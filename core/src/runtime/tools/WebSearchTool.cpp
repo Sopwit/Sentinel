@@ -9,6 +9,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QEventLoop>
+#include <QRegularExpression>
 #include <QUrlQuery>
 #include <QTimer>
 #include <QDebug>
@@ -44,6 +45,10 @@ WebSearchResponse WebSearchTool::search(const QString& query, int numResults) {
 
     if (numResults <= 0) {
         numResults = m_maxResults;
+    }
+
+    if (!apiKeyConfigured()) {
+        return searchDuckDuckGo(query, numResults);
     }
 
     QUrl url = buildSearchUrl(query, numResults);
@@ -101,6 +106,12 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
         numResults = m_maxResults;
     }
 
+    if (!apiKeyConfigured()) {
+        WebSearchResponse response = searchDuckDuckGo(query, numResults);
+        if (callback) callback(response);
+        return;
+    }
+
     QUrl url = buildSearchUrl(query, numResults);
     if (!url.isValid()) {
         WebSearchResponse response;
@@ -129,7 +140,129 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
 }
 
 QStringList WebSearchTool::supportedProviders() {
-    return {"exa", "parallel", "custom"};
+    return {"duckduckgo", "exa", "parallel", "custom"};
+}
+
+bool WebSearchTool::apiKeyConfigured() const {
+    // Only the keyless DuckDuckGo provider runs without credentials; API-backed
+    // providers fall back to DuckDuckGo until a key is configured.
+    if (m_searchProvider.compare(QStringLiteral("duckduckgo"),
+                                  Qt::CaseInsensitive) == 0) {
+        return false;
+    }
+    return !m_apiKey.trimmed().isEmpty();
+}
+
+WebSearchResponse WebSearchTool::searchDuckDuckGo(const QString& query, int numResults) {
+    WebSearchResponse response;
+
+    QUrl url(QStringLiteral("https://html.duckduckgo.com/html/"));
+    QUrlQuery params;
+    params.addQueryItem(QStringLiteral("q"), query);
+    QNetworkRequest request{url};
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QStringLiteral("application/x-www-form-urlencoded"));
+    // DuckDuckGo rejects clearly non-browser agents; use a conventional UA.
+    request.setRawHeader(
+        "User-Agent",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0 Safari/537.36");
+
+    QNetworkReply* reply = m_networkManager.post(
+        request, params.toString(QUrl::FullyEncoded).toUtf8());
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(15000);
+    loop.exec();
+    if (!reply->isFinished()) {
+        reply->abort();
+        response.errorString = QStringLiteral("Search request timed out.");
+    } else {
+        response = parseDuckDuckGoResponse(reply->readAll(), numResults);
+        if (reply->error() != QNetworkReply::NoError && !response.success) {
+            response.success = false;
+            response.errorString = reply->errorString();
+        }
+    }
+    reply->deleteLater();
+    return response;
+}
+
+namespace {
+
+QString htmlUnescape(const QString& text) {
+    QString out = text;
+    out.replace(QStringLiteral("&amp;"), QStringLiteral("&"));
+    out.replace(QStringLiteral("&lt;"), QStringLiteral("<"));
+    out.replace(QStringLiteral("&gt;"), QStringLiteral(">"));
+    out.replace(QStringLiteral("&quot;"), QStringLiteral("\""));
+    out.replace(QStringLiteral("&#x27;"), QStringLiteral("'"));
+    out.replace(QStringLiteral("&#39;"), QStringLiteral("'"));
+    out.replace(QStringLiteral("&nbsp;"), QStringLiteral(" "));
+    return out;
+}
+
+} // namespace
+
+WebSearchResponse WebSearchTool::parseDuckDuckGoResponse(const QByteArray& responseData,
+                                                         int numResults) {
+    WebSearchResponse response;
+
+    const QString html = QString::fromUtf8(responseData);
+    // Each result row: <a rel="nofollow" class="result__a" href="...">Title</a>
+    // followed by a snippet in <a class="result__snippet" ...>...</a>.
+    static const QRegularExpression resultBlock(
+        QStringLiteral(
+            "class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>"
+            "(?:.*?class=\"result__snippet\"[^>]*>(.*?)</a>)?"),
+        QRegularExpression::DotMatchesEverythingOption);
+
+    auto it = resultBlock.globalMatch(html);
+    while (it.hasNext() && response.results.size() < numResults) {
+        const auto match = it.next();
+
+        QString url = htmlUnescape(match.captured(1));
+        // DuckDuckGo wraps destinations in /l/?uddg=<encoded url>; unwrap it.
+        if (url.startsWith(QStringLiteral("//duckduckgo.com/l/")) ||
+            url.startsWith(QStringLiteral("/l/"))) {
+            const int uddgStart = url.indexOf(QStringLiteral("uddg="));
+            if (uddgStart >= 0) {
+                QString embedded = url.mid(uddgStart + 5);
+                const int amp = embedded.indexOf(QLatin1Char('&'));
+                if (amp >= 0) {
+                    embedded = embedded.left(amp);
+                }
+                url = QUrl::fromPercentEncoding(embedded.toUtf8());
+            }
+        }
+        if (url.startsWith(QStringLiteral("//"))) {
+            url.prepend(QStringLiteral("https:"));
+        }
+
+        WebSearchResult result;
+        result.title =
+            htmlUnescape(match.captured(2)).remove(QRegularExpression(QStringLiteral("<[^>]*>")))
+                .simplified();
+        result.url = url;
+        result.snippet =
+            htmlUnescape(match.captured(3)).remove(QRegularExpression(QStringLiteral("<[^>]*>")))
+                .simplified();
+        response.results.append(result);
+    }
+
+    if (response.results.isEmpty()) {
+        response.errorString = QStringLiteral(
+            "No results were returned (DuckDuckGo layout may have changed or the request was "
+            "blocked).");
+    } else {
+        response.success = true;
+    }
+    response.totalResults = response.results.size();
+    return response;
 }
 
 void WebSearchTool::onSearchReply(QNetworkReply* reply) {

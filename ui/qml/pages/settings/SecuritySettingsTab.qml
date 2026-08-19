@@ -395,7 +395,7 @@ Item {
         SettingCard {
             SettingControlRow {
                 title: qsTr("Search Provider")
-                subtitle: qsTr("API-backed search provider for agent web searches.")
+                subtitle: qsTr("Search provider for agent web searches. DuckDuckGo needs no API key; Exa and Parallel require one.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -403,15 +403,19 @@ Item {
                 SentinelComboBox {
                     anchors.fill: parent
                     accent: root.modeAccent
-                    model: ["Exa", "Parallel"]
-                    currentIndex: root.viewModel.webSearchProvider === "parallel" ? 1 : 0
-                    onActivated: (index) => root.viewModel.webSearchProvider = index === 1 ? "parallel" : "exa"
+                    model: [qsTr("DuckDuckGo (no API key)"), "Exa", "Parallel"]
+                    currentIndex: root.viewModel.webSearchProvider === "exa" ? 1
+                                  : (root.viewModel.webSearchProvider === "parallel" ? 2 : 0)
+                    onActivated: (index) => {
+                        root.viewModel.webSearchProvider = index === 1 ? "exa"
+                                      : (index === 2 ? "parallel" : "duckduckgo")
+                    }
                 }
             }
 
             SettingControlRow {
                 title: qsTr("Search API Key")
-                subtitle: qsTr("Credential sent only to the selected search provider.")
+                subtitle: qsTr("Credential sent only to the selected search provider. Leave empty to use the keyless DuckDuckGo fallback.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true

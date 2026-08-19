@@ -18,9 +18,12 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
+#include <QSettings>
 #include <QStorageInfo>
 #include <QSysInfo>
 #include <QUrl>
+
+#include <optional>
 
 #if defined(Q_OS_UNIX)
 #include <unistd.h>
@@ -259,6 +262,95 @@ QString processListReport() {
         .arg(QString::number(lines.size()), QString::number(shown.size()),
              shown.join(QLatin1Char('\n')));
 }
+
+// Freedesktop .desktop entry resolution (Linux/BSD app-launch support).
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+struct DesktopEntry {
+    QString desktopId;
+    QString name;
+    QString exec;
+    QString icon;
+};
+
+// Locates a freedesktop .desktop entry for an application name such as
+// "Spotify" or "org.kde.dolphin". Searches the standard data directories.
+std::optional<DesktopEntry> findDesktopEntry(const QString& appName) {
+    const QString needle = appName.trimmed();
+    if (needle.isEmpty()) {
+        return std::nullopt;
+    }
+    const QString lowered = needle.toLower();
+
+    QStringList searchRoots;
+    const QString dataHome =
+        qEnvironmentVariable("XDG_DATA_HOME").isEmpty()
+            ? QDir::home().filePath(QStringLiteral(".local/share"))
+            : qEnvironmentVariable("XDG_DATA_HOME");
+    searchRoots.append(dataHome);
+    const QString dataDirsEnv = qEnvironmentVariable("XDG_DATA_DIRS");
+    const QStringList dataDirs = dataDirsEnv.isEmpty()
+                                     ? QStringList{QStringLiteral("/usr/share"),
+                                                   QStringLiteral("/usr/local/share")}
+                                     : dataDirsEnv.split(QLatin1Char(':'), Qt::SkipEmptyParts);
+    searchRoots.append(dataDirs);
+
+    std::optional<DesktopEntry> best;
+    for (const auto& root : searchRoots) {
+        QDirIterator it(QDir(root).filePath(QStringLiteral("applications")),
+                        {QStringLiteral("*.desktop")}, QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            QSettings desktopFile(path, QSettings::IniFormat);
+            desktopFile.beginGroup(QStringLiteral("Desktop Entry"));
+
+            const QString type = desktopFile
+                                     .value(QStringLiteral("Type"), QString())
+                                     .toString()
+                                     .trimmed();
+            const bool hidden = desktopFile.value(QStringLiteral("Hidden"), false).toBool();
+            if (type != QStringLiteral("Application") || hidden) {
+                continue;
+            }
+
+            const QString name = desktopFile.value(QStringLiteral("Name"), QString())
+                                     .toString()
+                                     .trimmed();
+            const QString desktopId = QFileInfo(path).completeBaseName();
+            const bool matches = desktopId.compare(lowered, Qt::CaseInsensitive) == 0 ||
+                                 desktopId.endsWith(QStringLiteral(".") + lowered,
+                                                    Qt::CaseInsensitive) ||
+                                 name.compare(needle, Qt::CaseInsensitive) == 0;
+            if (!matches) {
+                continue;
+            }
+
+            DesktopEntry entry;
+            entry.desktopId = desktopId;
+            entry.name = name;
+            entry.exec = desktopFile.value(QStringLiteral("Exec"), QString()).toString();
+            entry.icon = desktopFile.value(QStringLiteral("Icon"), QString()).toString();
+            desktopFile.endGroup();
+
+            // Prefer exact id matches (e.g. "spotify") over suffix matches
+            // (e.g. "org.kde.dolphin" for "dolphin").
+            if (!best || (best->desktopId.toLower() != lowered &&
+                          desktopId.toLower() == lowered)) {
+                best = entry;
+            }
+        }
+    }
+    return best;
+}
+
+// Strips freedesktop field codes (%f, %u, %F, %U) from an Exec= value.
+QString desktopExecToCommand(const QString& exec) {
+    static const QRegularExpression fieldCodes(QStringLiteral("%[fFuUdDnNickvm]"));
+    QString command = exec;
+    command.remove(fieldCodes);
+    return command.simplified();
+}
+#endif // !Q_OS_MACOS && !Q_OS_WIN
 
 QDateTime parseAlarmTime(const QString& raw) {
     const auto trimmed = raw.trimmed();
@@ -875,6 +967,30 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             }
             runSynchronousProcess(QStringLiteral("cmd.exe"), args, QString(), 15000, &error);
 #else
+            // Linux/BSD: resolve the application through its freedesktop
+            // .desktop entry so names like "Files" launch org.kde.dolphin.
+            const auto entry = findDesktopEntry(app);
+            if (entry) {
+                QString command = desktopExecToCommand(entry->exec);
+                QStringList args;
+                if (!extraArgs.isEmpty()) {
+                    args.append(extraArgs);
+                }
+                if (command.isEmpty()) {
+                    command = entry->desktopId;
+                }
+                const bool started =
+                    QProcess::startDetached(command, args);
+                logs.append(started
+                                ? QStringLiteral(
+                                      "app-launch: Launched '%1' (%2) via desktop entry.")
+                                      .arg(app, entry->desktopId)
+                                : QStringLiteral(
+                                      "app-launch: Found desktop entry '%1' but failed to start "
+                                      "'%2'.")
+                                      .arg(entry->desktopId, command));
+                continue;
+            }
             QProcess::startDetached(app, extraArgs.isEmpty()
                                              ? QStringList{}
                                              : QStringList{extraArgs});
@@ -970,14 +1086,31 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                              osascriptEscape(title.isEmpty() ? QStringLiteral("Sentinel") : title))},
                 QString(), 15000, &error);
 #elif defined(Q_OS_WIN)
+            // PowerShell toast via the Windows Runtime projection; works on
+            // Windows 10/11 without any extra dependencies.
+            const QString escapedTitle = title.isEmpty() ? QStringLiteral("Sentinel") : title;
+            const QString psScript = QStringLiteral(
+                "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, "
+                "ContentType = WindowsRuntime] | Out-Null;"
+                "[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, "
+                "ContentType = WindowsRuntime] | Out-Null;"
+                "$template = "
+                "'<toast><visual><binding template=\"ToastGeneric\">"
+                "<text id=\"1\">%1</text><text id=\"2\">%2</text></binding></visual></toast>';"
+                "$xml = New-Object Windows.Data.Xml.Dom.XmlDocument;"
+                "$xml.LoadXml($template);"
+                "$toast = New-Object Windows.UI.Notifications.ToastNotification($xml);"
+                "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("
+                "'Sentinel').Show($toast);");
             runSynchronousProcess(
                 QStringLiteral("powershell"),
-                QStringList{
-                    QStringLiteral("-Command"),
-                    QStringLiteral(
-                        "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI."
-                        "Notifications, ContentType = WindowsRuntime] | Out-Null"),
-                },
+                QStringList{QStringLiteral("-NoProfile"),
+                            QStringLiteral("-NonInteractive"),
+                            QStringLiteral("-Command"),
+                            psScript.arg(escapedTitle.replace(QLatin1Char('\''), QStringLiteral(
+                                                              "''")),
+                                         message.replace(QLatin1Char('\''),
+                                                         QStringLiteral("''")))},
                 QString(), 15000, &error);
 #else
             runSynchronousProcess(
