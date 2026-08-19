@@ -4,12 +4,16 @@
 
 #include "sentinel/core/runtime/LocalInference.h"
 
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
 
 using sentinel::core::LocalInferenceError;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceStatus;
 using sentinel::core::LocalInferenceStreamStatus;
+using sentinel::core::LMStudioConfig;
+using sentinel::core::LMStudioLocalInferenceClient;
 using sentinel::core::NullLocalInferenceClient;
 using sentinel::core::NullLocalInferenceStreamClient;
 using sentinel::core::OllamaConfig;
@@ -25,6 +29,8 @@ private slots:
     void unavailableModelRejectedBeforeGeneration();
     void invalidEndpointIsBlocked();
     void streamSkeletonIsDeterministicallyDisabled();
+    void cloudEndpointWithoutKeyIsBlocked();
+    void cloudOpenAiCompatibleRequestCarriesBearerKey();
 };
 
 void LocalInferenceTest::nullClientDeterministicallyRefuses() {
@@ -124,5 +130,84 @@ void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
 }
 
 QTEST_MAIN(LocalInferenceTest)
+
+void LocalInferenceTest::cloudEndpointWithoutKeyIsBlocked() {
+    // 127.0.0.2 is not treated as a local loopback endpoint, so it exercises
+    // the cloud permission gate: an API key is mandatory.
+    LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
+    config.apiKey = QString();
+
+    LMStudioLocalInferenceClient client(config, 1000);
+    LocalInferenceRequest request;
+    request.prompt = QStringLiteral("hello");
+    request.options.model = QStringLiteral("gpt-4o-mini");
+
+    const auto response = client.infer(request);
+    QCOMPARE(response.status, LocalInferenceStatus::Blocked);
+    QCOMPARE(response.error, LocalInferenceError::EndpointBlocked);
+    QVERIFY(response.summary.contains(QStringLiteral("API key")));
+}
+
+void LocalInferenceTest::cloudOpenAiCompatibleRequestCarriesBearerKey() {
+    QTcpServer server;
+    if (!server.listen(QHostAddress(QStringLiteral("127.0.0.2")), 0)) {
+        QSKIP("127.0.0.2 loopback alias is not available on this machine.");
+    }
+    const quint16 port = server.serverPort();
+
+    LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("http://127.0.0.2:%1").arg(port));
+    config.apiKey = QStringLiteral("test-key-123");
+
+    QString capturedAuth;
+    QString capturedRequestLine;
+    server.connect(&server, &QTcpServer::newConnection, &server, [&]() {
+        QTcpSocket* socket = server.nextPendingConnection();
+        socket->connect(socket, &QTcpSocket::readyRead, socket, [socket, &capturedAuth,
+                                                                 &capturedRequestLine]() {
+            const QByteArray data = socket->readAll();
+            const int headerEnd = data.indexOf("\r\n\r\n");
+            if (headerEnd < 0) {
+                return;
+            }
+            const QByteArray headers = data.left(headerEnd);
+            if (capturedRequestLine.isEmpty()) {
+                capturedRequestLine =
+                    QString::fromLatin1(headers.split('\r').first());
+            }
+            if (capturedAuth.isEmpty()) {
+                for (const auto& line : headers.split('\n')) {
+                    if (line.startsWith("Authorization:")) {
+                        capturedAuth = QString::fromLatin1(line.trimmed());
+                    }
+                }
+            }
+
+            const QByteArray body =
+                QByteArrayLiteral("{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                                  "\"content\":\"cloud says hi\"}}]}");
+            socket->write(QStringLiteral("HTTP/1.1 200 OK\r\n"
+                                         "Content-Type: application/json\r\n"
+                                         "Content-Length: %1\r\n"
+                                         "Connection: close\r\n\r\n")
+                              .arg(body.size())
+                              .toLatin1() +
+                          body);
+            socket->flush();
+        });
+    });
+
+    LMStudioLocalInferenceClient client(config, 5000);
+    LocalInferenceRequest request;
+    request.prompt = QStringLiteral("hello cloud");
+    request.options.model = QStringLiteral("gpt-test");
+
+    const auto response = client.infer(request);
+    QCOMPARE(response.status, LocalInferenceStatus::Succeeded);
+    QCOMPARE(response.text, QStringLiteral("cloud says hi"));
+    QVERIFY(capturedAuth.contains(QStringLiteral("Bearer test-key-123")));
+    QVERIFY(capturedRequestLine.contains(QStringLiteral("/v1/chat/completions")));
+}
 
 #include "test_local_inference.moc"

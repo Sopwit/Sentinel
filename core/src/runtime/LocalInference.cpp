@@ -85,12 +85,16 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     return JsonReply{true, false, document, {}, QNetworkReply::NoError};
 }
 
-JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
+JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs,
+                   const QMap<QByteArray, QByteArray>& headers = {}) {
     QNetworkAccessManager manager;
     QNetworkRequest request{url};
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::ManualRedirectPolicy);
+    for (auto it = headers.constBegin(); it != headers.constEnd(); ++it) {
+        request.setRawHeader(it.key(), it.value());
+    }
 
     QEventLoop loop;
     QTimer timer;
@@ -1054,14 +1058,18 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         response.status = LocalInferenceStatus::Blocked;
         response.error = LocalInferenceError::EndpointBlocked;
         response.summary =
-            QStringLiteral("Local inference blocked: endpoint must be local loopback HTTP.");
+            config_.isCloud()
+                ? QStringLiteral(
+                      "%1 inference blocked: an API key is required for cloud endpoints.")
+                      .arg(config_.providerDisplayName())
+                : QStringLiteral("Local inference blocked: endpoint must be local loopback HTTP.");
         response.traces.append(
             trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), response.summary));
         return response;
     }
 
     const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
-    if (endpointAllowed()) {
+    if (endpointAllowed() && !config_.isCloud()) {
         const auto models =
             fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
         bool modelAvailable = false;
@@ -1080,6 +1088,219 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                                          QStringLiteral("Unavailable"), response.summary));
             return response;
         }
+    }
+
+    // Cloud providers need their own request shape and credentials; the
+    // OpenAI-compatible body below only fits LM Studio / llama.cpp / local
+    // OpenAI-compatible servers.
+    if (config_.isCloud()) {
+        const bool isAnthropic = config_.endpoint.host().contains(QLatin1String("anthropic.com"));
+        const bool isGemini = config_.endpoint.host().contains(QLatin1String("googleapis.com"));
+
+        if (isAnthropic) {
+            QJsonObject messageObj;
+            messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+            messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+            QJsonArray messagesArr;
+            messagesArr.append(messageObj);
+
+            QJsonObject body;
+            body.insert(QStringLiteral("model"), response.model);
+            body.insert(QStringLiteral("messages"), messagesArr);
+            body.insert(QStringLiteral("max_tokens"),
+                        request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
+            body.insert(QStringLiteral("stream"), false);
+
+            response.traces.append(
+                trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                      QStringLiteral("Calling Anthropic /v1/messages; timeout %1 ms.")
+                          .arg(timeoutMs)));
+
+            QMap<QByteArray, QByteArray> headers;
+            headers.insert("x-api-key", config_.apiKey.toUtf8());
+            headers.insert("anthropic-version", "2023-06-01");
+            const auto reply = postJson(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")),
+                                        body, timeoutMs, headers);
+            if (!reply.ok) {
+                response.status = LocalInferenceStatus::Error;
+                response.error = networkErrorCategory(reply);
+                response.summary = safeNetworkFailureSummary(
+                    reply, QStringLiteral("Anthropic cloud generation"), timeoutMs);
+                response.traces.append(trace(3, QStringLiteral("Generation"),
+                                             QStringLiteral("Error"), response.summary));
+                return response;
+            }
+            const auto contentParts =
+                reply.document.object().value(QStringLiteral("content")).toArray();
+            QString text;
+            for (const auto& part : contentParts) {
+                const auto partObj = part.toObject();
+                if (partObj.value(QStringLiteral("type")).toString() ==
+                    QStringLiteral("text")) {
+                    text += partObj.value(QStringLiteral("text")).toString();
+                }
+            }
+            if (text.isEmpty()) {
+                response.status = LocalInferenceStatus::Error;
+                response.error = LocalInferenceError::InvalidResponse;
+                response.summary = QStringLiteral(
+                    "Anthropic cloud generation response did not include text.");
+                response.traces.append(trace(3, QStringLiteral("Generation"),
+                                             QStringLiteral("Invalid Response"), response.summary));
+                return response;
+            }
+            response.status = LocalInferenceStatus::Succeeded;
+            response.error = LocalInferenceError::None;
+            response.text = text;
+            response.summary = QStringLiteral("Anthropic cloud generation succeeded.");
+            response.traces.append(trace(3, QStringLiteral("Generation"),
+                                         QStringLiteral("Succeeded"), response.summary));
+            return response;
+        }
+
+        if (isGemini) {
+            const QString modelId =
+                response.model.isEmpty() ? QStringLiteral("gemini-2.0-flash") : response.model;
+
+            QJsonObject partObj;
+            partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
+            QJsonArray partsArr;
+            partsArr.append(partObj);
+
+            QJsonObject contentObj;
+            contentObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+            contentObj.insert(QStringLiteral("parts"), partsArr);
+            QJsonArray contentsArr;
+            contentsArr.append(contentObj);
+
+            QJsonObject body;
+            body.insert(QStringLiteral("contents"), contentsArr);
+            QJsonObject generationConfig;
+            generationConfig.insert(QStringLiteral("temperature"), request.options.temperature);
+            generationConfig.insert(QStringLiteral("topP"), request.options.topP);
+            generationConfig.insert(QStringLiteral("maxOutputTokens"),
+                                    request.options.maxTokens > 0 ? request.options.maxTokens
+                                                                  : 2048);
+            body.insert(QStringLiteral("generationConfig"), generationConfig);
+
+            response.traces.append(
+                trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                      QStringLiteral("Calling Gemini generateContent; timeout %1 ms.")
+                          .arg(timeoutMs)));
+
+            const QUrl url(QStringLiteral(
+                               "https://generativelanguage.googleapis.com/v1beta/models/"
+                               "%1:generateContent?key=%2")
+                               .arg(modelId, config_.apiKey));
+            const auto reply = postJson(url, body, timeoutMs);
+            if (!reply.ok) {
+                response.status = LocalInferenceStatus::Error;
+                response.error = networkErrorCategory(reply);
+                response.summary = safeNetworkFailureSummary(
+                    reply, QStringLiteral("Gemini cloud generation"), timeoutMs);
+                response.traces.append(trace(3, QStringLiteral("Generation"),
+                                             QStringLiteral("Error"), response.summary));
+                return response;
+            }
+            const auto candidates =
+                reply.document.object().value(QStringLiteral("candidates")).toArray();
+            QString text;
+            if (!candidates.isEmpty()) {
+                const auto parts = candidates.first()
+                                       .toObject()
+                                       .value(QStringLiteral("content"))
+                                       .toObject()
+                                       .value(QStringLiteral("parts"))
+                                       .toArray();
+                for (const auto& part : parts) {
+                    text += part.toObject().value(QStringLiteral("text")).toString();
+                }
+            }
+            if (text.isEmpty()) {
+                response.status = LocalInferenceStatus::Error;
+                response.error = LocalInferenceError::InvalidResponse;
+                response.summary =
+                    QStringLiteral("Gemini cloud generation response did not include text.");
+                response.traces.append(trace(3, QStringLiteral("Generation"),
+                                             QStringLiteral("Invalid Response"), response.summary));
+                return response;
+            }
+            response.status = LocalInferenceStatus::Succeeded;
+            response.error = LocalInferenceError::None;
+            response.text = text;
+            response.summary = QStringLiteral("Gemini cloud generation succeeded.");
+            response.traces.append(trace(3, QStringLiteral("Generation"),
+                                         QStringLiteral("Succeeded"), response.summary));
+            return response;
+        }
+
+        // OpenAI-compatible cloud (OpenAI, DeepSeek, Groq, Mistral).
+        QJsonObject messageObj;
+        messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        QJsonArray messagesArr;
+        messagesArr.append(messageObj);
+
+        QJsonObject body;
+        body.insert(QStringLiteral("model"), response.model);
+        body.insert(QStringLiteral("messages"), messagesArr);
+        body.insert(QStringLiteral("stream"), false);
+        body.insert(QStringLiteral("temperature"), request.options.temperature);
+        body.insert(QStringLiteral("max_tokens"),
+                    request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
+
+        response.traces.append(
+            trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                  QStringLiteral("Calling %1 /v1/chat/completions; timeout %2 ms.")
+                      .arg(config_.providerDisplayName(), QString::number(timeoutMs))));
+
+        QMap<QByteArray, QByteArray> headers;
+        headers.insert("Authorization",
+                       QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
+        const auto reply = postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body,
+                                    timeoutMs, headers);
+        if (!reply.ok) {
+            response.status = LocalInferenceStatus::Error;
+            response.error = networkErrorCategory(reply);
+            response.summary = safeNetworkFailureSummary(
+                reply, QStringLiteral("%1 cloud generation").arg(config_.providerDisplayName()),
+                timeoutMs);
+            response.traces.append(trace(3, QStringLiteral("Generation"),
+                                         QStringLiteral("Error"), response.summary));
+            return response;
+        }
+        const auto choices = reply.document.object().value(QStringLiteral("choices")).toArray();
+        if (choices.isEmpty()) {
+            response.status = LocalInferenceStatus::Error;
+            response.error = LocalInferenceError::InvalidResponse;
+            response.summary = QStringLiteral(
+                "%1 cloud generation response did not include choices.")
+                .arg(config_.providerDisplayName());
+            response.traces.append(trace(3, QStringLiteral("Generation"),
+                                         QStringLiteral("Invalid Response"), response.summary));
+            return response;
+        }
+        const auto choiceObj = choices.first().toObject();
+        const auto text =
+            choiceObj.value(QStringLiteral("message")).toObject().value(QStringLiteral("content"))
+                .toString();
+        if (text.isEmpty()) {
+            response.status = LocalInferenceStatus::Error;
+            response.error = LocalInferenceError::InvalidResponse;
+            response.summary = QStringLiteral("%1 cloud generation response did not include text.")
+                .arg(config_.providerDisplayName());
+            response.traces.append(trace(3, QStringLiteral("Generation"),
+                                         QStringLiteral("Invalid Response"), response.summary));
+            return response;
+        }
+        response.status = LocalInferenceStatus::Succeeded;
+        response.error = LocalInferenceError::None;
+        response.text = text;
+        response.summary =
+            QStringLiteral("%1 cloud generation succeeded.").arg(config_.providerDisplayName());
+        response.traces.append(
+            trace(3, QStringLiteral("Generation"), QStringLiteral("Succeeded"), response.summary));
+        return response;
     }
 
     QJsonObject messageObj;

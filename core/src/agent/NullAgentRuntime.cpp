@@ -257,6 +257,34 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
                                 QStringLiteral("Target path (may use a new file name)."),
                                 true},
                         }},
+        ToolDescriptor{QStringLiteral("apply-patch"),
+                        QStringLiteral("Apply Patch"),
+                        QStringLiteral(
+                            "Applies a unified diff patch to workspace files. Supports update "
+                            "(--- a/file + +++ b/file), add (--- /dev/null), and delete "
+                            "(+++ /dev/null) with @@ hunk headers. Prefer this over many "
+                            "edit-file calls for multi-file or multi-hunk changes."),
+                        ToolRiskLevel::High,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{
+                                QStringLiteral("patch"),
+                                QStringLiteral("The complete unified diff patch text."),
+                                true},
+                        }},
+        ToolDescriptor{QStringLiteral("list-code-definitions"),
+                        QStringLiteral("List Code Definitions"),
+                        QStringLiteral(
+                            "Lists classes, functions, and other top-level symbols with line "
+                            "numbers for a source file (C/C++, Python, JavaScript/"
+                            "TypeScript, Rust). Use it to understand file structure before "
+                            "reading or editing."),
+                        ToolRiskLevel::Low,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{QStringLiteral("path"),
+                                                    QStringLiteral("Source file path."), true},
+                        }},
         ToolDescriptor{
             QStringLiteral("run-command"),
             QStringLiteral("Run Command"),
@@ -264,7 +292,9 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
                 "Runs a shell command and returns stdout/stderr. Prefer dedicated tools "
                 "(read-file, edit-file, grep, glob) over cat/grep/find. Use the timeout "
                 "parameter (milliseconds) for long-running commands; default 60000, max "
-                "600000. Use workdir instead of 'cd x && ...'."),
+                "600000. Use workdir instead of 'cd x && ...'. Set sandbox=docker to run the "
+                "command inside an isolated, network-disabled Docker container with the "
+                "workspace mounted at /workspace (requires Docker)."),
             ToolRiskLevel::High,
             ToolExecutionMode::Local,
             {
@@ -277,6 +307,10 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
                 ToolParameterDescriptor{
                     QStringLiteral("workdir"),
                     QStringLiteral("Working directory for the command."), false},
+                ToolParameterDescriptor{
+                    QStringLiteral("sandbox"),
+                    QStringLiteral("empty for local shell, or 'docker' for container sandbox."),
+                    false},
             }},
         ToolDescriptor{QStringLiteral("app-launch"),
                         QStringLiteral("Launch App"),
@@ -441,6 +475,118 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
                             ToolParameterDescriptor{
                                 QStringLiteral("limit"),
                                 QStringLiteral("Max matches to return (default 10, max 50)."),
+                                false},
+                        }},
+        ToolDescriptor{QStringLiteral("history-search"),
+                        QStringLiteral("History Search"),
+                        QStringLiteral(
+                            "Searches earlier messages of this chat history (all roles) for "
+                            "the query text. Use it to recall what the user said before."),
+                        ToolRiskLevel::Low,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{QStringLiteral("query"),
+                                                    QStringLiteral("Text to search for."), true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("limit"),
+                                QStringLiteral("Max matches to return (default 10, max 50)."),
+                                false},
+                        }},
+        ToolDescriptor{QStringLiteral("ask-question"),
+                        QStringLiteral("Ask Question"),
+                        QStringLiteral(
+                            "Asks the user a single clarifying question when the goal is "
+                            "ambiguous. Provide 2-5 short options, one per line, when the "
+                            "answer is a choice. After calling this, end the run with the "
+                            "question as your final answer and wait for the user's reply."),
+                        ToolRiskLevel::Low,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{QStringLiteral("question"),
+                                                    QStringLiteral("The question to ask."),
+                                                    true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("options"),
+                                QStringLiteral("Optional answer choices, one per line."),
+                                false},
+                        }},
+        ToolDescriptor{QStringLiteral("mcp-list"),
+                        QStringLiteral("MCP List"),
+                        QStringLiteral(
+                            "Lists configured MCP (Model Context Protocol) servers and the "
+                            "tools they expose. Call this first to discover extendable "
+                            "capabilities before using mcp-call."),
+                        ToolRiskLevel::Low,
+                        ToolExecutionMode::Local,
+                        {}},
+        ToolDescriptor{QStringLiteral("mcp-call"),
+                        QStringLiteral("MCP Call"),
+                        QStringLiteral(
+                            "Calls a tool on a configured MCP server. Find server and tool "
+                            "names with mcp-list first. Arguments must be a JSON object "
+                            "matching the tool's schema."),
+                        ToolRiskLevel::High,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{
+                                QStringLiteral("server"),
+                                QStringLiteral("MCP server name from mcp-list."), true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("tool"),
+                                QStringLiteral("Tool name on that server."), true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("arguments"),
+                                QStringLiteral(
+                                    "JSON object of tool arguments, e.g. {\"key\": \"value\"}."),
+                                false},
+                        }},
+        ToolDescriptor{QStringLiteral("spawn-agent"),
+                        QStringLiteral("Spawn Agent"),
+                        QStringLiteral(
+                            "Delegates a self-contained subtask to a bounded read-only "
+                            "subagent and returns its final answer. Use for parallelizable "
+                            "research or verification subtasks (e.g. 'check whether X is "
+                            "documented anywhere in the workspace'). Subagents cannot spawn "
+                            "further subagents or edit files."),
+                        ToolRiskLevel::Medium,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{
+                                QStringLiteral("task"),
+                                QStringLiteral("The complete, self-contained task description."),
+                                true},
+                        }},
+        ToolDescriptor{QStringLiteral("browser-screenshot"),
+                        QStringLiteral("Browser Screenshot"),
+                        QStringLiteral(
+                            "Takes a full-page screenshot of a URL in a headless Chromium "
+                            "browser via Playwright and saves it as PNG. Requires Node.js "
+                            "(npx) and 'npx playwright install chromium'. Use open-url when "
+                            "the user just wants to see the page."),
+                        ToolRiskLevel::Medium,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{QStringLiteral("url"),
+                                                    QStringLiteral("The page URL."), true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("path"),
+                                QStringLiteral("Output PNG path (default: temp file)."),
+                                false},
+                        }},
+        ToolDescriptor{QStringLiteral("browser-pdf"),
+                        QStringLiteral("Browser PDF"),
+                        QStringLiteral(
+                            "Renders a URL to a PDF document in a headless Chromium browser "
+                            "via Playwright. Requires Node.js (npx) and 'npx playwright "
+                            "install chromium'."),
+                        ToolRiskLevel::Medium,
+                        ToolExecutionMode::Local,
+                        {
+                            ToolParameterDescriptor{QStringLiteral("url"),
+                                                    QStringLiteral("The page URL."), true},
+                            ToolParameterDescriptor{
+                                QStringLiteral("path"),
+                                QStringLiteral("Output PDF path (default: temp file)."),
                                 false},
                         }},
         ToolDescriptor{QStringLiteral("web-fetch"),

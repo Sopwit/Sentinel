@@ -1277,6 +1277,7 @@ public:
     QString llamaCppEndpoint() const;
     void setLlamaCppEndpoint(const QString& endpoint);
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
+    void configureMcpServers(const QString& serversJson);
     void setSemanticProvider(const QString& provider, const QString& embeddingModel);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
