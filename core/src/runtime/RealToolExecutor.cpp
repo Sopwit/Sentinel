@@ -352,6 +352,35 @@ QString desktopExecToCommand(const QString& exec) {
 }
 #endif // !Q_OS_MACOS && !Q_OS_WIN
 
+// True when the text looks like a website address ("sahibinden.com",
+// "www.x.com", "https://x.com") rather than an application name.
+bool looksLikeDomainName(const QString& text) {
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty() || trimmed.contains(QLatin1Char(' '))) {
+        return false;
+    }
+    const QString lowered = trimmed.toLower();
+    if (lowered.startsWith(QStringLiteral("http://")) ||
+        lowered.startsWith(QStringLiteral("https://")) ||
+        lowered.startsWith(QStringLiteral("www."))) {
+        return true;
+    }
+    const int dot = trimmed.lastIndexOf(QLatin1Char('.'));
+    if (dot < 1 || dot >= trimmed.size() - 2) {
+        return false;
+    }
+    const QString suffix = trimmed.mid(dot + 1);
+    if (suffix.size() > 10) {
+        return false;
+    }
+    for (const QChar c : suffix) {
+        if (!c.isLetter()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 QDateTime parseAlarmTime(const QString& raw) {
     const auto trimmed = raw.trimmed();
     QDateTime parsed = QDateTime::fromString(trimmed, Qt::ISODateWithMs);
@@ -948,6 +977,17 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString app = getArgument(invocation, QStringLiteral("app")).trimmed();
             if (app.isEmpty()) {
                 logs.append(QStringLiteral("app-launch: No app argument provided."));
+                continue;
+            }
+            // Safety net: domains are websites, not applications. Guide the
+            // caller to open-url instead of trying to launch a browser as an
+            // app.
+            if (looksLikeDomainName(app)) {
+                logs.append(QStringLiteral(
+                                "app-launch: '%1' is a website address, not an application. "
+                                "Retry with the open-url tool and url=%1 to open it in the "
+                                "browser.")
+                                .arg(app));
                 continue;
             }
             const QString extraArgs = getArgument(invocation, QStringLiteral("args")).trimmed();

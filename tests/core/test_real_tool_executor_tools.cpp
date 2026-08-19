@@ -557,6 +557,20 @@ private slots:
         QVERIFY(result.summary.contains(
             QStringLiteral("No memory entries are available for this session")));
     }
+
+    void appLaunchRedirectsDomainNamesToOpenUrl() {
+        // Domains must never be launched as applications; the executor guides
+        // the caller to open-url instead of spawning anything.
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("app-launch"),
+            {ToolInvocationArgument{QStringLiteral("app"), QStringLiteral("sahibinden.com")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("is a website address")));
+        QVERIFY(result.summary.contains(QStringLiteral("open-url")));
+    }
 };
 
 QTEST_MAIN(RealToolExecutorToolsTest)
