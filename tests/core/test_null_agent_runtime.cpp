@@ -34,6 +34,10 @@ private slots:
     void detectsEnglishWebSearchIntent();
     void detectsWeatherWebSearchIntent();
     void keepsOrdinaryPromptsLocal();
+    void routesDomainLaunchRequestToOpenUrl();
+    void routesWwwAndHttpsLaunchRequestsToOpenUrl();
+    void routesTurkishSuffixedDomainToOpenUrl();
+    void keepsApplicationLaunchRequestsOnAppLaunch();
 };
 
 static ToolDescriptor makeTool(const QString& id, const QString& name, ToolRiskLevel riskLevel) {
@@ -208,6 +212,55 @@ void NullAgentRuntimeTest::keepsOrdinaryPromptsLocal() {
 
     QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
     QCOMPARE(plan.invocations.first().toolId, QStringLiteral("run-command"));
+}
+
+void NullAgentRuntimeTest::routesDomainLaunchRequestToOpenUrl() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("sahibinden.com aç")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("open-url"));
+    QCOMPARE(plan.invocations.first().arguments.first().id, QStringLiteral("url"));
+    QCOMPARE(plan.invocations.first().arguments.first().value,
+             QStringLiteral("sahibinden.com"));
+}
+
+void NullAgentRuntimeTest::routesWwwAndHttpsLaunchRequestsToOpenUrl() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto wwwPlan =
+        runtime.plan(AgentRequest{QStringLiteral("aç www.sahibinden.com")});
+    QCOMPARE(wwwPlan.invocations.first().toolId, QStringLiteral("open-url"));
+    QCOMPARE(wwwPlan.invocations.first().arguments.first().value,
+             QStringLiteral("www.sahibinden.com"));
+
+    const auto httpsPlan =
+        runtime.plan(AgentRequest{QStringLiteral("https://example.com open")});
+    QCOMPARE(httpsPlan.invocations.first().toolId, QStringLiteral("open-url"));
+    QCOMPARE(httpsPlan.invocations.first().arguments.first().value,
+             QStringLiteral("https://example.com"));
+}
+
+void NullAgentRuntimeTest::routesTurkishSuffixedDomainToOpenUrl() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("sahibinden.com'u aç")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("open-url"));
+    QCOMPARE(plan.invocations.first().arguments.first().value,
+             QStringLiteral("sahibinden.com"));
+}
+
+void NullAgentRuntimeTest::keepsApplicationLaunchRequestsOnAppLaunch() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("spotify aç")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("app-launch"));
+    QCOMPARE(plan.invocations.first().arguments.first().value, QStringLiteral("Spotify"));
 }
 
 QTEST_MAIN(NullAgentRuntimeTest)

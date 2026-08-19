@@ -36,6 +36,56 @@ bool isAutomaticWebSearchIntent(const QString& prompt) {
 
 } // namespace
 
+namespace {
+
+// Returns a cleaned URL for domain-like targets ("sahibinden.com",
+// "www.x.com", "https://x.com", "sahibinden.com'u") or an empty string when
+// the text is not a website address. Used to route "X aç" requests to
+// open-url instead of app-launch.
+QString urlTargetFromName(const QString& text) {
+    QString trimmed = text.trimmed();
+    if (trimmed.isEmpty() || trimmed.contains(QLatin1Char(' '))) {
+        return QString();
+    }
+
+    const QString lowered = trimmed.toLower();
+    if (lowered.startsWith(QStringLiteral("http://")) ||
+        lowered.startsWith(QStringLiteral("https://")) ||
+        lowered.startsWith(QStringLiteral("www."))) {
+        return trimmed;
+    }
+
+    // Strip a trailing Turkish possessive suffix: "sahibinden.com'u".
+    const int apos = trimmed.lastIndexOf(QLatin1Char('\''));
+    if (apos > 0) {
+        trimmed = trimmed.left(apos);
+    }
+
+    const int dot = trimmed.lastIndexOf(QLatin1Char('.'));
+    if (dot < 1 || dot >= trimmed.size() - 2) {
+        return QString();
+    }
+
+    const QString suffix = trimmed.mid(dot + 1);
+    if (suffix.size() > 10) {
+        return QString();
+    }
+    for (const QChar c : suffix) {
+        if (!c.isLetter()) {
+            return QString();
+        }
+    }
+
+    for (const QChar c : trimmed.left(dot)) {
+        if (!c.isLetterOrNumber() && c != QLatin1Char('-') && c != QLatin1Char('.')) {
+            return QString();
+        }
+    }
+    return trimmed;
+}
+
+} // namespace
+
 NullAgentRuntime::NullAgentRuntime()
     : NullAgentRuntime(QList<ToolDescriptor>{ToolDescriptor{
           QStringLiteral("local-plan-summary"),
@@ -258,7 +308,9 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
                         QStringLiteral("Open URL"),
                         QStringLiteral(
                             "Opens a URL in the user's default web browser (http/https only). "
-                            "Use web-fetch instead when the page content itself is needed."),
+                            "Use for website requests like 'sahibinden.com aç' — domains are "
+                            "websites, not applications. Use web-fetch instead when the page "
+                            "content itself is needed."),
                         ToolRiskLevel::Medium,
                         ToolExecutionMode::Local,
                         {
@@ -557,13 +609,19 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
             }
         };
 
+        QString urlTarget;
         if (!programName.isEmpty()) {
             // 'open -a X' is an explicit shell pattern; leave it to run-command.
             if (programName.startsWith(QLatin1Char('-')) ||
                 trimmed.contains(QStringLiteral("open -a"))) {
                 programName.clear();
             } else {
-                stripSuffix(programName);
+                // Website targets keep their original form; app names get the
+                // Turkish suffix stripping and capitalization treatment.
+                urlTarget = urlTargetFromName(programName);
+                if (urlTarget.isEmpty()) {
+                    stripSuffix(programName);
+                }
             }
         }
 
@@ -574,6 +632,12 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
             selectedToolId = QStringLiteral("app-quit");
             arguments.append(
                 ToolInvocationArgument{QStringLiteral("app"), programName});
+        } else if (!urlTarget.isEmpty() && !wantsQuit &&
+                   toolRegistry_.findToolById(QStringLiteral("open-url")).has_value()) {
+            // Website requests like 'sahibinden.com aç' open in the browser,
+            // never as desktop applications.
+            selectedToolId = QStringLiteral("open-url");
+            arguments.append(ToolInvocationArgument{QStringLiteral("url"), urlTarget});
         } else if (!programName.isEmpty() && !wantsQuit &&
                    toolRegistry_.findToolById(QStringLiteral("app-launch")).has_value()) {
             selectedToolId = QStringLiteral("app-launch");
