@@ -2015,6 +2015,13 @@ void ApplicationController::refreshModelDiscovery() {
     pollOllama();
 }
 
+QString ApplicationController::cloudModelDiscoveryError() const {
+    if (!ollamaCacheInitialized_) {
+        initializeOllamaCache();
+    }
+    return cachedCloudProviderError_;
+}
+
 void ApplicationController::configureMcpServers(const QString& serversJson) {
     if (serversJson.trimmed().isEmpty()) {
         return;
@@ -9887,7 +9894,7 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
                                          : QStringLiteral("Provider API is configured and returned models.");
     const RuntimeProviderDescriptor cloudApiDescriptor{
         QStringLiteral("cloud-api"),
-        QStringLiteral("Cloud API (%1)").arg(cloudProvider),
+        QStringLiteral("Cloud"),
         hasCloudKey ? QStringLiteral("configured") : QStringLiteral("credentials-required"),
         cloudReadiness,
         hasCloudKey ? QStringLiteral("API key configured") : QStringLiteral("API key missing"),
@@ -9946,7 +9953,7 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
             selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
             selectedRuntimeProvider_ == QStringLiteral("groq") ||
             selectedRuntimeProvider_ == QStringLiteral("mistral"))
-            return {QStringLiteral("cloud-api"), QStringLiteral("Cloud API")};
+            return {QStringLiteral("cloud-api"), QStringLiteral("Cloud")};
         return {QStringLiteral("ollama"), QStringLiteral("Ollama")};
     }();
 
@@ -10050,6 +10057,7 @@ void ApplicationController::pollOllama() {
         QList<OllamaModelSummary> openAiModels;
         QList<OllamaModelSummary> cloudModels;
         QString cloudOriginId;
+        QString cloudError;
 
         if (ollamaRuntimeClient_) {
             health = ollamaRuntimeClient_->healthCheck();
@@ -10102,30 +10110,31 @@ void ApplicationController::pollOllama() {
                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
 
             if (isGemini) {
-                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000);
+                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("gemini");
             } else if (isClaude) {
-                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000);
+                cloudModels =
+                    fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("claude");
             } else if (isDeepSeek) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.deepseek.com/v1/models")),
-                    settings.deepseekApiKey(), 4000);
+                    settings.deepseekApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("deepseek");
             } else if (isGroq) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")),
-                    settings.groqApiKey(), 4000);
+                    settings.groqApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("groq");
             } else if (isMistral) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
-                                           settings.mistralApiKey(), 4000);
+                                           settings.mistralApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("mistral");
             } else if (isOpenAi) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")),
-                                           settings.openAiApiKey(), 4000);
+                                           settings.openAiApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("openai");
             }
         }
@@ -10135,7 +10144,7 @@ void ApplicationController::pollOllama() {
             [this, health = std::move(health), ollamaModels = std::move(ollamaModels),
              lmStudioModels = std::move(lmStudioModels), llamaCppModels = std::move(llamaCppModels),
              openAiModels = std::move(openAiModels), cloudModels = std::move(cloudModels),
-             cloudOriginId = std::move(cloudOriginId)]() {
+             cloudOriginId = std::move(cloudOriginId), cloudError = std::move(cloudError)]() {
                 bool changed = false;
                 ollamaCacheInitialized_ = true;
 
@@ -10197,6 +10206,11 @@ void ApplicationController::pollOllama() {
                             break;
                         }
                     }
+                }
+
+                if (cachedCloudProviderError_ != cloudError) {
+                    cachedCloudProviderError_ = cloudError;
+                    changed = true;
                 }
 
                 if (cachedCloudProviderOriginId_ != cloudOriginId ||

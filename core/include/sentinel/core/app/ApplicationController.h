@@ -1281,6 +1281,7 @@ public:
     // Triggers an immediate model discovery pass (used when credentials or
     // cloud provider selection change).
     void refreshModelDiscovery();
+    QString cloudModelDiscoveryError() const;
     void setSemanticProvider(const QString& provider, const QString& embeddingModel);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
@@ -2211,6 +2212,7 @@ private:
     mutable QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
     mutable QList<OllamaModelSummary> cachedCloudProviderModels_;
     mutable QString cachedCloudProviderOriginId_;
+    mutable QString cachedCloudProviderError_;
     mutable bool ollamaCacheInitialized_ = false;
 
     void pollOllama();

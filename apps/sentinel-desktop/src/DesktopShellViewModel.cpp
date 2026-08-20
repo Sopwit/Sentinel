@@ -1451,6 +1451,10 @@ QStringList DesktopShellViewModel::ollamaModelNames() const {
     return controller_.ollamaModelNames();
 }
 
+QString DesktopShellViewModel::cloudModelDiscoveryError() const {
+    return controller_.cloudModelDiscoveryError();
+}
+
 QStringList DesktopShellViewModel::installedOllamaModelNames() const {
     return controller_.installedOllamaModelNames();
 }

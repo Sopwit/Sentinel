@@ -101,11 +101,14 @@ QStringList ollamaModelSummaries(const QList<OllamaModelSummary>& models);
 QString safeOllamaHealthSummary(const OllamaHealthCheckResult& result);
 QList<OllamaModelSummary>
 fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
-                            const QMap<QByteArray, QByteArray>& headers = {});
-QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000);
-QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs = 4000);
+                            const QMap<QByteArray, QByteArray>& headers = {},
+                            QString* errorOut = nullptr);
+QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000,
+                                                 QString* errorOut = nullptr);
+QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs = 4000,
+                                                    QString* errorOut = nullptr);
 QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
-                                                 int timeoutMs = 4000);
+                                                 int timeoutMs = 4000, QString* errorOut = nullptr);
 
 class IOllamaRuntimeClient {
 public:

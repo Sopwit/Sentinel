@@ -307,6 +307,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString cloudModelDiscoveryError READ cloudModelDiscoveryError NOTIFY
+                   ollamaStatusChanged)
     Q_PROPERTY(QStringList installedOllamaModelNames READ installedOllamaModelNames NOTIFY
                    ollamaStatusChanged)
     Q_PROPERTY(QStringList loadedLMStudioModelNames READ loadedLMStudioModelNames NOTIFY
@@ -1702,6 +1704,7 @@ public:
     int ollamaModelCount() const;
     bool isOnline() const;
     QStringList ollamaModelNames() const;
+    QString cloudModelDiscoveryError() const;
     QStringList installedOllamaModelNames() const;
     QStringList loadedLMStudioModelNames() const;
     QStringList ollamaModelSummaries() const;
