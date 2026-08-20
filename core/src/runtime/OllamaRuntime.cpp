@@ -13,6 +13,7 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QTimer>
+#include <QUrlQuery>
 #include <QVariant>
 
 #include <utility>
@@ -1368,9 +1369,16 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 
 namespace sentinel::core {
 QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
-                                                      const QMap<QByteArray, QByteArray>& headers) {
+                                                      const QMap<QByteArray, QByteArray>& headers,
+                                                      QString* errorOut) {
     const auto reply = getJson(url, timeoutMs, nullptr, headers);
     if (!reply.ok) {
+        if (errorOut) {
+            *errorOut = reply.timedOut
+                            ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
+                            : safeOllamaNetworkFailureSummary(reply, QStringLiteral("Model list"),
+                                                              timeoutMs);
+        }
         return {};
     }
 
@@ -1398,14 +1406,26 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
     return models;
 }
 
-QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs) {
+QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs,
+                                                 QString* errorOut) {
     if (apiKey.trimmed().isEmpty()) {
+        if (errorOut) {
+            *errorOut = QStringLiteral("Gemini API key is empty.");
+        }
         return {};
     }
-    const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models?key=") +
-                   apiKey.trimmed());
+    QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models"));
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("key"), apiKey.trimmed());
+    url.setQuery(query);
     const auto reply = getJson(url, timeoutMs);
     if (!reply.ok) {
+        if (errorOut) {
+            *errorOut = reply.timedOut
+                            ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
+                            : safeOllamaNetworkFailureSummary(reply, QStringLiteral("Gemini API"),
+                                                              timeoutMs);
+        }
         return {};
     }
 
@@ -1426,23 +1446,30 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
     return models;
 }
 
-QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs) {
+QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs,
+                                                    QString* errorOut) {
     if (apiKey.trimmed().isEmpty()) {
+        if (errorOut) {
+            *errorOut = QStringLiteral("Anthropic API key is empty.");
+        }
         return {};
     }
     const QUrl url(QStringLiteral("https://api.anthropic.com/v1/models"));
     const QMap<QByteArray, QByteArray> headers{{"x-api-key", apiKey.trimmed().toUtf8()},
                                                {"anthropic-version", "2023-06-01"}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut);
 }
 
 QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
-                                                 int timeoutMs) {
+                                                 int timeoutMs, QString* errorOut) {
     if (apiKey.trimmed().isEmpty()) {
+        if (errorOut) {
+            *errorOut = QStringLiteral("API key is empty.");
+        }
         return {};
     }
     const QMap<QByteArray, QByteArray> headers{
         {"Authorization", ("Bearer " + apiKey.trimmed()).toUtf8()}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut);
 }
 } // namespace sentinel::core

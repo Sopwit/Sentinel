@@ -16,6 +16,11 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property var cloudProviderNames: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
     readonly property string currentProvider: root.viewModel.selectedRuntimeProvider
+    readonly property bool isCloudProvider: {
+        var p = (root.currentProvider || "").toLowerCase()
+        return p === "cloud-api" || p === "openai" || p === "claude" || p === "gemini" ||
+               p === "deepseek" || p === "groq" || p === "mistral"
+    }
     readonly property var modelList: {
         if (root.currentProvider === "ollama") return root.viewModel.ollamaModelNames
         if (root.currentProvider === "lm-studio") return root.viewModel.loadedLMStudioModelNames
@@ -142,7 +147,13 @@ Item {
                 title: qsTr("Active Model")
                 subtitle: root.hasSelectableModels()
                           ? root.viewModel.selectedLocalModelSummary
-                          : qsTr("Model selection is available after the active local runtime reports models.")
+                          : root.isCloudProvider
+                              ? (root.viewModel.cloudModelDiscoveryError.length > 0
+                                     ? root.viewModel.cloudModelDiscoveryError
+                                     : root.viewModel.activeRuntimeReadinessSummary.length > 0
+                                           ? root.viewModel.activeRuntimeReadinessSummary
+                                           : qsTr("No models returned by the provider API."))
+                              : qsTr("Model selection is available after the active local runtime reports models.")
                 accent: root.modeAccent
                 compact: root.compact
 
@@ -293,7 +304,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "OpenAI"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "openai"
                 title: qsTr("OpenAI API Key")
                 subtitle: qsTr("Authentication key for GPT-4, GPT-4o, and OpenAI endpoints.")
                 accent: root.modeAccent
@@ -309,7 +320,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Claude"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "claude"
                 title: qsTr("Claude API Key")
                 subtitle: qsTr("Authentication key for Anthropic Claude 3.5 Sonnet and Opus models.")
                 accent: root.modeAccent
@@ -325,7 +336,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Gemini"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "gemini"
                 title: qsTr("Gemini API Key")
                 subtitle: qsTr("Authentication key for Google Gemini Pro and Flash models.")
                 accent: root.modeAccent
@@ -341,7 +352,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "DeepSeek"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "deepseek"
                 title: qsTr("DeepSeek API Key")
                 subtitle: qsTr("Authentication key for DeepSeek V3 and DeepSeek R1 reasoning endpoints.")
                 accent: root.modeAccent
@@ -357,7 +368,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Groq"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "groq"
                 title: qsTr("Groq API Key")
                 subtitle: qsTr("Authentication key for ultra-fast Groq LPU inference.")
                 accent: root.modeAccent
@@ -373,7 +384,7 @@ Item {
             }
 
             SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Mistral"
+                visible: (root.viewModel.selectedCloudProvider || "").toLowerCase() === "mistral"
                 title: qsTr("Mistral API Key")
                 subtitle: qsTr("Authentication key for Mistral Large, Codestral, and NeMo endpoints.")
                 accent: root.modeAccent
