@@ -337,12 +337,19 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
-    connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this,
-            &DesktopShellViewModel::cloudApiKeysChanged);
+    connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this, [this]() {
+        // Refresh cloud model discovery immediately when credentials change
+        // instead of waiting for the next poll tick.
+        controller_.refreshModelDiscovery();
+        emit cloudApiKeysChanged();
+    });
     connect(&settings_, &core::AppSettings::proxySettingsChanged, this,
             &DesktopShellViewModel::proxySettingsChanged);
-    connect(&settings_, &core::AppSettings::selectedCloudProviderChanged, this,
-            &DesktopShellViewModel::selectedCloudProviderChanged);
+    connect(&settings_, &core::AppSettings::selectedCloudProviderChanged, this, [this]() {
+        // Provider switch changes which cloud endpoint must be discovered.
+        controller_.refreshModelDiscovery();
+        emit selectedCloudProviderChanged();
+    });
     connect(&settings_, &core::AppSettings::webSearchSettingsChanged, this, [this]() {
         controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
                                        settings_.webSearchMaxResults());

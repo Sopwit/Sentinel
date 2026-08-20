@@ -1278,6 +1278,9 @@ public:
     void setLlamaCppEndpoint(const QString& endpoint);
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void configureMcpServers(const QString& serversJson);
+    // Triggers an immediate model discovery pass (used when credentials or
+    // cloud provider selection change).
+    void refreshModelDiscovery();
     void setSemanticProvider(const QString& provider, const QString& embeddingModel);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;

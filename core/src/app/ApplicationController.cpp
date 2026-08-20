@@ -2011,6 +2011,10 @@ void ApplicationController::configureWebSearch(const QString& provider, const QS
     }
 }
 
+void ApplicationController::refreshModelDiscovery() {
+    pollOllama();
+}
+
 void ApplicationController::configureMcpServers(const QString& serversJson) {
     if (serversJson.trimmed().isEmpty()) {
         return;
