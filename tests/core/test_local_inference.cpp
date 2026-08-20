@@ -151,13 +151,15 @@ void LocalInferenceTest::cloudEndpointWithoutKeyIsBlocked() {
 
 void LocalInferenceTest::cloudOpenAiCompatibleRequestCarriesBearerKey() {
     QTcpServer server;
-    if (!server.listen(QHostAddress(QStringLiteral("127.0.0.2")), 0)) {
-        QSKIP("127.0.0.2 loopback alias is not available on this machine.");
+    if (!server.listen(QHostAddress::LocalHost, 0)) {
+        QSKIP("loopback TCP server is not available on this machine.");
     }
     const quint16 port = server.serverPort();
 
+    // "localhost." (trailing dot) resolves to 127.0.0.1 but is not matched by
+    // the loopback-host check, so the client takes the cloud request path.
     LMStudioConfig config;
-    config.endpoint = QUrl(QStringLiteral("http://127.0.0.2:%1").arg(port));
+    config.endpoint = QUrl(QStringLiteral("http://localhost.:%1").arg(port));
     config.apiKey = QStringLiteral("test-key-123");
 
     QString capturedAuth;

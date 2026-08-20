@@ -19,7 +19,10 @@ Item {
     readonly property var modelList: {
         if (root.currentProvider === "ollama") return root.viewModel.ollamaModelNames
         if (root.currentProvider === "lm-studio") return root.viewModel.loadedLMStudioModelNames
-        return []
+        // Cloud providers (cloud-api, openai, claude, gemini, deepseek, groq,
+        // mistral) and the other OpenAI-compatible local runtimes share the
+        // same discovered model-name list.
+        return root.viewModel.ollamaModelNames
     }
     readonly property var inferencePresetModel: [
         { "name": qsTr("Precise"), "temp": 0.20, "topP": 0.80 },
@@ -271,7 +274,16 @@ Item {
                     anchors.fill: parent
                     implicitHeight: 36
                     model: root.cloudProviderNames
-                    currentIndex: Math.max(0, root.cloudProviderNames.indexOf(root.viewModel.selectedCloudProvider))
+                    currentIndex: {
+                        // Settings stores lowercase ids; the display list is
+                        // capitalized, so compare case-insensitively.
+                        var stored = (root.viewModel.selectedCloudProvider || "").toLowerCase()
+                        for (var i = 0; i < root.cloudProviderNames.length; ++i) {
+                            if (root.cloudProviderNames[i].toLowerCase() === stored)
+                                return i
+                        }
+                        return 0
+                    }
                     displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedCloudProvider
                     onActivated: (index) => {
                         if (index >= 0 && index < root.cloudProviderNames.length)
