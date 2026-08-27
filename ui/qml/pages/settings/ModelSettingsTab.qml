@@ -24,9 +24,10 @@ Item {
     readonly property var modelList: {
         if (root.currentProvider === "ollama") return root.viewModel.ollamaModelNames
         if (root.currentProvider === "lm-studio") return root.viewModel.loadedLMStudioModelNames
-        // Cloud providers (cloud-api, openai, claude, gemini, deepseek, groq,
-        // mistral) and the other OpenAI-compatible local runtimes share the
-        // same discovered model-name list.
+        // Cloud providers (cloud-api, openai, claude, gemini, deepseek, groq, mistral)
+        // and other OpenAI-compatible local runtimes:
+        // ollamaModelNames() routes through currentOllamaModels() which returns
+        // cachedCloudProviderModels_ when a cloud provider is active.
         return root.viewModel.ollamaModelNames
     }
     readonly property var inferencePresetModel: [

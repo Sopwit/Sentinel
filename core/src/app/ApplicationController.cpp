@@ -2012,6 +2012,12 @@ void ApplicationController::configureWebSearch(const QString& provider, const QS
 }
 
 void ApplicationController::refreshModelDiscovery() {
+    if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
+        // Thread is busy; remember to re-poll as soon as it finishes so that
+        // the credential or provider change is not silently dropped.
+        pendingModelRefresh_ = true;
+        return;
+    }
     pollOllama();
 }
 
@@ -9990,7 +9996,7 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
                 QStringLiteral("settings.json"));
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
-        const QString cloudProv = settings.selectedCloudProvider();
+        const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
         const bool isClaude = cloudProv == QStringLiteral("claude") ||
                               selectedRuntimeProvider_ == QStringLiteral("claude");
         const bool isGemini = cloudProv == QStringLiteral("gemini") ||
@@ -10088,7 +10094,7 @@ void ApplicationController::pollOllama() {
                 QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
                     QStringLiteral("settings.json"));
             AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
-            const QString cloudProv = settings.selectedCloudProvider();
+            const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
 
             const bool isGemini =
                 provider == QStringLiteral("gemini") ||
@@ -10239,6 +10245,13 @@ void ApplicationController::pollOllama() {
                     emit runtimeProviderRegistryChanged();
                     emit localChatInferenceRoutingChanged();
                 }
+
+                // A credential or provider change arrived while this thread was
+                // running. Start a fresh poll now that the thread is gone.
+                if (pendingModelRefresh_) {
+                    pendingModelRefresh_ = false;
+                    pollOllama();
+                }
             },
             Qt::QueuedConnection);
     });
@@ -10288,7 +10301,7 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
             QStringLiteral("settings.json"));
     AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
     LMStudioConfig config;
-    QString cloudProv = settings.selectedCloudProvider();
+    QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
 
     // Infer cloud provider from selected model name if cloud-api is active
     const auto modelLower = selectedLocalModel_.trimmed().toLower();

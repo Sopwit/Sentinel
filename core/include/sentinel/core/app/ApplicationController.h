@@ -2203,6 +2203,7 @@ private:
 
     QTimer* ollamaPollTimer_ = nullptr;
     QThread* ollamaCheckThread_ = nullptr;
+    bool pendingModelRefresh_ = false;
     mutable OllamaHealthCheckResult cachedOllamaHealthCheck_;
     mutable QList<OllamaModelSummary> cachedOllamaModels_;
     mutable QList<OllamaModelSummary> cachedLMStudioModels_;
