@@ -68,8 +68,12 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
     QNetworkAccessManager localManager;
     QNetworkAccessManager* activeManager = manager ? manager : &localManager;
     QNetworkRequest request{url};
+    // NoLessSafeRedirectPolicy: follows HTTPS→HTTPS and HTTP→HTTPS redirects
+    // (required by Gemini and some other cloud API endpoints) while still
+    // blocking HTTPS→HTTP downgrades. Local Ollama endpoints never redirect,
+    // so this has no effect on them.
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                         QNetworkRequest::ManualRedirectPolicy);
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
     for (auto it = headers.constBegin(); it != headers.constEnd(); ++it) {
         request.setRawHeader(it.key(), it.value());
     }
@@ -92,7 +96,7 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
         return JsonReply{false,
                          true,
                          {},
-                         QStringLiteral("Ollama local request timed out."),
+                         QStringLiteral("Request timed out."),
                          QNetworkReply::TimeoutError};
     }
 
