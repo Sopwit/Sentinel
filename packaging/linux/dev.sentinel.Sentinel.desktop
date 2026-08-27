@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Version=1.1
+Version=1.0
 Name=Sentinel Desktop
 GenericName=Local AI Assistant
 GenericName[tr]=Yerel Yapay Zeka Asistanı
@@ -12,7 +12,5 @@ Terminal=false
 Categories=Utility;
 Keywords=AI;Assistant;Local;Privacy;LLM;Qt;KDE;Sentinel;Ollama;
 StartupWMClass=dev.sentinel.Sentinel
-DBusActivatable=true
-X-SingleMainWindow=true
 MimeType=x-scheme-handler/sentinel;
 
