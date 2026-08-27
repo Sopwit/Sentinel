@@ -13,7 +13,6 @@ Categories=Utility;
 Keywords=AI;Assistant;Local;Privacy;LLM;Qt;KDE;Sentinel;Ollama;
 StartupWMClass=dev.sentinel.Sentinel
 DBusActivatable=true
-SingleMainWindow=true
 X-SingleMainWindow=true
 MimeType=x-scheme-handler/sentinel;
 

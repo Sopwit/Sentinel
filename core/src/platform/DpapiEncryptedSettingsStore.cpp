@@ -8,6 +8,7 @@
 
 #if defined(Q_OS_WIN)
 #include <dpapi.h>
+#include <wincrypt.h>
 #include <windows.h>
 #elif defined(Q_OS_MACOS) || defined(__APPLE__)
 #include <CommonCrypto/CommonCrypto.h>
