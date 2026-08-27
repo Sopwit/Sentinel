@@ -119,14 +119,11 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: SentinelTheme.pageMargin(root.width)
-        anchors.rightMargin: SentinelTheme.pageMargin(root.width)
-        anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
-                           + root.shellEntranceOffset
-        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
-                               + 72 + SentinelTheme.spaceMd
-                               - root.shellEntranceOffset
-        spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
+        anchors.leftMargin: SentinelTheme.spaceXl
+        anchors.rightMargin: SentinelTheme.spaceXl
+        anchors.topMargin: SentinelTheme.spaceLg + root.shellEntranceOffset
+        anchors.bottomMargin: SentinelTheme.spaceLg + 72 + SentinelTheme.spaceMd - root.shellEntranceOffset
+        spacing: SentinelTheme.spaceMd
         opacity: root.shellReady ? 1.0 : 0.0
 
         Behavior on opacity {
@@ -140,7 +137,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 0
-            spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+            spacing: SentinelTheme.spaceMd
 
         ColumnLayout {
                 Layout.fillWidth: true
@@ -247,7 +244,7 @@ ApplicationWindow {
     Button {
         id: settingsFab
         anchors.right: parent.right
-        anchors.rightMargin: SentinelTheme.pageMargin(root.width)
+        anchors.rightMargin: SentinelTheme.spaceXl
         anchors.verticalCenter: bottomDock.verticalCenter
         width: 52
         height: 52
