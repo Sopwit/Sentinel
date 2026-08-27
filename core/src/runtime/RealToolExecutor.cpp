@@ -1797,7 +1797,10 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
 #elif defined(Q_OS_WIN)
             // PowerShell toast via the Windows Runtime projection; works on
             // Windows 10/11 without any extra dependencies.
-            const QString escapedTitle = title.isEmpty() ? QStringLiteral("Sentinel") : title;
+            QString escapedTitle = title.isEmpty() ? QStringLiteral("Sentinel") : title;
+            escapedTitle.replace(QLatin1Char('\''), QStringLiteral("''"));
+            QString cleanMessage = message;
+            cleanMessage.replace(QLatin1Char('\''), QStringLiteral("''"));
             const QString psScript = QStringLiteral(
                 "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, "
                 "ContentType = WindowsRuntime] | Out-Null;"
@@ -1813,11 +1816,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 "'Sentinel').Show($toast);");
             runSynchronousProcess(
                 QStringLiteral("powershell"),
-                QStringList{
-                    QStringLiteral("-NoProfile"), QStringLiteral("-NonInteractive"),
-                    QStringLiteral("-Command"),
-                    psScript.arg(escapedTitle.replace(QLatin1Char('\''), QStringLiteral("''")),
-                                 message.replace(QLatin1Char('\''), QStringLiteral("''")))},
+                QStringList{QStringLiteral("-NoProfile"), QStringLiteral("-NonInteractive"),
+                            QStringLiteral("-Command"), psScript.arg(escapedTitle, cleanMessage)},
                 QString(), 15000, &error);
 #else
             runSynchronousProcess(
