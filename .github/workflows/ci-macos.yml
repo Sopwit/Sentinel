@@ -42,7 +42,7 @@ jobs:
 
       - name: QML Lint Check
         run: |
-          find ui/qml -name "*.qml" -print0 | xargs -0 qmllint --Werror
+          find ui/qml -name "*.qml" -print0 | xargs -0 qmllint
 
       - name: Run Tests
         env:

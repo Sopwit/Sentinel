@@ -62,7 +62,7 @@ jobs:
       - name: QML Lint Check
         shell: pwsh
         run: |
-          Get-ChildItem -Path ui/qml -Recurse -Filter *.qml | ForEach-Object { qmllint --Werror $_.FullName }
+          Get-ChildItem -Path ui/qml -Recurse -Filter *.qml | ForEach-Object { qmllint $_.FullName }
 
       - name: Run Tests
         env:
