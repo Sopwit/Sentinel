@@ -9,15 +9,16 @@
 
 namespace sentinel::core {
 
-template<typename T>
-class DeferredDisposable {
+template <typename T> class DeferredDisposable {
 public:
     using Deleter = std::function<void(T*)>;
 
     DeferredDisposable() = default;
     DeferredDisposable(T* ptr, Deleter deleter) : m_ptr(ptr), m_deleter(deleter) {}
 
-    ~DeferredDisposable() { dispose(); }
+    ~DeferredDisposable() {
+        dispose();
+    }
 
     DeferredDisposable(const DeferredDisposable&) = delete;
     DeferredDisposable& operator=(const DeferredDisposable&) = delete;
@@ -37,13 +38,26 @@ public:
         return *this;
     }
 
-    T* get() const { return m_ptr; }
-    T* release() { T* p = m_ptr; m_ptr = nullptr; return p; }
-    void dispose() {
-        if (m_ptr && m_deleter) { m_deleter(m_ptr); m_ptr = nullptr; }
+    T* get() const {
+        return m_ptr;
     }
-    bool isDisposed() const { return m_ptr == nullptr; }
-    explicit operator bool() const { return m_ptr != nullptr; }
+    T* release() {
+        T* p = m_ptr;
+        m_ptr = nullptr;
+        return p;
+    }
+    void dispose() {
+        if (m_ptr && m_deleter) {
+            m_deleter(m_ptr);
+            m_ptr = nullptr;
+        }
+    }
+    bool isDisposed() const {
+        return m_ptr == nullptr;
+    }
+    explicit operator bool() const {
+        return m_ptr != nullptr;
+    }
 
 private:
     T* m_ptr{nullptr};

@@ -7,7 +7,9 @@
 namespace sentinel::core {
 
 WebUiService::WebUiService(QObject* parent) : QObject(parent) {}
-WebUiService::~WebUiService() { stop(); }
+WebUiService::~WebUiService() {
+    stop();
+}
 
 bool WebUiService::start(const WebUiConfig& config) {
     m_config = config;
@@ -15,8 +17,12 @@ bool WebUiService::start(const WebUiConfig& config) {
     return true;
 }
 
-void WebUiService::stop() { m_running = false; }
-bool WebUiService::isRunning() const { return m_running; }
+void WebUiService::stop() {
+    m_running = false;
+}
+bool WebUiService::isRunning() const {
+    return m_running;
+}
 
 QString WebUiService::url() const {
     return QStringLiteral("http://%1:%2").arg(m_config.host).arg(m_config.port);
@@ -26,7 +32,8 @@ void WebUiService::setContent(const QString& path, const QString& content) {
     m_content[path] = content;
 }
 
-void WebUiService::setApiHandler(const QString& path, std::function<QString(const QJsonObject&)> handler) {
+void WebUiService::setApiHandler(const QString& path,
+                                 std::function<QString(const QJsonObject&)> handler) {
     m_apiHandlers[path] = handler;
 }
 

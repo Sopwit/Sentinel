@@ -344,8 +344,7 @@ if(WIN32)
 endif()
 
 if(UNIX AND NOT APPLE)
-    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.desktop.in
-        RENAME dev.sentinel.Sentinel.desktop
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.desktop
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
     )
 

@@ -3,23 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
+#include <QDebug>
+#include <QEventLoop>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QEventLoop>
+#include <QNetworkRequest>
 #include <QRegularExpression>
-#include <QUrlQuery>
 #include <QTimer>
-#include <QDebug>
+#include <QUrlQuery>
 
 namespace sentinel::core {
 
-WebSearchTool::WebSearchTool(QObject* parent)
-    : QObject(parent)
-{
-}
+WebSearchTool::WebSearchTool(QObject* parent) : QObject(parent) {}
 
 WebSearchTool::~WebSearchTool() = default;
 
@@ -67,10 +64,9 @@ WebSearchResponse WebSearchTool::search(const QString& query, int numResults) {
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setRawHeader("x-api-key", m_apiKey.toUtf8());
     QNetworkReply* reply = m_networkManager.post(
-        request, QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        onSearchReply(reply);
-    });
+        request,
+        QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() { onSearchReply(reply); });
 
     QEventLoop loop;
     QTimer timer;
@@ -94,11 +90,12 @@ WebSearchResponse WebSearchTool::search(const QString& query, int numResults) {
 }
 
 void WebSearchTool::searchAsync(const QString& query, int numResults,
-                                 std::function<void(WebSearchResponse)> callback) {
+                                std::function<void(WebSearchResponse)> callback) {
     if (query.isEmpty()) {
         WebSearchResponse response;
         response.errorString = "Search query is empty";
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         return;
     }
 
@@ -108,7 +105,8 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
 
     if (!apiKeyConfigured()) {
         WebSearchResponse response = searchDuckDuckGo(query, numResults);
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         return;
     }
 
@@ -116,7 +114,8 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
     if (!url.isValid()) {
         WebSearchResponse response;
         response.errorString = "Invalid search URL";
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         return;
     }
 
@@ -126,7 +125,8 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setRawHeader("x-api-key", m_apiKey.toUtf8());
     QNetworkReply* reply = m_networkManager.post(
-        request, QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
+        request,
+        QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
     connect(reply, &QNetworkReply::finished, this, [this, reply, callback]() {
         WebSearchResponse response = parseSearchResponse(reply->readAll());
         if (reply->error() != QNetworkReply::NoError) {
@@ -134,7 +134,8 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
         }
         reply->deleteLater();
 
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         emit searchCompleted(response);
     });
 }
@@ -146,8 +147,7 @@ QStringList WebSearchTool::supportedProviders() {
 bool WebSearchTool::apiKeyConfigured() const {
     // Only the keyless DuckDuckGo provider runs without credentials; API-backed
     // providers fall back to DuckDuckGo until a key is configured.
-    if (m_searchProvider.compare(QStringLiteral("duckduckgo"),
-                                  Qt::CaseInsensitive) == 0) {
+    if (m_searchProvider.compare(QStringLiteral("duckduckgo"), Qt::CaseInsensitive) == 0) {
         return false;
     }
     return !m_apiKey.trimmed().isEmpty();
@@ -163,13 +163,12 @@ WebSearchResponse WebSearchTool::searchDuckDuckGo(const QString& query, int numR
     request.setHeader(QNetworkRequest::ContentTypeHeader,
                       QStringLiteral("application/x-www-form-urlencoded"));
     // DuckDuckGo rejects clearly non-browser agents; use a conventional UA.
-    request.setRawHeader(
-        "User-Agent",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0 Safari/537.36");
+    request.setRawHeader("User-Agent",
+                         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                         "Chrome/124.0 Safari/537.36");
 
-    QNetworkReply* reply = m_networkManager.post(
-        request, params.toString(QUrl::FullyEncoded).toUtf8());
+    QNetworkReply* reply =
+        m_networkManager.post(request, params.toString(QUrl::FullyEncoded).toUtf8());
 
     QEventLoop loop;
     QTimer timer;
@@ -216,9 +215,8 @@ WebSearchResponse WebSearchTool::parseDuckDuckGoResponse(const QByteArray& respo
     // Each result row: <a rel="nofollow" class="result__a" href="...">Title</a>
     // followed by a snippet in <a class="result__snippet" ...>...</a>.
     static const QRegularExpression resultBlock(
-        QStringLiteral(
-            "class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>"
-            "(?:.*?class=\"result__snippet\"[^>]*>(.*?)</a>)?"),
+        QStringLiteral("class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>"
+                       "(?:.*?class=\"result__snippet\"[^>]*>(.*?)</a>)?"),
         QRegularExpression::DotMatchesEverythingOption);
 
     auto it = resultBlock.globalMatch(html);
@@ -244,13 +242,13 @@ WebSearchResponse WebSearchTool::parseDuckDuckGoResponse(const QByteArray& respo
         }
 
         WebSearchResult result;
-        result.title =
-            htmlUnescape(match.captured(2)).remove(QRegularExpression(QStringLiteral("<[^>]*>")))
-                .simplified();
+        result.title = htmlUnescape(match.captured(2))
+                           .remove(QRegularExpression(QStringLiteral("<[^>]*>")))
+                           .simplified();
         result.url = url;
-        result.snippet =
-            htmlUnescape(match.captured(3)).remove(QRegularExpression(QStringLiteral("<[^>]*>")))
-                .simplified();
+        result.snippet = htmlUnescape(match.captured(3))
+                             .remove(QRegularExpression(QStringLiteral("<[^>]*>")))
+                             .simplified();
         response.results.append(result);
     }
 

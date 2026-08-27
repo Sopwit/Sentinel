@@ -21,15 +21,13 @@ private slots:
 };
 
 void MemoMapTest::basicGet() {
-    MemoMap<QString, int> memo([](const QString &key) {
-        return key.length();
-    });
+    MemoMap<QString, int> memo([](const QString& key) { return key.length(); });
     QCOMPARE(memo.get("hello"), 5);
 }
 
 void MemoMapTest::memoizes() {
     int callCount = 0;
-    MemoMap<QString, int> memo([&callCount](const QString &key) {
+    MemoMap<QString, int> memo([&callCount](const QString& key) {
         callCount++;
         return key.length();
     });
@@ -42,9 +40,7 @@ void MemoMapTest::memoizes() {
 }
 
 void MemoMapTest::hasAndInvalidate() {
-    MemoMap<QString, int> memo([](const QString &key) {
-        return key.length();
-    });
+    MemoMap<QString, int> memo([](const QString& key) { return key.length(); });
     memo.get("test");
     QVERIFY(memo.has("test"));
     memo.invalidate("test");
@@ -52,9 +48,7 @@ void MemoMapTest::hasAndInvalidate() {
 }
 
 void MemoMapTest::invalidateAll() {
-    MemoMap<QString, int> memo([](const QString &key) {
-        return key.length();
-    });
+    MemoMap<QString, int> memo([](const QString& key) { return key.length(); });
     memo.get("a");
     memo.get("b");
     QCOMPARE(memo.size(), 2);
@@ -63,9 +57,7 @@ void MemoMapTest::invalidateAll() {
 }
 
 void MemoMapTest::sharedMemoMap() {
-    SharedMemoMap<QString, int> memo([](const QString &key) {
-        return key.length();
-    });
+    SharedMemoMap<QString, int> memo([](const QString& key) { return key.length(); });
     auto ptr1 = memo.get("hello");
     auto ptr2 = memo.get("hello");
     QCOMPARE(*ptr1, 5);

@@ -3,26 +3,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/reference/ReferenceService.h"
+#include <QDebug>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
-#include <QEventLoop>
+#include <QJsonObject>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QTimer>
-#include <QJsonObject>
-#include <QJsonArray>
 #include <QTextStream>
-#include <QNetworkReply>
-#include <QDebug>
+#include <QTimer>
 
 namespace sentinel::core {
 
-ReferenceService::ReferenceService(QObject* parent)
-    : QObject(parent)
-{
-}
+ReferenceService::ReferenceService(QObject* parent) : QObject(parent) {}
 
 ReferenceService::~ReferenceService() = default;
 

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "sentinel/core/chat/ChatMessage.h"
 #include "sentinel/core/app/IClock.h"
+#include "sentinel/core/chat/ChatMessage.h"
 
 #include <QList>
 #include <QString>

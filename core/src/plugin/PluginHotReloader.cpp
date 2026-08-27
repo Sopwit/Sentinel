@@ -4,17 +4,16 @@
 
 #include "sentinel/core/plugin/PluginHotReloader.h"
 #include "sentinel/core/plugin/PluginManager.h"
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
-#include <QDebug>
 
 namespace sentinel::core::plugin {
 
 PluginHotReloader::PluginHotReloader(PluginManager* manager, QObject* parent)
-    : QObject(parent)
-    , m_manager(manager)
-{
-    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &PluginHotReloader::onDirectoryChanged);
+    : QObject(parent), m_manager(manager) {
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this,
+            &PluginHotReloader::onDirectoryChanged);
     connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, &PluginHotReloader::onFileChanged);
 
     m_debounceTimer.setSingleShot(true);
@@ -51,7 +50,8 @@ void PluginHotReloader::startWatching() {
     }
 
     m_isWatching = true;
-    qDebug() << "PluginHotReloader: Started watching" << m_config.watchedDirs.size() << "directories";
+    qDebug() << "PluginHotReloader: Started watching" << m_config.watchedDirs.size()
+             << "directories";
 }
 
 void PluginHotReloader::stopWatching() {
@@ -152,7 +152,8 @@ void PluginHotReloader::processPendingChanges() {
         const QString& pluginId = it.key();
         const QString& changeType = it.value();
 
-        qDebug() << QStringLiteral("PluginHotReloader: Processing %1 change for plugin '%2'").arg(changeType, pluginId);
+        qDebug() << QStringLiteral("PluginHotReloader: Processing %1 change for plugin '%2'")
+                        .arg(changeType, pluginId);
 
         if (changeType == "added") {
             // New plugin discovered - need full discovery + load

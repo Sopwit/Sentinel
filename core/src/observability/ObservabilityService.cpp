@@ -3,23 +3,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/observability/ObservabilityService.h"
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QFile>
-#include <QDir>
-#include <QStandardPaths>
 #include <QDateTime>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QStandardPaths>
 
 namespace sentinel::core {
 
-ObservabilityService::ObservabilityService(QObject* parent)
-    : QObject(parent)
-{
+ObservabilityService::ObservabilityService(QObject* parent) : QObject(parent) {
     connect(&m_flushTimer, &QTimer::timeout, this, &ObservabilityService::flushSpans);
     connect(&m_flushTimer, &QTimer::timeout, this, &ObservabilityService::flushMetrics);
 }
@@ -36,12 +34,14 @@ void ObservabilityService::configure(const ObservabilityConfig& config) {
         m_flushTimer.start(5000); // Flush every 5 seconds
 
         if (m_config.logFilePath.isEmpty()) {
-            m_config.logFilePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-                                   + "/logs/observability.jsonl";
+            m_config.logFilePath =
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
+                "/logs/observability.jsonl";
             QDir().mkpath(QFileInfo(m_config.logFilePath).absolutePath());
         }
 
-        qDebug() << QStringLiteral("ObservabilityService: Enabled with endpoint %1").arg(m_config.otlpEndpoint);
+        qDebug() << QStringLiteral("ObservabilityService: Enabled with endpoint %1")
+                        .arg(m_config.otlpEndpoint);
     } else {
         m_flushTimer.stop();
         qDebug() << "ObservabilityService: Disabled";
@@ -96,7 +96,8 @@ void ObservabilityService::endSpan(const QString& spanId, bool success) {
     }
 }
 
-void ObservabilityService::setSpanAttribute(const QString& spanId, const QString& key, const QString& value) {
+void ObservabilityService::setSpanAttribute(const QString& spanId, const QString& key,
+                                            const QString& value) {
     if (!m_config.enabled) {
         return;
     }
@@ -107,7 +108,8 @@ void ObservabilityService::setSpanAttribute(const QString& spanId, const QString
     }
 }
 
-void ObservabilityService::recordMetric(const QString& name, double value, const QMap<QString, QString>& attributes) {
+void ObservabilityService::recordMetric(const QString& name, double value,
+                                        const QMap<QString, QString>& attributes) {
     if (!m_config.enabled) {
         return;
     }
@@ -125,23 +127,27 @@ void ObservabilityService::recordMetric(const QString& name, double value, const
     }
 }
 
-void ObservabilityService::incrementCounter(const QString& name, const QMap<QString, QString>& attributes) {
+void ObservabilityService::incrementCounter(const QString& name,
+                                            const QMap<QString, QString>& attributes) {
     recordMetric(name, 1.0, attributes);
 }
 
-void ObservabilityService::logInfo(const QString& message, const QMap<QString, QString>& attributes) {
+void ObservabilityService::logInfo(const QString& message,
+                                   const QMap<QString, QString>& attributes) {
     Q_UNUSED(attributes)
     m_logs.enqueue({message, "info"});
     emit logMessage("info", message);
 }
 
-void ObservabilityService::logWarning(const QString& message, const QMap<QString, QString>& attributes) {
+void ObservabilityService::logWarning(const QString& message,
+                                      const QMap<QString, QString>& attributes) {
     Q_UNUSED(attributes)
     m_logs.enqueue({message, "warning"});
     emit logMessage("warning", message);
 }
 
-void ObservabilityService::logError(const QString& message, const QMap<QString, QString>& attributes) {
+void ObservabilityService::logError(const QString& message,
+                                    const QMap<QString, QString>& attributes) {
     Q_UNUSED(attributes)
     m_logs.enqueue({message, "error"});
     emit logMessage("error", message);
@@ -227,7 +233,8 @@ void ObservabilityService::writeToFile(const QString& data) {
     }
 }
 
-void ObservabilityService::exportToOtlp(const QList<SpanData>& spans, const QList<MetricData>& metrics) {
+void ObservabilityService::exportToOtlp(const QList<SpanData>& spans,
+                                        const QList<MetricData>& metrics) {
     if (!m_config.enabled || m_config.otlpEndpoint.isEmpty()) {
         return;
     }
@@ -237,10 +244,11 @@ void ObservabilityService::exportToOtlp(const QList<SpanData>& spans, const QLis
     QJsonObject resourceAttrs;
     resourceAttrs["service.name"] = m_config.serviceName;
     resourceAttrs["service.version"] = m_config.serviceVersion;
-    resource["attributes"] = QJsonArray{
-        QJsonObject{{"key", "service.name"}, {"value", QJsonObject{{"stringValue", m_config.serviceName}}}},
-        QJsonObject{{"key", "service.version"}, {"value", QJsonObject{{"stringValue", m_config.serviceVersion}}}}
-    };
+    resource["attributes"] =
+        QJsonArray{QJsonObject{{"key", "service.name"},
+                               {"value", QJsonObject{{"stringValue", m_config.serviceName}}}},
+                   QJsonObject{{"key", "service.version"},
+                               {"value", QJsonObject{{"stringValue", m_config.serviceVersion}}}}};
 
     QJsonObject payload;
     QJsonArray spanArray;
@@ -250,29 +258,25 @@ void ObservabilityService::exportToOtlp(const QList<SpanData>& spans, const QLis
             attributes.append(QJsonObject{{"key", it.key()},
                                           {"value", QJsonObject{{"stringValue", it.value()}}}});
         }
-        spanArray.append(QJsonObject{{"traceId", span.traceId}, {"spanId", span.spanId},
-                                     {"name", span.name},
-                                     {"startTimeUnixNano", QString::number(span.startTimeMs * 1000000)},
-                                     {"endTimeUnixNano", QString::number(span.endTimeMs * 1000000)},
-                                     {"attributes", attributes}});
+        spanArray.append(
+            QJsonObject{{"traceId", span.traceId},
+                        {"spanId", span.spanId},
+                        {"name", span.name},
+                        {"startTimeUnixNano", QString::number(span.startTimeMs * 1000000)},
+                        {"endTimeUnixNano", QString::number(span.endTimeMs * 1000000)},
+                        {"attributes", attributes}});
     }
-    payload["resourceSpans"] = QJsonArray{
-        QJsonObject{
-            {"resource", resource},
-            {"scopeSpans", QJsonArray{
-                QJsonObject{
-                    {"scope", QJsonObject{{"name", "sentinel"}}},
-                    {"spans", spanArray}
-                }
-            }}
-        }
-    };
+    payload["resourceSpans"] = QJsonArray{QJsonObject{
+        {"resource", resource},
+        {"scopeSpans", QJsonArray{QJsonObject{{"scope", QJsonObject{{"name", "sentinel"}}},
+                                              {"spans", spanArray}}}}}};
 
     QJsonArray metricArray;
     for (const MetricData& metric : metrics) {
         metricArray.append(QJsonObject{{"name", metric.name}, {"value", metric.value}});
     }
-    if (!metricArray.isEmpty()) payload["resourceMetrics"] = metricArray;
+    if (!metricArray.isEmpty())
+        payload["resourceMetrics"] = metricArray;
 
     QJsonDocument doc(payload);
     QNetworkAccessManager* manager = new QNetworkAccessManager(this);

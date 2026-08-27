@@ -36,8 +36,8 @@ using sentinel::core::hybridRetrievalReadiness;
 using sentinel::core::HybridRetrievalStatus;
 using sentinel::core::includeSemanticPromptSupplements;
 using sentinel::core::LocalVectorPersistenceIndex;
-using sentinel::core::orchestrateSemanticCandidates;
 using sentinel::core::OllamaEmbeddingProvider;
+using sentinel::core::orchestrateSemanticCandidates;
 using sentinel::core::planRetrieval;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
@@ -249,14 +249,13 @@ void SemanticRetrievalTest::ollamaEmbeddingProviderGeneratesRealLocalEmbeddings(
                 R"({"embeddings":[[0.1,0.2,0.3],[0.4,0.5,0.6]],"model":"nomic-embed-text"})";
             socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
                           "Content-Length: " +
-                          QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" +
-                          body);
+                          QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
             socket->disconnectFromHost();
         });
     });
 
-    OllamaEmbeddingProvider provider(
-        QStringLiteral("http://127.0.0.1:%1").arg(port), QStringLiteral("nomic-embed-text"));
+    OllamaEmbeddingProvider provider(QStringLiteral("http://127.0.0.1:%1").arg(port),
+                                     QStringLiteral("nomic-embed-text"));
     QCOMPARE(provider.status(), EmbeddingProviderStatus::Ready);
 
     const EmbeddingRequest request{

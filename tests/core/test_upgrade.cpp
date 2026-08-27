@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
-#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
 #include <QDir>
 #include <QFile>
@@ -16,8 +16,8 @@
 #include <QUuid>
 #include <QtTest>
 
-using sentinel::core::JsonSettingsStore;
 using sentinel::core::DpapiEncryptedSettingsStore;
+using sentinel::core::JsonSettingsStore;
 
 class UpgradeTest final : public QObject {
     Q_OBJECT
@@ -46,8 +46,7 @@ void UpgradeTest::settingsBackwardCompatible() {
     }
 
     // Load with current store chain (DpapiEncryptedSettingsStore + JsonSettingsStore)
-    DpapiEncryptedSettingsStore store(
-        std::make_unique<JsonSettingsStore>(filePath));
+    DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath));
 
     // Non-secret keys should read normally
     QCOMPARE(store.value(QStringLiteral("themeName")), QStringLiteral("Sentinel Dark"));
@@ -68,8 +67,7 @@ void UpgradeTest::settingsForwardCompatible() {
 
     // Write settings using the current encrypted store
     {
-        DpapiEncryptedSettingsStore store(
-            std::make_unique<JsonSettingsStore>(filePath));
+        DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath));
         store.setValue(QStringLiteral("themeName"), QStringLiteral("Sentinel Light"));
         store.setValue(QStringLiteral("openAiApiKey"), QStringLiteral("sk-new-key"));
         store.setValue(QStringLiteral("ollamaEndpoint"), QStringLiteral("http://localhost:11434"));
@@ -86,8 +84,7 @@ void UpgradeTest::settingsForwardCompatible() {
     QVERIFY(rawApiKey.startsWith(QStringLiteral("$dpapi$")));
 
     // Verify encrypted store can decrypt it
-    DpapiEncryptedSettingsStore encryptedStore(
-        std::make_unique<JsonSettingsStore>(filePath));
+    DpapiEncryptedSettingsStore encryptedStore(std::make_unique<JsonSettingsStore>(filePath));
     QCOMPARE(encryptedStore.value(QStringLiteral("openAiApiKey")), QStringLiteral("sk-new-key"));
 }
 
@@ -99,7 +96,8 @@ void UpgradeTest::chatHistorySchemaMigration() {
     {
         // Create a SQLite database with an old schema (missing the newer columns)
         // Use a unique connection name to avoid conflicts with the store below
-        const QString connName = QStringLiteral("migration_test_") + QUuid::createUuid().toString(QUuid::Id128);
+        const QString connName =
+            QStringLiteral("migration_test_") + QUuid::createUuid().toString(QUuid::Id128);
         {
             QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connName);
             db.setDatabaseName(dbPath);
@@ -108,15 +106,16 @@ void UpgradeTest::chatHistorySchemaMigration() {
             QSqlQuery query(db);
             // Old schema: only the essential columns
             QVERIFY(query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS chat_messages("
-                                               "id INTEGER PRIMARY KEY NOT NULL,"
-                                               "role TEXT NOT NULL,"
-                                               "content TEXT NOT NULL,"
-                                               "timestamp TEXT NOT NULL,"
-                                               "status TEXT NOT NULL)")));
+                                              "id INTEGER PRIMARY KEY NOT NULL,"
+                                              "role TEXT NOT NULL,"
+                                              "content TEXT NOT NULL,"
+                                              "timestamp TEXT NOT NULL,"
+                                              "status TEXT NOT NULL)")));
 
             // Insert a sample message
-            query.prepare(QStringLiteral("INSERT INTO chat_messages(role, content, timestamp, status) "
-                                          "VALUES(?, ?, ?, ?)"));
+            query.prepare(
+                QStringLiteral("INSERT INTO chat_messages(role, content, timestamp, status) "
+                               "VALUES(?, ?, ?, ?)"));
             query.addBindValue(QStringLiteral("user"));
             query.addBindValue(QStringLiteral("Hello from old version"));
             query.addBindValue(QStringLiteral("2025-01-01T00:00:00"));

@@ -4,22 +4,20 @@
 
 #pragma once
 
-#include <QString>
 #include <QList>
 #include <QMap>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {
 
-enum class PermissionEffect : std::uint8_t {
-    Allow,
-    Ask,
-    Deny
-};
+enum class PermissionEffect : std::uint8_t { Allow, Ask, Deny };
 
 struct PermissionRule {
-    QString action; // e.g., "edit", "shell", "read", "write", "websearch", "webfetch", "lsp", "skill", "task"
-    QString resource; // pattern with wildcards, e.g., "*.cpp", "/path/to/*", "https://example.com/*"
+    QString action; // e.g., "edit", "shell", "read", "write", "websearch", "webfetch", "lsp",
+                    // "skill", "task"
+    QString
+        resource; // pattern with wildcards, e.g., "*.cpp", "/path/to/*", "https://example.com/*"
     PermissionEffect effect{PermissionEffect::Ask};
     QString description;
     bool isDefault{false};
@@ -48,7 +46,8 @@ public:
     virtual bool requiresApproval(const QString& action, const QString& resource) const = 0;
 
     // Saved permissions (per-project)
-    virtual bool savePermission(const QString& action, const QString& resource, PermissionEffect effect) = 0;
+    virtual bool savePermission(const QString& action, const QString& resource,
+                                PermissionEffect effect) = 0;
     virtual bool clearSavedPermissions() = 0;
     virtual QList<PermissionRule> savedPermissions() const = 0;
 

@@ -605,7 +605,7 @@ EmbeddingResult FakeEmbeddingProvider::embed(const EmbeddingRequest& request) co
     result.summary = QStringLiteral("Generated %1 deterministic fake %2 with %3 dimensions.")
                          .arg(result.documentCount)
                          .arg(result.documentCount == 1 ? QStringLiteral("embedding")
-                                                         : QStringLiteral("embeddings"))
+                                                        : QStringLiteral("embeddings"))
                          .arg(policy_.dimensions);
     return result;
 }
@@ -614,7 +614,8 @@ OllamaEmbeddingProvider::OllamaEmbeddingProvider(QString endpoint, QString model
     : endpoint_(std::move(endpoint)), model_(std::move(model)), timeoutMs_(timeoutMs) {
     if (endpoint_.isEmpty() || model_.isEmpty()) {
         status_ = EmbeddingProviderStatus::NotConfigured;
-        statusDetail_ = QStringLiteral("Ollama embedding provider needs a local endpoint and model.");
+        statusDetail_ =
+            QStringLiteral("Ollama embedding provider needs a local endpoint and model.");
         return;
     }
     if (!endpointAllowed()) {
@@ -623,8 +624,8 @@ OllamaEmbeddingProvider::OllamaEmbeddingProvider(QString endpoint, QString model
         return;
     }
     status_ = EmbeddingProviderStatus::Ready;
-    statusDetail_ = QStringLiteral("Ollama embedding provider is ready for local model %1.")
-                        .arg(model_);
+    statusDetail_ =
+        QStringLiteral("Ollama embedding provider is ready for local model %1.").arg(model_);
 }
 
 bool OllamaEmbeddingProvider::endpointAllowed() const {
@@ -654,8 +655,7 @@ EmbeddingProviderPolicy OllamaEmbeddingProvider::policy() const {
 
 EmbeddingVector OllamaEmbeddingProvider::embedText(const QString& text) const {
     EmbeddingVector vector;
-    vector.modelSummary =
-        QStringLiteral("Ollama embedding via %1 model %2").arg(endpoint_, model_);
+    vector.modelSummary = QStringLiteral("Ollama embedding via %1 model %2").arg(endpoint_, model_);
 
     const QUrl url(endpoint_ + QStringLiteral("/api/embed"));
     QNetworkRequest request(url);
@@ -683,7 +683,8 @@ EmbeddingVector OllamaEmbeddingProvider::embedText(const QString& text) const {
     const auto error = reply->error();
     if (error != QNetworkReply::NoError) {
         status_ = EmbeddingProviderStatus::Error;
-        statusDetail_ = QStringLiteral("Ollama embedding request failed: %1").arg(reply->errorString());
+        statusDetail_ =
+            QStringLiteral("Ollama embedding request failed: %1").arg(reply->errorString());
         reply->deleteLater();
         return vector;
     }
@@ -715,10 +716,9 @@ EmbeddingVector OllamaEmbeddingProvider::embedText(const QString& text) const {
         vector.values.append(value.toDouble());
     }
     status_ = EmbeddingProviderStatus::Ready;
-    statusDetail_ =
-        QStringLiteral("Ollama embedding generated %1 dimensions via model %2.")
-            .arg(vector.values.size())
-            .arg(model_);
+    statusDetail_ = QStringLiteral("Ollama embedding generated %1 dimensions via model %2.")
+                        .arg(vector.values.size())
+                        .arg(model_);
     return vector;
 }
 
@@ -753,7 +753,7 @@ EmbeddingResult OllamaEmbeddingProvider::embed(const EmbeddingRequest& request) 
     result.summary = QStringLiteral("Generated %1 real local %2 via Ollama model %3.")
                          .arg(result.documentCount)
                          .arg(result.documentCount == 1 ? QStringLiteral("embedding")
-                                                         : QStringLiteral("embeddings"))
+                                                        : QStringLiteral("embeddings"))
                          .arg(model_);
     return result;
 }
@@ -3146,16 +3146,16 @@ plannedSemanticProviderDescriptors(const SemanticProviderPolicy& policy) {
     descriptors.append(makeDescriptor(
         SemanticProviderMode::LocalOllamaEmbeddings,
         QStringLiteral("Local Ollama embeddings provider"),
-         QStringLiteral("Local Ollama embeddings provider using the configured embedding model."),
+        QStringLiteral("Local Ollama embeddings provider using the configured embedding model."),
         policy.allowLocalOllamaEmbeddingsProvider ? SemanticProviderReadiness::ReadyMetadataOnly
                                                   : SemanticProviderReadiness::Planned,
         {SemanticProviderCapability::LocalOnly, SemanticProviderCapability::EmbeddingGeneration,
          SemanticProviderCapability::MetadataOnlyHealth,
          SemanticProviderCapability::PromptMutationBlocked,
          SemanticProviderCapability::VectorWritesBlocked},
-         {QStringLiteral("Add an explicit local embedding model selection gate."),
-          QStringLiteral("Select a local Ollama embedding model."),
-          QStringLiteral("Keep semantic prompt injection disabled until separately approved.")}));
+        {QStringLiteral("Add an explicit local embedding model selection gate."),
+         QStringLiteral("Select a local Ollama embedding model."),
+         QStringLiteral("Keep semantic prompt injection disabled until separately approved.")}));
     descriptors.append(makeDescriptor(
         SemanticProviderMode::LocalFileVectorIndex, QStringLiteral("Local file/vector index"),
         QStringLiteral("Planned local vector index boundary; no vector database writes are made."),
@@ -3246,22 +3246,25 @@ SemanticActivationReadiness semanticActivationReadiness(const SemanticProviderSe
         QStringLiteral("Deterministic retrieval authoritative: yes"),
     };
 
-    readiness.ready = !policy.disabledByDefault &&
-                      selection.readiness == SemanticProviderReadiness::ReadyMetadataOnly &&
-                      ((selection.mode == SemanticProviderMode::FakeInMemory &&
-                        policy.allowFakeInMemoryProvider) ||
-                       (selection.mode == SemanticProviderMode::LocalOllamaEmbeddings &&
-                        policy.allowLocalOllamaEmbeddingsProvider && policy.allowRealEmbeddingCalls)) &&
-                      !policy.allowSemanticPromptInjection;
+    readiness.ready =
+        !policy.disabledByDefault &&
+        selection.readiness == SemanticProviderReadiness::ReadyMetadataOnly &&
+        ((selection.mode == SemanticProviderMode::FakeInMemory &&
+          policy.allowFakeInMemoryProvider) ||
+         (selection.mode == SemanticProviderMode::LocalOllamaEmbeddings &&
+          policy.allowLocalOllamaEmbeddingsProvider && policy.allowRealEmbeddingCalls)) &&
+        !policy.allowSemanticPromptInjection;
     readiness.status =
         readiness.ready ? QStringLiteral("Metadata Ready") : QStringLiteral("Refused");
     readiness.summary =
         readiness.ready
             ? (selection.mode == SemanticProviderMode::FakeInMemory
-                   ? QStringLiteral("Semantic provider metadata is ready for isolated fake tests only; "
-                                    "semantic ranking and prompt injection remain disabled.")
-                   : QStringLiteral("Semantic provider is ready for isolated local embedding calls; "
-                                    "prompt injection remains disabled."))
+                   ? QStringLiteral(
+                         "Semantic provider metadata is ready for isolated fake tests only; "
+                         "semantic ranking and prompt injection remain disabled.")
+                   : QStringLiteral(
+                         "Semantic provider is ready for isolated local embedding calls; "
+                         "prompt injection remains disabled."))
             : QStringLiteral("Semantic activation refused: %1").arg(selection.disabledReason);
     return readiness;
 }

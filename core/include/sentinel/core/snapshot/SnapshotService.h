@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/snapshot/ISnapshotService.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 #include <QTimer>
 #include <QUuid>
 

@@ -23,7 +23,8 @@ QString QuestionService::ask(const QuestionRequest& request, QuestionCallback ca
 
 void QuestionService::respond(const QString& questionId, const QuestionResponse& response) {
     auto it = m_pending.find(questionId);
-    if (it == m_pending.end()) return;
+    if (it == m_pending.end())
+        return;
 
     if (it->callback) {
         it->callback(response);
@@ -35,7 +36,8 @@ void QuestionService::respond(const QString& questionId, const QuestionResponse&
 
 void QuestionService::cancel(const QString& questionId) {
     auto it = m_pending.find(questionId);
-    if (it == m_pending.end()) return;
+    if (it == m_pending.end())
+        return;
 
     QuestionResponse resp;
     resp.questionId = questionId;

@@ -4,18 +4,12 @@
 
 #pragma once
 
-#include <QString>
 #include <QMap>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class NotificationEvent : std::uint8_t {
-    Question,
-    Permission,
-    Error,
-    Done,
-    SubagentDone
-};
+enum class NotificationEvent : std::uint8_t { Question, Permission, Error, Done, SubagentDone };
 
 struct NotificationConfig {
     bool enabled{true};

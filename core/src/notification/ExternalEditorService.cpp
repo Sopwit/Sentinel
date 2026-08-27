@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/notification/ExternalEditorService.h"
-#include <QProcess>
-#include <QFile>
 #include <QDir>
+#include <QFile>
+#include <QProcess>
 #include <QTemporaryFile>
 #include <QTextStream>
 
@@ -16,8 +16,10 @@ ExternalEditorService::~ExternalEditorService() = default;
 
 QString ExternalEditorService::detectEditor() const {
     QString editor = qgetenv("VISUAL");
-    if (editor.isEmpty()) editor = qgetenv("EDITOR");
-    if (editor.isEmpty()) editor = "vi";
+    if (editor.isEmpty())
+        editor = qgetenv("EDITOR");
+    if (editor.isEmpty())
+        editor = "vi";
     return editor;
 }
 
@@ -48,8 +50,14 @@ QString ExternalEditorService::editContent(const QString& content) const {
     return content;
 }
 
-void ExternalEditorService::setEditor(const QString& editor) { m_configuredEditor = editor; }
-QString ExternalEditorService::configuredEditor() const { return m_configuredEditor; }
-bool ExternalEditorService::isAvailable() const { return true; }
+void ExternalEditorService::setEditor(const QString& editor) {
+    m_configuredEditor = editor;
+}
+QString ExternalEditorService::configuredEditor() const {
+    return m_configuredEditor;
+}
+bool ExternalEditorService::isAvailable() const {
+    return true;
+}
 
 } // namespace sentinel::core

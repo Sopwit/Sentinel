@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/StaticAgentRegistry.h"
+#include "sentinel/core/app/StaticTaskPlanner.h"
 #include "sentinel/core/memory/StaticMemoryCatalog.h"
 #include "sentinel/core/model/StaticProviderCatalog.h"
-#include "sentinel/core/app/StaticTaskPlanner.h"
 
 #include <QtTest>
 

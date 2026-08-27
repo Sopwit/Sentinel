@@ -4,17 +4,13 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
 #include <QSet>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class FileChangeType : std::uint8_t {
-    Created,
-    Modified,
-    Deleted
-};
+enum class FileChangeType : std::uint8_t { Created, Modified, Deleted };
 
 struct FileChangeEvent {
     QString filePath;
@@ -27,7 +23,8 @@ public:
     virtual ~IFileChangeService() = default;
 
     virtual void publishEvent(const FileChangeEvent& event) = 0;
-    virtual void subscribe(const QString& pattern, std::function<void(const FileChangeEvent&)> callback) = 0;
+    virtual void subscribe(const QString& pattern,
+                           std::function<void(const FileChangeEvent&)> callback) = 0;
     virtual void unsubscribe(const QString& pattern) = 0;
     virtual QList<FileChangeEvent> recentEvents(int count = 100) const = 0;
 };

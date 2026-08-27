@@ -12,18 +12,24 @@ ExternalDirectoryGate::ExternalDirectoryGate(const ExternalDirectoryPolicy& poli
     : m_policy(policy), m_workingDir(QDir::currentPath()) {}
 
 bool ExternalDirectoryGate::isAccessAllowed(const QString& path, const QString& workingDir) const {
-    if (!m_policy.enabled) return true;
+    if (!m_policy.enabled)
+        return true;
 
     QString resolved = resolvePath(path);
-    if (isWithinDirectory(resolved, workingDir)) return true;
-    if (m_grantedPermissions.contains(resolved)) return true;
+    if (isWithinDirectory(resolved, workingDir))
+        return true;
+    if (m_grantedPermissions.contains(resolved))
+        return true;
 
     return false;
 }
 
-bool ExternalDirectoryGate::checkAndRequestPermission(const QString& path, const QString& workingDir) const {
-    if (isAccessAllowed(path, workingDir)) return true;
-    if (!m_policy.allowExplicitGrant) return false;
+bool ExternalDirectoryGate::checkAndRequestPermission(const QString& path,
+                                                      const QString& workingDir) const {
+    if (isAccessAllowed(path, workingDir))
+        return true;
+    if (!m_policy.allowExplicitGrant)
+        return false;
     return false;
 }
 
@@ -49,7 +55,8 @@ bool ExternalDirectoryGate::isWithinDirectory(const QString& path, const QString
 }
 
 QString ExternalDirectoryGate::resolvePath(const QString& path) const {
-    if (QDir::isAbsolutePath(path)) return path;
+    if (QDir::isAbsolutePath(path))
+        return path;
     return QDir(m_workingDir).filePath(path);
 }
 

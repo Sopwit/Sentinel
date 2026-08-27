@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/proxy/ProxyResolver.h"
-#include <QUrl>
 #include <QHostInfo>
+#include <QUrl>
 
 namespace sentinel::core {
 
@@ -27,23 +27,33 @@ ProxyConfig ProxyResolver::resolveFromSystem() const {
 
 QString ProxyResolver::proxyForUrl(const QString& url, const ProxyConfig& config) const {
     QUrl u(url);
-    if (u.scheme() == "https") return config.httpsProxy;
-    if (u.scheme() == "http") return config.httpProxy;
-    if (u.scheme() == "ftp") return config.ftpProxy;
+    if (u.scheme() == "https")
+        return config.httpsProxy;
+    if (u.scheme() == "http")
+        return config.httpProxy;
+    if (u.scheme() == "ftp")
+        return config.ftpProxy;
     return {};
 }
 
 bool ProxyResolver::shouldBypassProxy(const QString& host, const ProxyConfig& config) const {
-    if (config.noProxy.isEmpty()) return false;
+    if (config.noProxy.isEmpty())
+        return false;
     QStringList bypassList = config.noProxy.split(',', Qt::SkipEmptyParts);
     for (const auto& entry : bypassList) {
-        if (host == entry.trimmed()) return true;
-        if (entry.trimmed() == "*") return true;
+        if (host == entry.trimmed())
+            return true;
+        if (entry.trimmed() == "*")
+            return true;
     }
     return false;
 }
 
-void ProxyResolver::setConfig(const ProxyConfig& config) { m_config = config; }
-ProxyConfig ProxyResolver::config() const { return m_config; }
+void ProxyResolver::setConfig(const ProxyConfig& config) {
+    m_config = config;
+}
+ProxyConfig ProxyResolver::config() const {
+    return m_config;
+}
 
 } // namespace sentinel::core

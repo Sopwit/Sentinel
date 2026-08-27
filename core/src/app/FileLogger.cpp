@@ -54,8 +54,8 @@ void FileLogger::rotateLog() {
     }
 
     currentLogDate_ = today;
-    const QString fileName = QStringLiteral("sentinel-%1.log")
-                                 .arg(today.toString(QStringLiteral("yyyy-MM-dd")));
+    const QString fileName =
+        QStringLiteral("sentinel-%1.log").arg(today.toString(QStringLiteral("yyyy-MM-dd")));
     const QString filePath = logDir_.filePath(fileName);
 
     logFile_.setFileName(filePath);
@@ -82,11 +82,16 @@ void FileLogger::cleanOldLogs() {
 
 static const char* levelPrefix(QtMsgType type) {
     switch (type) {
-    case QtDebugMsg:    return "DBG";
-    case QtInfoMsg:     return "INF";
-    case QtWarningMsg:  return "WRN";
-    case QtCriticalMsg: return "CRT";
-    case QtFatalMsg:    return "FTL";
+    case QtDebugMsg:
+        return "DBG";
+    case QtInfoMsg:
+        return "INF";
+    case QtWarningMsg:
+        return "WRN";
+    case QtCriticalMsg:
+        return "CRT";
+    case QtFatalMsg:
+        return "FTL";
     }
     return "???";
 }
@@ -97,7 +102,8 @@ void FileLogger::handleMessage(QtMsgType type, const QMessageLogContext& ctx, co
 
     const QString timestamp =
         QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"));
-    const QString category = ctx.category ? QString::fromLatin1(ctx.category) : QStringLiteral("default");
+    const QString category =
+        ctx.category ? QString::fromLatin1(ctx.category) : QStringLiteral("default");
     const QString line = QStringLiteral("%1 [%2] [%3] %4")
                              .arg(timestamp, QString::fromLatin1(levelPrefix(type)), category, msg);
 
@@ -110,11 +116,21 @@ void FileLogger::handleMessage(QtMsgType type, const QMessageLogContext& ctx, co
     static os_log_t osLog = os_log_create("dev.sentinel.Sentinel", "app");
     os_log_type_t osLogType = OS_LOG_TYPE_DEFAULT;
     switch (type) {
-    case QtDebugMsg:    osLogType = OS_LOG_TYPE_DEBUG; break;
-    case QtInfoMsg:     osLogType = OS_LOG_TYPE_INFO; break;
-    case QtWarningMsg:  osLogType = OS_LOG_TYPE_DEFAULT; break;
-    case QtCriticalMsg: osLogType = OS_LOG_TYPE_ERROR; break;
-    case QtFatalMsg:    osLogType = OS_LOG_TYPE_FAULT; break;
+    case QtDebugMsg:
+        osLogType = OS_LOG_TYPE_DEBUG;
+        break;
+    case QtInfoMsg:
+        osLogType = OS_LOG_TYPE_INFO;
+        break;
+    case QtWarningMsg:
+        osLogType = OS_LOG_TYPE_DEFAULT;
+        break;
+    case QtCriticalMsg:
+        osLogType = OS_LOG_TYPE_ERROR;
+        break;
+    case QtFatalMsg:
+        osLogType = OS_LOG_TYPE_FAULT;
+        break;
     }
     os_log_with_type(osLog, osLogType, "%{public}s", msg.toUtf8().constData());
 #endif

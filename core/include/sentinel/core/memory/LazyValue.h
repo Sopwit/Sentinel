@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace sentinel::core {
 
-template<typename T>
-class LazyValue {
+template <typename T> class LazyValue {
 public:
     using Factory = std::function<T()>;
 
@@ -32,9 +31,15 @@ public:
         return m_value;
     }
 
-    bool isComputed() const { return m_cached; }
-    void invalidate() { m_cached = false; }
-    explicit operator bool() const { return m_cached; }
+    bool isComputed() const {
+        return m_cached;
+    }
+    void invalidate() {
+        m_cached = false;
+    }
+    explicit operator bool() const {
+        return m_cached;
+    }
 
 private:
     Factory m_factory;

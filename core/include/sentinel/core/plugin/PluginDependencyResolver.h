@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QString>
+#include "sentinel/core/plugin/PluginManifest.h"
 #include <QList>
 #include <QMap>
-#include "sentinel/core/plugin/PluginManifest.h"
+#include <QString>
 
 namespace sentinel::core::plugin {
 

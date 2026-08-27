@@ -3,18 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/mcp/McpClient.h"
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QNetworkReply>
 #include <QDebug>
 #include <QEventLoop>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QNetworkReply>
 #include <QTimer>
 
 namespace sentinel::core {
 
-McpClient::McpClient(QObject* parent)
-    : QObject(parent)
-{
+McpClient::McpClient(QObject* parent) : QObject(parent) {
     m_networkManager = new QNetworkAccessManager(this);
 }
 
@@ -28,10 +26,10 @@ bool McpClient::connectLocal(const QString& command, const QStringList& argument
 
     m_process = std::make_unique<QProcess>();
 
-    connect(m_process.get(), &QProcess::readyReadStandardOutput,
-            this, &McpClient::onLocalProcessReadyRead);
-    connect(m_process.get(), QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, &McpClient::onLocalProcessFinished);
+    connect(m_process.get(), &QProcess::readyReadStandardOutput, this,
+            &McpClient::onLocalProcessReadyRead);
+    connect(m_process.get(), QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+            &McpClient::onLocalProcessFinished);
 
     m_process->start(command, arguments);
     if (!m_process->waitForStarted(5000)) {
@@ -111,7 +109,7 @@ QJsonObject McpClient::sendRequest(const QString& method, const QJsonObject& par
 }
 
 void McpClient::sendRequestAsync(const QString& method, const QJsonObject& params,
-                                  std::function<void(const QJsonObject&)> callback) {
+                                 std::function<void(const QJsonObject&)> callback) {
     if (!isConnected()) {
         if (callback) {
             callback(QJsonObject{{"error", QJsonObject{{"message", "Not connected"}}}});
@@ -146,12 +144,12 @@ void McpClient::sendRequestAsync(const QString& method, const QJsonObject& param
     if (m_transportType == TransportType::Remote && m_networkManager) {
         QNetworkRequest networkRequest;
         networkRequest.setUrl(QUrl(m_remoteUrl));
-        networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+        networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
+                                 QStringLiteral("application/json"));
         for (auto it = m_remoteHeaders.constBegin(); it != m_remoteHeaders.constEnd(); ++it) {
             networkRequest.setRawHeader(it.key().toUtf8(), it.value().toString().toUtf8());
         }
-        QNetworkReply* reply = m_networkManager->post(
-            networkRequest, jsonData);
+        QNetworkReply* reply = m_networkManager->post(networkRequest, jsonData);
         QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, requestId]() {
             const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             const QByteArray payload = reply->readAll();
@@ -160,16 +158,19 @@ void McpClient::sendRequestAsync(const QString& method, const QJsonObject& param
             QJsonObject result;
             if (reply->error() != QNetworkReply::NoError || status >= 400 ||
                 parseError.error != QJsonParseError::NoError || !document.isObject()) {
-                result = QJsonObject{{"error", QJsonObject{{"message", reply->errorString().isEmpty()
-                                                                  ? QStringLiteral("Invalid MCP remote response")
-                                                                  : reply->errorString()}}}};
+                result = QJsonObject{
+                    {"error",
+                     QJsonObject{{"message", reply->errorString().isEmpty()
+                                                 ? QStringLiteral("Invalid MCP remote response")
+                                                 : reply->errorString()}}}};
             } else {
                 result = document.object();
             }
             reply->deleteLater();
             auto it = m_pendingRequests.find(requestId);
             if (it != m_pendingRequests.end()) {
-                if (it->callback) it->callback(result);
+                if (it->callback)
+                    it->callback(result);
                 m_pendingRequests.erase(it);
             }
         });

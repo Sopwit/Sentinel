@@ -4,20 +4,17 @@
 
 #include "sentinel/core/runtime/tools/WebFetchTool.h"
 #include "sentinel/core/runtime/tools/HtmlToMarkdown.h"
+#include <QDebug>
+#include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QEventLoop>
+#include <QNetworkRequest>
 #include <QTimer>
-#include <QDebug>
 
 namespace sentinel::core {
 
-WebFetchTool::WebFetchTool(QObject* parent)
-    : QObject(parent)
-{
-}
+WebFetchTool::WebFetchTool(QObject* parent) : QObject(parent) {}
 
 WebFetchTool::~WebFetchTool() = default;
 
@@ -44,7 +41,8 @@ WebFetchResponse WebFetchTool::fetch(const QString& url, WebFetchFormat format) 
 
     QNetworkRequest request{validatedUrl};
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
-    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept",
+                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
     QNetworkReply* reply = m_networkManager.get(request);
     QEventLoop loop;
@@ -65,18 +63,20 @@ WebFetchResponse WebFetchTool::fetch(const QString& url, WebFetchFormat format) 
 }
 
 void WebFetchTool::fetchAsync(const QString& url, WebFetchFormat format,
-                               std::function<void(WebFetchResponse)> callback) {
+                              std::function<void(WebFetchResponse)> callback) {
     QUrl validatedUrl = validateUrl(url);
     if (!validatedUrl.isValid()) {
         WebFetchResponse response;
         response.errorString = "Invalid URL: " + url;
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         return;
     }
 
     QNetworkRequest request(validatedUrl);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
-    request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    request.setRawHeader("Accept",
+                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
     QNetworkReply* reply = m_networkManager.get(request);
 
@@ -91,7 +91,8 @@ void WebFetchTool::fetchAsync(const QString& url, WebFetchFormat format,
         WebFetchResponse response = processResponse(reply, format);
         reply->deleteLater();
 
-        if (callback) callback(response);
+        if (callback)
+            callback(response);
         emit fetchCompleted(response);
     });
 }
@@ -157,7 +158,8 @@ WebFetchResponse WebFetchTool::processResponse(QNetworkReply* reply, WebFetchFor
     return response;
 }
 
-QString WebFetchTool::convertResponse(const QByteArray& content, const QString& contentType, WebFetchFormat format) const {
+QString WebFetchTool::convertResponse(const QByteArray& content, const QString& contentType,
+                                      WebFetchFormat format) const {
     QString html = QString::fromUtf8(content);
 
     switch (format) {

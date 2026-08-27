@@ -9,14 +9,7 @@
 
 namespace sentinel::core {
 
-enum class BomType : std::uint8_t {
-    None,
-    UTF8,
-    UTF16LE,
-    UTF16BE,
-    UTF32LE,
-    UTF32BE
-};
+enum class BomType : std::uint8_t { None, UTF8, UTF16LE, UTF16BE, UTF32LE, UTF32BE };
 
 class BomHandler {
 public:

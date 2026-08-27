@@ -246,9 +246,12 @@ void SQLiteChatHistoryStore::initializeSchema() {
         {QStringLiteral("approx_tokens_per_second"), QStringLiteral("REAL")},
     };
     const QStringList knownColumnNames = {
-        QStringLiteral("provider_used"), QStringLiteral("model_used"),
-        QStringLiteral("role_used"), QStringLiteral("response_duration_ms"),
-        QStringLiteral("first_token_latency_ms"), QStringLiteral("approx_tokens_per_second"),
+        QStringLiteral("provider_used"),
+        QStringLiteral("model_used"),
+        QStringLiteral("role_used"),
+        QStringLiteral("response_duration_ms"),
+        QStringLiteral("first_token_latency_ms"),
+        QStringLiteral("approx_tokens_per_second"),
     };
     for (const auto& column : columns) {
         if (!knownColumnNames.contains(column.first)) {

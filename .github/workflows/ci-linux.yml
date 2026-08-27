@@ -22,7 +22,7 @@ jobs:
 
       - name: Validate Desktop Entry & AppStream Metadata
         run: |
-          desktop-file-validate packaging/linux/dev.sentinel.Sentinel.desktop.in
+          desktop-file-validate packaging/linux/dev.sentinel.Sentinel.desktop
           appstream-util validate-relax --nonet packaging/linux/dev.sentinel.Sentinel.metainfo.xml
 
       - name: Install Qt
@@ -84,4 +84,5 @@ jobs:
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --preset asan
+          ASAN_OPTIONS: 'detect_leaks=0:halt_on_error=1'
+        run: ctest --preset asan --output-on-failure

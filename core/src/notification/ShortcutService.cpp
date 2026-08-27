@@ -9,7 +9,8 @@ namespace sentinel::core {
 ShortcutService::ShortcutService(QObject* parent) : QObject(parent) {}
 ShortcutService::~ShortcutService() = default;
 
-void ShortcutService::registerShortcut(const QString& action, const QString& keys, const QString& description) {
+void ShortcutService::registerShortcut(const QString& action, const QString& keys,
+                                       const QString& description) {
     for (int i = 0; i < m_bindings.size(); ++i) {
         if (m_bindings[i].action == action) {
             m_bindings[i].keys = keys;
@@ -45,9 +46,15 @@ bool ShortcutService::processKeys(const QString& keySequence) {
     return false;
 }
 
-QList<ShortcutBinding> ShortcutService::bindings() const { return m_bindings; }
+QList<ShortcutBinding> ShortcutService::bindings() const {
+    return m_bindings;
+}
 
-void ShortcutService::setLeaderKey(const QString& key) { m_leaderKey = key; }
-QString ShortcutService::leaderKey() const { return m_leaderKey; }
+void ShortcutService::setLeaderKey(const QString& key) {
+    m_leaderKey = key;
+}
+QString ShortcutService::leaderKey() const {
+    return m_leaderKey;
+}
 
 } // namespace sentinel::core

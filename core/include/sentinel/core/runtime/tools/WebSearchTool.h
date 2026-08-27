@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QObject>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {

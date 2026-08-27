@@ -17,9 +17,8 @@ void BackgroundJobPersistenceTest::persistsAndRecoversTerminalMetadata() {
     QVERIFY(database.open());
     BackgroundJobService service;
     QVERIFY(service.setPersistenceDatabase(database));
-    const QString id = service.submitJob(QStringLiteral("success"), [](Job&, std::function<void(JobProgress)>) {
-        return true;
-    });
+    const QString id = service.submitJob(
+        QStringLiteral("success"), [](Job&, std::function<void(JobProgress)>) { return true; });
     QTRY_VERIFY_WITH_TIMEOUT(service.findJob(id).has_value(), 1000);
     QTest::qWait(50);
     QVERIFY(service.findJob(id).has_value());

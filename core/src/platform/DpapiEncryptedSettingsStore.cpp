@@ -7,12 +7,12 @@
 #include <QtGlobal>
 
 #if defined(Q_OS_WIN)
-#include <windows.h>
 #include <dpapi.h>
+#include <windows.h>
 #elif defined(Q_OS_MACOS) || defined(__APPLE__)
-#include <Security/Security.h>
 #include <CommonCrypto/CommonCrypto.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
 #endif
 
 namespace sentinel::core {
@@ -23,10 +23,8 @@ constexpr QLatin1String encryptedPrefix("$dpapi$");
 
 bool isProbablySecret(const QString& key) {
     const auto lower = key.toLower();
-    return lower.contains(QStringLiteral("apikey"))
-        || lower.contains(QStringLiteral("secret"))
-        || lower.contains(QStringLiteral("token"))
-        || lower.contains(QStringLiteral("password"));
+    return lower.contains(QStringLiteral("apikey")) || lower.contains(QStringLiteral("secret")) ||
+           lower.contains(QStringLiteral("token")) || lower.contains(QStringLiteral("password"));
 }
 
 } // namespace
@@ -102,27 +100,19 @@ static QByteArray getOrCreateMacKeychainKey() {
     static const char* kService = "dev.sentinel.Sentinel";
     static const char* kAccount = "master_encryption_key";
 
-    CFStringRef serviceStr = CFStringCreateWithCString(kCFAllocatorDefault, kService, kCFStringEncodingUTF8);
-    CFStringRef accountStr = CFStringCreateWithCString(kCFAllocatorDefault, kAccount, kCFStringEncodingUTF8);
+    CFStringRef serviceStr =
+        CFStringCreateWithCString(kCFAllocatorDefault, kService, kCFStringEncodingUTF8);
+    CFStringRef accountStr =
+        CFStringCreateWithCString(kCFAllocatorDefault, kAccount, kCFStringEncodingUTF8);
 
-    const void* keys[] = {
-        kSecClass,
-        kSecAttrService,
-        kSecAttrAccount,
-        kSecReturnData,
-        kSecMatchLimit
-    };
-    const void* values[] = {
-        kSecClassGenericPassword,
-        serviceStr,
-        accountStr,
-        kCFBooleanTrue,
-        kSecMatchLimitOne
-    };
+    const void* keys[] = {kSecClass, kSecAttrService, kSecAttrAccount, kSecReturnData,
+                          kSecMatchLimit};
+    const void* values[] = {kSecClassGenericPassword, serviceStr, accountStr, kCFBooleanTrue,
+                            kSecMatchLimitOne};
 
-    CFDictionaryRef query = CFDictionaryCreate(kCFAllocatorDefault, keys, values, 5,
-                                               &kCFTypeDictionaryKeyCallBacks,
-                                               &kCFTypeDictionaryValueCallBacks);
+    CFDictionaryRef query =
+        CFDictionaryCreate(kCFAllocatorDefault, keys, values, 5, &kCFTypeDictionaryKeyCallBacks,
+                           &kCFTypeDictionaryValueCallBacks);
 
     CFTypeRef dataTypeRef = NULL;
     OSStatus status = SecItemCopyMatching(query, &dataTypeRef);
@@ -130,7 +120,8 @@ static QByteArray getOrCreateMacKeychainKey() {
 
     if (status == errSecSuccess && dataTypeRef != NULL) {
         CFDataRef dataRef = (CFDataRef)dataTypeRef;
-        QByteArray key(reinterpret_cast<const char*>(CFDataGetBytePtr(dataRef)), static_cast<int>(CFDataGetLength(dataRef)));
+        QByteArray key(reinterpret_cast<const char*>(CFDataGetBytePtr(dataRef)),
+                       static_cast<int>(CFDataGetLength(dataRef)));
         CFRelease(dataTypeRef);
         CFRelease(serviceStr);
         CFRelease(accountStr);
@@ -138,31 +129,23 @@ static QByteArray getOrCreateMacKeychainKey() {
     }
 
     QByteArray newKey(32, 0);
-    if (SecRandomCopyBytes(kSecRandomDefault, newKey.size(), reinterpret_cast<uint8_t*>(newKey.data())) != errSecSuccess) {
+    if (SecRandomCopyBytes(kSecRandomDefault, newKey.size(),
+                           reinterpret_cast<uint8_t*>(newKey.data())) != errSecSuccess) {
         CFRelease(serviceStr);
         CFRelease(accountStr);
         return QByteArray();
     }
 
-    CFDataRef keyData = CFDataCreate(kCFAllocatorDefault, reinterpret_cast<const UInt8*>(newKey.constData()), newKey.size());
-    const void* addKeys[] = {
-        kSecClass,
-        kSecAttrService,
-        kSecAttrAccount,
-        kSecValueData,
-        kSecAttrAccessible
-    };
-    const void* addValues[] = {
-        kSecClassGenericPassword,
-        serviceStr,
-        accountStr,
-        keyData,
-        kSecAttrAccessibleAfterFirstUnlock
-    };
+    CFDataRef keyData = CFDataCreate(
+        kCFAllocatorDefault, reinterpret_cast<const UInt8*>(newKey.constData()), newKey.size());
+    const void* addKeys[] = {kSecClass, kSecAttrService, kSecAttrAccount, kSecValueData,
+                             kSecAttrAccessible};
+    const void* addValues[] = {kSecClassGenericPassword, serviceStr, accountStr, keyData,
+                               kSecAttrAccessibleAfterFirstUnlock};
 
-    CFDictionaryRef addQuery = CFDictionaryCreate(kCFAllocatorDefault, addKeys, addValues, 5,
-                                                   &kCFTypeDictionaryKeyCallBacks,
-                                                   &kCFTypeDictionaryValueCallBacks);
+    CFDictionaryRef addQuery =
+        CFDictionaryCreate(kCFAllocatorDefault, addKeys, addValues, 5,
+                           &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     SecItemAdd(addQuery, NULL);
 
     CFRelease(addQuery);
@@ -186,19 +169,9 @@ QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
     size_t outLen = 0;
     QByteArray cipherText(utf8.size() + kCCBlockSizeAES128, 0);
 
-    CCCryptorStatus status = CCCrypt(
-        kCCEncrypt,
-        kCCAlgorithmAES,
-        kCCOptionPKCS7Padding,
-        key.constData(),
-        key.size(),
-        iv.constData(),
-        utf8.constData(),
-        utf8.size(),
-        cipherText.data(),
-        cipherText.size(),
-        &outLen
-    );
+    CCCryptorStatus status = CCCrypt(kCCEncrypt, kCCAlgorithmAES, kCCOptionPKCS7Padding,
+                                     key.constData(), key.size(), iv.constData(), utf8.constData(),
+                                     utf8.size(), cipherText.data(), cipherText.size(), &outLen);
 
     if (status != kCCSuccess) {
         return plainText.toUtf8();
@@ -220,19 +193,10 @@ QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) {
     size_t outLen = 0;
     QByteArray plainText(encryptedPayload.size() + kCCBlockSizeAES128, 0);
 
-    CCCryptorStatus status = CCCrypt(
-        kCCDecrypt,
-        kCCAlgorithmAES,
-        kCCOptionPKCS7Padding,
-        key.constData(),
-        key.size(),
-        iv.constData(),
-        encryptedPayload.constData(),
-        encryptedPayload.size(),
-        plainText.data(),
-        plainText.size(),
-        &outLen
-    );
+    CCCryptorStatus status =
+        CCCrypt(kCCDecrypt, kCCAlgorithmAES, kCCOptionPKCS7Padding, key.constData(), key.size(),
+                iv.constData(), encryptedPayload.constData(), encryptedPayload.size(),
+                plainText.data(), plainText.size(), &outLen);
 
     if (status != kCCSuccess) {
         return QString::fromUtf8(cipherData);

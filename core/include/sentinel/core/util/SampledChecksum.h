@@ -1,8 +1,8 @@
 #pragma once
 
+#include "sentinel/core/util/FnvHash.h"
 #include <QByteArray>
 #include <QString>
-#include "sentinel/core/util/FnvHash.h"
 
 namespace Sentinel {
 
@@ -17,7 +17,7 @@ public:
         int sampleCount;
     };
 
-    static ChecksumResult compute(const QByteArray &data) {
+    static ChecksumResult compute(const QByteArray& data) {
         qint64 size = data.size();
         if (size == 0)
             return {FnvHash::fnv1a32(QByteArray("")), 0, 0};
@@ -60,11 +60,11 @@ public:
         return {combined, size, samplesFound};
     }
 
-    static uint32_t computeHash(const QByteArray &data) {
+    static uint32_t computeHash(const QByteArray& data) {
         return compute(data).hash;
     }
 
-    static bool hasChanged(const QByteArray &oldData, const QByteArray &newData) {
+    static bool hasChanged(const QByteArray& oldData, const QByteArray& newData) {
         return computeHash(oldData) != computeHash(newData);
     }
 };

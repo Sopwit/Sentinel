@@ -25,8 +25,8 @@ namespace {
 
 QString hresultToString(HRESULT hr) {
     wchar_t* msg = nullptr;
-    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                   nullptr, hr, 0, reinterpret_cast<wchar_t*>(&msg), 0, nullptr);
+    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr, 0,
+                   reinterpret_cast<wchar_t*>(&msg), 0, nullptr);
     QString result = msg ? QString::fromWCharArray(msg) : QStringLiteral("(unknown)");
     LocalFree(msg);
     return result.trimmed();
@@ -34,18 +34,18 @@ QString hresultToString(HRESULT hr) {
 
 // ── COM GUIDs (defined locally to avoid linker dependency on uuid.lib) ───
 
-static const GUID CLSID_TaskbarList_Local = {0x56fdf344, 0xfd6d, 0x11d0,
-    {0x95, 0x8a, 0x00, 0x60, 0x97, 0xc9, 0x90, 0x4b}};
-static const GUID CLSID_DestinationList_Local = {0x77f10cf0, 0x3db5, 0x4966,
-    {0xb5, 0x20, 0xb7, 0xc5, 0x4f, 0xd3, 0x5e, 0xd6}};
-static const GUID CLSID_EnumerableCollection_Local = {0x2d3468c1, 0x36a7, 0x43b6,
-    {0xac, 0x24, 0xd3, 0xf0, 0x2f, 0xd9, 0x60, 0x7a}};
-static const GUID IID_ITaskbarList3_Local = {0xea1afb91, 0x9e28, 0x4b86,
-    {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
-static const GUID IID_ICustomDestinationList_Local = {0x6332debf, 0x87b5, 0x4670,
-    {0x90, 0x0c, 0x5d, 0xb3, 0x4b, 0x82, 0x06, 0x42}};
-static const GUID IID_IObjectCollection_Local = {0x5632b1a4, 0xe38a, 0x400a,
-    {0x92, 0x8a, 0xd4, 0xcd, 0x63, 0x23, 0x02, 0x95}};
+static const GUID CLSID_TaskbarList_Local = {
+    0x56fdf344, 0xfd6d, 0x11d0, {0x95, 0x8a, 0x00, 0x60, 0x97, 0xc9, 0x90, 0x4b}};
+static const GUID CLSID_DestinationList_Local = {
+    0x77f10cf0, 0x3db5, 0x4966, {0xb5, 0x20, 0xb7, 0xc5, 0x4f, 0xd3, 0x5e, 0xd6}};
+static const GUID CLSID_EnumerableCollection_Local = {
+    0x2d3468c1, 0x36a7, 0x43b6, {0xac, 0x24, 0xd3, 0xf0, 0x2f, 0xd9, 0x60, 0x7a}};
+static const GUID IID_ITaskbarList3_Local = {
+    0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
+static const GUID IID_ICustomDestinationList_Local = {
+    0x6332debf, 0x87b5, 0x4670, {0x90, 0x0c, 0x5d, 0xb3, 0x4b, 0x82, 0x06, 0x42}};
+static const GUID IID_IObjectCollection_Local = {
+    0x5632b1a4, 0xe38a, 0x400a, {0x92, 0x8a, 0xd4, 0xcd, 0x63, 0x23, 0x02, 0x95}};
 
 } // namespace
 
@@ -59,7 +59,8 @@ struct WinTaskbarIntegration::Private {
     IUnknown* destList = nullptr;
 
     bool initCOM() {
-        if (comInitialized) return true;
+        if (comInitialized)
+            return true;
         HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
         if (SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE || hr == S_FALSE) {
             comInitialized = true;
@@ -69,15 +70,17 @@ struct WinTaskbarIntegration::Private {
     }
 
     void ensureTaskbarList() {
-        if (taskbarList) return;
-        if (!hwnd || !initCOM()) return;
+        if (taskbarList)
+            return;
+        if (!hwnd || !initCOM())
+            return;
 
         IUnknown* unk = nullptr;
         HRESULT hr = CoCreateInstance(CLSID_TaskbarList_Local, nullptr, CLSCTX_INPROC_SERVER,
                                       IID_IUnknown, reinterpret_cast<void**>(&unk));
         if (FAILED(hr) || !unk) {
-            qWarning().noquote()
-                << "WinTaskbar: CoCreateInstance(TaskbarList) failed:" << hresultToString(hr);
+            qWarning().noquote() << "WinTaskbar: CoCreateInstance(TaskbarList) failed:"
+                                 << hresultToString(hr);
             return;
         }
 
@@ -98,22 +101,33 @@ struct WinTaskbarIntegration::Private {
     }
 
     void ensureDestList() {
-        if (destList) return;
-        if (!hwnd || !initCOM()) return;
+        if (destList)
+            return;
+        if (!hwnd || !initCOM())
+            return;
 
         HRESULT hr = CoCreateInstance(CLSID_DestinationList_Local, nullptr, CLSCTX_INPROC_SERVER,
-                                       IID_IUnknown, reinterpret_cast<void**>(&destList));
+                                      IID_IUnknown, reinterpret_cast<void**>(&destList));
         if (FAILED(hr) || !destList) {
-            qWarning().noquote()
-                << "WinTaskbar: CoCreateInstance(DestinationList) failed:" << hresultToString(hr);
+            qWarning().noquote() << "WinTaskbar: CoCreateInstance(DestinationList) failed:"
+                                 << hresultToString(hr);
             destList = nullptr;
         }
     }
 
     void releaseCOM() {
-        if (taskbarList) { taskbarList->Release(); taskbarList = nullptr; }
-        if (destList) { destList->Release(); destList = nullptr; }
-        if (comInitialized) { CoUninitialize(); comInitialized = false; }
+        if (taskbarList) {
+            taskbarList->Release();
+            taskbarList = nullptr;
+        }
+        if (destList) {
+            destList->Release();
+            destList = nullptr;
+        }
+        if (comInitialized) {
+            CoUninitialize();
+            comInitialized = false;
+        }
     }
 
     static IShellLinkW* createShellLink(const QString& title, const QString& appPath,
@@ -122,7 +136,8 @@ struct WinTaskbarIntegration::Private {
         IShellLinkW* link = nullptr;
         HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
                                       IID_IShellLinkW, reinterpret_cast<void**>(&link));
-        if (FAILED(hr) || !link) return nullptr;
+        if (FAILED(hr) || !link)
+            return nullptr;
 
         link->SetPath(appPath.toStdWString().c_str());
         if (!arguments.isEmpty())
@@ -137,23 +152,25 @@ struct WinTaskbarIntegration::Private {
 
     IObjectCollection* createCollection() {
         IObjectCollection* collection = nullptr;
-        HRESULT hr = CoCreateInstance(CLSID_EnumerableCollection_Local, nullptr,
-                                       CLSCTX_INPROC_SERVER, IID_IObjectCollection_Local,
-                                       reinterpret_cast<void**>(&collection));
+        HRESULT hr =
+            CoCreateInstance(CLSID_EnumerableCollection_Local, nullptr, CLSCTX_INPROC_SERVER,
+                             IID_IObjectCollection_Local, reinterpret_cast<void**>(&collection));
         if (FAILED(hr)) {
-            qWarning().noquote()
-                << "WinTaskbar: CoCreateInstance(Collection) failed:" << hresultToString(hr);
+            qWarning().noquote() << "WinTaskbar: CoCreateInstance(Collection) failed:"
+                                 << hresultToString(hr);
         }
         return collection;
     }
 
     bool appendCategory(const QString& name, IObjectCollection* collection) {
-        if (!destList || !collection) return false;
+        if (!destList || !collection)
+            return false;
 
         ICustomDestinationList* cd = nullptr;
         HRESULT hr = destList->QueryInterface(IID_ICustomDestinationList_Local,
-                                               reinterpret_cast<void**>(&cd));
-        if (FAILED(hr) || !cd) return false;
+                                              reinterpret_cast<void**>(&cd));
+        if (FAILED(hr) || !cd)
+            return false;
 
         cd->SetAppID(L"dev.sentinel.Sentinel");
         UINT maxSlots = 0;
@@ -167,7 +184,8 @@ struct WinTaskbarIntegration::Private {
         } else {
             qWarning().noquote() << "WinTaskbar: BeginList failed:" << hresultToString(hr);
         }
-        if (removed) removed->Release();
+        if (removed)
+            removed->Release();
         cd->Release();
         return SUCCEEDED(hr);
     }
@@ -190,7 +208,8 @@ void WinTaskbarIntegration::setWindowHandle(quintptr hwnd) {
 
 namespace {
 ITaskbarList3* queryTaskbarList(IUnknown* unk) {
-    if (!unk) return nullptr;
+    if (!unk)
+        return nullptr;
     ITaskbarList3* tlb3 = nullptr;
     if (SUCCEEDED(unk->QueryInterface(IID_ITaskbarList3_Local, reinterpret_cast<void**>(&tlb3))))
         return tlb3;
@@ -241,18 +260,21 @@ void WinTaskbarIntegration::clearProgress() {
 // ── JumpList ──────────────────────────────────────────────────────────────
 
 void WinTaskbarIntegration::setUserTasks(const QList<WinTaskbarTask>& tasks) {
-    if (!d->hwnd || tasks.isEmpty()) return;
+    if (!d->hwnd || tasks.isEmpty())
+        return;
     d->ensureDestList();
-    if (!d->destList) return;
+    if (!d->destList)
+        return;
 
     auto* collection = d->createCollection();
-    if (!collection) return;
+    if (!collection)
+        return;
 
     const QString appPath = QCoreApplication::applicationFilePath();
     for (const auto& task : tasks) {
-        auto* link = Private::createShellLink(
-            task.title, task.appPath.isEmpty() ? appPath : task.appPath,
-            task.arguments, task.iconPath, task.iconIndex);
+        auto* link =
+            Private::createShellLink(task.title, task.appPath.isEmpty() ? appPath : task.appPath,
+                                     task.arguments, task.iconPath, task.iconIndex);
         if (link) {
             collection->AddObject(link);
             link->Release();
@@ -264,24 +286,29 @@ void WinTaskbarIntegration::setUserTasks(const QList<WinTaskbarTask>& tasks) {
 }
 
 void WinTaskbarIntegration::addRecentItem(const QString& filePath, const QString& title) {
-    if (!d->hwnd) return;
+    if (!d->hwnd)
+        return;
     auto* link = Private::createShellLink(title, filePath, {}, {}, 0);
-    if (!link) return;
+    if (!link)
+        return;
     SHAddToRecentDocs(SHARD_LINK, link);
     link->Release();
 }
 
 void WinTaskbarIntegration::setRecentItems(const QList<WinTaskbarJumpListItem>& items) {
-    if (!d->hwnd || items.isEmpty()) return;
+    if (!d->hwnd || items.isEmpty())
+        return;
     d->ensureDestList();
-    if (!d->destList) return;
+    if (!d->destList)
+        return;
 
     auto* collection = d->createCollection();
-    if (!collection) return;
+    if (!collection)
+        return;
 
     for (const auto& item : items) {
-        auto* link = Private::createShellLink(
-            item.title, item.filePath, {}, item.iconPath, item.iconIndex);
+        auto* link =
+            Private::createShellLink(item.title, item.filePath, {}, item.iconPath, item.iconIndex);
         if (link) {
             collection->AddObject(link);
             link->Release();
@@ -293,11 +320,12 @@ void WinTaskbarIntegration::setRecentItems(const QList<WinTaskbarJumpListItem>& 
 }
 
 void WinTaskbarIntegration::clearJumpList() {
-    if (!d->destList) return;
+    if (!d->destList)
+        return;
 
     ICustomDestinationList* cd = nullptr;
     if (SUCCEEDED(d->destList->QueryInterface(IID_ICustomDestinationList_Local,
-                                               reinterpret_cast<void**>(&cd)))) {
+                                              reinterpret_cast<void**>(&cd)))) {
         cd->DeleteList(L"dev.sentinel.Sentinel");
         cd->Release();
     }
@@ -309,7 +337,8 @@ void WinTaskbarIntegration::clearJumpList() {
 
 struct WinTaskbarIntegration::Private {};
 
-WinTaskbarIntegration::WinTaskbarIntegration(QObject* parent) : QObject(parent), d(std::make_unique<Private>()) {}
+WinTaskbarIntegration::WinTaskbarIntegration(QObject* parent)
+    : QObject(parent), d(std::make_unique<Private>()) {}
 WinTaskbarIntegration::~WinTaskbarIntegration() = default;
 void WinTaskbarIntegration::setWindowHandle(quintptr) {}
 void WinTaskbarIntegration::setProgressValue(quint64, quint64) {}

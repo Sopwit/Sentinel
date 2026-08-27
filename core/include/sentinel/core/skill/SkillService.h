@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/skill/ISkillService.h"
-#include <QObject>
 #include <QMap>
 #include <QNetworkAccessManager>
+#include <QObject>
 
 namespace sentinel::core {
 

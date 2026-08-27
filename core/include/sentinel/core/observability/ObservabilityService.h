@@ -27,8 +27,10 @@ public:
     void endSpan(const QString& spanId, bool success = true) override;
     void setSpanAttribute(const QString& spanId, const QString& key, const QString& value) override;
 
-    void recordMetric(const QString& name, double value, const QMap<QString, QString>& attributes = {}) override;
-    void incrementCounter(const QString& name, const QMap<QString, QString>& attributes = {}) override;
+    void recordMetric(const QString& name, double value,
+                      const QMap<QString, QString>& attributes = {}) override;
+    void incrementCounter(const QString& name,
+                          const QMap<QString, QString>& attributes = {}) override;
 
     void logInfo(const QString& message, const QMap<QString, QString>& attributes = {}) override;
     void logWarning(const QString& message, const QMap<QString, QString>& attributes = {}) override;

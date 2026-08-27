@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QString>
 #include <QDateTime>
 #include <QJsonObject>
 #include <QList>
+#include <QString>
 
 namespace sentinel::core {
 

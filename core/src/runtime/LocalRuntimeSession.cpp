@@ -71,14 +71,17 @@ LocalRuntimeSession OllamaRuntimeSessionManager::currentSession() const {
     const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
     LocalRuntimeSession session;
     session.id = {QStringLiteral("ollama-runtime-session-1")};
-    session.status = ready ? LocalRuntimeSessionStatus::Active : LocalRuntimeSessionStatus::Reserved;
-    session.health = ready ? LocalRuntimeSessionHealth::Ready : LocalRuntimeSessionHealth::Unavailable;
+    session.status =
+        ready ? LocalRuntimeSessionStatus::Active : LocalRuntimeSessionStatus::Reserved;
+    session.health =
+        ready ? LocalRuntimeSessionHealth::Ready : LocalRuntimeSessionHealth::Unavailable;
     session.allocation = {
         QStringLiteral("ollama-local-runtime"),
         QStringLiteral("Ollama"),
         {QStringLiteral("local-runtime.metadata"), QStringLiteral("local-runtime.inference")},
-        ready ? QStringLiteral("Ollama runtime active with %1 installed model(s).").arg(models.size())
-              : safeOllamaHealthSummary(health),
+        ready
+            ? QStringLiteral("Ollama runtime active with %1 installed model(s).").arg(models.size())
+            : safeOllamaHealthSummary(health),
     };
     session.reservation = {
         QStringLiteral("ollama-runtime-reservation-1"),

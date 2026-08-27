@@ -22,9 +22,18 @@ void ProcessStreamCollector::collectStderr(const QByteArray& data) {
     m_stderr += QString::fromUtf8(data);
 }
 
-QString ProcessStreamCollector::stdoutOutput() const { return m_stdout; }
-QString ProcessStreamCollector::stderrOutput() const { return m_stderr; }
-void ProcessStreamCollector::setLineCallback(LineCallback callback) { m_callback = callback; }
-void ProcessStreamCollector::clear() { m_stdout.clear(); m_stderr.clear(); }
+QString ProcessStreamCollector::stdoutOutput() const {
+    return m_stdout;
+}
+QString ProcessStreamCollector::stderrOutput() const {
+    return m_stderr;
+}
+void ProcessStreamCollector::setLineCallback(LineCallback callback) {
+    m_callback = callback;
+}
+void ProcessStreamCollector::clear() {
+    m_stdout.clear();
+    m_stderr.clear();
+}
 
 } // namespace sentinel::core

@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "sentinel/core/plugin/IPluginContext.h"
+#include "sentinel/core/plugin/PluginState.h"
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
-#include <QJsonObject>
 #include <memory>
-#include "sentinel/core/plugin/PluginState.h"
-#include "sentinel/core/plugin/IPluginContext.h"
 
 namespace sentinel::core::plugin {
 

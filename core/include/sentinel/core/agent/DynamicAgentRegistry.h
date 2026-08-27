@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/agent/IAgentRegistry.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -14,8 +14,8 @@ struct AgentDefinition {
     QString id;
     QString displayName;
     QString description;
-    QString role; // Coordinator, Planner, Researcher, Builder, Guardian, Companion
-    QString mode; // build, plan, explore
+    QString role;  // Coordinator, Planner, Researcher, Builder, Guardian, Companion
+    QString mode;  // build, plan, explore
     QString model; // preferred model
     QString color;
     QStringList permissions;

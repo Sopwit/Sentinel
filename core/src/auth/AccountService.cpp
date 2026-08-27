@@ -9,13 +9,17 @@ namespace sentinel::core {
 AccountService::AccountService(QObject* parent) : QObject(parent) {}
 AccountService::~AccountService() = default;
 
-Account AccountService::currentAccount() const { return m_currentAccount; }
+Account AccountService::currentAccount() const {
+    return m_currentAccount;
+}
 
 void AccountService::setCurrentAccount(const Account& account) {
     m_currentAccount = account;
 }
 
-QList<Account> AccountService::accounts() const { return m_accounts; }
+QList<Account> AccountService::accounts() const {
+    return m_accounts;
+}
 
 Organization AccountService::organization(const QString& orgId) const {
     return m_organizations.value(orgId);

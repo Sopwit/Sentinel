@@ -19,13 +19,15 @@ QString WildcardMatcher::regexFromWildcard(const QString& wildcard) {
     QString regex;
     for (int i = 0; i < wildcard.size(); ++i) {
         QChar c = wildcard[i];
-        if (c == '*') regex += ".*";
-        else if (c == '?') regex += ".";
+        if (c == '*')
+            regex += ".*";
+        else if (c == '?')
+            regex += ".";
         else if (c.isPunct()) {
             regex += "\\";
             regex += QString(c);
-        }
-        else regex += c;
+        } else
+            regex += c;
     }
     return "^" + regex + "$";
 }
@@ -37,7 +39,8 @@ bool WildcardMatcher::containsWildcard(const QString& pattern) {
 QStringList WildcardMatcher::matchingFiles(const QString& pattern, const QStringList& files) {
     QStringList result;
     for (const auto& f : files) {
-        if (match(pattern, f)) result.append(f);
+        if (match(pattern, f))
+            result.append(f);
     }
     return result;
 }

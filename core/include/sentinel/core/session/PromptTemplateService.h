@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/session/IPromptTemplateService.h"
-#include <QObject>
 #include <QList>
+#include <QObject>
 
 namespace sentinel::core {
 

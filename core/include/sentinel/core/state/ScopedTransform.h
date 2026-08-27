@@ -2,9 +2,9 @@
 
 #include <QJsonObject>
 #include <QMutex>
+#include <QUuid>
 #include <functional>
 #include <vector>
-#include <QUuid>
 
 namespace Sentinel {
 
@@ -12,14 +12,13 @@ class ScopedTransform {
 public:
     struct Transform {
         QString id;
-        std::function<QJsonObject(const QJsonObject &)> apply;
+        std::function<QJsonObject(const QJsonObject&)> apply;
     };
 
     explicit ScopedTransform(QJsonObject initialState = {})
-        : m_initialState(std::move(initialState))
-        , m_currentState(m_initialState) {}
+        : m_initialState(std::move(initialState)), m_currentState(m_initialState) {}
 
-    QString addTransform(std::function<QJsonObject(const QJsonObject &)> fn) {
+    QString addTransform(std::function<QJsonObject(const QJsonObject&)> fn) {
         QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
         QMutexLocker locker(&m_mutex);
         m_transforms.push_back({id, std::move(fn)});
@@ -27,9 +26,9 @@ public:
         return id;
     }
 
-    void removeTransform(const QString &id) {
+    void removeTransform(const QString& id) {
         QMutexLocker locker(&m_mutex);
-        std::erase_if(m_transforms, [&id](const Transform &t) { return t.id == id; });
+        std::erase_if(m_transforms, [&id](const Transform& t) { return t.id == id; });
         rebuild();
     }
 
@@ -44,7 +43,7 @@ public:
         m_currentState = m_initialState;
     }
 
-    void reload(std::function<QJsonObject(const QJsonObject &)> baseLoader) {
+    void reload(std::function<QJsonObject(const QJsonObject&)> baseLoader) {
         QMutexLocker locker(&m_mutex);
         m_initialState = baseLoader(m_initialState);
         rebuild();
@@ -56,9 +55,9 @@ public:
     }
 
 private:
-    QJsonObject applyAll(const QJsonObject &base, const std::vector<Transform> &transforms) const {
+    QJsonObject applyAll(const QJsonObject& base, const std::vector<Transform>& transforms) const {
         QJsonObject state = base;
-        for (const auto &t : transforms) {
+        for (const auto& t : transforms) {
             state = t.apply(state);
         }
         return state;

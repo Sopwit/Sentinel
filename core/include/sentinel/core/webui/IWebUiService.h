@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -27,7 +27,8 @@ public:
     virtual bool isRunning() const = 0;
     virtual QString url() const = 0;
     virtual void setContent(const QString& path, const QString& content) = 0;
-    virtual void setApiHandler(const QString& path, std::function<QString(const QJsonObject&)> handler) = 0;
+    virtual void setApiHandler(const QString& path,
+                               std::function<QString(const QJsonObject&)> handler) = 0;
 };
 
 } // namespace sentinel::core

@@ -15,11 +15,13 @@ WellKnownConfig WellKnownAuthService::discover(const QString& issuerUrl) const {
     return config;
 }
 
-bool WellKnownAuthService::validateIssuer(const QString& issuerUrl, const WellKnownConfig& config) const {
+bool WellKnownAuthService::validateIssuer(const QString& issuerUrl,
+                                          const WellKnownConfig& config) const {
     return config.issuer == issuerUrl;
 }
 
-QString WellKnownAuthService::buildAuthUrl(const WellKnownConfig& config, const QString& clientId, const QString& redirectUri, const QString& state) const {
+QString WellKnownAuthService::buildAuthUrl(const WellKnownConfig& config, const QString& clientId,
+                                           const QString& redirectUri, const QString& state) const {
     return QStringLiteral("%1?client_id=%2&redirect_uri=%3&state=%4&response_type=code")
         .arg(config.authorizationEndpoint, clientId, redirectUri, state);
 }

@@ -198,8 +198,8 @@ bool writeFile(const QString& path, const QByteArray& bytes) {
 
 void makeExecutable(const QString& path) {
 #if !defined(Q_OS_WIN)
-    QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                    QFileDevice::ExeOwner);
+    QFile::setPermissions(path,
+                          QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 #else
     Q_UNUSED(path);
 #endif
@@ -220,9 +220,8 @@ PiperTtsConfig configuredPiperConfig(QTemporaryDir& dir) {
         qFatal("Failed to write mock binary to %s", qPrintable(binaryPath));
     }
 #if !defined(Q_OS_WIN)
-    if (!QFile::setPermissions(binaryPath,
-                               QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                   QFileDevice::ExeOwner)) {
+    if (!QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                               QFileDevice::ExeOwner)) {
         qFatal("Failed to set executable permissions on %s", qPrintable(binaryPath));
     }
 #endif
@@ -877,8 +876,8 @@ void VoiceTest::localWhisperTranscriptionAttemptsSubprocessWhenExecutionEnabled(
     QVERIFY(result.executionAttempted);
     QVERIFY(result.status != WhisperTranscriptionStatus::Refused);
     QVERIFY(result.status != WhisperTranscriptionStatus::SafetyBlocked);
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(
-        QStringLiteral("started a controlled subprocess")));
+    QVERIFY(result.traces.join(QStringLiteral(" "))
+                .contains(QStringLiteral("started a controlled subprocess")));
 }
 
 void VoiceTest::nullPiperSynthesisClientRefusesWithoutSideEffects() {
@@ -988,7 +987,8 @@ void VoiceTest::localPiperSynthesisExecutesControlledSubprocessWhenEnabled() {
     const auto binaryPath = dir.filePath(QStringLiteral("piper"));
 #endif
     const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nfor a in \"$@\"; do last=\"$a\"; done\ntouch \"$last\"\nexit 0\n"));
+    QVERIFY(writeFile(
+        binaryPath, "#!/bin/sh\nfor a in \"$@\"; do last=\"$a\"; done\ntouch \"$last\"\nexit 0\n"));
     makeExecutable(binaryPath);
     QVERIFY(writeFile(modelPath, "model"));
 
@@ -1028,8 +1028,8 @@ void VoiceTest::localPiperSynthesisAttemptsSubprocessWhenExecutionEnabled() {
     QVERIFY(result.executionAttempted);
     QVERIFY(result.status != PiperSynthesisStatus::Refused);
     QVERIFY(result.status != PiperSynthesisStatus::SafetyBlocked);
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(
-        QStringLiteral("started a controlled subprocess")));
+    QVERIFY(result.traces.join(QStringLiteral(" "))
+                .contains(QStringLiteral("started a controlled subprocess")));
 }
 
 void VoiceTest::nullPiperTtsClientRefusesWithoutSideEffects() {
@@ -1214,8 +1214,8 @@ void VoiceTest::localPiperTtsClientExecutesControlledSubprocessWhenEnabled() {
 
     LocalPiperTtsClient client;
     const auto result = client.synthesize(
-        PiperTtsRequest{QStringLiteral("hello"), {}, outputPath, true, true, false,
-                        config.timeoutMs},
+        PiperTtsRequest{
+            QStringLiteral("hello"), {}, outputPath, true, true, false, config.timeoutMs},
         config);
 
     QCOMPARE(result.status, PiperTtsStatus::Succeeded);
@@ -1255,7 +1255,8 @@ void VoiceTest::whisperSpeechToTextProviderExecutesControlledSubprocessWhenEnabl
     QVERIFY(result.transcript.contains(QStringLiteral("HELLO WORLD")));
     QVERIFY(result.executionAttempted);
 
-    const auto response = provider.transcribe(VoiceRequest{audioPath, {}, VoiceRuntimeMode::FutureLocal});
+    const auto response =
+        provider.transcribe(VoiceRequest{audioPath, {}, VoiceRuntimeMode::FutureLocal});
     QCOMPARE(response.status, VoiceProviderStatus::MetadataOnly);
     QVERIFY(response.available);
     QVERIFY(response.text.contains(QStringLiteral("HELLO WORLD")));

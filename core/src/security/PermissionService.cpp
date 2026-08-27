@@ -3,15 +3,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/security/PermissionService.h"
-#include <QRegularExpression>
 #include <QDebug>
+#include <QRegularExpression>
 #include <QUuid>
 
 namespace sentinel::core {
 
-PermissionService::PermissionService(QObject* parent)
-    : QObject(parent)
-{
+PermissionService::PermissionService(QObject* parent) : QObject(parent) {
     loadDefaultRules();
 }
 
@@ -47,7 +45,8 @@ bool PermissionService::updateRule(int index, const PermissionRule& rule) {
     return true;
 }
 
-PermissionDecision PermissionService::evaluate(const QString& action, const QString& resource) const {
+PermissionDecision PermissionService::evaluate(const QString& action,
+                                               const QString& resource) const {
     PermissionDecision decision;
 
     // Check agent-specific rules first
@@ -88,7 +87,8 @@ bool PermissionService::requiresApproval(const QString& action, const QString& r
     return decision.requiresApproval;
 }
 
-bool PermissionService::savePermission(const QString& action, const QString& resource, PermissionEffect effect) {
+bool PermissionService::savePermission(const QString& action, const QString& resource,
+                                       PermissionEffect effect) {
     PermissionRule rule;
     rule.action = action;
     rule.resource = resource;
@@ -124,7 +124,8 @@ QString PermissionService::requestPermission(const QString& action, const QStrin
     return requestId;
 }
 
-bool PermissionService::resolvePermission(const QString& requestId, bool allowed, bool alwaysAllow) {
+bool PermissionService::resolvePermission(const QString& requestId, bool allowed,
+                                          bool alwaysAllow) {
     const auto it = m_pendingPermissions.find(requestId);
     if (it == m_pendingPermissions.end()) {
         return false;
@@ -169,7 +170,8 @@ void PermissionService::loadDefaultRules() {
     m_rules.append({"write", "*", PermissionEffect::Ask, "Ask before writing files", true});
 
     // Ask for shell operations
-    m_rules.append({"shell", "*", PermissionEffect::Ask, "Ask before running shell commands", true});
+    m_rules.append(
+        {"shell", "*", PermissionEffect::Ask, "Ask before running shell commands", true});
 
     // Ask for web operations
     m_rules.append({"websearch", "*", PermissionEffect::Ask, "Ask before web search", true});
@@ -187,7 +189,8 @@ void PermissionService::loadDefaultRules() {
     // Deny dangerous operations by default
     m_rules.append({"shell", "rm -rf *", PermissionEffect::Deny, "Deny recursive delete", true});
     m_rules.append({"shell", "sudo *", PermissionEffect::Deny, "Deny sudo operations", true});
-    m_rules.append({"shell", "chmod 777 *", PermissionEffect::Deny, "Deny unsafe permissions", true});
+    m_rules.append(
+        {"shell", "chmod 777 *", PermissionEffect::Deny, "Deny unsafe permissions", true});
 }
 
 bool PermissionService::matchPattern(const QString& pattern, const QString& value) const {
@@ -209,8 +212,9 @@ bool PermissionService::matchPattern(const QString& pattern, const QString& valu
     return regex.match(value).hasMatch();
 }
 
-PermissionEffect PermissionService::findMatchingEffect(const QString& action, const QString& resource,
-                                                       const QList<PermissionRule>& rulesList) const {
+PermissionEffect
+PermissionService::findMatchingEffect(const QString& action, const QString& resource,
+                                      const QList<PermissionRule>& rulesList) const {
     // Find the last matching rule (most specific)
     PermissionEffect lastEffect = PermissionEffect::Ask;
     bool foundMatch = false;

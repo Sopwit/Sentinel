@@ -3,21 +3,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/session/CompactionService.h"
+#include "sentinel/core/chat/ChatMessage.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/session/CompactionPrompt.h"
-#include "sentinel/core/chat/ChatMessage.h"
-#include <QJsonArray>
-#include <QJsonDocument>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QtConcurrentRun>
 
 namespace sentinel::core {
 
-CompactionService::CompactionService(QObject* parent)
-    : QObject(parent)
-{
-}
+CompactionService::CompactionService(QObject* parent) : QObject(parent) {}
 
 CompactionService::~CompactionService() = default;
 
@@ -134,10 +131,9 @@ void CompactionService::clearSummary() {
 }
 
 void CompactionService::compactAsync(QList<ChatMessage>& messages, int currentTokens,
-                                      std::function<void(CompactionResult)> callback) {
-    QFuture<CompactionResult> future = QtConcurrent::run([this, &messages, currentTokens]() {
-        return compact(messages, currentTokens);
-    });
+                                     std::function<void(CompactionResult)> callback) {
+    QFuture<CompactionResult> future = QtConcurrent::run(
+        [this, &messages, currentTokens]() { return compact(messages, currentTokens); });
 
     QFutureWatcher<CompactionResult>* watcher = new QFutureWatcher<CompactionResult>(this);
     connect(watcher, &QFutureWatcher<CompactionResult>::finished, this, [watcher, callback]() {
@@ -159,7 +155,8 @@ int CompactionService::estimateTokens(const QString& text) const {
     return text.length() / 4;
 }
 
-QList<int> CompactionService::selectMessagesToCompact(const QList<ChatMessage>& messages, int preserveRecentCount) const {
+QList<int> CompactionService::selectMessagesToCompact(const QList<ChatMessage>& messages,
+                                                      int preserveRecentCount) const {
     QList<int> indices;
 
     // Compact oldest messages, preserve recent ones
@@ -171,7 +168,8 @@ QList<int> CompactionService::selectMessagesToCompact(const QList<ChatMessage>& 
     return indices;
 }
 
-QString CompactionService::buildCompactionPrompt(const QList<ChatMessage>& messagesToCompact, const QString& previousSummary) const {
+QString CompactionService::buildCompactionPrompt(const QList<ChatMessage>& messagesToCompact,
+                                                 const QString& previousSummary) const {
     QJsonArray messagesArray;
     for (const auto& message : messagesToCompact) {
         QJsonObject msgObj;
@@ -205,7 +203,8 @@ int CompactionService::calculatePreserveCount(int totalMessages, int currentToke
 
     // Calculate based on token ratio
     int targetPreserveTokens = static_cast<int>(currentTokens * m_config.preserveRecentRatio);
-    targetPreserveTokens = qBound(m_config.minPreserveTokens, targetPreserveTokens, m_config.maxPreserveTokens);
+    targetPreserveTokens =
+        qBound(m_config.minPreserveTokens, targetPreserveTokens, m_config.maxPreserveTokens);
 
     // Estimate messages needed for target tokens
     int estimatedTokensPerMessage = currentTokens / totalMessages;
@@ -214,7 +213,8 @@ int CompactionService::calculatePreserveCount(int totalMessages, int currentToke
     }
 
     int preserveCount = targetPreserveTokens / estimatedTokensPerMessage;
-    preserveCount = qMax(2, qMin(preserveCount, totalMessages - 1)); // Keep at least 1 message for compaction
+    preserveCount =
+        qMax(2, qMin(preserveCount, totalMessages - 1)); // Keep at least 1 message for compaction
 
     return preserveCount;
 }

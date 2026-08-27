@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QList>
+#include <QString>
 
 #include <optional>
 
@@ -53,11 +53,9 @@ public:
     virtual std::optional<GitStatus> status(const QString& path) const = 0;
     virtual QString currentBranch(const QString& path) const = 0;
     virtual std::optional<GitDiffSummary> diffSummary(const QString& path) const = 0;
-    virtual Worktree createWorktree(const QString& repositoryPath,
-                                    const QString& branch = {},
+    virtual Worktree createWorktree(const QString& repositoryPath, const QString& branch = {},
                                     const QString& name = {}) = 0;
-    virtual bool removeWorktree(const QString& repositoryPath,
-                                const QString& worktreePath) = 0;
+    virtual bool removeWorktree(const QString& repositoryPath, const QString& worktreePath) = 0;
     virtual QString lastError() const = 0;
 };
 

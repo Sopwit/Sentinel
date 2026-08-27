@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/compaction/StructuredCompactionSummary.h"
-#include <QStringList>
 #include <QRegularExpression>
+#include <QStringList>
 
 namespace sentinel::core {
 
-StructuredSummary StructuredCompactionSummary::buildSummary(const QString& conversationText, const StructuredSummary& previousSummary) const {
+StructuredSummary
+StructuredCompactionSummary::buildSummary(const QString& conversationText,
+                                          const StructuredSummary& previousSummary) const {
     StructuredSummary summary;
 
     summary.objective = extractObjective(conversationText);
@@ -41,22 +43,29 @@ StructuredSummary StructuredCompactionSummary::parseSummary(const QString& markd
     StructuredSummary summary;
     summary.rawMarkdown = markdown;
 
-    QRegularExpression objectiveRx("## Objective\\n(.+?)(?=\\n##|$)", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression objectiveRx("## Objective\\n(.+?)(?=\\n##|$)",
+                                   QRegularExpression::DotMatchesEverythingOption);
     QRegularExpressionMatch m = objectiveRx.match(markdown);
-    if (m.hasMatch()) summary.objective = m.captured(1).trimmed();
+    if (m.hasMatch())
+        summary.objective = m.captured(1).trimmed();
 
-    QRegularExpression detailsRx("## Important Details\\n(.+?)(?=\\n##|$)", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression detailsRx("## Important Details\\n(.+?)(?=\\n##|$)",
+                                 QRegularExpression::DotMatchesEverythingOption);
     m = detailsRx.match(markdown);
-    if (m.hasMatch()) summary.importantDetails = m.captured(1).trimmed();
+    if (m.hasMatch())
+        summary.importantDetails = m.captured(1).trimmed();
 
-    QRegularExpression filesRx("## Relevant Files\\n(.+?)(?=\\n##|$)", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression filesRx("## Relevant Files\\n(.+?)(?=\\n##|$)",
+                               QRegularExpression::DotMatchesEverythingOption);
     m = filesRx.match(markdown);
-    if (m.hasMatch()) summary.relevantFiles = m.captured(1).trimmed();
+    if (m.hasMatch())
+        summary.relevantFiles = m.captured(1).trimmed();
 
     return summary;
 }
 
-QString StructuredCompactionSummary::incrementalUpdate(const StructuredSummary& previous, const QString& newConversation) const {
+QString StructuredCompactionSummary::incrementalUpdate(const StructuredSummary& previous,
+                                                       const QString& newConversation) const {
     StructuredSummary updated = previous;
     updated.importantDetails += "\n" + extractDetails(newConversation);
     updated.relevantFiles += "\n" + extractFiles(newConversation);
@@ -80,13 +89,15 @@ QString StructuredCompactionSummary::extractObjective(const QString& text) const
             return trimmed.section(':', 1).trimmed();
         }
     }
-    if (!lines.isEmpty()) return lines.first().trimmed();
+    if (!lines.isEmpty())
+        return lines.first().trimmed();
     return "No objective identified";
 }
 
 QString StructuredCompactionSummary::extractDetails(const QString& text) const {
     QString details;
-    QRegularExpression errorRx("(error|exception|failed|failure)", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression errorRx("(error|exception|failed|failure)",
+                               QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatchIterator it = errorRx.globalMatch(text);
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
@@ -98,7 +109,8 @@ QString StructuredCompactionSummary::extractDetails(const QString& text) const {
 }
 
 QString StructuredCompactionSummary::extractFiles(const QString& text) const {
-    QRegularExpression fileRx("[\\/\\w\\.\\-]+\\.(cpp|h|hpp|c|py|js|ts|json|yaml|yml|md|txt|cmake|toml)");
+    QRegularExpression fileRx(
+        "[\\/\\w\\.\\-]+\\.(cpp|h|hpp|c|py|js|ts|json|yaml|yml|md|txt|cmake|toml)");
     QSet<QString> files;
     QRegularExpressionMatchIterator it = fileRx.globalMatch(text);
     while (it.hasNext()) {
@@ -120,7 +132,8 @@ QString StructuredCompactionSummary::extractCommands(const QString& text) const 
 }
 
 QString StructuredCompactionSummary::extractErrors(const QString& text) const {
-    QRegularExpression errorRx("(error|fatal|panic|failed)[^\\n]*", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression errorRx("(error|fatal|panic|failed)[^\\n]*",
+                               QRegularExpression::CaseInsensitiveOption);
     QStringList errors;
     QRegularExpressionMatchIterator it = errorRx.globalMatch(text);
     while (it.hasNext()) {

@@ -9,47 +9,47 @@
 #include "sentinel/core/agent/AgentPipelineResult.h"
 #include "sentinel/core/agent/AgentRuntimeContext.h"
 #include "sentinel/core/agent/AgentTaskRuntime.h"
-#include "sentinel/core/chat/AudioFileSession.h"
-#include "sentinel/core/chat/ChatSession.h"
-#include "sentinel/core/app/ContextAssembly.h"
-#include "sentinel/core/chat/ConversationHistoryMetadata.h"
-#include "sentinel/core/chat/ConversationSession.h"
-#include "sentinel/core/chat/ConversationStateGraph.h"
-#include "sentinel/core/security/CredentialStore.h"
-#include "sentinel/core/runtime/ExecutionLifecycle.h"
 #include "sentinel/core/agent/IAgentRegistry.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
-#include "sentinel/core/security/IApprovalPolicy.h"
+#include "sentinel/core/app/ContextAssembly.h"
+#include "sentinel/core/app/ITaskPlanner.h"
+#include "sentinel/core/app/OrchestrationDiagnostics.h"
+#include "sentinel/core/app/OrchestrationSnapshot.h"
+#include "sentinel/core/chat/AudioFileSession.h"
+#include "sentinel/core/chat/ChatSession.h"
+#include "sentinel/core/chat/ConversationHistoryMetadata.h"
+#include "sentinel/core/chat/ConversationSession.h"
+#include "sentinel/core/chat/ConversationStateGraph.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
-#include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/chat/IConversationStore.h"
-#include "sentinel/core/memory/IMemoryCatalog.h"
+#include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
+#include "sentinel/core/memory/IMemoryCatalog.h"
+#include "sentinel/core/memory/MemoryCandidate.h"
+#include "sentinel/core/memory/MemoryRecall.h"
+#include "sentinel/core/memory/SemanticRetrieval.h"
 #include "sentinel/core/model/IModelRouter.h"
 #include "sentinel/core/model/IProviderCatalog.h"
-#include "sentinel/core/security/ISandboxPolicy.h"
-#include "sentinel/core/app/ITaskPlanner.h"
+#include "sentinel/core/model/ModelManagement.h"
+#include "sentinel/core/model/ModelRegistry.h"
+#include "sentinel/core/runtime/ExecutionLifecycle.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/LocalRuntime.h"
 #include "sentinel/core/runtime/LocalRuntimeSession.h"
-#include "sentinel/core/memory/MemoryCandidate.h"
-#include "sentinel/core/memory/MemoryRecall.h"
-#include "sentinel/core/model/ModelManagement.h"
-#include "sentinel/core/model/ModelRegistry.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
-#include "sentinel/core/app/OrchestrationDiagnostics.h"
-#include "sentinel/core/app/OrchestrationSnapshot.h"
-#include "sentinel/core/voice/PiperTts.h"
-#include "sentinel/core/security/ProviderCredentials.h"
 #include "sentinel/core/runtime/RuntimeCapabilities.h"
 #include "sentinel/core/runtime/RuntimeIntegration.h"
 #include "sentinel/core/runtime/RuntimePermissions.h"
 #include "sentinel/core/runtime/RuntimePipeline.h"
 #include "sentinel/core/runtime/RuntimeProvider.h"
 #include "sentinel/core/runtime/RuntimeSafety.h"
-#include "sentinel/core/memory/SemanticRetrieval.h"
+#include "sentinel/core/security/CredentialStore.h"
+#include "sentinel/core/security/IApprovalPolicy.h"
+#include "sentinel/core/security/ISandboxPolicy.h"
+#include "sentinel/core/security/ProviderCredentials.h"
+#include "sentinel/core/voice/PiperTts.h"
 #include "sentinel/core/voice/Voice.h"
 #include "sentinel/core/voice/WhisperTranscription.h"
 
@@ -2089,6 +2089,7 @@ private:
                selectedRuntimeProvider_ == QStringLiteral("groq") ||
                selectedRuntimeProvider_ == QStringLiteral("mistral");
     }
+    bool hasActiveLocalInferenceRuntime() const;
     LMStudioConfig currentCloudOrLMStudioConfig() const;
     ILocalInferenceWorker* activeLocalInferenceWorker() const;
     void updatePiperTtsProviderConfig();
@@ -2128,7 +2129,8 @@ private:
     SemanticProviderMode selectedSemanticProviderMode_ = SemanticProviderMode::Disabled;
     QString semanticEmbeddingModel_ = QStringLiteral("nomic-embed-text");
     EmbeddingProviderStatus semanticEmbeddingStatus_ = EmbeddingProviderStatus::NotConfigured;
-    QString semanticEmbeddingSummary_ = QStringLiteral("Semantic embedding provider is not configured.");
+    QString semanticEmbeddingSummary_ =
+        QStringLiteral("Semantic embedding provider is not configured.");
     SemanticCandidatePolicy semanticCandidatePolicy_;
     HybridRetrievalPolicy hybridRetrievalPolicy_;
     SemanticArbitrationPolicy semanticArbitrationPolicy_;
@@ -2149,7 +2151,7 @@ private:
     AgentActivityLog agentActivityLog_;
     QString selectedLocalModel_;
     QString selectedRuntimeProvider_ = QStringLiteral("ollama");
-    bool localChatInferenceEnabled_ = true;
+    bool localChatInferenceEnabled_ = false;
     bool agentAutonomousMode_ = false;
     QString pendingCommand_;
     AgentLoopState activeAgentSession_;

@@ -91,7 +91,11 @@ QString DiffViewerService::formatDiff(const Diff& diff, DiffViewMode mode) const
     return result;
 }
 
-void DiffViewerService::setViewMode(DiffViewMode mode) { m_viewMode = mode; }
-DiffViewMode DiffViewerService::viewMode() const { return m_viewMode; }
+void DiffViewerService::setViewMode(DiffViewMode mode) {
+    m_viewMode = mode;
+}
+DiffViewMode DiffViewerService::viewMode() const {
+    return m_viewMode;
+}
 
 } // namespace sentinel::core

@@ -55,8 +55,8 @@ private slots:
     }
 
     void parseDuckDuckGoResponseExtractsResults() {
-        const auto response = WebSearchTool::parseDuckDuckGoResponse(
-            kDuckDuckGoSampleHtml.toUtf8(), 5);
+        const auto response =
+            WebSearchTool::parseDuckDuckGoResponse(kDuckDuckGoSampleHtml.toUtf8(), 5);
 
         QCOMPARE(response.results.size(), 2);
         QVERIFY(response.success);
@@ -75,8 +75,8 @@ private slots:
     }
 
     void parseDuckDuckGoResponseRespectsLimit() {
-        const auto response = WebSearchTool::parseDuckDuckGoResponse(
-            kDuckDuckGoSampleHtml.toUtf8(), 1);
+        const auto response =
+            WebSearchTool::parseDuckDuckGoResponse(kDuckDuckGoSampleHtml.toUtf8(), 1);
 
         QCOMPARE(response.results.size(), 1);
         QCOMPARE(response.results.at(0).url, QStringLiteral("https://example.com/docs"));

@@ -14,8 +14,7 @@ using sentinel::core::ChatRole;
 
 ChatViewModel::ChatViewModel(sentinel::core::IChatProvider* provider,
                              sentinel::core::IChatHistoryStore* historyStore, QObject* parent)
-    : QObject(parent), m_provider(provider), m_historyStore(historyStore) {
-}
+    : QObject(parent), m_provider(provider), m_historyStore(historyStore) {}
 
 void ChatViewModel::setPrompt(const QString& prompt) {
     if (m_prompt != prompt) {
@@ -54,7 +53,7 @@ void ChatViewModel::sendPrompt() {
 
     if (!m_provider) {
         Q_EMIT messageReceived(QStringLiteral("assistant"),
-                              QStringLiteral("No chat provider is configured."));
+                               QStringLiteral("No chat provider is configured."));
         return;
     }
 
@@ -62,9 +61,9 @@ void ChatViewModel::sendPrompt() {
     const auto reply = m_provider->sendMessage(text);
     setIsStreaming(false);
 
-    const auto assistantText =
-        reply.success ? reply.message
-                      : QStringLiteral("Provider error: %1").arg(reply.errorMessage);
+    const auto assistantText = reply.success
+                                   ? reply.message
+                                   : QStringLiteral("Provider error: %1").arg(reply.errorMessage);
     Q_EMIT messageReceived(QStringLiteral("assistant"), assistantText);
 
     if (m_historyStore) {

@@ -1,6 +1,6 @@
 #include "sentinel/core/config/ConfigResolver.h"
-#include <QTemporaryDir>
 #include <QFile>
+#include <QTemporaryDir>
 #include <QtTest>
 
 using sentinel::core::ConfigResolver;
@@ -22,8 +22,10 @@ void ConfigResolverTest::mergesLayersAndReportsSources() {
     const auto resolved = ConfigResolver::resolve(
         dir.path(), QJsonObject{{"provider", QJsonObject{{"endpoint", "local"}}}},
         QJsonObject{{"policy", QJsonObject{{"allow", true}}}});
-    QCOMPARE(resolved.value.value("provider").toObject().value("endpoint").toString(), QStringLiteral("local"));
-    QCOMPARE(resolved.value.value("provider").toObject().value("model").toString(), QStringLiteral("local"));
+    QCOMPARE(resolved.value.value("provider").toObject().value("endpoint").toString(),
+             QStringLiteral("local"));
+    QCOMPARE(resolved.value.value("provider").toObject().value("model").toString(),
+             QStringLiteral("local"));
     QVERIFY(resolved.value.value("policy").toObject().value("allow").toBool());
     QVERIFY(resolved.errors.isEmpty());
     QVERIFY(!resolved.sources.isEmpty());

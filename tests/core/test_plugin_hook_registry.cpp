@@ -17,7 +17,8 @@ void PluginHookRegistryTest::registersAndInvokes() {
         return output;
     }));
     QVERIFY(registry.contains(QStringLiteral("transform")));
-    QVERIFY(registry.invoke(QStringLiteral("transform"), {}).value(QStringLiteral("done")).toBool());
+    QVERIFY(
+        registry.invoke(QStringLiteral("transform"), {}).value(QStringLiteral("done")).toBool());
     QVERIFY(registry.unregisterHook(QStringLiteral("transform")));
     QVERIFY(!registry.contains(QStringLiteral("transform")));
 }

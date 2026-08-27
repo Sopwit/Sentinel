@@ -59,16 +59,15 @@ void DaemonIpcServer::handleNewConnection() {
     }
 }
 
-QByteArray DaemonIpcServer::buildStatusResponse(
-    sentinel::core::ApplicationController* controller) const {
+QByteArray
+DaemonIpcServer::buildStatusResponse(sentinel::core::ApplicationController* controller) const {
     QJsonObject root;
     root.insert(QStringLiteral("status"), QStringLiteral("ok"));
     root.insert(QStringLiteral("service"), QStringLiteral("sentinel-daemon"));
 
     if (!controller) {
         root.insert(QStringLiteral("controllerAvailable"), false);
-        root.insert(QStringLiteral("ollamaHealth"),
-                    QStringLiteral("Controller unavailable"));
+        root.insert(QStringLiteral("ollamaHealth"), QStringLiteral("Controller unavailable"));
         return QJsonDocument(root).toJson(QJsonDocument::Compact) + '\n';
     }
 

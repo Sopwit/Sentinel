@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -22,10 +22,12 @@ struct StructuredSummary {
 
 class StructuredCompactionSummary {
 public:
-    StructuredSummary buildSummary(const QString& conversationText, const StructuredSummary& previousSummary = {}) const;
+    StructuredSummary buildSummary(const QString& conversationText,
+                                   const StructuredSummary& previousSummary = {}) const;
     QString formatMarkdown(const StructuredSummary& summary) const;
     StructuredSummary parseSummary(const QString& markdown) const;
-    QString incrementalUpdate(const StructuredSummary& previous, const QString& newConversation) const;
+    QString incrementalUpdate(const StructuredSummary& previous,
+                              const QString& newConversation) const;
     int estimateTokens(const QString& text) const;
     int preserveRecentTokens() const;
 

@@ -20,8 +20,8 @@
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0601
 #endif
-#include <windows.h>
 #include <shellapi.h>
+#include <windows.h>
 #endif
 
 namespace sentinel::desktop {
@@ -37,7 +37,7 @@ QString preferredUiFontFamily() {
         QStringLiteral("Helvetica Neue"), QStringLiteral("Noto Sans"), QStringLiteral("Arial")};
 #else
     const QStringList preferredFamilies = {
-        QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"), QStringLiteral("Ubuntu"),
+        QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),    QStringLiteral("Ubuntu"),
         QStringLiteral("Segoe UI"),  QStringLiteral("Helvetica Neue"), QStringLiteral("Arial")};
 #endif
 
@@ -68,11 +68,9 @@ void configureDefaultUiFont() {
 QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
     const auto configured = settings.appLanguage();
     const auto systemLanguage = QLocale::system().name().left(2).toLower();
-    const QStringList supported = {
-        QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
-        QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
-        QStringLiteral("ja"), QStringLiteral("ar")
-    };
+    const QStringList supported = {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
+                                   QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
+                                   QStringLiteral("ja"), QStringLiteral("ar")};
     if (supported.contains(configured)) {
         return configured;
     }
@@ -99,12 +97,10 @@ void initializePlatformIntegrations(const QString& crashDumpPath) {
 #if defined(Q_OS_WIN)
     sentinel::core::registerSentinelProtocol();
 
-    using SetCurrentProcessExplicitAppUserModelIDProc =
-        HRESULT(WINAPI*)(PCWSTR AppID);
+    using SetCurrentProcessExplicitAppUserModelIDProc = HRESULT(WINAPI*)(PCWSTR AppID);
     auto setAppUserModelId =
-        reinterpret_cast<SetCurrentProcessExplicitAppUserModelIDProc>(
-            ::GetProcAddress(::GetModuleHandleW(L"shell32.dll"),
-                             "SetCurrentProcessExplicitAppUserModelID"));
+        reinterpret_cast<SetCurrentProcessExplicitAppUserModelIDProc>(::GetProcAddress(
+            ::GetModuleHandleW(L"shell32.dll"), "SetCurrentProcessExplicitAppUserModelID"));
     if (setAppUserModelId) {
         HRESULT hr = setAppUserModelId(L"dev.sentinel.Sentinel");
         if (FAILED(hr)) {
@@ -115,9 +111,9 @@ void initializePlatformIntegrations(const QString& crashDumpPath) {
     }
 
     HKEY hKey;
-    LSTATUS regStatus = RegOpenKeyExW(HKEY_CURRENT_USER,
-                                       L"Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                                       0, KEY_SET_VALUE, &hKey);
+    LSTATUS regStatus =
+        RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0,
+                      KEY_SET_VALUE, &hKey);
     if (regStatus == ERROR_SUCCESS) {
         const QString appPath = QCoreApplication::applicationFilePath();
         const std::wstring appPathW = appPath.toStdWString();

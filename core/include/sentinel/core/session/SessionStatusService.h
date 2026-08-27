@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/session/ISessionStatusService.h"
-#include <QObject>
 #include <QMap>
 #include <QMutex>
+#include <QObject>
 
 namespace sentinel::core {
 

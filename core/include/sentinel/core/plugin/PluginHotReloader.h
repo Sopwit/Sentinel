@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
 #include <QFileSystemWatcher>
 #include <QMap>
+#include <QObject>
+#include <QString>
 #include <QTimer>
 #include <memory>
 

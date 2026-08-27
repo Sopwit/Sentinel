@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/notification/IShortcutService.h"
-#include <QObject>
 #include <QList>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -17,7 +17,8 @@ public:
     explicit ShortcutService(QObject* parent = nullptr);
     ~ShortcutService() override;
 
-    void registerShortcut(const QString& action, const QString& keys, const QString& description) override;
+    void registerShortcut(const QString& action, const QString& keys,
+                          const QString& description) override;
     void bindCallback(const QString& action, std::function<void()> callback) override;
     void triggerAction(const QString& action) override;
     bool processKeys(const QString& keySequence) override;

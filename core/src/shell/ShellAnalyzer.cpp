@@ -13,7 +13,8 @@ ShellCommandInfo ShellAnalyzer::analyze(const QString& command) const {
     info.command = command;
 
     QStringList tokens = command.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-    if (tokens.isEmpty()) return info;
+    if (tokens.isEmpty())
+        return info;
 
     info.subcommands = tokens.first().split('|');
 
@@ -34,7 +35,8 @@ ShellCommandInfo ShellAnalyzer::analyze(const QString& command) const {
 
 bool ShellAnalyzer::isDestructiveCommand(const QString& command) const {
     QStringList tokens = command.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-    if (tokens.isEmpty()) return false;
+    if (tokens.isEmpty())
+        return false;
 
     QString cmd = tokens.first().toLower();
     cmd = QFileInfo(cmd).fileName();
@@ -56,7 +58,8 @@ QStringList ShellAnalyzer::extractFilePaths(const QString& command) const {
     return paths;
 }
 
-bool ShellAnalyzer::accessesExternalDirectory(const QString& command, const QString& workingDir) const {
+bool ShellAnalyzer::accessesExternalDirectory(const QString& command,
+                                              const QString& workingDir) const {
     QStringList paths = extractFilePaths(command);
     for (const auto& path : paths) {
         if (!isWithinDirectory(resolvePath(path, workingDir), workingDir)) {
@@ -71,7 +74,8 @@ bool ShellAnalyzer::requiresPermission(const ShellCommandInfo& info) const {
 }
 
 QString ShellAnalyzer::resolvePath(const QString& path, const QString& workingDir) const {
-    if (QDir::isAbsolutePath(path)) return path;
+    if (QDir::isAbsolutePath(path))
+        return path;
     return QDir(workingDir).filePath(path);
 }
 
@@ -81,14 +85,14 @@ bool ShellAnalyzer::isWithinDirectory(const QString& path, const QString& direct
 }
 
 QStringList ShellAnalyzer::destructiveCommands() const {
-    return {"rm", "rmdir", "rmrf", "unlink", "shred", "dd", "mkfs", "format",
-            "del", "erase", "rd", "chmod", "chown", "chgrp", "kill", "killall",
-            "shutdown", "reboot", "init", "systemctl"};
+    return {"rm",     "rmdir",   "rmrf",     "unlink", "shred", "dd",       "mkfs",
+            "format", "del",     "erase",    "rd",     "chmod", "chown",    "chgrp",
+            "kill",   "killall", "shutdown", "reboot", "init",  "systemctl"};
 }
 
 QStringList ShellAnalyzer::networkCommands() const {
-    return {"curl", "wget", "ssh", "scp", "rsync", "git", "npm", "pip",
-            "docker", "kubectl", "ansible", "telnet", "nc", "ncat"};
+    return {"curl", "wget",   "ssh",     "scp",     "rsync",  "git", "npm",
+            "pip",  "docker", "kubectl", "ansible", "telnet", "nc",  "ncat"};
 }
 
 } // namespace sentinel::core

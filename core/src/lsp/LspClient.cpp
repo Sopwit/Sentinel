@@ -4,17 +4,14 @@
 
 #include "sentinel/core/lsp/LspClient.h"
 #include <QCoreApplication>
-#include <QJsonDocument>
-#include <QJsonArray>
 #include <QDebug>
+#include <QJsonArray>
+#include <QJsonDocument>
 
 namespace sentinel::core {
 
 LspClient::LspClient(const QString& serverName, QObject* parent)
-    : QObject(parent)
-    , m_serverName(serverName)
-{
-}
+    : QObject(parent), m_serverName(serverName) {}
 
 LspClient::~LspClient() {
     stop();
@@ -27,10 +24,10 @@ bool LspClient::start(const QString& command, const QStringList& arguments) {
 
     m_process = std::make_unique<QProcess>();
 
-    connect(m_process.get(), &QProcess::readyReadStandardOutput,
-            this, &LspClient::onProcessReadyRead);
-    connect(m_process.get(), QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, &LspClient::onProcessFinished);
+    connect(m_process.get(), &QProcess::readyReadStandardOutput, this,
+            &LspClient::onProcessReadyRead);
+    connect(m_process.get(), QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+            &LspClient::onProcessFinished);
 
     m_process->start(command, arguments);
     if (!m_process->waitForStarted(5000)) {
@@ -107,7 +104,7 @@ QJsonObject LspClient::sendRequest(const QString& method, const QJsonObject& par
 }
 
 void LspClient::sendRequestAsync(const QString& method, const QJsonObject& params,
-                                  std::function<void(const QJsonObject&)> callback) {
+                                 std::function<void(const QJsonObject&)> callback) {
     if (!isRunning()) {
         if (callback) {
             callback(QJsonObject{{"error", QJsonObject{{"message", "Server not running"}}}});
@@ -160,18 +157,13 @@ void LspClient::initialize(const QString& rootPath) {
     params["processId"] = QCoreApplication::applicationPid();
     params["rootUri"] = QStringLiteral("file://%1").arg(rootPath);
     params["capabilities"] = QJsonObject{
-        {"textDocument", QJsonObject{
-            {"synchronization", QJsonObject{
-                {"didOpen", true},
-                {"didChange", true},
-                {"didClose", true}
-            }},
-            {"definition", QJsonObject{{"dynamicRegistration", false}}},
-            {"references", QJsonObject{{"dynamicRegistration", false}}},
-            {"hover", QJsonObject{{"dynamicRegistration", false}}},
-            {"documentSymbol", QJsonObject{{"dynamicRegistration", false}}}
-        }}
-    };
+        {"textDocument",
+         QJsonObject{{"synchronization",
+                      QJsonObject{{"didOpen", true}, {"didChange", true}, {"didClose", true}}},
+                     {"definition", QJsonObject{{"dynamicRegistration", false}}},
+                     {"references", QJsonObject{{"dynamicRegistration", false}}},
+                     {"hover", QJsonObject{{"dynamicRegistration", false}}},
+                     {"documentSymbol", QJsonObject{{"dynamicRegistration", false}}}}}};
 
     sendRequest("initialize", params);
 }

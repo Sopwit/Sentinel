@@ -16,7 +16,8 @@ Workspace WorkspaceManagerService::create(const QString& name, const QString& pa
     ws.isActive = true;
     m_workspaces.append(ws);
     m_currentName = name;
-    if (m_changedCallback) m_changedCallback(name);
+    if (m_changedCallback)
+        m_changedCallback(name);
     return ws;
 }
 
@@ -35,11 +36,14 @@ bool WorkspaceManagerService::switchTo(const QString& name) {
         ws.isActive = (ws.name == name);
     }
     m_currentName = name;
-    if (m_changedCallback) m_changedCallback(name);
+    if (m_changedCallback)
+        m_changedCallback(name);
     return true;
 }
 
-QList<Workspace> WorkspaceManagerService::list() const { return m_workspaces; }
+QList<Workspace> WorkspaceManagerService::list() const {
+    return m_workspaces;
+}
 
 std::optional<Workspace> WorkspaceManagerService::current() const {
     return find(m_currentName);
@@ -47,7 +51,8 @@ std::optional<Workspace> WorkspaceManagerService::current() const {
 
 std::optional<Workspace> WorkspaceManagerService::find(const QString& name) const {
     for (const auto& ws : m_workspaces) {
-        if (ws.name == name) return ws;
+        if (ws.name == name)
+            return ws;
     }
     return std::nullopt;
 }

@@ -18,7 +18,9 @@ void AsyncQueue::enqueue(AsyncTask task) {
     processNext();
 }
 
-void AsyncQueue::setMaxConcurrent(int max) { m_maxConcurrent = max; }
+void AsyncQueue::setMaxConcurrent(int max) {
+    m_maxConcurrent = max;
+}
 
 int AsyncQueue::pendingCount() const {
     QMutexLocker locker(&m_mutex);
@@ -37,7 +39,8 @@ void AsyncQueue::clear() {
 
 void AsyncQueue::processNext() {
     if (m_running >= m_maxConcurrent || m_queue.isEmpty()) {
-        if (m_queue.isEmpty() && m_running == 0) emit queueEmpty();
+        if (m_queue.isEmpty() && m_running == 0)
+            emit queueEmpty();
         return;
     }
 
@@ -46,7 +49,10 @@ void AsyncQueue::processNext() {
     emit taskStarted();
 
     QtConcurrent::run([this, task]() {
-        try { task(); } catch (...) {}
+        try {
+            task();
+        } catch (...) {
+        }
         QMutexLocker locker(&m_mutex);
         m_running--;
         emit taskCompleted();

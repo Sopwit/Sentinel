@@ -15,12 +15,18 @@ bool RemoteConfigService::fetchConfig(const QString& url) {
     return true;
 }
 
-RemoteConfig RemoteConfigService::config() const { return m_config; }
+RemoteConfig RemoteConfigService::config() const {
+    return m_config;
+}
 bool RemoteConfigService::isStale() const {
     return m_config.fetchedAt.secsTo(QDateTime::currentDateTime()) > m_refreshInterval;
 }
-void RemoteConfigService::setAutoRefresh(bool enabled) { m_autoRefresh = enabled; }
-void RemoteConfigService::setRefreshInterval(int seconds) { m_refreshInterval = seconds; }
+void RemoteConfigService::setAutoRefresh(bool enabled) {
+    m_autoRefresh = enabled;
+}
+void RemoteConfigService::setRefreshInterval(int seconds) {
+    m_refreshInterval = seconds;
+}
 
 bool RemoteConfigService::featureEnabled(const QString& feature) const {
     return m_config.features[feature].toBool();

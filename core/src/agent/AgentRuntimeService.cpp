@@ -177,8 +177,7 @@ AgentPlanRecord AgentPlanRegistry::previewPlan(
     }
 
     QStringList steps{
-        QStringLiteral(
-            "Classify goal for %1 and identify the tools required for execution.")
+        QStringLiteral("Classify goal for %1 and identify the tools required for execution.")
             .arg(agent.displayName),
         QStringLiteral("Check selected profile metadata: %1 / %2.")
             .arg(profile.name, profile.readiness),
@@ -234,19 +233,17 @@ QList<AgentRecord> AgentRuntimeService::agents(const QString& defaultPermissionS
         QStringList toolAvailabilities;
         for (const auto& toolId : toolIds) {
             const auto tool = metadataForTool(toolId, toolGateway);
-            toolAvailabilities.append(QStringLiteral("%1 / %2")
-                                          .arg(tool.displayName,
-                                               toolExecutionAvailabilityName(tool.availability)));
+            toolAvailabilities.append(QStringLiteral("%1 / %2").arg(
+                tool.displayName, toolExecutionAvailabilityName(tool.availability)));
         }
 
-        agent.capabilitySummary = QStringLiteral(
-            "%1 Tools: %2. Profile: %3 / %4. Workspace: %5 / %6.")
-                                      .arg(agent.capabilitySummary,
-                                           toolAvailabilities.isEmpty()
-                                               ? QStringLiteral("none")
-                                               : toolAvailabilities.join(QStringLiteral(", ")))
-                                      .arg(profile.name, profile.readiness)
-                                      .arg(workspace.name, workspaceReadiness.status);
+        agent.capabilitySummary =
+            QStringLiteral("%1 Tools: %2. Profile: %3 / %4. Workspace: %5 / %6.")
+                .arg(agent.capabilitySummary, toolAvailabilities.isEmpty()
+                                                  ? QStringLiteral("none")
+                                                  : toolAvailabilities.join(QStringLiteral(", ")))
+                .arg(profile.name, profile.readiness)
+                .arg(workspace.name, workspaceReadiness.status);
     }
     return records;
 }

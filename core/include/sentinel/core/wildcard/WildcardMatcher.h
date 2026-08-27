@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QRegularExpression>
+#include <QString>
 
 namespace sentinel::core {
 

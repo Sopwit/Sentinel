@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/ide/IdeIntegrationService.h"
-#include <QProcess>
 #include <QDir>
+#include <QProcess>
 #include <QStandardPaths>
 
 namespace sentinel::core {
@@ -19,7 +19,8 @@ IdeIntegrationService::IdeIntegrationService() {
 
 IdeInfo IdeIntegrationService::detectIde() const {
     IdeInfo info = detectFromEnvironment();
-    if (info.detected) return info;
+    if (info.detected)
+        return info;
     return detectFromLockFiles();
 }
 
@@ -32,7 +33,8 @@ QString IdeIntegrationService::ideName() const {
 }
 
 bool IdeIntegrationService::installExtension(const QString& ideName) const {
-    if (!m_supportedIdes.contains(ideName)) return false;
+    if (!m_supportedIdes.contains(ideName))
+        return false;
 
     const IdeInfo& info = m_supportedIdes[ideName];
     QProcess process;
@@ -41,9 +43,13 @@ bool IdeIntegrationService::installExtension(const QString& ideName) const {
     return process.exitCode() == 0;
 }
 
-QMap<QString, IdeInfo> IdeIntegrationService::supportedIdes() const { return m_supportedIdes; }
+QMap<QString, IdeInfo> IdeIntegrationService::supportedIdes() const {
+    return m_supportedIdes;
+}
 
-void IdeIntegrationService::setDetectedIde(const QString& name) { m_detectedIde = name; }
+void IdeIntegrationService::setDetectedIde(const QString& name) {
+    m_detectedIde = name;
+}
 
 IdeInfo IdeIntegrationService::detectFromEnvironment() const {
     QString termProgram = qgetenv("TERM_PROGRAM");

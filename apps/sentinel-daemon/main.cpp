@@ -11,7 +11,8 @@
 
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
-    QCoreApplication::setApplicationName(sentinel::core::AppMetadata::displayName() + QStringLiteral(" Daemon"));
+    QCoreApplication::setApplicationName(sentinel::core::AppMetadata::displayName() +
+                                         QStringLiteral(" Daemon"));
     QCoreApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
     QCoreApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
 

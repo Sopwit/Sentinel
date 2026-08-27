@@ -6,16 +6,16 @@
 
 #include "sentinel/core/plugin/IPluginContext.h"
 #include "sentinel/core/plugin/PluginPermissions.h"
-#include <QString>
 #include <QJsonObject>
 #include <QMap>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {
 class IToolRegistry;
 class IMemoryStore;
 class IProviderCatalog;
-}
+} // namespace sentinel::core
 
 namespace sentinel::core::plugin {
 
@@ -23,11 +23,8 @@ class PluginContext : public IPluginContext {
 public:
     using LoggerCallback = std::function<void(const QString& level, const QString& message)>;
 
-    PluginContext(QString pluginId,
-                  QString coreVersion,
-                  QString dataDir,
-                  PluginPermissions permissions,
-                  QJsonObject config = {},
+    PluginContext(QString pluginId, QString coreVersion, QString dataDir,
+                  PluginPermissions permissions, QJsonObject config = {},
                   LoggerCallback logger = nullptr);
 
     QString coreVersion() const override;

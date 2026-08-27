@@ -7,7 +7,8 @@ namespace sentinel::core {
 class Base64Url final {
 public:
     static QByteArray encode(const QByteArray& input) {
-        QByteArray result = input.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+        QByteArray result =
+            input.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
         return result;
     }
 

@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/patch/PatchParser.h"
-#include <QFile>
 #include <QDir>
+#include <QFile>
 #include <QTextStream>
 
 namespace sentinel::core {

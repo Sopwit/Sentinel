@@ -5,10 +5,10 @@
 #pragma once
 
 #include "sentinel/core/mcp/IMcpService.h"
+#include <QMap>
+#include <QNetworkAccessManager>
 #include <QObject>
 #include <QProcess>
-#include <QNetworkAccessManager>
-#include <QMap>
 #include <QTimer>
 #include <memory>
 
@@ -40,7 +40,8 @@ public:
     McpConnectionState connectionState(const QString& serverName) const override;
 
     QList<McpToolDefinition> tools(const QString& serverName = QString()) const override;
-    QJsonObject callTool(const QString& serverName, const QString& toolName, const QJsonObject& arguments = {}) override;
+    QJsonObject callTool(const QString& serverName, const QString& toolName,
+                         const QJsonObject& arguments = {}) override;
 
     bool connectToAll() override;
     void disconnectFromAll() override;
@@ -58,7 +59,8 @@ private slots:
 
 private:
     // JSON-RPC communication
-    QJsonObject sendJsonRpc(const QString& serverName, const QString& method, const QJsonObject& params = {});
+    QJsonObject sendJsonRpc(const QString& serverName, const QString& method,
+                            const QJsonObject& params = {});
     void handleJsonRpcResponse(const QString& serverName, const QJsonObject& response);
 
     // Server operations

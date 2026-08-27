@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <QMap>
 #include <QString>
 #include <QStringList>
-#include <QMap>
 
 namespace sentinel::core {
 

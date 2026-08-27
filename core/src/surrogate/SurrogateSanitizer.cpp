@@ -30,7 +30,8 @@ QByteArray SurrogateSanitizer::sanitize(const QByteArray& input) {
 
 bool SurrogateSanitizer::containsSurrogates(const QString& input) {
     for (const QChar& c : input) {
-        if (c.isHighSurrogate() || c.isLowSurrogate()) return true;
+        if (c.isHighSurrogate() || c.isLowSurrogate())
+            return true;
     }
     return false;
 }
@@ -39,7 +40,8 @@ bool SurrogateSanitizer::isValidUtf16(const QString& input) {
     for (int i = 0; i < input.size(); ++i) {
         QChar c = input[i];
         if (c.isHighSurrogate()) {
-            if (i + 1 >= input.size() || !input[i + 1].isLowSurrogate()) return false;
+            if (i + 1 >= input.size() || !input[i + 1].isLowSurrogate())
+                return false;
             ++i;
         } else if (c.isLowSurrogate()) {
             return false;

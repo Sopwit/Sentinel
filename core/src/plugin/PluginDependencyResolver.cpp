@@ -16,7 +16,7 @@ ResolutionResult PluginDependencyResolver::resolve(const QList<PluginManifest>& 
     }
 
     // Filter dependencies to plugin-to-plugin dependencies (excluding dev.sentinel.core)
-    QMap<QString, QSet<QString>> inEdges;  // plugin -> set of plugins depending on it
+    QMap<QString, QSet<QString>> inEdges; // plugin -> set of plugins depending on it
     QMap<QString, int> inDegree;          // plugin -> count of unfulfilled plugin dependencies
 
     for (const auto& m : manifests) {
@@ -34,15 +34,18 @@ ResolutionResult PluginDependencyResolver::resolve(const QList<PluginManifest>& 
 
             if (!manifestMap.contains(depId)) {
                 result.success = false;
-                result.errorMessage = QStringLiteral("Missing plugin dependency '%1' required by '%2'").arg(depId, m.id);
+                result.errorMessage =
+                    QStringLiteral("Missing plugin dependency '%1' required by '%2'")
+                        .arg(depId, m.id);
                 return result;
             }
 
             const auto& depManifest = manifestMap[depId];
             if (!checkVersionRequirement(depManifest.version, reqVer)) {
                 result.success = false;
-                result.errorMessage = QStringLiteral("Plugin '%1' requires '%2' version '%3', but found version '%4'")
-                                          .arg(m.id, depId, reqVer, depManifest.version);
+                result.errorMessage =
+                    QStringLiteral("Plugin '%1' requires '%2' version '%3', but found version '%4'")
+                        .arg(m.id, depId, reqVer, depManifest.version);
                 return result;
             }
 

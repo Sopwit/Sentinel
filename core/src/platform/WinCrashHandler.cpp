@@ -37,9 +37,10 @@ static LONG WINAPI sentinelExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
         mei.ExceptionPointers = exceptionInfo;
         mei.ClientPointers = FALSE;
 
-        MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
-                          MINIDUMP_TYPE(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory),
-                          exceptionInfo ? &mei : nullptr, nullptr, nullptr);
+        MiniDumpWriteDump(
+            GetCurrentProcess(), GetCurrentProcessId(), hFile,
+            MINIDUMP_TYPE(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory),
+            exceptionInfo ? &mei : nullptr, nullptr, nullptr);
         CloseHandle(hFile);
     }
 

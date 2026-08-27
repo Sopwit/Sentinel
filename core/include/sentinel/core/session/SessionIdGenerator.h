@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <QDateTime>
 #include <QString>
 #include <QUuid>
-#include <QDateTime>
 
 namespace sentinel::core {
 

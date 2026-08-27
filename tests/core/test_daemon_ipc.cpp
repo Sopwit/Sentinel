@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/memory/InMemoryStore.h"
-#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "service/DaemonIpcServer.h"
 
 #include <QCoreApplication>
@@ -52,11 +52,12 @@ QJsonObject sendRequest(const QString& serverName, const QByteArray& payload) {
 }
 
 void DaemonIpcServerTest::respondsToPing() {
-    sentinel::core::ApplicationController controller(std::make_unique<sentinel::core::LocalEchoProvider>(),
-                                                     std::make_unique<sentinel::core::InMemoryStore>());
+    sentinel::core::ApplicationController controller(
+        std::make_unique<sentinel::core::LocalEchoProvider>(),
+        std::make_unique<sentinel::core::InMemoryStore>());
     sentinel::daemon::DaemonIpcServer server(&controller);
-    const QString serverName = QStringLiteral("sentinel-daemon-test-ping-%1")
-                                   .arg(QCoreApplication::applicationPid());
+    const QString serverName =
+        QStringLiteral("sentinel-daemon-test-ping-%1").arg(QCoreApplication::applicationPid());
     QVERIFY(server.startServer(serverName));
 
     const QJsonObject root = sendRequest(serverName, "{\"command\":\"ping\"}\n");
@@ -67,11 +68,12 @@ void DaemonIpcServerTest::respondsToPing() {
 }
 
 void DaemonIpcServerTest::respondsToStatusWithControllerData() {
-    sentinel::core::ApplicationController controller(std::make_unique<sentinel::core::LocalEchoProvider>(),
-                                                     std::make_unique<sentinel::core::InMemoryStore>());
+    sentinel::core::ApplicationController controller(
+        std::make_unique<sentinel::core::LocalEchoProvider>(),
+        std::make_unique<sentinel::core::InMemoryStore>());
     sentinel::daemon::DaemonIpcServer server(&controller);
-    const QString serverName = QStringLiteral("sentinel-daemon-test-status-%1")
-                                   .arg(QCoreApplication::applicationPid());
+    const QString serverName =
+        QStringLiteral("sentinel-daemon-test-status-%1").arg(QCoreApplication::applicationPid());
     QVERIFY(server.startServer(serverName));
 
     const QJsonObject root = sendRequest(serverName, "{\"command\":\"status\"}\n");
@@ -85,11 +87,12 @@ void DaemonIpcServerTest::respondsToStatusWithControllerData() {
 }
 
 void DaemonIpcServerTest::rejectsUnknownCommand() {
-    sentinel::core::ApplicationController controller(std::make_unique<sentinel::core::LocalEchoProvider>(),
-                                                     std::make_unique<sentinel::core::InMemoryStore>());
+    sentinel::core::ApplicationController controller(
+        std::make_unique<sentinel::core::LocalEchoProvider>(),
+        std::make_unique<sentinel::core::InMemoryStore>());
     sentinel::daemon::DaemonIpcServer server(&controller);
-    const QString serverName = QStringLiteral("sentinel-daemon-test-unknown-%1")
-                                   .arg(QCoreApplication::applicationPid());
+    const QString serverName =
+        QStringLiteral("sentinel-daemon-test-unknown-%1").arg(QCoreApplication::applicationPid());
     QVERIFY(server.startServer(serverName));
 
     const QJsonObject root = sendRequest(serverName, "{\"command\":\"bogus\"}\n");

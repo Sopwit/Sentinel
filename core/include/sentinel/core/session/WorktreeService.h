@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/session/IWorktreeService.h"
-#include <QObject>
 #include <QList>
+#include <QObject>
 #include <QStandardPaths>
 
 namespace sentinel::core {
@@ -29,11 +29,9 @@ public:
     std::optional<GitStatus> status(const QString& path) const override;
     QString currentBranch(const QString& path) const override;
     std::optional<GitDiffSummary> diffSummary(const QString& path) const override;
-    Worktree createWorktree(const QString& repositoryPath,
-                            const QString& branch = {},
+    Worktree createWorktree(const QString& repositoryPath, const QString& branch = {},
                             const QString& name = {}) override;
-    bool removeWorktree(const QString& repositoryPath,
-                        const QString& worktreePath) override;
+    bool removeWorktree(const QString& repositoryPath, const QString& worktreePath) override;
     QString lastError() const override;
 
 private:

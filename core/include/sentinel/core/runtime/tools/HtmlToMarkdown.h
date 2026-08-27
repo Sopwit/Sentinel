@@ -25,7 +25,8 @@ private:
     // Internal conversion helpers
     static QString processNode(const QString& html, int& pos);
     static QString escapeMarkdown(const QString& text);
-    static QString convertTag(const QString& tag, const QString& attributes, const QString& content);
+    static QString convertTag(const QString& tag, const QString& attributes,
+                              const QString& content);
 };
 
 } // namespace sentinel::core

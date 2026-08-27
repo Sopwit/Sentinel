@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QProcess>
-#include <QNetworkAccessManager>
-#include <QMap>
 #include <QByteArray>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QMap>
+#include <QNetworkAccessManager>
+#include <QObject>
+#include <QProcess>
+#include <QString>
 #include <functional>
 #include <memory>
 

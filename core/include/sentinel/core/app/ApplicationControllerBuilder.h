@@ -5,8 +5,8 @@
 #ifndef SENTINEL_CORE_APPLICATIONCONTROLLERBUILDER_H
 #define SENTINEL_CORE_APPLICATIONCONTROLLERBUILDER_H
 
-#include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
 #include "sentinel/core/runtime/AlarmStore.h"
 
@@ -20,68 +20,71 @@ public:
     ~ApplicationControllerBuilder();
 
     ApplicationControllerBuilder& withStandardDefaults(const StandardPathProvider& pathProvider,
-                                                         const AppSettings& settings);
+                                                       const AppSettings& settings);
 
     ApplicationControllerBuilder& withProvider(std::unique_ptr<IChatProvider> provider);
     ApplicationControllerBuilder& withMemoryStore(std::unique_ptr<IMemoryStore> memoryStore);
     ApplicationControllerBuilder& withChatSession(std::unique_ptr<ChatSession> chatSession);
-    ApplicationControllerBuilder& withChatHistoryStore(std::unique_ptr<IChatHistoryStore> chatHistoryStore);
+    ApplicationControllerBuilder&
+    withChatHistoryStore(std::unique_ptr<IChatHistoryStore> chatHistoryStore);
     ApplicationControllerBuilder& withAgentRuntime(std::unique_ptr<IAgentRuntime> agentRuntime);
-    ApplicationControllerBuilder& withAgentStepPlanner(
-        std::unique_ptr<IAgentStepPlanner> agentStepPlanner);
-    ApplicationControllerBuilder& withApprovalPolicy(std::unique_ptr<IApprovalPolicy> approvalPolicy);
+    ApplicationControllerBuilder&
+    withAgentStepPlanner(std::unique_ptr<IAgentStepPlanner> agentStepPlanner);
+    ApplicationControllerBuilder&
+    withApprovalPolicy(std::unique_ptr<IApprovalPolicy> approvalPolicy);
     ApplicationControllerBuilder& withSandboxPolicy(std::unique_ptr<ISandboxPolicy> sandboxPolicy);
     ApplicationControllerBuilder& withToolExecutor(std::unique_ptr<IToolExecutor> toolExecutor);
     ApplicationControllerBuilder& withModelRouter(std::unique_ptr<IModelRouter> modelRouter);
-    ApplicationControllerBuilder& withProviderCatalog(std::unique_ptr<IProviderCatalog> providerCatalog);
+    ApplicationControllerBuilder&
+    withProviderCatalog(std::unique_ptr<IProviderCatalog> providerCatalog);
     ApplicationControllerBuilder& withTaskPlanner(std::unique_ptr<ITaskPlanner> taskPlanner);
     ApplicationControllerBuilder& withAgentRegistry(std::unique_ptr<IAgentRegistry> agentRegistry);
     ApplicationControllerBuilder& withMemoryCatalog(std::unique_ptr<IMemoryCatalog> memoryCatalog);
     ApplicationControllerBuilder& withLocalRuntime(std::unique_ptr<ILocalRuntime> localRuntime);
-    ApplicationControllerBuilder& withLocalRuntimeSessions(
-        std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions);
-    ApplicationControllerBuilder& withRuntimeCapabilities(
-        std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities);
-    ApplicationControllerBuilder& withRuntimePermissionPolicy(
-        std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy);
-    ApplicationControllerBuilder& withRuntimeSafetyPolicy(
-        std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy);
-    ApplicationControllerBuilder& withRuntimePipeline(
-        std::unique_ptr<IRuntimePipeline> runtimePipeline);
-    ApplicationControllerBuilder& withExecutionLifecycle(
-        std::unique_ptr<IExecutionLifecycle> executionLifecycle);
-    ApplicationControllerBuilder& withExecutionCoordinator(
-        std::unique_ptr<ExecutionCoordinator> executionCoordinator);
-    ApplicationControllerBuilder& withLocalRuntimeAdapter(
-        std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter);
-    ApplicationControllerBuilder& withProviderRuntimeBridge(
-        std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge);
+    ApplicationControllerBuilder&
+    withLocalRuntimeSessions(std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions);
+    ApplicationControllerBuilder&
+    withRuntimeCapabilities(std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities);
+    ApplicationControllerBuilder&
+    withRuntimePermissionPolicy(std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy);
+    ApplicationControllerBuilder&
+    withRuntimeSafetyPolicy(std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy);
+    ApplicationControllerBuilder&
+    withRuntimePipeline(std::unique_ptr<IRuntimePipeline> runtimePipeline);
+    ApplicationControllerBuilder&
+    withExecutionLifecycle(std::unique_ptr<IExecutionLifecycle> executionLifecycle);
+    ApplicationControllerBuilder&
+    withExecutionCoordinator(std::unique_ptr<ExecutionCoordinator> executionCoordinator);
+    ApplicationControllerBuilder&
+    withLocalRuntimeAdapter(std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter);
+    ApplicationControllerBuilder&
+    withProviderRuntimeBridge(std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge);
     ApplicationControllerBuilder& withRuntimeIntegrationReadiness(
         std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness);
-    ApplicationControllerBuilder& withOllamaRuntimeClient(
-        std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient);
-    ApplicationControllerBuilder& withLocalInferenceClient(
-        std::unique_ptr<ILocalInferenceClient> localInferenceClient);
+    ApplicationControllerBuilder&
+    withOllamaRuntimeClient(std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient);
+    ApplicationControllerBuilder&
+    withLocalInferenceClient(std::unique_ptr<ILocalInferenceClient> localInferenceClient);
     ApplicationControllerBuilder& withLocalInferenceStreamClient(
         std::unique_ptr<ILocalInferenceStreamClient> localInferenceStreamClient);
-    ApplicationControllerBuilder& withModelManagementService(
-        std::unique_ptr<IModelManagementService> modelManagementService);
-    ApplicationControllerBuilder& withTextToSpeechProvider(
-        std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider);
-    ApplicationControllerBuilder& withSpeechToTextProvider(
-        std::unique_ptr<ISpeechToTextProvider> speechToTextProvider);
-    ApplicationControllerBuilder& withVoiceRuntimeCoordinator(
-        std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator);
-    ApplicationControllerBuilder& withVoiceRuntimeEnvironment(
-        std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment);
+    ApplicationControllerBuilder&
+    withModelManagementService(std::unique_ptr<IModelManagementService> modelManagementService);
+    ApplicationControllerBuilder&
+    withTextToSpeechProvider(std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider);
+    ApplicationControllerBuilder&
+    withSpeechToTextProvider(std::unique_ptr<ISpeechToTextProvider> speechToTextProvider);
+    ApplicationControllerBuilder&
+    withVoiceRuntimeCoordinator(std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator);
+    ApplicationControllerBuilder&
+    withVoiceRuntimeEnvironment(std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment);
     ApplicationControllerBuilder& withPiperTextToSpeechProvider(
         std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider);
-    ApplicationControllerBuilder& withLocalInferenceWorker(
-        std::unique_ptr<ILocalInferenceWorker> localInferenceWorker);
-    ApplicationControllerBuilder& withConversationStore(
-        std::unique_ptr<IConversationStore> conversationStore);
-    ApplicationControllerBuilder& withAgentTaskRuntime(
-        std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime);
+    ApplicationControllerBuilder&
+    withLocalInferenceWorker(std::unique_ptr<ILocalInferenceWorker> localInferenceWorker);
+    ApplicationControllerBuilder&
+    withConversationStore(std::unique_ptr<IConversationStore> conversationStore);
+    ApplicationControllerBuilder&
+    withAgentTaskRuntime(std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime);
 
     std::unique_ptr<ApplicationController> build();
 

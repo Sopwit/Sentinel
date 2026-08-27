@@ -197,7 +197,8 @@ QList<RuntimeCapabilityDescriptor> OllamaRuntimeCapabilityRegistry::capabilities
     const auto health = client.healthCheck();
     const auto models = client.installedModels();
     const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
-    const auto state = ready ? RuntimeCapabilityState::Enabled : RuntimeCapabilityState::Unavailable;
+    const auto state =
+        ready ? RuntimeCapabilityState::Enabled : RuntimeCapabilityState::Unavailable;
     return {
         {QStringLiteral("local-inference"), QStringLiteral("Local Inference"),
          RuntimeCapabilityGroup::Inference, state,

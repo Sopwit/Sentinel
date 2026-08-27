@@ -6,17 +6,17 @@
 
 #include <QFileInfo>
 
-#include "sentinel/core/chat/LocalEchoProvider.h"
-#include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/chat/LocalEchoProvider.h"
+#include "sentinel/core/chat/OllamaChatProvider.h"
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
+#include "sentinel/core/chat/SQLiteConversationStore.h"
+#include "sentinel/core/memory/SQLiteMemoryStore.h"
 #include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/runtime/RuntimePermissions.h"
-#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
-#include "sentinel/core/chat/SQLiteConversationStore.h"
-#include "sentinel/core/memory/SQLiteMemoryStore.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
 namespace sentinel::core {
@@ -24,8 +24,9 @@ namespace sentinel::core {
 ApplicationControllerBuilder::ApplicationControllerBuilder() = default;
 ApplicationControllerBuilder::~ApplicationControllerBuilder() = default;
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults(
-    const StandardPathProvider& pathProvider, const AppSettings& settings) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withStandardDefaults(const StandardPathProvider& pathProvider,
+                                                   const AppSettings& settings) {
     const auto ollamaConfig = OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
 
     m_provider = std::make_unique<OllamaChatProvider>(ollamaConfig);
@@ -37,10 +38,10 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
     m_memoryStore = std::make_unique<SQLiteMemoryStore>(pathProvider.memoryDatabasePath());
     m_chatHistoryStore =
         std::make_unique<SQLiteChatHistoryStore>(pathProvider.chatHistoryDatabasePath());
-    m_alarmStore = std::make_shared<AlarmStore>(
-        QFileInfo(pathProvider.memoryDatabasePath()).absolutePath() + QStringLiteral("/alarms.json"));
-    m_agentRuntime =
-        std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools());
+    m_alarmStore =
+        std::make_shared<AlarmStore>(QFileInfo(pathProvider.memoryDatabasePath()).absolutePath() +
+                                     QStringLiteral("/alarms.json"));
+    m_agentRuntime = std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools());
     m_sandboxPolicy = std::make_unique<StaticSandboxPolicy>(
         QSet<QString>{QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.medium"),
                       QStringLiteral("tool.risk.high")});
@@ -55,21 +56,21 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withProvider(
-    std::unique_ptr<IChatProvider> provider) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withProvider(std::unique_ptr<IChatProvider> provider) {
     m_provider = std::move(provider);
     m_agentStepPlanner.reset();
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withMemoryStore(
-    std::unique_ptr<IMemoryStore> memoryStore) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withMemoryStore(std::unique_ptr<IMemoryStore> memoryStore) {
     m_memoryStore = std::move(memoryStore);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withChatSession(
-    std::unique_ptr<ChatSession> chatSession) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withChatSession(std::unique_ptr<ChatSession> chatSession) {
     m_chatSession = std::move(chatSession);
     return *this;
 }
@@ -80,8 +81,8 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withChatHistoryStore
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentRuntime(
-    std::unique_ptr<IAgentRuntime> agentRuntime) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withAgentRuntime(std::unique_ptr<IAgentRuntime> agentRuntime) {
     m_agentRuntime = std::move(agentRuntime);
     return *this;
 }
@@ -92,26 +93,26 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentStepPlanner
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withApprovalPolicy(
-    std::unique_ptr<IApprovalPolicy> approvalPolicy) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withApprovalPolicy(std::unique_ptr<IApprovalPolicy> approvalPolicy) {
     m_approvalPolicy = std::move(approvalPolicy);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withSandboxPolicy(
-    std::unique_ptr<ISandboxPolicy> sandboxPolicy) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withSandboxPolicy(std::unique_ptr<ISandboxPolicy> sandboxPolicy) {
     m_sandboxPolicy = std::move(sandboxPolicy);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withToolExecutor(
-    std::unique_ptr<IToolExecutor> toolExecutor) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withToolExecutor(std::unique_ptr<IToolExecutor> toolExecutor) {
     m_toolExecutor = std::move(toolExecutor);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withModelRouter(
-    std::unique_ptr<IModelRouter> modelRouter) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withModelRouter(std::unique_ptr<IModelRouter> modelRouter) {
     m_modelRouter = std::move(modelRouter);
     return *this;
 }
@@ -122,26 +123,26 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withProviderCatalog(
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withTaskPlanner(
-    std::unique_ptr<ITaskPlanner> taskPlanner) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withTaskPlanner(std::unique_ptr<ITaskPlanner> taskPlanner) {
     m_taskPlanner = std::move(taskPlanner);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentRegistry(
-    std::unique_ptr<IAgentRegistry> agentRegistry) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withAgentRegistry(std::unique_ptr<IAgentRegistry> agentRegistry) {
     m_agentRegistry = std::move(agentRegistry);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withMemoryCatalog(
-    std::unique_ptr<IMemoryCatalog> memoryCatalog) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withMemoryCatalog(std::unique_ptr<IMemoryCatalog> memoryCatalog) {
     m_memoryCatalog = std::move(memoryCatalog);
     return *this;
 }
 
-ApplicationControllerBuilder& ApplicationControllerBuilder::withLocalRuntime(
-    std::unique_ptr<ILocalRuntime> localRuntime) {
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withLocalRuntime(std::unique_ptr<ILocalRuntime> localRuntime) {
     m_localRuntime = std::move(localRuntime);
     return *this;
 }
@@ -280,8 +281,8 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentTaskRuntime
 
 std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
     if (!m_agentStepPlanner && m_provider) {
-        m_agentStepPlanner = std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(),
-                                                               m_provider.get());
+        m_agentStepPlanner =
+            std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(), m_provider.get());
     }
     if (m_toolExecutor && m_alarmStore) {
         if (auto* realExecutor = dynamic_cast<RealToolExecutor*>(m_toolExecutor.get())) {

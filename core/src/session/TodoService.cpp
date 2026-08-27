@@ -24,9 +24,11 @@ QList<TodoItem> TodoService::items() const {
 
 void TodoService::updateItem(const QString& id, const QString& status, const QString& content) {
     auto it = m_items.find(id);
-    if (it == m_items.end()) return;
+    if (it == m_items.end())
+        return;
     it->status = status;
-    if (!content.isEmpty()) it->content = content;
+    if (!content.isEmpty())
+        it->content = content;
     emit todoUpdated();
 }
 
@@ -61,7 +63,8 @@ QString TodoService::formattedText() const {
     QString result;
     for (const auto& item : m_items) {
         QString checkbox = item.status == "completed" ? "[x]" : "[ ]";
-        result += QStringLiteral("%1 %2 (priority: %3)\n").arg(checkbox, item.content, item.priority);
+        result +=
+            QStringLiteral("%1 %2 (priority: %3)\n").arg(checkbox, item.content, item.priority);
     }
     return result;
 }

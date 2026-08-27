@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QString>
 #include <QDateTime>
 #include <QJsonObject>
 #include <QMap>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -31,7 +31,9 @@ struct SnapshotDiff {
     QStringList addedFiles;
     QStringList removedFiles;
     QStringList modifiedFiles;
-    int totalChanges() const { return addedFiles.size() + removedFiles.size() + modifiedFiles.size(); }
+    int totalChanges() const {
+        return addedFiles.size() + removedFiles.size() + modifiedFiles.size();
+    }
 };
 
 class ISnapshotService {

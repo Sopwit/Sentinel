@@ -4,16 +4,13 @@
 
 #pragma once
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
-#include <QJsonObject>
 
 namespace sentinel::core {
 
-enum class DiffViewMode : std::uint8_t {
-    Unified,
-    Split
-};
+enum class DiffViewMode : std::uint8_t { Unified, Split };
 
 struct DiffLine {
     QString content;
@@ -49,7 +46,8 @@ public:
 
     virtual Diff computeDiff(const QString& oldPath, const QString& newPath) const = 0;
     virtual Diff computeGitDiff(const QString& directory) const = 0;
-    virtual QString formatDiff(const Diff& diff, DiffViewMode mode = DiffViewMode::Unified) const = 0;
+    virtual QString formatDiff(const Diff& diff,
+                               DiffViewMode mode = DiffViewMode::Unified) const = 0;
     virtual void setViewMode(DiffViewMode mode) = 0;
     virtual DiffViewMode viewMode() const = 0;
 };

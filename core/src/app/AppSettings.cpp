@@ -242,9 +242,8 @@ void AppSettings::setAppLanguage(const QString& language) {
 }
 
 QStringList AppSettings::availableLanguages() const {
-    return {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
-            QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
-            QStringLiteral("ja"), QStringLiteral("ar")};
+    return {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"), QStringLiteral("es"),
+            QStringLiteral("fr"), QStringLiteral("zh"), QStringLiteral("ja"), QStringLiteral("ar")};
 }
 
 QString AppSettings::languageDisplayName(const QString& language) const {
@@ -355,8 +354,8 @@ void AppSettings::setCloudApiEndpoint(const QString& endpoint) {
 
 QString AppSettings::webSearchProvider() const {
     const auto fallback = QString::fromLatin1(defaultWebSearchProvider);
-    const auto value = store_ ? store_->value(QString::fromLatin1(webSearchProviderKey), fallback)
-                              : fallback;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(webSearchProviderKey), fallback) : fallback;
     const auto normalized = value.trimmed().toLower();
     return (normalized == QStringLiteral("exa") || normalized == QStringLiteral("parallel") ||
             normalized == QStringLiteral("duckduckgo"))
@@ -391,8 +390,7 @@ void AppSettings::setWebSearchApiKey(const QString& key) {
 }
 
 QString AppSettings::mcpServersJson() const {
-    return store_ ? store_->value(QString::fromLatin1(mcpServersJsonKey), QString())
-                  : QString();
+    return store_ ? store_->value(QString::fromLatin1(mcpServersJsonKey), QString()) : QString();
 }
 
 void AppSettings::setMcpServersJson(const QString& json) {
@@ -406,7 +404,10 @@ void AppSettings::setMcpServersJson(const QString& json) {
 
 int AppSettings::webSearchMaxResults() const {
     bool ok = false;
-    const auto value = store_ ? store_->value(QString::fromLatin1(webSearchMaxResultsKey), QStringLiteral("5")).toInt(&ok) : 5;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(webSearchMaxResultsKey), QStringLiteral("5"))
+                     .toInt(&ok)
+               : 5;
     return ok ? std::clamp(value, 1, 20) : 5;
 }
 
@@ -421,10 +422,10 @@ void AppSettings::setWebSearchMaxResults(int maxResults) {
 
 QString AppSettings::semanticProvider() const {
     const auto fallback = QString::fromLatin1(defaultSemanticProvider);
-    const auto value = store_ ? store_->value(QString::fromLatin1(semanticProviderKey), fallback)
-                              : fallback;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(semanticProviderKey), fallback) : fallback;
     return value.trimmed().toLower() == QStringLiteral("ollama") ? QStringLiteral("ollama")
-                                                                  : QStringLiteral("disabled");
+                                                                 : QStringLiteral("disabled");
 }
 
 void AppSettings::setSemanticProvider(const QString& provider) {
@@ -440,8 +441,9 @@ void AppSettings::setSemanticProvider(const QString& provider) {
 
 QString AppSettings::semanticEmbeddingModel() const {
     const auto fallback = QString::fromLatin1(defaultSemanticEmbeddingModel);
-    return store_ ? store_->value(QString::fromLatin1(semanticEmbeddingModelKey), fallback).trimmed()
-                  : fallback;
+    return store_
+               ? store_->value(QString::fromLatin1(semanticEmbeddingModelKey), fallback).trimmed()
+               : fallback;
 }
 
 void AppSettings::setSemanticEmbeddingModel(const QString& model) {
@@ -607,8 +609,7 @@ void AppSettings::setLocalChatInferenceEnabled(bool enabled) {
         return;
     }
 
-    store_->setValue(QString::fromLatin1(localChatInferenceEnabledKey),
-                     QStringLiteral("true"));
+    store_->setValue(QString::fromLatin1(localChatInferenceEnabledKey), QStringLiteral("true"));
     emit localChatInferenceEnabledChanged();
 }
 
@@ -838,8 +839,10 @@ QString findPiperBinaryCandidate() {
     };
 #else
     const QStringList candidates{
-        QStringLiteral("/opt/homebrew/bin/piper"), QStringLiteral("/usr/local/bin/piper"),
-        QStringLiteral("/usr/bin/piper"),          QStringLiteral("/bin/piper"),
+        QStringLiteral("/opt/homebrew/bin/piper"),
+        QStringLiteral("/usr/local/bin/piper"),
+        QStringLiteral("/usr/bin/piper"),
+        QStringLiteral("/bin/piper"),
         QDir::homePath() + QStringLiteral("/.local/bin/piper"),
         QDir::homePath() + QStringLiteral("/piper/piper"),
     };
@@ -1002,7 +1005,8 @@ QString findKokoroModelCandidate() {
 } // namespace
 
 QString AppSettings::piperBinaryPath() const {
-    return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed() : QString();
+    return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
+                  : QString();
 }
 
 void AppSettings::setPiperBinaryPath(const QString& path) {
@@ -1079,7 +1083,8 @@ void AppSettings::setKokoroVoice(const QString& voice) {
 }
 
 QString AppSettings::whisperBinaryPath() const {
-    return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed() : QString();
+    return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
+                  : QString();
 }
 
 void AppSettings::setWhisperBinaryPath(const QString& path) {
@@ -1141,7 +1146,8 @@ QString AppSettings::autoDetectVoicePaths() {
     }
 
     if (detected.isEmpty()) {
-        return QStringLiteral("No local voice binaries or model files were detected automatically.");
+        return QStringLiteral(
+            "No local voice binaries or model files were detected automatically.");
     }
     return QStringLiteral("Auto-detected voice paths:\n- ") + detected.join(QStringLiteral("\n- "));
 }
@@ -1785,21 +1791,27 @@ void AppSettings::setMistralApiKey(const QString& key) {
 // ── Proxy ─────────────────────────────────────────────────────────────────
 
 bool AppSettings::proxyEnabled() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyEnabledKey), QStringLiteral("false")) == QStringLiteral("true") : false;
+    return store_ ? store_->value(QString::fromLatin1(proxyEnabledKey), QStringLiteral("false")) ==
+                        QStringLiteral("true")
+                  : false;
 }
 
 void AppSettings::setProxyEnabled(bool enabled) {
-    if (!store_) return;
-    store_->setValue(QString::fromLatin1(proxyEnabledKey), enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    if (!store_)
+        return;
+    store_->setValue(QString::fromLatin1(proxyEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit proxySettingsChanged();
 }
 
 QString AppSettings::proxyType() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyTypeKey), QStringLiteral("http")) : QStringLiteral("http");
+    return store_ ? store_->value(QString::fromLatin1(proxyTypeKey), QStringLiteral("http"))
+                  : QStringLiteral("http");
 }
 
 void AppSettings::setProxyType(const QString& type) {
-    if (!store_) return;
+    if (!store_)
+        return;
     store_->setValue(QString::fromLatin1(proxyTypeKey), type);
     emit proxySettingsChanged();
 }
@@ -1809,20 +1821,24 @@ QString AppSettings::proxyHost() const {
 }
 
 void AppSettings::setProxyHost(const QString& host) {
-    if (!store_) return;
+    if (!store_)
+        return;
     store_->setValue(QString::fromLatin1(proxyHostKey), host);
     emit proxySettingsChanged();
 }
 
 quint16 AppSettings::proxyPort() const {
-    if (!store_) return 8080;
+    if (!store_)
+        return 8080;
     bool ok = false;
-    quint16 val = static_cast<quint16>(store_->value(QString::fromLatin1(proxyPortKey), QStringLiteral("8080")).toUShort(&ok));
+    quint16 val = static_cast<quint16>(
+        store_->value(QString::fromLatin1(proxyPortKey), QStringLiteral("8080")).toUShort(&ok));
     return ok ? val : 8080;
 }
 
 void AppSettings::setProxyPort(quint16 port) {
-    if (!store_) return;
+    if (!store_)
+        return;
     store_->setValue(QString::fromLatin1(proxyPortKey), QString::number(port));
     emit proxySettingsChanged();
 }
@@ -1832,7 +1848,8 @@ QString AppSettings::proxyUser() const {
 }
 
 void AppSettings::setProxyUser(const QString& user) {
-    if (!store_) return;
+    if (!store_)
+        return;
     store_->setValue(QString::fromLatin1(proxyUserKey), user);
     emit proxySettingsChanged();
 }
@@ -1842,7 +1859,8 @@ QString AppSettings::proxyPassword() const {
 }
 
 void AppSettings::setProxyPassword(const QString& password) {
-    if (!store_) return;
+    if (!store_)
+        return;
     store_->setValue(QString::fromLatin1(proxyPasswordKey), password);
     emit proxySettingsChanged();
 }

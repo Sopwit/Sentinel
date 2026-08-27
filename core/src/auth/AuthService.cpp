@@ -4,13 +4,13 @@
 
 #include "sentinel/core/auth/AuthService.h"
 #include <QDebug>
-#include <QJsonDocument>
 #include <QEventLoop>
+#include <QJsonDocument>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QUrlQuery>
 #include <QTimer>
+#include <QUrlQuery>
 
 namespace sentinel::core {
 
@@ -36,7 +36,8 @@ void AuthService::setApiKey(const QString& provider, const QString& apiKey) {
 
 std::optional<AuthCredentials> AuthService::credentials(const QString& provider) const {
     auto it = m_credentials.find(provider);
-    if (it == m_credentials.end()) return std::nullopt;
+    if (it == m_credentials.end())
+        return std::nullopt;
     return it.value();
 }
 
@@ -61,7 +62,8 @@ bool AuthService::refreshToken(const QString& provider) {
     const auto credentialsIt = m_credentials.find(provider);
     if (configIt == m_oauthConfigs.constEnd() || credentialsIt == m_credentials.end() ||
         credentialsIt->refreshToken.isEmpty() || configIt->tokenUrl.isEmpty()) {
-        emit authenticationFailed(provider, QStringLiteral("OAuth refresh configuration is incomplete."));
+        emit authenticationFailed(provider,
+                                  QStringLiteral("OAuth refresh configuration is incomplete."));
         return false;
     }
 
@@ -88,8 +90,8 @@ bool AuthService::refreshToken(const QString& provider) {
             reply->abort();
         const auto error = reply->errorString();
         reply->deleteLater();
-        emit authenticationFailed(provider, error.isEmpty() ? QStringLiteral("OAuth refresh failed.")
-                                                            : error);
+        emit authenticationFailed(
+            provider, error.isEmpty() ? QStringLiteral("OAuth refresh failed.") : error);
         return false;
     }
     const auto payload = reply->readAll();
@@ -97,13 +99,15 @@ bool AuthService::refreshToken(const QString& provider) {
     QJsonParseError parseError;
     const auto document = QJsonDocument::fromJson(payload, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        emit authenticationFailed(provider, QStringLiteral("OAuth token endpoint returned invalid JSON."));
+        emit authenticationFailed(provider,
+                                  QStringLiteral("OAuth token endpoint returned invalid JSON."));
         return false;
     }
     const auto object = document.object();
     const auto token = object.value(QStringLiteral("access_token")).toString();
     if (token.isEmpty()) {
-        emit authenticationFailed(provider, QStringLiteral("OAuth response did not contain access_token."));
+        emit authenticationFailed(provider,
+                                  QStringLiteral("OAuth response did not contain access_token."));
         return false;
     }
     credentialsIt->token = token;

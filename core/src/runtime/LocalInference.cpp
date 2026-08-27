@@ -1111,16 +1111,16 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                         request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
             body.insert(QStringLiteral("stream"), false);
 
-            response.traces.append(
-                trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
-                      QStringLiteral("Calling Anthropic /v1/messages; timeout %1 ms.")
-                          .arg(timeoutMs)));
+            response.traces.append(trace(
+                2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                QStringLiteral("Calling Anthropic /v1/messages; timeout %1 ms.").arg(timeoutMs)));
 
             QMap<QByteArray, QByteArray> headers;
             headers.insert("x-api-key", config_.apiKey.toUtf8());
             headers.insert("anthropic-version", "2023-06-01");
-            const auto reply = postJson(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")),
-                                        body, timeoutMs, headers);
+            const auto reply =
+                postJson(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")), body,
+                         timeoutMs, headers);
             if (!reply.ok) {
                 response.status = LocalInferenceStatus::Error;
                 response.error = networkErrorCategory(reply);
@@ -1135,16 +1135,15 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             QString text;
             for (const auto& part : contentParts) {
                 const auto partObj = part.toObject();
-                if (partObj.value(QStringLiteral("type")).toString() ==
-                    QStringLiteral("text")) {
+                if (partObj.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
                     text += partObj.value(QStringLiteral("text")).toString();
                 }
             }
             if (text.isEmpty()) {
                 response.status = LocalInferenceStatus::Error;
                 response.error = LocalInferenceError::InvalidResponse;
-                response.summary = QStringLiteral(
-                    "Anthropic cloud generation response did not include text.");
+                response.summary =
+                    QStringLiteral("Anthropic cloud generation response did not include text.");
                 response.traces.append(trace(3, QStringLiteral("Generation"),
                                              QStringLiteral("Invalid Response"), response.summary));
                 return response;
@@ -1183,14 +1182,12 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                                                                   : 2048);
             body.insert(QStringLiteral("generationConfig"), generationConfig);
 
-            response.traces.append(
-                trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
-                      QStringLiteral("Calling Gemini generateContent; timeout %1 ms.")
-                          .arg(timeoutMs)));
+            response.traces.append(trace(
+                2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                QStringLiteral("Calling Gemini generateContent; timeout %1 ms.").arg(timeoutMs)));
 
-            const QUrl url(QStringLiteral(
-                               "https://generativelanguage.googleapis.com/v1beta/models/"
-                               "%1:generateContent?key=%2")
+            const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
+                                          "%1:generateContent?key=%2")
                                .arg(modelId, config_.apiKey));
             const auto reply = postJson(url, body, timeoutMs);
             if (!reply.ok) {
@@ -1255,40 +1252,40 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                       .arg(config_.providerDisplayName(), QString::number(timeoutMs))));
 
         QMap<QByteArray, QByteArray> headers;
-        headers.insert("Authorization",
-                       QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-        const auto reply = postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body,
-                                    timeoutMs, headers);
+        headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
+        const auto reply =
+            postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body, timeoutMs, headers);
         if (!reply.ok) {
             response.status = LocalInferenceStatus::Error;
             response.error = networkErrorCategory(reply);
             response.summary = safeNetworkFailureSummary(
                 reply, QStringLiteral("%1 cloud generation").arg(config_.providerDisplayName()),
                 timeoutMs);
-            response.traces.append(trace(3, QStringLiteral("Generation"),
-                                         QStringLiteral("Error"), response.summary));
+            response.traces.append(
+                trace(3, QStringLiteral("Generation"), QStringLiteral("Error"), response.summary));
             return response;
         }
         const auto choices = reply.document.object().value(QStringLiteral("choices")).toArray();
         if (choices.isEmpty()) {
             response.status = LocalInferenceStatus::Error;
             response.error = LocalInferenceError::InvalidResponse;
-            response.summary = QStringLiteral(
-                "%1 cloud generation response did not include choices.")
-                .arg(config_.providerDisplayName());
+            response.summary =
+                QStringLiteral("%1 cloud generation response did not include choices.")
+                    .arg(config_.providerDisplayName());
             response.traces.append(trace(3, QStringLiteral("Generation"),
                                          QStringLiteral("Invalid Response"), response.summary));
             return response;
         }
         const auto choiceObj = choices.first().toObject();
-        const auto text =
-            choiceObj.value(QStringLiteral("message")).toObject().value(QStringLiteral("content"))
-                .toString();
+        const auto text = choiceObj.value(QStringLiteral("message"))
+                              .toObject()
+                              .value(QStringLiteral("content"))
+                              .toString();
         if (text.isEmpty()) {
             response.status = LocalInferenceStatus::Error;
             response.error = LocalInferenceError::InvalidResponse;
             response.summary = QStringLiteral("%1 cloud generation response did not include text.")
-                .arg(config_.providerDisplayName());
+                                   .arg(config_.providerDisplayName());
             response.traces.append(trace(3, QStringLiteral("Generation"),
                                          QStringLiteral("Invalid Response"), response.summary));
             return response;

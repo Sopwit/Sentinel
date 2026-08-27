@@ -6,8 +6,7 @@
 
 namespace sentinel::core {
 
-BasicContextEngine::BasicContextEngine(IMemoryStore* memoryStore)
-    : memoryStore_(memoryStore) {}
+BasicContextEngine::BasicContextEngine(IMemoryStore* memoryStore) : memoryStore_(memoryStore) {}
 
 QString BasicContextEngine::buildContextForPrompt(const QString& prompt) const {
     const auto trimmed = prompt.trimmed();

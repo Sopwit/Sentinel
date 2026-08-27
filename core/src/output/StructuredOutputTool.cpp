@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/output/StructuredOutputTool.h"
-#include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonDocument>
 
 namespace sentinel::core {
 
@@ -16,7 +16,8 @@ QString StructuredOutputTool::generateJsonSchema(const StructuredOutputSchema& s
     return QJsonDocument(obj).toJson(QJsonDocument::Indented);
 }
 
-QJsonObject StructuredOutputTool::validateOutput(const QString& json, const StructuredOutputSchema& schema) const {
+QJsonObject StructuredOutputTool::validateOutput(const QString& json,
+                                                 const StructuredOutputSchema& schema) const {
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
     if (error.error != QJsonParseError::NoError) {
@@ -27,7 +28,8 @@ QJsonObject StructuredOutputTool::validateOutput(const QString& json, const Stru
     return doc.object();
 }
 
-QString StructuredOutputTool::wrapToolResponse(const QJsonObject& data, const QString& mimeType) const {
+QString StructuredOutputTool::wrapToolResponse(const QJsonObject& data,
+                                               const QString& mimeType) const {
     Q_UNUSED(mimeType)
     return QJsonDocument(data).toJson(QJsonDocument::Compact);
 }

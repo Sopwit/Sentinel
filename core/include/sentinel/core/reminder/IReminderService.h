@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
 #include <QList>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -23,7 +23,8 @@ class IReminderService {
 public:
     virtual ~IReminderService() = default;
 
-    virtual QString addReminder(const QString& sessionId, const QString& content, int triggerAfter = 5) = 0;
+    virtual QString addReminder(const QString& sessionId, const QString& content,
+                                int triggerAfter = 5) = 0;
     virtual bool removeReminder(const QString& reminderId) = 0;
     virtual QList<Reminder> activeReminders(const QString& sessionId) const = 0;
     virtual void incrementMessageCount(const QString& sessionId) = 0;

@@ -3,22 +3,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/session/SessionExportService.h"
+#include <QEventLoop>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QUuid>
-#include <QEventLoop>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QTimer>
+#include <QUuid>
 
 namespace sentinel::core {
 
 SessionExportService::SessionExportService(QObject* parent) : QObject(parent) {}
 SessionExportService::~SessionExportService() = default;
 
-QString SessionExportService::exportSession(const QString& sessionId, const ExportConfig& config) const {
+QString SessionExportService::exportSession(const QString& sessionId,
+                                            const ExportConfig& config) const {
     QJsonObject exportData;
     exportData["sessionId"] = sessionId;
     exportData["exportedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
@@ -54,19 +55,22 @@ QString SessionExportService::exportSession(const QString& sessionId, const Expo
 
 bool SessionExportService::importSession(const QString& jsonContent, QString& sessionId) {
     QJsonDocument doc = QJsonDocument::fromJson(jsonContent.toUtf8());
-    if (doc.isNull()) return false;
+    if (doc.isNull())
+        return false;
 
-    if (!doc.isObject()) return false;
+    if (!doc.isObject())
+        return false;
     QJsonObject data = doc.object();
-    if (data.value("version").toString().isEmpty()) return false;
+    if (data.value("version").toString().isEmpty())
+        return false;
     sessionId = data["sessionId"].toString();
     return !sessionId.isEmpty();
 }
 
 bool SessionExportService::importFromUrl(const QString& url, QString& sessionId) {
     const QUrl target(url);
-    if (!target.isValid() || (target.scheme() != QStringLiteral("http") &&
-                              target.scheme() != QStringLiteral("https"))) {
+    if (!target.isValid() ||
+        (target.scheme() != QStringLiteral("http") && target.scheme() != QStringLiteral("https"))) {
         return false;
     }
 

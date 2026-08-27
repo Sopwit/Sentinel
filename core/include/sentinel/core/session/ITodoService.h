@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -26,7 +26,8 @@ public:
 
     virtual void setItems(const QList<TodoItem>& items) = 0;
     virtual QList<TodoItem> items() const = 0;
-    virtual void updateItem(const QString& id, const QString& status, const QString& content = {}) = 0;
+    virtual void updateItem(const QString& id, const QString& status,
+                            const QString& content = {}) = 0;
     virtual void addItem(const QString& content, const QString& priority = "medium") = 0;
     virtual void removeItem(const QString& id) = 0;
     virtual TodoSnapshot snapshot() const = 0;

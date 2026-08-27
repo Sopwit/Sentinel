@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/security/PermissionPolicyService.h"
 
 #include <QList>
 #include <QString>

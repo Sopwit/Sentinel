@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/config/ConfigVariableSubstitutor.h"
-#include <QFile>
 #include <QDir>
-#include <QTextStream>
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
+#include <QTextStream>
 
 namespace sentinel::core {
 
@@ -42,13 +42,15 @@ QString ConfigVariableSubstitutor::substitute(const QString& input) const {
 }
 
 QString ConfigVariableSubstitutor::substituteEnv(const QString& varName) const {
-    if (!m_config.allowEnv) return QStringLiteral("{env:%1}").arg(varName);
+    if (!m_config.allowEnv)
+        return QStringLiteral("{env:%1}").arg(varName);
     QByteArray value = qgetenv(varName.toUtf8().constData());
     return QString::fromUtf8(value);
 }
 
 QString ConfigVariableSubstitutor::substituteFile(const QString& filePath) const {
-    if (!m_config.allowFile) return QStringLiteral("{file:%1}").arg(filePath);
+    if (!m_config.allowFile)
+        return QStringLiteral("{file:%1}").arg(filePath);
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -71,7 +73,8 @@ bool ConfigVariableSubstitutor::validate(const QString& input, QString& error) c
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
         if (!m_config.allowEnv) {
-            error = QStringLiteral("Environment variable substitution not allowed: %1").arg(match.captured(0));
+            error = QStringLiteral("Environment variable substitution not allowed: %1")
+                        .arg(match.captured(0));
             return false;
         }
     }

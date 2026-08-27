@@ -38,11 +38,14 @@ bool CommandService::execute(const QString& name, const QString& args) {
     return false;
 }
 
-QList<Command> CommandService::commands() const { return m_commands; }
+QList<Command> CommandService::commands() const {
+    return m_commands;
+}
 
 std::optional<Command> CommandService::findCommand(const QString& name) const {
     for (const auto& cmd : m_commands) {
-        if (cmd.name == name) return cmd;
+        if (cmd.name == name)
+            return cmd;
     }
     return std::nullopt;
 }

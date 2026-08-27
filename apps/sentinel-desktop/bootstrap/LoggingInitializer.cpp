@@ -36,11 +36,16 @@ void configureLogging(bool verbose, bool quiet, const QString& logDir) {
 
         const auto prefix = [](QtMsgType t) -> const char* {
             switch (t) {
-            case QtDebugMsg:    return "[DEBUG]";
-            case QtInfoMsg:     return "[INFO]";
-            case QtWarningMsg:  return "[WARN]";
-            case QtCriticalMsg: return "[ERROR]";
-            case QtFatalMsg:    return "[FATAL]";
+            case QtDebugMsg:
+                return "[DEBUG]";
+            case QtInfoMsg:
+                return "[INFO]";
+            case QtWarningMsg:
+                return "[WARN]";
+            case QtCriticalMsg:
+                return "[ERROR]";
+            case QtFatalMsg:
+                return "[FATAL]";
             }
             return "[?]";
         };

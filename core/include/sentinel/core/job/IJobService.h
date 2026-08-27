@@ -4,27 +4,23 @@
 
 #pragma once
 
-#include <QString>
 #include <QDateTime>
-#include <functional>
+#include <QString>
 #include <atomic>
+#include <functional>
 #include <memory>
 
 namespace sentinel::core {
 
-enum class JobState : std::uint8_t {
-    Queued,
-    Running,
-    Completed,
-    Failed,
-    Cancelled
-};
+enum class JobState : std::uint8_t { Queued, Running, Completed, Failed, Cancelled };
 
 struct JobProgress {
     int current{0};
     int total{0};
     QString status;
-    double percentage() const { return total > 0 ? (current * 100.0 / total) : 0.0; }
+    double percentage() const {
+        return total > 0 ? (current * 100.0 / total) : 0.0;
+    }
 };
 
 struct Job {
@@ -46,14 +42,16 @@ struct Job {
     }
 };
 
-using JobFunction = std::function<bool(Job& job, std::function<void(JobProgress)> progressCallback)>;
+using JobFunction =
+    std::function<bool(Job& job, std::function<void(JobProgress)> progressCallback)>;
 
 class IJobService {
 public:
     virtual ~IJobService() = default;
 
     // Job management
-    virtual QString submitJob(const QString& name, JobFunction func, const QString& description = {}) = 0;
+    virtual QString submitJob(const QString& name, JobFunction func,
+                              const QString& description = {}) = 0;
     virtual bool cancelJob(const QString& jobId) = 0;
     virtual bool retryJob(const QString& jobId) = 0;
     virtual bool removeJob(const QString& jobId) = 0;

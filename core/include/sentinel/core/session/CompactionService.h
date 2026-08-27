@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/session/ICompactionService.h"
-#include <QObject>
 #include <QFuture>
+#include <QObject>
 #include <QPromise>
 
 namespace sentinel::core {
@@ -46,10 +46,12 @@ private:
     int estimateTokens(const QString& text) const;
 
     // Message selection
-    QList<int> selectMessagesToCompact(const QList<ChatMessage>& messages, int preserveRecentCount) const;
+    QList<int> selectMessagesToCompact(const QList<ChatMessage>& messages,
+                                       int preserveRecentCount) const;
 
     // Summary generation
-    QString buildCompactionPrompt(const QList<ChatMessage>& messagesToCompact, const QString& previousSummary) const;
+    QString buildCompactionPrompt(const QList<ChatMessage>& messagesToCompact,
+                                  const QString& previousSummary) const;
     QString generateSummary(const QString& prompt);
 
     // Message serialization

@@ -3,27 +3,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/ToolOutputTruncator.h"
-#include <QFile>
-#include <QDir>
-#include <QTextStream>
 #include <QDateTime>
+#include <QDir>
+#include <QFile>
 #include <QStandardPaths>
+#include <QTextStream>
 
 namespace sentinel::core {
 
 ToolOutputTruncator::ToolOutputTruncator(const TruncationConfig& config) : m_config(config) {
     if (m_config.outputDir.isEmpty()) {
-        m_config.outputDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/sentinel/truncation";
+        m_config.outputDir =
+            QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/sentinel/truncation";
     }
 }
 
-TruncationResult ToolOutputTruncator::truncate(const QByteArray& output, const QString& toolName) const {
+TruncationResult ToolOutputTruncator::truncate(const QByteArray& output,
+                                               const QString& toolName) const {
     TruncationResult result;
     result.totalBytes = output.size();
     result.totalLines = output.count('\n');
 
-    bool needsTruncation = (result.totalLines > m_config.maxLines) ||
-                           (result.totalBytes > m_config.maxBytes);
+    bool needsTruncation =
+        (result.totalLines > m_config.maxLines) || (result.totalBytes > m_config.maxBytes);
 
     if (!needsTruncation) {
         result.preview = QString::fromUtf8(output);
@@ -48,7 +50,8 @@ TruncationResult ToolOutputTruncator::truncate(const QByteArray& output, const Q
     // Enforce the byte bound without splitting UTF-8 characters.
     if (result.preview.toUtf8().size() > m_config.maxBytes) {
         QByteArray previewBytes = result.preview.toUtf8().left(static_cast<int>(m_config.maxBytes));
-        while (!previewBytes.isEmpty() && (static_cast<unsigned char>(previewBytes.back()) & 0xc0) == 0x80) {
+        while (!previewBytes.isEmpty() &&
+               (static_cast<unsigned char>(previewBytes.back()) & 0xc0) == 0x80) {
             previewBytes.chop(1);
         }
         result.preview = QString::fromUtf8(previewBytes);
@@ -78,7 +81,8 @@ QByteArray ToolOutputTruncator::readFullOutput(const QString& path) const {
 
 void ToolOutputTruncator::cleanupOldFiles() const {
     QDir dir(m_config.outputDir);
-    if (!dir.exists()) return;
+    if (!dir.exists())
+        return;
 
     QDateTime cutoff = QDateTime::currentDateTime().addDays(-m_config.retentionDays);
     for (const auto& entry : dir.entryInfoList(QDir::Files)) {

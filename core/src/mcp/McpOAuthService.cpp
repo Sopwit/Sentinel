@@ -9,7 +9,8 @@ namespace sentinel::core {
 
 McpOAuthService::McpOAuthService() = default;
 
-bool McpOAuthService::startDeviceFlow(const McpOAuthConfig& config, QString& deviceCode, QString& userCode) {
+bool McpOAuthService::startDeviceFlow(const McpOAuthConfig& config, QString& deviceCode,
+                                      QString& userCode) {
     Q_UNUSED(config)
     deviceCode = QUuid::createUuid().toString(QUuid::WithoutBraces).left(16);
     userCode = QUuid::createUuid().toString(QUuid::WithoutBraces).left(8).toUpper();
@@ -38,7 +39,8 @@ void McpOAuthService::storeToken(const QString& serverUrl, const McpOAuthToken& 
 
 std::optional<McpOAuthToken> McpOAuthService::getStoredToken(const QString& serverUrl) const {
     auto it = m_storedTokens.find(serverUrl);
-    if (it == m_storedTokens.end()) return std::nullopt;
+    if (it == m_storedTokens.end())
+        return std::nullopt;
     return it.value();
 }
 

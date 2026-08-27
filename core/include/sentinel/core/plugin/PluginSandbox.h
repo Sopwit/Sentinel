@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QMap>
 #include "sentinel/core/plugin/PluginPermissions.h"
+#include <QMap>
+#include <QString>
 
 namespace sentinel::core::plugin {
 

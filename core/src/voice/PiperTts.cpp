@@ -37,8 +37,7 @@ bool isExistingExecutableFile(const QString& path) {
     const QFileInfo info(path);
     if (info.exists() && info.isFile()) {
 #if defined(Q_OS_WIN)
-        return info.isExecutable() ||
-               QFileInfo(path + QStringLiteral(".exe")).exists();
+        return info.isExecutable() || QFileInfo(path + QStringLiteral(".exe")).exists();
 #else
         return info.isExecutable();
 #endif
@@ -504,12 +503,10 @@ PiperSynthesisResult LocalPiperSynthesisClient::synthesize(const PiperSynthesisR
     process.start(config.binary.expectedPath, arguments);
     if (!process.waitForStarted(request.timeoutMs)) {
         const auto errorText = process.errorString();
-        traces.append(
-            QStringLiteral("Piper subprocess failed to start: %1").arg(errorText));
-        return completedSynthesisResult(PiperSynthesisStatus::Failed,
-                                         QStringLiteral("Piper subprocess failed to start"),
-                                         request, config, traces, false,
-                                         QStringLiteral("No audio produced or played."));
+        traces.append(QStringLiteral("Piper subprocess failed to start: %1").arg(errorText));
+        return completedSynthesisResult(
+            PiperSynthesisStatus::Failed, QStringLiteral("Piper subprocess failed to start"),
+            request, config, traces, false, QStringLiteral("No audio produced or played."));
     }
 
     process.write(request.text.toUtf8());
@@ -518,28 +515,24 @@ PiperSynthesisResult LocalPiperSynthesisClient::synthesize(const PiperSynthesisR
         process.kill();
         process.waitForFinished(1000);
         traces.append(QStringLiteral("Piper subprocess timed out and was terminated."));
-        return completedSynthesisResult(PiperSynthesisStatus::Timeout,
-                                         QStringLiteral("Piper subprocess timed out"), request,
-                                         config, traces, false,
-                                         QStringLiteral("No audio produced or played."));
+        return completedSynthesisResult(
+            PiperSynthesisStatus::Timeout, QStringLiteral("Piper subprocess timed out"), request,
+            config, traces, false, QStringLiteral("No audio produced or played."));
     }
 
     const auto exitCode = process.exitCode();
     if (exitCode != 0 || !QFileInfo::exists(outputPath)) {
         traces.append(QStringLiteral("Piper subprocess exited with code %1.").arg(exitCode));
-        return completedSynthesisResult(PiperSynthesisStatus::Failed,
-                                         QStringLiteral("Piper subprocess exited with code %1")
-                                             .arg(exitCode),
-                                         request, config, traces, false,
-                                         QStringLiteral("No audio produced or played."));
+        return completedSynthesisResult(
+            PiperSynthesisStatus::Failed,
+            QStringLiteral("Piper subprocess exited with code %1").arg(exitCode), request, config,
+            traces, false, QStringLiteral("No audio produced or played."));
     }
 
     traces.append(QStringLiteral("Piper subprocess completed successfully with code 0."));
-    return completedSynthesisResult(PiperSynthesisStatus::Succeeded,
-                                     QStringLiteral("local synthesis completed"), request, config,
-                                     traces, true,
-                                     QStringLiteral("Controlled local audio file: %1")
-                                         .arg(outputPath));
+    return completedSynthesisResult(
+        PiperSynthesisStatus::Succeeded, QStringLiteral("local synthesis completed"), request,
+        config, traces, true, QStringLiteral("Controlled local audio file: %1").arg(outputPath));
 }
 
 QString piperVoiceModelDescriptorSummary(const PiperVoiceModelDescriptor& descriptor) {
@@ -643,7 +636,13 @@ PiperTtsResult LocalPiperTtsClient::synthesize(const PiperTtsRequest& request,
     const auto trimmedText = request.text.trimmed();
     if (trimmedText.isEmpty()) {
         return PiperTtsResult{
-            PiperTtsStatus::Refused, false, {}, {}, request.timeoutMs, -1, {},
+            PiperTtsStatus::Refused,
+            false,
+            {},
+            {},
+            request.timeoutMs,
+            -1,
+            {},
             QStringLiteral("Piper TTS refused an empty synthesis request."),
             {QStringLiteral("Piper request text was empty.")},
         };
@@ -651,16 +650,28 @@ PiperTtsResult LocalPiperTtsClient::synthesize(const PiperTtsRequest& request,
     if (!request.localOnly || request.allowAudioPlayback || !request.allowProcessExecution ||
         !config.processExecutionAllowed || !config.fileOutputAllowed) {
         return PiperTtsResult{
-            PiperTtsStatus::Refused, false, {}, {}, request.timeoutMs, -1, {},
+            PiperTtsStatus::Refused,
+            false,
+            {},
+            {},
+            request.timeoutMs,
+            -1,
+            {},
             QStringLiteral("Piper TTS refused request policy: synthesis is local-only controlled "
                            "file output; process execution must be explicitly enabled."),
             {QStringLiteral("Piper request policy gate refused synthesis.")},
         };
     }
-    if (request.outputPath.trimmed().isEmpty() || !isControlledOutputPath(request.outputPath,
-                                                                          config.controlledOutputDirectory)) {
+    if (request.outputPath.trimmed().isEmpty() ||
+        !isControlledOutputPath(request.outputPath, config.controlledOutputDirectory)) {
         return PiperTtsResult{
-            PiperTtsStatus::Refused, false, request.outputPath, {}, request.timeoutMs, -1, {},
+            PiperTtsStatus::Refused,
+            false,
+            request.outputPath,
+            {},
+            request.timeoutMs,
+            -1,
+            {},
             QStringLiteral("Piper TTS refused output outside the controlled app output directory."),
             {QStringLiteral("Piper output path gate refused synthesis.")},
         };
@@ -682,8 +693,13 @@ PiperTtsResult LocalPiperTtsClient::synthesize(const PiperTtsRequest& request,
     if (!process.waitForStarted(request.timeoutMs)) {
         const auto errorText = process.errorString();
         return PiperTtsResult{
-            PiperTtsStatus::Failed, false, request.outputPath,
-            outputPathSummary(request.outputPath, config), request.timeoutMs, -1, errorText,
+            PiperTtsStatus::Failed,
+            false,
+            request.outputPath,
+            outputPathSummary(request.outputPath, config),
+            request.timeoutMs,
+            -1,
+            errorText,
             QStringLiteral("Piper subprocess failed to start: %1").arg(errorText),
             {QStringLiteral("Piper subprocess failed to start.")},
         };
@@ -695,8 +711,13 @@ PiperTtsResult LocalPiperTtsClient::synthesize(const PiperTtsRequest& request,
         process.kill();
         process.waitForFinished(1000);
         return PiperTtsResult{
-            PiperTtsStatus::Timeout, false, request.outputPath,
-            outputPathSummary(request.outputPath, config), request.timeoutMs, -1, {},
+            PiperTtsStatus::Timeout,
+            false,
+            request.outputPath,
+            outputPathSummary(request.outputPath, config),
+            request.timeoutMs,
+            -1,
+            {},
             QStringLiteral("Piper subprocess timed out and was terminated."),
             {QStringLiteral("Piper subprocess timed out.")},
         };
@@ -705,16 +726,26 @@ PiperTtsResult LocalPiperTtsClient::synthesize(const PiperTtsRequest& request,
     const auto exitCode = process.exitCode();
     if (exitCode != 0 || !QFileInfo::exists(request.outputPath)) {
         return PiperTtsResult{
-            PiperTtsStatus::Failed, false, request.outputPath,
-            outputPathSummary(request.outputPath, config), request.timeoutMs, exitCode, {},
+            PiperTtsStatus::Failed,
+            false,
+            request.outputPath,
+            outputPathSummary(request.outputPath, config),
+            request.timeoutMs,
+            exitCode,
+            {},
             QStringLiteral("Piper subprocess exited with code %1.").arg(exitCode),
             {QStringLiteral("Piper subprocess exited with code %1.").arg(exitCode)},
         };
     }
 
     return PiperTtsResult{
-        PiperTtsStatus::Succeeded, true, request.outputPath,
-        outputPathSummary(request.outputPath, config), request.timeoutMs, 0, {},
+        PiperTtsStatus::Succeeded,
+        true,
+        request.outputPath,
+        outputPathSummary(request.outputPath, config),
+        request.timeoutMs,
+        0,
+        {},
         QStringLiteral("Piper TTS completed a controlled local file-output synthesis."),
         {QStringLiteral("Piper subprocess completed successfully with code 0.")},
     };
@@ -752,7 +783,7 @@ VoiceResponse PiperTextToSpeechProvider::synthesize(const VoiceRequest& request)
         config_.timeoutMs,
     });
     return VoiceResponse{
-        VoiceProviderStatus::Refused, VoiceCapability::TextToSpeech, {}, false,
+        VoiceProviderStatus::Refused,      VoiceCapability::TextToSpeech, {}, false,
         safePiperTtsResultSummary(result),
     };
 }

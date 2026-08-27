@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/memory/LocalRagStore.h"
 #include <QDir>
 #include <QTemporaryDir>
 #include <QtTest>
-#include "sentinel/core/memory/LocalRagStore.h"
 
 using sentinel::core::LocalRagStore;
 using sentinel::core::RagDocumentRecord;

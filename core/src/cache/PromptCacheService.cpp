@@ -10,11 +10,16 @@ namespace sentinel::core {
 PromptCacheService::PromptCacheService(QObject* parent) : QObject(parent) {}
 PromptCacheService::~PromptCacheService() = default;
 
-bool PromptCacheService::isEnabled() const { return m_enabled; }
-void PromptCacheService::setEnabled(bool enabled) { m_enabled = enabled; }
+bool PromptCacheService::isEnabled() const {
+    return m_enabled;
+}
+void PromptCacheService::setEnabled(bool enabled) {
+    m_enabled = enabled;
+}
 
 std::optional<QString> PromptCacheService::lookup(const QString& promptHash) const {
-    if (!m_enabled) return std::nullopt;
+    if (!m_enabled)
+        return std::nullopt;
 
     auto it = m_cache.find(promptHash);
     if (it == m_cache.end()) {
@@ -35,12 +40,14 @@ std::optional<QString> PromptCacheService::lookup(const QString& promptHash) con
 }
 
 void PromptCacheService::store(const QString& promptHash, const QString& response) {
-    if (!m_enabled) return;
+    if (!m_enabled)
+        return;
 
     if (m_cache.size() >= m_maxEntries) {
         auto oldest = m_cache.begin();
         for (auto it = m_cache.begin(); it != m_cache.end(); ++it) {
-            if (it->createdAt < oldest->createdAt) oldest = it;
+            if (it->createdAt < oldest->createdAt)
+                oldest = it;
         }
         m_cache.erase(oldest);
     }
@@ -52,14 +59,26 @@ void PromptCacheService::store(const QString& promptHash, const QString& respons
     m_cache[promptHash] = entry;
 }
 
-void PromptCacheService::invalidate(const QString& promptHash) { m_cache.remove(promptHash); }
-void PromptCacheService::clear() { m_cache.clear(); m_hits = 0; m_misses = 0; }
-int PromptCacheService::size() const { return m_cache.size(); }
+void PromptCacheService::invalidate(const QString& promptHash) {
+    m_cache.remove(promptHash);
+}
+void PromptCacheService::clear() {
+    m_cache.clear();
+    m_hits = 0;
+    m_misses = 0;
+}
+int PromptCacheService::size() const {
+    return m_cache.size();
+}
 double PromptCacheService::hitRate() const {
     int total = m_hits + m_misses;
     return total > 0 ? (static_cast<double>(m_hits) / total * 100.0) : 0.0;
 }
-void PromptCacheService::setMaxEntries(int max) { m_maxEntries = max; }
-void PromptCacheService::setTtlSeconds(int seconds) { m_ttlSeconds = seconds; }
+void PromptCacheService::setMaxEntries(int max) {
+    m_maxEntries = max;
+}
+void PromptCacheService::setTtlSeconds(int seconds) {
+    m_ttlSeconds = seconds;
+}
 
 } // namespace sentinel::core

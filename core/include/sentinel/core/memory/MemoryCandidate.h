@@ -11,8 +11,8 @@
 #include <QString>
 #include <QStringList>
 
-#include <cstdint>
 #include <QtGlobal>
+#include <cstdint>
 
 namespace sentinel::core {
 

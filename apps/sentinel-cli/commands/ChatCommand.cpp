@@ -4,10 +4,10 @@
 
 #include "ChatCommand.h"
 
-#include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/app/AppSettings.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
+#include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
 
 #include <QCoreApplication>

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QMap>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {
@@ -21,7 +21,8 @@ class IShortcutService {
 public:
     virtual ~IShortcutService() = default;
 
-    virtual void registerShortcut(const QString& action, const QString& keys, const QString& description) = 0;
+    virtual void registerShortcut(const QString& action, const QString& keys,
+                                  const QString& description) = 0;
     virtual void bindCallback(const QString& action, std::function<void()> callback) = 0;
     virtual void triggerAction(const QString& action) = 0;
     virtual bool processKeys(const QString& keySequence) = 0;

@@ -48,7 +48,7 @@ public:
 } // namespace sentinel::core
 
 namespace sentinel::core::interfaces {
-    using IChatProvider = ::sentinel::core::IChatProvider;
-    using ChatProviderStatus = ::sentinel::core::ChatProviderStatus;
-    using ChatProviderReply = ::sentinel::core::ChatProviderReply;
-}
+using IChatProvider = ::sentinel::core::IChatProvider;
+using ChatProviderStatus = ::sentinel::core::ChatProviderStatus;
+using ChatProviderReply = ::sentinel::core::ChatProviderReply;
+} // namespace sentinel::core::interfaces

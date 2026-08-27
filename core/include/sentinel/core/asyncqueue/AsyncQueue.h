@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <QMutex>
 #include <QObject>
 #include <QQueue>
-#include <QMutex>
 #include <functional>
 
 namespace sentinel::core {

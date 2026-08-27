@@ -4,24 +4,24 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QList>
-#include <QMap>
-#include <QPluginLoader>
-#include <memory>
 #include "sentinel/core/plugin/ISentinelPlugin.h"
+#include "sentinel/core/plugin/PluginContext.h"
+#include "sentinel/core/plugin/PluginHotReloader.h"
 #include "sentinel/core/plugin/PluginManifest.h"
 #include "sentinel/core/plugin/PluginSandbox.h"
 #include "sentinel/core/plugin/PluginState.h"
-#include "sentinel/core/plugin/PluginContext.h"
-#include "sentinel/core/plugin/PluginHotReloader.h"
+#include <QList>
+#include <QMap>
+#include <QObject>
+#include <QPluginLoader>
+#include <QString>
+#include <memory>
 
 namespace sentinel::core {
 class IToolRegistry;
 class IMemoryStore;
 class IProviderCatalog;
-}
+} // namespace sentinel::core
 
 namespace sentinel::core::plugin {
 
@@ -39,8 +39,7 @@ class PluginManager : public QObject {
     Q_OBJECT
 public:
     explicit PluginManager(QString coreVersion = QStringLiteral("1.0.0"),
-                           QString pluginStorageDir = QString(),
-                           QObject* parent = nullptr);
+                           QString pluginStorageDir = QString(), QObject* parent = nullptr);
     ~PluginManager() override;
 
     void setPluginStorageDir(const QString& dir);

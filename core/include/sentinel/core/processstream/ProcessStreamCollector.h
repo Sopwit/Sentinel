@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QByteArray>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {

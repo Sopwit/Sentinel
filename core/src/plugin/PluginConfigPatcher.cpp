@@ -6,7 +6,8 @@
 
 namespace sentinel::core {
 
-QJsonObject PluginConfigPatcher::patch(const QJsonObject& original, const QJsonObject& patchData) const {
+QJsonObject PluginConfigPatcher::patch(const QJsonObject& original,
+                                       const QJsonObject& patchData) const {
     QJsonObject result = original;
     for (auto it = patchData.begin(); it != patchData.end(); ++it) {
         if (it.value().isObject() && result[it.key()].isObject()) {
@@ -22,7 +23,8 @@ QJsonObject PluginConfigPatcher::merge(const QJsonObject& base, const QJsonObjec
     return patch(base, override);
 }
 
-QJsonObject PluginConfigPatcher::applyDefaults(const QJsonObject& config, const QJsonObject& defaults) const {
+QJsonObject PluginConfigPatcher::applyDefaults(const QJsonObject& config,
+                                               const QJsonObject& defaults) const {
     QJsonObject result = defaults;
     for (auto it = config.begin(); it != config.end(); ++it) {
         result[it.key()] = it.value();

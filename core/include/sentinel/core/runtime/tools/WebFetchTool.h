@@ -4,20 +4,16 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QObject>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {
 
-enum class WebFetchFormat {
-    Text,
-    Markdown,
-    Html
-};
+enum class WebFetchFormat { Text, Markdown, Html };
 
 struct WebFetchResponse {
     bool success{false};
@@ -59,7 +55,8 @@ private:
     QUrl validateUrl(const QString& url) const;
     QByteArray buildRequestHeaders() const;
     WebFetchResponse processResponse(QNetworkReply* reply, WebFetchFormat format) const;
-    QString convertResponse(const QByteArray& content, const QString& contentType, WebFetchFormat format) const;
+    QString convertResponse(const QByteArray& content, const QString& contentType,
+                            WebFetchFormat format) const;
 
     int m_timeoutSeconds{30};
     qint64 m_maxContentSize{5 * 1024 * 1024}; // 5MB

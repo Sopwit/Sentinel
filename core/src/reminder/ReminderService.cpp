@@ -10,7 +10,8 @@ namespace sentinel::core {
 ReminderService::ReminderService(QObject* parent) : QObject(parent) {}
 ReminderService::~ReminderService() = default;
 
-QString ReminderService::addReminder(const QString& sessionId, const QString& content, int triggerAfter) {
+QString ReminderService::addReminder(const QString& sessionId, const QString& content,
+                                     int triggerAfter) {
     Reminder r;
     r.id = generateId();
     r.content = content;
@@ -27,7 +28,8 @@ bool ReminderService::removeReminder(const QString& reminderId) {
 QList<Reminder> ReminderService::activeReminders(const QString& sessionId) const {
     QList<Reminder> result;
     for (const auto& r : m_reminders) {
-        if (r.sessionId == sessionId && r.active) result.append(r);
+        if (r.sessionId == sessionId && r.active)
+            result.append(r);
     }
     return result;
 }

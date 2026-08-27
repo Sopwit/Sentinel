@@ -19,8 +19,10 @@ PtyTicket PtyTicketService::createTicket(const QString& sessionId, int ttlSecond
 
 bool PtyTicketService::validateTicket(const QString& ticketId) {
     auto it = m_tickets.find(ticketId);
-    if (it == m_tickets.end()) return false;
-    if (it->expiresAt < QDateTime::currentDateTime()) return false;
+    if (it == m_tickets.end())
+        return false;
+    if (it->expiresAt < QDateTime::currentDateTime())
+        return false;
     it->used = true;
     return true;
 }

@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QList>
 #include <QObject>
 #include <QString>
-#include <QList>
-#include <QJsonObject>
-#include <QJsonArray>
 #include <memory>
 
 namespace sentinel::core {
@@ -22,20 +22,15 @@ struct McpToolDefinition {
 
 struct McpServerConfig {
     QString name;
-    QString type; // "local" or "remote"
-    QString command; // for local: executable path
+    QString type;          // "local" or "remote"
+    QString command;       // for local: executable path
     QStringList arguments; // for local: command arguments
-    QString url; // for remote: HTTP endpoint
-    QJsonObject headers; // for remote: custom headers
+    QString url;           // for remote: HTTP endpoint
+    QJsonObject headers;   // for remote: custom headers
     bool enabled{true};
 };
 
-enum class McpConnectionState {
-    Disconnected,
-    Connecting,
-    Connected,
-    Error
-};
+enum class McpConnectionState { Disconnected, Connecting, Connected, Error };
 
 class IMcpService {
 public:
@@ -54,7 +49,8 @@ public:
 
     // Tool operations
     virtual QList<McpToolDefinition> tools(const QString& serverName = QString()) const = 0;
-    virtual QJsonObject callTool(const QString& serverName, const QString& toolName, const QJsonObject& arguments = {}) = 0;
+    virtual QJsonObject callTool(const QString& serverName, const QString& toolName,
+                                 const QJsonObject& arguments = {}) = 0;
 
     // Batch operations
     virtual bool connectToAll() = 0;

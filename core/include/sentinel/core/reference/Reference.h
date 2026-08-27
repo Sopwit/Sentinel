@@ -4,16 +4,12 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class ReferenceType : std::uint8_t {
-    Repository,
-    LocalPath,
-    Url
-};
+enum class ReferenceType : std::uint8_t { Repository, LocalPath, Url };
 
 struct Reference {
     QString name;
@@ -22,7 +18,9 @@ struct Reference {
     QString path; // local path, repo URL, or web URL
     bool isAvailable{false};
     QString lastError;
-    bool isValid() const { return !name.isEmpty() && !path.isEmpty(); }
+    bool isValid() const {
+        return !name.isEmpty() && !path.isEmpty();
+    }
 };
 
 } // namespace sentinel::core

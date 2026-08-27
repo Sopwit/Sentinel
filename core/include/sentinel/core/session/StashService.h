@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/session/IStashService.h"
-#include <QObject>
 #include <QList>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -16,7 +16,8 @@ public:
     explicit StashService(QObject* parent = nullptr);
     ~StashService() override;
 
-    QString stash(const QString& sessionId, const QJsonObject& data, const QString& description = {}) override;
+    QString stash(const QString& sessionId, const QJsonObject& data,
+                  const QString& description = {}) override;
     bool unstash(const QString& stashId, QJsonObject& data) override;
     bool removeStash(const QString& stashId) override;
     QList<StashedChanges> stashes(const QString& sessionId = {}) const override;

@@ -2,18 +2,18 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
+#include "sentinel/core/chat/LocalEchoProvider.h"
+#include "sentinel/core/chat/SQLiteConversationStore.h"
 #include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
-#include "sentinel/core/chat/LocalEchoProvider.h"
-#include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/model/ModelManagement.h"
-#include "sentinel/core/agent/NullAgentRuntime.h"
-#include "sentinel/core/voice/PiperTts.h"
+#include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/RuntimePermissions.h"
-#include "sentinel/core/chat/SQLiteConversationStore.h"
+#include "sentinel/core/voice/PiperTts.h"
 #include "sentinel/core/voice/Voice.h"
 
 #include <QDir>
@@ -862,6 +862,7 @@ makeAsyncWorkerController(std::unique_ptr<ILocalInferenceWorker> worker) {
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
     controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalInferenceStreamingEnabled(false);
     return controller;
 }
 
@@ -951,7 +952,7 @@ void ApplicationControllerTest::exposesProviderCatalogMetadata() {
     QCOMPARE(controller->providerCatalogCount(), 4);
     QCOMPARE(controller->providerCatalogSummaries().size(), 4);
     QVERIFY(controller->providerCatalogSummaries().contains(
-         QStringLiteral("Ollama Local (Local, Not Configured)")));
+        QStringLiteral("Ollama Local (Local, Not Configured)")));
     QVERIFY(controller->providerCatalogSummaries().contains(
         QStringLiteral("OpenAI Cloud (Cloud, Not Configured)")));
 }
@@ -1235,15 +1236,13 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("readiness=disabled")));
     QVERIFY(controller->providerCredentialRegistrySummary().contains(
         QStringLiteral("API key values are persisted")));
-    QVERIFY(
-        controller->credentialStoreSummary().contains(QStringLiteral("ready")));
-    QVERIFY(
-        controller->credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
+    QVERIFY(controller->credentialStoreSummary().contains(QStringLiteral("ready")));
+    QVERIFY(controller->credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
     QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
     QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("credential store")));
-    QVERIFY(controller->credentialExecutionStatus().contains(
-        QStringLiteral("user-provided API key")));
+    QVERIFY(
+        controller->credentialExecutionStatus().contains(QStringLiteral("user-provided API key")));
     QCOMPARE(controller->providerCredentialSummaries().size(), 4);
     QVERIFY(controller->providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
@@ -1647,15 +1646,17 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
 
     QCOMPARE(fixture.controller->piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Ready Metadata"));
-    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("disabled")));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
+             QStringLiteral("Ready Metadata"));
+    QVERIFY(
+        fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("disabled")));
 
     const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
 
     QVERIFY(!generated);
     QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Ready Metadata"));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
+             QStringLiteral("Ready Metadata"));
     QVERIFY(
         fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
     QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
@@ -1679,8 +1680,8 @@ void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControl
         QStringLiteral("generated")));
     QVERIFY(fixture.controller->piperFileOutputAudioPathSummary().contains(
         QStringLiteral("sentinel-piper-tts.wav")));
-    QVERIFY(!fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QVERIFY(
+        !fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout() {
@@ -1728,7 +1729,8 @@ void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrMod
     QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
     QVERIFY(!fixture.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Missing Binary"));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
+             QStringLiteral("Missing Binary"));
     QVERIFY(
         fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 }
@@ -3110,6 +3112,7 @@ void ApplicationControllerTest::localChatInferenceRequiresASelectedModel() {
         std::make_unique<FakeOllamaRuntimeClient>(
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
+    controller->setLocalChatInferenceEnabled(true);
 
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
