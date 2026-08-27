@@ -7,9 +7,11 @@
 #include <QtGlobal>
 
 #if defined(Q_OS_WIN)
-#include <dpapi.h>
+// clang-format off
 #include <qt_windows.h>
 #include <wincrypt.h>
+#include <dpapi.h>
+// clang-format on
 #elif defined(Q_OS_MACOS) || defined(__APPLE__)
 #include <CommonCrypto/CommonCrypto.h>
 #include <CoreFoundation/CoreFoundation.h>
