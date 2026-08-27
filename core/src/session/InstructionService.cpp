@@ -30,7 +30,8 @@ QList<Instruction> InstructionService::discoverInstructions(const QString& start
                 instructions.append(instr);
             }
         }
-        if (!dir.cdUp()) break;
+        if (!dir.cdUp())
+            break;
     }
 
     for (const auto& globalPath : m_globalInstructions) {
@@ -78,7 +79,11 @@ void InstructionService::addRemoteInstruction(const QString& url) {
     }
 }
 
-QStringList InstructionService::globalInstructions() const { return m_globalInstructions; }
-QStringList InstructionService::remoteInstructions() const { return m_remoteInstructions; }
+QStringList InstructionService::globalInstructions() const {
+    return m_globalInstructions;
+}
+QStringList InstructionService::remoteInstructions() const {
+    return m_remoteInstructions;
+}
 
 } // namespace sentinel::core

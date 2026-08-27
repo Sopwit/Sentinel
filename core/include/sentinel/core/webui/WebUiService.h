@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/webui/IWebUiService.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -21,7 +21,8 @@ public:
     bool isRunning() const override;
     QString url() const override;
     void setContent(const QString& path, const QString& content) override;
-    void setApiHandler(const QString& path, std::function<QString(const QJsonObject&)> handler) override;
+    void setApiHandler(const QString& path,
+                       std::function<QString(const QJsonObject&)> handler) override;
 
 private:
     WebUiConfig m_config;

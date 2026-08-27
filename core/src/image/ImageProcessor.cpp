@@ -37,14 +37,14 @@ QImage ImageProcessor::fromBase64(const QByteArray& data) const {
 
 QImage ImageProcessor::loadAndNormalize(const QString& filePath) const {
     QImage image(filePath);
-    if (image.isNull()) return image;
+    if (image.isNull())
+        return image;
     return normalize(image);
 }
 
 bool ImageProcessor::fitsLimits(const QImage& image) const {
     qint64 estimatedBase64 = static_cast<qint64>(image.width() * image.height() * 3) * 4 / 3;
-    return image.width() <= m_config.maxWidth &&
-           image.height() <= m_config.maxHeight &&
+    return image.width() <= m_config.maxWidth && image.height() <= m_config.maxHeight &&
            estimatedBase64 <= m_config.maxBase64Size;
 }
 
@@ -52,8 +52,8 @@ QImage ImageProcessor::resize(const QImage& image) const {
     if (image.width() <= m_config.maxWidth && image.height() <= m_config.maxHeight) {
         return image;
     }
-    return image.scaled(m_config.maxWidth, m_config.maxHeight,
-                        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return image.scaled(m_config.maxWidth, m_config.maxHeight, Qt::KeepAspectRatio,
+                        Qt::SmoothTransformation);
 }
 
 QImage ImageProcessor::compress(const QImage& image) const {

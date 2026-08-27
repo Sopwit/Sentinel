@@ -3,22 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/DynamicAgentRegistry.h"
+#include <QDebug>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QTextStream>
 #include <QRegularExpression>
-#include <QDebug>
+#include <QTextStream>
 
 namespace sentinel::core {
 
-DynamicAgentRegistry::DynamicAgentRegistry(QObject* parent)
-    : QObject(parent)
-{
+DynamicAgentRegistry::DynamicAgentRegistry(QObject* parent) : QObject(parent) {
     loadBuiltInAgents();
 }
 
@@ -82,7 +80,8 @@ QList<AgentDefinition> DynamicAgentRegistry::agentDefinitions() const {
     return m_agents.values();
 }
 
-std::optional<AgentDefinition> DynamicAgentRegistry::findAgentDefinition(const QString& agentId) const {
+std::optional<AgentDefinition>
+DynamicAgentRegistry::findAgentDefinition(const QString& agentId) const {
     auto it = m_agents.find(agentId);
     if (it == m_agents.end()) {
         return std::nullopt;
@@ -229,11 +228,16 @@ AgentDescriptor DynamicAgentRegistry::definitionToDescriptor(const AgentDefiniti
     desc.priority = AgentPriority::Normal;
 
     // Map role string to enum
-    if (def.role == "Planner") desc.role = AgentRole::Planner;
-    else if (def.role == "Researcher") desc.role = AgentRole::Researcher;
-    else if (def.role == "Builder") desc.role = AgentRole::Builder;
-    else if (def.role == "Guardian") desc.role = AgentRole::Guardian;
-    else if (def.role == "Companion") desc.role = AgentRole::Companion;
+    if (def.role == "Planner")
+        desc.role = AgentRole::Planner;
+    else if (def.role == "Researcher")
+        desc.role = AgentRole::Researcher;
+    else if (def.role == "Builder")
+        desc.role = AgentRole::Builder;
+    else if (def.role == "Guardian")
+        desc.role = AgentRole::Guardian;
+    else if (def.role == "Companion")
+        desc.role = AgentRole::Companion;
 
     return desc;
 }
@@ -258,32 +262,40 @@ AgentDefinition DynamicAgentRegistry::parseMarkdownAgent(const QString& filePath
     if (!frontmatter.isEmpty()) {
         QRegularExpression idRegex("id:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
         QRegularExpression nameRegex("name:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
-        QRegularExpression descRegex("description:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
+        QRegularExpression descRegex("description:\\s*(.+)",
+                                     QRegularExpression::CaseInsensitiveOption);
         QRegularExpression roleRegex("role:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
         QRegularExpression modeRegex("mode:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
         QRegularExpression modelRegex("model:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
         QRegularExpression colorRegex("color:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
 
         QRegularExpressionMatch idMatch = idRegex.match(frontmatter);
-        if (idMatch.hasMatch()) agent.id = idMatch.captured(1).trimmed();
+        if (idMatch.hasMatch())
+            agent.id = idMatch.captured(1).trimmed();
 
         QRegularExpressionMatch nameMatch = nameRegex.match(frontmatter);
-        if (nameMatch.hasMatch()) agent.displayName = nameMatch.captured(1).trimmed();
+        if (nameMatch.hasMatch())
+            agent.displayName = nameMatch.captured(1).trimmed();
 
         QRegularExpressionMatch descMatch = descRegex.match(frontmatter);
-        if (descMatch.hasMatch()) agent.description = descMatch.captured(1).trimmed();
+        if (descMatch.hasMatch())
+            agent.description = descMatch.captured(1).trimmed();
 
         QRegularExpressionMatch roleMatch = roleRegex.match(frontmatter);
-        if (roleMatch.hasMatch()) agent.role = roleMatch.captured(1).trimmed();
+        if (roleMatch.hasMatch())
+            agent.role = roleMatch.captured(1).trimmed();
 
         QRegularExpressionMatch modeMatch = modeRegex.match(frontmatter);
-        if (modeMatch.hasMatch()) agent.mode = modeMatch.captured(1).trimmed();
+        if (modeMatch.hasMatch())
+            agent.mode = modeMatch.captured(1).trimmed();
 
         QRegularExpressionMatch modelMatch = modelRegex.match(frontmatter);
-        if (modelMatch.hasMatch()) agent.model = modelMatch.captured(1).trimmed();
+        if (modelMatch.hasMatch())
+            agent.model = modelMatch.captured(1).trimmed();
 
         QRegularExpressionMatch colorMatch = colorRegex.match(frontmatter);
-        if (colorMatch.hasMatch()) agent.color = colorMatch.captured(1).trimmed();
+        if (colorMatch.hasMatch())
+            agent.color = colorMatch.captured(1).trimmed();
     }
 
     // If no id from frontmatter, use filename

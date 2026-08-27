@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "sentinel/core/runtime/IToolExecutor.h"
-#include "sentinel/core/runtime/AlarmStore.h"
-#include "sentinel/core/runtime/tools/WebFetchTool.h"
-#include "sentinel/core/runtime/tools/WebSearchTool.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
 #include "sentinel/core/mcp/IMcpService.h"
+#include "sentinel/core/runtime/AlarmStore.h"
+#include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/runtime/tools/WebFetchTool.h"
+#include "sentinel/core/runtime/tools/WebSearchTool.h"
 
 #include <QJsonArray>
 #include <functional>

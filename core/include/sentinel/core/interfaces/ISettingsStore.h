@@ -22,5 +22,5 @@ public:
 } // namespace sentinel::core
 
 namespace sentinel::core::interfaces {
-    using ISettingsStore = ::sentinel::core::ISettingsStore;
+using ISettingsStore = ::sentinel::core::ISettingsStore;
 }

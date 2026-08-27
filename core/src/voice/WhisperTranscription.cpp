@@ -32,8 +32,7 @@ bool existingExecutableFile(const QString& path) {
     const QFileInfo info(path);
     if (info.exists() && info.isFile()) {
 #if defined(Q_OS_WIN)
-        return info.isExecutable() ||
-               QFileInfo(path + QStringLiteral(".exe")).exists();
+        return info.isExecutable() || QFileInfo(path + QStringLiteral(".exe")).exists();
 #else
         return info.isExecutable();
 #endif
@@ -61,8 +60,8 @@ QString safeAudioPathSummary(const QString& path) {
     return QStringLiteral("Local audio file metadata accepted without exposing raw path.");
 }
 
-[[maybe_unused]] WhisperTranscriptionTrace trace(const QString& stage, WhisperTranscriptionStatus status,
-                                const QString& summary) {
+[[maybe_unused]] WhisperTranscriptionTrace
+trace(const QString& stage, WhisperTranscriptionStatus status, const QString& summary) {
     return WhisperTranscriptionTrace{stage, status, false, summary};
 }
 
@@ -100,11 +99,12 @@ WhisperTranscriptionResult refusedResult(WhisperTranscriptionStatus status, cons
     return result;
 }
 
-WhisperTranscriptionResult
-completedTranscriptionResult(WhisperTranscriptionStatus status, const QString& reason,
-                             const WhisperTranscriptionRequest& request,
-                             const WhisperTranscriptionConfig& config,
-                             const QStringList& traces, bool success, const QString& transcript) {
+WhisperTranscriptionResult completedTranscriptionResult(WhisperTranscriptionStatus status,
+                                                        const QString& reason,
+                                                        const WhisperTranscriptionRequest& request,
+                                                        const WhisperTranscriptionConfig& config,
+                                                        const QStringList& traces, bool success,
+                                                        const QString& transcript) {
     auto safety = whisperTranscriptionSafetyReport(config.policy);
     safety.executionAttempted = true;
     WhisperTranscriptionResult result;
@@ -434,8 +434,8 @@ LocalWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& r
     }
 
     QProcess process;
-    QStringList arguments = {QStringLiteral("-m"), config.model.expectedPath,
-                             QStringLiteral("-f"), request.audioPath};
+    QStringList arguments = {QStringLiteral("-m"), config.model.expectedPath, QStringLiteral("-f"),
+                             request.audioPath};
     if (!request.languageHint.trimmed().isEmpty()) {
         arguments << QStringLiteral("-l") << request.languageHint.trimmed();
     }
@@ -460,8 +460,7 @@ LocalWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& r
     }
 
     const auto exitCode = process.exitCode();
-    const auto transcript =
-        QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    const auto transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
     if (exitCode != 0) {
         traces.append(QStringLiteral("Whisper subprocess exited with code %1.").arg(exitCode));
         return completedTranscriptionResult(WhisperTranscriptionStatus::Failed,

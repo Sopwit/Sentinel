@@ -25,8 +25,10 @@ void SecurityUtilitiesTest::policyIsLastMatchWins() {
 }
 
 void SecurityUtilitiesTest::pathGuardBlocksEscape() {
-    QVERIFY(PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project/src")));
-    QVERIFY(!PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project-other")));
+    QVERIFY(
+        PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project/src")));
+    QVERIFY(
+        !PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project-other")));
 }
 
 void SecurityUtilitiesTest::base64UrlRoundTrips() {

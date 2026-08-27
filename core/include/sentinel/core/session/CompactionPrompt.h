@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -61,7 +61,9 @@ Provide your summary in this exact structure:
 Be concise but comprehensive. Preserve all critical information needed to continue the work.
 )";
 
-    static constexpr const char* SystemMessage = "You are a precise conversation summarizer. Output only the structured summary in the specified format.";
+    static constexpr const char* SystemMessage =
+        "You are a precise conversation summarizer. Output only the structured summary in the "
+        "specified format.";
 };
 
 } // namespace sentinel::core

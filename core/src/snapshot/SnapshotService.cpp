@@ -3,22 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/snapshot/SnapshotService.h"
+#include <QCryptographicHash>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QCryptographicHash>
 #include <QStandardPaths>
 #include <QUuid>
-#include <QDebug>
 
 namespace sentinel::core {
 
-SnapshotService::SnapshotService(QObject* parent)
-    : QObject(parent)
-{
+SnapshotService::SnapshotService(QObject* parent) : QObject(parent) {
     m_checkTimer.setInterval(5000); // Check every 5 seconds
     connect(&m_checkTimer, &QTimer::timeout, this, &SnapshotService::checkForChanges);
 }
@@ -45,7 +43,8 @@ QString SnapshotService::createSnapshot(const QString& description) {
 
     // Save snapshot
     if (!saveSnapshotToFile(snapshot)) {
-        qWarning() << QStringLiteral("SnapshotService: Failed to save snapshot '%1'").arg(snapshot.id);
+        qWarning()
+            << QStringLiteral("SnapshotService: Failed to save snapshot '%1'").arg(snapshot.id);
         return {};
     }
 
@@ -70,7 +69,8 @@ bool SnapshotService::restoreSnapshot(const QString& snapshotId) {
     for (auto it = snapshot->files.begin(); it != snapshot->files.end(); ++it) {
         const FileSnapshot& fileSnap = it.value();
         if (!writeFileContent(fileSnap.filePath, fileSnap.content)) {
-            qWarning() << QStringLiteral("SnapshotService: Failed to restore file '%1'").arg(fileSnap.filePath);
+            qWarning() << QStringLiteral("SnapshotService: Failed to restore file '%1'")
+                              .arg(fileSnap.filePath);
             return false;
         }
     }
@@ -287,8 +287,8 @@ QString SnapshotService::generateSnapshotId() const {
 
 QString SnapshotService::snapshotPath(const QString& snapshotId) const {
     QString baseDir = m_workingDirectory.isEmpty()
-        ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-        : m_workingDirectory;
+                          ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                          : m_workingDirectory;
 
     return QStringLiteral("%1/snapshots/%2.json").arg(baseDir, snapshotId);
 }

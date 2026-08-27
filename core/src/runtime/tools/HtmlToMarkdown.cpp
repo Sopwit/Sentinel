@@ -16,69 +16,98 @@ QString HtmlToMarkdown::convert(const QString& html) {
     QString result = html;
 
     // Remove script and style elements
-    result.remove(QRegularExpression("<script[^>]*>[\\s\\S]*?</script>", QRegularExpression::CaseInsensitiveOption));
-    result.remove(QRegularExpression("<style[^>]*>[\\s\\S]*?</style>", QRegularExpression::CaseInsensitiveOption));
+    result.remove(QRegularExpression("<script[^>]*>[\\s\\S]*?</script>",
+                                     QRegularExpression::CaseInsensitiveOption));
+    result.remove(QRegularExpression("<style[^>]*>[\\s\\S]*?</style>",
+                                     QRegularExpression::CaseInsensitiveOption));
 
     // Convert headers
     for (int i = 6; i >= 1; --i) {
         QString prefix(i, '#');
         result.replace(QRegularExpression(QStringLiteral("<h%1[^>]*>(.*?)</h%1>").arg(i),
-                      QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
-                      QStringLiteral("%1 %2\n\n").arg(prefix));
+                                          QRegularExpression::CaseInsensitiveOption |
+                                              QRegularExpression::DotMatchesEverythingOption),
+                       QStringLiteral("%1 %2\n\n").arg(prefix));
     }
 
     // Convert paragraphs
-    result.replace(QRegularExpression("<p[^>]*>(.*?)</p>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
-                   QStringLiteral("%1\n\n"));
+    result.replace(
+        QRegularExpression("<p[^>]*>(.*?)</p>", QRegularExpression::CaseInsensitiveOption |
+                                                    QRegularExpression::DotMatchesEverythingOption),
+        QStringLiteral("%1\n\n"));
 
     // Convert line breaks
-    result.replace(QRegularExpression("<br[^>]*>", QRegularExpression::CaseInsensitiveOption), "\n");
-    result.replace(QRegularExpression("<br[^>]*/?>", QRegularExpression::CaseInsensitiveOption), "\n");
+    result.replace(QRegularExpression("<br[^>]*>", QRegularExpression::CaseInsensitiveOption),
+                   "\n");
+    result.replace(QRegularExpression("<br[^>]*/?>", QRegularExpression::CaseInsensitiveOption),
+                   "\n");
 
     // Convert bold
-    result.replace(QRegularExpression("<b[^>]*>(.*?)</b>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
-                   QStringLiteral("**%1**"));
-    result.replace(QRegularExpression("<strong[^>]*>(.*?)</strong>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(
+        QRegularExpression("<b[^>]*>(.*?)</b>", QRegularExpression::CaseInsensitiveOption |
+                                                    QRegularExpression::DotMatchesEverythingOption),
+        QStringLiteral("**%1**"));
+    result.replace(QRegularExpression("<strong[^>]*>(.*?)</strong>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("**%1**"));
 
     // Convert italic
-    result.replace(QRegularExpression("<i[^>]*>(.*?)</i>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
-                   QStringLiteral("*%1*"));
-    result.replace(QRegularExpression("<em[^>]*>(.*?)</em>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(
+        QRegularExpression("<i[^>]*>(.*?)</i>", QRegularExpression::CaseInsensitiveOption |
+                                                    QRegularExpression::DotMatchesEverythingOption),
+        QStringLiteral("*%1*"));
+    result.replace(QRegularExpression("<em[^>]*>(.*?)</em>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("*%1*"));
 
     // Convert links
-    result.replace(QRegularExpression("<a[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(QRegularExpression("<a[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("[%2](%1)"));
 
     // Convert images
-    result.replace(QRegularExpression("<img[^>]*src=\"([^\"]+)\"[^>]*/?>", QRegularExpression::CaseInsensitiveOption),
+    result.replace(QRegularExpression("<img[^>]*src=\"([^\"]+)\"[^>]*/?>",
+                                      QRegularExpression::CaseInsensitiveOption),
                    QStringLiteral("![Image](%1)"));
 
     // Convert lists
-    result.replace(QRegularExpression("<li[^>]*>(.*?)</li>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(QRegularExpression("<li[^>]*>(.*?)</li>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("- %1\n"));
 
     // Convert code blocks
-    result.replace(QRegularExpression("<pre[^>]*><code[^>]*>(.*?)</code></pre>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(QRegularExpression("<pre[^>]*><code[^>]*>(.*?)</code></pre>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("```\n%1\n```\n\n"));
 
     // Convert inline code
-    result.replace(QRegularExpression("<code[^>]*>(.*?)</code>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(QRegularExpression("<code[^>]*>(.*?)</code>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("`%1`"));
 
     // Convert blockquotes
-    result.replace(QRegularExpression("<blockquote[^>]*>(.*?)</blockquote>", QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption),
+    result.replace(QRegularExpression("<blockquote[^>]*>(.*?)</blockquote>",
+                                      QRegularExpression::CaseInsensitiveOption |
+                                          QRegularExpression::DotMatchesEverythingOption),
                    QStringLiteral("> %1\n\n"));
 
     // Convert tables (simplified)
-    result.replace(QRegularExpression("<table[^>]*>", QRegularExpression::CaseInsensitiveOption), "\n");
+    result.replace(QRegularExpression("<table[^>]*>", QRegularExpression::CaseInsensitiveOption),
+                   "\n");
     result.replace(QRegularExpression("</table>", QRegularExpression::CaseInsensitiveOption), "\n");
     result.replace(QRegularExpression("<tr[^>]*>", QRegularExpression::CaseInsensitiveOption), "");
     result.replace(QRegularExpression("</tr>", QRegularExpression::CaseInsensitiveOption), "\n");
-    result.replace(QRegularExpression("<td[^>]*>", QRegularExpression::CaseInsensitiveOption), "| ");
+    result.replace(QRegularExpression("<td[^>]*>", QRegularExpression::CaseInsensitiveOption),
+                   "| ");
     result.replace(QRegularExpression("</td>", QRegularExpression::CaseInsensitiveOption), " ");
-    result.replace(QRegularExpression("<th[^>]*>", QRegularExpression::CaseInsensitiveOption), "| ");
+    result.replace(QRegularExpression("<th[^>]*>", QRegularExpression::CaseInsensitiveOption),
+                   "| ");
     result.replace(QRegularExpression("</th>", QRegularExpression::CaseInsensitiveOption), " ");
 
     // Remove remaining HTML tags
@@ -107,8 +136,10 @@ QString HtmlToMarkdown::toText(const QString& html) {
     QString result = html;
 
     // Remove script and style elements
-    result.remove(QRegularExpression("<script[^>]*>[\\s\\S]*?</script>", QRegularExpression::CaseInsensitiveOption));
-    result.remove(QRegularExpression("<style[^>]*>[\\s\\S]*?</style>", QRegularExpression::CaseInsensitiveOption));
+    result.remove(QRegularExpression("<script[^>]*>[\\s\\S]*?</script>",
+                                     QRegularExpression::CaseInsensitiveOption));
+    result.remove(QRegularExpression("<style[^>]*>[\\s\\S]*?</style>",
+                                     QRegularExpression::CaseInsensitiveOption));
 
     // Remove all HTML tags
     result.remove(QRegularExpression("<[^>]*>"));
@@ -130,7 +161,8 @@ QString HtmlToMarkdown::toText(const QString& html) {
 
 QString HtmlToMarkdown::extractTitle(const QString& html) {
     QRegularExpression titleRegex("<title[^>]*>(.*?)</title>",
-                                  QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
+                                  QRegularExpression::CaseInsensitiveOption |
+                                      QRegularExpression::DotMatchesEverythingOption);
     QRegularExpressionMatch match = titleRegex.match(html);
     if (match.hasMatch()) {
         return match.captured(1).trimmed();
@@ -141,7 +173,8 @@ QString HtmlToMarkdown::extractTitle(const QString& html) {
 QString HtmlToMarkdown::extractLinks(const QString& html) {
     QString links;
     QRegularExpression linkRegex("<a[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>",
-                                 QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
+                                 QRegularExpression::CaseInsensitiveOption |
+                                     QRegularExpression::DotMatchesEverythingOption);
 
     QRegularExpressionMatchIterator it = linkRegex.globalMatch(html);
     while (it.hasNext()) {

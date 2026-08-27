@@ -5,13 +5,13 @@
 #pragma once
 
 #include "sentinel/core/job/IJobService.h"
-#include <QObject>
 #include <QMap>
-#include <QQueue>
-#include <QThreadPool>
 #include <QMutex>
-#include <QUuid>
+#include <QObject>
+#include <QQueue>
 #include <QSqlDatabase>
+#include <QThreadPool>
+#include <QUuid>
 
 namespace sentinel::core {
 
@@ -22,7 +22,8 @@ public:
     ~BackgroundJobService() override;
 
     // IJobService interface
-    QString submitJob(const QString& name, JobFunction func, const QString& description = {}) override;
+    QString submitJob(const QString& name, JobFunction func,
+                      const QString& description = {}) override;
     bool cancelJob(const QString& jobId) override;
     bool retryJob(const QString& jobId) override;
     bool removeJob(const QString& jobId) override;

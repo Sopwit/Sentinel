@@ -16,9 +16,9 @@ ModelCatalogEntry unconfiguredLocalModel() {
         ModelDescriptor{
             QStringLiteral("sentinel-local-placeholder"),
             QStringLiteral("Ollama Local (not configured)"),
-             QStringLiteral("ollama-local-not-configured"),
-             true,
-             false,
+            QStringLiteral("ollama-local-not-configured"),
+            true,
+            false,
             8192,
             QStringLiteral("metadata"),
             QStringLiteral("low"),
@@ -41,8 +41,8 @@ ModelCatalogEntry unconfiguredLocalModel() {
 ProviderCatalogEntry unconfiguredLocalProvider() {
     return ProviderCatalogEntry{
         ProviderDescriptor{
-             QStringLiteral("ollama-local"),
-         QStringLiteral("Ollama Local Provider"),
+            QStringLiteral("ollama-local"),
+            QStringLiteral("Ollama Local Provider"),
             ProviderKind::Local,
             ProviderCapabilityProfile{
                 true,
@@ -63,12 +63,12 @@ ProviderCatalogEntry unconfiguredLocalProvider() {
                 },
             },
         },
-         CatalogAvailability::NotConfigured,
+        CatalogAvailability::NotConfigured,
         CatalogPrivacyLevel::LocalOnly,
         2048,
         0,
-         QStringLiteral("Ollama Local (Local, Not Configured)"),
-         {unconfiguredLocalModel()},
+        QStringLiteral("Ollama Local (Local, Not Configured)"),
+        {unconfiguredLocalModel()},
     };
 }
 
@@ -167,12 +167,13 @@ QList<ProviderCatalogEntry> defaultEntries() {
     return {
         unconfiguredLocalProvider(),
         unconfiguredOllamaProvider(),
-        unconfiguredCloudProvider(QStringLiteral("anthropic-cloud"), QStringLiteral("Anthropic Cloud"),
-                         QStringLiteral("anthropic-cloud-placeholder"),
-                         QStringLiteral("Anthropic Cloud Placeholder")),
+        unconfiguredCloudProvider(QStringLiteral("anthropic-cloud"),
+                                  QStringLiteral("Anthropic Cloud"),
+                                  QStringLiteral("anthropic-cloud-placeholder"),
+                                  QStringLiteral("Anthropic Cloud Placeholder")),
         unconfiguredCloudProvider(QStringLiteral("openai-cloud"), QStringLiteral("OpenAI Cloud"),
-                         QStringLiteral("openai-cloud-placeholder"),
-                         QStringLiteral("OpenAI Cloud Placeholder")),
+                                  QStringLiteral("openai-cloud-placeholder"),
+                                  QStringLiteral("OpenAI Cloud Placeholder")),
     };
 }
 

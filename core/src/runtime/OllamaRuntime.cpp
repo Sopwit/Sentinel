@@ -93,11 +93,8 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
     } else {
         reply->abort();
         reply->deleteLater();
-        return JsonReply{false,
-                         true,
-                         {},
-                         QStringLiteral("Request timed out."),
-                         QNetworkReply::TimeoutError};
+        return JsonReply{
+            false, true, {}, QStringLiteral("Request timed out."), QNetworkReply::TimeoutError};
     }
 
     if (reply->error() != QNetworkReply::NoError) {
@@ -468,8 +465,9 @@ void OllamaModelPuller::removeModel(const QString& modelId) {
     QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, trimmed]() {
         const bool success = (reply->error() == QNetworkReply::NoError);
         if (!success) {
-            setState(false, trimmed, 0.0, QString(),
-                     QStringLiteral("Delete failed: Ollama is not running or rejected the request."));
+            setState(
+                false, trimmed, 0.0, QString(),
+                QStringLiteral("Delete failed: Ollama is not running or rejected the request."));
         }
         reply->deleteLater();
         emit removeFinished(trimmed, success);
@@ -1378,10 +1376,9 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
     const auto reply = getJson(url, timeoutMs, nullptr, headers);
     if (!reply.ok) {
         if (errorOut) {
-            *errorOut = reply.timedOut
-                            ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
-                            : safeOllamaNetworkFailureSummary(reply, QStringLiteral("Model list"),
-                                                              timeoutMs);
+            *errorOut = reply.timedOut ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
+                                       : safeOllamaNetworkFailureSummary(
+                                             reply, QStringLiteral("Model list"), timeoutMs);
         }
         return {};
     }
@@ -1425,10 +1422,9 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
     const auto reply = getJson(url, timeoutMs);
     if (!reply.ok) {
         if (errorOut) {
-            *errorOut = reply.timedOut
-                            ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
-                            : safeOllamaNetworkFailureSummary(reply, QStringLiteral("Gemini API"),
-                                                              timeoutMs);
+            *errorOut = reply.timedOut ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
+                                       : safeOllamaNetworkFailureSummary(
+                                             reply, QStringLiteral("Gemini API"), timeoutMs);
         }
         return {};
     }

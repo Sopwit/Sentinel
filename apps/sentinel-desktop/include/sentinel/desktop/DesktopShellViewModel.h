@@ -5,16 +5,16 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentRuntimeService.h"
-#include "sentinel/core/app/CompanionService.h"
-#include "sentinel/core/platform/WinTaskbarIntegration.h"
 #include "sentinel/core/agent/ControlledAgentTasks.h"
-#include "sentinel/core/memory/LocalRagStore.h"
-#include "sentinel/core/security/PermissionPolicyService.h"
-#include "sentinel/core/memory/SemanticRetrieval.h"
+#include "sentinel/core/app/CompanionService.h"
 #include "sentinel/core/app/SkillProfileService.h"
-#include "sentinel/core/runtime/ToolExecutionGateway.h"
-#include "sentinel/core/runtime/ToolExecution.h"
 #include "sentinel/core/app/WorkspaceService.h"
+#include "sentinel/core/memory/LocalRagStore.h"
+#include "sentinel/core/memory/SemanticRetrieval.h"
+#include "sentinel/core/platform/WinTaskbarIntegration.h"
+#include "sentinel/core/runtime/ToolExecution.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
 #include <QElapsedTimer>
@@ -302,13 +302,13 @@ class DesktopShellViewModel final : public QObject {
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
-    Q_PROPERTY(
-        QString localInferenceHealthSummary READ localInferenceHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString localInferenceHealthSummary READ localInferenceHealthSummary NOTIFY
+                   ollamaStatusChanged)
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
-    Q_PROPERTY(QString cloudModelDiscoveryError READ cloudModelDiscoveryError NOTIFY
-                   ollamaStatusChanged)
+    Q_PROPERTY(
+        QString cloudModelDiscoveryError READ cloudModelDiscoveryError NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList installedOllamaModelNames READ installedOllamaModelNames NOTIFY
                    ollamaStatusChanged)
     Q_PROPERTY(QStringList loadedLMStudioModelNames READ loadedLMStudioModelNames NOTIFY
@@ -318,12 +318,12 @@ class DesktopShellViewModel final : public QObject {
 
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
-    Q_PROPERTY(
-        QString selectedOllamaModel READ selectedOllamaModel WRITE setSelectedOllamaModel NOTIFY
-            localModelSelectionChanged)
+    Q_PROPERTY(QString selectedOllamaModel READ selectedOllamaModel WRITE setSelectedOllamaModel
+                   NOTIFY localModelSelectionChanged)
     Q_PROPERTY(
         QString activeLocalModelName READ activeLocalModelName NOTIFY localModelSelectionChanged)
-    Q_PROPERTY(bool proxyEnabled READ proxyEnabled WRITE setProxyEnabled NOTIFY proxySettingsChanged)
+    Q_PROPERTY(
+        bool proxyEnabled READ proxyEnabled WRITE setProxyEnabled NOTIFY proxySettingsChanged)
     Q_PROPERTY(QString proxyType READ proxyType WRITE setProxyType NOTIFY proxySettingsChanged)
     Q_PROPERTY(QString proxyHost READ proxyHost WRITE setProxyHost NOTIFY proxySettingsChanged)
     Q_PROPERTY(int proxyPort READ proxyPort WRITE setProxyPort NOTIFY proxySettingsChanged)
@@ -503,8 +503,8 @@ class DesktopShellViewModel final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
                    setPiperFileOutputExecutionEnabled NOTIFY voiceConfigurationChanged)
-    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled WRITE
-                   setWhisperTranscriptionExecutionEnabled NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled
+                   WRITE setWhisperTranscriptionExecutionEnabled NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperFileOutputExecutionStatus READ piperFileOutputExecutionStatus NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperFileOutputExecutionSummary READ piperFileOutputExecutionSummary NOTIFY
@@ -1384,19 +1384,16 @@ class DesktopShellViewModel final : public QObject {
         QStringList fileChatActionSummaries READ fileChatActionSummaries NOTIFY attachmentChanged)
     Q_PROPERTY(bool localKnowledgeBaseEnabled READ localKnowledgeBaseEnabled WRITE
                    setLocalKnowledgeBaseEnabled NOTIFY workspaceChanged)
-    Q_PROPERTY(
-        QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior NOTIFY
-            workspaceChanged)
-    Q_PROPERTY(
-        QString exportDefaultFormat READ exportDefaultFormat WRITE setExportDefaultFormat NOTIFY
-            workspaceChanged)
+    Q_PROPERTY(QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QString exportDefaultFormat READ exportDefaultFormat WRITE setExportDefaultFormat
+                   NOTIFY workspaceChanged)
     Q_PROPERTY(bool exportIncludeTimestamps READ exportIncludeTimestamps WRITE
                    setExportIncludeTimestamps NOTIFY workspaceChanged)
-    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE setExportIncludeCitations
+    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE
+                   setExportIncludeCitations NOTIFY workspaceChanged)
+    Q_PROPERTY(bool exportAnonymizeNames READ exportAnonymizeNames WRITE setExportAnonymizeNames
                    NOTIFY workspaceChanged)
-    Q_PROPERTY(
-        bool exportAnonymizeNames READ exportAnonymizeNames WRITE setExportAnonymizeNames NOTIFY
-            workspaceChanged)
     Q_PROPERTY(bool exportIncludeModelMetadata READ exportIncludeModelMetadata WRITE
                    setExportIncludeModelMetadata NOTIFY workspaceChanged)
     Q_PROPERTY(

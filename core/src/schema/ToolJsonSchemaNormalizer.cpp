@@ -6,7 +6,8 @@
 
 namespace sentinel::core {
 
-QJsonObject ToolJsonSchemaNormalizer::normalize(const QJsonObject& schema, const QString& provider) const {
+QJsonObject ToolJsonSchemaNormalizer::normalize(const QJsonObject& schema,
+                                                const QString& provider) const {
     QJsonObject normalized = schema;
 
     if (!normalized.contains("type")) {
@@ -30,7 +31,8 @@ QJsonObject ToolJsonSchemaNormalizer::normalize(const QJsonObject& schema, const
     return normalized;
 }
 
-QJsonArray ToolJsonSchemaNormalizer::normalizeToolDefinitions(const QJsonArray& tools, const QString& provider) const {
+QJsonArray ToolJsonSchemaNormalizer::normalizeToolDefinitions(const QJsonArray& tools,
+                                                              const QString& provider) const {
     QJsonArray normalized;
     for (const auto& tool : tools) {
         QJsonObject t = tool.toObject();
@@ -70,7 +72,8 @@ QJsonObject ToolJsonSchemaNormalizer::normalizeParameterNames(const QJsonObject&
     return s;
 }
 
-ToolSchema ToolJsonSchemaNormalizer::fromMcpTool(const QJsonObject& mcpTool, const QString& serverName) const {
+ToolSchema ToolJsonSchemaNormalizer::fromMcpTool(const QJsonObject& mcpTool,
+                                                 const QString& serverName) const {
     ToolSchema schema;
     schema.name = mcpTool["name"].toString();
     schema.description = mcpTool["description"].toString();

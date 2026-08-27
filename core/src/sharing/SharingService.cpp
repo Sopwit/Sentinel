@@ -3,20 +3,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/sharing/SharingService.h"
-#include <QUuid>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QDebug>
 #include <QEventLoop>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QTimer>
+#include <QUuid>
 
 namespace sentinel::core {
 
-SharingService::SharingService(QObject* parent)
-    : QObject(parent)
-{
+SharingService::SharingService(QObject* parent) : QObject(parent) {
     connect(&m_syncTimer, &QTimer::timeout, this, &SharingService::performAutoSync);
 }
 
@@ -32,11 +30,13 @@ ShareRecord SharingService::createShare(const QString& sessionId) {
     QNetworkRequest request(QUrl(m_config.apiUrl + QStringLiteral("/shares")));
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     if (!m_config.authToken.isEmpty()) {
-        request.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());
+        request.setRawHeader("Authorization",
+                             QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());
     }
     const QJsonObject body{{QStringLiteral("sessionId"), sessionId},
                            {QStringLiteral("secret"), record.secret}};
-    QNetworkReply* reply = m_networkManager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    QNetworkReply* reply =
+        m_networkManager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
@@ -140,12 +140,14 @@ bool SharingService::syncShare(const QString& shareId) {
     }
 
     if (!m_config.enabled || m_config.apiUrl.trimmed().isEmpty()) {
-        emit shareError(shareId, QStringLiteral("Sharing is disabled or no sharing API is configured."));
+        emit shareError(shareId,
+                        QStringLiteral("Sharing is disabled or no sharing API is configured."));
         return false;
     }
     QNetworkRequest request(QUrl(m_config.apiUrl + QStringLiteral("/shares/%1").arg(shareId)));
     if (!m_config.authToken.isEmpty()) {
-        request.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());
+        request.setRawHeader("Authorization",
+                             QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());
     }
     QNetworkReply* reply = m_networkManager.get(request);
     QEventLoop loop;

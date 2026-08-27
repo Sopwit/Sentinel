@@ -4,8 +4,8 @@
 
 #include "sentinel/core/session/WorktreeService.h"
 
-#include <QFile>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QProcess>
 #include <QTemporaryDir>
@@ -33,13 +33,17 @@ static bool runGit(const QString& directory, const QStringList& args) {
 void WorktreeServiceTest::discoversAndReportsRepository() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
-    QVERIFY(runGit(dir.path(), {QStringLiteral("init"), QStringLiteral("-b"), QStringLiteral("main")}));
+    QVERIFY(
+        runGit(dir.path(), {QStringLiteral("init"), QStringLiteral("-b"), QStringLiteral("main")}));
     QFile file(QDir(dir.path()).filePath(QStringLiteral("tracked.txt")));
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("initial\n");
     file.close();
     QVERIFY(runGit(dir.path(), {QStringLiteral("add"), QStringLiteral("tracked.txt")}));
-    QVERIFY(runGit(dir.path(), {QStringLiteral("-c"), QStringLiteral("user.name=Sentinel"), QStringLiteral("-c"), QStringLiteral("user.email=sentinel@example.invalid"), QStringLiteral("commit"), QStringLiteral("-m"), QStringLiteral("initial")}));
+    QVERIFY(runGit(dir.path(),
+                   {QStringLiteral("-c"), QStringLiteral("user.name=Sentinel"),
+                    QStringLiteral("-c"), QStringLiteral("user.email=sentinel@example.invalid"),
+                    QStringLiteral("commit"), QStringLiteral("-m"), QStringLiteral("initial")}));
 
     WorktreeService service;
     const auto repository = service.discoverRepository(dir.path());
@@ -67,7 +71,10 @@ void WorktreeServiceTest::createsAndRemovesRealWorktree() {
     file.write("initial\n");
     file.close();
     QVERIFY(runGit(dir.path(), {QStringLiteral("add"), QStringLiteral("tracked.txt")}));
-    QVERIFY(runGit(dir.path(), {QStringLiteral("-c"), QStringLiteral("user.name=Sentinel"), QStringLiteral("-c"), QStringLiteral("user.email=sentinel@example.invalid"), QStringLiteral("commit"), QStringLiteral("-m"), QStringLiteral("initial")}));
+    QVERIFY(runGit(dir.path(),
+                   {QStringLiteral("-c"), QStringLiteral("user.name=Sentinel"),
+                    QStringLiteral("-c"), QStringLiteral("user.email=sentinel@example.invalid"),
+                    QStringLiteral("commit"), QStringLiteral("-m"), QStringLiteral("initial")}));
 
     WorktreeService service;
     service.setRepositoryPath(dir.path());
@@ -82,7 +89,9 @@ void WorktreeServiceTest::rejectsUnsafeWorktreePath() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     WorktreeService service;
-    QVERIFY(!service.createWorktree(dir.path(), QStringLiteral("HEAD"), QStringLiteral("../outside")).active);
+    QVERIFY(
+        !service.createWorktree(dir.path(), QStringLiteral("HEAD"), QStringLiteral("../outside"))
+             .active);
     QVERIFY(!service.lastError().isEmpty());
 }
 

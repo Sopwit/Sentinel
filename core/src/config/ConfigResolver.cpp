@@ -11,7 +11,8 @@ QJsonObject ConfigResolver::deepMerge(const QJsonObject& base, const QJsonObject
     QJsonObject result = base;
     for (auto it = overlay.constBegin(); it != overlay.constEnd(); ++it) {
         if (it.value().isObject() && result.value(it.key()).isObject()) {
-            result.insert(it.key(), deepMerge(result.value(it.key()).toObject(), it.value().toObject()));
+            result.insert(it.key(),
+                          deepMerge(result.value(it.key()).toObject(), it.value().toObject()));
         } else {
             result.insert(it.key(), it.value());
         }
@@ -23,25 +24,30 @@ ResolvedConfig ConfigResolver::resolve(const QString& projectDirectory,
                                        const QJsonObject& globalConfig,
                                        const QJsonObject& managedConfig) {
     ResolvedConfig resolved{globalConfig, {}, {}};
-    if (!globalConfig.isEmpty()) resolved.sources.append(QStringLiteral("global"));
+    if (!globalConfig.isEmpty())
+        resolved.sources.append(QStringLiteral("global"));
 
     QStringList directories;
     QDir current(projectDirectory);
     if (!current.exists()) {
-        resolved.errors.append(QStringLiteral("Project directory does not exist: %1").arg(projectDirectory));
+        resolved.errors.append(
+            QStringLiteral("Project directory does not exist: %1").arg(projectDirectory));
         return resolved;
     }
     while (true) {
         directories.prepend(current.absolutePath());
         const QString parent = QFileInfo(current.absolutePath()).dir().absolutePath();
-        if (parent == current.absolutePath()) break;
+        if (parent == current.absolutePath())
+            break;
         current.setPath(parent);
     }
 
     for (const QString& directory : directories) {
-        for (const QString& filename : {QStringLiteral("sentinel.json"), QStringLiteral("sentinel.jsonc")}) {
+        for (const QString& filename :
+             {QStringLiteral("sentinel.json"), QStringLiteral("sentinel.jsonc")}) {
             const QString path = QDir(directory).filePath(filename);
-            if (!QFileInfo::exists(path)) continue;
+            if (!QFileInfo::exists(path))
+                continue;
             QString error;
             const QJsonObject layer = JsoncParser::parseFile(path, error);
             if (!error.isEmpty()) {

@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/codemode/CodeModeInterpreter.h"
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
 #include <QRegularExpression>
 
 namespace sentinel::core {
@@ -21,7 +21,8 @@ CodeModeResult CodeModeInterpreter::execute(const CodeModeScript& script) const 
     QString cleanedScript = script.script;
     cleanedScript.remove(QRegularExpression("^\\s*//.*$", QRegularExpression::MultilineOption));
 
-    QRegularExpression toolCallRx("([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)\\(([^)]*)\\)");
+    QRegularExpression toolCallRx(
+        "([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)\\(([^)]*)\\)");
     QRegularExpressionMatchIterator it = toolCallRx.globalMatch(cleanedScript);
 
     while (it.hasNext()) {
@@ -31,15 +32,17 @@ CodeModeResult CodeModeInterpreter::execute(const CodeModeScript& script) const 
         toolCall["method"] = match.captured(2);
         toolCall["args"] = match.captured(3);
         if (!script.toolCatalog.isEmpty() && !script.toolCatalog.contains(match.captured(1))) {
-            result.error = QStringLiteral("CodeMode tool is not present in the approved catalog: %1")
-                               .arg(match.captured(1));
+            result.error =
+                QStringLiteral("CodeMode tool is not present in the approved catalog: %1")
+                    .arg(match.captured(1));
             result.toolCalls.clear();
             return result;
         }
         result.toolCalls.append(toolCall);
         if (result.toolCalls.size() >= qMax(1, script.maxToolCalls)) {
             result.success = true;
-            result.output = QStringLiteral("CodeMode call limit reached; execution stopped safely.");
+            result.output =
+                QStringLiteral("CodeMode call limit reached; execution stopped safely.");
             return result;
         }
     }
@@ -63,10 +66,10 @@ bool CodeModeInterpreter::validateScript(const QString& script, QString& error) 
         return false;
     }
     static const QStringList forbidden{
-        QStringLiteral("#include"), QStringLiteral("import "), QStringLiteral("require("),
-        QStringLiteral("exec("), QStringLiteral("eval("), QStringLiteral("system("),
-        QStringLiteral("process"), QStringLiteral("filesystem"), QStringLiteral("while"),
-        QStringLiteral("for("), QStringLiteral("for ("), QStringLiteral("function "),
+        QStringLiteral("#include"), QStringLiteral("import "),    QStringLiteral("require("),
+        QStringLiteral("exec("),    QStringLiteral("eval("),      QStringLiteral("system("),
+        QStringLiteral("process"),  QStringLiteral("filesystem"), QStringLiteral("while"),
+        QStringLiteral("for("),     QStringLiteral("for ("),      QStringLiteral("function "),
     };
     const QString lower = script.toLower();
     for (const QString& token : forbidden) {

@@ -2,16 +2,16 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <QtTest/QtTest>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QTemporaryDir>
-#include <QFile>
+#include "sentinel/core/plugin/PluginDependencyResolver.h"
+#include "sentinel/core/plugin/PluginManager.h"
 #include "sentinel/core/plugin/PluginManifest.h"
 #include "sentinel/core/plugin/PluginPermissions.h"
 #include "sentinel/core/plugin/PluginSandbox.h"
-#include "sentinel/core/plugin/PluginDependencyResolver.h"
-#include "sentinel/core/plugin/PluginManager.h"
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QTemporaryDir>
+#include <QtTest/QtTest>
 
 using namespace sentinel::core::plugin;
 
@@ -188,7 +188,8 @@ void PluginManagerTest::testSamplePluginsLoading() {
     }
 
     if (!samplesDir.exists()) {
-        QSKIP("Sample plugins build directory not found, skipping live binary plugin loading test.");
+        QSKIP(
+            "Sample plugins build directory not found, skipping live binary plugin loading test.");
     }
 
     QTemporaryDir dataDir;
@@ -196,29 +197,38 @@ void PluginManagerTest::testSamplePluginsLoading() {
     int discovered = manager.discoverPlugins(samplesDir.absolutePath());
     QVERIFY(discovered >= 2);
 
-    QVERIFY(manager.registeredPluginIds().contains(QStringLiteral("dev.sentinel.plugin.ollama-extended")));
-    QVERIFY(manager.registeredPluginIds().contains(QStringLiteral("dev.sentinel.plugin.custom-tool")));
+    QVERIFY(manager.registeredPluginIds().contains(
+        QStringLiteral("dev.sentinel.plugin.ollama-extended")));
+    QVERIFY(
+        manager.registeredPluginIds().contains(QStringLiteral("dev.sentinel.plugin.custom-tool")));
 
     QVERIFY(manager.initializeAll());
     QVERIFY(manager.startAll());
 
-    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.ollama-extended")), PluginState::Active);
-    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.custom-tool")), PluginState::Active);
+    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.ollama-extended")),
+             PluginState::Active);
+    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.custom-tool")),
+             PluginState::Active);
 
     // Check plugin instance queries
-    auto* ollamaPlugin = manager.pluginInstance(QStringLiteral("dev.sentinel.plugin.ollama-extended"));
+    auto* ollamaPlugin =
+        manager.pluginInstance(QStringLiteral("dev.sentinel.plugin.ollama-extended"));
     QVERIFY(ollamaPlugin != nullptr);
     QCOMPARE(ollamaPlugin->displayName(), QStringLiteral("Ollama Extended Provider"));
 
     // Check sandbox permissions
-    QVERIFY(manager.sandbox().checkPermission(QStringLiteral("dev.sentinel.plugin.ollama-extended"), Permissions::NetworkLoopback));
-    QVERIFY(manager.sandbox().checkPermission(QStringLiteral("dev.sentinel.plugin.custom-tool"), Permissions::ToolExecution));
+    QVERIFY(manager.sandbox().checkPermission(QStringLiteral("dev.sentinel.plugin.ollama-extended"),
+                                              Permissions::NetworkLoopback));
+    QVERIFY(manager.sandbox().checkPermission(QStringLiteral("dev.sentinel.plugin.custom-tool"),
+                                              Permissions::ToolExecution));
 
     QVERIFY(manager.stopAll());
     manager.unloadAll();
 
-    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.ollama-extended")), PluginState::Unloaded);
-    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.custom-tool")), PluginState::Unloaded);
+    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.ollama-extended")),
+             PluginState::Unloaded);
+    QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.custom-tool")),
+             PluginState::Unloaded);
 }
 
 QTEST_MAIN(PluginManagerTest)

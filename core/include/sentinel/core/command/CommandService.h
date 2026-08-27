@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/command/ICommandService.h"
-#include <QObject>
 #include <QList>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 

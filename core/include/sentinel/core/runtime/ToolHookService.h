@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/runtime/IToolHookService.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 

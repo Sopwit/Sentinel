@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "sentinel/core/session/ISessionExportService.h"
 #include "sentinel/core/chat/IConversationStore.h"
+#include "sentinel/core/session/ISessionExportService.h"
 #include <QObject>
 
 namespace sentinel::core {

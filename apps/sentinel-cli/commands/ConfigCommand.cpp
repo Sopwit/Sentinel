@@ -5,8 +5,8 @@
 #include "ConfigCommand.h"
 
 #include "sentinel/core/app/AppSettings.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
 
 #include <iostream>
@@ -24,8 +24,10 @@ int executeConfigCommand(const QStringList& args) {
     if (sub == QStringLiteral("get")) {
         const QString key = args.value(1);
         if (key.isEmpty()) {
-            std::cout << "ollamaEndpoint = " << settings.ollamaEndpoint().toStdString() << std::endl;
-            std::cout << "routingMode    = " << settings.routingModeName().toStdString() << std::endl;
+            std::cout << "ollamaEndpoint = " << settings.ollamaEndpoint().toStdString()
+                      << std::endl;
+            std::cout << "routingMode    = " << settings.routingModeName().toStdString()
+                      << std::endl;
             std::cout << "appLanguage    = " << settings.appLanguage().toStdString() << std::endl;
             return 0;
         }
@@ -57,7 +59,8 @@ int executeConfigCommand(const QStringList& args) {
             std::cerr << "Unknown configuration key: " << key.toStdString() << std::endl;
             return 1;
         }
-        std::cout << "Updated configuration: " << key.toStdString() << " = " << val.toStdString() << std::endl;
+        std::cout << "Updated configuration: " << key.toStdString() << " = " << val.toStdString()
+                  << std::endl;
         return 0;
     }
 

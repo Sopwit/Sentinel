@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -20,7 +20,8 @@ class ISessionExportService {
 public:
     virtual ~ISessionExportService() = default;
 
-    virtual QString exportSession(const QString& sessionId, const ExportConfig& config = {}) const = 0;
+    virtual QString exportSession(const QString& sessionId,
+                                  const ExportConfig& config = {}) const = 0;
     virtual bool importSession(const QString& jsonContent, QString& sessionId) = 0;
     virtual bool importFromUrl(const QString& url, QString& sessionId) = 0;
     virtual QJsonObject redactSensitive(const QJsonObject& data) const = 0;

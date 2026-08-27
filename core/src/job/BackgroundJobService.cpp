@@ -3,16 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/job/BackgroundJobService.h"
-#include <QtConcurrent>
-#include <QFuture>
 #include <QDebug>
+#include <QFuture>
 #include <QSqlQuery>
+#include <QtConcurrent>
 
 namespace sentinel::core {
 
-BackgroundJobService::BackgroundJobService(QObject* parent)
-    : QObject(parent)
-{
+BackgroundJobService::BackgroundJobService(QObject* parent) : QObject(parent) {
     m_threadPool.setMaxThreadCount(m_maxConcurrentJobs);
 }
 
@@ -26,7 +24,8 @@ BackgroundJobService::~BackgroundJobService() {
     m_threadPool.waitForDone();
 }
 
-QString BackgroundJobService::submitJob(const QString& name, JobFunction func, const QString& description) {
+QString BackgroundJobService::submitJob(const QString& name, JobFunction func,
+                                        const QString& description) {
     Job job;
     {
         QMutexLocker locker(&m_mutex);
@@ -85,7 +84,8 @@ bool BackgroundJobService::retryJob(const QString& jobId) {
     {
         QMutexLocker locker(&m_mutex);
         auto it = m_jobs.find(jobId);
-        if (it == m_jobs.end() || it->state != JobState::Failed || it->retryCount >= it->maxRetries) {
+        if (it == m_jobs.end() || it->state != JobState::Failed ||
+            it->retryCount >= it->maxRetries) {
             return false;
         }
         it->retryCount++;
@@ -169,27 +169,31 @@ int BackgroundJobService::maxConcurrentJobs() const {
 }
 
 bool BackgroundJobService::setPersistenceDatabase(QSqlDatabase database) {
-    if (!database.isValid() || !database.isOpen()) return false;
+    if (!database.isValid() || !database.isOpen())
+        return false;
     m_database = database;
     return initializePersistence();
 }
 
 bool BackgroundJobService::initializePersistence() {
-    if (!m_database.isOpen()) return false;
+    if (!m_database.isOpen())
+        return false;
     QSqlQuery query(m_database);
     return query.exec(QStringLiteral(
         "CREATE TABLE IF NOT EXISTS sentinel_jobs ("
         "id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, state INTEGER NOT NULL, "
-        "created_at TEXT, started_at TEXT, completed_at TEXT, error TEXT, retry_count INTEGER, max_retries INTEGER)"));
+        "created_at TEXT, started_at TEXT, completed_at TEXT, error TEXT, retry_count INTEGER, "
+        "max_retries INTEGER)"));
 }
 
 void BackgroundJobService::persistJob(const Job& job) {
-    if (!m_database.isOpen()) return;
+    if (!m_database.isOpen())
+        return;
     QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT OR REPLACE INTO sentinel_jobs "
-        "(id,name,description,state,created_at,started_at,completed_at,error,retry_count,max_retries) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?)"));
+    query.prepare(QStringLiteral("INSERT OR REPLACE INTO sentinel_jobs "
+                                 "(id,name,description,state,created_at,started_at,completed_at,"
+                                 "error,retry_count,max_retries) "
+                                 "VALUES(?,?,?,?,?,?,?,?,?,?)"));
     query.addBindValue(job.id);
     query.addBindValue(job.name);
     query.addBindValue(job.description);
@@ -204,9 +208,12 @@ void BackgroundJobService::persistJob(const Job& job) {
 }
 
 int BackgroundJobService::recoverPersistedJobs() {
-    if (!m_database.isOpen()) return 0;
+    if (!m_database.isOpen())
+        return 0;
     QSqlQuery query(m_database);
-    if (!query.exec(QStringLiteral("SELECT id,name,description,state,created_at,started_at,completed_at,error,retry_count,max_retries FROM sentinel_jobs"))) {
+    if (!query.exec(QStringLiteral("SELECT "
+                                   "id,name,description,state,created_at,started_at,completed_at,"
+                                   "error,retry_count,max_retries FROM sentinel_jobs"))) {
         return 0;
     }
     int recovered = 0;
@@ -224,7 +231,8 @@ int BackgroundJobService::recoverPersistedJobs() {
         job.maxRetries = query.value(9).toInt();
         if (job.state == JobState::Running || job.state == JobState::Queued) {
             job.state = JobState::Failed;
-            job.errorString = QStringLiteral("Recovered after restart; execution function was not restored.");
+            job.errorString =
+                QStringLiteral("Recovered after restart; execution function was not restored.");
             job.completedAt = QDateTime::currentDateTime();
         }
         m_jobs.insert(job.id, job);

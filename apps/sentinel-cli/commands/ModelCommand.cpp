@@ -4,10 +4,10 @@
 
 #include "ModelCommand.h"
 
-#include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/app/AppSettings.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
+#include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
@@ -82,8 +82,7 @@ int executeModelCommand(const QStringList& args) {
                          [&loop, &finished](const QString& model, bool success) {
                              finished = true;
                              std::cout << std::endl
-                                       << (success ? "Pull completed: "
-                                                   : "Pull failed: ")
+                                       << (success ? "Pull completed: " : "Pull failed: ")
                                        << model.toStdString() << std::endl;
                              loop.quit();
                          });
@@ -93,8 +92,8 @@ int executeModelCommand(const QStringList& args) {
             if (finished) {
                 return;
             }
-            std::cout << "\r  Progress: " << static_cast<int>(puller.progress() * 100)
-                      << "% - " << puller.statusText().toStdString() << "          ";
+            std::cout << "\r  Progress: " << static_cast<int>(puller.progress() * 100) << "% - "
+                      << puller.statusText().toStdString() << "          ";
             std::cout.flush();
         });
         progressTimer.start(250);

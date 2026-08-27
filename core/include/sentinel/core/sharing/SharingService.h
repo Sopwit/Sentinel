@@ -5,10 +5,10 @@
 #pragma once
 
 #include "sentinel/core/sharing/ISharingService.h"
-#include <QObject>
 #include <QMap>
-#include <QTimer>
 #include <QNetworkAccessManager>
+#include <QObject>
+#include <QTimer>
 
 namespace sentinel::core {
 

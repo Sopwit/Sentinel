@@ -30,7 +30,8 @@ struct ProviderError {
 
 class ProviderErrorClassifier {
 public:
-    static ProviderError classify(int httpStatus, const QString& message, const QString& provider = {});
+    static ProviderError classify(int httpStatus, const QString& message,
+                                  const QString& provider = {});
     static bool isRetryable(const ProviderError& error);
     static QString userMessage(const ProviderError& error);
     static ProviderErrorCategory categoryFromHttpStatus(int status);

@@ -28,7 +28,8 @@ HealthReport HealthService::report() const {
     result.ready = true;
     for (const HealthCheck& check : checks_) {
         result.healthy = result.healthy && check.passed;
-        if (check.critical) result.ready = result.ready && check.passed;
+        if (check.critical)
+            result.ready = result.ready && check.passed;
     }
     result.summary = result.ready ? QStringLiteral("Sentinel is ready.")
                                   : QStringLiteral("Sentinel is not ready.");

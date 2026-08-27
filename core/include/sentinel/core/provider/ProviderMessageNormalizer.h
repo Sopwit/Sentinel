@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -21,7 +21,8 @@ class ProviderMessageNormalizer {
 public:
     NormalizedMessage normalize(const QJsonObject& message, const QString& provider) const;
     QJsonObject denormalize(const NormalizedMessage& message) const;
-    QList<NormalizedMessage> normalizeConversation(const QJsonArray& messages, const QString& provider) const;
+    QList<NormalizedMessage> normalizeConversation(const QJsonArray& messages,
+                                                   const QString& provider) const;
     QString extractText(const QJsonObject& message) const;
     QList<QJsonObject> extractToolCalls(const QJsonObject& message) const;
     QJsonObject injectToolResults(const QJsonObject& message, const QJsonArray& results) const;

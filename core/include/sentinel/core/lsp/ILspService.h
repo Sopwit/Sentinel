@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <QJsonObject>
+#include <QList>
+#include <QMap>
 #include <QObject>
 #include <QString>
-#include <QList>
-#include <QJsonObject>
-#include <QMap>
 #include <memory>
 
 namespace sentinel::core {

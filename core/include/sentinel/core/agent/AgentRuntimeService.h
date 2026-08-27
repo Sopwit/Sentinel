@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/core/app/SkillProfileService.h"
-#include "sentinel/core/runtime/ToolExecutionGateway.h"
 #include "sentinel/core/app/WorkspaceService.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/security/PermissionPolicyService.h"
 
 #include <QList>
 #include <QString>

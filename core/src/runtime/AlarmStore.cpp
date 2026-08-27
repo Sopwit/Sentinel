@@ -20,8 +20,7 @@ QDateTime parseUtc(const QString& text) {
 
 } // namespace
 
-AlarmStore::AlarmStore(QString persistencePath)
-    : persistencePath_(std::move(persistencePath)) {
+AlarmStore::AlarmStore(QString persistencePath) : persistencePath_(std::move(persistencePath)) {
     load();
 }
 

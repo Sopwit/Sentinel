@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <QJsonObject>
+#include <QList>
 #include <QObject>
 #include <QString>
-#include <QList>
-#include <QJsonObject>
 #include <functional>
 #include <memory>
 

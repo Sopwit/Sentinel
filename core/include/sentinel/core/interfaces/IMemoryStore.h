@@ -35,7 +35,7 @@ public:
 } // namespace sentinel::core
 
 namespace sentinel::core::interfaces {
-    using IMemoryStore = ::sentinel::core::IMemoryStore;
-    using MemoryEntry = ::sentinel::core::MemoryEntry;
-    using MemoryEntries = ::sentinel::core::MemoryEntries;
-}
+using IMemoryStore = ::sentinel::core::IMemoryStore;
+using MemoryEntry = ::sentinel::core::MemoryEntry;
+using MemoryEntries = ::sentinel::core::MemoryEntries;
+} // namespace sentinel::core::interfaces

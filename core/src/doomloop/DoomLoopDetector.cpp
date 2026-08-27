@@ -16,7 +16,8 @@ DoomLoopIndicator DoomLoopDetector::detect(const QJsonObject& context) const {
 
 bool DoomLoopDetector::isStuck(const QString& sessionId) const {
     auto it = m_actionHistory.find(sessionId);
-    if (it == m_actionHistory.end()) return false;
+    if (it == m_actionHistory.end())
+        return false;
     return hasRepeatedPattern(*it);
 }
 
@@ -35,7 +36,8 @@ void DoomLoopDetector::reset(const QString& sessionId) {
 QList<DoomLoopIndicator> DoomLoopDetector::analyzeHistory(const QString& sessionId) const {
     QList<DoomLoopIndicator> indicators;
     auto it = m_actionHistory.find(sessionId);
-    if (it == m_actionHistory.end()) return indicators;
+    if (it == m_actionHistory.end())
+        return indicators;
 
     if (hasRepeatedPattern(*it)) {
         indicators.append({"repetition", "Repeated action pattern detected", 80});
@@ -50,7 +52,8 @@ QList<DoomLoopIndicator> DoomLoopDetector::analyzeHistory(const QString& session
 }
 
 bool DoomLoopDetector::hasRepeatedPattern(const QStringList& actions) const {
-    if (actions.size() < m_config.maxRepetitions * 2) return false;
+    if (actions.size() < m_config.maxRepetitions * 2)
+        return false;
 
     for (int len = 1; len <= actions.size() / 2; ++len) {
         int count = 0;
@@ -59,7 +62,8 @@ bool DoomLoopDetector::hasRepeatedPattern(const QStringList& actions) const {
                 count++;
             }
         }
-        if (count >= m_config.maxRepetitions) return true;
+        if (count >= m_config.maxRepetitions)
+            return true;
     }
     return false;
 }
@@ -69,11 +73,13 @@ bool DoomLoopDetector::hasSelfModification(const QString& action) const {
 }
 
 bool DoomLoopDetector::hasErrorLoop(const QStringList& errors) const {
-    if (errors.size() < m_config.maxRepetitions) return false;
+    if (errors.size() < m_config.maxRepetitions)
+        return false;
     QString last = errors.last();
     int count = 0;
     for (const auto& e : errors) {
-        if (e == last) count++;
+        if (e == last)
+            count++;
     }
     return count >= m_config.maxRepetitions;
 }

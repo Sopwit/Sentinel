@@ -2,20 +2,18 @@
 
 #include <QHash>
 #include <QMutex>
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace Sentinel {
 
-template <typename Key, typename Value>
-class MemoMap {
+template <typename Key, typename Value> class MemoMap {
 public:
-    using Factory = std::function<Value(const Key &)>;
+    using Factory = std::function<Value(const Key&)>;
 
-    explicit MemoMap(Factory factory)
-        : m_factory(std::move(factory)) {}
+    explicit MemoMap(Factory factory) : m_factory(std::move(factory)) {}
 
-    Value get(const Key &key) {
+    Value get(const Key& key) {
         QMutexLocker locker(&m_mutex);
         auto it = m_cache.find(key);
         if (it != m_cache.end()) {
@@ -26,12 +24,12 @@ public:
         return value;
     }
 
-    bool has(const Key &key) const {
+    bool has(const Key& key) const {
         QMutexLocker locker(&m_mutex);
         return m_cache.contains(key);
     }
 
-    void invalidate(const Key &key) {
+    void invalidate(const Key& key) {
         QMutexLocker locker(&m_mutex);
         m_cache.remove(key);
     }
@@ -57,15 +55,13 @@ private:
     mutable QMutex m_mutex;
 };
 
-template <typename Key, typename Value>
-class SharedMemoMap {
+template <typename Key, typename Value> class SharedMemoMap {
 public:
-    using Factory = std::function<Value(const Key &)>;
+    using Factory = std::function<Value(const Key&)>;
 
-    explicit SharedMemoMap(Factory factory)
-        : m_factory(std::move(factory)) {}
+    explicit SharedMemoMap(Factory factory) : m_factory(std::move(factory)) {}
 
-    std::shared_ptr<Value> get(const Key &key) {
+    std::shared_ptr<Value> get(const Key& key) {
         QMutexLocker locker(&m_mutex);
         auto it = m_cache.find(key);
         if (it != m_cache.end()) {
@@ -76,12 +72,12 @@ public:
         return value;
     }
 
-    bool has(const Key &key) const {
+    bool has(const Key& key) const {
         QMutexLocker locker(&m_mutex);
         return m_cache.contains(key);
     }
 
-    void invalidate(const Key &key) {
+    void invalidate(const Key& key) {
         QMutexLocker locker(&m_mutex);
         m_cache.remove(key);
     }

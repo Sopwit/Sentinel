@@ -94,8 +94,7 @@ LocalRuntimeDescriptor OllamaLocalRuntime::descriptor() const {
     return {
         QStringLiteral("ollama-local-runtime"),
         QStringLiteral("Ollama Local Runtime"),
-        ready ? QStringLiteral("Ollama is ready with %1 installed model(s).")
-                    .arg(models.size())
+        ready ? QStringLiteral("Ollama is ready with %1 installed model(s).").arg(models.size())
               : safeOllamaHealthSummary(health),
         ready ? LocalRuntimeStatus::Active : LocalRuntimeStatus::Unavailable,
         ready ? LocalRuntimeHealth::Ready : LocalRuntimeHealth::Unavailable,
@@ -121,7 +120,7 @@ LocalRuntimeResponse OllamaLocalRuntime::evaluate(const LocalRuntimeRequest& req
     const auto state = descriptor();
     return {state.health == LocalRuntimeHealth::Ready,
             state.health == LocalRuntimeHealth::Ready ? QStringLiteral("Ready")
-                                                       : QStringLiteral("Unavailable"),
+                                                      : QStringLiteral("Unavailable"),
             state.summary};
 }
 

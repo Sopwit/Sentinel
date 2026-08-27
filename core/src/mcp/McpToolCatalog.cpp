@@ -4,8 +4,8 @@
 
 #include "sentinel/core/mcp/McpToolCatalog.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
-#include <QJsonDocument>
 #include <QDebug>
+#include <QJsonDocument>
 
 namespace sentinel::core {
 
@@ -33,7 +33,8 @@ ToolDescriptor McpToolCatalog::mcpToolToDescriptor(const McpToolDefinition& mcpT
     return descriptor;
 }
 
-QList<ToolDescriptor> McpToolCatalog::mcpToolsToDescriptors(const QList<McpToolDefinition>& mcpTools) {
+QList<ToolDescriptor>
+McpToolCatalog::mcpToolsToDescriptors(const QList<McpToolDefinition>& mcpTools) {
     QList<ToolDescriptor> descriptors;
     for (const auto& mcpTool : mcpTools) {
         descriptors.append(mcpToolToDescriptor(mcpTool));
@@ -41,7 +42,8 @@ QList<ToolDescriptor> McpToolCatalog::mcpToolsToDescriptors(const QList<McpToolD
     return descriptors;
 }
 
-void McpToolCatalog::registerMcpTools(const QList<McpToolDefinition>& mcpTools, IToolRegistry* registry) {
+void McpToolCatalog::registerMcpTools(const QList<McpToolDefinition>& mcpTools,
+                                      IToolRegistry* registry) {
     if (!registry) {
         return;
     }
@@ -49,7 +51,8 @@ void McpToolCatalog::registerMcpTools(const QList<McpToolDefinition>& mcpTools, 
     QList<ToolDescriptor> descriptors = mcpToolsToDescriptors(mcpTools);
     for (const auto& descriptor : descriptors) {
         if (!registry->registerTool(descriptor)) {
-            qWarning() << QStringLiteral("McpToolCatalog: Failed to register MCP tool '%1'").arg(descriptor.id);
+            qWarning() << QStringLiteral("McpToolCatalog: Failed to register MCP tool '%1'")
+                              .arg(descriptor.id);
         }
     }
 

@@ -9,11 +9,14 @@ namespace sentinel::core {
 McpResourceService::McpResourceService(QObject* parent) : QObject(parent) {}
 McpResourceService::~McpResourceService() = default;
 
-QList<McpResource> McpResourceService::listResources() const { return m_resources; }
+QList<McpResource> McpResourceService::listResources() const {
+    return m_resources;
+}
 
 QString McpResourceService::readResource(const QString& uri) const {
     for (const auto& r : m_resources) {
-        if (r.uri == uri) return r.name;
+        if (r.uri == uri)
+            return r.name;
     }
     return {};
 }
@@ -21,7 +24,8 @@ QString McpResourceService::readResource(const QString& uri) const {
 QList<McpResource> McpResourceService::resourcesByServer(const QString& serverName) const {
     QList<McpResource> result;
     for (const auto& r : m_resources) {
-        if (r.serverName == serverName) result.append(r);
+        if (r.serverName == serverName)
+            result.append(r);
     }
     return result;
 }

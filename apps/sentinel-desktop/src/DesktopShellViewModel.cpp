@@ -241,11 +241,10 @@ QList<FfmpegConfig> getFfmpegConfigs() {
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
                                              core::ModeManager& modeManager,
                                              core::AppSettings& settings,
-                                             core::WinTaskbarIntegration* taskbar,
-                                             QObject* parent)
+                                             core::WinTaskbarIntegration* taskbar, QObject* parent)
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
-      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())),
-      chatMessages_(this), taskbar_(taskbar) {
+      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())), chatMessages_(this),
+      taskbar_(taskbar) {
     // ── Network connectivity monitoring ────────────────────────────────────
     if (!QNetworkInformation::instance()) {
         QNetworkInformation::loadDefaultBackend();
@@ -360,7 +359,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         emit mcpServersChanged();
     });
     connect(&settings_, &core::AppSettings::semanticSettingsChanged, this, [this]() {
-        controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
+        controller_.setSemanticProvider(settings_.semanticProvider(),
+                                        settings_.semanticEmbeddingModel());
         emit semanticSettingsChanged();
         emit contextAssemblyChanged();
     });
@@ -462,27 +462,20 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::semanticPromptInclusionEnabledChanged, this, [this]() {
         controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
     });
-    connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this, [this]() {
-        controller_.setPiperBinaryPath(settings_.piperBinaryPath());
-    });
-    connect(&settings_, &core::AppSettings::piperModelPathChanged, this, [this]() {
-        controller_.setPiperModelPath(settings_.piperModelPath());
-    });
-    connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this, [this]() {
-        emit voiceConfigurationChanged();
-    });
-    connect(&settings_, &core::AppSettings::kokoroModelPathChanged, this, [this]() {
-        emit voiceConfigurationChanged();
-    });
-    connect(&settings_, &core::AppSettings::kokoroVoiceChanged, this, [this]() {
-        emit voiceConfigurationChanged();
-    });
-    connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this, [this]() {
-        controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
-    });
-    connect(&settings_, &core::AppSettings::whisperModelPathChanged, this, [this]() {
-        controller_.setWhisperModelPath(settings_.whisperModelPath());
-    });
+    connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this,
+            [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
+    connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
+            [this]() { controller_.setPiperModelPath(settings_.piperModelPath()); });
+    connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this,
+            [this]() { emit voiceConfigurationChanged(); });
+    connect(&settings_, &core::AppSettings::kokoroModelPathChanged, this,
+            [this]() { emit voiceConfigurationChanged(); });
+    connect(&settings_, &core::AppSettings::kokoroVoiceChanged, this,
+            [this]() { emit voiceConfigurationChanged(); });
+    connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this,
+            [this]() { controller_.setWhisperBinaryPath(settings_.whisperBinaryPath()); });
+    connect(&settings_, &core::AppSettings::whisperModelPathChanged, this,
+            [this]() { controller_.setWhisperModelPath(settings_.whisperModelPath()); });
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
@@ -517,7 +510,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
                                    settings_.webSearchMaxResults());
     controller_.configureMcpServers(settings_.mcpServersJson());
-    controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
+    controller_.setSemanticProvider(settings_.semanticProvider(),
+                                    settings_.semanticEmbeddingModel());
     if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
     }
@@ -2151,8 +2145,7 @@ void DesktopShellViewModel::startVoiceCapture() {
     if (recPath.isEmpty()) {
         recPath = QStandardPaths::findExecutable(
             QStringLiteral("rec.exe"),
-            {QStringLiteral("C:\\Program Files (x86)\\sox-*"),
-             QStringLiteral("C:\\tools\\sox")});
+            {QStringLiteral("C:\\Program Files (x86)\\sox-*"), QStringLiteral("C:\\tools\\sox")});
     }
 #else
     QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
@@ -2253,16 +2246,16 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
                             voiceRecordingActive_ = false;
                             emit voiceRecordingActiveChanged();
 
-            emit voiceTranscriptionCompleted(
-                QCoreApplication::translate("DesktopShellViewModel",
-                                            "Error: Audio recording (rec) stopped "
-                                            "unexpectedly.\nDetail: ") +
-                errorMsg);
+                            emit voiceTranscriptionCompleted(
+                                QCoreApplication::translate("DesktopShellViewModel",
+                                                            "Error: Audio recording (rec) stopped "
+                                                            "unexpectedly.\nDetail: ") +
+                                errorMsg);
 
-            recordingProcess_->deleteLater();
-            recordingProcess_ = nullptr;
-        }
-    });
+                            recordingProcess_->deleteLater();
+                            recordingProcess_ = nullptr;
+                        }
+                    });
 
             recordingProcess_->start(recPath, {QStringLiteral("-r"), QStringLiteral("16000"),
                                                QStringLiteral("-c"), QStringLiteral("1"),
@@ -2272,9 +2265,8 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
             if (!recordingProcess_->waitForStarted(1500)) {
                 voiceRecordingActive_ = false;
                 emit voiceRecordingActiveChanged();
-                emit voiceTranscriptionCompleted(
-                    QCoreApplication::translate("DesktopShellViewModel",
-                                                "Error: Audio recording (rec) could not be started."));
+                emit voiceTranscriptionCompleted(QCoreApplication::translate(
+                    "DesktopShellViewModel", "Error: Audio recording (rec) could not be started."));
                 recordingProcess_->deleteLater();
                 recordingProcess_ = nullptr;
             }
@@ -2283,17 +2275,16 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
             voiceRecordingActive_ = false;
             emit voiceRecordingActiveChanged();
 
-            QString errorMsg = QCoreApplication::translate("DesktopShellViewModel",
-                                                           "Error: Could not start audio recording. ");
+            QString errorMsg = QCoreApplication::translate(
+                "DesktopShellViewModel", "Error: Could not start audio recording. ");
             if (hasFfmpeg) {
-                errorMsg +=
-                    QCoreApplication::translate("DesktopShellViewModel",
-                                                "Could not open audio input devices on this system. "
-                                                "Please check microphone permissions and default "
-                                                "audio input device.");
+                errorMsg += QCoreApplication::translate(
+                    "DesktopShellViewModel", "Could not open audio input devices on this system. "
+                                             "Please check microphone permissions and default "
+                                             "audio input device.");
                 if (!lastRecordingError_.isEmpty()) {
-                    errorMsg += QCoreApplication::translate("DesktopShellViewModel",
-                                                            "\nDetail: ") + lastRecordingError_;
+                    errorMsg += QCoreApplication::translate("DesktopShellViewModel", "\nDetail: ") +
+                                lastRecordingError_;
                 }
             } else {
 #if defined(Q_OS_WIN)
@@ -4050,13 +4041,12 @@ bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) cons
         const QString localAppData =
             QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
         return QFileInfo::exists(
-                   QDir(localAppData).filePath(QStringLiteral("Programs/lm-studio/LM Studio.exe"))) ||
-               QFileInfo::exists(
-                   QStringLiteral("C:\\Program Files\\LM Studio\\LM Studio.exe")) ||
+                   QDir(localAppData)
+                       .filePath(QStringLiteral("Programs/lm-studio/LM Studio.exe"))) ||
+               QFileInfo::exists(QStringLiteral("C:\\Program Files\\LM Studio\\LM Studio.exe")) ||
                QFileInfo::exists(
                    QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
-                       .filePath(
-                           QStringLiteral("AppData/Local/Programs/lm-studio/LM Studio.exe")));
+                       .filePath(QStringLiteral("AppData/Local/Programs/lm-studio/LM Studio.exe")));
 #else
         return QFileInfo::exists(QStringLiteral("/usr/local/bin/lm-studio")) ||
                QFileInfo::exists(QDir::homePath() + QStringLiteral("/.local/share/lm-studio"));
@@ -5569,9 +5559,8 @@ bool DesktopShellViewModel::executeControlledAgentStep(const QString& taskId) {
         pipelineResult.execution.status == core::ToolExecutionStatus::Succeeded ||
         pipelineResult.execution.status == core::ToolExecutionStatus::PlaceholderSucceeded;
     const auto outcome =
-        QStringLiteral("%1: %2")
-            .arg(core::toolExecutionStatusName(pipelineResult.execution.status),
-                 pipelineResult.execution.summary);
+        QStringLiteral("%1: %2").arg(core::toolExecutionStatusName(pipelineResult.execution.status),
+                                     pipelineResult.execution.summary);
     task = controlledAgentTaskService_.executeCurrentStep(task, outcome, succeeded);
     tasks = controlledAgentTaskService_.upsertTask(tasks, task);
     settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
@@ -5792,9 +5781,9 @@ bool DesktopShellViewModel::checkForUpdates() {
 
         if (latestTag.isEmpty()) {
             const QString apiMsg = root.value(QStringLiteral("message")).toString();
-            const QString errState = apiMsg.isEmpty()
-                ? QStringLiteral("Update check failed: release info not found")
-                : QStringLiteral("Update check failed: %1").arg(apiMsg);
+            const QString errState =
+                apiMsg.isEmpty() ? QStringLiteral("Update check failed: release info not found")
+                                 : QStringLiteral("Update check failed: %1").arg(apiMsg);
             settings_.setUpdateWorkflowState(errState);
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
@@ -5845,15 +5834,15 @@ bool DesktopShellViewModel::checkForUpdates() {
                                      .arg(latestTag)
                                      .arg(bodyText.left(120));
             QString updatedJson;
-            if (!updateNotification(settings_.notificationCenterJson(),
-                                    QStringLiteral("updates-manual"),
-                                    [title, body](QJsonObject& item) {
-                                        item.insert(QStringLiteral("read"), false);
-                                        item.insert(QStringLiteral("archived"), false);
-                                        item.insert(QStringLiteral("title"), title);
-                                        item.insert(QStringLiteral("body"), body);
-                                    },
-                                    &updatedJson)) {
+            if (!updateNotification(
+                    settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
+                    [title, body](QJsonObject& item) {
+                        item.insert(QStringLiteral("read"), false);
+                        item.insert(QStringLiteral("archived"), false);
+                        item.insert(QStringLiteral("title"), title);
+                        item.insert(QStringLiteral("body"), body);
+                    },
+                    &updatedJson)) {
                 const qint64 now = QDateTime::currentMSecsSinceEpoch();
                 QJsonObject item;
                 item.insert(QStringLiteral("id"), QStringLiteral("updates-manual"));

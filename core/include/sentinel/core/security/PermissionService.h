@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/security/IPermissionService.h"
-#include <QObject>
-#include <QMap>
 #include <QHash>
+#include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -27,7 +27,8 @@ public:
     bool isAllowed(const QString& action, const QString& resource) const override;
     bool requiresApproval(const QString& action, const QString& resource) const override;
 
-    bool savePermission(const QString& action, const QString& resource, PermissionEffect effect) override;
+    bool savePermission(const QString& action, const QString& resource,
+                        PermissionEffect effect) override;
     bool clearSavedPermissions() override;
     QList<PermissionRule> savedPermissions() const override;
 
@@ -48,12 +49,13 @@ signals:
     void ruleUpdated(int index);
     void permissionRequested(const QString& action, const QString& resource);
     void permissionDecisionMade(const QString& action, const QString& resource, bool allowed);
-    void permissionPending(const QString& requestId, const QString& action, const QString& resource);
+    void permissionPending(const QString& requestId, const QString& action,
+                           const QString& resource);
 
 private:
     bool matchPattern(const QString& pattern, const QString& value) const;
     PermissionEffect findMatchingEffect(const QString& action, const QString& resource,
-                                         const QList<PermissionRule>& rulesList) const;
+                                        const QList<PermissionRule>& rulesList) const;
 
     QList<PermissionRule> m_rules;
     QList<PermissionRule> m_savedPermissions;

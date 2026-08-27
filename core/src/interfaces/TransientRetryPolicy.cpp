@@ -11,10 +11,14 @@ namespace sentinel::core {
 TransientRetryPolicy::TransientRetryPolicy(const TransientRetryConfig& config) : m_config(config) {}
 
 bool TransientRetryPolicy::shouldRetry(int attempt, int httpStatus, const QString& error) const {
-    if (attempt >= m_config.maxRetries) return false;
-    if (httpStatus == 429 || (httpStatus >= 500 && httpStatus < 600)) return true;
-    if (m_config.retryOnTimeout && error.contains("timeout")) return true;
-    if (m_config.retryOnNetworkError && error.contains("network")) return true;
+    if (attempt >= m_config.maxRetries)
+        return false;
+    if (httpStatus == 429 || (httpStatus >= 500 && httpStatus < 600))
+        return true;
+    if (m_config.retryOnTimeout && error.contains("timeout"))
+        return true;
+    if (m_config.retryOnNetworkError && error.contains("network"))
+        return true;
     return false;
 }
 
@@ -27,7 +31,9 @@ int TransientRetryPolicy::delayMs(int attempt) const {
 
 QString TransientRetryPolicy::describeRetry(int attempt, int httpStatus) const {
     return QStringLiteral("Retry %1/%2 after HTTP %3")
-        .arg(attempt + 1).arg(m_config.maxRetries).arg(httpStatus);
+        .arg(attempt + 1)
+        .arg(m_config.maxRetries)
+        .arg(httpStatus);
 }
 
 } // namespace sentinel::core

@@ -4,16 +4,12 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class SkillSourceType : std::uint8_t {
-    Embedded,
-    Directory,
-    Url
-};
+enum class SkillSourceType : std::uint8_t { Embedded, Directory, Url };
 
 struct Skill {
     QString name;
@@ -22,7 +18,9 @@ struct Skill {
     SkillSourceType sourceType{SkillSourceType::Embedded};
     QString sourceLocation;
     QString version;
-    bool isValid() const { return !name.isEmpty() && !content.isEmpty(); }
+    bool isValid() const {
+        return !name.isEmpty() && !content.isEmpty();
+    }
 };
 
 } // namespace sentinel::core

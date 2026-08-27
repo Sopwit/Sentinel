@@ -36,8 +36,8 @@ class AppSettings final : public QObject {
                    webSearchSettingsChanged)
     Q_PROPERTY(int webSearchMaxResults READ webSearchMaxResults WRITE setWebSearchMaxResults NOTIFY
                    webSearchSettingsChanged)
-    Q_PROPERTY(QString mcpServersJson READ mcpServersJson WRITE setMcpServersJson NOTIFY
-                   mcpServersChanged)
+    Q_PROPERTY(
+        QString mcpServersJson READ mcpServersJson WRITE setMcpServersJson NOTIFY mcpServersChanged)
     Q_PROPERTY(QString semanticProvider READ semanticProvider WRITE setSemanticProvider NOTIFY
                    semanticSettingsChanged)
     Q_PROPERTY(QString semanticEmbeddingModel READ semanticEmbeddingModel WRITE
@@ -82,8 +82,9 @@ class AppSettings final : public QObject {
                    whisperModelPathChanged)
     Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
                    setPiperFileOutputExecutionEnabled NOTIFY piperFileOutputExecutionEnabledChanged)
-    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled WRITE
-                   setWhisperTranscriptionExecutionEnabled NOTIFY whisperTranscriptionExecutionEnabledChanged)
+    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled
+                   WRITE setWhisperTranscriptionExecutionEnabled NOTIFY
+                       whisperTranscriptionExecutionEnabledChanged)
     Q_PROPERTY(QString selectedTtsEngine READ selectedTtsEngine WRITE setSelectedTtsEngine NOTIFY
                    selectedTtsEngineChanged)
     Q_PROPERTY(QString kokoroModelPath READ kokoroModelPath WRITE setKokoroModelPath NOTIFY
@@ -160,10 +161,9 @@ class AppSettings final : public QObject {
         QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(
         QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString groqApiKey READ groqApiKey WRITE setGroqApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY
+                   cloudApiKeysChanged)
+    Q_PROPERTY(QString groqApiKey READ groqApiKey WRITE setGroqApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(
         QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(bool soundEffectsEnabled READ soundEffectsEnabled WRITE setSoundEffectsEnabled NOTIFY
@@ -453,7 +453,8 @@ private:
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
     static constexpr auto whisperModelPathKey = "whisperModelPath";
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
-    static constexpr auto whisperTranscriptionExecutionEnabledKey = "whisperTranscriptionExecutionEnabled";
+    static constexpr auto whisperTranscriptionExecutionEnabledKey =
+        "whisperTranscriptionExecutionEnabled";
     static constexpr auto selectedTtsEngineKey = "selectedTtsEngine";
     static constexpr auto kokoroModelPathKey = "kokoroModelPath";
     static constexpr auto kokoroVoiceKey = "kokoroVoice";

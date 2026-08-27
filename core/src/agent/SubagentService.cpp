@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/SubagentService.h"
-#include <QtConcurrent>
 #include <QUuid>
+#include <QtConcurrent>
 
 namespace sentinel::core {
 
-SubagentService::SubagentService(QObject* parent)
-    : QObject(parent)
-{
+SubagentService::SubagentService(QObject* parent) : QObject(parent) {
     m_threadPool.setMaxThreadCount(4);
 }
 
@@ -53,7 +51,8 @@ QString SubagentService::submitTask(const TaskRequest& request, TaskFunction fun
 bool SubagentService::cancelTask(const QString& taskId) {
     QMutexLocker locker(&m_mutex);
     auto it = m_requests.find(taskId);
-    if (it == m_requests.end()) return false;
+    if (it == m_requests.end())
+        return false;
     if (it->cancellationToken) {
         it->cancellationToken->store(true);
     }
@@ -63,7 +62,8 @@ bool SubagentService::cancelTask(const QString& taskId) {
 std::optional<TaskResult> SubagentService::findResult(const QString& taskId) {
     QMutexLocker locker(&m_mutex);
     auto it = m_results.find(taskId);
-    if (it == m_results.end()) return std::nullopt;
+    if (it == m_results.end())
+        return std::nullopt;
     return it.value();
 }
 
@@ -72,8 +72,12 @@ bool SubagentService::isTaskComplete(const QString& taskId) const {
     return m_results.contains(taskId);
 }
 
-void SubagentService::setMaxDepth(int depth) { m_maxDepth = depth; }
-int SubagentService::maxDepth() const { return m_maxDepth; }
+void SubagentService::setMaxDepth(int depth) {
+    m_maxDepth = depth;
+}
+int SubagentService::maxDepth() const {
+    return m_maxDepth;
+}
 
 QString SubagentService::generateTaskId() const {
     return QUuid::createUuid().toString(QUuid::WithoutBraces).left(8);

@@ -250,8 +250,8 @@ CredentialStoreBackend DisabledCredentialBackend::backend() const {
 CredentialStoreSummary DisabledCredentialBackend::summary() const {
     const auto preferredBackend = preferredBackendForPlatform();
     return summaryForBackend(
-        preferredBackend, CredentialStoreStatus::Disabled, CredentialStoreReadiness::DisabledFallback,
-        false,
+        preferredBackend, CredentialStoreStatus::Disabled,
+        CredentialStoreReadiness::DisabledFallback, false,
         QStringLiteral("Credential store disabled: no API key storage is active, no plaintext "
                        "persistence is allowed, and provider execution remains disabled."),
         QStringLiteral("%1 preferred / disabledFallback / storage unavailable on this platform.")
@@ -789,12 +789,12 @@ QStringList CredentialStore::capabilitySummaries() const {
     return {
         QStringLiteral("%1: available")
             .arg(credentialStoreCapabilityName(CredentialStoreCapability::ReadinessMetadata)),
-        QStringLiteral("%1: %2")
-            .arg(credentialStoreCapabilityName(CredentialStoreCapability::StoreSecret),
-                 ready ? QStringLiteral("available") : QStringLiteral("disabled")),
-        QStringLiteral("%1: %2")
-            .arg(credentialStoreCapabilityName(CredentialStoreCapability::RemoveSecret),
-                 ready ? QStringLiteral("available") : QStringLiteral("disabled")),
+        QStringLiteral("%1: %2").arg(
+            credentialStoreCapabilityName(CredentialStoreCapability::StoreSecret),
+            ready ? QStringLiteral("available") : QStringLiteral("disabled")),
+        QStringLiteral("%1: %2").arg(
+            credentialStoreCapabilityName(CredentialStoreCapability::RemoveSecret),
+            ready ? QStringLiteral("available") : QStringLiteral("disabled")),
         QStringLiteral("%1: disabled")
             .arg(credentialStoreCapabilityName(CredentialStoreCapability::TestCredential)),
     };

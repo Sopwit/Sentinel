@@ -10,7 +10,8 @@ namespace sentinel::core {
 StashService::StashService(QObject* parent) : QObject(parent) {}
 StashService::~StashService() = default;
 
-QString StashService::stash(const QString& sessionId, const QJsonObject& data, const QString& description) {
+QString StashService::stash(const QString& sessionId, const QJsonObject& data,
+                            const QString& description) {
     StashedChanges changes;
     changes.stashId = generateStashId();
     changes.sessionId = sessionId;
@@ -43,17 +44,20 @@ bool StashService::removeStash(const QString& stashId) {
 }
 
 QList<StashedChanges> StashService::stashes(const QString& sessionId) const {
-    if (sessionId.isEmpty()) return m_stashes;
+    if (sessionId.isEmpty())
+        return m_stashes;
     QList<StashedChanges> result;
     for (const auto& s : m_stashes) {
-        if (s.sessionId == sessionId) result.append(s);
+        if (s.sessionId == sessionId)
+            result.append(s);
     }
     return result;
 }
 
 std::optional<StashedChanges> StashService::findStash(const QString& stashId) const {
     for (const auto& s : m_stashes) {
-        if (s.stashId == stashId) return s;
+        if (s.stashId == stashId)
+            return s;
     }
     return std::nullopt;
 }

@@ -770,8 +770,8 @@ AgentTaskResult StaticAgentTaskRuntime::executeTask(const AgentTask& task) const
 
     return AgentTaskResult{
         AgentTaskStatus::CompletedMetadata,
-        QStringLiteral("%1 executed locally: %2").arg(agentTaskTypeName(task.type),
-                                                      executionSummary),
+        QStringLiteral("%1 executed locally: %2")
+            .arg(agentTaskTypeName(task.type), executionSummary),
         true,
     };
 }
@@ -1339,8 +1339,7 @@ StaticAgentTaskRuntime::makeToolContract(ToolContractType type, ToolContractStat
 
 AgentTaskQueueSummary StaticAgentTaskRuntime::queueSummary() const {
     AgentTaskQueueSummary summary;
-    summary.status =
-        tasks_.isEmpty() ? AgentTaskQueueStatus::Empty : AgentTaskQueueStatus::Ready;
+    summary.status = tasks_.isEmpty() ? AgentTaskQueueStatus::Empty : AgentTaskQueueStatus::Ready;
     summary.totalCount = static_cast<int>(tasks_.size());
 
     int latestOrder = -1;

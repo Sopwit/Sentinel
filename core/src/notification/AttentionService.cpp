@@ -8,7 +8,8 @@
 
 namespace sentinel::core {
 
-AttentionService::AttentionService(QObject* parent) : QObject(parent), m_soundEffect(std::make_unique<QSoundEffect>()) {
+AttentionService::AttentionService(QObject* parent)
+    : QObject(parent), m_soundEffect(std::make_unique<QSoundEffect>()) {
     m_soundEffect->setSource(QUrl(QStringLiteral("qrc:/sounds/notification.wav")));
     m_soundEffect->setVolume(0.35f);
 }
@@ -21,10 +22,14 @@ void AttentionService::configure(const NotificationConfig& config) {
     }
 }
 
-NotificationConfig AttentionService::config() const { return m_config; }
+NotificationConfig AttentionService::config() const {
+    return m_config;
+}
 
-void AttentionService::notify(NotificationEvent event, const QString& title, const QString& message) {
-    if (!m_config.enabled) return;
+void AttentionService::notify(NotificationEvent event, const QString& title,
+                              const QString& message) {
+    if (!m_config.enabled)
+        return;
 
     Q_UNUSED(event)
     Q_UNUSED(title)
@@ -39,12 +44,12 @@ void AttentionService::notify(NotificationEvent event, const QString& title, con
 }
 
 void AttentionService::playSound(NotificationEvent event) {
-    if (!m_config.soundEnabled) return;
-    const auto source = event == NotificationEvent::Error
-                            ? QUrl(QStringLiteral("qrc:/sounds/error.wav"))
-                            : event == NotificationEvent::Done
-                                ? QUrl(QStringLiteral("qrc:/sounds/success.wav"))
-                                : QUrl(QStringLiteral("qrc:/sounds/notification.wav"));
+    if (!m_config.soundEnabled)
+        return;
+    const auto source =
+        event == NotificationEvent::Error  ? QUrl(QStringLiteral("qrc:/sounds/error.wav"))
+        : event == NotificationEvent::Done ? QUrl(QStringLiteral("qrc:/sounds/success.wav"))
+                                           : QUrl(QStringLiteral("qrc:/sounds/notification.wav"));
     m_soundEffect->setSource(source);
     m_soundEffect->play();
 }

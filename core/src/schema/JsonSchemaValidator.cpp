@@ -22,11 +22,16 @@ QStringList JsonSchemaValidator::validate(const QJsonObject& value, const QJsonO
         const QString expected = it.value().toObject().value(QStringLiteral("type")).toString();
         const QJsonValue actual = value.value(it.key());
         bool matches = expected.isEmpty();
-        if (expected == QStringLiteral("string")) matches = actual.isString();
-        if (expected == QStringLiteral("number")) matches = actual.isDouble();
-        if (expected == QStringLiteral("boolean")) matches = actual.isBool();
-        if (expected == QStringLiteral("object")) matches = actual.isObject();
-        if (expected == QStringLiteral("array")) matches = actual.isArray();
+        if (expected == QStringLiteral("string"))
+            matches = actual.isString();
+        if (expected == QStringLiteral("number"))
+            matches = actual.isDouble();
+        if (expected == QStringLiteral("boolean"))
+            matches = actual.isBool();
+        if (expected == QStringLiteral("object"))
+            matches = actual.isObject();
+        if (expected == QStringLiteral("array"))
+            matches = actual.isArray();
         if (!matches) {
             errors.append(QStringLiteral("Invalid type for property: %1").arg(it.key()));
         }

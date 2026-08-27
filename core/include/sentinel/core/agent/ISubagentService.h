@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
 #include <QList>
-#include <functional>
+#include <QString>
 #include <atomic>
+#include <functional>
 #include <memory>
 
 namespace sentinel::core {
@@ -35,7 +35,8 @@ struct TaskResult {
     QString error;
 };
 
-using TaskFunction = std::function<TaskResult(const TaskRequest& request, std::function<void(QString)> progressCallback)>;
+using TaskFunction = std::function<TaskResult(const TaskRequest& request,
+                                              std::function<void(QString)> progressCallback)>;
 
 class ISubagentService {
 public:

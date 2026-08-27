@@ -53,9 +53,7 @@ void LazyTest::reset() {
 }
 
 void LazyTest::lazyPtr() {
-    LazyPtr<int> lazy([]() {
-        return std::make_shared<int>(42);
-    });
+    LazyPtr<int> lazy([]() { return std::make_shared<int>(42); });
     auto ptr = lazy.get();
     QCOMPARE(*ptr, 42);
     QVERIFY(lazy.isLoaded());

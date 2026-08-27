@@ -48,7 +48,10 @@ QJsonObject UsageStatsService::statsJson(int days) const {
 QString UsageStatsService::formattedStats(int days) const {
     auto s = stats(days);
     return QStringLiteral("Sessions: %1 | Messages: %2 | Tokens: %3 | Cost: $%4")
-        .arg(s.totalSessions).arg(s.totalMessages).arg(s.totalTokens).arg(s.totalCost, 0, 'f', 2);
+        .arg(s.totalSessions)
+        .arg(s.totalMessages)
+        .arg(s.totalTokens)
+        .arg(s.totalCost, 0, 'f', 2);
 }
 
 void UsageStatsService::reset() {

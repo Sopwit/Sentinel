@@ -122,17 +122,17 @@ QString scopedPath(const QString& workingDirectory, const QString& rawPath) {
 
 bool hasBinaryExtension(const QString& path) {
     static const QSet<QString> extensions{
-        QStringLiteral("zip"),   QStringLiteral("exe"),     QStringLiteral("so"),
-        QStringLiteral("dll"),   QStringLiteral("dylib"),   QStringLiteral("wasm"),
-        QStringLiteral("pyc"),   QStringLiteral("jpg"),     QStringLiteral("jpeg"),
-        QStringLiteral("png"),   QStringLiteral("gif"),     QStringLiteral("webp"),
-        QStringLiteral("ico"),   QStringLiteral("pdf"),     QStringLiteral("mp3"),
-        QStringLiteral("mp4"),   QStringLiteral("mov"),     QStringLiteral("avi"),
-        QStringLiteral("mkv"),   QStringLiteral("wav"),     QStringLiteral("ogg"),
-        QStringLiteral("flac"),  QStringLiteral("ttf"),     QStringLiteral("otf"),
-        QStringLiteral("woff"),  QStringLiteral("woff2"),   QStringLiteral("class"),
-        QStringLiteral("jar"),   QStringLiteral("7z"),      QStringLiteral("tar"),
-        QStringLiteral("gz"),    QStringLiteral("rar"),
+        QStringLiteral("zip"),  QStringLiteral("exe"),   QStringLiteral("so"),
+        QStringLiteral("dll"),  QStringLiteral("dylib"), QStringLiteral("wasm"),
+        QStringLiteral("pyc"),  QStringLiteral("jpg"),   QStringLiteral("jpeg"),
+        QStringLiteral("png"),  QStringLiteral("gif"),   QStringLiteral("webp"),
+        QStringLiteral("ico"),  QStringLiteral("pdf"),   QStringLiteral("mp3"),
+        QStringLiteral("mp4"),  QStringLiteral("mov"),   QStringLiteral("avi"),
+        QStringLiteral("mkv"),  QStringLiteral("wav"),   QStringLiteral("ogg"),
+        QStringLiteral("flac"), QStringLiteral("ttf"),   QStringLiteral("otf"),
+        QStringLiteral("woff"), QStringLiteral("woff2"), QStringLiteral("class"),
+        QStringLiteral("jar"),  QStringLiteral("7z"),    QStringLiteral("tar"),
+        QStringLiteral("gz"),   QStringLiteral("rar"),
     };
     return extensions.contains(QFileInfo(path).suffix().toLower());
 }
@@ -180,17 +180,15 @@ QString runSynchronousProcess(const QString& program, const QStringList& args,
         process.kill();
         process.waitForFinished(3000);
         if (errorOut) {
-            *errorOut =
-                QStringLiteral("Timed out after %1 ms.").arg(QString::number(timeoutMs));
+            *errorOut = QStringLiteral("Timed out after %1 ms.").arg(QString::number(timeoutMs));
         }
         return QString();
     }
     const QString out = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
     const QString err = QString::fromUtf8(process.readAllStandardError()).trimmed();
     if (process.exitCode() != 0 && errorOut && out.isEmpty()) {
-        *errorOut = err.isEmpty()
-                        ? QStringLiteral("Exited with code %1.").arg(process.exitCode())
-                        : err;
+        *errorOut =
+            err.isEmpty() ? QStringLiteral("Exited with code %1.").arg(process.exitCode()) : err;
     }
     return out;
 }
@@ -255,7 +253,8 @@ QString systemInfoReport() {
                               humanReadableBytes(static_cast<quint64>(root.bytesFree())),
                               humanReadableBytes(static_cast<quint64>(root.bytesTotal()))));
     }
-    lines.append(QStringLiteral("Workspace: %1").arg(QDir::toNativeSeparators(QDir::currentPath())));
+    lines.append(
+        QStringLiteral("Workspace: %1").arg(QDir::toNativeSeparators(QDir::currentPath())));
     return lines.join(QLatin1Char('\n'));
 }
 
@@ -308,45 +307,40 @@ std::optional<DesktopEntry> findDesktopEntry(const QString& appName) {
     const QString lowered = needle.toLower();
 
     QStringList searchRoots;
-    const QString dataHome =
-        qEnvironmentVariable("XDG_DATA_HOME").isEmpty()
-            ? QDir::home().filePath(QStringLiteral(".local/share"))
-            : qEnvironmentVariable("XDG_DATA_HOME");
+    const QString dataHome = qEnvironmentVariable("XDG_DATA_HOME").isEmpty()
+                                 ? QDir::home().filePath(QStringLiteral(".local/share"))
+                                 : qEnvironmentVariable("XDG_DATA_HOME");
     searchRoots.append(dataHome);
     const QString dataDirsEnv = qEnvironmentVariable("XDG_DATA_DIRS");
-    const QStringList dataDirs = dataDirsEnv.isEmpty()
-                                     ? QStringList{QStringLiteral("/usr/share"),
-                                                   QStringLiteral("/usr/local/share")}
-                                     : dataDirsEnv.split(QLatin1Char(':'), Qt::SkipEmptyParts);
+    const QStringList dataDirs =
+        dataDirsEnv.isEmpty()
+            ? QStringList{QStringLiteral("/usr/share"), QStringLiteral("/usr/local/share")}
+            : dataDirsEnv.split(QLatin1Char(':'), Qt::SkipEmptyParts);
     searchRoots.append(dataDirs);
 
     std::optional<DesktopEntry> best;
     for (const auto& root : searchRoots) {
         QDirIterator it(QDir(root).filePath(QStringLiteral("applications")),
-                        {QStringLiteral("*.desktop")}, QDir::Files,
-                        QDirIterator::Subdirectories);
+                        {QStringLiteral("*.desktop")}, QDir::Files, QDirIterator::Subdirectories);
         while (it.hasNext()) {
             const QString path = it.next();
             QSettings desktopFile(path, QSettings::IniFormat);
             desktopFile.beginGroup(QStringLiteral("Desktop Entry"));
 
-            const QString type = desktopFile
-                                     .value(QStringLiteral("Type"), QString())
-                                     .toString()
-                                     .trimmed();
+            const QString type =
+                desktopFile.value(QStringLiteral("Type"), QString()).toString().trimmed();
             const bool hidden = desktopFile.value(QStringLiteral("Hidden"), false).toBool();
             if (type != QStringLiteral("Application") || hidden) {
                 continue;
             }
 
-            const QString name = desktopFile.value(QStringLiteral("Name"), QString())
-                                     .toString()
-                                     .trimmed();
+            const QString name =
+                desktopFile.value(QStringLiteral("Name"), QString()).toString().trimmed();
             const QString desktopId = QFileInfo(path).completeBaseName();
-            const bool matches = desktopId.compare(lowered, Qt::CaseInsensitive) == 0 ||
-                                 desktopId.endsWith(QStringLiteral(".") + lowered,
-                                                    Qt::CaseInsensitive) ||
-                                 name.compare(needle, Qt::CaseInsensitive) == 0;
+            const bool matches =
+                desktopId.compare(lowered, Qt::CaseInsensitive) == 0 ||
+                desktopId.endsWith(QStringLiteral(".") + lowered, Qt::CaseInsensitive) ||
+                name.compare(needle, Qt::CaseInsensitive) == 0;
             if (!matches) {
                 continue;
             }
@@ -360,8 +354,7 @@ std::optional<DesktopEntry> findDesktopEntry(const QString& appName) {
 
             // Prefer exact id matches (e.g. "spotify") over suffix matches
             // (e.g. "org.kde.dolphin" for "dolphin").
-            if (!best || (best->desktopId.toLower() != lowered &&
-                          desktopId.toLower() == lowered)) {
+            if (!best || (best->desktopId.toLower() != lowered && desktopId.toLower() == lowered)) {
                 best = entry;
             }
         }
@@ -460,9 +453,8 @@ bool parseUnifiedDiff(const QString& patch, QList<PatchFile>& files, QString& er
         if (line.startsWith(QStringLiteral("--- "))) {
             finishFile();
             const QString oldPath = stripDiffPrefix(line.mid(4).trimmed());
-            current.action = oldPath == QStringLiteral("/dev/null")
-                                ? QStringLiteral("add")
-                                : QStringLiteral("update");
+            current.action = oldPath == QStringLiteral("/dev/null") ? QStringLiteral("add")
+                                                                    : QStringLiteral("update");
             current.path = oldPath;
             continue;
         }
@@ -502,9 +494,8 @@ bool parseUnifiedDiff(const QString& patch, QList<PatchFile>& files, QString& er
     finishFile();
 
     if (files.isEmpty()) {
-        error = QStringLiteral(
-            "No file sections found. The patch must use unified diff headers "
-            "(--- a/file, +++ b/file, @@ ... @@).");
+        error = QStringLiteral("No file sections found. The patch must use unified diff headers "
+                               "(--- a/file, +++ b/file, @@ ... @@).");
         return false;
     }
     return true;
@@ -535,8 +526,7 @@ bool applyHunkWithFuzz(QStringList& fileLines, int claimedStart, const PatchHunk
     const int maxOffset = fileLines.size();
     for (int offset = 0; offset <= maxOffset; ++offset) {
         const int down = claimed + offset;
-        if (down + hunk.oldLines.size() <= fileLines.size() &&
-            applyHunkAt(fileLines, down, hunk)) {
+        if (down + hunk.oldLines.size() <= fileLines.size() && applyHunkAt(fileLines, down, hunk)) {
             appliedAt = down;
             return true;
         }
@@ -554,29 +544,27 @@ bool applyHunkWithFuzz(QStringList& fileLines, int claimedStart, const PatchHunk
 
 // True when the docker CLI is available (checked with a fast --version call).
 bool dockerAvailable() {
-    return !runSynchronousProcess(QStringLiteral("docker"),
-                                   {QStringLiteral("--version")}, QString(), 5000)
+    return !runSynchronousProcess(QStringLiteral("docker"), {QStringLiteral("--version")},
+                                  QString(), 5000)
                 .isEmpty();
 }
 
 // Runs a shell command inside a throwaway docker container with the workspace
 // mounted read-write at /workspace. Ported from openclaw's Docker sandbox
 // pattern; degrades to a clear error when docker is missing.
-QString runCommandInDocker(const QString& command, const QString& workspace,
-                           int timeoutMs) {
+QString runCommandInDocker(const QString& command, const QString& workspace, int timeoutMs) {
     if (!dockerAvailable()) {
         return QStringLiteral(
             "run-command: docker sandbox requested but the docker CLI is not available. "
             "Install Docker or retry without sandbox=docker.");
     }
     const QString image = QStringLiteral("alpine:3.20");
-    QStringList args{QStringLiteral("run"),      QStringLiteral("--rm"),
+    QStringList args{QStringLiteral("run"),       QStringLiteral("--rm"),
                      QStringLiteral("--network"), QStringLiteral("none"),
                      QStringLiteral("--memory"),  QStringLiteral("2g"),
                      QStringLiteral("--cpus"),    QStringLiteral("2"),
-                     QStringLiteral("-v"),
-                     QStringLiteral("%1:/workspace").arg(workspace),
-                     QStringLiteral("-w"), QStringLiteral("/workspace")};
+                     QStringLiteral("-v"),        QStringLiteral("%1:/workspace").arg(workspace),
+                     QStringLiteral("-w"),        QStringLiteral("/workspace")};
     if (timeoutMs > 60000) {
         // Leave time for image pulls on first use.
         timeoutMs += 120000;
@@ -594,9 +582,8 @@ QString runCommandInDocker(const QString& command, const QString& workspace,
     if (!process.waitForFinished(timeoutMs)) {
         process.kill();
         process.waitForFinished(3000);
-        return QStringLiteral(
-                    "run-command: docker sandbox terminated command after timeout %1 ms.")
-                    .arg(QString::number(timeoutMs));
+        return QStringLiteral("run-command: docker sandbox terminated command after timeout %1 ms.")
+            .arg(QString::number(timeoutMs));
     }
     const QString out = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
     const QString err = QString::fromUtf8(process.readAllStandardError()).trimmed();
@@ -609,12 +596,13 @@ QString runCommandInDocker(const QString& command, const QString& workspace,
     if (err.contains(QStringLiteral("failed to connect to the docker API")) ||
         err.contains(QStringLiteral("Is the docker daemon running"))) {
         return QStringLiteral(
-                    "run-command: the docker CLI is installed but the daemon is not running. "
-                    "Start Docker (or OrbStack) and retry, or run without sandbox=docker.\n"
-                    "Details: %1")
+                   "run-command: the docker CLI is installed but the daemon is not running. "
+                   "Start Docker (or OrbStack) and retry, or run without sandbox=docker.\n"
+                   "Details: %1")
             .arg(err);
     }
-    return QStringLiteral("Docker sandbox command failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+    return QStringLiteral(
+               "Docker sandbox command failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
         .arg(QString::number(process.exitCode()), out, err);
 }
 
@@ -623,12 +611,11 @@ QString runCommandInDocker(const QString& command, const QString& workspace,
 // requires Node.js and npx on PATH, fails gracefully otherwise.
 QString runPlaywrightCli(const QString& mode, const QString& url, const QString& outputPath,
                          const QString& extraWait) {
-    if (runSynchronousProcess(QStringLiteral("npx"), {QStringLiteral("--version")}, QString(),
-                              5000)
+    if (runSynchronousProcess(QStringLiteral("npx"), {QStringLiteral("--version")}, QString(), 5000)
             .isEmpty()) {
         return QStringLiteral(
-            "browser-%1: Node.js (npx) is required for Playwright browser tools. Install "
-            "Node.js and run 'npx playwright install chromium' once.")
+                   "browser-%1: Node.js (npx) is required for Playwright browser tools. Install "
+                   "Node.js and run 'npx playwright install chromium' once.")
             .arg(mode);
     }
 
@@ -653,14 +640,15 @@ QString runPlaywrightCli(const QString& mode, const QString& url, const QString&
     }
     const QString err = QString::fromUtf8(process.readAllStandardError()).trimmed();
     if (process.exitCode() != 0 || !QFile::exists(outputPath)) {
-        return QStringLiteral("browser-%1: Playwright failed: %2").arg(
-            mode, err.isEmpty() ? QStringLiteral("no output file was produced") : err);
+        return QStringLiteral("browser-%1: Playwright failed: %2")
+            .arg(mode, err.isEmpty() ? QStringLiteral("no output file was produced") : err);
     }
     return QStringLiteral("browser-%1: saved '%2'.").arg(mode, outputPath);
 }
 
 QString applyPatchReport(const QString& patch, const QString& workingDirectory,
-                         const std::function<QString(const QString&)>& scopePath) {    QList<PatchFile> files;
+                         const std::function<QString(const QString&)>& scopePath) {
+    QList<PatchFile> files;
     QString parseError;
     if (!parseUnifiedDiff(patch, files, parseError)) {
         return QStringLiteral("apply-patch: %1").arg(parseError);
@@ -688,13 +676,12 @@ QString applyPatchReport(const QString& patch, const QString& workingDirectory,
                 contentLines.append(hunk.newLines);
             }
             if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                failures.append(
-                    QStringLiteral("%1: %2").arg(scoped, out.errorString()));
+                failures.append(QStringLiteral("%1: %2").arg(scoped, out.errorString()));
                 continue;
             }
             out.write(contentLines.join(QLatin1Char('\n')).toUtf8());
-            applied.append(QStringLiteral("added %1 (%2 lines)").arg(
-                scoped, QString::number(contentLines.size())));
+            applied.append(QStringLiteral("added %1 (%2 lines)")
+                               .arg(scoped, QString::number(contentLines.size())));
             continue;
         }
 
@@ -747,8 +734,8 @@ QString applyPatchReport(const QString& patch, const QString& workingDirectory,
             continue;
         }
         out.write(fileLines.join(QLatin1Char('\n')).toUtf8());
-        applied.append(QStringLiteral("updated %1 (%2 hunk(s))")
-                           .arg(scoped, QString::number(hunksApplied)));
+        applied.append(
+            QStringLiteral("updated %1 (%2 hunk(s))").arg(scoped, QString::number(hunksApplied)));
     }
 
     QStringList report;
@@ -758,8 +745,8 @@ QString applyPatchReport(const QString& patch, const QString& workingDirectory,
         report.append(applied);
     }
     if (!failures.isEmpty()) {
-        report.append(QStringLiteral("apply-patch: %1 failure(s):")
-                          .arg(QString::number(failures.size())));
+        report.append(
+            QStringLiteral("apply-patch: %1 failure(s):").arg(QString::number(failures.size())));
         report.append(failures);
     }
     if (report.isEmpty()) {
@@ -780,10 +767,9 @@ QStringList extractCodeDefinitions(const QString& path) {
     const QStringList lines = content.split(QLatin1Char('\n'));
     const QString suffix = QFileInfo(path).suffix().toLower();
 
-    static const QRegularExpression cxxPattern(
-        QStringLiteral(
-            "^\\s*(?:template\\s*<[^>]*>\\s*)?(?:class|struct|enum\\s+class|enum|namespace)\\s+"
-            "([A-Za-z_]\\w*)"));
+    static const QRegularExpression cxxPattern(QStringLiteral(
+        "^\\s*(?:template\\s*<[^>]*>\\s*)?(?:class|struct|enum\\s+class|enum|namespace)\\s+"
+        "([A-Za-z_]\\w*)"));
     static const QRegularExpression cxxFunction(
         QStringLiteral("^\\s*(?:[A-Za-z_][\\w:<>,\\*\\&\\s]*)\\s+([A-Za-z_]\\w*)\\s*\\("));
     static const QRegularExpression pythonPattern(
@@ -791,10 +777,9 @@ QStringList extractCodeDefinitions(const QString& path) {
     static const QRegularExpression jsPattern(
         QStringLiteral("^\\s*(?:export\\s+)?(?:default\\s+)?(?:async\\s+)?(?:function\\*?|class|"
                        "interface|type|enum)\\s+([A-Za-z_$][\\w$]*)"));
-    static const QRegularExpression rustPattern(
-        QStringLiteral(
-            "^\\s*(?:pub(?:\\(\\w+\\))?\\s+)?(?:async\\s+)?(?:fn|struct|enum|trait|mod)\\s+"
-            "([A-Za-z_]\\w*)"));
+    static const QRegularExpression rustPattern(QStringLiteral(
+        "^\\s*(?:pub(?:\\(\\w+\\))?\\s+)?(?:async\\s+)?(?:fn|struct|enum|trait|mod)\\s+"
+        "([A-Za-z_]\\w*)"));
 
     const bool isPython = suffix == QStringLiteral("py");
     const bool isJsLike = suffix == QStringLiteral("js") || suffix == QStringLiteral("jsx") ||
@@ -810,8 +795,8 @@ QStringList extractCodeDefinitions(const QString& path) {
     for (int i = 0; i < lines.size(); ++i) {
         const QString& line = lines.at(i);
         auto add = [&](const QString& kind, const QString& name) {
-            definitions.append(QStringLiteral("%1:%2 %3 %4")
-                                    .arg(QString::number(i + 1), kind, name));
+            definitions.append(
+                QStringLiteral("%1:%2 %3 %4").arg(QString::number(i + 1), kind, name));
         };
         if (isPython) {
             const auto m = pythonPattern.match(line);
@@ -841,7 +826,8 @@ QStringList extractCodeDefinitions(const QString& path) {
             const auto f = cxxFunction.match(line);
             if (f.hasMatch() && f.captured(1) != QStringLiteral("return") &&
                 f.captured(1) != QStringLiteral("if") && f.captured(1) != QStringLiteral("for") &&
-                f.captured(1) != QStringLiteral("while") && f.captured(1) != QStringLiteral("switch")) {
+                f.captured(1) != QStringLiteral("while") &&
+                f.captured(1) != QStringLiteral("switch")) {
                 add(QStringLiteral("function"), f.captured(1));
             }
         }
@@ -867,8 +853,7 @@ QDateTime parseAlarmTime(const QString& raw) {
     const auto match = timeOnly.match(trimmed);
     if (match.hasMatch()) {
         const auto now = QDateTime::currentDateTime();
-        QTime time(match.captured(1).toInt(), match.captured(2).toInt(),
-                   match.captured(3).toInt());
+        QTime time(match.captured(1).toInt(), match.captured(2).toInt(), match.captured(3).toInt());
         QDateTime candidate(now.date(), time);
         if (candidate <= now) {
             candidate = candidate.addDays(1);
@@ -941,15 +926,15 @@ QString readToolReport(const QString& path, int offset, int limit) {
 
 QString directoryListingReport(const QString& path, int offset) {
     const QDir dir(path);
-    const auto entries = dir.entryList(
-        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::DirsFirst | QDir::Name);
+    const auto entries = dir.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
+                                       QDir::DirsFirst | QDir::Name);
 
     if (offset < 1) {
         offset = 1;
     }
     if (offset > entries.size()) {
         return QStringLiteral(
-            "read-file: Offset %1 is out of range for this directory (%2 entries).")
+                   "read-file: Offset %1 is out of range for this directory (%2 entries).")
             .arg(QString::number(offset), QString::number(entries.size()));
     }
 
@@ -961,13 +946,15 @@ QString directoryListingReport(const QString& path, int offset) {
         listed.append(entries.at(i) + suffix);
     }
 
-    QString footer = end < entries.size()
-                         ? QStringLiteral("(Showing %1 of %2 entries. Use offset=%3 to continue.)")
-                               .arg(QString::number(listed.size()),
-                                    QString::number(entries.size()), QString::number(end + 1))
-                         : QStringLiteral("(Total %1 entries.)").arg(QString::number(entries.size()));
+    QString footer =
+        end < entries.size()
+            ? QStringLiteral("(Showing %1 of %2 entries. Use offset=%3 to continue.)")
+                  .arg(QString::number(listed.size()), QString::number(entries.size()),
+                       QString::number(end + 1))
+            : QStringLiteral("(Total %1 entries.)").arg(QString::number(entries.size()));
 
-    return QStringLiteral("<path>%1</path>\n<type>directory</type>\n<entries>\n%2\n</entries>\n\n%3")
+    return QStringLiteral(
+               "<path>%1</path>\n<type>directory</type>\n<entries>\n%2\n</entries>\n\n%3")
         .arg(QDir::toNativeSeparators(path), listed.join(QLatin1Char('\n')), footer);
 }
 
@@ -1062,10 +1049,9 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("read-file: Cannot read binary file: %1").arg(scoped));
                 continue;
             }
-            logs.append(readToolReport(scoped,
-                                       getIntArgument(invocation, QStringLiteral("offset"), 1),
-                                       getIntArgument(invocation, QStringLiteral("limit"),
-                                                      kDefaultReadLimit)));
+            logs.append(readToolReport(
+                scoped, getIntArgument(invocation, QStringLiteral("offset"), 1),
+                getIntArgument(invocation, QStringLiteral("limit"), kDefaultReadLimit)));
         }
         // 3. write-file
         else if (invocation.toolId == QLatin1String("write-file")) {
@@ -1096,9 +1082,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString oldString = getArgument(invocation, QStringLiteral("oldString"));
             const QString newString = getArgument(invocation, QStringLiteral("newString"));
             const bool replaceAll =
-                getArgument(invocation, QStringLiteral("replaceAll"))
-                    .trimmed()
-                    .toLower() == QStringLiteral("true");
+                getArgument(invocation, QStringLiteral("replaceAll")).trimmed().toLower() ==
+                QStringLiteral("true");
 
             if (rawPath.isEmpty()) {
                 logs.append(QStringLiteral("edit-file: No path argument provided."));
@@ -1144,8 +1129,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                     QStringLiteral("edit-file: Edited %1 line(s) in '%2' (match strategy: %3, "
                                    "confidence: %4%%).")
                         .arg(QString::number(result.linesChanged), scoped,
-                             QStringLiteral("strategy #%1").arg(
-                                 static_cast<int>(result.usedStrategy)),
+                             QStringLiteral("strategy #%1")
+                                 .arg(static_cast<int>(result.usedStrategy)),
                              QString::number(result.confidence)));
             } else {
                 logs.append(QStringLiteral("edit-file: %1").arg(result.error));
@@ -1184,8 +1169,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString rawSource = getArgument(invocation, QStringLiteral("source"));
             const QString rawDestination = getArgument(invocation, QStringLiteral("destination"));
             if (rawSource.isEmpty() || rawDestination.isEmpty()) {
-                logs.append(
-                    QStringLiteral("move-file: Both source and destination are required."));
+                logs.append(QStringLiteral("move-file: Both source and destination are required."));
                 continue;
             }
             const QString source = scopedPath(currentWorkingDirectory, rawSource);
@@ -1200,22 +1184,22 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             if (sourceInfo.isDir()) {
-                logs.append(QStringLiteral("move-file: Refusing to move a directory: %1")
-                                .arg(source));
+                logs.append(
+                    QStringLiteral("move-file: Refusing to move a directory: %1").arg(source));
                 continue;
             }
             if (QFile::exists(destination)) {
-                logs.append(QStringLiteral("move-file: Destination already exists: %1")
-                                .arg(destination));
+                logs.append(
+                    QStringLiteral("move-file: Destination already exists: %1").arg(destination));
                 continue;
             }
             QDir().mkpath(QFileInfo(destination).absolutePath());
             if (QFile::rename(source, destination)) {
-                logs.append(QStringLiteral("move-file: Moved '%1' to '%2'.")
-                                .arg(source, destination));
+                logs.append(
+                    QStringLiteral("move-file: Moved '%1' to '%2'.").arg(source, destination));
             } else {
-            logs.append(
-                QStringLiteral("move-file: Failed to move '%1' to '%2'.").arg(source, destination));
+                logs.append(QStringLiteral("move-file: Failed to move '%1' to '%2'.")
+                                .arg(source, destination));
             }
         }
         // 4d. apply-patch (unified diff; ported from cline/openclaw/opencode)
@@ -1225,17 +1209,16 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("apply-patch: No patch argument provided."));
                 continue;
             }
-            logs.append(applyPatchReport(
-                patch, currentWorkingDirectory, [&currentWorkingDirectory](const QString& p) {
-                    return scopedPath(currentWorkingDirectory, p);
-                }));
+            logs.append(applyPatchReport(patch, currentWorkingDirectory,
+                                         [&currentWorkingDirectory](const QString& p) {
+                                             return scopedPath(currentWorkingDirectory, p);
+                                         }));
         }
         // 4e. list-code-definitions (ported from cline)
         else if (invocation.toolId == QLatin1String("list-code-definitions")) {
             QString path = getArgument(invocation, QStringLiteral("path"));
             if (path.isEmpty()) {
-                logs.append(
-                    QStringLiteral("list-code-definitions: No path argument provided."));
+                logs.append(QStringLiteral("list-code-definitions: No path argument provided."));
                 continue;
             }
             const QString scoped = scopedPath(currentWorkingDirectory, path);
@@ -1245,17 +1228,15 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             if (!QFile::exists(scoped)) {
-                logs.append(QStringLiteral("list-code-definitions: File not found: %1")
-                                .arg(scoped));
+                logs.append(
+                    QStringLiteral("list-code-definitions: File not found: %1").arg(scoped));
                 continue;
             }
             const auto definitions = extractCodeDefinitions(scoped);
             logs.append(definitions.isEmpty()
-                            ? QStringLiteral(
-                                  "list-code-definitions: No definitions found in '%1'.")
+                            ? QStringLiteral("list-code-definitions: No definitions found in '%1'.")
                                   .arg(scoped)
-                            : QStringLiteral(
-                                  "list-code-definitions: %1 definition(s) in '%2':\n%3")
+                            : QStringLiteral("list-code-definitions: %1 definition(s) in '%2':\n%3")
                                   .arg(QString::number(definitions.size()), scoped,
                                        definitions.join(QLatin1Char('\n'))));
         }
@@ -1282,10 +1263,10 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString include = getArgument(invocation, QStringLiteral("include")).trimmed();
 
             static const QSet<QString> skippedDirs{
-                QStringLiteral(".git"),      QStringLiteral("node_modules"),
-                QStringLiteral("build"),    QStringLiteral("dist"),
-                QStringLiteral("target"),   QStringLiteral("__pycache__"),
-                QStringLiteral(".cache"),   QStringLiteral("venv"),
+                QStringLiteral(".git"),   QStringLiteral("node_modules"),
+                QStringLiteral("build"),  QStringLiteral("dist"),
+                QStringLiteral("target"), QStringLiteral("__pycache__"),
+                QStringLiteral(".cache"), QStringLiteral("venv"),
                 QStringLiteral(".venv"),
             };
 
@@ -1323,8 +1304,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                             break;
                         }
                         if (!fileHeaderWritten) {
-                            output.append(QStringLiteral("%1:").arg(
-                                QDir::toNativeSeparators(filePath)));
+                            output.append(
+                                QStringLiteral("%1:").arg(QDir::toNativeSeparators(filePath)));
                             fileHeaderWritten = true;
                             ++filesWithMatches;
                         }
@@ -1336,9 +1317,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                             trimmedLine = trimmedLine.left(kMaxLineLength) +
                                           QStringLiteral("... (line truncated)");
                         }
-                        output.append(
-                            QStringLiteral("  Line %1: %2").arg(QString::number(lineNumber),
-                                                               trimmedLine));
+                        output.append(QStringLiteral("  Line %1: %2")
+                                          .arg(QString::number(lineNumber), trimmedLine));
                         ++matches;
                     }
                 }
@@ -1354,10 +1334,10 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(output.join(QLatin1Char('\n')));
                 logs.append(QStringLiteral("\nFound %1 match(es) in %2 file(s).%3")
                                 .arg(QString::number(matches), QString::number(filesWithMatches),
-                                     truncated ? QStringLiteral(
-                                                     " (Results truncated. Consider a more "
-                                                     "specific path or pattern.)")
-                                               : QString()));
+                                     truncated
+                                         ? QStringLiteral(" (Results truncated. Consider a more "
+                                                          "specific path or pattern.)")
+                                         : QString()));
             }
         }
         // 6. glob
@@ -1409,8 +1389,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("run-command: No command argument provided."));
                 continue;
             }
-            int timeoutMs =
-                getIntArgument(invocation, QStringLiteral("timeout"), 60000);
+            int timeoutMs = getIntArgument(invocation, QStringLiteral("timeout"), 60000);
             timeoutMs = qBound(1000, timeoutMs, 600000);
             const QString workdirArg = getArgument(invocation, QStringLiteral("workdir")).trimmed();
             QString workingDirectory = currentWorkingDirectory;
@@ -1423,9 +1402,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 }
             }
 
-            const QString sandbox = getArgument(invocation, QStringLiteral("sandbox"))
-                                        .trimmed()
-                                        .toLower();
+            const QString sandbox =
+                getArgument(invocation, QStringLiteral("sandbox")).trimmed().toLower();
             if (sandbox == QStringLiteral("docker")) {
                 logs.append(runCommandInDocker(command, workingDirectory, timeoutMs));
                 continue;
@@ -1449,8 +1427,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             process.setProcessEnvironment(env);
 
 #if defined(Q_OS_WIN)
-            process.start(QStringLiteral("cmd.exe"),
-                          QStringList{QStringLiteral("/c"), command});
+            process.start(QStringLiteral("cmd.exe"), QStringList{QStringLiteral("/c"), command});
 #else
             process.start(QStringLiteral("/bin/sh"), QStringList{QStringLiteral("-c"), command});
 #endif
@@ -1480,17 +1457,18 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 if (stdoutContent.isEmpty() && stderrContent.isEmpty()) {
                     logs.append(QStringLiteral("Command executed successfully. (exit=0)"));
                 } else {
-                    logs.append(QStringLiteral(
-                                    "Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1")
-                                    .arg(stdoutContent));
+                    logs.append(
+                        QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1")
+                            .arg(stdoutContent));
                     if (!stderrContent.isEmpty()) {
                         logs.append(QStringLiteral("\n\n[STDERR]:\n%1").arg(stderrContent));
                     }
                 }
             } else {
-                logs.append(QStringLiteral(
-                                "Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
-                                .arg(QString::number(exitCode), stdoutContent, stderrContent));
+                logs.append(
+                    QStringLiteral(
+                        "Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+                        .arg(QString::number(exitCode), stdoutContent, stderrContent));
             }
         }
         // 8. app-launch
@@ -1504,11 +1482,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             // caller to open-url instead of trying to launch a browser as an
             // app.
             if (looksLikeDomainName(app)) {
-                logs.append(QStringLiteral(
-                                "app-launch: '%1' is a website address, not an application. "
-                                "Retry with the open-url tool and url=%1 to open it in the "
-                                "browser.")
-                                .arg(app));
+                logs.append(
+                    QStringLiteral("app-launch: '%1' is a website address, not an application. "
+                                   "Retry with the open-url tool and url=%1 to open it in the "
+                                   "browser.")
+                        .arg(app));
                 continue;
             }
             const QString extraArgs = getArgument(invocation, QStringLiteral("args")).trimmed();
@@ -1521,8 +1499,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             }
             runSynchronousProcess(QStringLiteral("open"), args, QString(), 15000, &error);
 #elif defined(Q_OS_WIN)
-            QStringList args{QStringLiteral("/c"), QStringLiteral("start"),
-                             QStringLiteral(""), app};
+            QStringList args{QStringLiteral("/c"), QStringLiteral("start"), QStringLiteral(""),
+                             app};
             if (!extraArgs.isEmpty()) {
                 args.append(extraArgs);
             }
@@ -1540,21 +1518,18 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 if (command.isEmpty()) {
                     command = entry->desktopId;
                 }
-                const bool started =
-                    QProcess::startDetached(command, args);
-                logs.append(started
-                                ? QStringLiteral(
-                                      "app-launch: Launched '%1' (%2) via desktop entry.")
-                                      .arg(app, entry->desktopId)
-                                : QStringLiteral(
-                                      "app-launch: Found desktop entry '%1' but failed to start "
-                                      "'%2'.")
-                                      .arg(entry->desktopId, command));
+                const bool started = QProcess::startDetached(command, args);
+                logs.append(
+                    started
+                        ? QStringLiteral("app-launch: Launched '%1' (%2) via desktop entry.")
+                              .arg(app, entry->desktopId)
+                        : QStringLiteral("app-launch: Found desktop entry '%1' but failed to start "
+                                         "'%2'.")
+                              .arg(entry->desktopId, command));
                 continue;
             }
-            QProcess::startDetached(app, extraArgs.isEmpty()
-                                             ? QStringList{}
-                                             : QStringList{extraArgs});
+            QProcess::startDetached(app,
+                                    extraArgs.isEmpty() ? QStringList{} : QStringList{extraArgs});
 #endif
             logs.append(error.isEmpty()
                             ? QStringLiteral("app-launch: Launch requested for '%1'.").arg(app)
@@ -1601,12 +1576,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             const QUrl parsed = QUrl::fromUserInput(url);
-            if (!parsed.isValid() ||
-                (parsed.scheme() != QStringLiteral("http") &&
-                 parsed.scheme() != QStringLiteral("https"))) {
-                logs.append(QStringLiteral(
-                                "open-url: Only http and https URLs can be opened. Got: %1")
-                                .arg(url));
+            if (!parsed.isValid() || (parsed.scheme() != QStringLiteral("http") &&
+                                      parsed.scheme() != QStringLiteral("https"))) {
+                logs.append(
+                    QStringLiteral("open-url: Only http and https URLs can be opened. Got: %1")
+                        .arg(url));
                 continue;
             }
             const QString target = parsed.toString(QUrl::FullyEncoded);
@@ -1620,12 +1594,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
 #else
             launched = QProcess::startDetached(QStringLiteral("xdg-open"), {target});
 #endif
-            logs.append(launched
-                            ? QStringLiteral("open-url: Opened '%1' in the default browser.")
-                                  .arg(parsed.toString())
-                            : QStringLiteral("open-url: Failed to open '%1' in the default "
-                                             "browser.")
-                                  .arg(parsed.toString()));
+            logs.append(launched ? QStringLiteral("open-url: Opened '%1' in the default browser.")
+                                       .arg(parsed.toString())
+                                 : QStringLiteral("open-url: Failed to open '%1' in the default "
+                                                  "browser.")
+                                       .arg(parsed.toString()));
         }
         // 9c. mcp-list (discover configured MCP servers and their tools)
         else if (invocation.toolId == QLatin1String("mcp-list")) {
@@ -1655,16 +1628,15 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                     }
                     return QStringLiteral("unknown");
                 }();
-                lines.append(QStringLiteral("%1 (%2, %3)").arg(server.name, server.type, stateName));
+                lines.append(
+                    QStringLiteral("%1 (%2, %3)").arg(server.name, server.type, stateName));
                 for (const auto& tool : mcpService_->tools(server.name)) {
                     lines.append(QStringLiteral("  - %1: %2")
-                                     .arg(tool.name,
-                                          tool.description.simplified().left(200)));
+                                     .arg(tool.name, tool.description.simplified().left(200)));
                 }
             }
             logs.append(QStringLiteral("mcp-list: %1 server(s):\n%2")
-                            .arg(QString::number(servers.size()),
-                                 lines.join(QLatin1Char('\n'))));
+                            .arg(QString::number(servers.size()), lines.join(QLatin1Char('\n'))));
         }
         // 9d. mcp-call (invoke a tool on a configured MCP server; ported from
         // cline's use_mcp_tool pattern)
@@ -1687,9 +1659,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (!argumentsRaw.trimmed().isEmpty()) {
                 const auto document = QJsonDocument::fromJson(argumentsRaw.toUtf8());
                 if (!document.isObject()) {
-                    logs.append(QStringLiteral(
-                                    "mcp-call: 'arguments' must be a JSON object, e.g. "
-                                    "{\"key\": \"value\"}. Rewrite the input."));
+                    logs.append(QStringLiteral("mcp-call: 'arguments' must be a JSON object, e.g. "
+                                               "{\"key\": \"value\"}. Rewrite the input."));
                     continue;
                 }
                 arguments = document.object();
@@ -1713,8 +1684,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                                      .toArray();
             for (const auto& item : content) {
                 const auto object = item.toObject();
-                if (object.value(QStringLiteral("type")).toString() ==
-                    QStringLiteral("text")) {
+                if (object.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
                     contentParts.append(object.value(QStringLiteral("text")).toString());
                 }
             }
@@ -1726,11 +1696,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                                      .toObject()
                                      .value(QStringLiteral("isError"))
                                      .toBool();
-            logs.append(QStringLiteral("mcp-call: %1/%2 %3\n%4")
-                            .arg(server, tool,
-                                 isError ? QStringLiteral("returned an error:")
-                                         : QStringLiteral("result:"),
-                                 contentParts.join(QLatin1Char('\n'))));
+            logs.append(
+                QStringLiteral("mcp-call: %1/%2 %3\n%4")
+                    .arg(server, tool,
+                         isError ? QStringLiteral("returned an error:") : QStringLiteral("result:"),
+                         contentParts.join(QLatin1Char('\n'))));
         }
         // 9e. spawn-agent (bounded read-only subagent; ported from cline's
         // new_task / openclaw's sessions_spawn pattern)
@@ -1762,8 +1732,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
         else if (invocation.toolId == QLatin1String("browser-screenshot")) {
             const QString url = getArgument(invocation, QStringLiteral("url")).trimmed();
             if (url.isEmpty()) {
-                logs.append(
-                    QStringLiteral("browser-screenshot: No url argument provided."));
+                logs.append(QStringLiteral("browser-screenshot: No url argument provided."));
                 continue;
             }
             QString path = getArgument(invocation, QStringLiteral("path")).trimmed();
@@ -1780,8 +1749,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 }
                 path = scoped;
             }
-            logs.append(runPlaywrightCli(QStringLiteral("screenshot"), url, path,
-                                         QStringLiteral("2500")));
+            logs.append(
+                runPlaywrightCli(QStringLiteral("screenshot"), url, path, QStringLiteral("2500")));
         }
         // 9g. browser-pdf
         else if (invocation.toolId == QLatin1String("browser-pdf")) {
@@ -1819,11 +1788,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
 #if defined(Q_OS_MACOS)
             runSynchronousProcess(
                 QStringLiteral("osascript"),
-                QStringList{
-                    QStringLiteral("-e"),
-                    QStringLiteral("display notification \"%1\" with title \"%2\"")
-                        .arg(osascriptEscape(message),
-                             osascriptEscape(title.isEmpty() ? QStringLiteral("Sentinel") : title))},
+                QStringList{QStringLiteral("-e"),
+                            QStringLiteral("display notification \"%1\" with title \"%2\"")
+                                .arg(osascriptEscape(message),
+                                     osascriptEscape(title.isEmpty() ? QStringLiteral("Sentinel")
+                                                                     : title))},
                 QString(), 15000, &error);
 #elif defined(Q_OS_WIN)
             // PowerShell toast via the Windows Runtime projection; works on
@@ -1844,13 +1813,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 "'Sentinel').Show($toast);");
             runSynchronousProcess(
                 QStringLiteral("powershell"),
-                QStringList{QStringLiteral("-NoProfile"),
-                            QStringLiteral("-NonInteractive"),
-                            QStringLiteral("-Command"),
-                            psScript.arg(escapedTitle.replace(QLatin1Char('\''), QStringLiteral(
-                                                              "''")),
-                                         message.replace(QLatin1Char('\''),
-                                                         QStringLiteral("''")))},
+                QStringList{
+                    QStringLiteral("-NoProfile"), QStringLiteral("-NonInteractive"),
+                    QStringLiteral("-Command"),
+                    psScript.arg(escapedTitle.replace(QLatin1Char('\''), QStringLiteral("''")),
+                                 message.replace(QLatin1Char('\''), QStringLiteral("''")))},
                 QString(), 15000, &error);
 #else
             runSynchronousProcess(
@@ -1880,9 +1847,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                               QStringLiteral("\n... (content truncated at %1 characters)")
                                   .arg(QString::number(kWebFetchPreviewChars));
                 }
-                logs.append(
-                    QStringLiteral("clipboard-read: (%1 characters)\n%2")
-                        .arg(QString::number(text.size()), preview));
+                logs.append(QStringLiteral("clipboard-read: (%1 characters)\n%2")
+                                .arg(QString::number(text.size()), preview));
             }
         }
         // 10c. clipboard-write
@@ -1952,14 +1918,14 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             } else {
                 QStringList lines;
                 for (const auto& alarm : alarms) {
-                    lines.append(QStringLiteral("%1 - %2 - %3")
-                                     .arg(alarm.triggerAt.toString(
-                                              QStringLiteral("yyyy-MM-dd HH:mm:ss")),
-                                          alarm.label, alarm.id));
+                    lines.append(
+                        QStringLiteral("%1 - %2 - %3")
+                            .arg(alarm.triggerAt.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")),
+                                 alarm.label, alarm.id));
                 }
-                logs.append(QStringLiteral("list-alarms: %1 active alarm(s):\n%2")
-                                .arg(QString::number(alarms.size()),
-                                     lines.join(QLatin1Char('\n'))));
+                logs.append(
+                    QStringLiteral("list-alarms: %1 active alarm(s):\n%2")
+                        .arg(QString::number(alarms.size()), lines.join(QLatin1Char('\n'))));
             }
         }
         // 12b. cancel-alarm
@@ -1997,19 +1963,20 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                     status != QStringLiteral("in_progress") &&
                     status != QStringLiteral("completed") &&
                     status != QStringLiteral("cancelled")) {
-                    logs.append(QStringLiteral(
-                        "todo-write: Invalid status '%1'. Allowed: pending, in_progress, "
-                        "completed, cancelled. Please rewrite the input.")
-                                    .arg(status));
+                    logs.append(
+                        QStringLiteral(
+                            "todo-write: Invalid status '%1'. Allowed: pending, in_progress, "
+                            "completed, cancelled. Please rewrite the input.")
+                            .arg(status));
                     continue;
                 }
                 QJsonObject fixed;
                 fixed.insert(QStringLiteral("content"),
                              object.value(QStringLiteral("content")).toString());
                 fixed.insert(QStringLiteral("status"), status);
-                fixed.insert(QStringLiteral("priority"),
-                             object.value(QStringLiteral("priority")).toString(
-                                 QStringLiteral("medium")));
+                fixed.insert(
+                    QStringLiteral("priority"),
+                    object.value(QStringLiteral("priority")).toString(QStringLiteral("medium")));
                 cleaned.append(fixed);
             }
             todos_ = cleaned;
@@ -2021,17 +1988,18 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                     ++pending;
                 }
             }
-            logs.append(QStringLiteral("todo-write: %1 todo(s) saved (%2 pending). Current list:\n%3")
-                            .arg(QString::number(todos_.size()), QString::number(pending),
-                                 QString::fromUtf8(
-                                     QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
+            logs.append(
+                QStringLiteral("todo-write: %1 todo(s) saved (%2 pending). Current list:\n%3")
+                    .arg(QString::number(todos_.size()), QString::number(pending),
+                         QString::fromUtf8(QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
         }
         // 14. todo-read
         else if (invocation.toolId == QLatin1String("todo-read")) {
             logs.append(todos_.isEmpty()
                             ? QStringLiteral("todo-read: No todos recorded for this session yet.")
-                            : QStringLiteral("todo-read: Current todos:\n%1").arg(QString::fromUtf8(
-                                  QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
+                            : QStringLiteral("todo-read: Current todos:\n%1")
+                                  .arg(QString::fromUtf8(
+                                      QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
         }
         // 14b. memory-search (long-term memory snapshot lookup)
         else if (invocation.toolId == QLatin1String("memory-search")) {
@@ -2067,8 +2035,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             }
 
             if (matches.isEmpty()) {
-                logs.append(QStringLiteral("memory-search: No memory entries match '%1'.")
-                                .arg(query));
+                logs.append(
+                    QStringLiteral("memory-search: No memory entries match '%1'.").arg(query));
             } else {
                 logs.append(QStringLiteral("memory-search: %1 match(es) for '%2' (showing %3):\n%4")
                                 .arg(QString::number(totalMatches), query,
@@ -2109,19 +2077,18 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             }
 
             if (matches.isEmpty()) {
-                logs.append(QStringLiteral("history-search: No history entries match '%1'.")
-                                .arg(query));
+                logs.append(
+                    QStringLiteral("history-search: No history entries match '%1'.").arg(query));
             } else {
                 logs.append(
                     QStringLiteral("history-search: %1 match(es) for '%2' (showing %3):\n%4")
-                        .arg(QString::number(totalMatches), query,
-                             QString::number(matches.size()), matches.join(QLatin1Char('\n'))));
+                        .arg(QString::number(totalMatches), query, QString::number(matches.size()),
+                             matches.join(QLatin1Char('\n'))));
             }
         }
         // 14d. ask-question (ported from cline ask_followup_question / opencode question)
         else if (invocation.toolId == QLatin1String("ask-question")) {
-            const QString question =
-                getArgument(invocation, QStringLiteral("question")).trimmed();
+            const QString question = getArgument(invocation, QStringLiteral("question")).trimmed();
             if (question.isEmpty()) {
                 logs.append(QStringLiteral("ask-question: No question argument provided."));
                 continue;
@@ -2139,17 +2106,17 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (!options.isEmpty()) {
                 QStringList numbered;
                 for (int i = 0; i < options.size(); ++i) {
-                    numbered.append(QStringLiteral("%1. %2")
-                                        .arg(QString::number(i + 1), options.at(i)));
+                    numbered.append(
+                        QStringLiteral("%1. %2").arg(QString::number(i + 1), options.at(i)));
                 }
                 formatted += QStringLiteral("\n") + numbered.join(QLatin1Char('\n'));
             }
-            logs.append(QStringLiteral(
-                            "ask-question: Question registered for the user:\n%1\n"
-                            "End this run now with the question above as your final answer "
-                            "(asked in the user's language). Wait for the user's reply before "
-                            "taking further steps.")
-                            .arg(formatted));
+            logs.append(
+                QStringLiteral("ask-question: Question registered for the user:\n%1\n"
+                               "End this run now with the question above as your final answer "
+                               "(asked in the user's language). Wait for the user's reply before "
+                               "taking further steps.")
+                    .arg(formatted));
         }
         // 15. web-fetch
         else if (invocation.toolId == QLatin1String("web-fetch")) {
@@ -2158,21 +2125,20 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("web-fetch: No url argument provided."));
                 continue;
             }
-            const QString format = getArgument(invocation, QStringLiteral("format"))
-                                       .trimmed()
-                                       .toLower();
-            const auto fetchFormat = format == QStringLiteral("text")
-                                         ? WebFetchFormat::Text
-                                         : (format == QStringLiteral("html")
-                                                ? WebFetchFormat::Html
-                                                : WebFetchFormat::Markdown);
+            const QString format =
+                getArgument(invocation, QStringLiteral("format")).trimmed().toLower();
+            const auto fetchFormat =
+                format == QStringLiteral("text")
+                    ? WebFetchFormat::Text
+                    : (format == QStringLiteral("html") ? WebFetchFormat::Html
+                                                        : WebFetchFormat::Markdown);
 
             const auto response = webFetchTool_.fetch(url, fetchFormat);
             if (!response.success) {
-                logs.append(QStringLiteral("web-fetch: Request failed: %1").arg(
-                    response.errorString.isEmpty()
-                        ? QStringLiteral("HTTP %1").arg(response.statusCode)
-                        : response.errorString));
+                logs.append(QStringLiteral("web-fetch: Request failed: %1")
+                                .arg(response.errorString.isEmpty()
+                                         ? QStringLiteral("HTTP %1").arg(response.statusCode)
+                                         : response.errorString));
                 continue;
             }
             QString content = response.content;
@@ -2202,8 +2168,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                     QStringLiteral("voice-transcribe: Whisper timed out for '%1'").arg(path));
                 continue;
             }
-            const QString transcript =
-                QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+            const QString transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
             logs.append(QStringLiteral("voice-transcribe: OK\n%1").arg(transcript));
         }
         // 17. voice-speak
@@ -2222,8 +2187,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString ttsOutput =
                 QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_tts.wav"));
             process.start(piperBinary,
-                          {QStringLiteral("--model"),
-                           QStringLiteral("en_US-lessac-medium.onnx"),
+                          {QStringLiteral("--model"), QStringLiteral("en_US-lessac-medium.onnx"),
                            QStringLiteral("--output_file"), ttsOutput});
             process.write(text.toUtf8());
             process.closeWriteChannel();
@@ -2231,8 +2195,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("voice-speak: Piper TTS timed out."));
                 continue;
             }
-            logs.append(
-                QStringLiteral("voice-speak: TTS synthesis OK → %1").arg(ttsOutput));
+            logs.append(QStringLiteral("voice-speak: TTS synthesis OK → %1").arg(ttsOutput));
         }
         // 18. web-search
         else if (invocation.toolId == QLatin1String("web-search")) {
@@ -2251,11 +2214,13 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             for (int i = 0; i < response.results.size(); ++i) {
                 const auto& result = response.results.at(i);
                 logs.append(QStringLiteral("%1. %2\n%3\n%4")
-                                .arg(i + 1).arg(result.title).arg(result.url).arg(result.snippet));
+                                .arg(i + 1)
+                                .arg(result.title)
+                                .arg(result.url)
+                                .arg(result.snippet));
             }
             if (response.results.isEmpty()) {
-                logs.append(
-                    QStringLiteral("web-search: No results found for '%1'.").arg(query));
+                logs.append(QStringLiteral("web-search: No results found for '%1'.").arg(query));
             }
         }
         // 19. open-workspace

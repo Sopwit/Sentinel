@@ -3,18 +3,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/lsp/LspService.h"
-#include <QFileInfo>
-#include <QJsonDocument>
-#include <QJsonArray>
 #include <QDebug>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QUrl>
 
 namespace sentinel::core {
 
-LspService::LspService(QObject* parent)
-    : QObject(parent)
-{
-}
+LspService::LspService(QObject* parent) : QObject(parent) {}
 
 LspService::~LspService() {
     for (auto& [name, client] : m_clients) {
@@ -246,18 +243,24 @@ void LspService::openFile(const QString& filePath, const QString& content) {
         if (newClient->start(config->command, config->arguments)) {
             connect(newClient.get(), &LspClient::notificationReceived, this,
                     [this](const QString& method, const QJsonObject& params) {
-                        if (method != QStringLiteral("textDocument/publishDiagnostics")) return;
-                        const QString path = QUrl(params.value(QStringLiteral("uri")).toString()).toLocalFile();
+                        if (method != QStringLiteral("textDocument/publishDiagnostics"))
+                            return;
+                        const QString path =
+                            QUrl(params.value(QStringLiteral("uri")).toString()).toLocalFile();
                         QList<LspDiagnostic> diagnostics;
-                        for (const QJsonValue& value : params.value(QStringLiteral("diagnostics")).toArray()) {
+                        for (const QJsonValue& value :
+                             params.value(QStringLiteral("diagnostics")).toArray()) {
                             const QJsonObject diagnostic = value.toObject();
-                            const QJsonObject start = diagnostic.value(QStringLiteral("range")).toObject()
-                                                          .value(QStringLiteral("start")).toObject();
-                            diagnostics.append({start.value(QStringLiteral("line")).toInt(),
-                                                start.value(QStringLiteral("character")).toInt(),
-                                                diagnostic.value(QStringLiteral("severity")).toInt(),
-                                                diagnostic.value(QStringLiteral("message")).toString(),
-                                                diagnostic.value(QStringLiteral("source")).toString()});
+                            const QJsonObject start = diagnostic.value(QStringLiteral("range"))
+                                                          .toObject()
+                                                          .value(QStringLiteral("start"))
+                                                          .toObject();
+                            diagnostics.append(
+                                {start.value(QStringLiteral("line")).toInt(),
+                                 start.value(QStringLiteral("character")).toInt(),
+                                 diagnostic.value(QStringLiteral("severity")).toInt(),
+                                 diagnostic.value(QStringLiteral("message")).toString(),
+                                 diagnostic.value(QStringLiteral("source")).toString()});
                         }
                         m_diagnostics.insert(path, diagnostics);
                         emit diagnosticsUpdated(path, diagnostics);
@@ -273,12 +276,10 @@ void LspService::openFile(const QString& filePath, const QString& content) {
     }
 
     QJsonObject params;
-    params["textDocument"] = QJsonObject{
-        {"uri", QStringLiteral("file://%1").arg(filePath)},
-        {"languageId", fileExtension(filePath).mid(1)},
-        {"version", 1},
-        {"text", content}
-    };
+    params["textDocument"] = QJsonObject{{"uri", QStringLiteral("file://%1").arg(filePath)},
+                                         {"languageId", fileExtension(filePath).mid(1)},
+                                         {"version", 1},
+                                         {"text", content}};
 
     client->sendNotification("textDocument/didOpen", params);
 }
@@ -290,9 +291,7 @@ void LspService::closeFile(const QString& filePath) {
     }
 
     QJsonObject params;
-    params["textDocument"] = QJsonObject{
-        {"uri", QStringLiteral("file://%1").arg(filePath)}
-    };
+    params["textDocument"] = QJsonObject{{"uri", QStringLiteral("file://%1").arg(filePath)}};
 
     client->sendNotification("textDocument/didClose", params);
 }
@@ -304,13 +303,9 @@ void LspService::updateFile(const QString& filePath, const QString& content) {
     }
 
     QJsonObject params;
-    params["textDocument"] = QJsonObject{
-        {"uri", QStringLiteral("file://%1").arg(filePath)},
-        {"version", 2}
-    };
-    params["contentChanges"] = QJsonArray{
-        QJsonObject{{"text", content}}
-    };
+    params["textDocument"] =
+        QJsonObject{{"uri", QStringLiteral("file://%1").arg(filePath)}, {"version", 2}};
+    params["contentChanges"] = QJsonArray{QJsonObject{{"text", content}}};
 
     client->sendNotification("textDocument/didChange", params);
 }

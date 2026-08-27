@@ -5,10 +5,10 @@
 #pragma once
 
 #include "sentinel/core/agent/ISubagentService.h"
-#include <QObject>
 #include <QMap>
-#include <QThreadPool>
 #include <QMutex>
+#include <QObject>
+#include <QThreadPool>
 
 namespace sentinel::core {
 

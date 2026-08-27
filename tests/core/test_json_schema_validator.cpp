@@ -10,8 +10,9 @@ private slots:
 };
 
 void JsonSchemaValidatorTest::validatesRequiredAndTypes() {
-    const QJsonObject schema{{"required", QJsonArray{"name"}},
-                             {"properties", QJsonObject{{"name", QJsonObject{{"type", "string"}}}}}};
+    const QJsonObject schema{
+        {"required", QJsonArray{"name"}},
+        {"properties", QJsonObject{{"name", QJsonObject{{"type", "string"}}}}}};
     QVERIFY(JsonSchemaValidator::isValid(QJsonObject{{"name", "Sentinel"}}, schema));
     QVERIFY(!JsonSchemaValidator::isValid(QJsonObject{{"name", 42}}, schema));
     QVERIFY(!JsonSchemaValidator::isValid(QJsonObject{}, schema));

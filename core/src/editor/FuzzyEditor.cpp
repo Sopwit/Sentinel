@@ -4,8 +4,8 @@
 
 #include "sentinel/core/editor/FuzzyEditor.h"
 #include <QFile>
-#include <QTextStream>
 #include <QFileInfo>
+#include <QTextStream>
 #include <algorithm>
 
 namespace sentinel::core {
@@ -82,22 +82,28 @@ FuzzyMatchResult FuzzyEditor::findBestMatch(const QString& content, const QStrin
     FuzzyMatchResult best;
 
     best = exactMatch(content, needle);
-    if (best.found && best.confidence >= 95) return best;
+    if (best.found && best.confidence >= 95)
+        return best;
 
     FuzzyMatchResult trimmed = lineTrimmedMatch(content, needle);
-    if (trimmed.found && trimmed.confidence > best.confidence) best = trimmed;
+    if (trimmed.found && trimmed.confidence > best.confidence)
+        best = trimmed;
 
     FuzzyMatchResult whitespace = whitespaceNormalizedMatch(content, needle);
-    if (whitespace.found && whitespace.confidence > best.confidence) best = whitespace;
+    if (whitespace.found && whitespace.confidence > best.confidence)
+        best = whitespace;
 
     FuzzyMatchResult indent = indentationFlexibleMatch(content, needle);
-    if (indent.found && indent.confidence > best.confidence) best = indent;
+    if (indent.found && indent.confidence > best.confidence)
+        best = indent;
 
     FuzzyMatchResult escaped = escapeNormalizedMatch(content, needle);
-    if (escaped.found && escaped.confidence > best.confidence) best = escaped;
+    if (escaped.found && escaped.confidence > best.confidence)
+        best = escaped;
 
     FuzzyMatchResult boundary = trimmedBoundaryMatch(content, needle);
-    if (boundary.found && boundary.confidence > best.confidence) best = boundary;
+    if (boundary.found && boundary.confidence > best.confidence)
+        best = boundary;
 
     return best;
 }
@@ -119,7 +125,8 @@ FuzzyMatchResult FuzzyEditor::exactMatch(const QString& content, const QString& 
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::lineTrimmedMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::lineTrimmedMatch(const QString& content,
+                                               const QString& needle) const {
     FuzzyMatchResult result;
     QStringList contentLines = content.split('\n');
     QStringList needleLines = needle.trimmed().split('\n');
@@ -144,7 +151,8 @@ FuzzyMatchResult FuzzyEditor::lineTrimmedMatch(const QString& content, const QSt
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::whitespaceNormalizedMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::whitespaceNormalizedMatch(const QString& content,
+                                                        const QString& needle) const {
     FuzzyMatchResult result;
     QString normalizedContent = normalizeWhitespace(content);
     QString normalizedNeedle = normalizeWhitespace(needle);
@@ -158,7 +166,8 @@ FuzzyMatchResult FuzzyEditor::whitespaceNormalizedMatch(const QString& content, 
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::indentationFlexibleMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::indentationFlexibleMatch(const QString& content,
+                                                       const QString& needle) const {
     FuzzyMatchResult result;
     QStringList contentLines = content.split('\n');
     QStringList needleLines = needle.trimmed().split('\n');
@@ -185,7 +194,8 @@ FuzzyMatchResult FuzzyEditor::indentationFlexibleMatch(const QString& content, c
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::escapeNormalizedMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::escapeNormalizedMatch(const QString& content,
+                                                    const QString& needle) const {
     FuzzyMatchResult result;
     QString normalizedContent = normalizeEscapes(content);
     QString normalizedNeedle = normalizeEscapes(needle);
@@ -199,7 +209,8 @@ FuzzyMatchResult FuzzyEditor::escapeNormalizedMatch(const QString& content, cons
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::trimmedBoundaryMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::trimmedBoundaryMatch(const QString& content,
+                                                   const QString& needle) const {
     FuzzyMatchResult result;
     QStringList contentLines = content.split('\n');
     QStringList needleLines = needle.trimmed().split('\n');
@@ -226,12 +237,14 @@ FuzzyMatchResult FuzzyEditor::trimmedBoundaryMatch(const QString& content, const
     return result;
 }
 
-FuzzyMatchResult FuzzyEditor::contextAwareMatch(const QString& content, const QString& needle, int contextLines) const {
+FuzzyMatchResult FuzzyEditor::contextAwareMatch(const QString& content, const QString& needle,
+                                                int contextLines) const {
     Q_UNUSED(contextLines)
     return exactMatch(content, needle);
 }
 
-FuzzyMatchResult FuzzyEditor::multiOccurrenceMatch(const QString& content, const QString& needle) const {
+FuzzyMatchResult FuzzyEditor::multiOccurrenceMatch(const QString& content,
+                                                   const QString& needle) const {
     FuzzyMatchResult result;
     int count = 0;
     int idx = 0;
@@ -252,15 +265,19 @@ int FuzzyEditor::levenshteinDistance(const QString& s1, const QString& s2) const
     int n = s2.length();
     QVector<int> dp((m + 1) * (n + 1));
 
-    for (int i = 0; i <= m; ++i) dp[i * (n + 1)] = i;
-    for (int j = 0; j <= n; ++j) dp[j] = j;
+    for (int i = 0; i <= m; ++i)
+        dp[i * (n + 1)] = i;
+    for (int j = 0; j <= n; ++j)
+        dp[j] = j;
 
     for (int i = 1; i <= m; ++i) {
         for (int j = 1; j <= n; ++j) {
             int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
             int minVal = dp[(i - 1) * (n + 1) + j] + 1;
-            if (dp[i * (n + 1) + (j - 1)] + 1 < minVal) minVal = dp[i * (n + 1) + (j - 1)] + 1;
-            if (dp[(i - 1) * (n + 1) + (j - 1)] + cost < minVal) minVal = dp[(i - 1) * (n + 1) + (j - 1)] + cost;
+            if (dp[i * (n + 1) + (j - 1)] + 1 < minVal)
+                minVal = dp[i * (n + 1) + (j - 1)] + 1;
+            if (dp[(i - 1) * (n + 1) + (j - 1)] + cost < minVal)
+                minVal = dp[(i - 1) * (n + 1) + (j - 1)] + cost;
             dp[i * (n + 1) + j] = minVal;
         }
     }
@@ -284,20 +301,28 @@ QString FuzzyEditor::normalizeEscapes(const QString& text) const {
 
 QString FuzzyEditor::readFile(const QString& filePath) const {
     QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return {};
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {};
     return QTextStream(&file).readAll();
 }
 
 bool FuzzyEditor::writeFile(const QString& filePath, const QString& content) const {
     QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return false;
     QTextStream(&file) << content;
     return true;
 }
 
 QStringList FuzzyEditor::strategyNames() const {
-    return {"Exact", "LineTrimmed", "WhitespaceNormalized", "IndentationFlexible",
-            "EscapeNormalized", "TrimmedBoundary", "ContextAware", "MultiOccurrence"};
+    return {"Exact",
+            "LineTrimmed",
+            "WhitespaceNormalized",
+            "IndentationFlexible",
+            "EscapeNormalized",
+            "TrimmedBoundary",
+            "ContextAware",
+            "MultiOccurrence"};
 }
 
 } // namespace sentinel::core

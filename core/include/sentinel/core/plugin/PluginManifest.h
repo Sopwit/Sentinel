@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include "sentinel/core/plugin/PluginPermissions.h"
+#include <QJsonObject>
+#include <QMap>
 #include <QString>
 #include <QStringList>
-#include <QMap>
-#include <QJsonObject>
-#include "sentinel/core/plugin/PluginPermissions.h"
 
 namespace sentinel::core::plugin {
 

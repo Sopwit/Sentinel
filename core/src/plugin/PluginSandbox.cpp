@@ -6,7 +6,8 @@
 
 namespace sentinel::core::plugin {
 
-void PluginSandbox::registerPluginPermissions(const QString& pluginId, const PluginPermissions& permissions) {
+void PluginSandbox::registerPluginPermissions(const QString& pluginId,
+                                              const PluginPermissions& permissions) {
     m_pluginPermissions[pluginId] = permissions;
 }
 

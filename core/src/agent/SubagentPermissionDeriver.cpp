@@ -6,7 +6,8 @@
 
 namespace sentinel::core {
 
-DerivedPermission SubagentPermissionDeriver::derive(const QString& parentAgentId, const QString& childAgentId) const {
+DerivedPermission SubagentPermissionDeriver::derive(const QString& parentAgentId,
+                                                    const QString& childAgentId) const {
     DerivedPermission perm;
     perm.agentId = childAgentId;
     perm.parentAgentId = parentAgentId;
@@ -26,7 +27,11 @@ QStringList SubagentPermissionDeriver::inheritedPermissions(const QString& agent
     return {};
 }
 
-void SubagentPermissionDeriver::setDenyByDefault(bool deny) { m_denyByDefault = deny; }
-bool SubagentPermissionDeriver::denyByDefault() const { return m_denyByDefault; }
+void SubagentPermissionDeriver::setDenyByDefault(bool deny) {
+    m_denyByDefault = deny;
+}
+bool SubagentPermissionDeriver::denyByDefault() const {
+    return m_denyByDefault;
+}
 
 } // namespace sentinel::core

@@ -4,23 +4,22 @@
 
 #include "sentinel/core/plugin/PluginManager.h"
 #include "sentinel/core/plugin/PluginDependencyResolver.h"
+#include <QDebug>
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QStandardPaths>
 #include <QLibrary>
-#include <QDebug>
+#include <QStandardPaths>
 
 namespace sentinel::core::plugin {
 
 PluginManager::PluginManager(QString coreVersion, QString pluginStorageDir, QObject* parent)
-    : QObject(parent)
-    , m_coreVersion(std::move(coreVersion))
-    , m_pluginStorageDir(std::move(pluginStorageDir))
-{
+    : QObject(parent), m_coreVersion(std::move(coreVersion)),
+      m_pluginStorageDir(std::move(pluginStorageDir)) {
     if (m_pluginStorageDir.isEmpty()) {
-        m_pluginStorageDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/plugins");
+        m_pluginStorageDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
+                             QStringLiteral("/plugins");
     }
 }
 
@@ -66,7 +65,8 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
     int discoveredCount = 0;
 
     // 1. Search for directory-based plugins containing plugin.json
-    QDirIterator it(targetDir, QStringList() << QStringLiteral("plugin.json"), QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(targetDir, QStringList() << QStringLiteral("plugin.json"), QDir::Files,
+                    QDirIterator::Subdirectories);
     while (it.hasNext()) {
         it.next();
         QString manifestPath = it.filePath();
@@ -75,7 +75,8 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
 
         if (manifest.isValid()) {
             if (!manifest.isCompatibleWithCore(m_coreVersion)) {
-                qWarning() << QStringLiteral("Plugin '%1' is incompatible with core version '%2'").arg(manifest.id, m_coreVersion);
+                qWarning() << QStringLiteral("Plugin '%1' is incompatible with core version '%2'")
+                                  .arg(manifest.id, m_coreVersion);
                 continue;
             }
 
@@ -120,7 +121,8 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
                     m_plugins[manifest.id] = desc;
                     discoveredCount++;
                 } else if (m_plugins[manifest.id].pluginFilePath.isEmpty() ||
-                           !m_plugins[manifest.id].pluginFilePath.endsWith(QLibrary::isLibrary(filePath) ? filePath : QString())) {
+                           !m_plugins[manifest.id].pluginFilePath.endsWith(
+                               QLibrary::isLibrary(filePath) ? filePath : QString())) {
                     // Update entry point path to library file if found
                     m_plugins[manifest.id].pluginFilePath = filePath;
                 }
@@ -137,7 +139,8 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
     if (res.success) {
         m_orderedIds = res.loadOrder;
     } else {
-        qWarning() << QStringLiteral("Plugin dependency resolution warning: %1").arg(res.errorMessage);
+        qWarning()
+            << QStringLiteral("Plugin dependency resolution warning: %1").arg(res.errorMessage);
         m_orderedIds = m_plugins.keys();
     }
 
@@ -166,12 +169,14 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
 #if defined(Q_OS_WIN)
             fileCandidate = pluginDir.filePath(entryName + QStringLiteral(".dll"));
 #elif defined(Q_OS_MACOS)
-            fileCandidate = pluginDir.filePath(QStringLiteral("lib") + entryName + QStringLiteral(".dylib"));
+            fileCandidate =
+                pluginDir.filePath(QStringLiteral("lib") + entryName + QStringLiteral(".dylib"));
             if (!QFile::exists(fileCandidate)) {
                 fileCandidate = pluginDir.filePath(entryName + QStringLiteral(".dylib"));
             }
 #else
-            fileCandidate = pluginDir.filePath(QStringLiteral("lib") + entryName + QStringLiteral(".so"));
+            fileCandidate =
+                pluginDir.filePath(QStringLiteral("lib") + entryName + QStringLiteral(".so"));
             if (!QFile::exists(fileCandidate)) {
                 fileCandidate = pluginDir.filePath(entryName + QStringLiteral(".so"));
             }
@@ -197,7 +202,8 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
 
     QObject* pluginObj = loader->instance();
     if (!pluginObj) {
-        desc.errorString = QStringLiteral("Failed to instantiate plugin object from %1").arg(libPath);
+        desc.errorString =
+            QStringLiteral("Failed to instantiate plugin object from %1").arg(libPath);
         loader->unload();
         updateState(desc, PluginState::Error);
         emit pluginError(pluginId, desc.errorString);
@@ -206,7 +212,8 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
 
     auto* sentinelPlugin = qobject_cast<ISentinelPlugin*>(pluginObj);
     if (!sentinelPlugin) {
-        desc.errorString = QStringLiteral("Plugin object does not implement ISentinelPlugin interface");
+        desc.errorString =
+            QStringLiteral("Plugin object does not implement ISentinelPlugin interface");
         loader->unload();
         updateState(desc, PluginState::Error);
         emit pluginError(pluginId, desc.errorString);
@@ -239,12 +246,8 @@ bool PluginManager::initializePlugin(const QString& pluginId) {
     QString dataDir = m_pluginStorageDir + QStringLiteral("/") + pluginId;
     QDir().mkpath(dataDir);
 
-    auto context = std::make_shared<PluginContext>(
-        pluginId,
-        m_coreVersion,
-        dataDir,
-        desc.manifest.permissions
-    );
+    auto context = std::make_shared<PluginContext>(pluginId, m_coreVersion, dataDir,
+                                                   desc.manifest.permissions);
 
     // Inject core services into plugin context
     injectCoreServices(context.get());
@@ -338,14 +341,16 @@ bool PluginManager::unloadPlugin(const QString& pluginId) {
 
 bool PluginManager::reloadPlugin(const QString& pluginId) {
     if (!m_plugins.contains(pluginId)) {
-        qWarning() << QStringLiteral("PluginManager::reloadPlugin: Plugin '%1' not found").arg(pluginId);
+        qWarning()
+            << QStringLiteral("PluginManager::reloadPlugin: Plugin '%1' not found").arg(pluginId);
         return false;
     }
 
     auto& desc = m_plugins[pluginId];
     PluginState previousState = desc.state;
 
-    qDebug() << QStringLiteral("PluginManager::reloadPlugin: Reloading plugin '%1' (previous state: %2)")
+    qDebug() << QStringLiteral(
+                    "PluginManager::reloadPlugin: Reloading plugin '%1' (previous state: %2)")
                     .arg(pluginId)
                     .arg(static_cast<int>(previousState));
 
@@ -368,19 +373,22 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
     // Restore to the previous state
     if (previousState >= PluginState::Initialized) {
         if (!initializePlugin(pluginId)) {
-            emit pluginReloadFailed(pluginId, QStringLiteral("Failed to initialize plugin after reload"));
+            emit pluginReloadFailed(pluginId,
+                                    QStringLiteral("Failed to initialize plugin after reload"));
             return false;
         }
     }
 
     if (previousState >= PluginState::Active) {
         if (!startPlugin(pluginId)) {
-            emit pluginReloadFailed(pluginId, QStringLiteral("Failed to start plugin after reload"));
+            emit pluginReloadFailed(pluginId,
+                                    QStringLiteral("Failed to start plugin after reload"));
             return false;
         }
     }
 
-    qDebug() << QStringLiteral("PluginManager::reloadPlugin: Successfully reloaded plugin '%1'").arg(pluginId);
+    qDebug() << QStringLiteral("PluginManager::reloadPlugin: Successfully reloaded plugin '%1'")
+                    .arg(pluginId);
     emit pluginReloaded(pluginId);
     return true;
 }
@@ -395,8 +403,8 @@ void PluginManager::enableHotReload(bool enabled) {
     if (enabled) {
         if (!m_hotReloader) {
             m_hotReloader = std::make_unique<PluginHotReloader>(this, this);
-            connect(m_hotReloader.get(), &PluginHotReloader::reloadRequested,
-                    this, &PluginManager::onHotReloadRequested);
+            connect(m_hotReloader.get(), &PluginHotReloader::reloadRequested, this,
+                    &PluginManager::onHotReloadRequested);
         }
 
         HotReloadConfig config;

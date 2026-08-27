@@ -19,8 +19,11 @@ private slots:
 };
 
 void SessionExecutionPatternsTest::promptTemplates() {
-    QVERIFY(ProviderPromptTemplates::systemPrompt(QStringLiteral("openai"), QStringLiteral("base")).contains(QStringLiteral("base")));
-    QCOMPARE(ProviderPromptTemplates::systemPrompt(QStringLiteral("unknown"), QStringLiteral("base")), QStringLiteral("base"));
+    QVERIFY(ProviderPromptTemplates::systemPrompt(QStringLiteral("openai"), QStringLiteral("base"))
+                .contains(QStringLiteral("base")));
+    QCOMPARE(
+        ProviderPromptTemplates::systemPrompt(QStringLiteral("unknown"), QStringLiteral("base")),
+        QStringLiteral("base"));
 }
 
 void SessionExecutionPatternsTest::epochQueueAndState() {
@@ -48,7 +51,8 @@ void SessionExecutionPatternsTest::durableEventsAndProjector() {
     QVERIFY(database.open());
     DurableEventLog log(database);
     QVERIFY(log.initialize());
-    const auto event = log.append(QStringLiteral("s1"), QStringLiteral("message.created"), QJsonObject{{"text", "hello"}});
+    const auto event = log.append(QStringLiteral("s1"), QStringLiteral("message.created"),
+                                  QJsonObject{{"text", "hello"}});
     QVERIFY(event.has_value());
     QCOMPARE(event->sequence, qint64(1));
     SessionProjector projector;

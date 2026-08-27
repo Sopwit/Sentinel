@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QImage>
 #include <QByteArray>
+#include <QImage>
+#include <QString>
 
 namespace sentinel::core {
 

@@ -4,17 +4,13 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 #include <functional>
 
 namespace sentinel::core {
 
-enum class AuthMethod : std::uint8_t {
-    ApiKey,
-    OAuthDeviceCode,
-    WellKnownToken
-};
+enum class AuthMethod : std::uint8_t { ApiKey, OAuthDeviceCode, WellKnownToken };
 
 struct AuthCredentials {
     QString provider;

@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/session/IMdnsService.h"
-#include <QObject>
 #include <QList>
 #include <QMap>
+#include <QObject>
 #include <QProcess>
 
 namespace sentinel::core {

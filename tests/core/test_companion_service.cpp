@@ -77,7 +77,8 @@ void CompanionServiceTest::exposesNativeActionReadinessAndPausedState() {
     QVERIFY(!pausedActions.at(2).available);
     QCOMPARE(pausedActions.at(3).label, QStringLiteral("Resume Companion"));
 
-    const auto captured = service.captureQuickNote(QStringLiteral("remember this idea"), true, false);
+    const auto captured =
+        service.captureQuickNote(QStringLiteral("remember this idea"), true, false);
     QVERIFY(captured.captured);
     QCOMPARE(captured.capturedCharacterCount, 18);
     QVERIFY(captured.summary.contains(QStringLiteral("Quick capture succeeded")));

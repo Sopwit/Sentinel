@@ -55,16 +55,20 @@ ChatProviderReply OllamaChatProvider::sendMessage(const QString& message) {
     OllamaHttpRuntimeClient runtimeClient(config_, std::min(timeoutMs_, 750));
     const auto health = runtimeClient.healthCheck();
     if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return {false, {}, QStringLiteral("Ollama is not running or unreachable at %1.")
-                            .arg(config_.endpoint.toString())};
+        return {false,
+                {},
+                QStringLiteral("Ollama is not running or unreachable at %1.")
+                    .arg(config_.endpoint.toString())};
     }
 
     auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
         const auto models = runtimeClient.installedModels();
         if (models.isEmpty()) {
-            return {false, {}, QStringLiteral("No Ollama model is installed yet. "
-                                              "Run 'sentinel-cli model pull <name>' to install one.")};
+            return {false,
+                    {},
+                    QStringLiteral("No Ollama model is installed yet. "
+                                   "Run 'sentinel-cli model pull <name>' to install one.")};
         }
         model = models.first().name;
     }

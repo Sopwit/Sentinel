@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QJsonObject>
 #include <QDateTime>
+#include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 

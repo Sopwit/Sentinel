@@ -21,8 +21,12 @@ void AcpService::disconnect() {
     emit disconnected();
 }
 
-bool AcpService::isConnected() const { return m_session.connected; }
-AcpSession AcpService::session() const { return m_session; }
+bool AcpService::isConnected() const {
+    return m_session.connected;
+}
+AcpSession AcpService::session() const {
+    return m_session;
+}
 
 bool AcpService::sendMessage(const AcpMessage& message) {
     Q_UNUSED(message)
@@ -33,6 +37,8 @@ AcpMessage AcpService::receiveMessage() {
     return {};
 }
 
-void AcpService::setClientInfo(const QString& info) { m_session.clientInfo = info; }
+void AcpService::setClientInfo(const QString& info) {
+    m_session.clientInfo = info;
+}
 
 } // namespace sentinel::core

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -20,7 +20,8 @@ class StructuredOutputTool {
 public:
     QString generateJsonSchema(const StructuredOutputSchema& schema) const;
     QJsonObject validateOutput(const QString& json, const StructuredOutputSchema& schema) const;
-    QString wrapToolResponse(const QJsonObject& data, const QString& mimeType = "application/json") const;
+    QString wrapToolResponse(const QJsonObject& data,
+                             const QString& mimeType = "application/json") const;
     bool isValidJson(const QString& text) const;
 };
 

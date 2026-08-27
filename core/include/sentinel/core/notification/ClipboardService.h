@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/notification/IClipboardService.h"
-#include <QObject>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QObject>
 
 namespace sentinel::core {
 

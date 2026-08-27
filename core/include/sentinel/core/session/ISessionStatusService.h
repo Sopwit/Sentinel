@@ -4,15 +4,12 @@
 
 #pragma once
 
-#include <QString>
 #include <QMap>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class SessionStatus : std::uint8_t {
-    Idle,
-    Busy
-};
+enum class SessionStatus : std::uint8_t { Idle, Busy };
 
 class ISessionStatusService {
 public:

@@ -4,20 +4,17 @@
 
 #include "sentinel/core/mcp/McpService.h"
 #include "sentinel/core/mcp/McpClient.h"
-#include <QJsonDocument>
-#include <QJsonArray>
 #include <QDebug>
 #include <QEventLoop>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QTimer>
 
 namespace sentinel::core {
 
-McpService::McpService(QObject* parent)
-    : QObject(parent)
-{
-}
+McpService::McpService(QObject* parent) : QObject(parent) {}
 
 McpService::~McpService() {
     disconnectFromAll();
@@ -43,7 +40,8 @@ bool McpService::addServer(const McpServerConfig& config) {
     state.config = config;
     m_servers[config.name] = state;
 
-    qDebug() << QStringLiteral("McpService: Added server '%1' (type: %2)").arg(config.name, config.type);
+    qDebug()
+        << QStringLiteral("McpService: Added server '%1' (type: %2)").arg(config.name, config.type);
     return true;
 }
 
@@ -159,7 +157,8 @@ QList<McpToolDefinition> McpService::tools(const QString& serverName) const {
     return state->tools;
 }
 
-QJsonObject McpService::callTool(const QString& serverName, const QString& toolName, const QJsonObject& arguments) {
+QJsonObject McpService::callTool(const QString& serverName, const QString& toolName,
+                                 const QJsonObject& arguments) {
     QJsonObject params;
     params["name"] = toolName;
     params["arguments"] = arguments;
@@ -191,12 +190,10 @@ bool McpService::connectToLocalServer(McpServerState& state) {
     m_processes.append(process);
     state.process = process;
 
-    connect(process, &QProcess::readyReadStandardOutput,
-            this, &McpService::onProcessReadyRead);
-    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, &McpService::onProcessFinished);
-    connect(process, &QProcess::errorOccurred,
-            this, &McpService::onProcessErrorOccurred);
+    connect(process, &QProcess::readyReadStandardOutput, this, &McpService::onProcessReadyRead);
+    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+            &McpService::onProcessFinished);
+    connect(process, &QProcess::errorOccurred, this, &McpService::onProcessErrorOccurred);
 
     process->start(state.config.command, state.config.arguments);
     if (!process->waitForStarted(5000)) {
@@ -209,10 +206,7 @@ bool McpService::connectToLocalServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2024-11-05";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{
-        {"name", "Sentinel"},
-        {"version", "1.0.0"}
-    };
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error")) {
@@ -231,8 +225,8 @@ bool McpService::connectToLocalServer(McpServerState& state) {
 
 bool McpService::connectToRemoteServer(McpServerState& state) {
     const QUrl url(state.config.url);
-    if (!url.isValid() || (url.scheme() != QStringLiteral("http") &&
-                           url.scheme() != QStringLiteral("https"))) {
+    if (!url.isValid() ||
+        (url.scheme() != QStringLiteral("http") && url.scheme() != QStringLiteral("https"))) {
         state.errorString = QStringLiteral("Remote MCP URL must use HTTP or HTTPS.");
         return false;
     }
@@ -241,10 +235,7 @@ bool McpService::connectToRemoteServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2024-11-05";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{
-        {"name", "Sentinel"},
-        {"version", "1.0.0"}
-    };
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error")) {
@@ -271,7 +262,8 @@ void McpService::listTools(McpServerState& state) {
     QJsonObject response = sendJsonRpc(state.config.name, "tools/list");
     if (response.contains("error")) {
         qWarning() << QStringLiteral("McpService: Failed to list tools for '%1': %2")
-                        .arg(state.config.name, response["error"].toObject()["message"].toString());
+                          .arg(state.config.name,
+                               response["error"].toObject()["message"].toString());
         return;
     }
 
@@ -293,7 +285,8 @@ void McpService::listTools(McpServerState& state) {
                     .arg(state.config.name);
 }
 
-QJsonObject McpService::sendJsonRpc(const QString& serverName, const QString& method, const QJsonObject& params) {
+QJsonObject McpService::sendJsonRpc(const QString& serverName, const QString& method,
+                                    const QJsonObject& params) {
     auto* state = findServer(serverName);
     if (!state) {
         return QJsonObject{{"error", QJsonObject{{"message", "Server not found"}}}};

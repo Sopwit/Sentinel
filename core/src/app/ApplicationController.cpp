@@ -4,21 +4,21 @@
 
 #include "sentinel/core/app/ApplicationController.h"
 
+#include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/app/AppSettings.h"
-#include "sentinel/core/runtime/AlarmStore.h"
+#include "sentinel/core/app/StaticTaskPlanner.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
 #include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
-#include "sentinel/core/runtime/LocalRuntime.h"
-#include "sentinel/core/runtime/NullToolExecutor.h"
-#include "sentinel/core/runtime/RealToolExecutor.h"
-#include "sentinel/core/agent/StaticAgentRegistry.h"
-#include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/memory/StaticMemoryCatalog.h"
 #include "sentinel/core/model/StaticModelRouter.h"
 #include "sentinel/core/model/StaticProviderCatalog.h"
+#include "sentinel/core/runtime/AlarmStore.h"
+#include "sentinel/core/runtime/LocalRuntime.h"
+#include "sentinel/core/runtime/NullToolExecutor.h"
+#include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
-#include "sentinel/core/app/StaticTaskPlanner.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -53,11 +53,11 @@ int toInt(qsizetype value) {
 bool requiresLiveWebSearch(const QString& prompt) {
     const auto normalized = prompt.toLower().simplified();
     static const QStringList livePhrases{
-        QStringLiteral("hava durumu"), QStringLiteral("hava nasıl"), QStringLiteral("hava nasil"),
-        QStringLiteral("weather"), QStringLiteral("forecast"), QStringLiteral("temperature"),
-        QStringLiteral("en son"), QStringLiteral("güncel"), QStringLiteral("guncel"),
-        QStringLiteral("bugün"), QStringLiteral("bugun"), QStringLiteral("son dakika"),
-        QStringLiteral("latest"), QStringLiteral("current"), QStringLiteral("today"),
+        QStringLiteral("hava durumu"),  QStringLiteral("hava nasıl"), QStringLiteral("hava nasil"),
+        QStringLiteral("weather"),      QStringLiteral("forecast"),   QStringLiteral("temperature"),
+        QStringLiteral("en son"),       QStringLiteral("güncel"),     QStringLiteral("guncel"),
+        QStringLiteral("bugün"),        QStringLiteral("bugun"),      QStringLiteral("son dakika"),
+        QStringLiteral("latest"),       QStringLiteral("current"),    QStringLiteral("today"),
         QStringLiteral("breaking news")};
     for (const auto& phrase : livePhrases) {
         if (normalized.contains(phrase)) {
@@ -179,7 +179,8 @@ QStringList literalContextTokens(const QString& text) {
     return tokens;
 }
 
-[[maybe_unused]] bool hasLiteralContextOverlap(const QString& prompt, const QString& key, const QString& value) {
+[[maybe_unused]] bool hasLiteralContextOverlap(const QString& prompt, const QString& key,
+                                               const QString& value) {
     const auto promptTokens = literalContextTokens(prompt);
     if (promptTokens.isEmpty()) {
         return false;
@@ -829,11 +830,10 @@ ApplicationController::ApplicationController(
       modelManagementService_(modelManagementService
                                   ? std::move(modelManagementService)
                                   : std::make_unique<StaticModelManagementService>()),
-      textToSpeechProvider_(textToSpeechProvider
-                                ? std::move(textToSpeechProvider)
-                                : std::make_unique<PiperTextToSpeechProvider>(
-                                      defaultDisabledPiperTtsConfig(),
-                                      std::make_unique<LocalPiperTtsClient>())),
+      textToSpeechProvider_(textToSpeechProvider ? std::move(textToSpeechProvider)
+                                                 : std::make_unique<PiperTextToSpeechProvider>(
+                                                       defaultDisabledPiperTtsConfig(),
+                                                       std::make_unique<LocalPiperTtsClient>())),
       speechToTextProvider_(speechToTextProvider
                                 ? std::move(speechToTextProvider)
                                 : std::make_unique<WhisperSpeechToTextProvider>(
@@ -863,9 +863,10 @@ ApplicationController::ApplicationController(
     localInferenceClientIsRealOllama_ =
         dynamic_cast<OllamaLocalInferenceClient*>(localInferenceClient.get()) != nullptr ||
         !localInferenceClient;
-    localInferenceStreamClientIsRealOllama_ = dynamic_cast<OllamaLocalInferenceStreamClient*>(
-                                                  localInferenceStreamClient.get()) != nullptr ||
-                                              !localInferenceStreamClient;
+    localInferenceStreamClientIsRealOllama_ =
+        dynamic_cast<OllamaLocalInferenceStreamClient*>(localInferenceStreamClient.get()) !=
+            nullptr ||
+        (!localInferenceStreamClient && !localInferenceClient);
     localInferenceWorker_ =
         localInferenceWorker
             ? std::move(localInferenceWorker)
@@ -873,9 +874,11 @@ ApplicationController::ApplicationController(
                   localInferenceClient ? std::move(localInferenceClient)
                                        : std::make_unique<OllamaLocalInferenceClient>(
                                              ollamaRuntimeClient_->config()),
-                  localInferenceStreamClient ? std::move(localInferenceStreamClient)
-                                             : std::make_unique<OllamaLocalInferenceStreamClient>(
-                                                   ollamaRuntimeClient_->config()),
+                  localInferenceStreamClient
+                      ? std::move(localInferenceStreamClient)
+                      : (localInferenceClient ? nullptr
+                                              : std::make_unique<OllamaLocalInferenceStreamClient>(
+                                                    ollamaRuntimeClient_->config())),
                   this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
 
     lmStudioInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
@@ -2051,8 +2054,7 @@ void ApplicationController::configureMcpServers(const QString& serversJson) {
         config.name = it.key();
         // Remote servers are identified by a URL; everything else is local.
         config.url = object.value(QStringLiteral("url")).toString().trimmed();
-        config.type = config.url.isEmpty() ? QStringLiteral("local")
-                                          : QStringLiteral("remote");
+        config.type = config.url.isEmpty() ? QStringLiteral("local") : QStringLiteral("remote");
         if (config.type == QLatin1String("local")) {
             config.command = object.value(QStringLiteral("command")).toString();
             if (config.command.isEmpty()) {
@@ -2091,13 +2093,14 @@ void ApplicationController::configureMcpServers(const QString& serversJson) {
     }
 }
 
-void ApplicationController::setSemanticProvider(const QString& provider, const QString& embeddingModel) {
+void ApplicationController::setSemanticProvider(const QString& provider,
+                                                const QString& embeddingModel) {
     semanticEmbeddingModel_ = embeddingModel.trimmed().isEmpty()
                                   ? QStringLiteral("nomic-embed-text")
                                   : embeddingModel.trimmed();
     const bool ollama = provider.trimmed().toLower() == QStringLiteral("ollama");
-    selectedSemanticProviderMode_ = ollama ? SemanticProviderMode::LocalOllamaEmbeddings
-                                           : SemanticProviderMode::Disabled;
+    selectedSemanticProviderMode_ =
+        ollama ? SemanticProviderMode::LocalOllamaEmbeddings : SemanticProviderMode::Disabled;
     semanticProviderPolicy_.disabledByDefault = !ollama;
     semanticProviderPolicy_.allowLocalOllamaEmbeddingsProvider = ollama;
     semanticProviderPolicy_.allowRealEmbeddingCalls = ollama;
@@ -2115,8 +2118,8 @@ void ApplicationController::setSemanticProvider(const QString& provider, const Q
     semanticPromptAuthorityPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
     semanticProviderPolicy_.allowSemanticPromptInjection = allowLiveSemanticSupplements;
     if (ollama && ollamaRuntimeClient_) {
-        const OllamaEmbeddingProvider embeddingProvider(ollamaRuntimeClient_->config().endpoint.toString(),
-                                                        semanticEmbeddingModel_, 4000);
+        const OllamaEmbeddingProvider embeddingProvider(
+            ollamaRuntimeClient_->config().endpoint.toString(), semanticEmbeddingModel_, 4000);
         const auto result = embeddingProvider.embed(EmbeddingRequest{
             {EmbeddingDocument{QStringLiteral("sentinel-provider-probe"),
                                QStringLiteral("semantic provider activation probe"),
@@ -2126,7 +2129,8 @@ void ApplicationController::setSemanticProvider(const QString& provider, const Q
         semanticEmbeddingSummary_ = result.summary;
     } else {
         semanticEmbeddingStatus_ = EmbeddingProviderStatus::NotConfigured;
-        semanticEmbeddingSummary_ = QStringLiteral("Semantic embedding provider is not configured.");
+        semanticEmbeddingSummary_ =
+            QStringLiteral("Semantic embedding provider is not configured.");
     }
     emit contextAssemblyChanged();
 }
@@ -2354,9 +2358,9 @@ QStringList ApplicationController::selectedModelCapabilityLabels() const {
 
 QString ApplicationController::modelManagementStatus() const {
     const auto health = currentOllamaHealthCheck();
-    return modelManagementStatusName(
-        health.healthStatus == OllamaHealthStatus::Healthy ? ModelManagementStatus::Available
-                                                           : ModelManagementStatus::Unavailable);
+    return modelManagementStatusName(health.healthStatus == OllamaHealthStatus::Healthy
+                                         ? ModelManagementStatus::Available
+                                         : ModelManagementStatus::Unavailable);
 }
 
 QString ApplicationController::modelManagementSummary() const {
@@ -2934,12 +2938,10 @@ void ApplicationController::updatePiperTtsProviderConfig() {
     }
 
     auto config = defaultDisabledPiperTtsConfig();
-    const auto binaryConfigured =
-        !piperBinaryPath_.trimmed().isEmpty() &&
-        piperBinaryPath_.trimmed() != QStringLiteral("not configured");
-    const auto modelConfigured =
-        !piperModelPath_.trimmed().isEmpty() &&
-        piperModelPath_.trimmed() != QStringLiteral("not configured");
+    const auto binaryConfigured = !piperBinaryPath_.trimmed().isEmpty() &&
+                                  piperBinaryPath_.trimmed() != QStringLiteral("not configured");
+    const auto modelConfigured = !piperModelPath_.trimmed().isEmpty() &&
+                                 piperModelPath_.trimmed() != QStringLiteral("not configured");
     config.enabled = binaryConfigured || modelConfigured;
     config.processExecutionAllowed = piperFileOutputExecutionEnabled_;
     config.fileOutputAllowed = piperFileOutputExecutionEnabled_;
@@ -2952,12 +2954,12 @@ void ApplicationController::updatePiperTtsProviderConfig() {
 #else
                              binaryInfo.isExecutable();
 #endif
-    const auto modelReady = modelConfigured && modelInfo.exists() && modelInfo.isFile() &&
-                            modelInfo.isReadable();
+    const auto modelReady =
+        modelConfigured && modelInfo.exists() && modelInfo.isFile() && modelInfo.isReadable();
     config.binary.status =
         binaryReady ? VoiceBinaryStatus::PresentMetadata : VoiceBinaryStatus::Missing;
-    config.binary.expectedPath = binaryConfigured ? piperBinaryPath_.trimmed()
-                                                  : QStringLiteral("not configured");
+    config.binary.expectedPath =
+        binaryConfigured ? piperBinaryPath_.trimmed() : QStringLiteral("not configured");
     config.binary.executableAllowed = piperFileOutputExecutionEnabled_;
     config.voiceModel.status =
         modelReady ? VoiceModelStatus::PresentMetadata : VoiceModelStatus::Missing;
@@ -4943,12 +4945,11 @@ bool ApplicationController::localInferenceStreamingEnabled() const {
 }
 
 void ApplicationController::setLocalInferenceStreamingEnabled(bool enabled) {
-    Q_UNUSED(enabled);
-    if (localInferenceStreamingEnabled_) {
+    if (localInferenceStreamingEnabled_ == enabled) {
         return;
     }
 
-    localInferenceStreamingEnabled_ = true;
+    localInferenceStreamingEnabled_ = enabled;
     emit localInferenceChanged();
 }
 
@@ -7879,7 +7880,8 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
-    if ((!isLocalChatProvider() || localChatInferenceEnabled_) && !localChatSendAvailable()) {
+    if (localChatInferenceEnabled_ && hasActiveLocalInferenceRuntime() &&
+        !localChatSendAvailable()) {
         const auto localChatEffectiveModel = effectiveLocalModel({});
         const auto localChatHealth = currentOllamaHealthCheck();
         LocalInferenceRequest request;
@@ -7958,10 +7960,10 @@ bool ApplicationController::sendMessage(const QString& message) {
                                      : trimmed;
         const auto liveSearch = executor ? executor->searchWeb(searchQuery) : WebSearchResponse{};
         if (!liveSearch.success || liveSearch.results.isEmpty()) {
-            const auto reason = liveSearch.errorString.trimmed().isEmpty()
-                                    ? QStringLiteral("No current web results were available.")
-                                    : QStringLiteral("Live web search failed: %1")
-                                          .arg(liveSearch.errorString);
+            const auto reason =
+                liveSearch.errorString.trimmed().isEmpty()
+                    ? QStringLiteral("No current web results were available.")
+                    : QStringLiteral("Live web search failed: %1").arg(liveSearch.errorString);
             const auto assistantMessage = chatSession_->appendAssistantMessage(
                 QStringLiteral("Güncel bilgi veremiyorum: %1 Eski veya doğrulanmamış bilgi "
                                "kullanmayacağım.")
@@ -7981,17 +7983,17 @@ bool ApplicationController::sendMessage(const QString& message) {
 
         QStringList resultLines;
         for (const auto& result : liveSearch.results) {
-            resultLines.append(QStringLiteral("- %1 | %2 | %3")
-                                   .arg(result.title, result.url, result.snippet));
+            resultLines.append(
+                QStringLiteral("- %1 | %2 | %3").arg(result.title, result.url, result.snippet));
         }
-        effectivePrompt = QStringLiteral(
-                              "Answer the user's request using only the following live web search "
-                              "results. Do not invent current facts, and state when the results "
-                              "are insufficient.\n\nUser request: %1\n\nLive web results:\n%2")
-                              .arg(trimmed, resultLines.join(QStringLiteral("\n")));
+        effectivePrompt =
+            QStringLiteral("Answer the user's request using only the following live web search "
+                           "results. Do not invent current facts, and state when the results "
+                           "are insufficient.\n\nUser request: %1\n\nLive web results:\n%2")
+                .arg(trimmed, resultLines.join(QStringLiteral("\n")));
     }
 
-    if (localChatInferenceEnabled_) {
+    if (localChatInferenceEnabled_ && hasActiveLocalInferenceRuntime()) {
         transitionConversationState(ConversationState::ReadyToRespond,
                                     QStringLiteral("local chat inference metadata ready"));
         transitionConversationState(ConversationState::Responding,
@@ -8002,8 +8004,8 @@ bool ApplicationController::sendMessage(const QString& message) {
         emit contextAssemblyChanged();
         activeLocalInferenceIsChatRequest_ = true;
         const auto startedLocalInference = localInferenceStreamingAvailable()
-                                                ? runLocalInferenceStream(effectivePrompt, {})
-                                                : runLocalInference(effectivePrompt, {});
+                                               ? runLocalInferenceStream(effectivePrompt, {})
+                                               : runLocalInference(effectivePrompt, {});
         if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {
             return true;
         }
@@ -8703,8 +8705,9 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
                                     : QStringLiteral("local chat inference metadata blocked"));
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
-    const auto responseText = succeeded ? latestLocalInferenceResponse_.text
-                                        : localInferenceChatFailureMessage(latestLocalInferenceResponse_);
+    const auto responseText = succeeded
+                                  ? latestLocalInferenceResponse_.text
+                                  : localInferenceChatFailureMessage(latestLocalInferenceResponse_);
     if (lastAgentResponse_ != responseText) {
         lastAgentResponse_ = responseText;
         emit agentResponseChanged();
@@ -8727,9 +8730,9 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         const bool wantsAlways = lowerRequest.contains(QStringLiteral("her zaman")) ||
                                  lowerRequest.contains(QStringLiteral("herzaman")) ||
                                  lowerRequest.contains(QStringLiteral("always"));
-        const bool wantsApproval =
-            wantsAlways || lowerRequest == QStringLiteral("onayla") ||
-            lowerRequest == QStringLiteral("approve") || lowerRequest == QStringLiteral("y");
+        const bool wantsApproval = wantsAlways || lowerRequest == QStringLiteral("onayla") ||
+                                   lowerRequest == QStringLiteral("approve") ||
+                                   lowerRequest == QStringLiteral("y");
         const bool wantsCancel = lowerRequest == QStringLiteral("iptal") ||
                                  lowerRequest == QStringLiteral("cancel") ||
                                  lowerRequest == QStringLiteral("n");
@@ -9042,9 +9045,8 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     if (executionStatus == ToolExecutionStatus::Succeeded) {
         nextMessage = latestAgentPipelineResult_.execution.summary;
     } else if (executionStatus == ToolExecutionStatus::Blocked) {
-        nextMessage =
-            QStringLiteral("Agent execution blocked: %1")
-                .arg(latestAgentPipelineResult_.execution.summary);
+        nextMessage = QStringLiteral("Agent execution blocked: %1")
+                          .arg(latestAgentPipelineResult_.execution.summary);
     } else {
         nextMessage = QStringLiteral("Agent execution status: %1")
                           .arg(toolExecutionStatusName(executionStatus));
@@ -9069,8 +9071,7 @@ bool ApplicationController::cancelAgentRun() {
 }
 
 bool ApplicationController::agentLoopActive() const {
-    return agentLoopThreadRunning_.load() ||
-           activeAgentSession_.phase == AgentLoopPhase::Running ||
+    return agentLoopThreadRunning_.load() || activeAgentSession_.phase == AgentLoopPhase::Running ||
            activeAgentSession_.phase == AgentLoopPhase::AwaitingApproval;
 }
 
@@ -9123,8 +9124,7 @@ void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resum
                 }
                 const QString content = message.content.simplified();
                 if (!content.isEmpty()) {
-                    historyLines.append(
-                        QStringLiteral("[%1] %2").arg(role, content.left(1000)));
+                    historyLines.append(QStringLiteral("[%1] %2").arg(role, content.left(1000)));
                 }
             }
         }
@@ -9154,11 +9154,11 @@ void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resum
                 }
             }
 
-            AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_,
-                           *sandboxPolicy_, readOnlyToolIds, config);
-            const auto state = loop.run(
-                task, QStringLiteral("subagent-%1").arg(QUuid::createUuid().toString(
-                                                      QUuid::WithoutBraces)));
+            AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_, *sandboxPolicy_,
+                           readOnlyToolIds, config);
+            const auto state =
+                loop.run(task, QStringLiteral("subagent-%1")
+                                   .arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
             if (state.phase == AgentLoopPhase::Completed) {
                 return state.finalAnswer;
             }
@@ -9176,47 +9176,46 @@ void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resum
 
     transitionConversationState(ConversationState::Planning,
                                 QStringLiteral("agent loop planning started"));
-    agentActivityLog_.append(AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
-                             QStringLiteral("Agent loop request received (autonomous=%1).")
-                                 .arg(autonomous ? QStringLiteral("true")
-                                                 : QStringLiteral("false")));
+    agentActivityLog_.append(
+        AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
+        QStringLiteral("Agent loop request received (autonomous=%1).")
+            .arg(autonomous ? QStringLiteral("true") : QStringLiteral("false")));
     emit agentActivityChanged();
 
     agentLoopThreadRunning_ = true;
-    agentLoopThread_ = std::thread([this, seed = std::move(seed), resume, approved, autonomous,
-                                    toolIds]() mutable {
-        AgentLoop::Config config;
-        config.autonomousMode = autonomous;
-        config.sessionApprovedToolIds = sessionApprovedToolIds_;
+    agentLoopThread_ = std::thread(
+        [this, seed = std::move(seed), resume, approved, autonomous, toolIds]() mutable {
+            AgentLoop::Config config;
+            config.autonomousMode = autonomous;
+            config.sessionApprovedToolIds = sessionApprovedToolIds_;
 
-        AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_, *sandboxPolicy_,
-                       toolIds, config);
-        loop.setCancelQuery([this] { return agentLoopCancelRequested_.load(); });
-        loop.setStepCallback([this](const AgentStepRecord& record) {
+            AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_, *sandboxPolicy_,
+                           toolIds, config);
+            loop.setCancelQuery([this] { return agentLoopCancelRequested_.load(); });
+            loop.setStepCallback([this](const AgentStepRecord& record) {
+                QMetaObject::invokeMethod(
+                    this, [this, record] { onAgentStepRecord(record); }, Qt::QueuedConnection);
+            });
+            loop.setStatusCallback([this](const QString& status) {
+                QMetaObject::invokeMethod(
+                    this, [this, status] { onAgentLoopStatus(status); }, Qt::QueuedConnection);
+            });
+
+            AgentLoopState result =
+                resume ? loop.resume(seed, approved) : loop.run(seed.goal, seed.sessionId);
+
             QMetaObject::invokeMethod(
-                this, [this, record] { onAgentStepRecord(record); }, Qt::QueuedConnection);
+                this, [this, result] { onAgentLoopFinished(result); }, Qt::QueuedConnection);
         });
-        loop.setStatusCallback([this](const QString& status) {
-            QMetaObject::invokeMethod(
-                this, [this, status] { onAgentLoopStatus(status); }, Qt::QueuedConnection);
-        });
-
-        AgentLoopState result =
-            resume ? loop.resume(seed, approved) : loop.run(seed.goal, seed.sessionId);
-
-        QMetaObject::invokeMethod(
-            this, [this, result] { onAgentLoopFinished(result); }, Qt::QueuedConnection);
-    });
 }
 
 void ApplicationController::onAgentStepRecord(const AgentStepRecord& record) {
     QStringList argumentParts;
     for (const auto& argument : record.arguments) {
-        argumentParts.append(QStringLiteral("`%1=%2`")
-                                 .arg(argument.id,
-                                      argument.value.size() > 300
-                                          ? argument.value.left(300) + QStringLiteral("…")
-                                          : argument.value));
+        argumentParts.append(QStringLiteral("`%1=%2`").arg(
+            argument.id, argument.value.size() > 300
+                             ? argument.value.left(300) + QStringLiteral("…")
+                             : argument.value));
     }
 
     const QString text =
@@ -9227,19 +9226,19 @@ void ApplicationController::onAgentStepRecord(const AgentStepRecord& record) {
                        "**Gözlem / Observation:**\n"
                        "```text\n%6\n```")
             .arg(QString::number(record.index), record.toolName,
-                 record.thought.isEmpty() ? QString() : QStringLiteral("**Düşünce / Thought:** %1\n")
-                                                     .arg(record.thought),
+                 record.thought.isEmpty()
+                     ? QString()
+                     : QStringLiteral("**Düşünce / Thought:** %1\n").arg(record.thought),
                  argumentParts.isEmpty() ? QStringLiteral("—")
                                          : argumentParts.join(QStringLiteral(" · ")),
                  record.statusText, record.observation);
 
     appendAgentLoopChatMessage(text);
-    agentActivityLog_.append(AgentActivityType::PlanCreated,
-                             record.succeeded ? AgentActivityStatus::Recorded
-                                              : AgentActivityStatus::Blocked,
-                             QStringLiteral("Agent loop step %1 (%2): %3")
-                                 .arg(QString::number(record.index), record.toolName,
-                                      record.statusText));
+    agentActivityLog_.append(
+        AgentActivityType::PlanCreated,
+        record.succeeded ? AgentActivityStatus::Recorded : AgentActivityStatus::Blocked,
+        QStringLiteral("Agent loop step %1 (%2): %3")
+            .arg(QString::number(record.index), record.toolName, record.statusText));
     emit agentActivityChanged();
 }
 
@@ -9257,13 +9256,13 @@ QString ApplicationController::agentApprovalRequestText(const AgentLoopState& st
                 QStringLiteral("`%1=%2`").arg(argument.id, argument.value.left(500)));
         }
         lines.append(QStringLiteral("**Araç / Tool:** `%1` (%2)")
-                         .arg(invocation.toolId,
-                              argumentParts.isEmpty() ? QStringLiteral("no arguments")
-                                                      : argumentParts.join(QStringLiteral(" · "))));
+                         .arg(invocation.toolId, argumentParts.isEmpty()
+                                                     ? QStringLiteral("no arguments")
+                                                     : argumentParts.join(QStringLiteral(" · "))));
     }
     if (!state.pendingApprovalThought.isEmpty()) {
-        lines.append(QStringLiteral("**Ajan Gerekçesi / Rationale:** %1")
-                         .arg(state.pendingApprovalThought));
+        lines.append(
+            QStringLiteral("**Ajan Gerekçesi / Rationale:** %1").arg(state.pendingApprovalThought));
     }
 
     return QStringLiteral(
@@ -9308,15 +9307,13 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
         finalText = QStringLiteral("🔁 **Ajan Döngüye Takıldı / Doom Loop Detected**\n\n%1\n\n"
                                    "*%2 adım çalıştırıldı / %2 steps executed.*")
                         .arg(state.abortReason, QString::number(state.steps.size()));
-        transitionConversationState(ConversationState::Error,
-                                    QStringLiteral("agent loop stuck"));
+        transitionConversationState(ConversationState::Error, QStringLiteral("agent loop stuck"));
         break;
     case AgentLoopPhase::Failed:
         finalText = QStringLiteral("🔴 **Ajan Görevi Başarısız / Agent Task Failed**\n\n%1\n\n"
                                    "*%2 adım çalıştırıldı / %2 steps executed.*")
                         .arg(state.abortReason, QString::number(state.steps.size()));
-        transitionConversationState(ConversationState::Error,
-                                    QStringLiteral("agent loop failed"));
+        transitionConversationState(ConversationState::Error, QStringLiteral("agent loop failed"));
         break;
     case AgentLoopPhase::Running:
     case AgentLoopPhase::Idle:
@@ -9327,12 +9324,13 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
         appendAgentLoopChatMessage(finalText);
     }
 
-    const auto summaryText = QStringLiteral("Agent loop finished: %1 (%2 steps)")
-                                 .arg(agentLoopPhaseName(state.phase),
-                                      QString::number(state.steps.size()));
+    const auto summaryText =
+        QStringLiteral("Agent loop finished: %1 (%2 steps)")
+            .arg(agentLoopPhaseName(state.phase), QString::number(state.steps.size()));
     agentActivityLog_.append(AgentActivityType::PipelineCompleted,
-                             state.phase == AgentLoopPhase::Completed ? AgentActivityStatus::Recorded
-                                                                      : AgentActivityStatus::Blocked,
+                             state.phase == AgentLoopPhase::Completed
+                                 ? AgentActivityStatus::Recorded
+                                 : AgentActivityStatus::Blocked,
                              summaryText);
     if (lastAgentResponse_ != summaryText) {
         lastAgentResponse_ = summaryText;
@@ -9379,8 +9377,8 @@ void ApplicationController::checkDueAlarms() {
         appendAgentLoopChatMessage(
             QStringLiteral("⏰ **Alarm / Reminder**\n\n**%1**\n\nPlanlanan zaman / Scheduled for: "
                            "%2 (id: %3)")
-                .arg(alarm.label,
-                     alarm.triggerAt.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")), alarm.id));
+                .arg(alarm.label, alarm.triggerAt.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")),
+                     alarm.id));
 
         QString notifyLabel = alarm.label;
         notifyLabel.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
@@ -9400,7 +9398,6 @@ void ApplicationController::checkDueAlarms() {
     }
 }
 
-
 AgentPipelineResult
 ApplicationController::buildAgentPipelineResult(const AgentRequest& request) const {
     AgentPipelineResult result;
@@ -9418,8 +9415,7 @@ ApplicationController::buildAgentPipelineResult(const AgentRequest& request) con
 
     result.sandbox = sandboxPolicy_->evaluate(result.plan, result.approval);
 
-    if (!agentAutonomousMode_ &&
-        result.approval.status == ApprovalStatus::RequiresApproval) {
+    if (!agentAutonomousMode_ && result.approval.status == ApprovalStatus::RequiresApproval) {
         result.execution.status = ToolExecutionStatus::Blocked;
         result.execution.summary =
             QStringLiteral("Execution paused: pending user approval in chat.");
@@ -9451,11 +9447,11 @@ QStringList ApplicationController::planAgentStepsForGoal(const QString& goal) co
         for (const auto& argument : invocation.arguments) {
             argumentParts.append(QStringLiteral("%1: %2").arg(argument.id, argument.value));
         }
-        steps.append(QStringLiteral("%1 - %2 (%3)")
-                         .arg(invocation.toolName,
-                              invocation.summary.isEmpty() ? invocation.rationale
-                                                           : invocation.summary,
-                              argumentParts.join(QStringLiteral(", "))));
+        steps.append(
+            QStringLiteral("%1 - %2 (%3)")
+                .arg(invocation.toolName,
+                     invocation.summary.isEmpty() ? invocation.rationale : invocation.summary,
+                     argumentParts.join(QStringLiteral(", "))));
     }
     return steps;
 }
@@ -9865,8 +9861,8 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ? selectedLocalModel_
                                                                        : QString()};
     const QString settingsPath =
-        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
-            QStringLiteral("settings.json"));
+        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
+            .filePath(QStringLiteral("settings.json"));
     AppSettings cloudSettings(std::make_unique<JsonSettingsStore>(settingsPath));
     const auto cloudProvider = cloudSettings.selectedCloudProvider();
     const auto cloudModels = currentOllamaModels();
@@ -9885,19 +9881,15 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
             return !cloudSettings.mistralApiKey().trimmed().isEmpty();
         return !cloudSettings.openAiApiKey().trimmed().isEmpty();
     }();
-    const auto cloudReadiness = !cloudSelected
-                                    ? RuntimeReadinessState::Unavailable
-                                    : !hasCloudKey ? RuntimeReadinessState::Unauthorized
-                                                   : cloudModels.isEmpty()
-                                                       ? RuntimeReadinessState::Unavailable
-                                                       : RuntimeReadinessState::Ready;
-    const auto cloudReason = !cloudSelected
-                                 ? QStringLiteral("Cloud provider is not selected.")
-                                 : !hasCloudKey
-                                     ? QStringLiteral("An API key is required for cloud inference.")
-                                     : cloudModels.isEmpty()
-                                         ? QStringLiteral("No models were returned by the provider API.")
-                                         : QStringLiteral("Provider API is configured and returned models.");
+    const auto cloudReadiness = !cloudSelected          ? RuntimeReadinessState::Unavailable
+                                : !hasCloudKey          ? RuntimeReadinessState::Unauthorized
+                                : cloudModels.isEmpty() ? RuntimeReadinessState::Unavailable
+                                                        : RuntimeReadinessState::Ready;
+    const auto cloudReason =
+        !cloudSelected          ? QStringLiteral("Cloud provider is not selected.")
+        : !hasCloudKey          ? QStringLiteral("An API key is required for cloud inference.")
+        : cloudModels.isEmpty() ? QStringLiteral("No models were returned by the provider API.")
+                                : QStringLiteral("Provider API is configured and returned models.");
     const RuntimeProviderDescriptor cloudApiDescriptor{
         QStringLiteral("cloud-api"),
         QStringLiteral("Cloud"),
@@ -9923,8 +9915,7 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
 
     return RuntimeProviderRegistry{
         {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
-         lmStudioProvider.descriptor(), llamaCppProvider.descriptor(),
-          cloudApiDescriptor},
+         lmStudioProvider.descriptor(), llamaCppProvider.descriptor(), cloudApiDescriptor},
         selectedRuntimeProvider_,
     };
 }
@@ -9993,8 +9984,8 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
                selectedRuntimeProvider_ == QStringLiteral("groq") ||
                selectedRuntimeProvider_ == QStringLiteral("mistral")) {
         const QString settingsPath =
-            QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
-                QStringLiteral("settings.json"));
+            QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
+                .filePath(QStringLiteral("settings.json"));
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
         const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
         const bool isClaude = cloudProv == QStringLiteral("claude") ||
@@ -10091,8 +10082,8 @@ void ApplicationController::pollOllama() {
                    provider == QStringLiteral("gemini") || provider == QStringLiteral("deepseek") ||
                    provider == QStringLiteral("groq") || provider == QStringLiteral("mistral")) {
             const QString settingsPath =
-                QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
-                    QStringLiteral("settings.json"));
+                QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
+                    .filePath(QStringLiteral("settings.json"));
             AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
             const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
 
@@ -10119,8 +10110,7 @@ void ApplicationController::pollOllama() {
                 cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("gemini");
             } else if (isClaude) {
-                cloudModels =
-                    fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError);
+                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError);
                 cloudOriginId = QStringLiteral("claude");
             } else if (isDeepSeek) {
                 cloudModels = fetchOpenAiCloudModels(
@@ -10297,8 +10287,8 @@ bool ApplicationController::discoveredModelNamesContain(
 
 LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
     const QString settingsPath =
-        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
-            QStringLiteral("settings.json"));
+        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
+            .filePath(QStringLiteral("settings.json"));
     AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
     LMStudioConfig config;
     QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
@@ -10365,14 +10355,21 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
 ILocalInferenceWorker* ApplicationController::activeLocalInferenceWorker() const {
     if (isLMStudioProvider()) {
         const auto config = currentCloudOrLMStudioConfig();
-        lmStudioInferenceWorker_ =
-            std::make_unique<LocalInferenceWorker>(
-                std::make_unique<LMStudioLocalInferenceClient>(config),
-                std::make_unique<LMStudioLocalInferenceStreamClient>(config),
-                const_cast<ApplicationController*>(this), true, true);
+        lmStudioInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
+            std::make_unique<LMStudioLocalInferenceClient>(config),
+            std::make_unique<LMStudioLocalInferenceStreamClient>(config),
+            const_cast<ApplicationController*>(this), true, true);
         return lmStudioInferenceWorker_.get();
     }
     return localInferenceWorker_.get();
+}
+
+bool ApplicationController::hasActiveLocalInferenceRuntime() const {
+    if (isLMStudioProvider()) {
+        return true;
+    }
+    return ollamaRuntimeClient_ &&
+           dynamic_cast<const NullOllamaRuntimeClient*>(ollamaRuntimeClient_.get()) == nullptr;
 }
 
 bool ApplicationController::localInferenceEndpointAllowed() const {

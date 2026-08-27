@@ -113,7 +113,7 @@ QString runtimeProviderCardSummary(const RuntimeProviderDescriptor& provider) {
     return QStringLiteral("%1 - %2 - %3 - %4")
         .arg(provider.displayName, runtimeReadinessStateName(provider.readiness),
              provider.capabilities.localOnly ? QStringLiteral("Local Only")
-                                              : QStringLiteral("External/API"),
+                                             : QStringLiteral("External/API"),
              runtimeCapabilitySummary(provider.capabilities));
 }
 

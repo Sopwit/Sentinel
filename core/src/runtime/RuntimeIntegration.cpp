@@ -87,13 +87,12 @@ LocalRuntimeAdapterDescriptor OllamaLocalRuntimeAdapter::descriptor() const {
         executable ? LocalRuntimeAdapterHealth::Ready
                    : (connected ? LocalRuntimeAdapterHealth::NotExecutable
                                 : LocalRuntimeAdapterHealth::NotConnected),
-        executable
-            ? QStringLiteral("Ollama is connected and %1 local model(s) are available.")
-                  .arg(models.size())
-            : safeOllamaHealthSummary(health),
+        executable ? QStringLiteral("Ollama is connected and %1 local model(s) are available.")
+                         .arg(models.size())
+                   : safeOllamaHealthSummary(health),
         {
-            {QStringLiteral("adapter.endpoint-configuration"), QStringLiteral("Endpoint Configuration"),
-             health.endpoint, connected, connected},
+            {QStringLiteral("adapter.endpoint-configuration"),
+             QStringLiteral("Endpoint Configuration"), health.endpoint, connected, connected},
             {QStringLiteral("adapter.model-discovery"), QStringLiteral("Model Discovery"),
              QStringLiteral("%1 installed model(s) discovered.").arg(models.size()), connected,
              executable},
@@ -204,10 +203,11 @@ StaticRuntimeIntegrationReadiness::evaluate(const LocalRuntimeAdapterDescriptor&
     report.readiness = adapterReady && bridgeReady ? RuntimeIntegrationReadiness::Ready
                                                    : RuntimeIntegrationReadiness::Blocked;
     report.executable = adapterReady && bridgeReady;
-    report.summary = report.executable
-                         ? QStringLiteral("Ollama runtime integration is connected and executable.")
-                         : QStringLiteral("Runtime integration is not ready: Ollama health and model "
-                                          "availability must pass.");
+    report.summary =
+        report.executable
+            ? QStringLiteral("Ollama runtime integration is connected and executable.")
+            : QStringLiteral("Runtime integration is not ready: Ollama health and model "
+                             "availability must pass.");
     report.checks = {
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.adapter-contract"),
@@ -237,8 +237,9 @@ StaticRuntimeIntegrationReadiness::evaluate(const LocalRuntimeAdapterDescriptor&
             QStringLiteral("runtime-integration.execution"),
             QStringLiteral("Execution Permission"),
             report.executable,
-            report.executable ? QStringLiteral("Execution is available behind policy gates.")
-                              : QStringLiteral("Execution is blocked until runtime readiness passes."),
+            report.executable
+                ? QStringLiteral("Execution is available behind policy gates.")
+                : QStringLiteral("Execution is blocked until runtime readiness passes."),
         },
     };
     return report;

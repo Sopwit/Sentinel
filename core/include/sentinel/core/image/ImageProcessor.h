@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QImage>
 #include <QByteArray>
+#include <QImage>
 
 namespace sentinel::core {
 

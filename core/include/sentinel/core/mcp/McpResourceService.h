@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/mcp/IMcpResourceService.h"
-#include <QObject>
 #include <QList>
+#include <QObject>
 
 namespace sentinel::core {
 

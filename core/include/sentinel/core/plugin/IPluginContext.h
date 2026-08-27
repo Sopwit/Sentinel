@@ -13,7 +13,7 @@ namespace sentinel::core {
 class IToolRegistry;
 class IMemoryStore;
 class IProviderCatalog;
-}
+} // namespace sentinel::core
 
 namespace sentinel::core::plugin {
 

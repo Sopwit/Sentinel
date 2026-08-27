@@ -145,10 +145,9 @@ QString whisperTranscriptionSafetySummary(const WhisperTranscriptionSafetyReport
 QString safeWhisperTranscriptionResultSummary(const WhisperTranscriptionResult& result);
 QStringList whisperTranscriptionTraceSummaries(const QList<WhisperTranscriptionTrace>& traces);
 WhisperTranscriptionConfig defaultDisabledWhisperTranscriptionConfig();
-WhisperTranscriptionConfig configuredWhisperTranscriptionConfig(const QString& binaryPath,
-                                                                const QString& modelPath,
-                                                                bool processExecutionAllowed =
-                                                                    false);
+WhisperTranscriptionConfig
+configuredWhisperTranscriptionConfig(const QString& binaryPath, const QString& modelPath,
+                                     bool processExecutionAllowed = false);
 WhisperTranscriptionReadiness
 whisperTranscriptionReadiness(const WhisperTranscriptionConfig& config,
                               const WhisperTranscriptionRequest& request);

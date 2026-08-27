@@ -7,7 +7,7 @@ namespace Sentinel {
 
 class TokenEstimator {
 public:
-    static int estimateTokenCount(const QString &text) {
+    static int estimateTokenCount(const QString& text) {
         if (text.isEmpty())
             return 0;
         return std::max(0, static_cast<int>(std::round(text.length() / 4.0)));
@@ -21,7 +21,7 @@ public:
         return std::max(0, static_cast<int>(std::round(charCount / 4.0)));
     }
 
-    static int estimateFromBytes(int byteCount, const QByteArray &data = QByteArray()) {
+    static int estimateFromBytes(int byteCount, const QByteArray& data = QByteArray()) {
         if (data.isEmpty())
             return std::max(0, byteCount / 4);
         return estimateTokenCount(QString::fromUtf8(data));

@@ -63,7 +63,8 @@ private:
     FuzzyMatchResult indentationFlexibleMatch(const QString& content, const QString& needle) const;
     FuzzyMatchResult escapeNormalizedMatch(const QString& content, const QString& needle) const;
     FuzzyMatchResult trimmedBoundaryMatch(const QString& content, const QString& needle) const;
-    FuzzyMatchResult contextAwareMatch(const QString& content, const QString& needle, int contextLines) const;
+    FuzzyMatchResult contextAwareMatch(const QString& content, const QString& needle,
+                                       int contextLines) const;
     FuzzyMatchResult multiOccurrenceMatch(const QString& content, const QString& needle) const;
     int levenshteinDistance(const QString& s1, const QString& s2) const;
     QString normalizeWhitespace(const QString& text) const;

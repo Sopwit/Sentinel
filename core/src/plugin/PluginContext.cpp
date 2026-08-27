@@ -9,20 +9,12 @@ namespace sentinel::core::plugin {
 
 QMap<QString, void*> PluginContext::s_serviceRegistry;
 
-PluginContext::PluginContext(QString pluginId,
-                             QString coreVersion,
-                             QString dataDir,
-                             PluginPermissions permissions,
-                             QJsonObject config,
+PluginContext::PluginContext(QString pluginId, QString coreVersion, QString dataDir,
+                             PluginPermissions permissions, QJsonObject config,
                              LoggerCallback logger)
-    : m_pluginId(std::move(pluginId))
-    , m_coreVersion(std::move(coreVersion))
-    , m_dataDir(std::move(dataDir))
-    , m_permissions(std::move(permissions))
-    , m_config(std::move(config))
-    , m_logger(std::move(logger))
-{
-}
+    : m_pluginId(std::move(pluginId)), m_coreVersion(std::move(coreVersion)),
+      m_dataDir(std::move(dataDir)), m_permissions(std::move(permissions)),
+      m_config(std::move(config)), m_logger(std::move(logger)) {}
 
 QString PluginContext::coreVersion() const {
     return m_coreVersion;
@@ -62,7 +54,8 @@ IProviderCatalog* PluginContext::providerCatalog() const {
 
 void PluginContext::registerService(const QString& serviceName, void* servicePtr) {
     if (s_serviceRegistry.contains(serviceName)) {
-        qWarning() << QStringLiteral("Plugin '%1' overwriting service '%2'").arg(m_pluginId, serviceName);
+        qWarning()
+            << QStringLiteral("Plugin '%1' overwriting service '%2'").arg(m_pluginId, serviceName);
     }
     s_serviceRegistry[serviceName] = servicePtr;
     qDebug() << QStringLiteral("Plugin '%1' registered service '%2'").arg(m_pluginId, serviceName);

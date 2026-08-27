@@ -5,8 +5,8 @@
 #pragma once
 
 #include "sentinel/core/reminder/IReminderService.h"
-#include <QObject>
 #include <QMap>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -16,7 +16,8 @@ public:
     explicit ReminderService(QObject* parent = nullptr);
     ~ReminderService() override;
 
-    QString addReminder(const QString& sessionId, const QString& content, int triggerAfter = 5) override;
+    QString addReminder(const QString& sessionId, const QString& content,
+                        int triggerAfter = 5) override;
     bool removeReminder(const QString& reminderId) override;
     QList<Reminder> activeReminders(const QString& sessionId) const override;
     void incrementMessageCount(const QString& sessionId) override;

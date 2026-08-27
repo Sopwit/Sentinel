@@ -10,14 +10,14 @@
 
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
-#include "sentinel/core/memory/JsonSettingsStore.h"
-#include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/app/ModeManager.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/platform/WinProtocolHandler.h"
 #include "sentinel/core/platform/WinTaskbarIntegration.h"
-#include "sentinel/desktop/NativeCompanionAdapter.h"
+#include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/desktop/DaemonClient.h"
+#include "sentinel/desktop/NativeCompanionAdapter.h"
 
 #include <QCommandLineOption>
 #include <QCoreApplication>
@@ -70,11 +70,9 @@ void ApplicationBootstrapper::ensureBackgroundDaemon() {
 
     m_daemonProcess = std::make_unique<QProcess>(this);
     m_daemonProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-    QObject::connect(m_daemonProcess.get(), &QProcess::started, this, []() {
-        qInfo().noquote() << "sentinel-daemon background process started.";
-    });
-    QObject::connect(m_daemonProcess.get(),
-                     &QProcess::finished, this,
+    QObject::connect(m_daemonProcess.get(), &QProcess::started, this,
+                     []() { qInfo().noquote() << "sentinel-daemon background process started."; });
+    QObject::connect(m_daemonProcess.get(), &QProcess::finished, this,
                      [this](int exitCode, QProcess::ExitStatus exitStatus) {
                          qInfo().noquote()
                              << "sentinel-daemon exited:" << exitCode
@@ -108,7 +106,8 @@ ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject
 
     QCommandLineOption safeModeOption(
         {QStringLiteral("safe-mode")},
-        QCoreApplication::translate("main", "Start with all extensions disabled and factory defaults."));
+        QCoreApplication::translate("main",
+                                    "Start with all extensions disabled and factory defaults."));
     m_parser.addOption(safeModeOption);
 
     if (QCoreApplication::instance()) {
@@ -148,7 +147,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
 
     m_settings = std::make_unique<sentinel::core::AppSettings>(
         std::make_unique<sentinel::core::DpapiEncryptedSettingsStore>(
-            std::make_unique<sentinel::core::JsonSettingsStore>(m_pathProvider.settingsFilePath())));
+            std::make_unique<sentinel::core::JsonSettingsStore>(
+                m_pathProvider.settingsFilePath())));
 
     installStartupTranslator(app, *m_settings, m_translator);
 
@@ -174,8 +174,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
             proxy.setPassword(m_settings->proxyPassword());
         }
         QNetworkProxy::setApplicationProxy(proxy);
-        qInfo().noquote()
-            << "Proxy enabled:" << type << m_settings->proxyHost() << QString::number(m_settings->proxyPort());
+        qInfo().noquote() << "Proxy enabled:" << type << m_settings->proxyHost()
+                          << QString::number(m_settings->proxyPort());
     }
 
     // Clean dependency injection using ApplicationControllerBuilder
@@ -218,8 +218,7 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                 m_controller->refreshOllamaStatus();
                 m_shellViewModel->addNotification(
                     tr("Models"), tr("Model Installed"),
-                    tr(
-                        "'%1' has been successfully downloaded and is ready for local inference.")
+                    tr("'%1' has been successfully downloaded and is ready for local inference.")
                         .arg(modelId));
             } else {
                 m_shellViewModel->addNotification(
@@ -236,8 +235,7 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                 m_controller->refreshOllamaStatus();
                 m_shellViewModel->addNotification(
                     tr("Models"), tr("Model Removed"),
-                     tr("'%1' has been deleted. Disk space has been reclaimed.")
-                         .arg(modelId));
+                    tr("'%1' has been deleted. Disk space has been reclaimed.").arg(modelId));
             } else {
                 m_shellViewModel->addNotification(
                     tr("Models"), tr("Model Removal Failed"),
@@ -254,16 +252,16 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     ensureBackgroundDaemon();
     auto* daemonClient = new DaemonClient(this);
 
-    m_engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"), m_shellViewModel.get());
+    m_engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"),
+                                               m_shellViewModel.get());
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaPuller"), ollamaPuller);
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"),
-                                             ollamaLibraryFetcher);
+                                               ollamaLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaModelDetailFetcher"),
-                                             ollamaModelDetailFetcher);
+                                               ollamaModelDetailFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"),
-                                             lmStudioLibraryFetcher);
+                                               lmStudioLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("daemonClient"), daemonClient);
-
 
     QObject::connect(
         &m_engine, &QQmlApplicationEngine::objectCreationFailed, &app,
@@ -271,7 +269,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
 
     m_engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
-    QObject* rootWindow = m_engine.rootObjects().isEmpty() ? nullptr : m_engine.rootObjects().first();
+    QObject* rootWindow =
+        m_engine.rootObjects().isEmpty() ? nullptr : m_engine.rootObjects().first();
     if (auto* quickWindow = qobject_cast<QQuickWindow*>(rootWindow)) {
         installGraphicsDiagnostics(*quickWindow);
     } else {

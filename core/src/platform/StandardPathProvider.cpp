@@ -128,4 +128,3 @@ QString StandardPathProvider::crashDumpDirectoryPath() const {
 }
 
 } // namespace sentinel::core
-

@@ -24,10 +24,14 @@ public:
                            QObject* parent = nullptr);
     ~ChatViewModel() override = default;
 
-    [[nodiscard]] QString prompt() const { return m_prompt; }
+    [[nodiscard]] QString prompt() const {
+        return m_prompt;
+    }
     void setPrompt(const QString& prompt);
 
-    [[nodiscard]] bool isStreaming() const { return m_isStreaming; }
+    [[nodiscard]] bool isStreaming() const {
+        return m_isStreaming;
+    }
     void setIsStreaming(bool streaming);
 
 public Q_SLOTS:

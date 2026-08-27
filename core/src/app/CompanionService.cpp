@@ -182,8 +182,7 @@ QStringList CompanionService::platformSummaries() const {
     };
 }
 
-CompanionCaptureResult CompanionService::captureQuickNote(const QString& note,
-                                                          bool nativeAvailable,
+CompanionCaptureResult CompanionService::captureQuickNote(const QString& note, bool nativeAvailable,
                                                           bool paused) const {
     CompanionCaptureResult result;
     if (!nativeAvailable || paused) {

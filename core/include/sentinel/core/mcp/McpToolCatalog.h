@@ -6,8 +6,8 @@
 
 #include "sentinel/core/mcp/IMcpService.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
-#include <QMap>
 #include <QList>
+#include <QMap>
 
 namespace sentinel::core {
 

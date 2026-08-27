@@ -4,8 +4,8 @@
 
 #include "sentinel/core/flock/FlockFileLock.h"
 
-#include <QtTest>
 #include <QTemporaryDir>
+#include <QtTest>
 
 using sentinel::core::FlockFileLock;
 

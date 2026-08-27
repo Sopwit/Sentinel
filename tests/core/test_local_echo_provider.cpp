@@ -36,8 +36,9 @@ void LocalEchoProviderTest::returnsDeterministicResponse() {
     QVERIFY(first.success);
     QVERIFY(second.success);
     QVERIFY(other.success);
-    QCOMPARE(first.message,
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] status"));
+    QCOMPARE(
+        first.message,
+        QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] status"));
     QCOMPARE(second.message, first.message);
     QVERIFY(other.message.contains(QStringLiteral("[echo] different prompt")));
     QVERIFY(first.errorMessage.isEmpty());

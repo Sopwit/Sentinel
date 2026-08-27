@@ -1,19 +1,17 @@
 #pragma once
 
 #include <QMutex>
-#include <optional>
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace Sentinel {
 
-template <typename T>
-class Lazy {
+template <typename T> class Lazy {
 public:
-    explicit Lazy(std::function<T()> factory)
-        : m_factory(std::move(factory)) {}
+    explicit Lazy(std::function<T()> factory) : m_factory(std::move(factory)) {}
 
-    T &get() {
+    T& get() {
         QMutexLocker locker(&m_mutex);
         if (!m_value) {
             m_value = m_factory();
@@ -21,7 +19,7 @@ public:
         return *m_value;
     }
 
-    const T &get() const {
+    const T& get() const {
         QMutexLocker locker(&m_mutex);
         if (!m_value) {
             m_value = m_factory();
@@ -49,11 +47,9 @@ private:
     mutable QMutex m_mutex;
 };
 
-template <typename T>
-class LazyPtr {
+template <typename T> class LazyPtr {
 public:
-    explicit LazyPtr(std::function<std::shared_ptr<T>()> factory)
-        : m_factory(std::move(factory)) {}
+    explicit LazyPtr(std::function<std::shared_ptr<T>()> factory) : m_factory(std::move(factory)) {}
 
     std::shared_ptr<T> get() {
         QMutexLocker locker(&m_mutex);

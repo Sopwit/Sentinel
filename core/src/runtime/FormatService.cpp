@@ -15,10 +15,13 @@ void FormatService::configure(const FormatterConfig& config) {
     m_config = config;
 }
 
-FormatterConfig FormatService::config() const { return m_config; }
+FormatterConfig FormatService::config() const {
+    return m_config;
+}
 
 QString FormatService::detectFormatter(const QString& filePath) const {
-    if (!m_config.enabled) return {};
+    if (!m_config.enabled)
+        return {};
 
     QFileInfo info(filePath);
     QString ext = info.suffix();
@@ -30,7 +33,8 @@ QString FormatService::detectFormatter(const QString& filePath) const {
 
 bool FormatService::formatFile(const QString& filePath) {
     QString formatter = detectFormatter(filePath);
-    if (formatter.isEmpty()) return false;
+    if (formatter.isEmpty())
+        return false;
 
     QProcess process;
     process.start("sh", {"-c", QStringLiteral("%1 \"%2\"").arg(formatter, filePath)});

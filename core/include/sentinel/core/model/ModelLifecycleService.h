@@ -4,17 +4,12 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
-enum class ModelStatus : std::uint8_t {
-    Active,
-    Alpha,
-    Beta,
-    Deprecated
-};
+enum class ModelStatus : std::uint8_t { Active, Alpha, Beta, Deprecated };
 
 struct ModelInfo {
     QString id;

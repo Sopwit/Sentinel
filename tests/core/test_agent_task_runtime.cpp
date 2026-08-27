@@ -50,8 +50,7 @@ void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
     StaticAgentTaskRuntime runtime;
 
     QCOMPARE(runtime.name(), QStringLiteral("StaticAgentTaskRuntime"));
-    QCOMPARE(agentTaskRuntimeStateName(runtime.runtimeStatus().state),
-             QStringLiteral("Ready"));
+    QCOMPARE(agentTaskRuntimeStateName(runtime.runtimeStatus().state), QStringLiteral("Ready"));
     QCOMPARE(runtime.runtimeStatus().taskCount, 6);
 
     const auto task = runtime.createTask(

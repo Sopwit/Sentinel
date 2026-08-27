@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QJsonObject>
+#include <QString>
 
 namespace sentinel::core {
 
@@ -21,7 +21,8 @@ class WellKnownAuthService {
 public:
     WellKnownConfig discover(const QString& issuerUrl) const;
     bool validateIssuer(const QString& issuerUrl, const WellKnownConfig& config) const;
-    QString buildAuthUrl(const WellKnownConfig& config, const QString& clientId, const QString& redirectUri, const QString& state) const;
+    QString buildAuthUrl(const WellKnownConfig& config, const QString& clientId,
+                         const QString& redirectUri, const QString& state) const;
 };
 
 } // namespace sentinel::core

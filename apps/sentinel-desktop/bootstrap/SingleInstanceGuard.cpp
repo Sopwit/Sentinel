@@ -18,8 +18,8 @@ SingleInstanceGuard::SingleInstanceGuard(QObject* parent) : QObject(parent) {}
 SingleInstanceGuard::~SingleInstanceGuard() = default;
 
 bool SingleInstanceGuard::tryLockAndSetupIpc() {
-    const QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-                             + QStringLiteral("/sentinel-desktop.lock");
+    const QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+                             QStringLiteral("/sentinel-desktop.lock");
     m_lockFile = std::make_unique<QLockFile>(lockPath);
     m_lockFile->setStaleLockTime(0);
 
@@ -58,9 +58,8 @@ void SingleInstanceGuard::bindShellViewModel(DesktopShellViewModel* shellViewMod
             const QString url = QString::fromUtf8(socket->readAll());
             if (!url.isEmpty() && m_shellViewModel) {
                 qInfo().noquote() << "Deep link received:" << url;
-                m_shellViewModel->addNotification(
-                    tr("System"), tr("Deep Link"),
-                    tr("Received: %1").arg(url));
+                m_shellViewModel->addNotification(tr("System"), tr("Deep Link"),
+                                                  tr("Received: %1").arg(url));
             }
             socket->deleteLater();
         }

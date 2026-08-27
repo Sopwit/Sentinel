@@ -5,8 +5,8 @@
 #include "DaemonService.h"
 
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 
 #include <QDebug>
 
@@ -23,7 +23,8 @@ bool DaemonService::initialize() {
 
     m_settings = std::make_unique<sentinel::core::AppSettings>(
         std::make_unique<sentinel::core::DpapiEncryptedSettingsStore>(
-            std::make_unique<sentinel::core::JsonSettingsStore>(m_pathProvider.settingsFilePath())));
+            std::make_unique<sentinel::core::JsonSettingsStore>(
+                m_pathProvider.settingsFilePath())));
 
     sentinel::core::ApplicationControllerBuilder builder;
     m_controller = builder.withStandardDefaults(m_pathProvider, *m_settings).build();

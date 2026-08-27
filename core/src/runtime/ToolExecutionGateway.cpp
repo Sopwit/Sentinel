@@ -50,9 +50,8 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
          QStringLiteral("Subprocess execution inside an audited sandbox environment."),
          QStringLiteral("subprocess-execution"), ToolGatewayRiskLevel::Critical,
          ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral(
-             "Subprocess execution is operational; commands can be run synchronously "
-             "via QProcess.")},
+         QStringLiteral("Subprocess execution is operational; commands can be run synchronously "
+                        "via QProcess.")},
         {QStringLiteral("edit-file"), QStringLiteral("Edit File"), QStringLiteral("Filesystem"),
          QStringLiteral("Scoped fuzzy file edit inside an approved workspace path."),
          QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Critical,
@@ -80,8 +79,7 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
          ToolGatewayScope::Local, ToolExecutionAvailability::Available,
          QStringLiteral("Application quit is operational via platform handlers.")},
         {QStringLiteral("system-notify"), QStringLiteral("System Notify"),
-         QStringLiteral("Notification"),
-         QStringLiteral("Immediate desktop notification."),
+         QStringLiteral("Notification"), QStringLiteral("Immediate desktop notification."),
          QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Medium,
          ToolGatewayScope::Local, ToolExecutionAvailability::Available,
          QStringLiteral("Desktop notifications are operational via platform handlers.")},
@@ -92,18 +90,15 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
          QStringLiteral("Alarms are operational via the persisted alarm store.")},
         {QStringLiteral("list-alarms"), QStringLiteral("List Alarms"),
          QStringLiteral("Notification"), QStringLiteral("List active scheduled alarms."),
-         QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Low,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Alarm listing is operational.")},
+         QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
+         ToolExecutionAvailability::Available, QStringLiteral("Alarm listing is operational.")},
         {QStringLiteral("todo-write"), QStringLiteral("Todo Write"), QStringLiteral("Session"),
-         QStringLiteral("Agent task checklist recording."),
-         QStringLiteral("context-injection"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
+         QStringLiteral("Agent task checklist recording."), QStringLiteral("context-injection"),
+         ToolGatewayRiskLevel::Low, ToolGatewayScope::Local, ToolExecutionAvailability::Available,
          QStringLiteral("Agent checklist tracking is operational.")},
         {QStringLiteral("todo-read"), QStringLiteral("Todo Read"), QStringLiteral("Session"),
-         QStringLiteral("Agent task checklist reading."),
-         QStringLiteral("context-injection"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
+         QStringLiteral("Agent task checklist reading."), QStringLiteral("context-injection"),
+         ToolGatewayRiskLevel::Low, ToolGatewayScope::Local, ToolExecutionAvailability::Available,
          QStringLiteral("Agent checklist reading is operational.")},
         {QStringLiteral("web-fetch"), QStringLiteral("Web Fetch"), QStringLiteral("Network"),
          QStringLiteral("Single URL fetch returning page content."),
@@ -243,8 +238,9 @@ ToolExecutionResult ToolExecutionGateway::execute(const ToolExecutionRequest& re
     }
     if (gatedRequest.approval.status != ApprovalStatus::Approved &&
         gatedRequest.approval.status != ApprovalStatus::NotRequired) {
-        return {ToolExecutionStatus::Blocked,
-                QStringLiteral("Tool gateway blocked execution until explicit approval is granted.")};
+        return {
+            ToolExecutionStatus::Blocked,
+            QStringLiteral("Tool gateway blocked execution until explicit approval is granted.")};
     }
     return executor.execute(gatedRequest);
 }

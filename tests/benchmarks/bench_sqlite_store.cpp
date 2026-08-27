@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <QtTest>
 #include "sentinel/core/memory/SQLiteMemoryStore.h"
+#include <QtTest>
 
 #include <QTemporaryDir>
 

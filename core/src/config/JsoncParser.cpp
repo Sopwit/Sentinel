@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/config/JsoncParser.h"
-#include <QJsonDocument>
 #include <QFile>
-#include <QTextStream>
+#include <QJsonDocument>
 #include <QRegularExpression>
+#include <QTextStream>
 
 namespace sentinel::core {
 

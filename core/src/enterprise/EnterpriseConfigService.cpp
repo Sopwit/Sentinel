@@ -14,11 +14,16 @@ bool EnterpriseConfigService::loadPolicy(const QString& policyPath) {
     return true;
 }
 
-EnterprisePolicy EnterpriseConfigService::currentPolicy() const { return m_policy; }
-bool EnterpriseConfigService::isEnforced() const { return m_policy.enforced; }
+EnterprisePolicy EnterpriseConfigService::currentPolicy() const {
+    return m_policy;
+}
+bool EnterpriseConfigService::isEnforced() const {
+    return m_policy.enforced;
+}
 
 bool EnterpriseConfigService::settingAllowed(const QString& setting) const {
-    if (!m_policy.enforced) return true;
+    if (!m_policy.enforced)
+        return true;
     return !m_policy.restrictions.contains(setting);
 }
 

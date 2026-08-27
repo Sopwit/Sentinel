@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <QtTest>
 #include "sentinel/core/memory/SemanticRetrieval.h"
+#include <QtTest>
 
 using namespace sentinel::core;
 
@@ -13,14 +13,12 @@ constexpr int kPersistenceItemCount = 500;
 
 QString syntheticText(int index) {
     static const QStringList vocabulary = {
-        QStringLiteral("alpha"),       QStringLiteral("beta"),
-        QStringLiteral("gamma"),       QStringLiteral("delta"),
-        QStringLiteral("memory"),      QStringLiteral("retrieval"),
-        QStringLiteral("semantic"),    QStringLiteral("assistant"),
-        QStringLiteral("conversation"), QStringLiteral("context"),
-        QStringLiteral("preference"),  QStringLiteral("summary"),
-        QStringLiteral("transcript"),  QStringLiteral("metadata"),
-        QStringLiteral("runtime"),     QStringLiteral("pipeline"),
+        QStringLiteral("alpha"),      QStringLiteral("beta"),       QStringLiteral("gamma"),
+        QStringLiteral("delta"),      QStringLiteral("memory"),     QStringLiteral("retrieval"),
+        QStringLiteral("semantic"),   QStringLiteral("assistant"),  QStringLiteral("conversation"),
+        QStringLiteral("context"),    QStringLiteral("preference"), QStringLiteral("summary"),
+        QStringLiteral("transcript"), QStringLiteral("metadata"),   QStringLiteral("runtime"),
+        QStringLiteral("pipeline"),
     };
     QStringList tokens;
     tokens.append(vocabulary.at(index % vocabulary.size()));
@@ -35,9 +33,8 @@ FakeVectorIndex makeVectorIndex() {
     QList<EmbeddingDocument> documents;
     documents.reserve(kVectorDocumentCount);
     for (int i = 0; i < kVectorDocumentCount; ++i) {
-        documents.append(EmbeddingDocument{QStringLiteral("doc-%1").arg(i),
-                                           syntheticText(i), QStringLiteral("bench"),
-                                           QStringLiteral("synthetic")});
+        documents.append(EmbeddingDocument{QStringLiteral("doc-%1").arg(i), syntheticText(i),
+                                           QStringLiteral("bench"), QStringLiteral("synthetic")});
     }
     const auto generated = provider.embed(EmbeddingRequest{documents, {}});
     for (int i = 0; i < generated.documents.size(); ++i) {
@@ -100,8 +97,8 @@ void SemanticSearchBenchmark::benchmarkTokenOverlapSemanticSearch() {
     SemanticSearchPolicy policy;
     policy.maxCandidates = 8;
     QBENCHMARK {
-        const auto result = index.searchLocalSemanticCandidates(query, {}, policy,
-                                                                SemanticSearchSession{});
+        const auto result =
+            index.searchLocalSemanticCandidates(query, {}, policy, SemanticSearchSession{});
         QVERIFY(result.candidates.size() <= 8);
     }
 }

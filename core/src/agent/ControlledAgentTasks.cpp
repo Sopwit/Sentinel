@@ -479,23 +479,22 @@ ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAge
     step.outcome = outcome;
     const auto nextIndex = task.currentStepIndex + 1;
     if (nextIndex >= task.steps.size()) {
-        const bool anyFailed = std::any_of(task.steps.cbegin(), task.steps.cend(),
-                                           [](const ControlledAgentStep& completedStep) {
-                                               return completedStep.state ==
-                                                      ControlledTaskState::Failed;
-                                           });
+        const bool anyFailed = std::any_of(
+            task.steps.cbegin(), task.steps.cend(), [](const ControlledAgentStep& completedStep) {
+                return completedStep.state == ControlledTaskState::Failed;
+            });
         task.state = anyFailed ? ControlledTaskState::Failed : ControlledTaskState::Completed;
         task.currentStepIndex = -1;
         task.completedAtUtc = timestampUtc();
-        task.resultSummary =
-            anyFailed ? QStringLiteral("Task finished with failed steps.")
-                      : QStringLiteral("Task completed after visible approved steps.");
+        task.resultSummary = anyFailed
+                                 ? QStringLiteral("Task finished with failed steps.")
+                                 : QStringLiteral("Task completed after visible approved steps.");
     } else {
         task.currentStepIndex = nextIndex;
         task.steps[nextIndex].state = ControlledTaskState::Running;
-        task.resultSummary = succeeded
-                                 ? QStringLiteral("Step completed. Next step is visible and waiting.")
-                                 : QStringLiteral("Step failed. Next step is visible and waiting.");
+        task.resultSummary =
+            succeeded ? QStringLiteral("Step completed. Next step is visible and waiting.")
+                      : QStringLiteral("Step failed. Next step is visible and waiting.");
     }
     return task;
 }

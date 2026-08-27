@@ -3,24 +3,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/skill/SkillService.h"
+#include <QDebug>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QTextStream>
-#include <QRegularExpression>
 #include <QNetworkReply>
-#include <QDebug>
+#include <QRegularExpression>
+#include <QTextStream>
 
 namespace sentinel::core {
 
-SkillService::SkillService(QObject* parent)
-    : QObject(parent)
-{
-}
+SkillService::SkillService(QObject* parent) : QObject(parent) {}
 
 SkillService::~SkillService() = default;
 
@@ -42,7 +39,8 @@ int SkillService::discoverSkills(const QString& searchDir) {
         if (skill.isValid()) {
             m_skills[skill.name] = skill;
             discoveredCount++;
-            qDebug() << QStringLiteral("SkillService: Discovered skill '%1' from %2").arg(skill.name, filePath);
+            qDebug() << QStringLiteral("SkillService: Discovered skill '%1' from %2")
+                            .arg(skill.name, filePath);
         }
     }
 
@@ -159,7 +157,8 @@ Skill SkillService::parseMarkdownSkill(const QString& filePath) const {
     if (!frontmatter.isEmpty()) {
         // Parse YAML-like frontmatter (simplified)
         QRegularExpression nameRegex("name:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
-        QRegularExpression descRegex("description:\\s*(.+)", QRegularExpression::CaseInsensitiveOption);
+        QRegularExpression descRegex("description:\\s*(.+)",
+                                     QRegularExpression::CaseInsensitiveOption);
 
         QRegularExpressionMatch nameMatch = nameRegex.match(frontmatter);
         if (nameMatch.hasMatch()) {
@@ -209,7 +208,7 @@ void SkillService::fetchIndexJson(const QString& indexUrl) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, indexUrl]() {
         if (reply->error() != QNetworkReply::NoError) {
             qWarning() << QStringLiteral("SkillService: Failed to fetch index from %1: %2")
-                            .arg(indexUrl, reply->errorString());
+                              .arg(indexUrl, reply->errorString());
             reply->deleteLater();
             return;
         }
@@ -220,7 +219,8 @@ void SkillService::fetchIndexJson(const QString& indexUrl) {
         QJsonParseError parseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
         if (parseError.error != QJsonParseError::NoError) {
-            qWarning() << QStringLiteral("SkillService: Failed to parse index JSON: %1").arg(parseError.errorString());
+            qWarning() << QStringLiteral("SkillService: Failed to parse index JSON: %1")
+                              .arg(parseError.errorString());
             return;
         }
 
@@ -247,7 +247,7 @@ void SkillService::downloadSkillFile(const QString& url, const QString& name) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, name, url]() {
         if (reply->error() != QNetworkReply::NoError) {
             qWarning() << QStringLiteral("SkillService: Failed to download skill '%1': %2")
-                            .arg(name, reply->errorString());
+                              .arg(name, reply->errorString());
             reply->deleteLater();
             return;
         }

@@ -4,14 +4,14 @@
 
 #include "sentinel/desktop/DesktopShellViewModel.h"
 
+#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
+#include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/memory/InMemorySettingsStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
-#include "sentinel/core/chat/LocalEchoProvider.h"
-#include "sentinel/core/app/ModeManager.h"
-#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QDir>
@@ -265,8 +265,8 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
                 .contains(QStringLiteral("Memory entries -")));
     QVERIFY(fixture.viewModel.notificationCenterSummaries().isEmpty());
     fixture.viewModel.addNotification(QStringLiteral("Brain"),
-                                     QStringLiteral("Memory snapshot saved"),
-                                     QStringLiteral("Snapshot persisted locally."));
+                                      QStringLiteral("Memory snapshot saved"),
+                                      QStringLiteral("Snapshot persisted locally."));
     QVERIFY(fixture.viewModel.notificationCenterSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Memory snapshot saved")));
@@ -355,7 +355,7 @@ void DesktopShellViewModelTest::exposesProviderCatalogMetadata() {
     QCOMPARE(fixture.viewModel.providerCatalogCount(), 4);
     QCOMPARE(fixture.viewModel.providerCatalogSummaries().size(), 4);
     QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
-         QStringLiteral("Ollama Local (Local, Not Configured)")));
+        QStringLiteral("Ollama Local (Local, Not Configured)")));
     QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
         QStringLiteral("Anthropic Cloud (Cloud, Not Configured)")));
 }
@@ -380,7 +380,7 @@ void DesktopShellViewModelTest::exposesOrchestrationSnapshotMetadata() {
     QVERIFY(fixture.viewModel.orchestrationSnapshotSummary().contains(
         QStringLiteral("4 provider entries, 6 agents, 5 memory categories")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
-         QStringLiteral("Routing: Local Only / No Available Model")));
+        QStringLiteral("Routing: Local Only / No Available Model")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
         QStringLiteral("Agent: Atlas (Coordinator, Available, Local)")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
@@ -616,10 +616,8 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(fixture.viewModel.providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
-    QVERIFY(fixture.viewModel.credentialStoreSummary().contains(
-        QStringLiteral("ready")));
-    QVERIFY(fixture.viewModel.credentialStoreBackendSummary().contains(
-        QStringLiteral("Ready")));
+    QVERIFY(fixture.viewModel.credentialStoreSummary().contains(QStringLiteral("ready")));
+    QVERIFY(fixture.viewModel.credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
     QVERIFY(
         fixture.viewModel.credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);
@@ -658,7 +656,8 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
         QStringLiteral("foreground-safe shell")));
     QVERIFY(fixture.viewModel.companionSafetyBoundary().contains(
         QStringLiteral("no background daemon")));
-    QVERIFY(fixture.viewModel.companionQuickCaptureSummary().contains(QStringLiteral("short note")));
+    QVERIFY(
+        fixture.viewModel.companionQuickCaptureSummary().contains(QStringLiteral("short note")));
     QCOMPARE(fixture.viewModel.companionActionSummaries().size(), 6);
     QCOMPARE(fixture.viewModel.companionPlatformSummaries().size(), 3);
     QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 6);
@@ -2931,8 +2930,9 @@ void DesktopShellViewModelTest::forwardsChatActions() {
     QVERIFY(sent);
     QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 3);
     const auto lastIndex = fixture.viewModel.chatMessages()->index(2, 0);
-    QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::ContentRole),
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] status"));
+    QCOMPARE(
+        fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::ContentRole),
+        QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] status"));
     QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::StatusRole),
              QStringLiteral("received"));
     QCOMPARE(fixture.viewModel.conversationState(), QStringLiteral("Completed"));
@@ -3110,6 +3110,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
     fixture.viewModel.setLocalChatInferenceEnabled(true);
     fixture.viewModel.setLocalInferenceStreamingEnabled(true);
+    fixture.viewModel.setLocalInferenceTimeoutMs(45000);
     fixture.viewModel.setPromptContextInjectionEnabled(true);
     fixture.viewModel.setContextExplainabilityVisible(false);
     fixture.viewModel.setDeveloperModeEnabled(true);
@@ -3127,6 +3128,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.settings.localChatInferenceEnabled());
     QVERIFY(fixture.viewModel.localInferenceStreamingEnabled());
     QVERIFY(fixture.settings.localInferenceStreamingEnabled());
+    QCOMPARE(fixture.viewModel.localInferenceTimeoutMs(), 45000);
+    QCOMPARE(fixture.settings.localInferenceTimeoutMs(), 45000);
     QVERIFY(fixture.viewModel.promptContextInjectionEnabled());
     QVERIFY(fixture.settings.promptContextInjectionEnabled());
     QVERIFY(!fixture.viewModel.contextExplainabilityEnabled());
@@ -3291,8 +3294,8 @@ void DesktopShellViewModelTest::exposesToolGatewayMetadata() {
 
     QCOMPARE(fixture.viewModel.toolGatewayStatus(), QStringLiteral("Operational"));
     QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Disabled"));
-    QCOMPARE(fixture.viewModel.toolGatewayToolCount(), 10);
-    QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 10);
+    QCOMPARE(fixture.viewModel.toolGatewayToolCount(), 21);
+    QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 21);
     QCOMPARE(fixture.viewModel.toolGatewayUnavailableCount(), 0);
     QCOMPARE(fixture.viewModel.toolGatewayRefusedCount(), 0);
     QVERIFY(fixture.viewModel.toolGatewaySummary().contains(QStringLiteral("fully operational")));
@@ -3353,8 +3356,7 @@ void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
         QStringLiteral("available through the approval")));
     QVERIFY(fixture.viewModel.agentPlanDiagnostics()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral(
-                    "Execution grant: approval and sandbox policy required")));
+                .contains(QStringLiteral("Execution grant: approval and sandbox policy required")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
     QCOMPARE(fixture.viewModel.agentRuntimeReadinessSummaries()
@@ -3433,10 +3435,9 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Reduced motion: Enabled")));
 
-    fixture.viewModel.addNotificationWithPriority(QStringLiteral("Security"),
-                                                  QStringLiteral("Test security notice"),
-                                                  QStringLiteral("A real local-only notification."),
-                                                  QStringLiteral("High"));
+    fixture.viewModel.addNotificationWithPriority(
+        QStringLiteral("Security"), QStringLiteral("Test security notice"),
+        QStringLiteral("A real local-only notification."), QStringLiteral("High"));
     QVERIFY(fixture.viewModel.notificationFilteredSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Test security notice")));

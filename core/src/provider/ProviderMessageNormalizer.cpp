@@ -6,7 +6,8 @@
 
 namespace sentinel::core {
 
-NormalizedMessage ProviderMessageNormalizer::normalize(const QJsonObject& message, const QString& provider) const {
+NormalizedMessage ProviderMessageNormalizer::normalize(const QJsonObject& message,
+                                                       const QString& provider) const {
     NormalizedMessage nm;
     nm.provider = provider;
     nm.original = message;
@@ -20,7 +21,9 @@ QJsonObject ProviderMessageNormalizer::denormalize(const NormalizedMessage& mess
     return message.original;
 }
 
-QList<NormalizedMessage> ProviderMessageNormalizer::normalizeConversation(const QJsonArray& messages, const QString& provider) const {
+QList<NormalizedMessage>
+ProviderMessageNormalizer::normalizeConversation(const QJsonArray& messages,
+                                                 const QString& provider) const {
     QList<NormalizedMessage> result;
     for (const auto& msg : messages) {
         result.append(normalize(msg.toObject(), provider));
@@ -55,7 +58,8 @@ QList<QJsonObject> ProviderMessageNormalizer::extractToolCalls(const QJsonObject
     return calls;
 }
 
-QJsonObject ProviderMessageNormalizer::injectToolResults(const QJsonObject& message, const QJsonArray& results) const {
+QJsonObject ProviderMessageNormalizer::injectToolResults(const QJsonObject& message,
+                                                         const QJsonArray& results) const {
     QJsonObject msg = message;
     msg["tool_results"] = results;
     return msg;

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <QString>
 #include <QDateTime>
+#include <QString>
 #include <optional>
 
 namespace sentinel::core {

@@ -3,13 +3,12 @@
 #include <QDir>
 #include <QHash>
 #include <QString>
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace sentinel::core {
 
-template <typename Service>
-class LocationServiceMap final {
+template <typename Service> class LocationServiceMap final {
 public:
     using Factory = std::function<std::shared_ptr<Service>(const QString&)>;
 
@@ -26,9 +25,15 @@ public:
         return service;
     }
 
-    void invalidate(const QString& location) { services_.remove(QDir(location).absolutePath()); }
-    void clear() { services_.clear(); }
-    int size() const { return services_.size(); }
+    void invalidate(const QString& location) {
+        services_.remove(QDir(location).absolutePath());
+    }
+    void clear() {
+        services_.clear();
+    }
+    int size() const {
+        return services_.size();
+    }
 
 private:
     Factory factory_;

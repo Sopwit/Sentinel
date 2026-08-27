@@ -27,7 +27,7 @@ void ScopedTransformTest::materializeReturnsInitialState() {
 
 void ScopedTransformTest::addTransformModifiesState() {
     ScopedTransform st({{"key", "value"}});
-    st.addTransform([](const QJsonObject &s) {
+    st.addTransform([](const QJsonObject& s) {
         QJsonObject copy = s;
         copy["key"] = "modified";
         return copy;
@@ -38,7 +38,7 @@ void ScopedTransformTest::addTransformModifiesState() {
 
 void ScopedTransformTest::removeTransformRestoresState() {
     ScopedTransform st({{"key", "value"}});
-    QString id = st.addTransform([](const QJsonObject &s) {
+    QString id = st.addTransform([](const QJsonObject& s) {
         QJsonObject copy = s;
         copy["key"] = "modified";
         return copy;
@@ -50,7 +50,7 @@ void ScopedTransformTest::removeTransformRestoresState() {
 
 void ScopedTransformTest::resetClearsAllTransforms() {
     ScopedTransform st({{"key", "value"}});
-    st.addTransform([](const QJsonObject &s) {
+    st.addTransform([](const QJsonObject& s) {
         QJsonObject copy = s;
         copy["key"] = "modified";
         return copy;
@@ -62,12 +62,12 @@ void ScopedTransformTest::resetClearsAllTransforms() {
 
 void ScopedTransformTest::multipleTransformsCompose() {
     ScopedTransform st({{"counter", 0}});
-    st.addTransform([](const QJsonObject &s) {
+    st.addTransform([](const QJsonObject& s) {
         QJsonObject copy = s;
         copy["counter"] = s["counter"].toInt() + 1;
         return copy;
     });
-    st.addTransform([](const QJsonObject &s) {
+    st.addTransform([](const QJsonObject& s) {
         QJsonObject copy = s;
         copy["counter"] = s["counter"].toInt() + 10;
         return copy;

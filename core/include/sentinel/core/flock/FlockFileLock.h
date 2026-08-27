@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <QString>
-#include <QFile>
-#include <QTimer>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QMutex>
+#include <QString>
+#include <QTimer>
 
 namespace sentinel::core {
 

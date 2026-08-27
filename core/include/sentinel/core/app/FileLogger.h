@@ -6,11 +6,11 @@
 
 #include <QDir>
 #include <QFile>
-#include <QString>
 #include <QMutex>
+#include <QString>
 #include <QTextStream>
-#include <memory>
 #include <QtGlobal>
+#include <memory>
 
 namespace sentinel::core {
 

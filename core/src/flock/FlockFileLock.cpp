@@ -5,26 +5,27 @@
 #include "sentinel/core/flock/FlockFileLock.h"
 #ifdef Q_OS_UNIX
 #include <sys/file.h>
-#include <utime.h>
 #include <unistd.h>
+#include <utime.h>
 #endif
 #include <QFileInfo>
 
 namespace sentinel::core {
 
 FlockFileLock::Config::Config()
-    : heartbeatIntervalMs(20000)
-    , stalenessTimeoutMs(60000)
-    , enableHeartbeat(true) {}
+    : heartbeatIntervalMs(20000), stalenessTimeoutMs(60000), enableHeartbeat(true) {}
 
 FlockFileLock::FlockFileLock(const QString& filePath, Config config)
     : m_filePath(filePath), m_config(std::move(config)) {}
 
-FlockFileLock::~FlockFileLock() { unlock(); }
+FlockFileLock::~FlockFileLock() {
+    unlock();
+}
 
 bool FlockFileLock::lock() {
     QMutexLocker locker(&m_mutex);
-    if (m_locked) return true;
+    if (m_locked)
+        return true;
 
     m_lockFile = new QFile(m_filePath);
     if (m_lockFile->open(QIODevice::ReadWrite | QIODevice::Append)) {
@@ -51,7 +52,8 @@ bool FlockFileLock::lock() {
 
 bool FlockFileLock::tryLock() {
     QMutexLocker locker(&m_mutex);
-    if (m_locked) return true;
+    if (m_locked)
+        return true;
 
     m_lockFile = new QFile(m_filePath);
     if (m_lockFile->open(QIODevice::ReadWrite | QIODevice::Append)) {
@@ -103,20 +105,22 @@ bool FlockFileLock::isStale() const {
     return checkStaleness();
 }
 
-QString FlockFileLock::filePath() const { return m_filePath; }
+QString FlockFileLock::filePath() const {
+    return m_filePath;
+}
 
 qint64 FlockFileLock::lockAgeMs() const {
     QMutexLocker locker(&m_mutex);
-    if (!m_locked) return 0;
+    if (!m_locked)
+        return 0;
     return m_lockTimer.elapsed();
 }
 
 void FlockFileLock::startHeartbeat() {
-    if (m_heartbeatTimer) return;
+    if (m_heartbeatTimer)
+        return;
     m_heartbeatTimer = new QTimer();
-    QObject::connect(m_heartbeatTimer, &QTimer::timeout, [this]() {
-        updateHeartbeat();
-    });
+    QObject::connect(m_heartbeatTimer, &QTimer::timeout, [this]() { updateHeartbeat(); });
     m_heartbeatTimer->start(m_config.heartbeatIntervalMs);
 }
 
@@ -138,7 +142,8 @@ void FlockFileLock::updateHeartbeat() {
 
 bool FlockFileLock::checkStaleness() const {
     QFileInfo info(m_filePath);
-    if (!info.exists()) return false;
+    if (!info.exists())
+        return false;
 
     qint64 age = info.lastModified().msecsTo(QDateTime::currentDateTime());
     return age > m_config.stalenessTimeoutMs;

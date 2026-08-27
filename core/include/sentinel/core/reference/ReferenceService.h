@@ -5,9 +5,9 @@
 #pragma once
 
 #include "sentinel/core/reference/IReferenceService.h"
-#include <QObject>
 #include <QMap>
 #include <QNetworkAccessManager>
+#include <QObject>
 
 namespace sentinel::core {
 

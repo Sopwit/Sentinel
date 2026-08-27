@@ -8,12 +8,12 @@
 #include <QTcpSocket>
 #include <QtTest>
 
+using sentinel::core::LMStudioConfig;
+using sentinel::core::LMStudioLocalInferenceClient;
 using sentinel::core::LocalInferenceError;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceStatus;
 using sentinel::core::LocalInferenceStreamStatus;
-using sentinel::core::LMStudioConfig;
-using sentinel::core::LMStudioLocalInferenceClient;
 using sentinel::core::NullLocalInferenceClient;
 using sentinel::core::NullLocalInferenceStreamClient;
 using sentinel::core::OllamaConfig;
@@ -166,38 +166,38 @@ void LocalInferenceTest::cloudOpenAiCompatibleRequestCarriesBearerKey() {
     QString capturedRequestLine;
     server.connect(&server, &QTcpServer::newConnection, &server, [&]() {
         QTcpSocket* socket = server.nextPendingConnection();
-        socket->connect(socket, &QTcpSocket::readyRead, socket, [socket, &capturedAuth,
-                                                                 &capturedRequestLine]() {
-            const QByteArray data = socket->readAll();
-            const int headerEnd = data.indexOf("\r\n\r\n");
-            if (headerEnd < 0) {
-                return;
-            }
-            const QByteArray headers = data.left(headerEnd);
-            if (capturedRequestLine.isEmpty()) {
-                capturedRequestLine =
-                    QString::fromLatin1(headers.split('\r').first());
-            }
-            if (capturedAuth.isEmpty()) {
-                for (const auto& line : headers.split('\n')) {
-                    if (line.startsWith("Authorization:")) {
-                        capturedAuth = QString::fromLatin1(line.trimmed());
-                    }
-                }
-            }
+        socket->connect(socket, &QTcpSocket::readyRead, socket,
+                        [socket, &capturedAuth, &capturedRequestLine]() {
+                            const QByteArray data = socket->readAll();
+                            const int headerEnd = data.indexOf("\r\n\r\n");
+                            if (headerEnd < 0) {
+                                return;
+                            }
+                            const QByteArray headers = data.left(headerEnd);
+                            if (capturedRequestLine.isEmpty()) {
+                                capturedRequestLine =
+                                    QString::fromLatin1(headers.split('\r').first());
+                            }
+                            if (capturedAuth.isEmpty()) {
+                                for (const auto& line : headers.split('\n')) {
+                                    if (line.startsWith("Authorization:")) {
+                                        capturedAuth = QString::fromLatin1(line.trimmed());
+                                    }
+                                }
+                            }
 
-            const QByteArray body =
-                QByteArrayLiteral("{\"choices\":[{\"message\":{\"role\":\"assistant\","
-                                  "\"content\":\"cloud says hi\"}}]}");
-            socket->write(QStringLiteral("HTTP/1.1 200 OK\r\n"
-                                         "Content-Type: application/json\r\n"
-                                         "Content-Length: %1\r\n"
-                                         "Connection: close\r\n\r\n")
-                              .arg(body.size())
-                              .toLatin1() +
-                          body);
-            socket->flush();
-        });
+                            const QByteArray body = QByteArrayLiteral(
+                                "{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                                "\"content\":\"cloud says hi\"}}]}");
+                            socket->write(QStringLiteral("HTTP/1.1 200 OK\r\n"
+                                                         "Content-Type: application/json\r\n"
+                                                         "Content-Length: %1\r\n"
+                                                         "Connection: close\r\n\r\n")
+                                              .arg(body.size())
+                                              .toLatin1() +
+                                          body);
+                            socket->flush();
+                        });
     });
 
     LMStudioLocalInferenceClient client(config, 5000);
