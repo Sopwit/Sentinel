@@ -5,9 +5,7 @@
   <project_license>Apache-2.0</project_license>
   <name>Sentinel Desktop</name>
   <summary>Local-first AI desktop assistant</summary>
-  <developer id="dev.sentinel">
-    <name>Sopwit / Sentinel Team</name>
-  </developer>
+  <developer_name>Sopwit / Sentinel Team</developer_name>
   <description>
     <p>
       Sentinel is a native Qt/QML desktop assistant focused on local-first operation, explicit user
