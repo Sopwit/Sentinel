@@ -105,8 +105,6 @@ jobs:
         with:
           version: '6.8.*'
           arch: 'win64_msvc2022_arm64'
-          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b'
-          modules: 'qtmultimedia'
           cache: true
 
       - name: Configure CMake
