@@ -20,9 +20,6 @@
   <url type="homepage">https://sentinel.dev</url>
   <url type="bugtracker">https://github.com/sentinel/sentinel/issues</url>
   <url type="vcs-browser">https://github.com/sentinel/sentinel</url>
-  <branding>
-    <color type="primary" scheme_preference="dark">#0F172A</color>
-  </branding>
   <kudos>
     <kudo>ModernToolkit</kudo>
     <kudo>HiDpiIcon</kudo>
@@ -39,9 +36,6 @@
     <category>Development</category>
   </categories>
   <content_rating type="oars-1.1" />
-  <requires>
-    <display_length compare="ge">600</display_length>
-  </requires>
   <provides>
     <binary>sentinel-desktop</binary>
   </provides>
