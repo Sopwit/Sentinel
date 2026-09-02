@@ -4,7 +4,21 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-test-macos:
@@ -15,8 +29,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install Ninja
-        run: brew install ninja
+      - name: Format Check (Fail-Fast)
+        run: |
+          pip3 install clang-format==18.1.8
+          find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
+            | xargs -0 clang-format --dry-run --Werror
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-sentinel-${{ github.job }}
+          max-size: 500M
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -29,16 +52,8 @@ jobs:
       - name: Configure CMake
         run: cmake --preset tests
 
-      - name: Install clang-format
-        run: brew install clang-format
-
       - name: Build
         run: cmake --build --preset tests
-
-      - name: Format Check
-        run: |
-          find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
-            | xargs -0 clang-format --dry-run --Werror
 
       - name: QML Lint Check
         run: |
@@ -48,3 +63,4 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --preset tests
+
