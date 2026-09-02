@@ -25,6 +25,7 @@ jobs:
   build-test-windows:
     name: Build & Test (Windows)
     runs-on: windows-2022
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -71,12 +72,13 @@ jobs:
       - name: QML Lint Check
         shell: pwsh
         run: |
-          Get-ChildItem -Path ui/qml -Recurse -Filter *.qml | ForEach-Object { qmllint -I ui/qml $_.FullName }
+          $files = (Get-ChildItem -Path ui/qml -Recurse -Filter *.qml).FullName
+          if ($files) { qmllint -I ui/qml $files }
 
       - name: Run Tests
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --preset tests
+        run: ctest --preset tests --timeout 60 --output-on-failure
 
   build-test-windows-arm64:
     name: Build & Test (Windows ARM64)
