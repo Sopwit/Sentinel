@@ -1084,6 +1084,8 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
 
     const auto autoDetectMsg = fixture.viewModel.autoDetectVoicePaths();
     QVERIFY(!autoDetectMsg.isEmpty());
+    // Re-apply the mock non-executable path so subsequent isolation checks are deterministic
+    fixture.viewModel.setWhisperBinaryPath(whisperBinaryPath);
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
         QStringLiteral("Piper binary: Ready")));
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
