@@ -31,7 +31,7 @@ jobs:
 
       - name: Format Check (Fail-Fast)
         run: |
-          pip3 install clang-format==18.1.8
+          pip3 install --break-system-packages clang-format==18.1.8 || pip3 install clang-format==18.1.8
           find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
             | xargs -0 clang-format --dry-run --Werror
 
