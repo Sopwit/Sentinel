@@ -860,26 +860,31 @@ ApplicationController::ApplicationController(
       conversationStore_(conversationStore ? std::move(conversationStore)
                                            : std::make_unique<InMemoryConversationStore>()),
       conversationExportDirectory_(defaultConversationExportDirectory()) {
+    const bool hasExplicitClient = localInferenceClient != nullptr;
+    const bool hasExplicitStreamClient = localInferenceStreamClient != nullptr;
     localInferenceClientIsRealOllama_ =
         dynamic_cast<OllamaLocalInferenceClient*>(localInferenceClient.get()) != nullptr ||
-        !localInferenceClient;
+        !hasExplicitClient;
     localInferenceStreamClientIsRealOllama_ =
         dynamic_cast<OllamaLocalInferenceStreamClient*>(localInferenceStreamClient.get()) !=
             nullptr ||
-        (!localInferenceStreamClient && !localInferenceClient);
+        (!hasExplicitStreamClient && !hasExplicitClient);
+
+    auto client = localInferenceClient
+                      ? std::move(localInferenceClient)
+                      : std::make_unique<OllamaLocalInferenceClient>(ollamaRuntimeClient_->config());
+    auto streamClient = localInferenceStreamClient
+                            ? std::move(localInferenceStreamClient)
+                            : (hasExplicitClient ? nullptr
+                                                 : std::make_unique<OllamaLocalInferenceStreamClient>(
+                                                       ollamaRuntimeClient_->config()));
+
     localInferenceWorker_ =
         localInferenceWorker
             ? std::move(localInferenceWorker)
             : std::make_unique<LocalInferenceWorker>(
-                  localInferenceClient ? std::move(localInferenceClient)
-                                       : std::make_unique<OllamaLocalInferenceClient>(
-                                             ollamaRuntimeClient_->config()),
-                  localInferenceStreamClient
-                      ? std::move(localInferenceStreamClient)
-                      : (localInferenceClient ? nullptr
-                                              : std::make_unique<OllamaLocalInferenceStreamClient>(
-                                                    ollamaRuntimeClient_->config())),
-                  this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
+                  std::move(client), std::move(streamClient), this,
+                  localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
 
     lmStudioInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
         std::make_unique<LMStudioLocalInferenceClient>(),
