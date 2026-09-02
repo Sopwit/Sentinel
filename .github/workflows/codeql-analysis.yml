@@ -51,7 +51,7 @@ jobs:
           cache: true
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: cpp
 
@@ -61,5 +61,5 @@ jobs:
           cmake --build --preset tests --target sentinel_core sentinel-cli sentinel-daemon sentinel-desktop
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
