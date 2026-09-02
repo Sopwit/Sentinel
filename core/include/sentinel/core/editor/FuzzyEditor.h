@@ -54,6 +54,7 @@ public:
     FuzzyMatchResult findBestMatch(const QString& content, const QString& needle) const;
     QString readFile(const QString& filePath) const;
     bool writeFile(const QString& filePath, const QString& content) const;
+    int levenshteinDistance(const QString& s1, const QString& s2) const;
 
 private:
     QStringList strategyNames() const;
@@ -66,7 +67,6 @@ private:
     FuzzyMatchResult contextAwareMatch(const QString& content, const QString& needle,
                                        int contextLines) const;
     FuzzyMatchResult multiOccurrenceMatch(const QString& content, const QString& needle) const;
-    int levenshteinDistance(const QString& s1, const QString& s2) const;
     QString normalizeWhitespace(const QString& text) const;
     QString normalizeEscapes(const QString& text) const;
 };

@@ -261,27 +261,47 @@ FuzzyMatchResult FuzzyEditor::multiOccurrenceMatch(const QString& content,
 }
 
 int FuzzyEditor::levenshteinDistance(const QString& s1, const QString& s2) const {
-    int m = s1.length();
-    int n = s2.length();
-    QVector<int> dp((m + 1) * (n + 1));
+    qsizetype m = s1.length();
+    qsizetype n = s2.length();
 
-    for (int i = 0; i <= m; ++i)
-        dp[i * (n + 1)] = i;
-    for (int j = 0; j <= n; ++j)
-        dp[j] = j;
+    if (m == 0) {
+        return static_cast<int>(n);
+    }
+    if (n == 0) {
+        return static_cast<int>(m);
+    }
 
-    for (int i = 1; i <= m; ++i) {
-        for (int j = 1; j <= n; ++j) {
-            int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
-            int minVal = dp[(i - 1) * (n + 1) + j] + 1;
-            if (dp[i * (n + 1) + (j - 1)] + 1 < minVal)
-                minVal = dp[i * (n + 1) + (j - 1)] + 1;
-            if (dp[(i - 1) * (n + 1) + (j - 1)] + cost < minVal)
-                minVal = dp[(i - 1) * (n + 1) + (j - 1)] + cost;
-            dp[i * (n + 1) + j] = minVal;
+    // Use shorter string for n to minimize memory allocation
+    const QString* str1 = &s1;
+    const QString* str2 = &s2;
+    if (m < n) {
+        std::swap(m, n);
+        std::swap(str1, str2);
+    }
+
+    QVector<int> dp(n + 1);
+    for (qsizetype j = 0; j <= n; ++j) {
+        dp[j] = static_cast<int>(j);
+    }
+
+    for (qsizetype i = 1; i <= m; ++i) {
+        int prev = dp[0];
+        dp[0] = static_cast<int>(i);
+        for (qsizetype j = 1; j <= n; ++j) {
+            const int temp = dp[j];
+            const int cost = ((*str1)[i - 1] == (*str2)[j - 1]) ? 0 : 1;
+            int minVal = dp[j] + 1;
+            if (dp[j - 1] + 1 < minVal) {
+                minVal = dp[j - 1] + 1;
+            }
+            if (prev + cost < minVal) {
+                minVal = prev + cost;
+            }
+            dp[j] = minVal;
+            prev = temp;
         }
     }
-    return dp[m * (n + 1) + n];
+    return dp[n];
 }
 
 QString FuzzyEditor::normalizeWhitespace(const QString& text) const {
