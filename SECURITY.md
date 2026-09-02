@@ -26,7 +26,7 @@ If you discover a security vulnerability in Sentinel, please report it privately
 ## Pre-Release Verification Checklist
 
 Before releasing any Sentinel binary distribution:
-1. Run the release checklist in `docs/release/release-checklist.md`.
+1. Run the release verification procedures in `docs/BUILD.md`.
 2. Confirm update checks remain manual-only and default to disabled.
 3. Verify that no credentials, tokens, or private build paths are embedded in binary builds.
 4. Confirm diagnostic exports write strictly to user-designated local export paths.
