@@ -4,11 +4,25 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
   schedule:
     - cron: '0 3 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
@@ -44,7 +58,8 @@ jobs:
       - name: Configure and Build
         run: |
           cmake --preset tests
-          cmake --build --preset tests
+          cmake --build --preset tests --target sentinel_core sentinel-cli sentinel-daemon sentinel-desktop
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+
