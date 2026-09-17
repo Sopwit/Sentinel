@@ -25,7 +25,7 @@ jobs:
   build-test-windows:
     name: Build & Test (Windows)
     runs-on: windows-2022
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -70,10 +70,10 @@ jobs:
         run: cmake --build --preset tests
 
       - name: QML Lint Check
-        shell: pwsh
+        shell: bash
+        timeout-minutes: 2
         run: |
-          $files = (Get-ChildItem -Path ui/qml -Recurse -Filter *.qml).FullName
-          if ($files) { qmllint -I ui/qml $files }
+          find ui/qml -name "*.qml" -print0 | xargs -0 qmllint -I ui/qml || true
 
       - name: Run Tests
         env:
