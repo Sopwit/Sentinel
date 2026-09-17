@@ -40,7 +40,6 @@ void ReminderService::incrementMessageCount(const QString& sessionId) {
 
 QStringList ReminderService::checkReminders(const QString& sessionId) {
     QStringList triggered;
-    int count = m_messageCounts.value(sessionId, 0);
 
     for (auto it = m_reminders.begin(); it != m_reminders.end(); ++it) {
         if (it->sessionId == sessionId && it->active) {
@@ -55,9 +54,11 @@ QStringList ReminderService::checkReminders(const QString& sessionId) {
 }
 
 void ReminderService::clearSession(const QString& sessionId) {
-    for (auto it = m_reminders.begin(); it != m_reminders.end(); ++it) {
+    for (auto it = m_reminders.begin(); it != m_reminders.end();) {
         if (it->sessionId == sessionId) {
             it = m_reminders.erase(it);
+        } else {
+            ++it;
         }
     }
     m_messageCounts.remove(sessionId);
