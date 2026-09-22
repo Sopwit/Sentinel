@@ -4,9 +4,8 @@
 
 #include "sentinel/core/job/BackgroundJobService.h"
 #include <QDebug>
-#include <QFuture>
 #include <QSqlQuery>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace sentinel::core {
 
@@ -272,7 +271,7 @@ void BackgroundJobService::executeJob(const QString& jobId) {
     Job& jobRef = *jobIt;
 
     // Run job in thread pool
-    QtConcurrent::run(&m_threadPool, [this, jobId, func, &jobRef]() {
+    m_threadPool.start([this, jobId, func, &jobRef]() {
         auto progressCallback = [this, jobId](JobProgress progress) {
             QMutexLocker locker(&m_mutex);
             auto it = m_jobs.find(jobId);

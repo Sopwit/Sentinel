@@ -51,7 +51,7 @@ QStringList ShellAnalyzer::extractFilePaths(const QString& command) const {
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
         QString captured = match.captured(0);
-        if (captured.contains('/') || captured.contains('.') && !captured.startsWith('-')) {
+        if (captured.contains('/') || (captured.contains('.') && !captured.startsWith('-'))) {
             paths.append(captured);
         }
     }

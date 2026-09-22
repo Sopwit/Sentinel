@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/SubagentService.h"
+#include <QThreadPool>
 #include <QUuid>
-#include <QtConcurrent>
 
 namespace sentinel::core {
 
@@ -28,7 +28,7 @@ QString SubagentService::submitTask(const TaskRequest& request, TaskFunction fun
 
     emit taskSubmitted(req.taskId);
 
-    QtConcurrent::run(&m_threadPool, [this, req, func]() {
+    m_threadPool.start([this, req, func]() {
         auto progressCb = [](QString) {};
 
         TaskResult result;

@@ -67,7 +67,7 @@ Flow {
         width: stateStrip.width
         visible: stateStrip.errorText.length > 0
         text: stateStrip.errorText
-        color: SentinelTheme.error
+        color: stateStrip.errorText.length > 0 ? SentinelTheme.errorText : SentinelTheme.textMuted
         font.pixelSize: SentinelTheme.fontSmall
         elide: Text.ElideRight
         maximumLineCount: 1

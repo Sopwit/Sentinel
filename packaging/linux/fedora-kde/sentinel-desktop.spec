@@ -23,6 +23,10 @@ Requires:       qt6-qtdeclarative >= 6.5.0
 Requires:       qt6-qtsql >= 6.5.0
 Requires:       qt6-qtmultimedia >= 6.5.0
 Requires:       hicolor-icon-theme
+Recommends:     libnotify
+Recommends:     xdg-utils
+Recommends:     libsecret
+Recommends:     avahi-tools
 
 %description
 Sentinel is a cross-platform, local-first AI desktop assistant application
@@ -46,6 +50,7 @@ companionship while ensuring privacy and explicit user control.
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/dev.sentinel.Sentinel.desktop
 appstream-util validate-relax --nonet %{buildroot}%{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
+export QT_QPA_PLATFORM=offscreen
 %ctest
 
 %post
@@ -66,6 +71,8 @@ fi
 %license LICENSE
 %doc README.md
 %{_bindir}/sentinel-desktop
+%{_bindir}/sentinel-daemon
+%{_bindir}/sentinel-cli
 %{_datadir}/applications/dev.sentinel.Sentinel.desktop
 %{_datadir}/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg
 %{_datadir}/icons/hicolor/1024x1024/apps/dev.sentinel.Sentinel.png
@@ -75,6 +82,9 @@ fi
 %config(noreplace) %{_sysconfdir}/sentinel/config.json.template
 
 %changelog
-* Thu Jul 30 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0-1
+* Tue Sep 22 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0-1
+- Ship sentinel-daemon and sentinel-cli alongside the desktop app
+- Run tests headless via QT_QPA_PLATFORM=offscreen
+- Recommend optional runtime helpers (libnotify, xdg-utils, libsecret, avahi-tools)
 - Initial enterprise RPM package release for Fedora KDE Plasma
 - FHS 3.0, XDG Base Directory, D-Bus session activation and systemd user service integration

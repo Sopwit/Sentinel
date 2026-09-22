@@ -23,6 +23,10 @@ Requires:       qt6-qtdeclarative >= 6.5.0
 Requires:       qt6-qtsql >= 6.5.0
 Requires:       qt6-qtmultimedia >= 6.5.0
 Requires:       hicolor-icon-theme
+Recommends:     libnotify
+Recommends:     xdg-utils
+Recommends:     libsecret
+Recommends:     avahi-tools
 
 %description
 Sentinel is a cross-platform, local-first AI desktop assistant application
@@ -46,6 +50,7 @@ companionship while ensuring privacy and explicit user control.
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/dev.sentinel.Sentinel.desktop
 appstream-util validate-relax --nonet %{buildroot}%{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
+export QT_QPA_PLATFORM=offscreen
 %ctest
 
 %post

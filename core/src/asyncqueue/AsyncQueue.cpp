@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/asyncqueue/AsyncQueue.h"
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace sentinel::core {
 
@@ -48,7 +48,7 @@ void AsyncQueue::processNext() {
     AsyncTask task = m_queue.dequeue();
     emit taskStarted();
 
-    QtConcurrent::run([this, task]() {
+    QThreadPool::globalInstance()->start([this, task]() {
         try {
             task();
         } catch (...) {
