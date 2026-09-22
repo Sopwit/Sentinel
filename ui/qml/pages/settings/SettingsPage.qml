@@ -71,7 +71,9 @@ Item {
 
     function jumpTo(category) {
         activeCategory = category
-        settingsFlick.contentY = 0
+        var flick = settingsFlick.contentItem
+        if (flick && flick.hasOwnProperty("contentY"))
+            flick.contentY = 0
     }
 
     RowLayout {

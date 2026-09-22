@@ -18,13 +18,13 @@ packaging/
 │   │   └── dev.sentinel.Sentinel.metainfo.xml # AppStream metadata
 │   ├── snap/                       # Ubuntu Snapcraft packaging
 │   │   └── snapcraft.yaml
-│   ├── dev.sentinel.Sentinel.desktop.in # freedesktop Desktop Entry
+│   ├── dev.sentinel.Sentinel.desktop  # freedesktop Desktop Entry
 │   └── dev.sentinel.Sentinel.metainfo.xml # AppStream 0.16 metadata
 ├── windows/
 │   └── winget/                     # Windows Package Manager (Winget) manifest
 │       └── Sopwit.Sentinel.yaml
 ├── rpm/
-│   └── sentinel-desktop.spec       # Enterprise Fedora RPM specification
+│   └── sentinel-desktop.spec       # Generic RPM specification (CPack)
 ├── dbus/
 │   └── dev.sentinel.Sentinel.service # D-Bus session activation service
 ├── systemd/

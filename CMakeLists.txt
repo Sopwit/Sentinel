@@ -42,7 +42,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick Qml Sql Test Network Widgets LinguistTools Multimedia)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick Qml Sql Test Network Widgets LinguistTools Multimedia Concurrent)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -62,8 +62,11 @@ add_subdirectory(core)
 add_subdirectory(plugins)
 add_subdirectory(apps)
 
-enable_testing()
-add_subdirectory(tests)
+option(SENTINEL_BUILD_TESTS "Build Sentinel unit tests" ON)
+if(SENTINEL_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 
 

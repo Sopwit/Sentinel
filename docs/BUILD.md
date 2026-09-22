@@ -6,29 +6,35 @@ This document details toolchain prerequisites, build instructions, test executio
 
 ## 1. Toolchain Prerequisites
 
-Sentinel requires a C++20 compliant compiler, CMake 3.24+, and Qt 6.5+ with the required Qt modules (`Core`, `Gui`, `Quick`, `Qml`, `Sql`, `Test`, `Widgets`).
+Sentinel requires a C++20 compliant compiler, CMake 3.24+, and Qt 6.5+ with the required Qt modules (`Core`, `Gui`, `Quick`, `Qml`, `Sql`, `Test`, `Network`, `Widgets`, `LinguistTools`, `Multimedia`, `Concurrent`).
 
 ### Fedora / RHEL (Recommended)
 ```bash
 sudo dnf install -y \
   gcc-c++ cmake ninja-build ccache \
-  qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel \
-  qt6-qtsvg-devel sqlite-devel clang-tools-extra
+  qt6-qtbase-devel qt6-qtdeclarative-devel \
+  qt6-qtmultimedia-devel qt6-qttools-devel \
+  clang-tools-extra
+```
+
+Optional runtime helpers (notifications, secret service, URL opening, mDNS):
+```bash
+sudo dnf install -y libnotify xdg-utils libsecret avahi-tools
 ```
 
 ### Ubuntu / Debian (24.04+)
 ```bash
 sudo apt update && sudo apt install -y \
   build-essential g++ cmake ninja-build ccache \
-  qt6-base-dev qt6-declarative-dev qt6-tools-dev \
-  libqt6svg6-dev libsqlite3-dev clang-format clang-tidy
+  qt6-base-dev qt6-declarative-dev qt6-multimedia-dev qt6-tools-dev \
+  clang-format clang-tidy
 ```
 
 ### Arch Linux
 ```bash
 sudo pacman -S --needed \
   base-devel cmake ninja ccache \
-  qt6-base qt6-declarative qt6-tools qt6-svg sqlite clang
+  qt6-base qt6-declarative qt6-multimedia qt6-tools clang
 ```
 
 ### macOS (Apple Silicon & Intel)
@@ -144,18 +150,24 @@ clang-tidy -p build core/src/editor/FuzzyEditor.cpp
 
 ## 7. Packaging Builds
 
-Platform packaging scripts are located in the `packaging/` directory:
+Platform packaging sources live under `packaging/`:
 
 ```bash
-# Linux RPM package (Fedora)
-packaging/rpm/build_rpm.sh
+# Fedora RPM (spec: packaging/linux/fedora-kde/sentinel-desktop.spec)
+git archive --prefix=sentinel-desktop-1.0.0/ -o sentinel-desktop-1.0.0.tar.gz HEAD
+# then rpmbuild / mock / COPR via packaging/linux/fedora-kde/build_copr.sh
 
-# Linux AppImage
-packaging/appimage/build_appimage.sh
+# CPack (DEB / RPM / TGZ on Linux; DragNDrop on macOS; NSIS / WiX on Windows)
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cpack --config build/CPackConfig.cmake
 
-# macOS DMG & notarization
-packaging/macos/build_dmg.sh
+# macOS DMG & PKG
+./packaging/macos/build_pkg.sh
 
-# Windows Installer (Inno Setup / WiX)
-packaging/windows/build_installer.bat
+# Flatpak / Snap
+./packaging/flatpak/build_flatpak.sh
+cd packaging/linux/snap && snapcraft
 ```
+
+AppImage is produced by CI (`.github/workflows/release.yml`) via linuxdeploy; there is no local `packaging/appimage/` script.

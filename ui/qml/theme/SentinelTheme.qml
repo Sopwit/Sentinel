@@ -211,6 +211,8 @@ QtObject {
                                        : "#669bdfff"
     readonly property color success: lightTheme ? "#10b981" : "#9ff0d0"
     readonly property color successBorder: lightTheme ? "#3310b981" : "#339ff0d0"
+    readonly property color error: lightTheme ? "#ef4444" : "#ff6b6b"
+    readonly property color errorText: lightTheme ? "#b91c1c" : "#ff8e8e"
     readonly property color errorBorder: liquidGlassLightTheme ? "#66ef4444" : "#66d66b6b"
     readonly property color separator: highContrast
                                      ? (liquidGlassLightTheme ? "#33000000" : "#33ffffff")

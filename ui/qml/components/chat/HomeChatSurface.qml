@@ -233,8 +233,8 @@ ShellPanel {
             if (view === "pinned" && !pinned) continue
             if (view === "archived" && !archived) continue
             if (view === "recent" && (pinned || archived)) continue
-            var title = viewModel.conversationTitles[i]
-            var id = viewModel.conversationIds[i]
+            var title = viewModel.conversationTitles[i] ?? ""
+            var id = viewModel.conversationIds[i] ?? ""
             if (normalized.length === 0
                     || title.toLowerCase().indexOf(normalized) >= 0
                     || id.toLowerCase().indexOf(normalized) >= 0) {
@@ -609,8 +609,14 @@ ShellPanel {
                     delegate: Item {
                         id: convItem
                         required property int modelData   // this is the sourceIndex into conversationIds
-                        readonly property string convId: homeChat.viewModel.conversationIds[modelData]
-                        readonly property string convTitle: homeChat.viewModel.conversationTitles[modelData]
+                        readonly property string convId: {
+                            var ids = homeChat.viewModel.conversationIds
+                            return (modelData >= 0 && modelData < ids.length) ? ids[modelData] : ""
+                        }
+                        readonly property string convTitle: {
+                            var titles = homeChat.viewModel.conversationTitles
+                            return (modelData >= 0 && modelData < titles.length) ? titles[modelData] : ""
+                        }
                         readonly property bool active: convId === homeChat.viewModel.activeConversationId
                         readonly property bool pinned: homeChat.isPinned(modelData)
                         readonly property bool archived: homeChat.isArchived(modelData)
@@ -1091,7 +1097,7 @@ ShellPanel {
                                         background: Rectangle { color: "transparent" }
                                         contentItem: Text {
                                             text: "×"
-                                            color: homeRemoveAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
+                                            color: homeRemoveAttachmentBtn.hovered ? SentinelTheme.errorText : SentinelTheme.textMuted
                                             font.pixelSize: SentinelTheme.fontBody
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
@@ -1820,7 +1826,7 @@ ShellPanel {
                             background: Rectangle { color: "transparent" }
                             contentItem: Text {
                                 text: "×"
-                                color: removeAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
+                                color: removeAttachmentBtn.hovered ? SentinelTheme.errorText : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontBody
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
