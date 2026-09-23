@@ -97,6 +97,13 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/mic.svg
     PROPERTIES QT_RESOURCE_ALIAS icons/lucide/mic.svg)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/square.svg
     PROPERTIES QT_RESOURCE_ALIAS icons/lucide/square.svg)
+file(GLOB SENTINEL_TABLER_ICONS CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/resources/icons/tabler/*.svg)
+foreach(SENTINEL_TABLER_ICON IN LISTS SENTINEL_TABLER_ICONS)
+    get_filename_component(SENTINEL_TABLER_ICON_NAME ${SENTINEL_TABLER_ICON} NAME)
+    set_source_files_properties(${SENTINEL_TABLER_ICON}
+        PROPERTIES QT_RESOURCE_ALIAS icons/tabler/${SENTINEL_TABLER_ICON_NAME})
+endforeach()
 set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/sounds/notification.wav
     PROPERTIES
         QT_RESOURCE_ALIAS sounds/notification.wav
@@ -128,6 +135,7 @@ qt_add_resources(sentinel-desktop sentinel_desktop_assets
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/file-text.svg
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/mic.svg
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/square.svg
+        ${SENTINEL_TABLER_ICONS}
         ${CMAKE_SOURCE_DIR}/resources/sounds/notification.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/error.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/success.wav
@@ -182,6 +190,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SoundManager.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusChip.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusPulse.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/TablerGlyph.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/HomeChatSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/RuntimeStateStrip.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/ActiveAgentsPanel.qml
