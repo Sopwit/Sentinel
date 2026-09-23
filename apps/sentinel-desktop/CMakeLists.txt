@@ -87,6 +87,16 @@ set_source_files_properties(${SENTINEL_APP_ICON_PNG}
     PROPERTIES
         QT_RESOURCE_ALIAS icons/dev.sentinel.Sentinel.png
 )
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/paperclip.svg
+    PROPERTIES QT_RESOURCE_ALIAS icons/lucide/paperclip.svg)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/image.svg
+    PROPERTIES QT_RESOURCE_ALIAS icons/lucide/image.svg)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/file-text.svg
+    PROPERTIES QT_RESOURCE_ALIAS icons/lucide/file-text.svg)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/mic.svg
+    PROPERTIES QT_RESOURCE_ALIAS icons/lucide/mic.svg)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/icons/lucide/square.svg
+    PROPERTIES QT_RESOURCE_ALIAS icons/lucide/square.svg)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/sounds/notification.wav
     PROPERTIES
         QT_RESOURCE_ALIAS sounds/notification.wav
