@@ -33,6 +33,11 @@ public:
                                const QList<AgentStepRecord>& history) const override;
 
     bool lastDecisionUsedLlm() const;
+    bool hasModelProvider() const {
+        return provider_ != nullptr;
+    }
+    void setStreamObserver(std::function<void(const QString&)> onDelta,
+                           std::shared_ptr<std::atomic_bool> cancellationToken = {}) const;
 
 private:
     QString buildPlannerPrompt(const QString& goal, const QList<AgentStepRecord>& history) const;
@@ -44,6 +49,8 @@ private:
     QList<ToolDescriptor> tools_;
     IChatProvider* provider_ = nullptr;
     mutable bool lastDecisionUsedLlm_ = false;
+    mutable std::function<void(const QString&)> streamObserver_;
+    mutable std::shared_ptr<std::atomic_bool> streamCancellationToken_;
 };
 
 } // namespace sentinel::core
