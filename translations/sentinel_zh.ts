@@ -2339,8 +2339,8 @@ Detail: </source>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1016"/>
-        <source>🔍 Search models…</source>
-        <translation>🔍 搜索模型…</translation>
+        <source>Search models…</source>
+        <translation>搜索模型…</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1061"/>
