@@ -6,6 +6,9 @@
 
 #include <QString>
 #include <QtGlobal>
+#include <atomic>
+#include <functional>
+#include <memory>
 
 namespace sentinel::core {
 
@@ -43,6 +46,14 @@ public:
     virtual QString name() const = 0;
     virtual ChatProviderStatus status() const = 0;
     virtual ChatProviderReply sendMessage(const QString& message) = 0;
+    virtual bool supportsStreaming() const {
+        return false;
+    }
+    virtual ChatProviderReply sendMessageStreaming(const QString& message,
+                                                   const std::function<void(const QString&)>&,
+                                                   const std::shared_ptr<std::atomic_bool>&) {
+        return sendMessage(message);
+    }
 };
 
 } // namespace sentinel::core

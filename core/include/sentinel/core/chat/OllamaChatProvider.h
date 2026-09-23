@@ -19,6 +19,12 @@ public:
     QString name() const override;
     ChatProviderStatus status() const override;
     ChatProviderReply sendMessage(const QString& message) override;
+    bool supportsStreaming() const override {
+        return true;
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken) override;
 
     QString endpoint() const;
     QString selectedModel() const;
