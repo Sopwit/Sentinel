@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include "sentinel/core/agent/IAgentStepPlanner.h"
+#include "sentinel/core/runtime/ToolInvocationPlan.h"
+
+#include <QList>
+#include <QString>
+
+namespace sentinel::core {
+
+enum class AgentLoopPhase {
+    Idle,
+    Running,
+    Cancelling,
+    AwaitingApproval,
+    Completed,
+    Cancelled,
+    Failed,
+    Stuck,
+};
+
+inline QString agentLoopPhaseName(AgentLoopPhase phase) {
+    switch (phase) {
+    case AgentLoopPhase::Idle:
+        return QStringLiteral("Idle");
+    case AgentLoopPhase::Running:
+        return QStringLiteral("Running");
+    case AgentLoopPhase::Cancelling:
+        return QStringLiteral("Cancelling");
+    case AgentLoopPhase::AwaitingApproval:
+        return QStringLiteral("Awaiting Approval");
+    case AgentLoopPhase::Completed:
+        return QStringLiteral("Completed");
+    case AgentLoopPhase::Cancelled:
+        return QStringLiteral("Cancelled");
+    case AgentLoopPhase::Failed:
+        return QStringLiteral("Failed");
+    case AgentLoopPhase::Stuck:
+        return QStringLiteral("Stuck");
+    }
+
+    return QStringLiteral("Idle");
+}
+
+struct AgentLoopState {
+    QString sessionId;
+    QString goal;
+    AgentLoopPhase phase = AgentLoopPhase::Idle;
+    QList<AgentStepRecord> steps;
+    QString finalAnswer;
+    QString abortReason;
+    ToolInvocationPlan pendingApprovalPlan;
+    QString pendingApprovalThought;
+};
+
+} // namespace sentinel::core
