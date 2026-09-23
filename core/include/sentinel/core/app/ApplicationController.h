@@ -5,7 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentActivityLog.h"
-#include "sentinel/core/agent/AgentLoop.h"
+#include "sentinel/core/agent/AgentLoopState.h"
 #include "sentinel/core/agent/AgentPipelineResult.h"
 #include "sentinel/core/agent/AgentRuntimeContext.h"
 #include "sentinel/core/agent/AgentTaskRuntime.h"
@@ -55,9 +55,7 @@
 
 #include <QObject>
 #include <QStringList>
-#include <atomic>
 #include <memory>
-#include <thread>
 
 class QTimer;
 class QThread;
@@ -1920,15 +1918,15 @@ signals:
     void promptContextInjectionChanged();
 
 private:
-    AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
+    AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request);
     void appendPipelineActivity(const AgentPipelineResult& result);
     void startAgentLoopRun(const QString& goal);
     void resumeAgentLoopWithApproval(bool approved, bool alwaysAllow = false);
-    void spawnAgentLoopThread(AgentLoopState seed, bool resume, bool approved);
+    AgentLoopState currentAgentSessionState() const;
     void onAgentStepRecord(const AgentStepRecord& record);
+    void onAgentEvent(const AgentEvent& event);
     void onAgentLoopStatus(const QString& status);
     void onAgentLoopFinished(const AgentLoopState& state);
-    void finishAgentLoopRun();
     void appendAgentLoopChatMessage(const QString& text);
     QString agentApprovalRequestText(const AgentLoopState& state) const;
     void checkDueAlarms();
@@ -2154,12 +2152,9 @@ private:
     bool localChatInferenceEnabled_ = false;
     bool agentAutonomousMode_ = false;
     QString pendingCommand_;
-    AgentLoopState activeAgentSession_;
-    QStringList sessionApprovedToolIds_;
+    QString activeAgentSessionId_;
+    QString agentEventSubscriptionId_;
     std::shared_ptr<AlarmStore> alarmStore_;
-    std::atomic<bool> agentLoopCancelRequested_{false};
-    std::atomic<bool> agentLoopThreadRunning_{false};
-    std::thread agentLoopThread_;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = true;
     int localInferenceTimeoutMs_ = 0;
