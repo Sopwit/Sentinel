@@ -8,6 +8,7 @@
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
 
+#include <QTimer>
 #include <QUuid>
 #include <utility>
 
@@ -66,6 +67,229 @@ void AgentLoop::setToolCallback(ToolCallback callback) {
 
 void AgentLoop::setPlanningCallback(PlanningCallback callback) {
     planningCallback_ = std::move(callback);
+}
+
+void AgentLoop::setOutputCallback(OutputCallback callback) {
+    outputCallback_ = std::move(callback);
+}
+
+void AgentLoop::setToolCallIdProvider(ToolCallIdProvider provider) {
+    toolCallIdProvider_ = std::move(provider);
+}
+
+void AgentLoop::runAsync(const QString& goal, const QString& sessionId, QObject* context,
+                         CompletionCallback completion) {
+    asyncContext_ = context;
+    completionCallback_ = std::move(completion);
+    asyncState_ = {};
+    asyncState_.sessionId = sessionId;
+    asyncState_.goal = goal;
+    asyncState_.phase = AgentLoopPhase::Running;
+    asyncFinished_ = false;
+    if (statusCallback_)
+        statusCallback_(QStringLiteral("Agent loop running for goal: %1").arg(goal));
+    scheduleAsyncAdvance();
+}
+
+void AgentLoop::resumeAsync(AgentLoopState state, bool approved, QObject* context,
+                            CompletionCallback completion) {
+    asyncContext_ = context;
+    completionCallback_ = std::move(completion);
+    asyncState_ = std::move(state);
+    asyncState_.phase = AgentLoopPhase::Running;
+    asyncFinished_ = false;
+    if (statusCallback_)
+        statusCallback_(QStringLiteral("Agent loop running for goal: %1").arg(asyncState_.goal));
+    const auto plan = asyncState_.pendingApprovalPlan;
+    const auto thought = asyncState_.pendingApprovalThought;
+    asyncState_.pendingApprovalPlan = {};
+    asyncState_.pendingApprovalThought.clear();
+    if (approved) {
+        executeStepAsync(
+            plan, thought,
+            {ApprovalStatus::Approved, QStringLiteral("User approved execution in chat."), {}});
+    } else {
+        appendBlockedStep(asyncState_, plan, thought, QStringLiteral("Denied"),
+                          QStringLiteral("User denied execution in chat."));
+        scheduleAsyncAdvance();
+    }
+}
+
+void AgentLoop::cancelAsync() {
+    cancelled_ = true;
+    if (asyncFinished_)
+        return;
+    if (waitingForTool_ && cancelTool_) {
+        cancelTool_();
+        return;
+    }
+    asyncState_.phase = AgentLoopPhase::Cancelled;
+    asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
+    completeAsync();
+}
+
+void AgentLoop::scheduleAsyncAdvance() {
+    QTimer::singleShot(0, asyncContext_, [this] {
+        if (!asyncFinished_)
+            advanceAsync();
+    });
+}
+
+void AgentLoop::completeAsync() {
+    if (asyncFinished_)
+        return;
+    asyncFinished_ = true;
+    waitingForTool_ = false;
+    cancelTool_ = {};
+    if (completionCallback_)
+        completionCallback_(asyncState_);
+}
+
+void AgentLoop::advanceAsync() {
+    if (cancellationRequested()) {
+        asyncState_.phase = AgentLoopPhase::Cancelled;
+        asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
+        completeAsync();
+        return;
+    }
+    if (asyncState_.steps.size() >= config_.maxIterations) {
+        asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.abortReason =
+            QStringLiteral("Iteration limit reached (%1 steps).").arg(config_.maxIterations);
+        completeAsync();
+        return;
+    }
+    const int stepIndex = asyncState_.steps.size() + 1;
+    if (planningCallback_)
+        planningCallback_(stepIndex, true);
+    AgentStepDecision decision;
+    try {
+        decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
+    } catch (...) {
+        if (planningCallback_)
+            planningCallback_(stepIndex, false);
+        asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.abortReason = QStringLiteral("Agent execution failed.");
+        completeAsync();
+        return;
+    }
+    if (planningCallback_)
+        planningCallback_(stepIndex, false);
+    if (cancellationRequested()) {
+        asyncState_.phase = AgentLoopPhase::Cancelled;
+        asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
+        completeAsync();
+        return;
+    }
+    if (decision.kind == AgentStepDecision::Kind::FinalAnswer) {
+        asyncState_.finalAnswer =
+            decision.answer.trimmed().isEmpty() ? decision.thought : decision.answer;
+        asyncState_.phase = AgentLoopPhase::Completed;
+        completeAsync();
+        return;
+    }
+    if (decision.kind == AgentStepDecision::Kind::GiveUp) {
+        asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.abortReason =
+            decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
+        completeAsync();
+        return;
+    }
+    const auto plan = planFromDecision(decision);
+    if (!knownToolIds_.contains(decision.toolId)) {
+        appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Unknown Tool"),
+                          QStringLiteral("Unknown tool requested: %1").arg(decision.toolId));
+        scheduleAsyncAdvance();
+        return;
+    }
+    doomDetector_.recordAction(asyncState_.sessionId, decisionActionKey(decision));
+    if (doomDetector_.isStuck(asyncState_.sessionId)) {
+        asyncState_.phase = AgentLoopPhase::Stuck;
+        asyncState_.abortReason = QStringLiteral(
+            "Doom loop detected: the agent repeated the same action without progress.");
+        completeAsync();
+        return;
+    }
+    if (toolCallback_)
+        toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
+    ApprovalDecision approval;
+    if (config_.autonomousMode)
+        approval = {ApprovalStatus::Approved,
+                    QStringLiteral("Autonomous Mode is enabled: per-step approval is bypassed."),
+                    {}};
+    else {
+        approval = approvalPolicy_.evaluate(plan);
+        if (approval.status == ApprovalStatus::RequiresApproval &&
+            config_.sessionApprovedToolIds.contains(decision.toolId))
+            approval = {
+                ApprovalStatus::Approved,
+                QStringLiteral(
+                    "Session-level approval: the user already allowed this tool for this session."),
+                {}};
+    }
+    if (approval.status == ApprovalStatus::RequiresApproval) {
+        if (toolCallback_)
+            toolCallback_(ToolTransition::ApprovalRequired, stepIndex, plan, nullptr);
+        asyncState_.pendingApprovalPlan = plan;
+        asyncState_.pendingApprovalThought = decision.thought;
+        asyncState_.phase = AgentLoopPhase::AwaitingApproval;
+        completeAsync();
+        return;
+    }
+    if (approval.status == ApprovalStatus::Denied) {
+        appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Denied"),
+                          QStringLiteral("Denied by approval policy: %1").arg(approval.summary));
+        scheduleAsyncAdvance();
+        return;
+    }
+    executeStepAsync(plan, decision.thought, approval);
+}
+
+void AgentLoop::executeStepAsync(const ToolInvocationPlan& plan, const QString& thought,
+                                 ApprovalDecision approval) {
+    const int index = asyncState_.steps.size() + 1;
+    const auto sandbox = sandboxPolicy_.evaluate(plan, approval);
+    if (toolCallback_)
+        toolCallback_(ToolTransition::ExecutionStarted, index, plan, nullptr);
+    waitingForTool_ = true;
+    cancelTool_ = gateway_.executeAsync(
+        {plan, approval, sandbox, knownToolIds_}, executor_, asyncState_.sessionId,
+        toolCallIdProvider_ ? toolCallIdProvider_(index) : QString::number(index),
+        [this, index](const QString& processId, ProcessStream stream, const QByteArray& bytes) {
+            if (!asyncFinished_ && !cancellationRequested() && outputCallback_)
+                outputCallback_(index, processId, stream, bytes);
+        },
+        [this, index, plan, thought](ToolExecutionResult result) {
+            if (asyncFinished_)
+                return;
+            waitingForTool_ = false;
+            cancelTool_ = {};
+            if (cancellationRequested()) {
+                asyncState_.phase = AgentLoopPhase::Cancelled;
+                asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
+                completeAsync();
+                return;
+            }
+            AgentStepRecord record;
+            record.index = index;
+            record.thought = thought;
+            fillRecordFromPlan(record, plan);
+            record.succeeded = result.status == ToolExecutionStatus::Succeeded ||
+                               result.status == ToolExecutionStatus::PlaceholderSucceeded;
+            record.statusText = toolExecutionStatusName(result.status);
+            record.observation =
+                truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
+            asyncState_.steps.append(record);
+            if (toolCallback_)
+                toolCallback_(ToolTransition::ExecutionFinished, index, plan, &record);
+            if (stepCallback_)
+                stepCallback_(record);
+            if (statusCallback_)
+                statusCallback_(QStringLiteral("Agent loop step %1 finished: %2 (%3)")
+                                    .arg(index)
+                                    .arg(record.toolName, record.statusText));
+            scheduleAsyncAdvance();
+        });
 }
 
 bool AgentLoop::cancellationRequested() const {

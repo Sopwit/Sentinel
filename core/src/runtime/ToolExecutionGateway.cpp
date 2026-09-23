@@ -245,6 +245,29 @@ ToolExecutionResult ToolExecutionGateway::execute(const ToolExecutionRequest& re
     return executor.execute(gatedRequest);
 }
 
+IToolExecutor::Cancel
+ToolExecutionGateway::executeAsync(const ToolExecutionRequest& request,
+                                   const IToolExecutor& executor, const QString& sessionId,
+                                   const QString& toolCallId, IToolExecutor::Output output,
+                                   IToolExecutor::Completion completion) const {
+    QStringList knownToolIds;
+    for (const ToolGatewayMetadata& metadata : toolMetadata())
+        knownToolIds.append(metadata.toolId);
+    ToolExecutionRequest gated = request;
+    if (gated.knownToolIds.isEmpty())
+        gated.knownToolIds = knownToolIds;
+    if (gated.plan.status == ToolInvocationPlanStatus::Planned &&
+        !gated.plan.invocations.isEmpty() && gated.approval.status != ApprovalStatus::Approved &&
+        gated.approval.status != ApprovalStatus::NotRequired) {
+        completion(
+            {ToolExecutionStatus::Blocked,
+             QStringLiteral("Tool gateway blocked execution until explicit approval is granted.")});
+        return {};
+    }
+    return executor.executeAsync(gated, sessionId, toolCallId, std::move(output),
+                                 std::move(completion));
+}
+
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel) {
     switch (riskLevel) {
     case ToolGatewayRiskLevel::Low:

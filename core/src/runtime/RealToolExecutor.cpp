@@ -22,6 +22,7 @@
 #include <QSettings>
 #include <QStorageInfo>
 #include <QSysInfo>
+#include <QTimer>
 #include <QUrl>
 
 #include <functional>
@@ -85,6 +86,201 @@ WebSearchResponse RealToolExecutor::searchWeb(const QString& query) const {
 }
 
 namespace {
+QString scopedPath(const QString& workingDirectory, const QString& rawPath);
+}
+
+IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest& request,
+                                                     const QString& sessionId,
+                                                     const QString& toolCallId, Output output,
+                                                     Completion completion) const {
+    if (request.plan.invocations.size() != 1 ||
+        request.plan.invocations.first().toolId != QLatin1String("run-command") ||
+        request.plan.status != ToolInvocationPlanStatus::Planned ||
+        !request.knownToolIds.contains(QStringLiteral("run-command")) ||
+        (request.approval.status != ApprovalStatus::Approved &&
+         request.approval.status != ApprovalStatus::NotRequired) ||
+        request.sandbox.status == SandboxStatus::Denied ||
+        request.sandbox.status == SandboxStatus::BlockedByApproval) {
+        return IToolExecutor::executeAsync(request, sessionId, toolCallId, std::move(output),
+                                           std::move(completion));
+    }
+
+    const auto& invocation = request.plan.invocations.first();
+    auto argument = [&invocation](const QString& id) {
+        for (const auto& item : invocation.arguments) {
+            if (item.id == id)
+                return item.value;
+        }
+        return QString{};
+    };
+    const QString command = argument(QStringLiteral("command"));
+    if (command.isEmpty()) {
+        completion({ToolExecutionStatus::Succeeded,
+                    QStringLiteral("run-command: No command argument provided.")});
+        return {};
+    }
+    bool timeoutOk = false;
+    const int suppliedTimeout = argument(QStringLiteral("timeout")).trimmed().toInt(&timeoutOk);
+    int timeoutMs = qBound(1000, timeoutOk ? suppliedTimeout : 60000, 600000);
+    const QString root = QDir::currentPath();
+    QString workdir = root;
+    const QString requestedWorkdir = argument(QStringLiteral("workdir")).trimmed();
+    if (!requestedWorkdir.isEmpty()) {
+        workdir = scopedPath(root, requestedWorkdir);
+        if (workdir.isEmpty() || !QDir(workdir).exists()) {
+            completion({ToolExecutionStatus::Succeeded,
+                        QStringLiteral("run-command: workdir is outside the approved workspace.")});
+            return {};
+        }
+    }
+    const bool docker =
+        argument(QStringLiteral("sandbox")).trimmed().toLower() == QLatin1String("docker");
+    ProcessRequest process;
+    process.workingDirectory = workdir;
+    process.sessionId = sessionId;
+    process.toolCallId = toolCallId;
+    process.timeoutMs = timeoutMs;
+    if (docker) {
+        process.program = QStringLiteral("docker");
+        process.arguments = {
+            QStringLiteral("run"),       QStringLiteral("--rm"),
+            QStringLiteral("--network"), QStringLiteral("none"),
+            QStringLiteral("--memory"),  QStringLiteral("2g"),
+            QStringLiteral("--cpus"),    QStringLiteral("2"),
+            QStringLiteral("-v"),        QStringLiteral("%1:/workspace").arg(workdir),
+            QStringLiteral("-w"),        QStringLiteral("/workspace")};
+        if (timeoutMs > 60000)
+            process.timeoutMs += 120000;
+        process.arguments.append(
+            {QStringLiteral("alpine:3.20"), QStringLiteral("sh"), QStringLiteral("-c"), command});
+    } else {
+        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        QString pathEnv = env.value(QStringLiteral("PATH"));
+#if defined(Q_OS_MACOS)
+        if (!pathEnv.contains(QStringLiteral("/opt/homebrew/bin")))
+            pathEnv = QStringLiteral("/opt/homebrew/bin:/usr/local/bin:") + pathEnv;
+#elif defined(Q_OS_UNIX)
+        if (!pathEnv.contains(QStringLiteral("/usr/local/bin")))
+            pathEnv = QStringLiteral("/usr/local/bin:") + pathEnv;
+#endif
+        env.insert(QStringLiteral("PATH"), pathEnv);
+        process.environment = env;
+#if defined(Q_OS_WIN)
+        process.program = QStringLiteral("cmd.exe");
+        process.arguments = {QStringLiteral("/c"), command};
+#else
+        process.program = QStringLiteral("/bin/sh");
+        process.arguments = {QStringLiteral("-c"), command};
+#endif
+    }
+
+    struct ActiveCommand {
+        std::shared_ptr<ProcessExecutor> executor;
+        QString id;
+        QByteArray stdoutBytes;
+        QByteArray stderrBytes;
+        Output output;
+        Completion completion;
+        bool docker = false;
+        QString command;
+        int timeoutMs = 0;
+    };
+    auto active = std::make_shared<ActiveCommand>();
+    active->executor = std::shared_ptr<ProcessExecutor>(
+        new ProcessExecutor, [](ProcessExecutor* service) { service->deleteLater(); });
+    active->output = std::move(output);
+    active->completion = std::move(completion);
+    active->docker = docker;
+    active->command = command;
+    active->timeoutMs = timeoutMs;
+    std::weak_ptr<ActiveCommand> weak = active;
+    active->id = active->executor->start(
+        process,
+        [weak](const ProcessRecord& record) {
+            auto current = weak.lock();
+            if (!current ||
+                (record.state != ProcessState::Exited && record.state != ProcessState::Failed &&
+                 record.state != ProcessState::Cancelled))
+                return;
+            const QString out = QString::fromUtf8(current->stdoutBytes).trimmed();
+            const QString err = QString::fromUtf8(current->stderrBytes).trimmed();
+            QString summary;
+            if (record.timedOut) {
+                summary =
+                    current->docker
+                        ? QStringLiteral(
+                              "run-command: docker sandbox terminated command after timeout %1 ms.")
+                              .arg(current->timeoutMs)
+                        : QStringLiteral(
+                              "run-command: Shell tool terminated command after exceeding timeout "
+                              "%1 ms. If this command is expected to take longer, retry it with a "
+                              "larger timeout value in milliseconds.\nCommand: %2")
+                              .arg(current->timeoutMs)
+                              .arg(current->command);
+            } else if (record.state == ProcessState::Cancelled) {
+                summary = QStringLiteral("run-command: Command cancelled.");
+            } else if (record.state == ProcessState::Failed && record.systemPid == 0) {
+                summary =
+                    current->docker
+                        ? QStringLiteral(
+                              "run-command: docker sandbox requested but the docker CLI is not "
+                              "available. Install Docker or retry without sandbox=docker.")
+                        : QStringLiteral("run-command: Failed to start: %1").arg(current->command);
+            } else if (current->docker) {
+                if (record.exitCode == 0)
+                    summary =
+                        out.isEmpty() && err.isEmpty()
+                            ? QStringLiteral("Command executed in docker sandbox. (exit=0)")
+                            : QStringLiteral(
+                                  "Command executed in docker sandbox. (exit=0)\n\n[STDOUT]:\n%1")
+                                  .arg(out);
+                else if (err.contains(QStringLiteral("failed to connect to the docker API")) ||
+                         err.contains(QStringLiteral("Is the docker daemon running")))
+                    summary =
+                        QStringLiteral("run-command: the docker CLI is installed but the daemon is "
+                                       "not running. Start Docker (or OrbStack) and retry, or run "
+                                       "without sandbox=docker.\nDetails: %1")
+                            .arg(err);
+                else
+                    summary = QStringLiteral("Docker sandbox command failed. "
+                                             "(exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+                                  .arg(record.exitCode)
+                                  .arg(out, err);
+            } else if (record.exitCode == 0) {
+                summary =
+                    out.isEmpty() && err.isEmpty()
+                        ? QStringLiteral("Command executed successfully. (exit=0)")
+                        : QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1")
+                              .arg(out);
+                if (!err.isEmpty())
+                    summary += QStringLiteral("\n\n[STDERR]:\n%1").arg(err);
+            } else {
+                summary =
+                    QStringLiteral(
+                        "Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+                        .arg(record.exitCode)
+                        .arg(out, err);
+            }
+            current->completion({ToolExecutionStatus::Succeeded, summary});
+        },
+        [weak](const QString& id, ProcessStream stream, const QByteArray& bytes) {
+            auto current = weak.lock();
+            if (!current)
+                return;
+            auto& buffer =
+                stream == ProcessStream::Stdout ? current->stdoutBytes : current->stderrBytes;
+            if (buffer.size() < 65536)
+                buffer.append(bytes.left(65536 - buffer.size()));
+            if (current->output)
+                current->output(id, stream, bytes);
+        });
+    return [active] {
+        if (active->executor && !active->id.isEmpty())
+            active->executor->terminate(active->id);
+    };
+}
+
+namespace {
 
 constexpr int kDefaultReadLimit = 2000;
 constexpr int kMaxLineLength = 2000;
@@ -128,21 +324,13 @@ QString scopedPath(const QString& workingDirectory, const QString& rawPath) {
 
 bool isSensitiveToolPath(const QString& canonicalPath) {
     static const QStringList sensitiveDirs{
-        QStringLiteral(".ssh"),
-        QStringLiteral(".gnupg"),
-        QStringLiteral(".aws"),
-        QStringLiteral(".kube"),
-        QStringLiteral(".password-store"),
+        QStringLiteral(".ssh"),  QStringLiteral(".gnupg"),          QStringLiteral(".aws"),
+        QStringLiteral(".kube"), QStringLiteral(".password-store"),
     };
     static const QStringList sensitiveFiles{
-        QStringLiteral("id_rsa"),
-        QStringLiteral("id_ed25519"),
-        QStringLiteral("id_ecdsa"),
-        QStringLiteral("id_dsa"),
-        QStringLiteral(".git-credentials"),
-        QStringLiteral(".npmrc"),
-        QStringLiteral(".pypirc"),
-        QStringLiteral(".netrc"),
+        QStringLiteral("id_rsa"),  QStringLiteral("id_ed25519"),       QStringLiteral("id_ecdsa"),
+        QStringLiteral("id_dsa"),  QStringLiteral(".git-credentials"), QStringLiteral(".npmrc"),
+        QStringLiteral(".pypirc"), QStringLiteral(".netrc"),
     };
 
     const QFileInfo info(canonicalPath);
@@ -205,8 +393,7 @@ bool isForbiddenWorkspacePath(const QString& canonicalPath) {
     }
 
     const QString home = QDir::cleanPath(QDir::homePath());
-    if (home != clean && home != QStringLiteral("/") &&
-        home.startsWith(clean + QLatin1Char('/'))) {
+    if (home != clean && home != QStringLiteral("/") && home.startsWith(clean + QLatin1Char('/'))) {
         return true;
     }
 
@@ -1489,8 +1676,8 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (!workdirArg.isEmpty()) {
                 const QString scopedWorkdir = scopedPath(currentWorkingDirectory, workdirArg);
                 if (scopedWorkdir.isEmpty() || !QDir(scopedWorkdir).exists()) {
-                    logs.append(QStringLiteral(
-                        "run-command: workdir is outside the approved workspace."));
+                    logs.append(
+                        QStringLiteral("run-command: workdir is outside the approved workspace."));
                     continue;
                 }
                 workingDirectory = scopedWorkdir;

@@ -82,6 +82,10 @@ public:
 
     ToolExecutionResult execute(const ToolExecutionRequest& request,
                                 const IToolExecutor& executor) const;
+    IToolExecutor::Cancel executeAsync(const ToolExecutionRequest& request,
+                                       const IToolExecutor& executor, const QString& sessionId,
+                                       const QString& toolCallId, IToolExecutor::Output output,
+                                       IToolExecutor::Completion completion) const;
 };
 
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel);

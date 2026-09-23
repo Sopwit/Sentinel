@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentLoopState.h"
+#include "sentinel/core/runtime/ProcessExecutor.h"
 
 #include <QDateTime>
 #include <QString>
@@ -51,6 +52,12 @@ struct AgentStepEvent {
     AgentStepRecord step;
 };
 
+struct AgentToolOutputEvent {
+    QString processId;
+    ProcessStream stream = ProcessStream::Stdout;
+    QByteArray chunk;
+};
+
 struct AgentRunEvent {
     AgentLoopPhase phase = AgentLoopPhase::Idle;
     QString finalAnswer;
@@ -60,8 +67,9 @@ struct AgentRunEvent {
     QString pendingThought;
 };
 
-using AgentEventPayload = std::variant<std::monostate, AgentStateEvent, AgentTextEvent,
-                                       AgentToolEvent, AgentStepEvent, AgentRunEvent>;
+using AgentEventPayload =
+    std::variant<std::monostate, AgentStateEvent, AgentTextEvent, AgentToolEvent,
+                 AgentToolOutputEvent, AgentStepEvent, AgentRunEvent>;
 
 struct AgentEvent {
     QString id;
