@@ -91,4 +91,54 @@ ChatProviderReply OllamaChatProvider::sendMessage(const QString& message) {
     return {false, response.text, response.summary};
 }
 
+ChatProviderReply OllamaChatProvider::sendMessageStreaming(
+    const QString& message, const std::function<void(const QString&)>& onDelta,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) {
+    const auto trimmed = message.trimmed();
+    if (trimmed.isEmpty())
+        return {false, {}, QStringLiteral("Prompt is blank.")};
+
+    OllamaHttpRuntimeClient runtimeClient(config_, std::min(timeoutMs_, 750));
+    if (runtimeClient.healthCheck().healthStatus != OllamaHealthStatus::Healthy) {
+        return {false,
+                {},
+                QStringLiteral("Ollama is not running or unreachable at %1.")
+                    .arg(config_.endpoint.toString())};
+    }
+    auto model = selectedModel_.trimmed();
+    if (model.isEmpty()) {
+        const auto models = runtimeClient.installedModels();
+        if (models.isEmpty()) {
+            return {false,
+                    {},
+                    QStringLiteral("No Ollama model is installed yet. "
+                                   "Run 'sentinel-cli model pull <name>' to install one.")};
+        }
+        model = models.first().name;
+    }
+
+    LocalInferenceRequest request;
+    request.id = QStringLiteral("ollama-chat-provider-stream-request");
+    request.prompt = trimmed;
+    request.options.model = model;
+    request.options.timeoutMs = timeoutMs_;
+    request.options.temperature = 0.7;
+    request.options.topP = 0.9;
+    request.options.maxTokens = 2048;
+    request.options.streamingRequested = true;
+    request.options.cancellationToken = cancellationToken;
+
+    OllamaLocalInferenceStreamClient client(config_, timeoutMs_);
+    const auto result = client.startStream(request, [&](const LocalInferenceStreamChunk& chunk) {
+        if (!chunk.malformed && !chunk.text.isEmpty() &&
+            !(cancellationToken && cancellationToken->load()) && onDelta) {
+            onDelta(chunk.text);
+        }
+    });
+    if (result.status == LocalInferenceStreamStatus::Completed) {
+        return {true, result.accumulatedText, {}};
+    }
+    return {false, result.accumulatedText, result.summary};
+}
+
 } // namespace sentinel::core
