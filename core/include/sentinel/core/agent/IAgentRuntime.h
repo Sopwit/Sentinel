@@ -4,11 +4,16 @@
 
 #pragma once
 
+#include "sentinel/core/agent/AgentEvent.h"
+#include "sentinel/core/agent/AgentLoopState.h"
+#include "sentinel/core/agent/AgentPipelineResult.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 
 #include <QList>
 #include <QString>
+#include <QStringList>
+#include <functional>
 
 namespace sentinel::core {
 
@@ -51,6 +56,32 @@ struct AgentResponse {
     AgentStatus status = AgentStatus::Unavailable;
 };
 
+struct AgentSessionOptions {
+    bool autonomousMode = false;
+    QStringList availableToolIds;
+    std::function<void(const AgentStepRecord&)> onStep;
+    std::function<void(const QString&)> onStatus;
+    std::function<void(const AgentLoopState&)> onFinished;
+};
+
+using AgentEventCallback = std::function<void(const AgentEvent&)>;
+
+enum class AgentRuntimeErrorCode {
+    None,
+    InvalidSession,
+    Busy,
+    InvalidState,
+    ExecutionFailed,
+    Cancelled,
+    Stuck,
+};
+
+struct AgentRuntimeError {
+    AgentRuntimeErrorCode code = AgentRuntimeErrorCode::None;
+    QString message;
+    bool retryable = false;
+};
+
 class IAgentRuntime {
 public:
     virtual ~IAgentRuntime() = default;
@@ -61,6 +92,57 @@ public:
     virtual QList<ToolDescriptor> availableTools() const = 0;
     virtual ToolInvocationPlan plan(const AgentRequest& request) const = 0;
     virtual AgentResponse execute(const AgentRequest& request) = 0;
+
+    // Session execution is optional for metadata-only runtimes. The desktop
+    // installs an executing runtime when a step planner is available.
+    virtual QString createSession() {
+        return {};
+    }
+    virtual AgentLoopState submit(const QString&, const QString&) {
+        return {};
+    }
+    virtual AgentLoopState resume(const QString&, bool) {
+        return {};
+    }
+    virtual bool approve(const QString&, bool) {
+        return false;
+    }
+    virtual bool cancel(const QString&) {
+        return false;
+    }
+    virtual AgentLoopState sessionState(const QString&) const {
+        return {};
+    }
+    virtual AgentRuntimeError error(const QString&) const {
+        return {};
+    }
+    virtual void configureSession(const QString&, AgentSessionOptions) {}
+    virtual bool start(const QString&, const QString&) {
+        return false;
+    }
+    virtual bool continueSession(const QString&, bool) {
+        return false;
+    }
+    virtual void shutdown() {}
+    virtual AgentPipelineResult executePipeline(const AgentRequest&, bool) {
+        return {};
+    }
+    virtual AgentPipelineResult executeApprovedGoal(const QString&) {
+        return {};
+    }
+    virtual AgentPipelineResult executeApprovedPlan(const ToolInvocationPlan&, const QString&) {
+        return {};
+    }
+    virtual bool supportsSessions() const {
+        return false;
+    }
+    virtual QString subscribe(AgentEventCallback) {
+        return {};
+    }
+    virtual void unsubscribe(const QString&) {}
+    virtual QList<AgentEvent> eventHistory(const QString&) const {
+        return {};
+    }
 };
 
 } // namespace sentinel::core
