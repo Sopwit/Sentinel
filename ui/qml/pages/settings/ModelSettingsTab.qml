@@ -481,9 +481,25 @@ Item {
                 }
             }
 
+            SettingToggleRow {
+                id: requestTimeoutToggle
+                title: qsTr("Request timeout")
+                subtitle: checked
+                          ? qsTr("Stop a request after the selected limit.")
+                          : qsTr("No client-side time limit. You can still stop a response manually.")
+                accent: root.modeAccent
+                compact: root.compact
+                checked: root.viewModel.localInferenceTimeoutMs > 0
+                showDivider: true
+                onToggled: (enabled) => {
+                    root.viewModel.localInferenceTimeoutMs = enabled ? 30000 : 0
+                }
+            }
+
             SettingControlRow {
-                title: qsTr("Timeout (ms)")
-                subtitle: qsTr("Maximum waiting time before timing out requests.")
+                visible: requestTimeoutToggle.checked
+                title: qsTr("Timeout (%1 ms)").arg(root.viewModel.localInferenceTimeoutMs)
+                subtitle: qsTr("Only applies while request timeout is enabled.")
                 accent: root.modeAccent
                 compact: root.compact
                 controlWidth: root.compact ? 150 : 200

@@ -76,8 +76,8 @@ struct OllamaConfig {
     bool modelDiscoveryEnabled = true;
     int healthCheckTimeoutMs = 750;
     int modelDiscoveryTimeoutMs = 1500;
-    int generateTimeoutMs = 30000;
-    int streamTimeoutMs = 30000;
+    int generateTimeoutMs = 0;
+    int streamTimeoutMs = 0;
 
     static OllamaConfig fromEndpoint(const QString& endpoint);
 };

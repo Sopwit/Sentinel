@@ -63,7 +63,8 @@ QString localInferenceErrorName(LocalInferenceError error);
 
 struct LocalInferenceOptions {
     QString model;
-    int timeoutMs = 30000;
+    // Zero means no client-side timeout. Cancellation remains available.
+    int timeoutMs = 0;
     double temperature = 0.7;
     double topP = 0.9;
     int maxTokens = 2048;
@@ -232,7 +233,7 @@ private:
 class OllamaLocalInferenceClient final : public ILocalInferenceClient {
 public:
     explicit OllamaLocalInferenceClient(OllamaConfig config = OllamaConfig{},
-                                        int timeoutMs = 30000);
+                                        int timeoutMs = 0);
 
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
     QString statusSummary() const override;
@@ -243,13 +244,13 @@ private:
     ModelLookupReply installedModels(int timeoutMs) const;
 
     OllamaConfig config_;
-    int timeoutMs_ = 30000;
+    int timeoutMs_ = 0;
 };
 
 class OllamaLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
 public:
     explicit OllamaLocalInferenceStreamClient(OllamaConfig config = OllamaConfig{},
-                                              int timeoutMs = 30000);
+                                              int timeoutMs = 0);
 
     LocalInferenceStreamResult
     startStream(const LocalInferenceRequest& request,
@@ -262,12 +263,12 @@ private:
     bool endpointAllowed() const;
 
     OllamaConfig config_;
-    int timeoutMs_ = 30000;
+    int timeoutMs_ = 0;
 };
 
 struct LMStudioConfig {
     QUrl endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
-    int timeoutMs = 30000;
+    int timeoutMs = 0;
     QString apiKey;
 
     bool isAllowedEndpoint() const {
@@ -320,7 +321,7 @@ struct LMStudioConfig {
 class LMStudioLocalInferenceClient final : public ILocalInferenceClient {
 public:
     explicit LMStudioLocalInferenceClient(LMStudioConfig config = LMStudioConfig{},
-                                          int timeoutMs = 30000);
+                                          int timeoutMs = 0);
 
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
     QString statusSummary() const override;
@@ -330,13 +331,13 @@ private:
     bool endpointAllowed() const;
 
     LMStudioConfig config_;
-    int timeoutMs_ = 30000;
+    int timeoutMs_ = 0;
 };
 
 class LMStudioLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
 public:
     explicit LMStudioLocalInferenceStreamClient(LMStudioConfig config = LMStudioConfig{},
-                                                int timeoutMs = 30000);
+                                                int timeoutMs = 0);
 
     LocalInferenceStreamResult
     startStream(const LocalInferenceRequest& request,
@@ -349,7 +350,7 @@ private:
     bool endpointAllowed() const;
 
     LMStudioConfig config_;
-    int timeoutMs_ = 30000;
+    int timeoutMs_ = 0;
 };
 
 } // namespace sentinel::core

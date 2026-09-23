@@ -641,11 +641,11 @@ int AppSettings::localInferenceTimeoutMs() const {
     if (!ok) {
         return defaultLocalInferenceTimeoutMs;
     }
-    return std::clamp(value, 1000, 300000);
+    return value <= 0 ? 0 : std::clamp(value, 1000, 300000);
 }
 
 void AppSettings::setLocalInferenceTimeoutMs(int timeoutMs) {
-    const auto normalized = std::clamp(timeoutMs, 1000, 300000);
+    const auto normalized = timeoutMs <= 0 ? 0 : std::clamp(timeoutMs, 1000, 300000);
     if (normalized == localInferenceTimeoutMs() || !store_) {
         return;
     }

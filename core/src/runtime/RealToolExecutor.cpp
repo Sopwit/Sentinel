@@ -93,6 +93,8 @@ constexpr int kGrepGlobLimit = 100;
 constexpr int kDirListLimit = 100;
 constexpr int kWebFetchPreviewChars = 8000;
 
+bool isSensitiveToolPath(const QString& canonicalPath);
+
 QString getArgument(const PlannedToolInvocation& invocation, const QString& argId) {
     for (const auto& arg : invocation.arguments) {
         if (arg.id == argId) {
@@ -117,7 +119,98 @@ QString scopedPath(const QString& workingDirectory, const QString& rawPath) {
     if (fileInfo.isRelative()) {
         path = QDir(workingDirectory).absoluteFilePath(path);
     }
-    return PathGuard::safePath(workingDirectory, path);
+    const QString scoped = PathGuard::safePath(workingDirectory, path);
+    if (scoped.isEmpty() || isSensitiveToolPath(scoped)) {
+        return QString();
+    }
+    return scoped;
+}
+
+bool isSensitiveToolPath(const QString& canonicalPath) {
+    static const QStringList sensitiveDirs{
+        QStringLiteral(".ssh"),
+        QStringLiteral(".gnupg"),
+        QStringLiteral(".aws"),
+        QStringLiteral(".kube"),
+        QStringLiteral(".password-store"),
+    };
+    static const QStringList sensitiveFiles{
+        QStringLiteral("id_rsa"),
+        QStringLiteral("id_ed25519"),
+        QStringLiteral("id_ecdsa"),
+        QStringLiteral("id_dsa"),
+        QStringLiteral(".git-credentials"),
+        QStringLiteral(".npmrc"),
+        QStringLiteral(".pypirc"),
+        QStringLiteral(".netrc"),
+    };
+
+    const QFileInfo info(canonicalPath);
+    if (sensitiveFiles.contains(info.fileName())) {
+        return true;
+    }
+
+    const QStringList parts =
+        QDir::cleanPath(canonicalPath).split(QDir::separator(), Qt::SkipEmptyParts);
+    for (const auto& part : parts) {
+        if (sensitiveDirs.contains(part)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isFilesystemRootPath(const QString& canonicalPath) {
+    const QString clean = QDir::cleanPath(canonicalPath);
+#ifdef Q_OS_WIN
+    if (clean.size() == 2 && clean.endsWith(QLatin1Char(':'))) {
+        return true;
+    }
+    if (clean.size() == 3 && clean.at(1) == QLatin1Char(':') &&
+        (clean.at(2) == QLatin1Char('/') || clean.at(2) == QLatin1Char('\\'))) {
+        return true;
+    }
+#endif
+    return clean == QStringLiteral("/") || clean.isEmpty();
+}
+
+bool isForbiddenWorkspacePath(const QString& canonicalPath) {
+    if (isFilesystemRootPath(canonicalPath)) {
+        return true;
+    }
+
+    const QString clean = QDir::cleanPath(canonicalPath);
+    static const QStringList systemRoots{
+        QStringLiteral("/etc"),
+        QStringLiteral("/usr"),
+        QStringLiteral("/bin"),
+        QStringLiteral("/sbin"),
+        QStringLiteral("/lib"),
+        QStringLiteral("/lib64"),
+        QStringLiteral("/var"),
+        QStringLiteral("/boot"),
+        QStringLiteral("/root"),
+        QStringLiteral("/System"),
+        QStringLiteral("/Library/Keychains"),
+        QStringLiteral("/Applications"),
+        QStringLiteral("C:\\Windows"),
+        QStringLiteral("C:\\Program Files"),
+        QStringLiteral("C:\\Program Files (x86)"),
+    };
+    for (const auto& systemRoot : systemRoots) {
+        const QString root = QDir::cleanPath(systemRoot);
+        if (clean == root || clean.startsWith(root + QLatin1Char('/'))) {
+            return true;
+        }
+    }
+
+    const QString home = QDir::cleanPath(QDir::homePath());
+    if (home != clean && home != QStringLiteral("/") &&
+        home.startsWith(clean + QLatin1Char('/'))) {
+        return true;
+    }
+
+    return isSensitiveToolPath(clean);
 }
 
 bool hasBinaryExtension(const QString& path) {
@@ -1395,11 +1488,12 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             QString workingDirectory = currentWorkingDirectory;
             if (!workdirArg.isEmpty()) {
                 const QString scopedWorkdir = scopedPath(currentWorkingDirectory, workdirArg);
-                if (!scopedWorkdir.isEmpty() && QDir(scopedWorkdir).exists()) {
-                    workingDirectory = scopedWorkdir;
-                } else if (QDir(workdirArg).exists()) {
-                    workingDirectory = workdirArg;
+                if (scopedWorkdir.isEmpty() || !QDir(scopedWorkdir).exists()) {
+                    logs.append(QStringLiteral(
+                        "run-command: workdir is outside the approved workspace."));
+                    continue;
                 }
+                workingDirectory = scopedWorkdir;
             }
 
             const QString sandbox =
@@ -2225,12 +2319,25 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
         }
         // 19. open-workspace
         else if (invocation.toolId == QLatin1String("open-workspace")) {
-            const QString path = getArgument(invocation, QStringLiteral("path"));
-            const auto workspacePath = QDir(path).absolutePath();
-            if (path.isEmpty() || !QDir(workspacePath).exists()) {
+            const QString path = getArgument(invocation, QStringLiteral("path")).trimmed();
+            if (path.isEmpty()) {
+                return {
+                    ToolExecutionStatus::Blocked,
+                    QStringLiteral("open-workspace: path argument is required."),
+                };
+            }
+            const QString workspacePath = PathGuard::canonicalPath(path);
+            if (workspacePath.isEmpty() || !QDir(workspacePath).exists()) {
                 return {
                     ToolExecutionStatus::Blocked,
                     QStringLiteral("open-workspace: requested workspace does not exist."),
+                };
+            }
+            if (isForbiddenWorkspacePath(workspacePath)) {
+                return {
+                    ToolExecutionStatus::Blocked,
+                    QStringLiteral(
+                        "open-workspace: requested workspace is a system or sensitive path."),
                 };
             }
             currentWorkingDirectory = workspacePath;

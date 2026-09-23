@@ -163,6 +163,7 @@ void SQLiteMemoryStore::open() {
         setLastError(database_.lastError().text());
     } else {
         applySqlitePerformancePragmas(database_);
+        QFile::setPermissions(databasePath_, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
         setLastError({});
     }
 }

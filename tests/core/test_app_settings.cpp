@@ -74,6 +74,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
     QVERIFY(settings->localChatInferenceEnabled());
     QVERIFY(settings->localInferenceStreamingEnabled());
+    QCOMPARE(settings->localInferenceTimeoutMs(), 0);
     QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(!settings->semanticPromptInclusionEnabled());
     QVERIFY(settings->contextExplainabilityVisible());
@@ -728,6 +729,8 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setSelectedLocalModel(QStringLiteral(" llama3.2 "));
         settings.setLocalChatInferenceEnabled(true);
         settings.setLocalInferenceStreamingEnabled(true);
+        settings.setLocalInferenceTimeoutMs(45000);
+        settings.setLocalInferenceTimeoutMs(0);
         settings.setPromptContextInjectionEnabled(true);
         settings.setSemanticPromptInclusionEnabled(true);
         settings.setContextExplainabilityVisible(false);
@@ -753,6 +756,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QCOMPARE(reloaded.selectedLocalModel(), QStringLiteral("llama3.2"));
     QVERIFY(reloaded.localChatInferenceEnabled());
     QVERIFY(reloaded.localInferenceStreamingEnabled());
+    QCOMPARE(reloaded.localInferenceTimeoutMs(), 0);
     QVERIFY(reloaded.promptContextInjectionEnabled());
     QVERIFY(reloaded.semanticPromptInclusionEnabled());
     QVERIFY(!reloaded.contextExplainabilityVisible());

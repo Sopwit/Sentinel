@@ -2,6 +2,8 @@
 #include "sentinel/core/security/PolicyEvaluator.h"
 #include "sentinel/core/util/Base64Url.h"
 
+#include <QFile>
+#include <QTemporaryDir>
 #include <QtTest>
 
 using namespace sentinel::core;
@@ -11,6 +13,8 @@ class SecurityUtilitiesTest final : public QObject {
 private slots:
     void policyIsLastMatchWins();
     void pathGuardBlocksEscape();
+    void pathGuardBlocksSymlinkEscape();
+    void pathGuardResolvesMissingChild();
     void base64UrlRoundTrips();
 };
 
@@ -29,6 +33,36 @@ void SecurityUtilitiesTest::pathGuardBlocksEscape() {
         PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project/src")));
     QVERIFY(
         !PathGuard::contains(QStringLiteral("/tmp/project"), QStringLiteral("/tmp/project-other")));
+}
+
+void SecurityUtilitiesTest::pathGuardBlocksSymlinkEscape() {
+    QTemporaryDir root;
+    QTemporaryDir outside;
+    QVERIFY(root.isValid());
+    QVERIFY(outside.isValid());
+
+    const QString secretPath = outside.filePath(QStringLiteral("secret.txt"));
+    QFile secret(secretPath);
+    QVERIFY(secret.open(QIODevice::WriteOnly));
+    secret.write("outside");
+    secret.close();
+
+    const QString linkPath = root.filePath(QStringLiteral("link.txt"));
+    QVERIFY(QFile::link(secretPath, linkPath));
+
+    QVERIFY(PathGuard::contains(root.path(), root.path()));
+    QVERIFY(!PathGuard::contains(root.path(), linkPath));
+    QVERIFY(PathGuard::safePath(root.path(), linkPath).isEmpty());
+}
+
+void SecurityUtilitiesTest::pathGuardResolvesMissingChild() {
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+
+    const QString missing = root.filePath(QStringLiteral("nested/new-file.txt"));
+    QVERIFY(PathGuard::contains(root.path(), missing));
+    QCOMPARE(PathGuard::safePath(root.path(), missing),
+             PathGuard::canonicalPath(missing));
 }
 
 void SecurityUtilitiesTest::base64UrlRoundTrips() {

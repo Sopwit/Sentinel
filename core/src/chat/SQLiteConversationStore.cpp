@@ -491,6 +491,7 @@ void SQLiteConversationStore::open() {
         setLastError(ConversationStoreErrorCode::Unavailable, database_.lastError().text());
     } else {
         applySqlitePerformancePragmas(database_);
+        QFile::setPermissions(databasePath_, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
         setLastError(ConversationStoreErrorCode::None, {});
     }
 }

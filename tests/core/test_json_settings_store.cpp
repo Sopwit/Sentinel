@@ -18,6 +18,7 @@ private slots:
     void returnsDefaultsForMissingFile();
     void persistsValuesAcrossInstances();
     void createsParentDirectories();
+    void usesOwnerOnlyFilePermissions();
 };
 
 void JsonSettingsStoreTest::returnsDefaultsForMissingFile() {
@@ -58,6 +59,23 @@ void JsonSettingsStoreTest::createsParentDirectories() {
     store.setValue(QStringLiteral("themeName"), QStringLiteral("Sentinel Dark"));
 
     QVERIFY(QFile::exists(filePath));
+}
+
+void JsonSettingsStoreTest::usesOwnerOnlyFilePermissions() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto filePath = dir.filePath(QStringLiteral("settings.json"));
+
+    JsonSettingsStore store(filePath);
+    store.setValue(QStringLiteral("themeName"), QStringLiteral("Sentinel Light"));
+
+    const auto permissions = QFile::permissions(filePath);
+    QVERIFY(permissions & QFileDevice::ReadOwner);
+    QVERIFY(permissions & QFileDevice::WriteOwner);
+    QVERIFY(!(permissions & QFileDevice::ReadGroup));
+    QVERIFY(!(permissions & QFileDevice::WriteGroup));
+    QVERIFY(!(permissions & QFileDevice::ReadOther));
+    QVERIFY(!(permissions & QFileDevice::WriteOther));
 }
 
 QTEST_MAIN(JsonSettingsStoreTest)

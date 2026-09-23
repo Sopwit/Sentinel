@@ -2162,7 +2162,7 @@ private:
     std::thread agentLoopThread_;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = true;
-    int localInferenceTimeoutMs_ = 30000;
+    int localInferenceTimeoutMs_ = 0;
     double localInferenceTemperature_ = 0.7;
     double localInferenceTopP_ = 0.9;
     int localInferenceMaxTokens_ = 2048;
