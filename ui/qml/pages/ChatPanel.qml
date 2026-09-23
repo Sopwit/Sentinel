@@ -298,8 +298,8 @@ ShellPanel {
 
             EmptyState {
                 visible: true
-                icon: chatPanel.conversationFilter === "Pinned" ? "\u{1F4CC}"
-                       : chatPanel.conversationSearchText.length > 0 ? "\u{1F50D}" : "\u{1F4AC}"
+                icon: chatPanel.conversationFilter === "Pinned" ? "pin"
+                       : chatPanel.conversationSearchText.length > 0 ? "search" : "message-circle"
                 title: chatPanel.conversationFilter === "Pinned"
                        ? qsTr("No pinned conversations yet")
                        : chatPanel.conversationSearchText.length > 0
@@ -492,7 +492,7 @@ ShellPanel {
                             id: overflowButton
                             Layout.preferredWidth: 30
                             Layout.preferredHeight: 30
-                            text: "\u22ef"
+                            text: ""
                             hoverEnabled: true
                             focusPolicy: Qt.StrongFocus
                             onClicked: overflowMenu.open()

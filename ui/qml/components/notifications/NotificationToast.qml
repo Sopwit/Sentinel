@@ -38,22 +38,22 @@ Item {
 
     function priorityIcon(priority) {
         switch (priority) {
-            case "Critical": return "\u26A0"
-            case "High": return "\u2191"
-            case "Low": return "\u2193"
-            default: return "\u25CF"
+            case "Critical": return "alert-triangle"
+            case "High": return "arrow-up"
+            case "Low": return "arrow-down"
+            default: return "circle"
         }
     }
 
     function categoryIcon(cat) {
         switch (cat) {
-            case "Tasks": return "\u26A1"
-            case "Models": return "\uD83E\uDDE0"
-            case "Updates": return "\uD83D\uDD04"
-            case "Brain": return "\uD83D\uDCA1"
-            case "Workspace": return "\uD83D\uDCC1"
-            case "Security": return "\uD83D\uDEE1\uFE0F"
-            default: return "\uD83D\uDD14"
+            case "Tasks": return "bolt"
+            case "Models": return "brain"
+            case "Updates": return "refresh"
+            case "Brain": return "bulb"
+            case "Workspace": return "folder"
+            case "Security": return "shield"
+            default: return "bell"
         }
     }
 
@@ -250,8 +250,14 @@ Item {
                             spacing: 6
                             Layout.fillWidth: true
 
+                            TablerGlyph {
+                                text: categoryIcon(model.category)
+                                font.pixelSize: SentinelTheme.fontSmall
+                                color: priorityColor(model.priority)
+                            }
+
                             Text {
-                                text: categoryIcon(model.category) + " " + model.category
+                                text: model.category
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
                                 color: priorityColor(model.priority)
@@ -305,7 +311,7 @@ Item {
                     }
 
                     SentinelButton {
-                        text: "\u00D7"
+                        iconName: "x"
                         implicitWidth: 24
                         implicitHeight: 24
                         flat: true

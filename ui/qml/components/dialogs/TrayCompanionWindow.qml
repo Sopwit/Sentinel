@@ -298,7 +298,7 @@ Window {
                         implicitWidth: 28
                         implicitHeight: 28
                         flat: true
-                        text: companionWin.menuOpen ? "\uD83D\uDCAC" : "\u2699\uFE0F"
+                        iconName: companionWin.menuOpen ? "message-circle" : "settings"
                         font.pixelSize: 12
                         highlighted: companionWin.menuOpen
                         tooltipText: companionWin.menuOpen ? qsTr("Chat") : qsTr("Menu")
@@ -310,7 +310,7 @@ Window {
                         implicitWidth: 28
                         implicitHeight: 28
                         flat: true
-                        text: companionWin.alwaysOnTop ? "\uD83D\uDCCC" : "\uD83D\uDCCD"
+                        iconName: companionWin.alwaysOnTop ? "pin" : "map-pin"
                         font.pixelSize: 12
                         tooltipText: companionWin.alwaysOnTop ? qsTr("Unpin from top") : qsTr("Keep on top")
                         Accessible.name: companionWin.alwaysOnTop ? qsTr("Disable always on top") : qsTr("Enable always on top")
@@ -321,7 +321,7 @@ Window {
                         implicitWidth: 28
                         implicitHeight: 28
                         flat: true
-                        text: "\u2197"
+                        iconName: "arrow-up-right"
                         font.pixelSize: 13
                         font.bold: true
                         tooltipText: qsTr("Open full app")
@@ -339,7 +339,7 @@ Window {
                         implicitWidth: 28
                         implicitHeight: 28
                         flat: true
-                        text: "\u2715"
+                        iconName: "x"
                         font.pixelSize: 12
                         tooltipText: qsTr("Close")
                         Accessible.name: qsTr("Close companion window")
@@ -467,8 +467,8 @@ Window {
                                                 Layout.fillWidth: true
                                                 spacing: 6
 
-                                                Label {
-                                                    text: isUser ? "\uD83D\uDC64" : "\uD83E\uDD16"
+                                                TablerGlyph {
+                                                    text: isUser ? "user" : "robot"
                                                     font.pixelSize: 12
                                                 }
 
@@ -520,7 +520,7 @@ Window {
                                                     implicitWidth: 22
                                                     implicitHeight: 22
                                                     flat: true
-                                                    text: "\uD83D\uDCCB"
+                                                    iconName: "clipboard"
                                                     font.pixelSize: 10
                                                     tooltipText: qsTr("Copy")
                                                     Accessible.name: qsTr("Copy message")
@@ -531,7 +531,7 @@ Window {
                                                     implicitWidth: 22
                                                     implicitHeight: 22
                                                     flat: true
-                                                    text: "\uD83D\uDD04"
+                                                    iconName: "refresh"
                                                     font.pixelSize: 10
                                                     tooltipText: qsTr("Retry")
                                                     Accessible.name: qsTr("Retry message")
@@ -570,9 +570,9 @@ Window {
                                         SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel"), 0.25)
                                     border.width: 1
 
-                                    Text {
+                                    TablerGlyph {
                                         anchors.centerIn: parent
-                                        text: "\u26A1"
+                                        text: "bolt"
                                         font.pixelSize: 24
                                     }
 
@@ -624,9 +624,9 @@ Window {
                                 shadowOpacity: 1.0
                             }
 
-                            Text {
+                            TablerGlyph {
                                 anchors.centerIn: parent
-                                text: "\u2193"
+                                text: "arrow-down"
                                 font.pixelSize: 14
                                 font.bold: true
                                 color: SentinelTheme.textPrimary
@@ -725,18 +725,18 @@ Window {
 
                         Repeater {
                             model: [
-                                { label: "\u26A1 " + qsTr("Summarize"), prompt: "Please summarize this:" },
-                                { label: "\uD83D\uDCA1 " + qsTr("Explain"), prompt: "Explain in simple terms:" },
-                                { label: "\uD83D\uDEE0\uFE0F " + qsTr("Fix Code"), prompt: "Review and fix this code:" },
-                                { label: "\uD83D\uDCDD " + qsTr("Note"), prompt: "Note down:" },
-                                { label: "\uD83D\uDD0D " + qsTr("Search"), prompt: "Search for information on:" }
+                                { icon: "bolt", label: qsTr("Summarize"), prompt: "Please summarize this:" },
+                                { icon: "bulb", label: qsTr("Explain"), prompt: "Explain in simple terms:" },
+                                { icon: "tool", label: qsTr("Fix Code"), prompt: "Review and fix this code:" },
+                                { icon: "notes", label: qsTr("Note"), prompt: "Note down:" },
+                                { icon: "search", label: qsTr("Search"), prompt: "Search for information on:" }
                             ]
 
                             delegate: Rectangle {
                                 id: chipRect
                                 required property var modelData
                                 height: 26
-                                width: chipText.implicitWidth + 16
+                                width: chipContent.implicitWidth + 16
                                 radius: 13
                                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
@@ -754,12 +754,20 @@ Window {
                                 Accessible.role: Accessible.Button
                                 Accessible.name: modelData.label
 
-                                Text {
-                                    id: chipText
+                                Row {
+                                    id: chipContent
                                     anchors.centerIn: parent
-                                    text: modelData.label
-                                    font.pixelSize: 11
-                                    color: SentinelTheme.textPrimary
+                                    spacing: 4
+                                    TablerGlyph {
+                                        text: modelData.icon
+                                        font.pixelSize: 12
+                                        color: SentinelTheme.textPrimary
+                                    }
+                                    Text {
+                                        text: modelData.label
+                                        font.pixelSize: 11
+                                        color: SentinelTheme.textPrimary
+                                    }
                                 }
 
                                 MouseArea {
@@ -818,9 +826,9 @@ Window {
                                     radius: 16
                                     color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
 
-                                    Label {
+                                    TablerGlyph {
                                         anchors.centerIn: parent
-                                        text: "🛡"
+                                        text: "shield"
                                         font.pixelSize: 16
                                     }
                                 }
@@ -872,9 +880,9 @@ Window {
 
                         Repeater {
                             model: [
-                                { icon: "💬", text: qsTr("Quick Prompt"), shortcut: "Ctrl+Shift+C", action: "quickChat" },
-                                { icon: "✨", text: qsTr("New Conversation"), shortcut: "Ctrl+N", action: "newChat" },
-                                { icon: "🗑️", text: qsTr("Clear Current Chat"), shortcut: "", action: "clearChat" }
+                                { icon: "message-circle", text: qsTr("Quick Prompt"), shortcut: "Ctrl+Shift+C", action: "quickChat" },
+                                { icon: "sparkles", text: qsTr("New Conversation"), shortcut: "Ctrl+N", action: "newChat" },
+                                { icon: "trash", text: qsTr("Clear Current Chat"), shortcut: "", action: "clearChat" }
                             ]
 
                             delegate: Rectangle {
@@ -904,7 +912,7 @@ Window {
                                     anchors.rightMargin: SentinelTheme.spaceSm
                                     spacing: SentinelTheme.spaceSm
 
-                                    Text {
+                                    TablerGlyph {
                                         text: modelData.icon
                                         font.pixelSize: 14
                                     }
@@ -965,11 +973,11 @@ Window {
 
                         Repeater {
                             model: [
-                                { icon: companionWin.alwaysOnTop ? "📌" : "📍",
+                                { icon: companionWin.alwaysOnTop ? "pin" : "map-pin",
                                   text: qsTr("Always On Top"),
                                   shortcut: companionWin.alwaysOnTop ? "ON" : "OFF",
                                   action: "togglePin" },
-                                { icon: viewModel && viewModel.companionPaused ? "▶" : "⏸",
+                                { icon: viewModel && viewModel.companionPaused ? "player-play" : "player-pause",
                                   text: viewModel && viewModel.companionPaused ? qsTr("Resume Companion") : qsTr("Pause Companion"),
                                   shortcut: viewModel && viewModel.companionPaused ? "PAUSED" : "ACTIVE",
                                   action: "togglePause" }
@@ -1002,7 +1010,7 @@ Window {
                                     anchors.rightMargin: SentinelTheme.spaceSm
                                     spacing: SentinelTheme.spaceSm
 
-                                    Text {
+                                    TablerGlyph {
                                         text: modelData.icon
                                         font.pixelSize: 14
                                     }
@@ -1062,10 +1070,10 @@ Window {
 
                         Repeater {
                             model: [
-                                { icon: "🖥️", text: qsTr("Open Full App"), shortcut: "Ctrl+1", action: "dashboard" },
-                                { icon: "⚙️", text: qsTr("Settings"), shortcut: "Ctrl+,", action: "settings" },
-                                { icon: "🔄", text: qsTr("Check Updates"), shortcut: "", action: "updates" },
-                                { icon: "🚪", text: qsTr("Quit Sentinel"), shortcut: "Ctrl+Q", action: "quit" }
+                                { icon: "device-desktop", text: qsTr("Open Full App"), shortcut: "Ctrl+1", action: "dashboard" },
+                                { icon: "settings", text: qsTr("Settings"), shortcut: "Ctrl+,", action: "settings" },
+                                { icon: "refresh", text: qsTr("Check Updates"), shortcut: "", action: "updates" },
+                                { icon: "logout", text: qsTr("Quit Sentinel"), shortcut: "Ctrl+Q", action: "quit" }
                             ]
 
                             delegate: Rectangle {
@@ -1095,7 +1103,7 @@ Window {
                                     anchors.rightMargin: SentinelTheme.spaceSm
                                     spacing: SentinelTheme.spaceSm
 
-                                    Text {
+                                    TablerGlyph {
                                         text: modelData.icon
                                         font.pixelSize: 14
                                     }
@@ -1251,7 +1259,7 @@ Window {
                         Layout.alignment: Qt.AlignBottom
 
                         SentinelButton {
-                            text: "\uD83D\uDCE8"
+                            iconName: "send"
                             implicitHeight: 32
                             implicitWidth: 40
                             font.pixelSize: 14

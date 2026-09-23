@@ -79,10 +79,10 @@ ComboBox {
         }
     }
 
-    indicator: Text {
+    indicator: TablerGlyph {
         x: parent.width - width - SentinelTheme.spaceMd
         y: parent.height / 2 - height / 2
-        text: "\u276f"
+        text: "chevron-right"
         rotation: control.popup.visible ? 270 : 90
         color: control.popup.visible ? control.accent : SentinelTheme.textMuted
         font.pixelSize: SentinelTheme.fontSmall
@@ -240,9 +240,9 @@ ComboBox {
                 elide: Text.ElideRight
             }
 
-            Text {
+            TablerGlyph {
                 visible: control.popupShowsCheckmark && control.currentIndex === index
-                text: "\u2713"
+                text: "check"
                 color: control.accent
                 font.pixelSize: SentinelTheme.fontSmall
                 font.bold: true

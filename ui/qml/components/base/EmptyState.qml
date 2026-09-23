@@ -10,7 +10,7 @@ import Sentinel.Desktop
 Item {
     id: root
 
-    property string icon: "\u{1F50D}"
+    property string icon: "search"
     property string title: qsTr("Nothing here yet")
     property string description: ""
     property string actionLabel: ""
@@ -34,10 +34,14 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             spacing: root.compact ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
 
-            Text {
+            Image {
                 Layout.alignment: Qt.AlignHCenter
-                text: root.icon
-                font.pixelSize: root.compact ? 36 : 48
+                source: "qrc:/icons/tabler/" + root.icon + ".svg"
+                sourceSize.width: root.compact ? 36 : 48
+                sourceSize.height: root.compact ? 36 : 48
+                width: root.compact ? 36 : 48
+                height: width
+                fillMode: Image.PreserveAspectFit
             }
 
             Label {

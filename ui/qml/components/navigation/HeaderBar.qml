@@ -106,7 +106,7 @@ ShellPanel {
                 implicitWidth: 32
                 implicitHeight: 32
                 flat: true
-                text: "\uD83D\uDCAC"
+                iconName: "message-circle"
                 font.pixelSize: 16
                 tooltipText: qsTr("Toggle System Tray Companion Chat")
                 onClicked: {
@@ -129,7 +129,7 @@ ShellPanel {
                     implicitWidth: 24
                     implicitHeight: 24
                     flat: true
-                    text: "\uD83D\uDD07"
+                    iconName: "volume-off"
                     font.pixelSize: 12
                     tooltipText: qsTr("Do Not Disturb is on. Click to disable.")
                     Accessible.name: qsTr("Disable do not disturb")

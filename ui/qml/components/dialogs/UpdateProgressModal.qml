@@ -153,8 +153,8 @@ SentinelOverlayModal {
                         radius: 14
                         color: closeBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08) : "transparent"
                     }
-                    contentItem: Label {
-                        text: "\u00D7"
+                    contentItem: TablerGlyph {
+                        text: "x"
                         font.pixelSize: 20
                         font.bold: true
                         color: SentinelTheme.textMuted

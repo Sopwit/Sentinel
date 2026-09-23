@@ -49,9 +49,9 @@ Item {
                         radius: 12
                         color: SentinelTheme.withAlpha(root.brandAccent, 0.12)
 
-                        Label {
+                        TablerGlyph {
                             anchors.centerIn: parent
-                            text: "\u2713"
+                            text: "check"
                             color: root.brandAccent
                             font.pixelSize: SentinelTheme.fontSmall
                             font.bold: true

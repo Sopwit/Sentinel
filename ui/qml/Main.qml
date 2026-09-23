@@ -261,40 +261,17 @@ ApplicationWindow {
             implicitWidth: 22
             implicitHeight: 22
 
-            Canvas {
+            Image {
                 anchors.centerIn: parent
-                width: 20
-                height: 20
-                antialiasing: true
-
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.reset()
-                    var c = SentinelTheme.textPrimary
-                    ctx.strokeStyle = Qt.rgba(c.r, c.g, c.b, 0.9)
-                    ctx.lineWidth = 1.6
-                    ctx.lineJoin = "round"
-                    ctx.lineCap = "round"
-
-                    var cx = width / 2
-                    var cy = height / 2
-
-                    // Outer gear ring
-                    for (var i = 0; i < 8; i++) {
-                        var a = i * Math.PI / 4
-                        var innerR = 7
-                        var outerR = 10
-                        ctx.beginPath()
-                        ctx.moveTo(cx + Math.cos(a - 0.25) * innerR, cy + Math.sin(a - 0.25) * innerR)
-                        ctx.lineTo(cx + Math.cos(a) * outerR, cy + Math.sin(a) * outerR)
-                        ctx.lineTo(cx + Math.cos(a + 0.25) * innerR, cy + Math.sin(a + 0.25) * innerR)
-                        ctx.stroke()
-                    }
-
-                    // Inner circle
-                    ctx.beginPath()
-                    ctx.arc(cx, cy, 4.5, 0, Math.PI * 2)
-                    ctx.stroke()
+                width: 22
+                height: 22
+                source: "qrc:/icons/tabler/settings.svg"
+                sourceSize.width: 22
+                sourceSize.height: 22
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: SentinelTheme.textPrimary
                 }
             }
         }

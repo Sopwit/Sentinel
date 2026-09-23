@@ -11,6 +11,7 @@ Button {
     id: control
 
     property string tooltipText: ""
+    property string iconName: ""
     property bool premium: false
     property color accent: SentinelTheme.calmAccent
 
@@ -26,18 +27,37 @@ Button {
     font.pixelSize: SentinelTheme.fontControl
     font.bold: false
 
-    contentItem: Text {
-        text: control.text
-        color: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-        font: control.font
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: Math.max(18, contentText.implicitHeight)
 
-        Behavior on color {
-            ColorAnimation {
-                duration: MotionTokens.fast
-                easing.type: MotionTokens.standard
+        Row {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: control.iconName && control.text ? 6 : 0
+
+            Image {
+                visible: !!control.iconName
+                width: visible ? 18 : 0
+                height: 18
+                source: control.iconName ? "qrc:/icons/tabler/" + control.iconName + ".svg" : ""
+                sourceSize.width: 18
+                sourceSize.height: 18
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                }
+            }
+
+            Text {
+                id: contentText
+                visible: !!control.text
+                text: control.text
+                color: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                font: control.font
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
             }
         }
     }

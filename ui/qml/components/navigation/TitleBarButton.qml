@@ -4,11 +4,12 @@
 
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 
 Rectangle {
     id: root
 
-    property string symbol: ""
+    property string iconName: ""
     property string tooltip: ""
     property color hoverColor: "transparent"
     property color hoverTextColor: SentinelTheme.textPrimary
@@ -28,14 +29,18 @@ Rectangle {
         ColorAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.standard }
     }
 
-    Text {
+    Image {
         anchors.centerIn: parent
-        text: root.symbol
-        color: root.textColor
-        font.pixelSize: 14
-        font.weight: Font.Normal
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
+        width: 16
+        height: 16
+        source: "qrc:/icons/tabler/" + root.iconName + ".svg"
+        sourceSize.width: 16
+        sourceSize.height: 16
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            colorization: 1.0
+            colorizationColor: root.textColor
+        }
     }
 
     MouseArea {

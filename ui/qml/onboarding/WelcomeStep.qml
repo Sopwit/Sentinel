@@ -13,10 +13,10 @@ Item {
     property color brandAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
 
     readonly property var features: [
-        { icon: "\u2699", title: qsTr("Local-first"), caption: qsTr("Inference runs on your machine with Ollama, LM Studio, or llama.cpp.") },
-        { icon: "\uD83D\uDD10", title: qsTr("Private by design"), caption: qsTr("Memory, chat history, and knowledge stay on your device.") },
-        { icon: "\u2714", title: qsTr("No telemetry"), caption: qsTr("No hidden uploads, silent updates, or cloud activation.") },
-        { icon: "\uD83C\uDF10", title: qsTr("Cross-platform"), caption: qsTr("A portable Qt experience across Linux, Windows, and macOS.") }
+        { icon: "device-desktop", title: qsTr("Local-first"), caption: qsTr("Inference runs on your machine with Ollama, LM Studio, or llama.cpp.") },
+        { icon: "lock", title: qsTr("Private by design"), caption: qsTr("Memory, chat history, and knowledge stay on your device.") },
+        { icon: "check", title: qsTr("No telemetry"), caption: qsTr("No hidden uploads, silent updates, or cloud activation.") },
+        { icon: "world", title: qsTr("Cross-platform"), caption: qsTr("A portable Qt experience across Linux, Windows, and macOS.") }
     ]
 
     ColumnLayout {
@@ -91,10 +91,12 @@ Item {
                         anchors.margins: SentinelTheme.spaceLg
                         spacing: SentinelTheme.spaceSm
 
-                        Label {
-                            text: modelData.icon
-                            color: root.brandAccent
-                            font.pixelSize: 22
+                        Image {
+                            source: "qrc:/icons/tabler/" + modelData.icon + ".svg"
+                            sourceSize.width: 22
+                            sourceSize.height: 22
+                            width: 22
+                            height: 22
                         }
 
                         Label {

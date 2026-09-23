@@ -735,16 +735,16 @@ Item {
     }
 
     function categoryIcon(cat) {
-        if (cat === "All") return "❖"
-        if (cat === "LLM") return "💬"
-        if (cat === "Think") return "🧠"
-        if (cat === "Vision") return "👁️"
-        if (cat === "Image") return "🎨"
-        if (cat === "Video") return "🎬"
-        if (cat === "STT") return "🎙️"
-        if (cat === "TTS") return "🔊"
-        if (cat === "Runtime") return "⚙️"
-        return "•"
+        if (cat === "All") return "layout-dashboard"
+        if (cat === "LLM") return "message-circle"
+        if (cat === "Think") return "brain"
+        if (cat === "Vision") return "eye"
+        if (cat === "Image") return "palette"
+        if (cat === "Video") return "movie"
+        if (cat === "STT") return "microphone"
+        if (cat === "TTS") return "volume-2"
+        if (cat === "Runtime") return "settings"
+        return "circle"
     }
 
     function categoryIconSize(cat) {
@@ -894,7 +894,7 @@ Item {
                                         anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
                                         anchors.horizontalCenter: modelsPage.sidebarCollapsed ? parent.horizontalCenter : undefined
 
-                                        Text {
+                                        TablerGlyph {
                                             anchors.centerIn: parent
                                             text: modelsPage.categoryIcon(modelData)
                                             font.family: SentinelTheme.iconFontFamily
@@ -1013,7 +1013,7 @@ Item {
 
                         SentinelTextField {
                             id: searchField
-                            placeholderText: qsTr("🔍 Search models…")
+                            placeholderText: qsTr("Search models…")
                             implicitWidth: 180
                             implicitHeight: 26
                             font.pixelSize: SentinelTheme.fontTiny
@@ -1297,7 +1297,7 @@ Item {
 
             EmptyState {
                 visible: true
-                icon: modelsPage.searchQuery.length > 0 ? "\u{1F50D}" : "\u{1F9E0}"
+                icon: modelsPage.searchQuery.length > 0 ? "search" : "brain"
                 title: modelsPage.searchQuery.length > 0 ? qsTr("No models match your search")
                        : modelsPage.activeCategory === "Installed" ? qsTr("No installed models yet")
                        : qsTr("No models available")

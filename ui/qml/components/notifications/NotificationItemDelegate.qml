@@ -67,22 +67,22 @@ Rectangle {
 
     function priorityIcon(p) {
         switch (p) {
-            case "Critical": return "\u26A0"
-            case "High": return "\u2191"
-            case "Low": return "\u2193"
-            default: return "\u25CF"
+            case "Critical": return "alert-triangle"
+            case "High": return "arrow-up"
+            case "Low": return "arrow-down"
+            default: return "circle"
         }
     }
 
     function categoryIcon(cat) {
         switch (cat) {
-            case "Tasks": return "\u26A1"
-            case "Models": return "\uD83E\uDDE0"
-            case "Updates": return "\uD83D\uDD04"
-            case "Brain": return "\uD83D\uDCA1"
-            case "Workspace": return "\uD83D\uDCC1"
-            case "Security": return "\uD83D\uDEE1\uFE0F"
-            default: return "\uD83D\uDD14"
+            case "Tasks": return "bolt"
+            case "Models": return "brain"
+            case "Updates": return "refresh"
+            case "Brain": return "bulb"
+            case "Workspace": return "folder"
+            case "Security": return "shield"
+            default: return "bell"
         }
     }
 
@@ -121,8 +121,14 @@ Rectangle {
                 spacing: 8
                 Layout.fillWidth: true
 
+                TablerGlyph {
+                    text: notifData ? categoryIcon(notifData.category) : ""
+                    font.pixelSize: SentinelTheme.fontSmall
+                    color: notifData ? priorityColor(notifData.priority) : SentinelTheme.textMuted
+                }
+
                 Text {
-                    text: notifData ? categoryIcon(notifData.category) + " " + notifData.category : ""
+                    text: notifData ? notifData.category : ""
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: true
                     color: notifData ? priorityColor(notifData.priority) : SentinelTheme.textMuted
@@ -153,18 +159,18 @@ Rectangle {
                     Accessible.name: notifData ? "Time: " + timeAgo(notifData.timestamp) : ""
                 }
 
-                Text {
+                TablerGlyph {
                     visible: notifData && notifData.pinned
-                    text: "\uD83D\uDCCC"
+                    text: "pin"
                     font.pixelSize: SentinelTheme.fontSmall
 
                     Accessible.role: Accessible.Graphic
                     Accessible.name: "Pinned"
                 }
 
-                Text {
+                TablerGlyph {
                     visible: notifData && notifData.snoozed
-                    text: "\u23F0"
+                    text: "alarm"
                     font.pixelSize: SentinelTheme.fontSmall
 
                     Accessible.role: Accessible.Graphic
@@ -205,7 +211,7 @@ Rectangle {
             visible: mouseArea.containsMouse
 
             SentinelButton {
-                text: notifData && notifData.pinned ? "\uD83D\uDCCC" : "\uD83D\uDCCD"
+                iconName: notifData && notifData.pinned ? "pin" : "map-pin"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
@@ -219,7 +225,7 @@ Rectangle {
             }
 
             SentinelButton {
-                text: "\u2713"
+                iconName: "check"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
@@ -235,7 +241,7 @@ Rectangle {
 
             SentinelButton {
                 id: snoozeBtn
-                text: "\u23F0"
+                iconName: "alarm"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
@@ -282,7 +288,7 @@ Rectangle {
             }
 
             SentinelButton {
-                text: "\uD83D\uDCC1"
+                iconName: "folder"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
@@ -300,7 +306,7 @@ Rectangle {
             }
 
             SentinelButton {
-                text: "\u00D7"
+                iconName: "x"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true

@@ -49,13 +49,13 @@ ShellPanel {
 
     function categoryIcon(cat) {
         switch (cat) {
-            case "Tasks": return "\u26A1"
-            case "Models": return "\uD83E\uDDE0"
-            case "Updates": return "\uD83D\uDD04"
-            case "Brain": return "\uD83D\uDCA1"
-            case "Workspace": return "\uD83D\uDCC1"
-            case "Security": return "\uD83D\uDEE1\uFE0F"
-            default: return "\uD83D\uDD14"
+            case "Tasks": return "bolt"
+            case "Models": return "brain"
+            case "Updates": return "refresh"
+            case "Brain": return "bulb"
+            case "Workspace": return "folder"
+            case "Security": return "shield"
+            default: return "bell"
         }
     }
 
@@ -108,7 +108,7 @@ ShellPanel {
 
                 // ── DND toggle ───────────────────────────────────
                 SentinelButton {
-                    text: viewModel && viewModel.dndEnabled ? "\uD83D\uDD07" : "\uD83D\uDD0A"
+                    iconName: viewModel && viewModel.dndEnabled ? "volume-off" : "volume-2"
                     implicitWidth: 32
                     implicitHeight: 32
                     flat: true
@@ -141,7 +141,7 @@ ShellPanel {
                 }
 
                 SentinelButton {
-                    text: "\u00D7"
+                    iconName: "x"
                     implicitWidth: 32
                     implicitHeight: 32
                     flat: true
@@ -182,7 +182,8 @@ ShellPanel {
                 model: viewModel ? viewModel.notificationCategories : ["All"]
 
                 delegate: SentinelButton {
-                    text: modelData === "All" ? qsTr("All") : root.categoryIcon(modelData) + " " + modelData
+                    text: modelData === "All" ? qsTr("All") : modelData
+                    iconName: modelData === "All" ? "" : root.categoryIcon(modelData)
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: root.activeFilter === modelData
@@ -314,7 +315,8 @@ ShellPanel {
 
                     delegate: SentinelButton {
                         property bool muted: viewModel ? viewModel.isChannelMuted(modelData) : false
-                        text: root.categoryIcon(modelData) + " " + modelData + (muted ? " \uD83D\uDD07" : "")
+                        text: modelData
+                        iconName: root.categoryIcon(modelData)
                         flat: true
                         font.pixelSize: SentinelTheme.fontTiny
                         highlighted: !muted
@@ -387,8 +389,14 @@ ShellPanel {
                 anchors.rightMargin: 12
                 spacing: 6
 
+                TablerGlyph {
+                    text: root.categoryIcon(model.groupName)
+                    font.pixelSize: SentinelTheme.fontSmall
+                    color: SentinelTheme.textPrimary
+                }
+
                 Text {
-                    text: root.categoryIcon(model.groupName) + " " + model.groupName
+                    text: model.groupName
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: true
                     color: SentinelTheme.textPrimary
@@ -421,8 +429,8 @@ ShellPanel {
 
                 Item { Layout.fillWidth: true }
 
-                Text {
-                    text: model.expanded ? "\u25BC" : "\u25B6"
+                TablerGlyph {
+                    text: model.expanded ? "chevron-down" : "chevron-right"
                     font.pixelSize: 10
                     color: SentinelTheme.textMuted
                 }

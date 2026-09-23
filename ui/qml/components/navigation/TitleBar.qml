@@ -55,19 +55,19 @@ Item {
             }
 
             TitleBarButton {
-                symbol: "\u{2014}"
+                iconName: "minus"
                 tooltip: qsTr("Minimize")
                 onClicked: root.minimizeRequested()
             }
 
             TitleBarButton {
-                symbol: root.maximized ? "\u{25A1}" : "\u{25A2}"
+                iconName: root.maximized ? "minimize" : "maximize"
                 tooltip: root.maximized ? qsTr("Restore") : qsTr("Maximize")
                 onClicked: root.maximizeRequested()
             }
 
             TitleBarButton {
-                symbol: "\u2715"
+                iconName: "x"
                 tooltip: qsTr("Close")
                 hoverColor: "#ef4444"
                 hoverTextColor: "#ffffff"
