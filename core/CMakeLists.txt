@@ -8,9 +8,12 @@ add_library(sentinel_core STATIC
     include/sentinel/core/AppBuildConfig.h.in
     include/sentinel/core/agent/AgentActivityLog.h
     include/sentinel/core/agent/AgentLoop.h
+    include/sentinel/core/agent/AgentEvent.h
+    include/sentinel/core/agent/AgentLoopState.h
     include/sentinel/core/agent/AgentMetadata.h
     include/sentinel/core/agent/AgentPipelineResult.h
     include/sentinel/core/agent/AgentRuntimeContext.h
+    include/sentinel/core/agent/AgentRuntime.h
     include/sentinel/core/agent/AgentRuntimeService.h
     include/sentinel/core/agent/AgentTaskRuntime.h
     include/sentinel/core/agent/ControlledAgentTasks.h
@@ -151,6 +154,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/runtime/NullToolExecutor.h
     include/sentinel/core/runtime/OllamaRuntime.h
     include/sentinel/core/runtime/RealToolExecutor.h
+    include/sentinel/core/runtime/ProcessExecutor.h
     include/sentinel/core/runtime/RuntimeCapabilities.h
     include/sentinel/core/runtime/RuntimeIntegration.h
     include/sentinel/core/runtime/RuntimePermissions.h
@@ -287,6 +291,7 @@ add_library(sentinel_core STATIC
     src/agent/AgentActivityLog.cpp
     src/agent/AgentLoop.cpp
     src/agent/AgentRuntimeContext.cpp
+    src/agent/AgentRuntime.cpp
     src/agent/AgentRuntimeService.cpp
     src/agent/AgentTaskRuntime.cpp
     src/agent/ControlledAgentTasks.cpp
@@ -442,6 +447,7 @@ add_library(sentinel_core STATIC
     src/runtime/NullToolExecutor.cpp
     src/runtime/OllamaRuntime.cpp
     src/runtime/RealToolExecutor.cpp
+    src/runtime/ProcessExecutor.cpp
     src/runtime/RuntimeCapabilities.cpp
     src/runtime/RuntimeIntegration.cpp
     src/runtime/RuntimePermissions.cpp
