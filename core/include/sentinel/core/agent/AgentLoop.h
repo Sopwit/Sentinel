@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sentinel/core/agent/AgentLoopState.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/doomloop/DoomLoopDetector.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
@@ -23,48 +24,6 @@ class IApprovalPolicy;
 class ISandboxPolicy;
 class IToolExecutor;
 
-enum class AgentLoopPhase {
-    Idle,
-    Running,
-    AwaitingApproval,
-    Completed,
-    Cancelled,
-    Failed,
-    Stuck,
-};
-
-inline QString agentLoopPhaseName(AgentLoopPhase phase) {
-    switch (phase) {
-    case AgentLoopPhase::Idle:
-        return QStringLiteral("Idle");
-    case AgentLoopPhase::Running:
-        return QStringLiteral("Running");
-    case AgentLoopPhase::AwaitingApproval:
-        return QStringLiteral("Awaiting Approval");
-    case AgentLoopPhase::Completed:
-        return QStringLiteral("Completed");
-    case AgentLoopPhase::Cancelled:
-        return QStringLiteral("Cancelled");
-    case AgentLoopPhase::Failed:
-        return QStringLiteral("Failed");
-    case AgentLoopPhase::Stuck:
-        return QStringLiteral("Stuck");
-    }
-
-    return QStringLiteral("Idle");
-}
-
-struct AgentLoopState {
-    QString sessionId;
-    QString goal;
-    AgentLoopPhase phase = AgentLoopPhase::Idle;
-    QList<AgentStepRecord> steps;
-    QString finalAnswer;
-    QString abortReason;
-    ToolInvocationPlan pendingApprovalPlan;
-    QString pendingApprovalThought;
-};
-
 class AgentLoop {
 public:
     struct Config {
@@ -78,6 +37,10 @@ public:
     using StepCallback = std::function<void(const AgentStepRecord&)>;
     using StatusCallback = std::function<void(const QString&)>;
     using CancelQuery = std::function<bool()>;
+    enum class ToolTransition { Requested, ApprovalRequired, ExecutionStarted, ExecutionFinished };
+    using ToolCallback =
+        std::function<void(ToolTransition, int, const ToolInvocationPlan&, const AgentStepRecord*)>;
+    using PlanningCallback = std::function<void(int, bool)>;
 
     AgentLoop(IAgentStepPlanner& planner, const IToolExecutor& executor,
               const IApprovalPolicy& approvalPolicy, const ISandboxPolicy& sandboxPolicy,
@@ -92,6 +55,8 @@ public:
     void setStepCallback(StepCallback callback);
     void setStatusCallback(StatusCallback callback);
     void setCancelQuery(CancelQuery query);
+    void setToolCallback(ToolCallback callback);
+    void setPlanningCallback(PlanningCallback callback);
 
     AgentLoopState run(const QString& goal, const QString& sessionId = QString());
     AgentLoopState resume(AgentLoopState state, bool approved);
@@ -119,6 +84,8 @@ private:
     StepCallback stepCallback_;
     StatusCallback statusCallback_;
     CancelQuery cancelQuery_;
+    ToolCallback toolCallback_;
+    PlanningCallback planningCallback_;
 };
 
 } // namespace sentinel::core
