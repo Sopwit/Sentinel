@@ -25,7 +25,7 @@ public:
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void setAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
     // Snapshots long-term memory entries for the memory-search tool. Captured on the
-    // controller thread before an agent run starts so tool threads never touch the
+    // calling thread before an agent run starts so tool threads never touch the
     // SQLite-backed store directly.
     void setMemorySnapshot(MemoryEntries entries);
     // Snapshots chat history lines ("[role] content") for the history-search tool.
