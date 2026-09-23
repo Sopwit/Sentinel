@@ -68,6 +68,10 @@
 
 ### D. Controlled Foreground Agent Workflows
 - **Autonomous Agent Loop (`AgentLoop` + `LlmAgentRuntime`):** Multi-step task reasoning engine.
+- **Agent Runtime Boundary:** `IAgentRuntime` exposes in-process sessions, submission,
+  approval/resume, cancellation, state, and runtime errors. `AgentRuntime` owns session
+  lifecycle and delegates execution to the existing `AgentLoop`. Desktop chat presentation
+  remains in `ApplicationController`; the same runtime can be constructed without QML.
 - **Explicit Human Approval Gate:** Every destructive or privileged tool execution (file modification, shell command, workspace deletion) halts for explicit user approval unless explicitly overridden.
 - **Tool Sandbox & Isolation:** Built-in workspace boundaries prevent tool execution outside the authorized project root directory.
 
