@@ -123,37 +123,46 @@ void NativeCompanionAdapter::initialize() {
     menu_->addSeparator();
 
     // ── Core Assistant Actions ───────────────────────────────
-    quickChatAction_ = menu_->addAction(QStringLiteral("💬 Quick Prompt (Tray Chat)"));
+    quickChatAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/message-circle.svg")),
+                                     QStringLiteral("Quick Prompt (Tray Chat)"));
     quickChatAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
 
-    newConversationAction_ = menu_->addAction(QStringLiteral("✨ New Conversation"));
+    newConversationAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/sparkles.svg")),
+                                     QStringLiteral("New Conversation"));
     newConversationAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
 
-    openAction_ = menu_->addAction(QStringLiteral("🖥 Open Main Window"));
+    openAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/device-desktop.svg")),
+                                     QStringLiteral("Open Main Window"));
     openAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_1));
 
     menu_->addSeparator();
 
     // ── Utility & Capture Actions ─────────────────────────────
-    quickNoteAction_ = menu_->addAction(QStringLiteral("📝 Quick Capture / Note"));
+    quickNoteAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/notes.svg")),
+                                     QStringLiteral("Quick Capture / Note"));
     quickNoteAction_->setEnabled(true);
 
-    clearChatAction_ = menu_->addAction(QStringLiteral("🗑 Clear Companion Session"));
+    clearChatAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/trash.svg")),
+                                     QStringLiteral("Clear Companion Session"));
 
-    pauseAction_ = menu_->addAction(QStringLiteral("⏸ Pause Companion"));
+    pauseAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/player-pause.svg")),
+                                     QStringLiteral("Pause Companion"));
 
     menu_->addSeparator();
 
     // ── Settings & Updates ────────────────────────────────────
-    settingsAction_ = menu_->addAction(QStringLiteral("⚙ Settings & Preferences..."));
+    settingsAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/settings.svg")),
+                                     QStringLiteral("Settings & Preferences..."));
     settingsAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
 
-    updateAction_ = menu_->addAction(QStringLiteral("🔄 Check for Updates..."));
+    updateAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/refresh.svg")),
+                                     QStringLiteral("Check for Updates..."));
 
     menu_->addSeparator();
 
     // ── App Lifecycle ─────────────────────────────────────────
-    quitAction_ = menu_->addAction(QStringLiteral("🚪 Quit Sentinel"));
+    quitAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/logout.svg")),
+                                     QStringLiteral("Quit Sentinel"));
     quitAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 
     QIcon trayIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png"));

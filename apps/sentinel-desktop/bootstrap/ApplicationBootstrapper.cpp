@@ -267,6 +267,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
         &m_engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
 
+    // Populate the local runtime cache before QML evaluates readiness bindings.
+    (void)m_controller->selectedLocalModelSummary();
     m_engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
     QObject* rootWindow =
