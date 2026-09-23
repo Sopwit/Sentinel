@@ -7,11 +7,12 @@
 #include "sentinel/core/agent/IAgentRuntime.h"
 
 #include <QHash>
+#include <QPointer>
+#include <QThread>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <thread>
 
 namespace sentinel::core {
 
@@ -21,6 +22,7 @@ class IApprovalPolicy;
 class ISandboxPolicy;
 class IMemoryStore;
 class IChatHistoryStore;
+class AgentLoop;
 
 // Owns the lifecycle of foreground agent sessions. Dependencies are borrowed
 // from the composition root and must outlive this runtime.
@@ -67,6 +69,11 @@ public:
 private:
     AgentLoopState advance(const QString& sessionId, bool isResume, bool approved,
                            const QString& goal, bool prepared = false);
+    void advanceAsync(const QString& sessionId, bool isResume, bool approved, const QString& goal,
+                      QObject* context);
+    void configureLoop(AgentLoop& loop, const QString& sessionId,
+                       const AgentSessionOptions& options, const QString& goal);
+    void commitResult(const QString& sessionId, AgentLoopState& result);
     bool launch(const QString& sessionId, bool isResume, bool approved, const QString& goal);
     void prepareExecution(const QStringList& toolIds);
     QStringList toolIds() const;
@@ -103,7 +110,9 @@ private:
         std::make_shared<std::atomic_bool>(false);
     std::condition_variable cancellationPublished_;
     bool cancellationEventPending_ = false;
-    std::thread worker_;
+    QThread* worker_ = nullptr;
+    QObject* workerContext_ = nullptr;
+    AgentLoop* activeLoop_ = nullptr;
     bool shuttingDown_ = false;
     mutable std::mutex eventMutex_;
     struct Subscription {

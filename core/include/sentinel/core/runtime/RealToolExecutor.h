@@ -41,6 +41,9 @@ public:
     void setSubagentRunner(std::function<QString(const QString& task)> runner);
     WebSearchResponse searchWeb(const QString& query) const;
     ToolExecutionResult execute(const ToolExecutionRequest& request) const override;
+    Cancel executeAsync(const ToolExecutionRequest& request, const QString& sessionId,
+                        const QString& toolCallId, Output output,
+                        Completion completion) const override;
 
 private:
     mutable WebSearchTool webSearchTool_;

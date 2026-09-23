@@ -12,6 +12,8 @@
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
+#include <QFile>
+#include <QTemporaryDir>
 #include <atomic>
 #include <chrono>
 #include <future>
@@ -132,6 +134,250 @@ class AgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void asyncRunCommandStreamsAndContinues() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+        planner.decision.toolId = QStringLiteral("run-command");
+        planner.decision.toolName = QStringLiteral("run-command");
+        planner.decision.arguments.append(
+            {QStringLiteral("command"),
+             QStringLiteral("printf 'line1\\nline2\\n'; printf 'error\\n' >&2")});
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                             sandbox);
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.availableToolIds = {QStringLiteral("run-command")};
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase, AgentLoopPhase::Completed,
+                                  5000);
+        QCOMPARE(planner.calls, 2);
+        const auto state = runtime.sessionState(session);
+        QCOMPARE(state.steps.size(), 1);
+        QVERIFY(state.steps.first().observation.contains(QStringLiteral("line1")));
+        const auto events = runtime.eventHistory(session);
+        int start = -1, output = -1, finish = -1;
+        QByteArray stdoutBytes, stderrBytes;
+        QString processId, callId;
+        for (int i = 0; i < events.size(); ++i) {
+            const auto& event = events.at(i);
+            if (event.type == AgentEventType::ToolExecutionStarted) {
+                start = i;
+                callId = event.toolCallId;
+            } else if (event.type == AgentEventType::ToolOutput) {
+                output = i;
+                QCOMPARE(event.toolCallId, callId);
+                const auto& chunk = std::get<AgentToolOutputEvent>(event.payload);
+                if (processId.isEmpty())
+                    processId = chunk.processId;
+                QCOMPARE(chunk.processId, processId);
+                (chunk.stream == ProcessStream::Stdout ? stdoutBytes : stderrBytes)
+                    .append(chunk.chunk);
+            } else if (event.type == AgentEventType::ToolExecutionCompleted) {
+                finish = i;
+            }
+        }
+        QVERIFY(start >= 0 && output > start && finish > output);
+        QCOMPARE(stdoutBytes, QByteArray("line1\nline2\n"));
+        QCOMPARE(stderrBytes, QByteArray("error\n"));
+        QVERIFY(!processId.isEmpty());
+    }
+
+    void asyncRunCommandCancellationAndTimeout() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        for (const bool cancel : {false, true}) {
+            Planner planner;
+            planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+            planner.decision.toolId = QStringLiteral("run-command");
+            planner.decision.toolName = QStringLiteral("run-command");
+            planner.decision.arguments.append(
+                {QStringLiteral("command"), QStringLiteral("printf 'started\\n'; exec sleep 30")});
+            planner.decision.arguments.append(
+                {QStringLiteral("timeout"),
+                 cancel ? QStringLiteral("60000") : QStringLiteral("1000")});
+            RealToolExecutor executor;
+            StaticApprovalPolicy approval;
+            StaticSandboxPolicy sandbox;
+            AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                                 sandbox);
+            const auto session = runtime.createSession();
+            AgentSessionOptions options;
+            options.autonomousMode = true;
+            options.availableToolIds = {QStringLiteral("run-command")};
+            runtime.configureSession(session, std::move(options));
+            QVERIFY(runtime.start(session, QStringLiteral("task")));
+            QTRY_VERIFY_WITH_TIMEOUT(
+                [&] {
+                    for (const auto& event : runtime.eventHistory(session))
+                        if (event.type == AgentEventType::ToolOutput)
+                            return true;
+                    return false;
+                }(),
+                3000);
+            if (cancel)
+                QVERIFY(runtime.cancel(session));
+            QTRY_COMPARE_WITH_TIMEOUT(
+                runtime.sessionState(session).phase,
+                cancel ? AgentLoopPhase::Cancelled : AgentLoopPhase::Completed, 5000);
+            const auto events = runtime.eventHistory(session);
+            int terminal = 0;
+            bool sawNormalToolCompletion = false;
+            bool sawTimeout = false;
+            for (const auto& event : events) {
+                if (event.type == AgentEventType::AgentCancelled ||
+                    event.type == AgentEventType::AgentCompleted)
+                    ++terminal;
+                if (event.type == AgentEventType::ToolExecutionCompleted)
+                    sawNormalToolCompletion = true;
+            }
+            for (const auto& step : runtime.sessionState(session).steps)
+                sawTimeout |= step.observation.contains(QStringLiteral("timeout"));
+            QCOMPARE(terminal, 1);
+            if (cancel)
+                QVERIFY(!sawNormalToolCompletion);
+            else
+                QVERIFY(sawTimeout);
+        }
+    }
+
+    void asyncApprovalKeepsToolCallId() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+        planner.decision.toolId = QStringLiteral("run-command");
+        planner.decision.toolName = QStringLiteral("run-command");
+        planner.decision.riskLevel = ToolRiskLevel::High;
+        planner.decision.arguments.append(
+            {QStringLiteral("command"), QStringLiteral("printf approved")});
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox(
+            {QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.high")});
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                             sandbox);
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.availableToolIds = {QStringLiteral("run-command")};
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase,
+                                  AgentLoopPhase::AwaitingApproval, 3000);
+        QVERIFY(runtime.approve(session, false));
+        QVERIFY(runtime.continueSession(session, true));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase, AgentLoopPhase::Completed,
+                                  5000);
+        QString callId;
+        for (const auto& event : runtime.eventHistory(session)) {
+            if (event.type == AgentEventType::ToolRequested)
+                callId = event.toolCallId;
+            if (event.type == AgentEventType::ToolApprovalRequired ||
+                event.type == AgentEventType::ToolApprovalResolved ||
+                event.type == AgentEventType::ToolExecutionStarted ||
+                event.type == AgentEventType::ToolOutput ||
+                event.type == AgentEventType::ToolExecutionCompleted)
+                QCOMPARE(event.toolCallId, callId);
+        }
+        QVERIFY(!callId.isEmpty());
+    }
+
+    void asyncDockerUsesProcessExecutorAndPreservesRestrictions() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        const QString dockerPath = temporary.filePath(QStringLiteral("docker"));
+        QFile fakeDocker(dockerPath);
+        QVERIFY(fakeDocker.open(QIODevice::WriteOnly));
+        fakeDocker.write("#!/bin/sh\nprintf '%s\\n' \"$*\"\nprintf 'docker-error\\n' >&2\n");
+        fakeDocker.close();
+        QVERIFY(fakeDocker.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                          QFileDevice::ExeOwner));
+        const QByteArray oldPath = qgetenv("PATH");
+        qputenv("PATH", temporary.path().toUtf8() + ':' + oldPath);
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+        planner.decision.toolId = QStringLiteral("run-command");
+        planner.decision.toolName = QStringLiteral("run-command");
+        planner.decision.arguments.append(
+            {QStringLiteral("command"), QStringLiteral("printf docker")});
+        planner.decision.arguments.append({QStringLiteral("sandbox"), QStringLiteral("docker")});
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                             sandbox);
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.availableToolIds = {QStringLiteral("run-command")};
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase, AgentLoopPhase::Completed,
+                                  5000);
+        qputenv("PATH", oldPath);
+        const auto observation = runtime.sessionState(session).steps.first().observation;
+        QVERIFY(observation.contains(QStringLiteral("--network none")));
+        QVERIFY(observation.contains(QStringLiteral("--memory 2g")));
+        QVERIFY(observation.contains(QStringLiteral("--cpus 2")));
+        bool sawStderr = false;
+        for (const auto& event : runtime.eventHistory(session)) {
+            if (event.type == AgentEventType::ToolOutput) {
+                const auto& chunk = std::get<AgentToolOutputEvent>(event.payload);
+                sawStderr |=
+                    chunk.stream == ProcessStream::Stderr && chunk.chunk.contains("docker-error");
+            }
+        }
+        QVERIFY(sawStderr);
+    }
+
+    void shutdownStopsActiveCommand() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+        planner.decision.toolId = QStringLiteral("run-command");
+        planner.decision.toolName = QStringLiteral("run-command");
+        planner.decision.arguments.append(
+            {QStringLiteral("command"), QStringLiteral("printf 'ready\\n'; exec sleep 30")});
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                             sandbox);
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.availableToolIds = {QStringLiteral("run-command")};
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_VERIFY_WITH_TIMEOUT(
+            [&] {
+                for (const auto& event : runtime.eventHistory(session))
+                    if (event.type == AgentEventType::ToolOutput)
+                        return true;
+                return false;
+            }(),
+            3000);
+        runtime.shutdown();
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelled);
+        int cancelled = 0;
+        for (const auto& event : runtime.eventHistory(session))
+            cancelled += event.type == AgentEventType::AgentCancelled;
+        QCOMPARE(cancelled, 1);
+    }
     void streamsRealProviderDeltasWithStepCorrelation() {
         StreamingPlannerProvider provider;
         LlmAgentRuntime planner(NullAgentRuntime::standardTools(), &provider);

@@ -11,6 +11,7 @@
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
 
+#include <QTimer>
 #include <QUuid>
 
 namespace sentinel::core {
@@ -253,6 +254,19 @@ bool AgentRuntime::cancel(const QString& sessionId) {
         modelCancellationToken_->store(true);
         cancellationEventPending_ = true;
         sessions_[sessionId].phase = AgentLoopPhase::Cancelling;
+        if (workerContext_)
+            QMetaObject::invokeMethod(
+                workerContext_,
+                [this] {
+                    AgentLoop* loop = nullptr;
+                    {
+                        std::lock_guard lock(mutex_);
+                        loop = activeLoop_;
+                    }
+                    if (loop)
+                        loop->cancelAsync();
+                },
+                Qt::QueuedConnection);
     }
     publish(sessionId, AgentEventType::RuntimeStateChanged,
             AgentStateEvent{AgentLoopPhase::Cancelling});
@@ -331,8 +345,10 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
         if (!isResume)
             modelCancellationToken_ = std::make_shared<std::atomic_bool>(false);
     }
-    if (worker_.joinable()) {
-        worker_.join();
+    if (worker_) {
+        worker_->wait();
+        delete worker_;
+        worker_ = nullptr;
     }
     if (!isResume)
         beginTurn(sessionId);
@@ -347,34 +363,18 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
     }
     publish(sessionId, AgentEventType::RuntimeStateChanged,
             AgentStateEvent{AgentLoopPhase::Running});
-    try {
-        worker_ = std::thread([this, sessionId, isResume, approved, goal] {
-            const auto result = advance(sessionId, isResume, approved, goal, true);
-            std::function<void(const AgentLoopState&)> finished;
-            {
-                std::lock_guard lock(mutex_);
-                if (!shuttingDown_) {
-                    finished = options_.value(sessionId).onFinished;
-                }
-            }
-            if (finished) {
-                finished(result);
-            }
-        });
-    } catch (...) {
-        AgentLoopState failure;
-        {
-            std::lock_guard lock(mutex_);
-            auto& state = sessions_[sessionId];
-            state.phase = AgentLoopPhase::Failed;
-            state.abortReason = QStringLiteral("Agent runtime could not start.");
-            errors_[sessionId] = {AgentRuntimeErrorCode::ExecutionFailed, state.abortReason, false};
-            activeSessionId_.clear();
-            failure = state;
-        }
-        finishTurn(sessionId, failure);
-        return false;
+    worker_ = new QThread;
+    auto* context = new QObject;
+    context->moveToThread(worker_);
+    {
+        std::lock_guard lock(mutex_);
+        workerContext_ = context;
     }
+    QObject::connect(worker_, &QThread::started, context,
+                     [this, sessionId, isResume, approved, goal, context] {
+                         advanceAsync(sessionId, isResume, approved, goal, context);
+                     });
+    worker_->start();
     return true;
 }
 
@@ -399,8 +399,10 @@ void AgentRuntime::shutdown() {
         cancelRequested_ = true;
         modelCancellationToken_->store(true);
     }
-    if (worker_.joinable()) {
-        worker_.join();
+    if (worker_) {
+        worker_->wait();
+        delete worker_;
+        worker_ = nullptr;
     }
     for (const auto& session : sessionsToCancel)
         cancel(session);
@@ -538,6 +540,145 @@ AgentPipelineResult AgentRuntime::executeApprovedPlanLocked(const ToolInvocation
     return result;
 }
 
+void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
+                                 const AgentSessionOptions& options, const QString& goal) {
+    loop.setCancelQuery([this] { return cancelRequested_.load(); });
+    loop.setStepCallback([this, sessionId, callback = options.onStep](const AgentStepRecord& step) {
+        publish(sessionId, AgentEventType::AgentStepCompleted, AgentStepEvent{step}, step.index,
+                !step.toolId.isEmpty());
+        if (callback)
+            callback(step);
+    });
+    loop.setStatusCallback(std::move(options.onStatus));
+    loop.setPlanningCallback([this, sessionId, goal](int index, bool started) {
+        const auto* llm = dynamic_cast<const LlmAgentRuntime*>(planner_);
+        if (llm && llm->hasModelProvider() && !goal.trimmed().isEmpty()) {
+            if (started) {
+                llm->setStreamObserver(
+                    [this, sessionId, index](const QString& delta) {
+                        publish(sessionId, AgentEventType::ModelOutputDelta, AgentTextEvent{delta},
+                                index);
+                    },
+                    modelCancellationToken_);
+            } else {
+                llm->setStreamObserver({});
+            }
+            publish(sessionId,
+                    started ? AgentEventType::ModelRequestStarted
+                            : AgentEventType::ModelRequestCompleted,
+                    {}, index);
+        }
+    });
+    loop.setToolCallback([this, sessionId](AgentLoop::ToolTransition transition, int index,
+                                           const ToolInvocationPlan& plan,
+                                           const AgentStepRecord* record) {
+        if (plan.invocations.isEmpty())
+            return;
+        const auto& invocation = plan.invocations.first();
+        AgentToolEvent payload{invocation.toolId, invocation.arguments, invocation.riskLevel,
+                               record ? record->observation : QString{}};
+        AgentEventType type;
+        switch (transition) {
+        case AgentLoop::ToolTransition::Requested:
+            type = AgentEventType::ToolRequested;
+            break;
+        case AgentLoop::ToolTransition::ApprovalRequired:
+            type = AgentEventType::ToolApprovalRequired;
+            break;
+        case AgentLoop::ToolTransition::ExecutionStarted:
+            type = AgentEventType::ToolExecutionStarted;
+            break;
+        case AgentLoop::ToolTransition::ExecutionFinished:
+            type = record && record->succeeded ? AgentEventType::ToolExecutionCompleted
+                                               : AgentEventType::ToolExecutionFailed;
+            break;
+        }
+        publish(sessionId, type, payload, index, true);
+    });
+    loop.setOutputCallback([this, sessionId](int index, const QString& processId,
+                                             ProcessStream stream, const QByteArray& bytes) {
+        publish(sessionId, AgentEventType::ToolOutput,
+                AgentToolOutputEvent{processId, stream, bytes}, index, true);
+    });
+    loop.setToolCallIdProvider([this, sessionId](int index) {
+        std::lock_guard lock(eventMutex_);
+        return turns_.value(sessionId).toolCallIds.value(index);
+    });
+}
+
+void AgentRuntime::commitResult(const QString& sessionId, AgentLoopState& result) {
+    {
+        std::unique_lock lock(mutex_);
+        cancellationPublished_.wait(lock, [this] { return !cancellationEventPending_; });
+        if (cancelRequested_) {
+            result.phase = AgentLoopPhase::Cancelled;
+            result.abortReason = QStringLiteral("Agent run cancelled by user.");
+        }
+        sessions_[sessionId] = result;
+        AgentRuntimeErrorCode code = AgentRuntimeErrorCode::None;
+        if (result.phase == AgentLoopPhase::Failed)
+            code = AgentRuntimeErrorCode::ExecutionFailed;
+        else if (result.phase == AgentLoopPhase::Cancelled)
+            code = AgentRuntimeErrorCode::Cancelled;
+        else if (result.phase == AgentLoopPhase::Stuck)
+            code = AgentRuntimeErrorCode::Stuck;
+        if (code != AgentRuntimeErrorCode::None)
+            errors_[sessionId] = {code, result.abortReason, false};
+        activeSessionId_.clear();
+        activeLoop_ = nullptr;
+        workerContext_ = nullptr;
+    }
+    finishTurn(sessionId, result);
+}
+
+void AgentRuntime::advanceAsync(const QString& sessionId, bool isResume, bool approved,
+                                const QString& goal, QObject* context) {
+    AgentLoopState seed;
+    AgentSessionOptions options;
+    QStringList approvedToolIds;
+    {
+        std::lock_guard lock(mutex_);
+        seed = sessions_.value(sessionId);
+        options = options_.value(sessionId);
+        approvedToolIds = approvedToolIds_;
+        errors_.remove(sessionId);
+    }
+    const auto availableToolIds =
+        options.availableToolIds.isEmpty() ? toolIds() : options.availableToolIds;
+    prepareExecution(availableToolIds);
+    auto executionLock = std::make_shared<std::unique_lock<std::mutex>>(executionMutex_);
+    AgentLoop::Config config;
+    config.autonomousMode = options.autonomousMode;
+    config.sessionApprovedToolIds = approvedToolIds;
+    auto loop = std::make_shared<AgentLoop>(*planner_, executor_, approval_, sandbox_,
+                                            availableToolIds, config);
+    // The worker context owns the loop until its queued deletion on the same thread.
+    QObject::connect(context, &QObject::destroyed, [loop] {});
+    configureLoop(*loop, sessionId, options, seed.goal.isEmpty() ? goal : seed.goal);
+    {
+        std::lock_guard lock(mutex_);
+        activeLoop_ = loop.get();
+    }
+    auto finish = [this, sessionId, context, executionLock,
+                   callback = options.onFinished](const AgentLoopState& state) {
+        AgentLoopState result = state;
+        commitResult(sessionId, result);
+        bool shuttingDown;
+        {
+            std::lock_guard lock(mutex_);
+            shuttingDown = shuttingDown_;
+        }
+        if (!shuttingDown && callback)
+            callback(result);
+        context->deleteLater();
+        worker_->quit();
+    };
+    if (isResume)
+        loop->resumeAsync(seed, approved, context, std::move(finish));
+    else
+        loop->runAsync(goal, sessionId, context, std::move(finish));
+}
+
 AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bool approved,
                                      const QString& goal, bool prepared) {
     if (!planner_) {
@@ -613,61 +754,7 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
         prepareExecution(availableToolIds);
         std::lock_guard executionLock(executionMutex_);
         AgentLoop loop(*planner_, executor_, approval_, sandbox_, availableToolIds, config);
-        loop.setCancelQuery([this] { return cancelRequested_.load(); });
-        loop.setStepCallback(
-            [this, sessionId, callback = options.onStep](const AgentStepRecord& step) {
-                publish(sessionId, AgentEventType::AgentStepCompleted, AgentStepEvent{step},
-                        step.index, !step.toolId.isEmpty());
-                if (callback)
-                    callback(step);
-            });
-        loop.setStatusCallback(std::move(options.onStatus));
-        loop.setPlanningCallback([this, sessionId, goal = seed.goal.isEmpty() ? goal : seed.goal](
-                                     int index, bool started) {
-            const auto* llm = dynamic_cast<const LlmAgentRuntime*>(planner_);
-            if (llm && llm->hasModelProvider() && !goal.trimmed().isEmpty()) {
-                if (started) {
-                    llm->setStreamObserver(
-                        [this, sessionId, index](const QString& delta) {
-                            publish(sessionId, AgentEventType::ModelOutputDelta,
-                                    AgentTextEvent{delta}, index);
-                        },
-                        modelCancellationToken_);
-                } else {
-                    llm->setStreamObserver({});
-                }
-                publish(sessionId,
-                        started ? AgentEventType::ModelRequestStarted
-                                : AgentEventType::ModelRequestCompleted,
-                        {}, index);
-            }
-        });
-        loop.setToolCallback([this, sessionId](AgentLoop::ToolTransition transition, int index,
-                                               const ToolInvocationPlan& plan,
-                                               const AgentStepRecord* record) {
-            if (plan.invocations.isEmpty())
-                return;
-            const auto& invocation = plan.invocations.first();
-            AgentToolEvent payload{invocation.toolId, invocation.arguments, invocation.riskLevel,
-                                   record ? record->observation : QString{}};
-            AgentEventType type;
-            switch (transition) {
-            case AgentLoop::ToolTransition::Requested:
-                type = AgentEventType::ToolRequested;
-                break;
-            case AgentLoop::ToolTransition::ApprovalRequired:
-                type = AgentEventType::ToolApprovalRequired;
-                break;
-            case AgentLoop::ToolTransition::ExecutionStarted:
-                type = AgentEventType::ToolExecutionStarted;
-                break;
-            case AgentLoop::ToolTransition::ExecutionFinished:
-                type = record && record->succeeded ? AgentEventType::ToolExecutionCompleted
-                                                   : AgentEventType::ToolExecutionFailed;
-                break;
-            }
-            publish(sessionId, type, payload, index, true);
-        });
+        configureLoop(loop, sessionId, options, seed.goal.isEmpty() ? goal : seed.goal);
         result = isResume ? loop.resume(seed, approved) : loop.run(goal, sessionId);
     } catch (...) {
         result = std::move(seed);
