@@ -70,8 +70,17 @@
 - **Autonomous Agent Loop (`AgentLoop` + `LlmAgentRuntime`):** Multi-step task reasoning engine.
 - **Agent Runtime Boundary:** `IAgentRuntime` exposes in-process sessions, submission,
   approval/resume, cancellation, state, and runtime errors. `AgentRuntime` owns session
-  lifecycle and delegates execution to the existing `AgentLoop`. Desktop chat presentation
-  remains in `ApplicationController`; the same runtime can be constructed without QML.
+  lifecycle, its foreground worker, tool snapshots, bounded subagent runner, and controlled
+  task execution. It delegates multi-step work to the existing `AgentLoop`. Desktop chat
+  presentation remains in `ApplicationController`; the runtime can be constructed without QML.
+  Runtime consumers subscribe to typed `AgentEvent` values. Each accepted run has one turn ID;
+  step and tool call IDs remain stable across approval pauses. A session's events are queued in
+  order, with tool completion before step completion and exactly one terminal agent event.
+  Event history is in memory and capped at 256 events per session. Ollama planner requests use
+  the existing local stream client and emit real model deltas; providers with only a final-reply
+  API emit request start and completion without synthetic deltas.
+  Desktop presentation uses the terminal and approval event payloads directly; it does not poll
+  the runtime to discover live progress.
 - **Explicit Human Approval Gate:** Every destructive or privileged tool execution (file modification, shell command, workspace deletion) halts for explicit user approval unless explicitly overridden.
 - **Tool Sandbox & Isolation:** Built-in workspace boundaries prevent tool execution outside the authorized project root directory.
 
