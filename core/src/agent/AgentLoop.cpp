@@ -60,6 +60,14 @@ void AgentLoop::setCancelQuery(CancelQuery query) {
     cancelQuery_ = std::move(query);
 }
 
+void AgentLoop::setToolCallback(ToolCallback callback) {
+    toolCallback_ = std::move(callback);
+}
+
+void AgentLoop::setPlanningCallback(PlanningCallback callback) {
+    planningCallback_ = std::move(callback);
+}
+
 bool AgentLoop::cancellationRequested() const {
     return cancelled_.load() || (cancelQuery_ && cancelQuery_());
 }
@@ -116,7 +124,26 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             return state;
         }
 
-        const auto decision = planner_.nextStep(state.goal, state.steps);
+        const int stepIndex = static_cast<int>(state.steps.size()) + 1;
+        if (planningCallback_) {
+            planningCallback_(stepIndex, true);
+        }
+        AgentStepDecision decision;
+        try {
+            decision = planner_.nextStep(state.goal, state.steps);
+        } catch (...) {
+            if (planningCallback_)
+                planningCallback_(stepIndex, false);
+            throw;
+        }
+        if (planningCallback_) {
+            planningCallback_(stepIndex, false);
+        }
+        if (cancellationRequested()) {
+            state.phase = AgentLoopPhase::Cancelled;
+            state.abortReason = QStringLiteral("Agent run cancelled by user.");
+            return state;
+        }
 
         if (decision.kind == AgentStepDecision::Kind::FinalAnswer) {
             state.finalAnswer =
@@ -140,13 +167,15 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         const auto plan = planFromDecision(decision);
-
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
         if (doomDetector_.isStuck(state.sessionId)) {
             state.phase = AgentLoopPhase::Stuck;
             state.abortReason = QStringLiteral(
                 "Doom loop detected: the agent repeated the same action without progress.");
             return state;
+        }
+        if (toolCallback_) {
+            toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
         }
 
         ApprovalDecision approval;
@@ -171,6 +200,9 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         if (approval.status == ApprovalStatus::RequiresApproval) {
+            if (toolCallback_) {
+                toolCallback_(ToolTransition::ApprovalRequired, stepIndex, plan, nullptr);
+            }
             state.pendingApprovalPlan = plan;
             state.pendingApprovalThought = decision.thought;
             state.phase = AgentLoopPhase::AwaitingApproval;
@@ -195,6 +227,10 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
 void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& plan,
                             const QString& thought, ApprovalDecision approval) {
     const auto sandbox = sandboxPolicy_.evaluate(plan, approval);
+    const int stepIndex = static_cast<int>(state.steps.size()) + 1;
+    if (toolCallback_) {
+        toolCallback_(ToolTransition::ExecutionStarted, stepIndex, plan, nullptr);
+    }
 
     const auto result = gateway_.execute(
         ToolExecutionRequest{
@@ -215,6 +251,9 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& pla
     record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
 
     state.steps.append(record);
+    if (toolCallback_) {
+        toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan, &record);
+    }
     if (stepCallback_) {
         stepCallback_(record);
     }
