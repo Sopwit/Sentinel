@@ -4964,7 +4964,7 @@ int ApplicationController::localInferenceTimeoutMs() const {
 }
 
 void ApplicationController::setLocalInferenceTimeoutMs(int timeoutMs) {
-    const auto normalized = std::clamp(timeoutMs, 1000, 300000);
+    const auto normalized = timeoutMs <= 0 ? 0 : std::clamp(timeoutMs, 1000, 300000);
     if (normalized == localInferenceTimeoutMs_) {
         return;
     }

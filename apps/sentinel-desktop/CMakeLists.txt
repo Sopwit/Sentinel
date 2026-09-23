@@ -113,6 +113,11 @@ qt_add_resources(sentinel-desktop sentinel_desktop_assets
     PREFIX /
     FILES
         ${SENTINEL_APP_ICON_PNG}
+        ${CMAKE_SOURCE_DIR}/resources/icons/lucide/paperclip.svg
+        ${CMAKE_SOURCE_DIR}/resources/icons/lucide/image.svg
+        ${CMAKE_SOURCE_DIR}/resources/icons/lucide/file-text.svg
+        ${CMAKE_SOURCE_DIR}/resources/icons/lucide/mic.svg
+        ${CMAKE_SOURCE_DIR}/resources/icons/lucide/square.svg
         ${CMAKE_SOURCE_DIR}/resources/sounds/notification.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/error.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/success.wav
@@ -152,6 +157,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/RuntimeBadge.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelButton.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelIcon.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelComboBox.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelOrb.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelSlider.qml

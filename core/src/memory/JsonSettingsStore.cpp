@@ -43,8 +43,13 @@ void JsonSettingsStore::load() {
 
 void JsonSettingsStore::save() const {
     const QFileInfo fileInfo(filePath_);
-    if (!fileInfo.dir().exists()) {
-        QDir().mkpath(fileInfo.dir().absolutePath());
+    const QDir parentDir = fileInfo.dir();
+    const bool createdParent = !parentDir.exists();
+    if (createdParent) {
+        QDir().mkpath(parentDir.absolutePath());
+        QFile::setPermissions(parentDir.absolutePath(),
+                              QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                  QFileDevice::ExeOwner);
     }
 
     QFile file(filePath_);
@@ -53,6 +58,9 @@ void JsonSettingsStore::save() const {
     }
 
     file.write(QJsonDocument(values_).toJson(QJsonDocument::Indented));
+    file.close();
+
+    QFile::setPermissions(filePath_, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
 }
 
 } // namespace sentinel::core

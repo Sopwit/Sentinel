@@ -1268,11 +1268,11 @@ ShellPanel {
                                     }
                                 }
 
-                                contentItem: Text {
-                                    text: homeMicButton.recordingActive ? "🔴" : "🎤"
-                                    font.pixelSize: 16 * homeChat.resolutionScale
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
+                                contentItem: SentinelIcon {
+                                    name: homeMicButton.recordingActive ? "square" : "mic"
+                                    iconSize: 16 * homeChat.resolutionScale
+                                    tint: homeMicButton.recordingActive ? SentinelTheme.warning : SentinelTheme.textPrimary
+                                    anchors.centerIn: parent
                                 }
 
                                 background: Rectangle {
@@ -2024,11 +2024,11 @@ ShellPanel {
                         }
                     }
 
-                    contentItem: Text {
-                        text: micButton.recordingActive ? "🔴" : "🎤"
-                        font.pixelSize: 16 * homeChat.resolutionScale
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    contentItem: SentinelIcon {
+                        name: micButton.recordingActive ? "square" : "mic"
+                        iconSize: 16 * homeChat.resolutionScale
+                        tint: micButton.recordingActive ? SentinelTheme.warning : SentinelTheme.textPrimary
+                        anchors.centerIn: parent
                     }
 
                     background: Rectangle {
@@ -2069,6 +2069,52 @@ ShellPanel {
                             homeChat.viewModel.cancelLocalInference()
                         else
                             homeChat.sendComposerText()
+                    }
+                }
+
+                RowLayout {
+                    id: activeComposerModelRow
+                    Layout.fillWidth: true
+                    Layout.topMargin: SentinelTheme.spaceXs * homeChat.resolutionScale
+                    spacing: SentinelTheme.spaceXs * homeChat.resolutionScale
+
+                    Text {
+                        text: qsTr("Model")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                    }
+
+                    SentinelComboBox {
+                        id: activeComposerModelSelector
+                        readonly property var modelNames: homeChat.isLMStudio
+                                                          ? homeChat.viewModel.loadedLMStudioModelNames
+                                                          : homeChat.viewModel.ollamaModelNames
+                        accent: homeChat.modeAccent
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 30 * homeChat.resolutionScale
+                        Layout.maximumWidth: homeChat.compact ? 9999 : 340 * homeChat.resolutionScale
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        enabled: modelNames.length > 0 && !homeChat.sendBusy
+                        model: modelNames
+                        currentIndex: modelNames.indexOf(homeChat.viewModel.selectedLocalModel)
+                        displayText: currentIndex >= 0 ? modelNames[currentIndex]
+                                                     : (homeChat.viewModel.selectedLocalModel !== ""
+                                                        ? homeChat.viewModel.selectedLocalModel
+                                                        : qsTr("No model selected"))
+                        ToolTip.visible: hovered
+                        ToolTip.text: enabled ? qsTr("Choose the model for the next response")
+                                              : qsTr("A model becomes selectable when the active runtime reports one")
+                        onActivated: function(index) {
+                            if (index >= 0 && index < modelNames.length)
+                                homeChat.viewModel.selectedLocalModel = modelNames[index]
+                        }
+                    }
+
+                    Text {
+                        visible: !homeChat.compact
+                        text: homeChat.localProviderLabel
+                        color: SentinelTheme.textPlaceholder
+                        font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
                     }
                 }
             }

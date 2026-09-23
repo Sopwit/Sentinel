@@ -2901,7 +2901,7 @@ void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndRes
     QVERIFY(sent);
     QVERIFY(timeoutClientPtr->called);
     QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(timeoutClientPtr->lastRequest.options.timeoutMs, 30000);
+    QCOMPARE(timeoutClientPtr->lastRequest.options.timeoutMs, 0);
     QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);

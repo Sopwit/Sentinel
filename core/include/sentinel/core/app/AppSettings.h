@@ -524,7 +524,8 @@ private:
     static constexpr auto defaultUpdateWorkflowState = "Not Checked";
     static constexpr auto defaultSelectedTtsEngine = "Piper";
     static constexpr auto defaultKokoroVoice = "af_bella";
-    static constexpr int defaultLocalInferenceTimeoutMs = 30000;
+    // Zero keeps a request open until the runtime responds or the user cancels it.
+    static constexpr int defaultLocalInferenceTimeoutMs = 0;
     static constexpr double defaultLocalInferenceTemperature = 0.7;
     static constexpr double defaultLocalInferenceTopP = 0.9;
     static constexpr int defaultLocalInferenceMaxTokens = 2048;

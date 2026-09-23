@@ -35,6 +35,9 @@ void FileLogger::initialize(const QString& logDir, int retentionDays) {
 
     if (!logDir_.exists()) {
         logDir_.mkpath(QStringLiteral("."));
+        QFile::setPermissions(logDir_.absolutePath(),
+                              QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                  QFileDevice::ExeOwner);
     }
 
     rotateLog();
@@ -63,6 +66,7 @@ void FileLogger::rotateLog() {
         qWarning().noquote() << "FileLogger: cannot open log file:" << filePath;
         return;
     }
+    QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     logStream_.setDevice(&logFile_);
 }
 

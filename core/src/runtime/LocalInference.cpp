@@ -46,10 +46,13 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     QNetworkReply* reply = manager.get(request);
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(timeoutMs);
+    const bool timeoutEnabled = timeoutMs > 0;
+    if (timeoutEnabled) {
+        timer.start(timeoutMs);
+    }
     loop.exec();
 
-    if (timer.isActive()) {
+    if (!timeoutEnabled || timer.isActive()) {
         timer.stop();
     } else {
         reply->abort();
@@ -104,10 +107,13 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs,
         manager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(timeoutMs);
+    const bool timeoutEnabled = timeoutMs > 0;
+    if (timeoutEnabled) {
+        timer.start(timeoutMs);
+    }
     loop.exec();
 
-    if (timer.isActive()) {
+    if (!timeoutEnabled || timer.isActive()) {
         timer.stop();
     } else {
         reply->abort();
@@ -915,7 +921,10 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         }
     });
     const auto timeoutMs = result.timeoutMs > 0 ? result.timeoutMs : timeoutMs_;
-    timer.start(timeoutMs);
+    const bool timeoutEnabled = timeoutMs > 0;
+    if (timeoutEnabled) {
+        timer.start(timeoutMs);
+    }
     cancellationTimer.start();
     result.status = LocalInferenceStreamStatus::Streaming;
     result.summary = QStringLiteral("Local Ollama streaming generation is active.");
@@ -933,7 +942,7 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (timer.isActive()) {
+    if (!timeoutEnabled || timer.isActive()) {
         timer.stop();
     } else {
         reply->abort();
@@ -1697,7 +1706,10 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         }
     });
     const auto timeoutMs = result.timeoutMs > 0 ? result.timeoutMs : timeoutMs_;
-    timer.start(timeoutMs);
+    const bool timeoutEnabled = timeoutMs > 0;
+    if (timeoutEnabled) {
+        timer.start(timeoutMs);
+    }
     cancellationTimer.start();
     result.status = LocalInferenceStreamStatus::Streaming;
     result.summary = QStringLiteral("Local LM Studio streaming generation is active.");
@@ -1715,7 +1727,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (timer.isActive()) {
+    if (!timeoutEnabled || timer.isActive()) {
         timer.stop();
     } else {
         reply->abort();

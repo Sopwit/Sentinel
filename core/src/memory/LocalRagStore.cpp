@@ -47,6 +47,7 @@ QSqlDatabase openDatabase(const QString& connectionName, const QString& database
     db.open();
     if (db.isOpen()) {
         applySqlitePerformancePragmas(db);
+        QFile::setPermissions(databasePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     }
     return db;
 }
