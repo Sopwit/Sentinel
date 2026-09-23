@@ -114,11 +114,21 @@ bool LlmAgentRuntime::lastDecisionUsedLlm() const {
     return lastDecisionUsedLlm_;
 }
 
+void LlmAgentRuntime::setStreamObserver(std::function<void(const QString&)> onDelta,
+                                        std::shared_ptr<std::atomic_bool> cancellationToken) const {
+    streamObserver_ = std::move(onDelta);
+    streamCancellationToken_ = std::move(cancellationToken);
+}
+
 AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
     lastDecisionUsedLlm_ = false;
     if (provider_ && !goal.trimmed().isEmpty()) {
-        const auto reply = provider_->sendMessage(buildPlannerPrompt(goal, history));
+        const auto prompt = buildPlannerPrompt(goal, history);
+        const auto reply =
+            provider_->supportsStreaming() && streamObserver_
+                ? provider_->sendMessageStreaming(prompt, streamObserver_, streamCancellationToken_)
+                : provider_->sendMessage(prompt);
         if (reply.success && !reply.message.trimmed().isEmpty()) {
             const auto decision = decisionFromLlmOutput(reply.message);
             if (decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty()) {
