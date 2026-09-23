@@ -159,19 +159,19 @@ ShellPanel {
     }
 
     function getAttachmentIcon(summary) {
-        if (!summary) return "📎";
+        if (!summary) return "paperclip";
         var parts = summary.split(" / ");
-        if (parts.length < 2) return "📎";
+        if (parts.length < 2) return "paperclip";
         var fileType = parts[1].toLowerCase();
         
         if (fileType === "image") {
-            return "🖼️";
+            return "photo";
         } else if (fileType === "pdf" || fileType === "docx") {
-            return "📄";
+            return "file-text";
         } else if (fileType === "source code") {
-            return "💻";
+            return "code";
         } else {
-            return "📎";
+            return "paperclip";
         }
     }
 
@@ -342,8 +342,8 @@ ShellPanel {
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Show sidebar")
                     onClicked: homeChat.conversationSidebarOpen = true
-                    contentItem: Text {
-                        text: "\u2630"
+                    contentItem: TablerGlyph {
+                        text: "menu"
                         color: SentinelTheme.textPrimary
                         font.pixelSize: 14
                         horizontalAlignment: Text.AlignHCenter
@@ -457,8 +457,8 @@ ShellPanel {
                             ToolTip.text: qsTr("Search")
                             enabled: conversationSearch.text.trim().length > 0
                             onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
-                            contentItem: Text {
-                                text: "\uD83D\uDD0D"
+                            contentItem: TablerGlyph {
+                                text: "search"
                                 font.pixelSize: 11
                                 color: searchIconBtn.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
                                 horizontalAlignment: Text.AlignHCenter
@@ -480,8 +480,8 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Hide sidebar")
                         onClicked: homeChat.conversationSidebarOpen = false
-                        contentItem: Text {
-                            text: "\u2715"
+                        contentItem: TablerGlyph {
+                            text: "x"
                             color: SentinelTheme.textMuted
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignHCenter
@@ -535,8 +535,8 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Pinned chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "pinned" ? "recent" : "pinned")
-                        contentItem: Text {
-                            text: "\uD83D\uDCCC"
+                        contentItem: TablerGlyph {
+                            text: "pin"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "pinned" ? homeChat.modeAccent : SentinelTheme.textMuted
                             horizontalAlignment: Text.AlignHCenter
@@ -561,8 +561,8 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Archived chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "archived" ? "recent" : "archived")
-                        contentItem: Text {
-                            text: "\uD83D\uDDC4"
+                        contentItem: TablerGlyph {
+                            text: "database"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "archived" ? homeChat.modeAccent : SentinelTheme.textMuted
                             horizontalAlignment: Text.AlignHCenter
@@ -663,9 +663,9 @@ ShellPanel {
                                     elide: Text.ElideRight
                                 }
 
-                                Text {
+                                TablerGlyph {
                                     visible: convItem.pinned
-                                    text: "📌"
+                                    text: "pin"
                                     font.pixelSize: 10
                                     color: homeChat.modeAccent
                                 }
@@ -714,7 +714,8 @@ ShellPanel {
 
                             // Pin / Unpin
                             MenuItem {
-                                text: convItem.pinned ? "📍  " + qsTr("Unpin") : "📌  " + qsTr("Pin")
+                                text: convItem.pinned ? qsTr("Unpin") : qsTr("Pin")
+                                icon.source: convItem.pinned ? "qrc:/icons/tabler/map-pin.svg" : "qrc:/icons/tabler/pin.svg"
                                 onTriggered: {
                                     if (convItem.pinned)
                                         homeChat.viewModel.unpinConversation(convItem.convId)
@@ -725,7 +726,8 @@ ShellPanel {
 
                             // Archive / Unarchive
                             MenuItem {
-                                text: convItem.archived ? "📥  " + qsTr("Unarchive") : "📦  " + qsTr("Archive")
+                                text: convItem.archived ? qsTr("Unarchive") : qsTr("Archive")
+                                icon.source: convItem.archived ? "qrc:/icons/tabler/archive.svg" : "qrc:/icons/tabler/box.svg"
                                 onTriggered: {
                                     if (convItem.archived)
                                         homeChat.viewModel.unarchiveConversation(convItem.convId)
@@ -738,7 +740,8 @@ ShellPanel {
                             MenuSeparator {}
 
                             MenuItem {
-                                text: "🗑️  " + qsTr("Delete")
+                                text: qsTr("Delete")
+                                icon.source: "qrc:/icons/tabler/trash.svg"
                                 onTriggered: {
                                     homeChat.pendingDeleteConversationId = convItem.convId
                                     homeChat.pendingDeleteConversationTitle = convItem.convTitle
@@ -895,30 +898,30 @@ ShellPanel {
 
                             function getAllSuggestions() {
                                 return [
-                                    { icon: "📚", title: qsTr("Özet Çıkarma"), prompt: qsTr("Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar") },
-                                    { icon: "📊", title: qsTr("Excel Formül Asistanı"), prompt: qsTr("İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz") },
-                                    { icon: "📝", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
-                                    { icon: "💡", title: qsTr("İçerik Fikirleri"), prompt: qsTr("Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul") },
-                                    { icon: "🧠", title: qsTr("Basitçe Açıkla"), prompt: qsTr("Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla") },
-                                    { icon: "🌐", title: qsTr("Dil Öğrenimi"), prompt: qsTr("Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster") },
-                                    { icon: "📅", title: qsTr("Haftalık Yemek Planı"), prompt: qsTr("Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur") },
-                                    { icon: "✈️", title: qsTr("Seyahat Rotası"), prompt: qsTr("3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla") },
-                                    { icon: "🎁", title: qsTr("Hediye Önerileri"), prompt: qsTr("Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun") },
-                                    { icon: "⏱️", title: qsTr("Zaman Yönetimi"), prompt: qsTr("Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol") },
-                                    { icon: "📋", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
-                                    { icon: "🛠️", title: qsTr("Temel Otomasyon"), prompt: qsTr("Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz") },
-                                    { icon: "🔍", title: qsTr("Metin Düzenleme"), prompt: qsTr("Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir") },
-                                    { icon: "🎯", title: qsTr("Hedef Planlama"), prompt: qsTr("Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner") },
-                                    { icon: "📈", title: qsTr("Veri Analizi"), prompt: qsTr("Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla") },
-                                    { icon: "🤝", title: qsTr("Diplomatik Yanıt"), prompt: qsTr("Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz") },
-                                    { icon: "📓", title: qsTr("Yaratıcı Yazarlık"), prompt: qsTr("Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur") },
-                                    { icon: "📣", title: qsTr("Bülten Hazırlama"), prompt: qsTr("Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz") },
-                                    { icon: "💻", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz") },
-                                    { icon: "📐", title: qsTr("Sunum Taslağı"), prompt: qsTr("Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla") },
-                                    { icon: "⚡", title: qsTr("Klavye Kısayolları"), prompt: qsTr("İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele") },
-                                    { icon: "🏫", title: qsTr("Öğrenme Planı"), prompt: qsTr("Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla") },
-                                    { icon: "🩺", title: qsTr("Sağlıklı Yaşam"), prompt: qsTr("Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele") },
-                                    { icon: "✍️", title: qsTr("Blog Yazısı Taslağı"), prompt: qsTr("Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur") }
+                                    { icon: "books", title: qsTr("Özet Çıkarma"), prompt: qsTr("Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar") },
+                                    { icon: "chart-bar", title: qsTr("Excel Formül Asistanı"), prompt: qsTr("İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz") },
+                                    { icon: "notes", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
+                                    { icon: "bulb", title: qsTr("İçerik Fikirleri"), prompt: qsTr("Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul") },
+                                    { icon: "brain", title: qsTr("Basitçe Açıkla"), prompt: qsTr("Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla") },
+                                    { icon: "world", title: qsTr("Dil Öğrenimi"), prompt: qsTr("Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster") },
+                                    { icon: "calendar", title: qsTr("Haftalık Yemek Planı"), prompt: qsTr("Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur") },
+                                    { icon: "plane", title: qsTr("Seyahat Rotası"), prompt: qsTr("3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla") },
+                                    { icon: "gift", title: qsTr("Hediye Önerileri"), prompt: qsTr("Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun") },
+                                    { icon: "clock", title: qsTr("Zaman Yönetimi"), prompt: qsTr("Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol") },
+                                    { icon: "clipboard", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
+                                    { icon: "tool", title: qsTr("Temel Otomasyon"), prompt: qsTr("Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz") },
+                                    { icon: "search", title: qsTr("Metin Düzenleme"), prompt: qsTr("Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir") },
+                                    { icon: "target", title: qsTr("Hedef Planlama"), prompt: qsTr("Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner") },
+                                    { icon: "chart-line", title: qsTr("Veri Analizi"), prompt: qsTr("Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla") },
+                                    { icon: "friends", title: qsTr("Diplomatik Yanıt"), prompt: qsTr("Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz") },
+                                    { icon: "notebook", title: qsTr("Yaratıcı Yazarlık"), prompt: qsTr("Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur") },
+                                    { icon: "speakerphone", title: qsTr("Bülten Hazırlama"), prompt: qsTr("Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz") },
+                                    { icon: "code", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz") },
+                                    { icon: "ruler", title: qsTr("Sunum Taslağı"), prompt: qsTr("Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla") },
+                                    { icon: "bolt", title: qsTr("Klavye Kısayolları"), prompt: qsTr("İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele") },
+                                    { icon: "school", title: qsTr("Öğrenme Planı"), prompt: qsTr("Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla") },
+                                    { icon: "heartbeat", title: qsTr("Sağlıklı Yaşam"), prompt: qsTr("Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele") },
+                                    { icon: "pencil", title: qsTr("Blog Yazısı Taslağı"), prompt: qsTr("Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur") }
                                 ];
                             }
 
@@ -988,7 +991,7 @@ ShellPanel {
                                         anchors.margins: SentinelTheme.spaceSm
                                         spacing: SentinelTheme.spaceSm
 
-                                        Text {
+                                        TablerGlyph {
                                             text: modelData.icon
                                             font.pixelSize: 22 * homeChat.resolutionScale
                                             Layout.alignment: Qt.AlignVCenter
@@ -1077,9 +1080,15 @@ ShellPanel {
                                     anchors.rightMargin: SentinelTheme.spaceSm
                                     spacing: SentinelTheme.spaceSm
 
+                                    TablerGlyph {
+                                        text: homeChat.viewModel.attachmentSummaries.length > 0
+                                              ? homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) : ""
+                                        font.pixelSize: 16 * homeChat.resolutionScale
+                                    }
+
                                     Text {
                                         text: (homeChat.viewModel.attachmentSummaries.length > 0)
-                                              ? (homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) + " " + homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0]))
+                                              ? homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0])
                                               : ""
                                         color: SentinelTheme.textPrimary
                                         font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
@@ -1175,10 +1184,19 @@ ShellPanel {
                                                 }
                                             }
 
+                                            TablerGlyph {
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: SentinelTheme.spaceSm
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "photo"
+                                                font.pixelSize: 16 * homeChat.resolutionScale
+                                                color: SentinelTheme.textPrimary
+                                            }
+
                                             Text {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: SentinelTheme.spaceSm
-                                                text: "🖼️  " + qsTr("Upload Image")
+                                                anchors.leftMargin: SentinelTheme.spaceSm + 22 * homeChat.resolutionScale
+                                                text: qsTr("Upload Image")
                                                 color: homeImgMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                                 verticalAlignment: Text.AlignVCenter
@@ -1201,10 +1219,19 @@ ShellPanel {
                                                 }
                                             }
 
+                                            TablerGlyph {
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: SentinelTheme.spaceSm
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "file-text"
+                                                font.pixelSize: 16 * homeChat.resolutionScale
+                                                color: SentinelTheme.textPrimary
+                                            }
+
                                             Text {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: SentinelTheme.spaceSm
-                                                text: "📄  " + qsTr("Upload File")
+                                                anchors.leftMargin: SentinelTheme.spaceSm + 22 * homeChat.resolutionScale
+                                                text: qsTr("Upload File")
                                                 color: homeDocMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                                 verticalAlignment: Text.AlignVCenter
@@ -1806,9 +1833,15 @@ ShellPanel {
                         anchors.rightMargin: SentinelTheme.spaceSm
                         spacing: SentinelTheme.spaceSm
 
+                        TablerGlyph {
+                            text: homeChat.viewModel.attachmentSummaries.length > 0
+                                  ? homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) : ""
+                            font.pixelSize: 16 * homeChat.resolutionScale
+                        }
+
                         Text {
                             text: (homeChat.viewModel.attachmentSummaries.length > 0)
-                                  ? (homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) + " " + homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0]))
+                                  ? homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0])
                                   : ""
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
@@ -1904,10 +1937,19 @@ ShellPanel {
                                     }
                                 }
 
+                                TablerGlyph {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "photo"
+                                    font.pixelSize: 16 * homeChat.resolutionScale
+                                    color: SentinelTheme.textPrimary
+                                }
+
                                 Text {
                                     anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceSm
-                                    text: "🖼️  " + qsTr("Upload Image")
+                                    anchors.leftMargin: SentinelTheme.spaceSm + 22 * homeChat.resolutionScale
+                                    text: qsTr("Upload Image")
                                     color: imgMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                     verticalAlignment: Text.AlignVCenter
@@ -1930,10 +1972,19 @@ ShellPanel {
                                     }
                                 }
 
+                                TablerGlyph {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "file-text"
+                                    font.pixelSize: 16 * homeChat.resolutionScale
+                                    color: SentinelTheme.textPrimary
+                                }
+
                                 Text {
                                     anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceSm
-                                    text: "📄  " + qsTr("Upload File")
+                                    anchors.leftMargin: SentinelTheme.spaceSm + 22 * homeChat.resolutionScale
+                                    text: qsTr("Upload File")
                                     color: docMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                     verticalAlignment: Text.AlignVCenter
@@ -1960,10 +2011,19 @@ ShellPanel {
                                     }
                                 }
 
+                                TablerGlyph {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "notes"
+                                    font.pixelSize: 16 * homeChat.resolutionScale
+                                    color: SentinelTheme.textPrimary
+                                }
+
                                 Text {
                                     anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceSm
-                                    text: "📝  " + qsTr("Özet Oluştur")
+                                    anchors.leftMargin: SentinelTheme.spaceSm + 22 * homeChat.resolutionScale
+                                    text: qsTr("Özet Oluştur")
                                     color: !sumMouse.enabled ? SentinelTheme.textMuted
                                                              : (sumMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary)
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -2199,8 +2259,8 @@ ShellPanel {
                 RowLayout {
                     spacing: SentinelTheme.spaceSm
 
-                    Text {
-                        text: "\u26A0"
+                    TablerGlyph {
+                        text: "alert-triangle"
                         font.pixelSize: 20
                         color: SentinelTheme.warning
                     }

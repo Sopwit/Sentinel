@@ -20,8 +20,8 @@ Item {
 
     function buildDockItems() {
         return [
-            { id: "Dashboard", label: qsTr("Home"),   icon: "⌂" },
-            { id: "Models",    label: qsTr("Models"), icon: "◈" }
+            { id: "Dashboard", label: qsTr("Home"),   icon: "home" },
+            { id: "Models",    label: qsTr("Models"), icon: "brain" }
         ]
     }
 
@@ -191,97 +191,24 @@ Item {
                         spacing: 3
                         anchors.centerIn: parent
 
-                        // Premium vector icon (Canvas-drawn)
-                        Item {
+                        Image {
+                            id: dockIcon
                             Layout.alignment: Qt.AlignHCenter
+                            source: "qrc:/icons/tabler/" + tabBtn.modelData.icon + ".svg"
+                            sourceSize.width: 22
+                            sourceSize.height: 22
                             width: 22
                             height: 22
-
+                            fillMode: Image.PreserveAspectFit
                             readonly property color iconColor: tabBtn.active
                                 ? SentinelTheme.accent
                                 : (tabBtn.hovered
                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.80)
                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.45))
-
-                            Canvas {
-                                id: iconCanvas
-                                anchors.fill: parent
-                                antialiasing: true
-                                property string iconId: tabBtn.modelData.id
-                                property var c: parent.iconColor
-
-                                onPaint: {
-                                    var ctx = getContext("2d")
-                                    ctx.reset()
-                                    ctx.fillStyle = Qt.rgba(c.r, c.g, c.b, c.a)
-                                    ctx.strokeStyle = Qt.rgba(c.r, c.g, c.b, c.a)
-                                    ctx.lineWidth = 1.8
-                                    ctx.lineJoin = "round"
-                                    ctx.lineCap = "round"
-
-                                    var cx = width / 2
-                                    var cy = height / 2
-
-                                    if (iconId === "Dashboard") {
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx, 3)
-                                        ctx.lineTo(3, cy + 2)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx, 3)
-                                        ctx.lineTo(width - 3, cy + 2)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.rect(cx - 6, cy + 2, 12, 10)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.rect(cx - 3, cy + 5, 6, 7)
-                                        ctx.fill()
-                                    } else if (iconId === "Models") {
-                                        var r = 2.5
-                                        ctx.beginPath()
-                                        ctx.arc(cx - 6, cy - 5, r, 0, Math.PI * 2)
-                                        ctx.fill()
-                                        ctx.beginPath()
-                                        ctx.arc(cx + 6, cy - 5, r, 0, Math.PI * 2)
-                                        ctx.fill()
-                                        ctx.beginPath()
-                                        ctx.arc(cx, cy, r, 0, Math.PI * 2)
-                                        ctx.fill()
-                                        ctx.beginPath()
-                                        ctx.arc(cx - 6, cy + 5, r, 0, Math.PI * 2)
-                                        ctx.fill()
-                                        ctx.beginPath()
-                                        ctx.arc(cx + 6, cy + 5, r, 0, Math.PI * 2)
-                                        ctx.fill()
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx - 6, cy - 5)
-                                        ctx.lineTo(cx, cy)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx + 6, cy - 5)
-                                        ctx.lineTo(cx, cy)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx - 6, cy + 5)
-                                        ctx.lineTo(cx, cy)
-                                        ctx.stroke()
-                                        ctx.beginPath()
-                                        ctx.moveTo(cx + 6, cy + 5)
-                                        ctx.lineTo(cx, cy)
-                                        ctx.stroke()
-                                    }
-                                }
-
-                                Connections {
-                                    target: tabBtn
-                                    function onActiveChanged() { iconCanvas.requestPaint() }
-                                    function onHoveredChanged() { iconCanvas.requestPaint() }
-                                }
-                            }
-
-                            Behavior on scale {
-                                NumberAnimation { duration: MotionTokens.fast }
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                colorization: 1.0
+                                colorizationColor: dockIcon.iconColor
                             }
                         }
 

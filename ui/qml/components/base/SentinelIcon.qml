@@ -8,7 +8,7 @@ Image {
     required property string name
     property color tint: SentinelTheme.textPrimary
     property int iconSize: 18
-    source: "qrc:/resources/icons/lucide/" + name + ".svg"
+    source: "qrc:/icons/lucide/" + name + ".svg"
     sourceSize.width: iconSize
     sourceSize.height: iconSize
     width: iconSize

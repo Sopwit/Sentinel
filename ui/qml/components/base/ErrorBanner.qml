@@ -127,9 +127,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    TablerGlyph {
                         anchors.centerIn: parent
-                        text: "\u2715"
+                        text: "x"
                         color: root.textColor
                         font.pixelSize: 12
                         opacity: closeMouse.containsMouse ? 0.9 : 0.6
