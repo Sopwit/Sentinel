@@ -238,7 +238,8 @@ private slots:
         const auto state = loop.run(QStringLiteral("goal"));
 
         QCOMPARE(state.phase, AgentLoopPhase::Cancelled);
-        QCOMPARE(state.steps.size(), 2);
+        QCOMPARE(state.steps.size(), 1);
+        QCOMPARE(executor.requests.size(), 1);
         QVERIFY(state.abortReason.contains(QStringLiteral("cancelled")));
     }
 
