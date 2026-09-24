@@ -5,8 +5,10 @@
 #include "sentinel/core/agent/AgentLoop.h"
 
 #include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
+#include <QDir>
 
 #include <QTimer>
 #include <QUuid>
@@ -35,6 +37,49 @@ void fillRecordFromPlan(AgentStepRecord& record, const ToolInvocationPlan& plan)
 }
 
 } // namespace
+
+QStringList AgentLoop::externalPathsRequiringApproval(const ToolInvocationPlan& plan) const {
+    if (!externalDirectoryGate_ || plan.invocations.isEmpty())
+        return {};
+    const auto& invocation = plan.invocations.first();
+    static const QSet<QString> filesystem{
+        QStringLiteral("list-directory"), QStringLiteral("read-file"),
+        QStringLiteral("write-file"),     QStringLiteral("edit-file"),
+        QStringLiteral("delete-file"),    QStringLiteral("move-file"),
+        QStringLiteral("apply-patch"),    QStringLiteral("open-workspace"),
+        QStringLiteral("glob"),           QStringLiteral("grep")};
+    if (!filesystem.contains(invocation.toolId))
+        return {};
+    const bool write = invocation.toolId == QLatin1String("write-file") ||
+                       invocation.toolId == QLatin1String("edit-file") ||
+                       invocation.toolId == QLatin1String("delete-file") ||
+                       invocation.toolId == QLatin1String("move-file") ||
+                       invocation.toolId == QLatin1String("apply-patch");
+    QStringList paths;
+    for (const auto& argument : invocation.arguments) {
+        if (argument.id != QLatin1String("path") && argument.id != QLatin1String("source") &&
+            argument.id != QLatin1String("destination"))
+            continue;
+        const QString raw = argument.value.trimmed();
+        if (raw.isEmpty())
+            continue;
+        if (externalDirectoryGate_->canRequestPermission(raw, QDir::currentPath()) &&
+            !externalDirectoryGate_->isAccessAllowed(raw, QDir::currentPath(), write))
+            paths.append(raw);
+    }
+    return paths;
+}
+
+void AgentLoop::grantExternalPaths(const ToolInvocationPlan& plan) {
+    if (!externalDirectoryGate_)
+        return;
+    const auto& tool = plan.invocations.first().toolId;
+    const bool write = tool == QLatin1String("write-file") || tool == QLatin1String("edit-file") ||
+                       tool == QLatin1String("delete-file") || tool == QLatin1String("move-file") ||
+                       tool == QLatin1String("apply-patch");
+    for (const auto& path : externalPathsRequiringApproval(plan))
+        externalDirectoryGate_->grantPermission(path, write);
+}
 
 AgentLoop::AgentLoop(IAgentStepPlanner& planner, const IToolExecutor& executor,
                      const IApprovalPolicy& approvalPolicy, const ISandboxPolicy& sandboxPolicy,
@@ -105,6 +150,7 @@ void AgentLoop::resumeAsync(AgentLoopState state, bool approved, QObject* contex
     asyncState_.pendingApprovalPlan = {};
     asyncState_.pendingApprovalThought.clear();
     if (approved) {
+        grantExternalPaths(plan);
         executeStepAsync(
             plan, thought,
             {ApprovalStatus::Approved, QStringLiteral("User approved execution in chat."), {}});
@@ -121,6 +167,9 @@ void AgentLoop::cancelAsync() {
         return;
     if (waitingForTool_ && cancelTool_) {
         cancelTool_();
+        asyncState_.phase = AgentLoopPhase::Cancelled;
+        asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
+        completeAsync();
         return;
     }
     asyncState_.phase = AgentLoopPhase::Cancelled;
@@ -195,7 +244,7 @@ void AgentLoop::advanceAsync() {
         completeAsync();
         return;
     }
-    const auto plan = planFromDecision(decision);
+    auto plan = planFromDecision(decision);
     if (!knownToolIds_.contains(decision.toolId)) {
         appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Unknown Tool"),
                           QStringLiteral("Unknown tool requested: %1").arg(decision.toolId));
@@ -212,6 +261,16 @@ void AgentLoop::advanceAsync() {
     }
     if (toolCallback_)
         toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
+    const auto validation = gateway_.validatePlan(plan);
+    if (validation.status != ToolExecutionStatus::Succeeded) {
+        appendBlockedStep(asyncState_, plan, decision.thought,
+                          toolExecutionStatusName(validation.status), validation.summary);
+        if (toolCallback_)
+            toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan,
+                          &asyncState_.steps.last());
+        scheduleAsyncAdvance();
+        return;
+    }
     ApprovalDecision approval;
     if (config_.autonomousMode)
         approval = {ApprovalStatus::Approved,
@@ -226,6 +285,12 @@ void AgentLoop::advanceAsync() {
                 QStringLiteral(
                     "Session-level approval: the user already allowed this tool for this session."),
                 {}};
+    }
+    const auto externalPaths = externalPathsRequiringApproval(plan);
+    if (!externalPaths.isEmpty()) {
+        approval.status = ApprovalStatus::RequiresApproval;
+        approval.summary = QStringLiteral("Allow %1 to access %2?")
+                               .arg(decision.toolId, externalPaths.join(QStringLiteral(", ")));
     }
     if (approval.status == ApprovalStatus::RequiresApproval) {
         if (toolCallback_)
@@ -290,6 +355,8 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& plan, const QString& 
                                     .arg(record.toolName, record.statusText));
             scheduleAsyncAdvance();
         });
+    if (!waitingForTool_)
+        cancelTool_ = {};
 }
 
 bool AgentLoop::cancellationRequested() const {
@@ -320,6 +387,7 @@ AgentLoopState AgentLoop::resume(AgentLoopState state, bool approved) {
         return advance(std::move(state));
     }
 
+    grantExternalPaths(pendingPlan);
     executeStep(state, pendingPlan, thought,
                 ApprovalDecision{
                     ApprovalStatus::Approved,
@@ -390,7 +458,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             continue;
         }
 
-        const auto plan = planFromDecision(decision);
+        auto plan = planFromDecision(decision);
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
         if (doomDetector_.isStuck(state.sessionId)) {
             state.phase = AgentLoopPhase::Stuck;
@@ -400,6 +468,15 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
         if (toolCallback_) {
             toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
+        }
+        const auto validation = gateway_.validatePlan(plan);
+        if (validation.status != ToolExecutionStatus::Succeeded) {
+            appendBlockedStep(state, plan, decision.thought,
+                              toolExecutionStatusName(validation.status), validation.summary);
+            if (toolCallback_)
+                toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan,
+                              &state.steps.last());
+            continue;
         }
 
         ApprovalDecision approval;
@@ -423,6 +500,12 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             }
         }
 
+        const auto externalPaths = externalPathsRequiringApproval(plan);
+        if (!externalPaths.isEmpty()) {
+            approval.status = ApprovalStatus::RequiresApproval;
+            approval.summary = QStringLiteral("Allow %1 to access %2?")
+                                   .arg(decision.toolId, externalPaths.join(QStringLiteral(", ")));
+        }
         if (approval.status == ApprovalStatus::RequiresApproval) {
             if (toolCallback_) {
                 toolCallback_(ToolTransition::ApprovalRequired, stepIndex, plan, nullptr);

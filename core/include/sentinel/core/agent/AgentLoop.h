@@ -25,6 +25,9 @@ namespace sentinel::core {
 class IApprovalPolicy;
 class ISandboxPolicy;
 class IToolExecutor;
+class IToolRegistry;
+class IToolHookService;
+class ExternalDirectoryGate;
 
 class AgentLoop {
 public:
@@ -58,6 +61,9 @@ public:
               const IApprovalPolicy& approvalPolicy, const ISandboxPolicy& sandboxPolicy,
               QStringList knownToolIds, Config config);
 
+    void setExternalDirectoryGate(ExternalDirectoryGate* gate) {
+        externalDirectoryGate_ = gate;
+    }
     void setStepCallback(StepCallback callback);
     void setStatusCallback(StatusCallback callback);
     void setCancelQuery(CancelQuery query);
@@ -65,6 +71,15 @@ public:
     void setPlanningCallback(PlanningCallback callback);
     void setOutputCallback(OutputCallback callback);
     void setToolCallIdProvider(ToolCallIdProvider provider);
+    void setToolRegistry(const IToolRegistry* registry) {
+        gateway_.setRegistry(registry);
+    }
+    void setToolHookService(IToolHookService* hooks) {
+        gateway_.setHookService(hooks);
+    }
+    void setPermissionPolicy(const PermissionPolicyService* policy, QString defaultState) {
+        gateway_.setPermissionPolicy(policy, std::move(defaultState));
+    }
 
     AgentLoopState run(const QString& goal, const QString& sessionId = QString());
     AgentLoopState resume(AgentLoopState state, bool approved);
@@ -75,6 +90,8 @@ public:
     void cancelAsync();
 
 private:
+    QStringList externalPathsRequiringApproval(const ToolInvocationPlan& plan) const;
+    void grantExternalPaths(const ToolInvocationPlan& plan);
     AgentLoopState advance(AgentLoopState state);
     void executeStep(AgentLoopState& state, const ToolInvocationPlan& plan, const QString& thought,
                      ApprovalDecision approval);
@@ -89,6 +106,7 @@ private:
     void completeAsync();
     void scheduleAsyncAdvance();
 
+    ExternalDirectoryGate* externalDirectoryGate_ = nullptr;
     IAgentStepPlanner& planner_;
     const IToolExecutor& executor_;
     const IApprovalPolicy& approvalPolicy_;

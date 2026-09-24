@@ -39,6 +39,8 @@ struct AgentStepDecision {
     QList<ToolInvocationArgument> arguments;
     QString answer;
     QString reason;
+    bool requiresObservation = false;
+    bool observationRequirementDeclared = false;
 };
 
 class IAgentStepPlanner {

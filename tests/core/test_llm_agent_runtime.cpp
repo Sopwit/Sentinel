@@ -6,6 +6,8 @@
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 
 using namespace sentinel::core;
 
@@ -51,6 +53,74 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void registryChangesPlannerDiscovery() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral("{\"action\":\"final\",\"answer\":\"done\"}");
+        LlmAgentRuntime runtime({}, &provider);
+        InMemoryToolRegistry registry;
+        ToolDescriptor first{QStringLiteral("tool-a"), QStringLiteral("Tool A"),
+                             QStringLiteral("First tool")};
+        ToolDescriptor second{QStringLiteral("tool-b"), QStringLiteral("Tool B"),
+                              QStringLiteral("Second tool")};
+        ToolDescriptor disabled{QStringLiteral("disabled-tool"), QStringLiteral("Disabled"),
+                                QStringLiteral("Disabled tool")};
+        disabled.enabled = false;
+        class Handler final : public IToolHandler {
+        public:
+            IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString&,
+                                          const QString&, IToolExecutor::Output,
+                                          IToolExecutor::Completion completion) override {
+                completion({ToolExecutionStatus::Succeeded, QStringLiteral("done")});
+                return {};
+            }
+        };
+        auto handler = std::make_shared<Handler>();
+        QVERIFY(registry.registerTool({first, handler}));
+        QVERIFY(registry.registerTool({second, handler}));
+        QVERIFY(registry.registerTool({disabled, handler}));
+        runtime.setToolRegistry(&registry);
+        QCOMPARE(runtime.availableTools().size(), 2);
+        runtime.nextStep(QStringLiteral("goal"), {});
+        QVERIFY(provider.prompts.last().contains(QStringLiteral("tool-a")));
+        QVERIFY(provider.prompts.last().contains(QStringLiteral("tool-b")));
+        QVERIFY(!provider.prompts.last().contains(QStringLiteral("disabled-tool")));
+        QVERIFY(registry.setEnabled(QStringLiteral("tool-a"), false));
+        runtime.nextStep(QStringLiteral("goal"), {});
+        QVERIFY(!provider.prompts.last().contains(QStringLiteral("tool-a")));
+        QVERIFY(registry.setEnabled(QStringLiteral("tool-a"), true));
+        runtime.nextStep(QStringLiteral("goal"), {});
+        QVERIFY(provider.prompts.last().contains(QStringLiteral("tool-a")));
+        QVERIFY(registry.unregisterTool(QStringLiteral("tool-b")));
+        runtime.nextStep(QStringLiteral("goal"), {});
+        QVERIFY(!provider.prompts.last().contains(QStringLiteral("tool-b")));
+    }
+    void turkishDirectoryRequestsNeverBecomeShellFallback() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral("malformed planner output");
+        LlmAgentRuntime runtime(NullAgentRuntime::standardTools(), &provider);
+        for (const QString& goal :
+             {QStringLiteral("masaüstümde hangi dosyalar var bunu bana söyle"),
+              QStringLiteral(
+                  "~/Desktop dizinindeki dosya ve klasörleri listele. Bunun için uygun filesystem "
+                  "tool'unu kullan, kullanıcı mesajımı shell komutu olarak çalıştırma.")}) {
+            const auto decision = runtime.nextStep(goal, {});
+            QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+            QCOMPARE(provider.prompts.size() % 2, 0);
+        }
+    }
+
+    void modelCanSelectDirectoryToolForTurkishGoal() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral("{\"action\":\"tool\",\"tool\":\"list-directory\","
+                                                "\"args\":{\"path\":\"~/Desktop\"}}");
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        const auto decision =
+            runtime.nextStep(QStringLiteral("masaüstümde hangi dosyalar var bunu bana söyle"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(decision.toolId, QStringLiteral("list-directory"));
+        QCOMPARE(decision.arguments.first().value, QStringLiteral("~/Desktop"));
+    }
+
     void parsesPlainToolJson() {
         FakeChatProvider provider;
         provider.scriptedReply = QStringLiteral(
@@ -106,8 +176,7 @@ private slots:
         LlmAgentRuntime runtime(NullAgentRuntime::standardTools(), &provider);
         const auto decision = runtime.nextStep(QStringLiteral("run echo hi"), {});
 
-        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
-        QCOMPARE(decision.toolId, QStringLiteral("run-command"));
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
         QVERIFY(!runtime.lastDecisionUsedLlm());
     }
 
@@ -119,8 +188,7 @@ private slots:
         const auto decision =
             runtime.nextStep(QStringLiteral("goal"), QList<AgentStepRecord>{sampleRecord()});
 
-        QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
-        QVERIFY(decision.answer.contains(QStringLiteral("hello-from-step")));
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
         QVERIFY(!runtime.lastDecisionUsedLlm());
     }
 
@@ -132,8 +200,7 @@ private slots:
         LlmAgentRuntime runtime(NullAgentRuntime::standardTools(), &provider);
         const auto decision = runtime.nextStep(QStringLiteral("run echo hi"), {});
 
-        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
-        QCOMPARE(decision.toolId, QStringLiteral("run-command"));
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
         QVERIFY(!runtime.lastDecisionUsedLlm());
     }
 
@@ -165,8 +232,7 @@ private slots:
         QCOMPARE(runtime.status(), AgentStatus::Unavailable);
 
         const auto decision = runtime.nextStep(QStringLiteral("run echo hi"), {});
-        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
-        QCOMPARE(decision.toolId, QStringLiteral("run-command"));
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
         QVERIFY(!runtime.lastDecisionUsedLlm());
     }
 

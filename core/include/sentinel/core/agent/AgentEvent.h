@@ -77,6 +77,8 @@ struct AgentEvent {
     QString turnId;
     QString stepId;
     QString toolCallId;
+    QString providerId;
+    QString modelId;
     AgentEventType type = AgentEventType::SessionCreated;
     QDateTime timestamp;
     AgentEventPayload payload;

@@ -7,6 +7,8 @@
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
+#include "sentinel/core/mcp/McpToolProvider.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
@@ -16,15 +18,56 @@
 
 namespace sentinel::core {
 
+namespace {
+class ExecutorCompatibilityHandler final : public IToolHandler {
+public:
+    explicit ExecutorCompatibilityHandler(IToolExecutor& executor) : executor_(executor) {}
+    IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString& sessionId,
+                                  const QString& toolCallId, IToolExecutor::Output output,
+                                  IToolExecutor::Completion completion) override {
+        return executor_.executeAsync(request, sessionId, toolCallId, std::move(output),
+                                      std::move(completion));
+    }
+
+private:
+    IToolExecutor& executor_;
+};
+} // namespace
+
 AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPlanner* planner,
                            IToolExecutor& executor, const IApprovalPolicy& approval,
                            const ISandboxPolicy& sandbox, const IMemoryStore* memoryStore,
                            const IChatHistoryStore* chatHistoryStore)
     : metadata_(std::move(metadata)), planner_(planner), executor_(executor), approval_(approval),
-      sandbox_(sandbox), memoryStore_(memoryStore), chatHistoryStore_(chatHistoryStore) {}
+      sandbox_(sandbox), memoryStore_(memoryStore), chatHistoryStore_(chatHistoryStore) {
+    if (auto* nativeExecutor = dynamic_cast<RealToolExecutor*>(&executor_)) {
+        nativeExecutor->setExternalDirectoryGate(&externalDirectoryGate_);
+        BuiltInToolProvider::registerTools(toolRegistry_, *nativeExecutor);
+    } else {
+        auto compatibility = std::make_shared<ExecutorCompatibilityHandler>(executor_);
+        for (auto descriptor : metadata_->availableTools())
+            toolRegistry_.registerTool({std::move(descriptor), compatibility});
+    }
+    if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
+        llm->setToolRegistry(&toolRegistry_);
+    if (auto* nativeExecutor = dynamic_cast<RealToolExecutor*>(&executor_))
+        setMcpService(nativeExecutor->mcpService());
+    pluginManager_.setToolRegistry(&toolRegistry_);
+    if (dynamic_cast<RealToolExecutor*>(&executor_)) {
+        pluginManager_.discoverPlugins({});
+        pluginManager_.startAll();
+    }
+}
+
+void AgentRuntime::setMcpService(std::shared_ptr<IMcpService> service) {
+    mcpToolProvider_.reset();
+    if (service)
+        mcpToolProvider_ = std::make_unique<McpToolProvider>(std::move(service), toolRegistry_);
+}
 
 AgentRuntime::~AgentRuntime() {
     shutdown();
+    pluginManager_.unloadAll();
 }
 
 QString AgentRuntime::name() const {
@@ -37,13 +80,14 @@ QList<AgentCapabilityDescriptor> AgentRuntime::capabilities() const {
     return metadata_->capabilities();
 }
 QList<ToolDescriptor> AgentRuntime::availableTools() const {
-    return metadata_->availableTools();
+    return toolRegistry_.enabledTools();
 }
 ToolInvocationPlan AgentRuntime::plan(const AgentRequest& request) const {
     return metadata_->plan(request);
 }
 AgentResponse AgentRuntime::execute(const AgentRequest& request) {
-    return metadata_->execute(request);
+    const auto result = executePipeline(request, false);
+    return {result.execution.status == ToolExecutionStatus::Succeeded, result.summary, status()};
 }
 
 bool AgentRuntime::supportsSessions() const {
@@ -96,6 +140,14 @@ void AgentRuntime::publish(const QString& sessionId, AgentEventType type, AgentE
     event.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     event.sessionId = sessionId;
     event.type = type;
+    if (type == AgentEventType::ModelRequestStarted ||
+        type == AgentEventType::ModelRequestCompleted) {
+        if (const auto* llm = dynamic_cast<const LlmAgentRuntime*>(planner_)) {
+            const auto binding = llm->modelBinding();
+            event.providerId = binding.providerId;
+            event.modelId = binding.modelId;
+        }
+    }
     event.timestamp = QDateTime::currentDateTimeUtc();
     event.payload = std::move(payload);
     {
@@ -216,6 +268,8 @@ QString AgentRuntime::createSession() {
 }
 
 AgentLoopState AgentRuntime::submit(const QString& sessionId, const QString& goal) {
+    // Compatibility API for direct synchronous callers. Desktop sessions use
+    // start(), whose AgentLoop continuation runs on the Qt worker event loop.
     return advance(sessionId, false, false, goal);
 }
 
@@ -285,6 +339,7 @@ bool AgentRuntime::cancel(const QString& sessionId) {
             sessions_[sessionId] = finalState;
             errors_[sessionId] = {AgentRuntimeErrorCode::Cancelled, finalState.abortReason, false};
         }
+        externalDirectoryGate_.clearPermissions();
         finishTurn(sessionId, finalState);
     }
     return true;
@@ -350,8 +405,10 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
         delete worker_;
         worker_ = nullptr;
     }
-    if (!isResume)
+    if (!isResume) {
+        externalDirectoryGate_.clearPermissions();
         beginTurn(sessionId);
+    }
     if (isResume) {
         const auto state = sessionState(sessionId);
         const int index = static_cast<int>(state.steps.size()) + 1;
@@ -393,12 +450,19 @@ void AgentRuntime::shutdown() {
     if (!sessionsToCancel.isEmpty())
         cancel(sessionsToCancel.first());
     std::lock_guard workerLock(workerMutex_);
+    QList<std::function<void()>> controlledCancels;
     {
         std::lock_guard lock(mutex_);
         shuttingDown_ = true;
         cancelRequested_ = true;
         modelCancellationToken_->store(true);
+        callbacksAlive_->store(false);
+        controlledCancels = controlledCancels_.values();
+        controlledCancels_.clear();
     }
+    for (const auto& cancelControlled : controlledCancels)
+        if (cancelControlled)
+            cancelControlled();
     if (worker_) {
         worker_->wait();
         delete worker_;
@@ -417,7 +481,7 @@ void AgentRuntime::shutdown() {
 
 QStringList AgentRuntime::toolIds() const {
     QStringList ids;
-    for (const auto& tool : metadata_->availableTools()) {
+    for (const auto& tool : toolRegistry_.enabledTools()) {
         ids.append(tool.id);
     }
     return ids;
@@ -470,6 +534,10 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             }
         }
         AgentLoop loop(*planner_, executor_, approval_, sandbox_, readOnlyToolIds, config);
+        loop.setToolRegistry(&toolRegistry_);
+        loop.setExternalDirectoryGate(&externalDirectoryGate_);
+        loop.setToolHookService(&toolHooks_);
+        loop.setPermissionPolicy(&toolPermissionPolicy_, toolPermissionState_);
         const auto state = loop.run(
             task,
             QStringLiteral("subagent-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
@@ -486,9 +554,19 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
 }
 
 AgentPipelineResult AgentRuntime::executePipeline(const AgentRequest& request, bool autonomous) {
+    // Retained for synchronous API compatibility. Desktop dispatch uses
+    // executePipelineAsync() so process-backed tools do not block the UI.
     std::lock_guard executionLock(executionMutex_);
     AgentPipelineResult result;
     result.plan = metadata_->plan(request);
+    if (result.plan.status == ToolInvocationPlanStatus::Planned) {
+        ToolExecutionGateway gateway(&toolRegistry_);
+        result.execution = gateway.validatePlan(result.plan);
+        if (result.execution.status != ToolExecutionStatus::Succeeded) {
+            result.summary = safeToolExecutionSummary(result.execution);
+            return result;
+        }
+    }
     result.approval =
         autonomous ? ApprovalDecision{ApprovalStatus::Approved,
                                       QStringLiteral(
@@ -501,11 +579,44 @@ AgentPipelineResult AgentRuntime::executePipeline(const AgentRequest& request, b
         result.execution.summary =
             QStringLiteral("Execution paused: pending user approval in chat.");
     } else {
-        result.execution = executor_.execute(
-            ToolExecutionRequest{result.plan, result.approval, result.sandbox, toolIds()});
+        ToolExecutionGateway gateway(&toolRegistry_);
+        result.execution = gateway.execute(
+            ToolExecutionRequest{result.plan, result.approval, result.sandbox, toolIds()},
+            executor_);
     }
     result.summary = safeToolExecutionSummary(result.execution);
     return result;
+}
+
+void AgentRuntime::executePipelineAsync(const AgentRequest& request, bool autonomous,
+                                        std::function<void(AgentPipelineResult)> completion) {
+    AgentPipelineResult result;
+    result.plan = metadata_->plan(request);
+    if (result.plan.status == ToolInvocationPlanStatus::Planned) {
+        ToolExecutionGateway gateway(&toolRegistry_);
+        result.execution = gateway.validatePlan(result.plan);
+        if (result.execution.status != ToolExecutionStatus::Succeeded) {
+            result.summary = safeToolExecutionSummary(result.execution);
+            completion(std::move(result));
+            return;
+        }
+    }
+    result.approval =
+        autonomous ? ApprovalDecision{ApprovalStatus::Approved,
+                                      QStringLiteral(
+                                          "Autonomous Mode is enabled: user approval is bypassed."),
+                                      {}}
+                   : approval_.evaluate(result.plan);
+    result.sandbox = sandbox_.evaluate(result.plan, result.approval);
+    if (!autonomous && result.approval.status == ApprovalStatus::RequiresApproval) {
+        result.execution.status = ToolExecutionStatus::Blocked;
+        result.execution.summary =
+            QStringLiteral("Execution paused: pending user approval in chat.");
+        result.summary = safeToolExecutionSummary(result.execution);
+        completion(std::move(result));
+        return;
+    }
+    executePipelineResultAsync(std::move(result), std::move(completion));
 }
 
 AgentPipelineResult AgentRuntime::executeApprovedGoal(const QString& goal) {
@@ -528,14 +639,75 @@ AgentPipelineResult AgentRuntime::executeApprovedPlan(const ToolInvocationPlan& 
     return executeApprovedPlanLocked(plan, approvalSummary);
 }
 
+void AgentRuntime::executeApprovedGoalAsync(const QString& goal,
+                                            std::function<void(AgentPipelineResult)> completion) {
+    const QString trimmed = goal.trimmed();
+    if (trimmed.isEmpty()) {
+        AgentPipelineResult result;
+        result.summary = QStringLiteral("Agent request was empty.");
+        completion(std::move(result));
+        return;
+    }
+    executeApprovedPlanAsync(
+        metadata_->plan(AgentRequest{trimmed, {}}),
+        QStringLiteral("User approved this controlled task explicitly in Security settings."),
+        std::move(completion));
+}
+
+void AgentRuntime::executeApprovedPlanAsync(const ToolInvocationPlan& plan,
+                                            const QString& approvalSummary,
+                                            std::function<void(AgentPipelineResult)> completion) {
+    AgentPipelineResult result;
+    result.plan = plan;
+    result.approval = {ApprovalStatus::Approved, approvalSummary, {}};
+    result.sandbox = sandbox_.evaluate(plan, result.approval);
+    executePipelineResultAsync(std::move(result), std::move(completion));
+}
+
+void AgentRuntime::executePipelineResultAsync(AgentPipelineResult result,
+                                              std::function<void(AgentPipelineResult)> completion) {
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const auto alive = callbacksAlive_;
+    ToolExecutionGateway gateway(&toolRegistry_);
+    auto completed = std::make_shared<bool>(false);
+    ToolExecutionRequest request{result.plan, result.approval, result.sandbox, toolIds()};
+    auto cancel = gateway.executeAsync(
+        request, executor_, id, id, {},
+        [this, id, alive, completed, result = std::move(result),
+         completion = std::move(completion)](ToolExecutionResult execution) mutable {
+            *completed = true;
+            if (!alive->load())
+                return;
+            {
+                std::lock_guard lock(mutex_);
+                controlledCancels_.remove(id);
+            }
+            result.execution = std::move(execution);
+            result.summary = safeToolExecutionSummary(result.execution);
+            completion(std::move(result));
+        });
+    if (!*completed && cancel) {
+        bool shuttingDown;
+        {
+            std::lock_guard lock(mutex_);
+            shuttingDown = shuttingDown_;
+            if (!shuttingDown)
+                controlledCancels_.insert(id, cancel);
+        }
+        if (shuttingDown)
+            cancel();
+    }
+}
+
 AgentPipelineResult AgentRuntime::executeApprovedPlanLocked(const ToolInvocationPlan& plan,
                                                             const QString& approvalSummary) {
     AgentPipelineResult result;
     result.plan = plan;
     result.approval = {ApprovalStatus::Approved, approvalSummary, {}};
     result.sandbox = sandbox_.evaluate(result.plan, result.approval);
-    result.execution = executor_.execute(
-        ToolExecutionRequest{result.plan, result.approval, result.sandbox, toolIds()});
+    ToolExecutionGateway gateway(&toolRegistry_);
+    result.execution = gateway.execute(
+        ToolExecutionRequest{result.plan, result.approval, result.sandbox, toolIds()}, executor_);
     result.summary = safeToolExecutionSummary(result.execution);
     return result;
 }
@@ -549,7 +721,7 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
         if (callback)
             callback(step);
     });
-    loop.setStatusCallback(std::move(options.onStatus));
+    loop.setStatusCallback(options.onStatus);
     loop.setPlanningCallback([this, sessionId, goal](int index, bool started) {
         const auto* llm = dynamic_cast<const LlmAgentRuntime*>(planner_);
         if (llm && llm->hasModelProvider() && !goal.trimmed().isEmpty()) {
@@ -628,6 +800,8 @@ void AgentRuntime::commitResult(const QString& sessionId, AgentLoopState& result
         activeLoop_ = nullptr;
         workerContext_ = nullptr;
     }
+    if (result.phase != AgentLoopPhase::AwaitingApproval)
+        externalDirectoryGate_.clearPermissions();
     finishTurn(sessionId, result);
 }
 
@@ -652,6 +826,10 @@ void AgentRuntime::advanceAsync(const QString& sessionId, bool isResume, bool ap
     config.sessionApprovedToolIds = approvedToolIds;
     auto loop = std::make_shared<AgentLoop>(*planner_, executor_, approval_, sandbox_,
                                             availableToolIds, config);
+    loop->setToolRegistry(&toolRegistry_);
+    loop->setExternalDirectoryGate(&externalDirectoryGate_);
+    loop->setToolHookService(&toolHooks_);
+    loop->setPermissionPolicy(&toolPermissionPolicy_, toolPermissionState_);
     // The worker context owns the loop until its queued deletion on the same thread.
     QObject::connect(context, &QObject::destroyed, [loop] {});
     configureLoop(*loop, sessionId, options, seed.goal.isEmpty() ? goal : seed.goal);
@@ -730,8 +908,10 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
     }
 
     if (!prepared) {
-        if (!isResume)
+        if (!isResume) {
+            externalDirectoryGate_.clearPermissions();
             beginTurn(sessionId);
+        }
         if (isResume) {
             const int index = static_cast<int>(seed.steps.size()) + 1;
             publish(
@@ -754,6 +934,10 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
         prepareExecution(availableToolIds);
         std::lock_guard executionLock(executionMutex_);
         AgentLoop loop(*planner_, executor_, approval_, sandbox_, availableToolIds, config);
+        loop.setToolRegistry(&toolRegistry_);
+        loop.setExternalDirectoryGate(&externalDirectoryGate_);
+        loop.setToolHookService(&toolHooks_);
+        loop.setPermissionPolicy(&toolPermissionPolicy_, toolPermissionState_);
         configureLoop(loop, sessionId, options, seed.goal.isEmpty() ? goal : seed.goal);
         result = isResume ? loop.resume(seed, approved) : loop.run(goal, sessionId);
     } catch (...) {
@@ -782,6 +966,8 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
         }
         activeSessionId_.clear();
     }
+    if (result.phase != AgentLoopPhase::AwaitingApproval)
+        externalDirectoryGate_.clearPermissions();
     finishTurn(sessionId, result);
     return result;
 }

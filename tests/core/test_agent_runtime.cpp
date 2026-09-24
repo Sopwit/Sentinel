@@ -378,6 +378,117 @@ private slots:
             cancelled += event.type == AgentEventType::AgentCancelled;
         QCOMPARE(cancelled, 1);
     }
+
+    void asyncProcessListStreamsAndContinues() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        QFile fakePs(temporary.filePath(QStringLiteral("ps")));
+        QVERIFY(fakePs.open(QIODevice::WriteOnly));
+        fakePs.write("#!/bin/sh\nprintf 'PID CPU COMMAND\\n123 0 sentinel-test\\n'\n");
+        fakePs.close();
+        QVERIFY(fakePs.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                      QFileDevice::ExeOwner));
+        const QByteArray oldPath = qgetenv("PATH");
+        qputenv("PATH", temporary.path().toUtf8() + ':' + oldPath);
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::ToolCall;
+        planner.decision.toolId = QStringLiteral("process-list");
+        planner.decision.toolName = QStringLiteral("process-list");
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(), planner, executor, approval,
+                             sandbox);
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.availableToolIds = {QStringLiteral("process-list")};
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase, AgentLoopPhase::Completed,
+                                  5000);
+        qputenv("PATH", oldPath);
+        QVERIFY(runtime.sessionState(session).steps.first().observation.contains(
+            QStringLiteral("process-list:")));
+        bool sawOutput = false;
+        for (const auto& event : runtime.eventHistory(session))
+            sawOutput |= event.type == AgentEventType::ToolOutput;
+        QVERIFY(sawOutput);
+    }
+
+    void approvedPlanUsesAsyncProcessPath() {
+#ifdef Q_OS_WIN
+        QSKIP("The shell fixture is Unix-only.");
+#endif
+        RealToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<FixedPlanRuntime>(), nullptr, executor, approval,
+                             sandbox);
+        ToolInvocationPlan plan;
+        plan.status = ToolInvocationPlanStatus::Planned;
+        PlannedToolInvocation invocation;
+        invocation.toolId = QStringLiteral("run-command");
+        invocation.toolName = QStringLiteral("run-command");
+        invocation.arguments.append(
+            {QStringLiteral("command"), QStringLiteral("printf 'controlled\\n'; exec sleep 1")});
+        plan.invocations.append(invocation);
+        invocation.arguments.clear();
+        invocation.arguments.append(
+            {QStringLiteral("command"), QStringLiteral("printf 'second invocation\\n'")});
+        plan.invocations.append(invocation);
+        bool completed = false;
+        AgentPipelineResult result;
+        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved in chat."),
+                                         [&](AgentPipelineResult value) {
+                                             result = std::move(value);
+                                             completed = true;
+                                         });
+        QVERIFY(!completed);
+        QTRY_VERIFY_WITH_TIMEOUT(completed, 5000);
+        QCOMPARE(result.execution.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.execution.summary.contains(QStringLiteral("controlled")));
+        QVERIFY(result.execution.summary.contains(QStringLiteral("second invocation")));
+    }
+    void runtimeRegistryExecutesNewHandler() {
+        class Handler final : public IToolHandler {
+        public:
+            IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString&,
+                                          const QString&, IToolExecutor::Output,
+                                          IToolExecutor::Completion completion) override {
+                completion({ToolExecutionStatus::Succeeded, QStringLiteral("dynamic runtime")});
+                return {};
+            }
+        };
+        NullToolExecutor legacy;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<FixedPlanRuntime>(), nullptr, legacy, approval,
+                             sandbox);
+        ToolDescriptor descriptor;
+        descriptor.id = QStringLiteral("plugin.test.dynamic");
+        descriptor.name = QStringLiteral("Dynamic");
+        descriptor.source = ToolSource::Plugin;
+        descriptor.providerId = QStringLiteral("test");
+        QVERIFY(runtime.toolRegistry().registerTool({descriptor, std::make_shared<Handler>()}));
+        QVERIFY(runtime.availableTools().size() == 2);
+        ToolInvocationPlan plan;
+        plan.status = ToolInvocationPlanStatus::Planned;
+        plan.invocations.append({descriptor.id, descriptor.name});
+        AgentPipelineResult result;
+        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved"),
+                                         [&](AgentPipelineResult value) { result = value; });
+        QCOMPARE(result.execution.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.execution.summary, QStringLiteral("dynamic runtime"));
+        QVERIFY(runtime.toolRegistry().setEnabled(descriptor.id, false));
+        QCOMPARE(runtime.availableTools().size(), 1);
+        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved"),
+                                         [&](AgentPipelineResult value) { result = value; });
+        QCOMPARE(result.execution.status, ToolExecutionStatus::Blocked);
+    }
     void streamsRealProviderDeltasWithStepCorrelation() {
         StreamingPlannerProvider provider;
         LlmAgentRuntime planner(NullAgentRuntime::standardTools(), &provider);

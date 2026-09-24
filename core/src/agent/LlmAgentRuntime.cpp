@@ -3,14 +3,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
+#include "sentinel/core/runtime/IToolRegistry.h"
+#include "sentinel/core/runtime/ToolArgumentValidator.h"
 
 #include <QDateTime>
 #include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSet>
 #include <QSysInfo>
 
+#include <algorithm>
 #include <utility>
 
 namespace sentinel::core {
@@ -18,74 +22,86 @@ namespace sentinel::core {
 namespace {
 
 QString extractJsonObject(const QString& text) {
-    QString trimmed = text.trimmed();
-    if (trimmed.startsWith(QStringLiteral("```"))) {
-        const int firstNewline = trimmed.indexOf(QLatin1Char('\n'));
-        if (firstNewline >= 0) {
-            trimmed = trimmed.mid(firstNewline + 1);
-        }
-        const int fenceEnd = trimmed.lastIndexOf(QStringLiteral("```"));
-        if (fenceEnd >= 0) {
-            trimmed = trimmed.left(fenceEnd);
-        }
-        trimmed = trimmed.trimmed();
-    }
+    const auto trimmed = text.trimmed();
+    return trimmed.startsWith(QLatin1Char('{')) && trimmed.endsWith(QLatin1Char('}'))
+               ? trimmed
+               : QString{};
+}
 
-    const int start = trimmed.indexOf(QLatin1Char('{'));
-    if (start < 0) {
-        return {};
-    }
+QString normalizedAnswer(QString text) {
+    text = text.toCaseFolded();
+    QString normalized;
+    for (const auto character : text)
+        normalized.append(character.isLetterOrNumber() ? character : QLatin1Char(' '));
+    return normalized.simplified();
+}
 
-    int depth = 0;
-    bool inString = false;
-    bool escaped = false;
-    for (int i = start; i < trimmed.size(); ++i) {
-        const QChar c = trimmed.at(i);
-        if (inString) {
-            if (escaped) {
-                escaped = false;
-            } else if (c == QLatin1Char('\\')) {
-                escaped = true;
-            } else if (c == QLatin1Char('"')) {
-                inString = false;
-            }
-            continue;
-        }
-        if (c == QLatin1Char('"')) {
-            inString = true;
-        } else if (c == QLatin1Char('{')) {
-            ++depth;
-        } else if (c == QLatin1Char('}')) {
-            --depth;
-            if (depth == 0) {
-                return trimmed.mid(start, i - start + 1);
-            }
-        }
-    }
-    return {};
+bool isEcho(const QString& answer, const QString& goal) {
+    const auto normalizedGoal = normalizedAnswer(goal);
+    const auto normalizedFinal = normalizedAnswer(answer);
+    if (normalizedGoal.isEmpty() || normalizedFinal.isEmpty())
+        return false;
+    const int larger = qMax(normalizedGoal.size(), normalizedFinal.size());
+    const int smaller = qMin(normalizedGoal.size(), normalizedFinal.size());
+    return normalizedGoal == normalizedFinal ||
+           (smaller >= 16 && larger <= smaller + qMax(8, smaller / 5) &&
+            (normalizedGoal.contains(normalizedFinal) || normalizedFinal.contains(normalizedGoal)));
+}
+
+bool isContentFree(const QString& answer) {
+    const auto normalized = normalizedAnswer(answer);
+    static const QSet<QString> replies{
+        QStringLiteral("ok"), QStringLiteral("okay"), QStringLiteral("sure"),
+        QStringLiteral("done"), QStringLiteral("everything seems fine"),
+        QStringLiteral("all good")};
+    return replies.contains(normalized);
+}
+
+QString observationDomainForTool(const QString& id, ToolSource source) {
+    if (source == ToolSource::MCP || source == ToolSource::Plugin)
+        return QStringLiteral("external");
+    if (id == QLatin1String("todo-write") || id == QLatin1String("todo-read") ||
+        id == QLatin1String("ask-question") || id == QLatin1String("spawn-agent") ||
+        id == QLatin1String("mcp-list") || id == QLatin1String("app-launch") ||
+        id == QLatin1String("app-quit") || id == QLatin1String("open-url") ||
+        id == QLatin1String("run-command"))
+        return QStringLiteral("action");
+    if (id == QLatin1String("list-directory") || id == QLatin1String("glob") ||
+        id == QLatin1String("grep") || id == QLatin1String("read-file") ||
+        id == QLatin1String("list-code-definitions"))
+        return QStringLiteral("filesystem");
+    if (id == QLatin1String("process-list") || id == QLatin1String("system-info") ||
+        id == QLatin1String("current-time"))
+        return QStringLiteral("system");
+    if (id.startsWith(QLatin1String("clipboard-")))
+        return QStringLiteral("clipboard");
+    if (id.startsWith(QLatin1String("web-")) || id.startsWith(QLatin1String("browser-")))
+        return QStringLiteral("network");
+    if (id == QLatin1String("memory-search") || id == QLatin1String("history-search"))
+        return QStringLiteral("memory");
+    return QStringLiteral("external");
 }
 
 QString toolRiskLine(const ToolDescriptor& tool) {
-    QStringList parameters;
-    for (const auto& parameter : tool.parameters) {
-        parameters.append(QStringLiteral("%1%2").arg(
-            parameter.id,
-            parameter.required ? QStringLiteral(" (required)") : QStringLiteral(" (optional)")));
-    }
-    return QStringLiteral("- %1 | risk: %2 | description: %3 | params: %4")
+    return QStringLiteral("- %1 | risk: %2 | %3 | %4")
         .arg(tool.id,
              tool.riskLevel == ToolRiskLevel::High
                  ? QStringLiteral("High")
                  : (tool.riskLevel == ToolRiskLevel::Medium ? QStringLiteral("Medium")
                                                             : QStringLiteral("Low")),
-             tool.description,
-             parameters.isEmpty() ? QStringLiteral("none") : parameters.join(QStringLiteral(", ")));
+             tool.description, ToolArgumentValidator::compactContract(tool));
 }
 
 } // namespace
 
 LlmAgentRuntime::LlmAgentRuntime(QList<ToolDescriptor> tools, IChatProvider* provider)
     : heuristic_(tools), tools_(std::move(tools)), provider_(provider) {}
+
+void LlmAgentRuntime::bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider) {
+    boundProvider_ = std::move(provider);
+    modelBinding_ = std::move(binding);
+    provider_ = boundProvider_.get();
+}
 
 QString LlmAgentRuntime::name() const {
     return QStringLiteral("LlmAgentRuntime");
@@ -99,15 +115,11 @@ QList<AgentCapabilityDescriptor> LlmAgentRuntime::capabilities() const {
     return {
         {QStringLiteral("llm-step-planning"),
          QStringLiteral("Plans each agent step with the configured chat provider."), true},
-        {QStringLiteral("heuristic-fallback"),
-         QStringLiteral("Falls back to deterministic local planning when no provider output is "
-                        "available."),
-         true},
     };
 }
 
 QList<ToolDescriptor> LlmAgentRuntime::availableTools() const {
-    return tools_;
+    return registry_ ? registry_->enabledTools() : tools_;
 }
 
 bool LlmAgentRuntime::lastDecisionUsedLlm() const {
@@ -123,21 +135,137 @@ void LlmAgentRuntime::setStreamObserver(std::function<void(const QString&)> onDe
 AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
     lastDecisionUsedLlm_ = false;
-    if (provider_ && !goal.trimmed().isEmpty()) {
-        const auto prompt = buildPlannerPrompt(goal, history);
-        const auto reply =
-            provider_->supportsStreaming() && streamObserver_
-                ? provider_->sendMessageStreaming(prompt, streamObserver_, streamCancellationToken_)
-                : provider_->sendMessage(prompt);
-        if (reply.success && !reply.message.trimmed().isEmpty()) {
-            const auto decision = decisionFromLlmOutput(reply.message);
-            if (decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty()) {
-                lastDecisionUsedLlm_ = true;
-                return decision;
+    if (!provider_) {
+        AgentStepDecision failure;
+        failure.kind = AgentStepDecision::Kind::GiveUp;
+        failure.reason = QStringLiteral("No model is configured for Agent Mode.");
+        return failure;
+    }
+    const auto prompt = buildPlannerPrompt(goal, history);
+    QString repair;
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        const auto request = attempt == 0 ? prompt : repair;
+        const auto reply = attempt == 0 && provider_->supportsStreaming() && streamObserver_
+                               ? provider_->sendMessageStreaming(request, streamObserver_,
+                                                                 streamCancellationToken_)
+                               : provider_->sendMessage(request);
+        if (!reply.success) {
+            AgentStepDecision failure;
+            failure.kind = AgentStepDecision::Kind::GiveUp;
+            failure.reason = QStringLiteral("Model planning failed: %1").arg(reply.errorMessage);
+            return failure;
+        }
+        const auto decision = decisionFromLlmOutput(reply.message);
+        bool valid = decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty();
+        QString repairReason = QStringLiteral("Return one valid JSON action.");
+        if (valid && decision.kind == AgentStepDecision::Kind::FinalAnswer) {
+            if (isEcho(decision.answer, goal) || isContentFree(decision.answer)) {
+                valid = false;
+                repairReason = QStringLiteral(
+                    "Your final answer repeated the goal or contained no useful answer. "
+                    "Choose a tool or give a specific answer.");
+            } else {
+                QString classificationError;
+                const auto domain = observationDomainForGoal(goal, &classificationError);
+                if (!classificationError.isEmpty()) {
+                    AgentStepDecision failure;
+                    failure.kind = AgentStepDecision::Kind::GiveUp;
+                    failure.reason = QStringLiteral("Model planning failed: %1")
+                                         .arg(classificationError);
+                    return failure;
+                }
+                if (!domain || (decision.observationRequirementDeclared &&
+                                decision.requiresObservation && *domain == QLatin1String("none"))) {
+                    valid = false;
+                    repairReason = QStringLiteral(
+                        "Classify whether the goal needs current external observation, then "
+                        "choose a tool or a grounded final answer.");
+                } else if (*domain != QLatin1String("none") &&
+                           !hasRelevantObservation(*domain, history)) {
+                    valid = false;
+                    repairReason = QStringLiteral(
+                        "The answer requires observing external state. Choose one available "
+                        "observation tool with valid arguments. Do not guess.");
+                }
             }
         }
+        // The gateway validates the registered schema. Keep the shell-specific
+        // semantic guard here because schema cannot classify user prose.
+        if (valid && decision.kind == AgentStepDecision::Kind::ToolCall &&
+            decision.toolId == QLatin1String("run-command")) {
+            for (const auto& argument : decision.arguments) {
+                if (argument.id == QLatin1String("command") &&
+                    argument.value.trimmed() == goal.trimmed()) {
+                    valid = false;
+                    repairReason = QStringLiteral("Use a real shell command or a dedicated tool.");
+                }
+            }
+        }
+        if (valid) {
+            lastDecisionUsedLlm_ = true;
+            return decision;
+        }
+        repair = prompt + QStringLiteral("\nREPAIR: %1 Return exactly one JSON object.")
+                              .arg(repairReason);
     }
-    return heuristicDecision(goal, history);
+    AgentStepDecision failure;
+    failure.kind = AgentStepDecision::Kind::GiveUp;
+    failure.reason = QStringLiteral("Agent could not determine a valid next action.");
+    return failure;
+}
+
+std::optional<QString> LlmAgentRuntime::observationDomainForGoal(const QString& goal,
+                                                                 QString* error) const {
+    QStringList domains;
+    for (const auto& tool : availableTools()) {
+        const auto domain = observationDomainForTool(tool.id, tool.source);
+        if (domain != QLatin1String("action") && !domains.contains(domain))
+            domains.append(domain);
+    }
+    const auto request = QStringLiteral(
+        "Decide whether answering this goal requires a FRESH observation of current external "
+        "state. This applies to files, workspace, processes, clipboard, network, and external "
+        "services, in any language. General knowledge and conversation-only questions do not "
+        "require it. Return ONLY JSON: {\"domain\":\"none|filesystem|system|clipboard|"
+        "network|memory|external\"}. Use 'none' only when no live tool observation is needed. "
+        "Available domains: %1. Goal: %2")
+                             .arg(domains.join(QLatin1Char(',')), goal);
+    const auto reply = provider_->sendMessage(request);
+    if (!reply.success) {
+        if (error)
+            *error = reply.errorMessage;
+        return std::nullopt;
+    }
+    const auto candidate = extractJsonObject(reply.message);
+    if (candidate.isEmpty())
+        return std::nullopt;
+    const auto document = QJsonDocument::fromJson(candidate.toUtf8());
+    if (!document.isObject())
+        return std::nullopt;
+    const auto domain = document.object().value(QStringLiteral("domain")).toString();
+    static const QSet<QString> allowed{
+        QStringLiteral("none"),       QStringLiteral("filesystem"),
+        QStringLiteral("system"),     QStringLiteral("clipboard"),
+        QStringLiteral("network"),    QStringLiteral("memory"),
+        QStringLiteral("external")};
+    return allowed.contains(domain) ? std::optional<QString>(domain) : std::nullopt;
+}
+
+bool LlmAgentRuntime::hasRelevantObservation(const QString& domain,
+                                             const QList<AgentStepRecord>& history) const {
+    for (const auto& step : history) {
+        if (step.toolId.isEmpty() || step.statusText == QLatin1String("Invalid Arguments") ||
+            step.statusText == QLatin1String("Unknown Tool"))
+            continue;
+        for (const auto& tool : availableTools()) {
+            if (tool.id != step.toolId)
+                continue;
+            const auto toolDomain = observationDomainForTool(tool.id, tool.source);
+            if (toolDomain == domain)
+                return true;
+        }
+    }
+    return false;
 }
 
 AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) const {
@@ -156,7 +284,10 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
     const auto object = document.object();
 
     AgentStepDecision decision;
-    decision.thought = object.value(QStringLiteral("thought")).toString();
+    if (object.value(QStringLiteral("requiresObservation")).isBool()) {
+        decision.requiresObservation = object.value(QStringLiteral("requiresObservation")).toBool();
+        decision.observationRequirementDeclared = true;
+    }
 
     const QString action = object.value(QStringLiteral("action")).toString().toLower();
     if (action == QStringLiteral("final")) {
@@ -185,7 +316,7 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
     decision.toolId = object.value(QStringLiteral("tool")).toString().trimmed();
 
     const ToolDescriptor* matched = nullptr;
-    for (const auto& tool : tools_) {
+    for (const auto& tool : availableTools()) {
         if (tool.id == decision.toolId) {
             matched = &tool;
             break;
@@ -199,6 +330,8 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
     decision.riskLevel = matched->riskLevel;
     decision.executionMode = matched->executionMode;
 
+    if (!object.value(QStringLiteral("args")).isObject())
+        return invalid;
     const auto args = object.value(QStringLiteral("args")).toObject();
     for (auto it = args.begin(); it != args.end(); ++it) {
         const auto value = it.value();
@@ -209,10 +342,14 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
             text = QString::number(value.toDouble());
         } else if (value.isBool()) {
             text = value.toBool() ? QStringLiteral("true") : QStringLiteral("false");
-        } else {
+        } else if (value.isArray()) {
             text = QString::fromUtf8(QJsonDocument(value.toArray()).toJson(QJsonDocument::Compact));
+        } else if (value.isObject()) {
+            text = QString::fromUtf8(QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact));
+        } else {
+            text = QStringLiteral("null");
         }
-        decision.arguments.append(ToolInvocationArgument{it.key(), text});
+        decision.arguments.append(ToolInvocationArgument{it.key(), text, value});
     }
 
     return decision;
@@ -258,7 +395,7 @@ AgentStepDecision LlmAgentRuntime::heuristicDecision(const QString& goal,
 QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
     QStringList toolLines;
-    for (const auto& tool : tools_) {
+    for (const auto& tool : availableTools()) {
         toolLines.append(toolRiskLine(tool));
     }
 
@@ -273,10 +410,10 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
             record.observation.size() > 1200
                 ? record.observation.left(1200) + QStringLiteral("… [truncated]")
                 : record.observation;
-        historyLines.append(
-            QStringLiteral("%1. thought=%2 | action=%3(%4) -> %5\n   observation: %6")
-                .arg(QString::number(record.index), record.thought.left(500), record.toolId,
-                     argumentParts.join(QStringLiteral(", ")), record.statusText, observation));
+        historyLines.append(QStringLiteral("%1. %2(%3) [%4]: %5")
+                                .arg(QString::number(record.index), record.toolId,
+                                     argumentParts.join(QStringLiteral(", ")),
+                                     record.statusText, observation));
     }
 
     const QString environmentBlock =
@@ -286,59 +423,20 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                  QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm")));
 
     return QStringLiteral(
-               "You are Sentinel's autonomous agent planner. Decide the SINGLE next action toward "
-               "the "
-               "user's goal.\n\n"
-               "ENVIRONMENT:\n%7\n\n"
-               "AVAILABLE TOOLS:\n%1\n\n"
-               "RULES:\n"
-               "- Reply with exactly ONE JSON object and nothing else. No markdown fences, no "
-               "prose.\n"
-               "- To call a tool: {\"thought\":\"why\",\"action\":\"tool\",\"tool\":\"<tool id>\","
-               "\"args\":{\"<param>\":\"<value>\"}}\n"
-               "- When the goal is fully achieved: "
-               "{\"thought\":\"...\",\"action\":\"final\",\"answer\":"
-               "\"<final answer for the user>\"}\n"
-               "- When the goal is impossible after the steps so far: {\"thought\":\"...\","
-               "\"action\":\"giveup\",\"reason\":\"<why>\"}\n"
-               "- Only call tools from the list. Use every required parameter.\n"
-               "- Learn from observations: do not repeat a failed identical action; change the "
-               "approach "
-               "instead.\n"
-               "- Prefer the fewest steps. Chain tools when one step's output is needed by the "
-               "next.\n"
-               "- Use open-workspace before file tools when the goal refers to a specific "
-               "folder.\n"
-               "- Prefer dedicated tools over shell: read-file instead of cat, grep/glob instead "
-               "of grep/find in run-command, edit-file instead of sed. app-launch/app-quit open "
-               "and close desktop apps (e.g. 'spotify aç' -> app-launch with app=Spotify). "
-               "set-alarm schedules alarms/reminders. web-fetch reads a page after web-search.\n"
-               "- open-url opens a URL in the user's default browser. When the user says 'X aç'/"
-               "open X and X is a website address (a domain like sahibinden.com, www.example.org,"
-               " or any http(s) URL), ALWAYS use open-url — never app-launch. app-launch is only "
-               "for installed desktop applications like Spotify or Firefox. "
-               "clipboard-read/clipboard-write access the system clipboard. "
-               "system-info/process-list/current-time report machine state read-only. "
-               "memory-search looks up facts already stored in long-term memory and "
-               "history-search recalls earlier messages in this chat; try them "
-               "before asking the user again. ask-question asks the user one clarifying "
-               "question when the goal is ambiguous — after it, finish with the question as "
-               "your final answer. apply-patch applies unified diffs (prefer it over many "
-               "edit-file calls for multi-file changes); list-code-definitions maps a source "
-               "file's symbols before reading it. mcp-list/mcp-call discover and invoke "
-               "tools from configured MCP servers (list first, then call with a JSON "
-               "arguments object). spawn-agent delegates a self-contained read-only research "
-               "subtask to a bounded subagent and returns its answer. "
-               "browser-screenshot/browser-pdf render a page in headless Chromium via "
-               "Playwright (needs Node.js). run-command accepts sandbox=docker for an "
-               "isolated, network-disabled container run. delete-file/move-file reorganize "
-               "workspace files (delete is permanent).\n"
-               "- For goals with 3+ steps, start with todo-write to record the checklist, keep "
-               "exactly one item in_progress, and mark items completed only after verifying.\n"
-               "- The user speaks Turkish or English; answer in the user's language.\n\n"
-               "GOAL: %2\n\n"
-               "STEPS SO FAR:\n%3\n\n"
-               "NEXT ACTION (one JSON object only):")
+               "You are Sentinel's Agent Mode planner. Choose ONE next action. Reply with "
+               "exactly one JSON object, no prose or markdown.\n"
+               "Tool: {\"action\":\"tool\",\"tool\":\"id\",\"args\":{}}\n"
+               "Final: {\"action\":\"final\",\"requiresObservation\":false,"
+               "\"answer\":\"specific answer\"}\n"
+               "Failure: {\"action\":\"giveup\",\"reason\":\"why\"}\n"
+               "If the answer depends on current files, workspace, processes, clipboard, "
+               "network, or external services, use an observation tool BEFORE final. Never "
+               "guess that a resource exists. After a tool failure, use another tool or "
+               "explain that verification failed. Do not echo the goal. Prefer list-directory, "
+               "glob, read-file, and grep over shell for filesystem questions. Use only "
+               "listed tools and valid JSON arguments. Answer in the user's language.\n"
+               "ENVIRONMENT: %4\nTOOLS:\n%1\nGOAL: %2\nCURRENT TURN OBSERVATIONS:\n%3\n"
+               "NEXT JSON ACTION:")
         .arg(toolLines.join(QLatin1Char('\n')), goal,
              historyLines.isEmpty() ? QStringLiteral("(none yet)")
                                     : historyLines.join(QLatin1Char('\n')),

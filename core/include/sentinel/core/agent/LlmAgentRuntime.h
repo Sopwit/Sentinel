@@ -8,16 +8,18 @@
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/model/ModelRouting.h"
 
 #include <QList>
 #include <QString>
+#include <optional>
 
 namespace sentinel::core {
+class IToolRegistry;
 
 // IAgentRuntime + IAgentStepPlanner implementation that asks the configured
 // chat provider (local or cloud) for the next agent action in JSON form and
-// falls back to the deterministic NullAgentRuntime heuristics whenever the
-// provider is unavailable or returns unparseable output.
+// retries one malformed response, then reports planning failure.
 class LlmAgentRuntime final : public IAgentRuntime, public IAgentStepPlanner {
 public:
     LlmAgentRuntime(QList<ToolDescriptor> tools, IChatProvider* provider);
@@ -36,18 +38,31 @@ public:
     bool hasModelProvider() const {
         return provider_ != nullptr;
     }
+    // Called before an accepted run; the owned provider and binding stay fixed
+    // for every planner iteration in that run.
+    void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider);
+    ModelBinding modelBinding() const { return modelBinding_; }
     void setStreamObserver(std::function<void(const QString&)> onDelta,
                            std::shared_ptr<std::atomic_bool> cancellationToken = {}) const;
+    void setToolRegistry(const IToolRegistry* registry) {
+        registry_ = registry;
+    }
 
 private:
     QString buildPlannerPrompt(const QString& goal, const QList<AgentStepRecord>& history) const;
     AgentStepDecision decisionFromLlmOutput(const QString& output) const;
+    std::optional<QString> observationDomainForGoal(const QString& goal, QString* error) const;
+    bool hasRelevantObservation(const QString& domain,
+                                const QList<AgentStepRecord>& history) const;
     AgentStepDecision heuristicDecision(const QString& goal,
                                         const QList<AgentStepRecord>& history) const;
 
     NullAgentRuntime heuristic_;
     QList<ToolDescriptor> tools_;
+    const IToolRegistry* registry_ = nullptr;
     IChatProvider* provider_ = nullptr;
+    std::shared_ptr<IChatProvider> boundProvider_;
+    ModelBinding modelBinding_;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable std::function<void(const QString&)> streamObserver_;
     mutable std::shared_ptr<std::atomic_bool> streamCancellationToken_;

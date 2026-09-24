@@ -127,11 +127,24 @@ public:
     virtual AgentPipelineResult executePipeline(const AgentRequest&, bool) {
         return {};
     }
+    virtual void executePipelineAsync(const AgentRequest& request, bool autonomous,
+                                      std::function<void(AgentPipelineResult)> completion) {
+        completion(executePipeline(request, autonomous));
+    }
     virtual AgentPipelineResult executeApprovedGoal(const QString&) {
         return {};
     }
     virtual AgentPipelineResult executeApprovedPlan(const ToolInvocationPlan&, const QString&) {
         return {};
+    }
+    virtual void executeApprovedPlanAsync(const ToolInvocationPlan& plan,
+                                          const QString& approvalSummary,
+                                          std::function<void(AgentPipelineResult)> completion) {
+        completion(executeApprovedPlan(plan, approvalSummary));
+    }
+    virtual void executeApprovedGoalAsync(const QString& goal,
+                                          std::function<void(AgentPipelineResult)> completion) {
+        completion(executeApprovedGoal(goal));
     }
     virtual bool supportsSessions() const {
         return false;
