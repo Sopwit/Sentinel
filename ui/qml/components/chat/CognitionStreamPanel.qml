@@ -27,7 +27,7 @@ ShellPanel {
             Layout.fillWidth: true
 
             Label {
-                text: qsTr("COGNITION STREAM")
+                text: qsTr("AGENT ACTIVITY")
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 2.4
