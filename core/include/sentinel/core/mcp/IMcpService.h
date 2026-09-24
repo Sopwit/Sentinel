@@ -9,6 +9,7 @@
 #include <QList>
 #include <QObject>
 #include <QString>
+#include <functional>
 #include <memory>
 
 namespace sentinel::core {
@@ -51,6 +52,16 @@ public:
     virtual QList<McpToolDefinition> tools(const QString& serverName = QString()) const = 0;
     virtual QJsonObject callTool(const QString& serverName, const QString& toolName,
                                  const QJsonObject& arguments = {}) = 0;
+    using ToolCompletion = std::function<void(QJsonObject)>;
+    using Cancel = std::function<void()>;
+    virtual Cancel callToolAsync(const QString& serverName, const QString& toolName,
+                                 const QJsonObject& arguments, ToolCompletion completion) {
+        Q_UNUSED(serverName)
+        Q_UNUSED(toolName)
+        Q_UNUSED(arguments)
+        completion({{"error", QJsonObject{{"message", "Async MCP calls unavailable"}}}});
+        return {};
+    }
 
     // Batch operations
     virtual bool connectToAll() = 0;

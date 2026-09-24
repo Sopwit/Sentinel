@@ -42,6 +42,8 @@ public:
     QList<McpToolDefinition> tools(const QString& serverName = QString()) const override;
     QJsonObject callTool(const QString& serverName, const QString& toolName,
                          const QJsonObject& arguments = {}) override;
+    Cancel callToolAsync(const QString& serverName, const QString& toolName,
+                         const QJsonObject& arguments, ToolCompletion completion) override;
 
     bool connectToAll() override;
     void disconnectFromAll() override;
@@ -78,6 +80,8 @@ private:
     QMap<QString, McpServerState> m_servers;
     QList<QProcess*> m_processes; // Owned processes for cleanup
     QNetworkAccessManager m_networkManager;
+    QMap<QString, QMap<int, ToolCompletion>> m_pendingCalls;
+    QMap<QString, QByteArray> m_readBuffers;
 };
 
 } // namespace sentinel::core

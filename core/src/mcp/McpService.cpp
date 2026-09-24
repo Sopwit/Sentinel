@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QTimer>
 
 namespace sentinel::core {
@@ -51,7 +52,7 @@ bool McpService::removeServer(const QString& serverName) {
         return false;
     }
 
-    if (it->state == McpConnectionState::Connected) {
+    if (it->state != McpConnectionState::Disconnected) {
         disconnectFromServer(serverName);
     }
 
@@ -125,6 +126,10 @@ bool McpService::disconnectFromServer(const QString& serverName) {
         return true;
     }
 
+    auto pending = m_pendingCalls.take(serverName);
+    for (auto& completion : pending)
+        completion({{"error", QJsonObject{{"message", "MCP server disconnected"}}}});
+    m_readBuffers.remove(serverName);
     disconnectServer(*state);
     state->state = McpConnectionState::Disconnected;
     state->tools.clear();
@@ -166,6 +171,75 @@ QJsonObject McpService::callTool(const QString& serverName, const QString& toolN
     return sendJsonRpc(serverName, "tools/call", params);
 }
 
+IMcpService::Cancel McpService::callToolAsync(const QString& serverName, const QString& toolName,
+                                              const QJsonObject& arguments,
+                                              ToolCompletion completion) {
+    auto* state = findServer(serverName);
+    if (!state || state->state != McpConnectionState::Connected) {
+        completion({{"error", QJsonObject{{"message", "MCP server unavailable"}}}});
+        return {};
+    }
+    const int id = state->requestId++;
+    QJsonObject request{{"jsonrpc", "2.0"},
+                        {"id", id},
+                        {"method", "tools/call"},
+                        {"params", QJsonObject{{"name", toolName}, {"arguments", arguments}}}};
+    const auto payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
+    if (state->config.type == QStringLiteral("local") && state->process) {
+        m_pendingCalls[serverName].insert(id, std::move(completion));
+        state->process->write(payload);
+        QPointer<McpService> self(this);
+        QTimer::singleShot(30000, this, [self, serverName, id] {
+            if (!self)
+                return;
+            auto callback = self->m_pendingCalls[serverName].take(id);
+            if (callback)
+                callback({{"error", QJsonObject{{"message", "MCP local request timed out"}}}});
+        });
+        return [self, serverName, id] {
+            if (self)
+                self->m_pendingCalls[serverName].remove(id);
+        };
+    }
+    if (state->config.type == QStringLiteral("remote")) {
+        QNetworkRequest networkRequest(QUrl(state->config.url));
+        networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
+                                 QStringLiteral("application/json"));
+        for (auto it = state->config.headers.constBegin(); it != state->config.headers.constEnd();
+             ++it)
+            networkRequest.setRawHeader(it.key().toUtf8(), it.value().toString().toUtf8());
+        auto* reply = m_networkManager.post(networkRequest, payload);
+        auto* timer = new QTimer(reply);
+        timer->setSingleShot(true);
+        QObject::connect(timer, &QTimer::timeout, reply, [reply] { reply->abort(); });
+        timer->start(30000);
+        QObject::connect(
+            reply, &QNetworkReply::finished, this,
+            [reply, completion = std::move(completion)]() mutable {
+                QJsonObject result;
+                if (reply->error() != QNetworkReply::NoError)
+                    result = {{"error", QJsonObject{{"message", reply->errorString()}}}};
+                else {
+                    QJsonParseError error;
+                    const auto document = QJsonDocument::fromJson(reply->readAll(), &error);
+                    result = error.error == QJsonParseError::NoError && document.isObject()
+                                 ? document.object()
+                                 : QJsonObject{
+                                       {"error", QJsonObject{{"message", "Invalid MCP response"}}}};
+                }
+                reply->deleteLater();
+                completion(std::move(result));
+            });
+        QPointer<QNetworkReply> safeReply(reply);
+        return [safeReply] {
+            if (safeReply)
+                safeReply->abort();
+        };
+    }
+    completion({{"error", QJsonObject{{"message", "Unsupported MCP transport"}}}});
+    return {};
+}
+
 bool McpService::connectToAll() {
     bool allSuccess = true;
     for (auto it = m_servers.begin(); it != m_servers.end(); ++it) {
@@ -179,10 +253,9 @@ bool McpService::connectToAll() {
 }
 
 void McpService::disconnectFromAll() {
-    for (auto it = m_servers.begin(); it != m_servers.end(); ++it) {
-        disconnectServer(it.value());
-        it->state = McpConnectionState::Disconnected;
-    }
+    const auto names = m_servers.keys();
+    for (const auto& name : names)
+        disconnectFromServer(name);
 }
 
 bool McpService::connectToLocalServer(McpServerState& state) {
@@ -360,13 +433,24 @@ QJsonObject McpService::sendJsonRpc(const QString& serverName, const QString& me
 
 void McpService::onProcessReadyRead() {
     for (auto& state : m_servers) {
-        if (state.process && state.process->bytesAvailable() > 0) {
-            QByteArray data = state.process->readAllStandardOutput();
-            QJsonParseError parseError;
-            QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-
-            if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
-                handleJsonRpcResponse(state.config.name, doc.object());
+        if (state.process && state.process->bytesAvailable() > 0 &&
+            !m_pendingCalls.value(state.config.name).isEmpty()) {
+            auto& buffer = m_readBuffers[state.config.name];
+            buffer += state.process->readAllStandardOutput();
+            while (true) {
+                const auto end = buffer.indexOf('\n');
+                if (end < 0)
+                    break;
+                const auto line = buffer.left(end);
+                buffer.remove(0, end + 1);
+                const auto document = QJsonDocument::fromJson(line);
+                if (!document.isObject())
+                    continue;
+                const auto response = document.object();
+                const auto id = response.value(QStringLiteral("id")).toInt(-1);
+                auto completion = m_pendingCalls[state.config.name].take(id);
+                if (completion)
+                    completion(response);
             }
         }
     }
@@ -379,6 +463,9 @@ void McpService::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus
     for (auto& state : m_servers) {
         if (state.process && state.process->state() == QProcess::NotRunning) {
             state.state = McpConnectionState::Disconnected;
+            auto pending = m_pendingCalls.take(state.config.name);
+            for (auto& completion : pending)
+                completion({{"error", QJsonObject{{"message", "MCP process exited"}}}});
             emit serverDisconnected(state.config.name);
         }
     }
