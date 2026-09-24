@@ -7,6 +7,7 @@
 #include "sentinel/core/plugin/PluginManifest.h"
 #include "sentinel/core/plugin/PluginPermissions.h"
 #include "sentinel/core/plugin/PluginSandbox.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -194,6 +195,8 @@ void PluginManagerTest::testSamplePluginsLoading() {
 
     QTemporaryDir dataDir;
     PluginManager manager(QStringLiteral("1.0.0"), dataDir.path());
+    sentinel::core::InMemoryToolRegistry registry;
+    manager.setToolRegistry(&registry);
     int discovered = manager.discoverPlugins(samplesDir.absolutePath());
     QVERIFY(discovered >= 2);
 

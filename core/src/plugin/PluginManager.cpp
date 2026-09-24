@@ -4,6 +4,8 @@
 
 #include "sentinel/core/plugin/PluginManager.h"
 #include "sentinel/core/plugin/PluginDependencyResolver.h"
+#include "sentinel/core/runtime/IToolRegistry.h"
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDirIterator>
 #include <QFileInfo>
@@ -11,8 +13,104 @@
 #include <QJsonObject>
 #include <QLibrary>
 #include <QStandardPaths>
+#include <QTimer>
+#include <atomic>
 
 namespace sentinel::core::plugin {
+
+struct PluginModuleState {
+    std::shared_ptr<QPluginLoader> loader;
+    ISentinelPlugin* instance = nullptr;
+    std::atomic_bool unloading{false};
+    ~PluginModuleState() {
+        // Cleanup runs in a later event turn. A plugin can release its final
+        // completion callback while its own dynamic-library frame is active.
+        auto retiredLoader = std::move(loader);
+        auto* retiredInstance = instance;
+        auto cleanup = [retiredLoader = std::move(retiredLoader), retiredInstance] {
+            if (retiredInstance) {
+                try {
+                    if (retiredInstance->state() == PluginState::Active)
+                        retiredInstance->stop();
+                    retiredInstance->shutdown();
+                } catch (...) {
+                    qWarning() << "Plugin shutdown threw an exception";
+                }
+            }
+            if (retiredLoader)
+                retiredLoader->unload();
+        };
+        if (auto* app = QCoreApplication::instance())
+            QTimer::singleShot(0, app, std::move(cleanup));
+        else
+            cleanup();
+    }
+};
+
+namespace {
+QString escapedId(const QString& value) {
+    QString result;
+    for (const auto byte : value.toUtf8()) {
+        const auto c = static_cast<unsigned char>(byte);
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+            result += QLatin1Char(c);
+        else
+            result += QStringLiteral("_%1_").arg(c, 2, 16, QLatin1Char('0'));
+    }
+    return result;
+}
+
+class PluginToolHandler final : public IToolHandler,
+                                public std::enable_shared_from_this<PluginToolHandler> {
+public:
+    PluginToolHandler(std::shared_ptr<PluginModuleState> module,
+                      std::shared_ptr<IToolHandler> inner, std::shared_ptr<PluginSandbox> sandbox,
+                      QString pluginId)
+        : module_(std::move(module)), inner_(std::move(inner)), sandbox_(std::move(sandbox)),
+          pluginId_(std::move(pluginId)) {}
+
+    IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString& sessionId,
+                                  const QString& toolCallId, IToolExecutor::Output output,
+                                  IToolExecutor::Completion completion) override {
+        if (module_->unloading ||
+            !sandbox_->checkPermission(pluginId_, Permissions::ToolExecution)) {
+            completion({ToolExecutionStatus::Blocked,
+                        QStringLiteral("Plugin tool unavailable or permission denied.")});
+            return {};
+        }
+        auto self = shared_from_this();
+        auto finished = std::make_shared<std::atomic_bool>(false);
+        try {
+            auto cancel = inner_->execute(
+                request, sessionId, toolCallId, std::move(output),
+                [self, finished, completion = std::move(completion)](ToolExecutionResult result) {
+                    if (!finished->exchange(true))
+                        completion(std::move(result));
+                });
+            return [self, cancel = std::move(cancel)] {
+                if (cancel)
+                    cancel();
+            };
+        } catch (const std::exception& error) {
+            if (!finished->exchange(true))
+                completion({ToolExecutionStatus::Blocked,
+                            QStringLiteral("Plugin tool failed: %1").arg(error.what())});
+        } catch (...) {
+            if (!finished->exchange(true))
+                completion({ToolExecutionStatus::Blocked,
+                            QStringLiteral("Plugin tool failed with an unknown exception.")});
+        }
+        return {};
+    }
+
+private:
+    // The handler is destroyed before the module; its destructor remains in loaded code.
+    std::shared_ptr<PluginModuleState> module_;
+    std::shared_ptr<IToolHandler> inner_;
+    std::shared_ptr<PluginSandbox> sandbox_;
+    QString pluginId_;
+};
+} // namespace
 
 PluginManager::PluginManager(QString coreVersion, QString pluginStorageDir, QObject* parent)
     : QObject(parent), m_coreVersion(std::move(coreVersion)),
@@ -36,11 +134,11 @@ QString PluginManager::pluginStorageDir() const {
 }
 
 PluginSandbox& PluginManager::sandbox() {
-    return m_sandbox;
+    return *m_sandbox;
 }
 
 const PluginSandbox& PluginManager::sandbox() const {
-    return m_sandbox;
+    return *m_sandbox;
 }
 
 void PluginManager::setToolRegistry(IToolRegistry* registry) {
@@ -85,7 +183,7 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
             desc.pluginFilePath = QFileInfo(manifestPath).absolutePath(); // directory
             desc.state = PluginState::Unloaded;
 
-            m_sandbox.registerPluginPermissions(manifest.id, manifest.permissions);
+            m_sandbox->registerPluginPermissions(manifest.id, manifest.permissions);
             m_plugins[manifest.id] = desc;
             discoveredCount++;
         }
@@ -117,7 +215,7 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
                     desc.pluginFilePath = filePath;
                     desc.state = PluginState::Unloaded;
 
-                    m_sandbox.registerPluginPermissions(manifest.id, manifest.permissions);
+                    m_sandbox->registerPluginPermissions(manifest.id, manifest.permissions);
                     m_plugins[manifest.id] = desc;
                     discoveredCount++;
                 } else if (m_plugins[manifest.id].pluginFilePath.isEmpty() ||
@@ -249,11 +347,50 @@ bool PluginManager::initializePlugin(const QString& pluginId) {
     auto context = std::make_shared<PluginContext>(pluginId, m_coreVersion, dataDir,
                                                    desc.manifest.permissions);
 
+    auto module = std::make_shared<PluginModuleState>();
+    module->loader = desc.loader;
+    module->instance = desc.instance;
+    desc.module = module;
+    m_modules[pluginId] = module;
+    const auto version = desc.manifest.version;
+    std::weak_ptr<PluginModuleState> weakModule = module;
+    context->setToolRegistrar(
+        [weakModule, registry = m_toolRegistry, sandbox = m_sandbox, pluginId,
+         version](ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) {
+            const auto module = weakModule.lock();
+            if (!module || module->unloading || !registry || !handler ||
+                !sandbox->checkPermission(pluginId, Permissions::ToolExecution))
+                return false;
+            const auto localName = descriptor.id.trimmed();
+            if (localName.isEmpty())
+                return false;
+            descriptor.id =
+                QStringLiteral("plugin.%1.%2").arg(escapedId(pluginId), escapedId(localName));
+            if (descriptor.name.isEmpty())
+                descriptor.name = localName;
+            descriptor.source = ToolSource::Plugin;
+            descriptor.providerId = QStringLiteral("plugin:%1").arg(pluginId);
+            descriptor.version = version;
+            descriptor.executionMode = ToolExecutionMode::Local;
+            descriptor.requiredPermissionDomain = QStringLiteral("tool-execution");
+            auto wrapped =
+                std::make_shared<PluginToolHandler>(module, std::move(handler), sandbox, pluginId);
+            return registry->registerTool({std::move(descriptor), std::move(wrapped)});
+        });
+
     // Inject core services into plugin context
     injectCoreServices(context.get());
 
     desc.context = context;
     if (!desc.instance->initialize(context)) {
+        module->unloading = true;
+        if (m_toolRegistry)
+            m_toolRegistry->unregisterProvider(ToolSource::Plugin,
+                                               QStringLiteral("plugin:%1").arg(pluginId));
+        desc.instance = nullptr;
+        desc.context.reset();
+        desc.loader.reset();
+        desc.module.reset();
         desc.errorString = QStringLiteral("Plugin initialize() returned false");
         updateState(desc, PluginState::Error);
         emit pluginError(pluginId, desc.errorString);
@@ -282,6 +419,7 @@ bool PluginManager::startPlugin(const QString& pluginId) {
 
     if (!desc.instance->start()) {
         desc.errorString = QStringLiteral("Plugin start() returned false");
+        unloadPlugin(pluginId);
         updateState(desc, PluginState::Error);
         emit pluginError(pluginId, desc.errorString);
         return false;
@@ -316,6 +454,24 @@ bool PluginManager::unloadPlugin(const QString& pluginId) {
 
     auto& desc = m_plugins[pluginId];
     if (desc.state == PluginState::Unloaded) {
+        return true;
+    }
+
+    if (desc.module)
+        desc.module->unloading = true;
+    if (m_toolRegistry)
+        m_toolRegistry->unregisterProvider(ToolSource::Plugin,
+                                           QStringLiteral("plugin:%1").arg(pluginId));
+
+    if (desc.module) {
+        // Active gateway snapshots keep their wrapped handler and module alive. The
+        // module destructor performs stop/shutdown/unload after the last snapshot ends.
+        desc.instance = nullptr;
+        desc.context.reset();
+        desc.loader.reset();
+        desc.module.reset();
+        updateState(desc, PluginState::Unloaded);
+        emit pluginUnloaded(pluginId);
         return true;
     }
 
@@ -359,6 +515,23 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
         emit pluginReloadFailed(pluginId, QStringLiteral("Failed to unload plugin"));
         return false;
     }
+    QTimer::singleShot(
+        20, this, [this, pluginId, previousState] { finishReload(pluginId, previousState, 0); });
+    return true;
+}
+
+void PluginManager::finishReload(const QString& pluginId, PluginState previousState, int attempts) {
+    if (isModuleResident(pluginId)) {
+        if (attempts >= 250) {
+            emit pluginReloadFailed(pluginId, QStringLiteral("Active plugin calls did not finish"));
+            return;
+        }
+        QTimer::singleShot(20, this, [this, pluginId, previousState, attempts] {
+            finishReload(pluginId, previousState, attempts + 1);
+        });
+        return;
+    }
+    auto& desc = m_plugins[pluginId];
 
     // Re-discover the plugin (in case manifest changed)
     QString pluginDir = QFileInfo(desc.pluginFilePath).absoluteDir().absolutePath();
@@ -367,7 +540,7 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
     // Reload and restore previous state
     if (!loadPlugin(pluginId)) {
         emit pluginReloadFailed(pluginId, QStringLiteral("Failed to load plugin after unload"));
-        return false;
+        return;
     }
 
     // Restore to the previous state
@@ -375,7 +548,7 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
         if (!initializePlugin(pluginId)) {
             emit pluginReloadFailed(pluginId,
                                     QStringLiteral("Failed to initialize plugin after reload"));
-            return false;
+            return;
         }
     }
 
@@ -383,14 +556,13 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
         if (!startPlugin(pluginId)) {
             emit pluginReloadFailed(pluginId,
                                     QStringLiteral("Failed to start plugin after reload"));
-            return false;
+            return;
         }
     }
 
     qDebug() << QStringLiteral("PluginManager::reloadPlugin: Successfully reloaded plugin '%1'")
                     .arg(pluginId);
     emit pluginReloaded(pluginId);
-    return true;
 }
 
 void PluginManager::enableHotReload(bool enabled) {
@@ -507,6 +679,11 @@ ISentinelPlugin* PluginManager::pluginInstance(const QString& pluginId) const {
         return nullptr;
     }
     return m_plugins.value(pluginId).instance;
+}
+
+bool PluginManager::isModuleResident(const QString& pluginId) const {
+    const auto it = m_modules.constFind(pluginId);
+    return it != m_modules.cend() && !it.value().expired();
 }
 
 void PluginManager::onHotReloadRequested(const QString& pluginId) {

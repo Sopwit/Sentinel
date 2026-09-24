@@ -1,0 +1,12 @@
+{
+  "id": "dev.sentinel.plugin.second-tool",
+  "name": "Second Agent Tool",
+  "version": "1.0.0",
+  "api_version": "1.0",
+  "vendor": "Sopwit Community",
+  "description": "Second tool provider for registration isolation tests.",
+  "category": "Tool",
+  "entry_point": "second_agent_tool_plugin",
+  "permissions": ["tool.execute"],
+  "dependencies": {"dev.sentinel.core": ">=1.0.0"}
+}

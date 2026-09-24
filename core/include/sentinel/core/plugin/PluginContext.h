@@ -35,6 +35,7 @@ public:
 
     // Core service accessors
     IToolRegistry* toolRegistry() const override;
+    bool registerTool(ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) override;
     IMemoryStore* memoryStore() const override;
     IProviderCatalog* providerCatalog() const override;
 
@@ -44,6 +45,8 @@ public:
 
     // Setters for core services (called by PluginManager during initialization)
     void setToolRegistry(IToolRegistry* registry);
+    using ToolRegistrar = std::function<bool(ToolDescriptor, std::shared_ptr<IToolHandler>)>;
+    void setToolRegistrar(ToolRegistrar registrar);
     void setMemoryStore(IMemoryStore* store);
     void setProviderCatalog(IProviderCatalog* catalog);
 
@@ -57,6 +60,7 @@ private:
 
     // Core service pointers (non-owning)
     IToolRegistry* m_toolRegistry{nullptr};
+    ToolRegistrar m_toolRegistrar;
     IMemoryStore* m_memoryStore{nullptr};
     IProviderCatalog* m_providerCatalog{nullptr};
 

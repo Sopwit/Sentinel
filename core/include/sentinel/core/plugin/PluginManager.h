@@ -25,6 +25,8 @@ class IProviderCatalog;
 
 namespace sentinel::core::plugin {
 
+struct PluginModuleState;
+
 struct PluginDescriptor {
     PluginManifest manifest;
     QString pluginFilePath;
@@ -32,6 +34,7 @@ struct PluginDescriptor {
     ISentinelPlugin* instance{nullptr};
     std::shared_ptr<QPluginLoader> loader;
     std::shared_ptr<IPluginContext> context;
+    std::shared_ptr<PluginModuleState> module;
     QString errorString;
 };
 
@@ -80,6 +83,7 @@ public:
     PluginState pluginState(const QString& pluginId) const;
     const PluginDescriptor* descriptor(const QString& pluginId) const;
     ISentinelPlugin* pluginInstance(const QString& pluginId) const;
+    bool isModuleResident(const QString& pluginId) const;
 
 signals:
     void pluginLoaded(const QString& pluginId);
@@ -93,13 +97,15 @@ private slots:
     void onHotReloadRequested(const QString& pluginId);
 
 private:
+    void finishReload(const QString& pluginId, PluginState previousState, int attempts);
     void updateState(PluginDescriptor& desc, PluginState newState);
     void injectCoreServices(PluginContext* context);
 
     QString m_coreVersion;
     QString m_pluginStorageDir;
-    PluginSandbox m_sandbox;
+    std::shared_ptr<PluginSandbox> m_sandbox{std::make_shared<PluginSandbox>()};
     QMap<QString, PluginDescriptor> m_plugins;
+    QMap<QString, std::weak_ptr<PluginModuleState>> m_modules;
     QList<QString> m_orderedIds;
 
     // Core service pointers (non-owning)
