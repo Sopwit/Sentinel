@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/IToolHookService.h"
+#include "sentinel/core/runtime/IToolRegistry.h"
+#include "sentinel/core/runtime/ToolArgumentValidator.h"
+#include <QTimer>
 
 namespace sentinel::core {
 
@@ -27,119 +32,27 @@ QString toolSummaryLine(const ToolGatewaySummary& summary) {
 } // namespace
 
 QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
-    return {
-        {QStringLiteral("open-workspace"), QStringLiteral("Open Workspace"),
-         QStringLiteral("Workspace"), QStringLiteral("Workspace picker and scope selection."),
-         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Medium, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral(
-             "Workspace gateway is operational and allows defining active context path grants.")},
-        {QStringLiteral("read-file"), QStringLiteral("Read File"), QStringLiteral("Filesystem"),
-         QStringLiteral("Scoped file read inside an approved workspace path."),
-         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral(
-             "File reading is operational; files can be read inside active workspaces.")},
-        {QStringLiteral("write-file"), QStringLiteral("Write File"), QStringLiteral("Filesystem"),
-         QStringLiteral("Scoped file write after approval and validation checks."),
-         QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Critical,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral(
-             "File writing is operational; files can be edited/created inside active workspaces.")},
-        {QStringLiteral("run-command"), QStringLiteral("Run Command"), QStringLiteral("System"),
-         QStringLiteral("Subprocess execution inside an audited sandbox environment."),
-         QStringLiteral("subprocess-execution"), ToolGatewayRiskLevel::Critical,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Subprocess execution is operational; commands can be run synchronously "
-                        "via QProcess.")},
-        {QStringLiteral("edit-file"), QStringLiteral("Edit File"), QStringLiteral("Filesystem"),
-         QStringLiteral("Scoped fuzzy file edit inside an approved workspace path."),
-         QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Critical,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral(
-             "Fuzzy file editing is operational; edits are scoped to active workspaces.")},
-        {QStringLiteral("grep"), QStringLiteral("Grep"), QStringLiteral("Filesystem"),
-         QStringLiteral("Regular expression content search under a workspace path."),
-         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("Content search is operational and workspace-scoped.")},
-        {QStringLiteral("glob"), QStringLiteral("Glob"), QStringLiteral("Filesystem"),
-         QStringLiteral("Glob pattern file search under a workspace path."),
-         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("File pattern search is operational and workspace-scoped.")},
-        {QStringLiteral("app-launch"), QStringLiteral("Launch App"), QStringLiteral("System"),
-         QStringLiteral("Desktop application launch by name."),
-         QStringLiteral("subprocess-execution"), ToolGatewayRiskLevel::High,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Application launching is operational via platform open handlers.")},
-        {QStringLiteral("app-quit"), QStringLiteral("Quit App"), QStringLiteral("System"),
-         QStringLiteral("Desktop application quit by name."),
-         QStringLiteral("subprocess-execution"), ToolGatewayRiskLevel::High,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Application quit is operational via platform handlers.")},
-        {QStringLiteral("system-notify"), QStringLiteral("System Notify"),
-         QStringLiteral("Notification"), QStringLiteral("Immediate desktop notification."),
-         QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Medium,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Desktop notifications are operational via platform handlers.")},
-        {QStringLiteral("set-alarm"), QStringLiteral("Set Alarm"), QStringLiteral("Notification"),
-         QStringLiteral("Scheduled future alarm with chat notification."),
-         QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Medium,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Alarms are operational via the persisted alarm store.")},
-        {QStringLiteral("list-alarms"), QStringLiteral("List Alarms"),
-         QStringLiteral("Notification"), QStringLiteral("List active scheduled alarms."),
-         QStringLiteral("notification-posting"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available, QStringLiteral("Alarm listing is operational.")},
-        {QStringLiteral("todo-write"), QStringLiteral("Todo Write"), QStringLiteral("Session"),
-         QStringLiteral("Agent task checklist recording."), QStringLiteral("context-injection"),
-         ToolGatewayRiskLevel::Low, ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Agent checklist tracking is operational.")},
-        {QStringLiteral("todo-read"), QStringLiteral("Todo Read"), QStringLiteral("Session"),
-         QStringLiteral("Agent task checklist reading."), QStringLiteral("context-injection"),
-         ToolGatewayRiskLevel::Low, ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Agent checklist reading is operational.")},
-        {QStringLiteral("web-fetch"), QStringLiteral("Web Fetch"), QStringLiteral("Network"),
-         QStringLiteral("Single URL fetch returning page content."),
-         QStringLiteral("cloud-provider-access"), ToolGatewayRiskLevel::High,
-         ToolGatewayScope::Cloud, ToolExecutionAvailability::Available,
-         QStringLiteral("URL fetching is operational.")},
-        {QStringLiteral("summarize-current-conversation"),
-         QStringLiteral("Summarize Current Conversation"), QStringLiteral("Conversation"),
-         QStringLiteral("Conversation summary generation and prompt injection."),
-         QStringLiteral("context-injection"), ToolGatewayRiskLevel::Low, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("Conversation summarization is operational.")},
-        {QStringLiteral("export-conversation"), QStringLiteral("Export Conversation"),
-         QStringLiteral("Conversation"),
-         QStringLiteral("Explicit transcript export to local disk file."),
-         QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Medium, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("Conversation export is operational.")},
-        {QStringLiteral("voice-transcribe"), QStringLiteral("Voice Transcribe"),
-         QStringLiteral("Voice"),
-         QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
-         QStringLiteral("voice-capture"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("Voice transcription is operational via local Whisper CLI client.")},
-        {QStringLiteral("voice-speak"), QStringLiteral("Voice Speak"), QStringLiteral("Voice"),
-         QStringLiteral("TTS text-to-speech audio synthesis and playback."),
-         QStringLiteral("voice-playback"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
-         ToolExecutionAvailability::Available,
-         QStringLiteral("Voice playback is operational via local Piper TTS client.")},
-        {QStringLiteral("web-search"), QStringLiteral("Web Search"), QStringLiteral("Network"),
-         QStringLiteral("Web lookup querying the network via local client."),
-         QStringLiteral("cloud-provider-access"), ToolGatewayRiskLevel::High,
-         ToolGatewayScope::Cloud, ToolExecutionAvailability::Available,
-         QStringLiteral("Web search is operational.")},
-        {QStringLiteral("provider-test-call"), QStringLiteral("Provider Test Call"),
-         QStringLiteral("Provider"),
-         QStringLiteral("Cloud and local provider API connectivity test."),
-         QStringLiteral("cloud-provider-access"), ToolGatewayRiskLevel::High,
-         ToolGatewayScope::LocalAndCloud, ToolExecutionAvailability::Available,
-         QStringLiteral("Provider test calls are operational.")},
-    };
+    const auto descriptors =
+        registry_ ? registry_->listTools() : BuiltInToolProvider::descriptors();
+    QList<ToolGatewayMetadata> metadata;
+    for (const auto& descriptor : descriptors) {
+        ToolGatewayRiskLevel risk = ToolGatewayRiskLevel::Low;
+        if (descriptor.riskLevel == ToolRiskLevel::Medium)
+            risk = ToolGatewayRiskLevel::Medium;
+        else if (descriptor.riskLevel == ToolRiskLevel::High)
+            risk = ToolGatewayRiskLevel::High;
+        ToolGatewayScope scope = ToolGatewayScope::Local;
+        if (descriptor.scope == ToolScope::Cloud)
+            scope = ToolGatewayScope::Cloud;
+        else if (descriptor.scope == ToolScope::LocalAndCloud)
+            scope = ToolGatewayScope::LocalAndCloud;
+        metadata.append({descriptor.id, descriptor.name, descriptor.category,
+                         descriptor.description, descriptor.requiredPermissionDomain, risk, scope,
+                         descriptor.enabled ? ToolExecutionAvailability::Available
+                                            : ToolExecutionAvailability::Refused,
+                         descriptor.enabled ? QString() : QStringLiteral("Tool is disabled.")});
+    }
+    return metadata;
 }
 
 QList<ToolGatewaySummary>
@@ -221,8 +134,60 @@ ToolExecutionGateway::registrySummary(const QString& defaultPermissionState,
     return registry;
 }
 
+ToolExecutionResult ToolExecutionGateway::validatePlan(ToolInvocationPlan& plan) const {
+    if (!registry_)
+        return {ToolExecutionStatus::Succeeded,
+                QStringLiteral("Compatibility executor has no registry contract.")};
+    if (plan.status != ToolInvocationPlanStatus::Planned || plan.invocations.isEmpty())
+        return {ToolExecutionStatus::EmptyPlan, QStringLiteral("No tool invocation to validate.")};
+    for (auto& invocation : plan.invocations) {
+        // findRegistration returns a value snapshot; no registry lock is held during validation.
+        const auto registration = registry_->findRegistration(invocation.toolId);
+        if (!registration || !registration->handler || !registration->descriptor.enabled)
+            return {ToolExecutionStatus::UnknownTool,
+                    QStringLiteral("Tool unavailable: %1").arg(invocation.toolId)};
+        const auto contractErrors =
+            ToolArgumentValidator::validateSchema(registration->descriptor.inputSchema);
+        if (!contractErrors.isEmpty())
+            return {ToolExecutionStatus::InvalidToolContract,
+                    QStringLiteral("Tool contract is invalid for %1.").arg(invocation.toolId)};
+        const auto validation =
+            ToolArgumentValidator::validate(registration->descriptor, invocation.arguments);
+        if (!validation.valid) {
+            QStringList lines{QStringLiteral("Tool call rejected: invalid arguments for %1.")
+                                  .arg(invocation.toolId)};
+            for (const auto& error : validation.errors.mid(0, 8))
+                lines.append(
+                    QStringLiteral("%1 [%2]: %3").arg(error.path, error.keyword, error.message));
+            return {ToolExecutionStatus::InvalidArguments, lines.join(QLatin1Char('\n'))};
+        }
+        invocation.arguments =
+            ToolArgumentValidator::toInvocationArguments(validation.normalizedArguments);
+    }
+    return {ToolExecutionStatus::Succeeded, QStringLiteral("Arguments validated.")};
+}
+
 ToolExecutionResult ToolExecutionGateway::execute(const ToolExecutionRequest& request,
                                                   const IToolExecutor& executor) const {
+    if (registry_) {
+        struct State {
+            ToolExecutionResult result;
+            bool completed = false;
+        };
+        auto state = std::make_shared<State>();
+        auto cancel =
+            executeAsync(request, executor, {}, {}, {}, [state](ToolExecutionResult value) {
+                state->result = std::move(value);
+                state->completed = true;
+            });
+        if (!state->completed) {
+            if (cancel)
+                cancel();
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("Asynchronous tool requires the AgentLoop continuation path.")};
+        }
+        return state->result;
+    }
     QStringList knownToolIds;
     for (const ToolGatewayMetadata& metadata : toolMetadata()) {
         knownToolIds.append(metadata.toolId);
@@ -246,10 +211,217 @@ ToolExecutionResult ToolExecutionGateway::execute(const ToolExecutionRequest& re
 }
 
 IToolExecutor::Cancel
-ToolExecutionGateway::executeAsync(const ToolExecutionRequest& request,
+ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                                    const IToolExecutor& executor, const QString& sessionId,
                                    const QString& toolCallId, IToolExecutor::Output output,
                                    IToolExecutor::Completion completion) const {
+    ToolExecutionRequest normalizedRequest = originalRequest;
+    if (registry_ && normalizedRequest.plan.status == ToolInvocationPlanStatus::Planned &&
+        !normalizedRequest.plan.invocations.isEmpty()) {
+        const auto validation = validatePlan(normalizedRequest.plan);
+        if (validation.status != ToolExecutionStatus::Succeeded) {
+            completion(validation);
+            return {};
+        }
+    }
+    const auto& request = normalizedRequest;
+    if (registry_) {
+        if (request.plan.status != ToolInvocationPlanStatus::Planned ||
+            request.plan.invocations.isEmpty()) {
+            completion(
+                {ToolExecutionStatus::EmptyPlan,
+                 QStringLiteral("No planned tool invocation reached the execution boundary.")});
+            return {};
+        }
+        if (request.approval.status != ApprovalStatus::Approved &&
+            request.approval.status != ApprovalStatus::NotRequired) {
+            completion({ToolExecutionStatus::Blocked,
+                        QStringLiteral(
+                            "Tool gateway blocked execution until explicit approval is granted.")});
+            return {};
+        }
+        if (request.sandbox.status == SandboxStatus::Denied ||
+            request.sandbox.status == SandboxStatus::BlockedByApproval) {
+            completion(
+                {ToolExecutionStatus::Blocked,
+                 QStringLiteral("Execution boundary blocked by sandbox capability metadata.")});
+            return {};
+        }
+        if (request.plan.invocations.size() > 1) {
+            struct Batch {
+                ToolExecutionRequest request;
+                IToolExecutor::Output output;
+                IToolExecutor::Completion completion;
+                IToolExecutor::Cancel cancel;
+                QStringList summaries;
+                std::function<void()> next;
+                int index = 0;
+                bool active = false;
+                bool finished = false;
+                bool cancelled = false;
+            };
+            auto batch = std::make_shared<Batch>();
+            batch->request = request;
+            batch->output = std::move(output);
+            batch->completion = std::move(completion);
+            std::weak_ptr<Batch> weak = batch;
+            const auto* registry = registry_;
+            const auto* execution = &executor;
+            auto* hooks = hooks_;
+            const auto* permissionPolicy = permissionPolicy_;
+            const auto defaultPermissionState = defaultPermissionState_;
+            batch->next = [weak, registry, execution, hooks, permissionPolicy,
+                           defaultPermissionState, sessionId, toolCallId] {
+                auto state = weak.lock();
+                if (!state || state->finished)
+                    return;
+                if (state->cancelled || state->index >= state->request.plan.invocations.size()) {
+                    state->finished = true;
+                    state->completion({state->cancelled ? ToolExecutionStatus::Blocked
+                                                        : ToolExecutionStatus::Succeeded,
+                                       state->cancelled
+                                           ? QStringLiteral("Tool execution cancelled.")
+                                           : state->summaries.join(QStringLiteral("\n\n"))});
+                    state->next = {};
+                    return;
+                }
+                ToolExecutionRequest one = state->request;
+                one.plan.invocations = {state->request.plan.invocations.at(state->index++)};
+                state->active = true;
+                ToolExecutionGateway gateway(registry);
+                gateway.setHookService(hooks);
+                gateway.setPermissionPolicy(permissionPolicy, defaultPermissionState);
+                state->cancel = gateway.executeAsync(
+                    one, *execution, sessionId, toolCallId, state->output,
+                    [weak](ToolExecutionResult result) {
+                        auto current = weak.lock();
+                        if (!current || current->finished)
+                            return;
+                        current->active = false;
+                        current->cancel = {};
+                        if (current->cancelled ||
+                            (result.status != ToolExecutionStatus::Succeeded &&
+                             result.status != ToolExecutionStatus::PlaceholderSucceeded)) {
+                            current->finished = true;
+                            current->completion(
+                                current->cancelled
+                                    ? ToolExecutionResult{ToolExecutionStatus::Blocked,
+                                                          QStringLiteral(
+                                                              "Tool execution cancelled.")}
+                                    : std::move(result));
+                            current->next = {};
+                            return;
+                        }
+                        current->summaries.append(std::move(result.summary));
+                        QTimer::singleShot(0, [weak] {
+                            if (auto next = weak.lock(); next && next->next)
+                                next->next();
+                        });
+                    });
+                if (!state->active)
+                    state->cancel = {};
+            };
+            batch->next();
+            return [batch] {
+                if (batch->finished)
+                    return;
+                batch->cancelled = true;
+                if (batch->active && batch->cancel)
+                    batch->cancel();
+                else if (batch->next)
+                    batch->next();
+            };
+        }
+        const auto registration =
+            registry_->findRegistration(request.plan.invocations.first().toolId);
+        if (!registration || !registration->handler) {
+            completion({ToolExecutionStatus::UnknownTool,
+                        QStringLiteral("Execution boundary rejected unknown tool metadata: %1")
+                            .arg(request.plan.invocations.first().toolId)});
+            return {};
+        }
+        {
+            ToolExecutionRequest resolved = request;
+            if (!ToolArgumentValidator::validateSchema(registration->descriptor.inputSchema)
+                     .isEmpty()) {
+                completion({ToolExecutionStatus::InvalidToolContract,
+                            QStringLiteral("Tool contract is invalid for %1.")
+                                .arg(registration->descriptor.id)});
+                return {};
+            }
+            const auto snapshotValidation = ToolArgumentValidator::validate(
+                registration->descriptor, resolved.plan.invocations.first().arguments);
+            if (!snapshotValidation.valid) {
+                QStringList lines{QStringLiteral("Tool call rejected: invalid arguments for %1.")
+                                      .arg(registration->descriptor.id)};
+                for (const auto& issue : snapshotValidation.errors.mid(0, 8))
+                    lines.append(QStringLiteral("%1 [%2]: %3")
+                                     .arg(issue.path, issue.keyword, issue.message));
+                completion({ToolExecutionStatus::InvalidArguments, lines.join(QLatin1Char('\n'))});
+                return {};
+            }
+            resolved.plan.invocations.first().arguments =
+                ToolArgumentValidator::toInvocationArguments(
+                    snapshotValidation.normalizedArguments);
+            if (!registration->descriptor.enabled) {
+                completion(
+                    {ToolExecutionStatus::Blocked, QStringLiteral("Registered tool is disabled.")});
+                return {};
+            }
+            if (request.approval.status != ApprovalStatus::Approved &&
+                request.approval.status != ApprovalStatus::NotRequired) {
+                completion(
+                    {ToolExecutionStatus::Blocked,
+                     QStringLiteral(
+                         "Tool gateway blocked execution until explicit approval is granted.")});
+                return {};
+            }
+            if (permissionPolicy_ &&
+                (registration->descriptor.source == ToolSource::MCP ||
+                 registration->descriptor.source == ToolSource::Plugin) &&
+                !permissionPolicy_->allowsToolExecution(
+                    registration->descriptor.requiredPermissionDomain, defaultPermissionState_,
+                    request.approval.status == ApprovalStatus::Approved)) {
+                completion({ToolExecutionStatus::Blocked,
+                            QStringLiteral("MCP tool permission policy denied execution.")});
+                return {};
+            }
+            if (request.sandbox.status == SandboxStatus::Denied ||
+                request.sandbox.status == SandboxStatus::BlockedByApproval) {
+                completion({ToolExecutionStatus::Blocked,
+                            QStringLiteral("Tool gateway blocked execution by sandbox policy.")});
+                return {};
+            }
+            const auto handler = registration->handler;
+            resolved.knownToolIds = {registration->descriptor.id};
+            const auto toolId = registration->descriptor.id;
+            if (hooks_ && hooks_->hasHooks(toolId)) {
+                QJsonObject parameters;
+                for (const auto& argument : resolved.plan.invocations.first().arguments)
+                    parameters.insert(argument.id, argument.value);
+                hooks_->beforeToolExecution(toolId, parameters);
+            }
+            auto* hooks = hooks_;
+            auto cancel = handler->execute(
+                resolved, sessionId, toolCallId, std::move(output),
+                [handler, hooks, toolId,
+                 completion = std::move(completion)](ToolExecutionResult result) {
+                    if (hooks && hooks->hasHooks(toolId)) {
+                        if (result.status == ToolExecutionStatus::Succeeded) {
+                            QJsonObject output{{QStringLiteral("summary"), result.summary}};
+                            hooks->afterToolExecution(toolId, output);
+                        } else {
+                            hooks->onToolError(toolId, result.summary);
+                        }
+                    }
+                    completion(std::move(result));
+                });
+            return [handler, cancel = std::move(cancel)] {
+                if (cancel)
+                    cancel();
+            };
+        }
+    }
     QStringList knownToolIds;
     for (const ToolGatewayMetadata& metadata : toolMetadata())
         knownToolIds.append(metadata.toolId);
