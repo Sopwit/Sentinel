@@ -52,6 +52,7 @@ public:
     ~ProcessExecutor() override;
     QString start(const ProcessRequest& request, StateCallback state, OutputCallback output = {});
     bool write(const QString& processId, const QByteArray& bytes);
+    bool closeWriteChannel(const QString& processId);
     bool terminate(const QString& processId);
     bool kill(const QString& processId);
     ProcessRecord record(const QString& processId) const;
