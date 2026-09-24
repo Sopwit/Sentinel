@@ -22,6 +22,7 @@ public:
     QList<ProviderDescriptor> providers() const override;
     QList<ModelDescriptor> models() const override;
     ModelRoute route(const TaskClassification& task) const override;
+    ModelRoute resolveSelection(const ModelBinding& selection) const override;
 
 private:
     ProviderDescriptor providerForModel(const ModelDescriptor& model) const;

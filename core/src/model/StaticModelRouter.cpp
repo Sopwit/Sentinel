@@ -125,6 +125,32 @@ ModelRoute StaticModelRouter::route(const TaskClassification& task) const {
     };
 }
 
+ModelRoute StaticModelRouter::resolveSelection(const ModelBinding& selection) const {
+    ModelRoute result;
+    result.routingMode = routingMode_;
+    result.task.type = TaskType::ToolPlanning;
+    if (!selection.isConfigured()) {
+        result.status = ModelRoutingStatus::NoAvailableModel;
+        result.summary = QStringLiteral("No model is configured for Agent Mode.");
+        return result;
+    }
+    result.status = ModelRoutingStatus::Routed;
+    result.provider.id = selection.providerId;
+    result.provider.name = selection.providerId;
+    result.model.id = selection.modelId;
+    result.model.name = selection.modelId;
+    result.model.providerId = selection.providerId;
+    for (const auto& provider : providers_)
+        if (provider.id == selection.providerId)
+            result.provider = provider;
+    for (const auto& model : models_)
+        if (model.providerId == selection.providerId &&
+            (model.id == selection.modelId || model.name == selection.modelId))
+            result.model = model;
+    result.summary = QStringLiteral("%1 / %2").arg(selection.providerId, selection.modelId);
+    return result;
+}
+
 ProviderDescriptor StaticModelRouter::providerForModel(const ModelDescriptor& model) const {
     const auto found = std::find_if(
         providers_.begin(), providers_.end(),

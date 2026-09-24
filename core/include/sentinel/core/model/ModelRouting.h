@@ -195,6 +195,13 @@ struct ModelRoute {
     bool modelExecutionAllowed = false;
 };
 
+struct ModelBinding {
+    QString providerId;
+    QString modelId;
+
+    bool isConfigured() const { return !providerId.isEmpty() && !modelId.isEmpty(); }
+};
+
 inline QString safeModelRouteSummary(const ModelRoute& route) {
     if (route.status != ModelRoutingStatus::Routed) {
         return route.summary.isEmpty() ? modelRoutingStatusName(route.status) : route.summary;

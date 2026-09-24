@@ -17,6 +17,16 @@ public:
     virtual QList<ProviderDescriptor> providers() const = 0;
     virtual QList<ModelDescriptor> models() const = 0;
     virtual ModelRoute route(const TaskClassification& task) const = 0;
+    // Resolves an explicit user selection without choosing another provider.
+    virtual ModelRoute resolveSelection(const ModelBinding& selection) const {
+        ModelRoute result;
+        result.status = selection.isConfigured() ? ModelRoutingStatus::Routed
+                                                : ModelRoutingStatus::NoAvailableModel;
+        result.provider.id = selection.providerId;
+        result.model.id = selection.modelId;
+        result.model.providerId = selection.providerId;
+        return result;
+    }
 };
 
 } // namespace sentinel::core
