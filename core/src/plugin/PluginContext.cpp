@@ -41,7 +41,12 @@ QJsonObject PluginContext::pluginConfig() const {
 }
 
 IToolRegistry* PluginContext::toolRegistry() const {
-    return m_toolRegistry;
+    // Tool registrations must pass through registerTool so provider ownership is enforced.
+    return nullptr;
+}
+
+bool PluginContext::registerTool(ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) {
+    return m_toolRegistrar && m_toolRegistrar(std::move(descriptor), std::move(handler));
 }
 
 IMemoryStore* PluginContext::memoryStore() const {
@@ -67,6 +72,10 @@ void* PluginContext::lookupService(const QString& serviceName) const {
 
 void PluginContext::setToolRegistry(IToolRegistry* registry) {
     m_toolRegistry = registry;
+}
+
+void PluginContext::setToolRegistrar(ToolRegistrar registrar) {
+    m_toolRegistrar = std::move(registrar);
 }
 
 void PluginContext::setMemoryStore(IMemoryStore* store) {

@@ -4,14 +4,18 @@
 
 #pragma once
 
-#include <QObject>
 #include "SentinelPluginSdk.h"
+#include <QObject>
+
+#ifndef SENTINEL_SAMPLE_PLUGIN_MANIFEST
+#define SENTINEL_SAMPLE_PLUGIN_MANIFEST "plugin.json"
+#endif
 
 namespace sentinel::samples {
 
 class CustomToolPlugin : public QObject, public sentinel::core::plugin::ISentinelPlugin {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID ISentinelPlugin_iid FILE "plugin.json")
+    Q_PLUGIN_METADATA(IID ISentinelPlugin_iid FILE SENTINEL_SAMPLE_PLUGIN_MANIFEST)
     Q_INTERFACES(sentinel::core::plugin::ISentinelPlugin)
 
 public:

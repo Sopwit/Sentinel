@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "sentinel/core/runtime/IToolHandler.h"
+#include "sentinel/core/runtime/ToolDescriptor.h"
+
 #include <QString>
 #include <QVariantMap>
 #include <functional>
@@ -29,6 +32,7 @@ public:
 
     // Core service accessors (expanded API)
     virtual IToolRegistry* toolRegistry() const = 0;
+    virtual bool registerTool(ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) = 0;
     virtual IMemoryStore* memoryStore() const = 0;
     virtual IProviderCatalog* providerCatalog() const = 0;
 

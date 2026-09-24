@@ -6,6 +6,7 @@
 
 #include "sentinel/core/plugin/PluginPermissions.h"
 #include <QMap>
+#include <QReadWriteLock>
 #include <QString>
 
 namespace sentinel::core::plugin {
@@ -25,6 +26,7 @@ public:
     void clearAll();
 
 private:
+    mutable QReadWriteLock m_mutex;
     QMap<QString, PluginPermissions> m_pluginPermissions;
 };
 

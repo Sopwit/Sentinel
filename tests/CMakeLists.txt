@@ -38,6 +38,10 @@ add_sentinel_core_test(test_mcp_integration core/test_mcp_integration.cpp)
 add_dependencies(test_mcp_integration test_mcp_server)
 target_compile_definitions(test_mcp_integration PRIVATE
     TEST_MCP_SERVER_PATH="$<TARGET_FILE:test_mcp_server>")
+add_sentinel_core_test(test_plugin_tool_integration core/test_plugin_tool_integration.cpp)
+add_dependencies(test_plugin_tool_integration custom_agent_tool_plugin second_agent_tool_plugin)
+target_compile_definitions(test_plugin_tool_integration PRIVATE
+    TEST_PLUGIN_PATH="$<TARGET_FILE:custom_agent_tool_plugin>")
 add_sentinel_core_test(test_agent_activity_log core/test_agent_activity_log.cpp)
 add_sentinel_core_test(test_agent_pipeline_result core/test_agent_pipeline_result.cpp)
 add_sentinel_core_test(test_agent_runtime_context core/test_agent_runtime_context.cpp)
