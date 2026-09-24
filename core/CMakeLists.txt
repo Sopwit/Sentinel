@@ -22,6 +22,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/agent/IAgentRuntime.h
     include/sentinel/core/agent/IAgentStepPlanner.h
     include/sentinel/core/agent/LlmAgentRuntime.h
+    include/sentinel/core/agent/ObservationEvidence.h
+    include/sentinel/core/agent/ObservationPolicy.h
     include/sentinel/core/agent/NullAgentRuntime.h
     include/sentinel/core/agent/StaticAgentRegistry.h
     include/sentinel/core/app/ApplicationController.h
@@ -299,6 +301,7 @@ add_library(sentinel_core STATIC
     src/agent/ControlledAgentTasks.cpp
     src/agent/DynamicAgentRegistry.cpp
     src/agent/LlmAgentRuntime.cpp
+    src/agent/ObservationPolicy.cpp
     src/agent/NullAgentRuntime.cpp
     src/agent/StaticAgentRegistry.cpp
     src/agent/SubagentService.cpp

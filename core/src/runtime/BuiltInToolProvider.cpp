@@ -86,6 +86,57 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                        {QStringLiteral("required"), required},
                        {QStringLiteral("additionalProperties"), false}};
 }
+QList<ToolEvidenceDescriptor> builtInEvidence(const QString& id) {
+    using D = ObservationDomain;
+    using F = EvidenceFreshness;
+    using S = EvidenceScope;
+    auto one = [](D domain, F freshness, S scope, QString argument = {},
+                  QString qualifier = {}) {
+        return QList<ToolEvidenceDescriptor>{{domain, freshness, scope, std::move(argument),
+                                              std::move(qualifier)}};
+    };
+    if (id == QLatin1String("list-directory"))
+        return one(D::FileSystem, F::Live, S::DirectoryEntries, QStringLiteral("path"));
+    if (id == QLatin1String("read-file") || id == QLatin1String("list-code-definitions"))
+        return one(D::FileSystem, F::TurnScoped, S::ExactResource, QStringLiteral("path"));
+    if (id == QLatin1String("grep") || id == QLatin1String("glob"))
+        return one(D::FileSystem, F::Live, S::SearchScope, QStringLiteral("path"),
+                   QStringLiteral("pattern"));
+    if (id == QLatin1String("write-file") || id == QLatin1String("edit-file") ||
+        id == QLatin1String("delete-file"))
+        return one(D::FileSystem, F::TurnScoped, S::Operation, QStringLiteral("path"));
+    if (id == QLatin1String("move-file"))
+        return {{D::FileSystem, F::TurnScoped, S::Operation, QStringLiteral("source"), {}},
+                {D::FileSystem, F::TurnScoped, S::Operation, QStringLiteral("destination"), {}}};
+    if (id == QLatin1String("apply-patch"))
+        return one(D::Workspace, F::TurnScoped, S::Operation);
+    if (id == QLatin1String("process-list"))
+        return one(D::Process, F::Live, S::ExactResource);
+    if (id == QLatin1String("system-info") || id == QLatin1String("current-time"))
+        return one(D::System, F::Live, S::ExactResource);
+    if (id == QLatin1String("clipboard-read"))
+        return one(D::Clipboard, F::Live, S::ExactResource);
+    if (id == QLatin1String("web-search"))
+        return one(D::Network, F::Live, S::SearchScope, QStringLiteral("query"));
+    if (id == QLatin1String("web-fetch"))
+        return one(D::Network, F::Live, S::ExactResource, QStringLiteral("url"));
+    if (id == QLatin1String("browser-screenshot") || id == QLatin1String("browser-pdf"))
+        return one(D::Browser, F::Live, S::ExactResource, QStringLiteral("url"));
+    if (id == QLatin1String("memory-search"))
+        return one(D::Memory, F::SessionStable, S::SearchScope, QStringLiteral("query"));
+    if (id == QLatin1String("history-search"))
+        return one(D::ConversationHistory, F::SessionStable, S::SearchScope,
+                   QStringLiteral("query"));
+    if (id == QLatin1String("mcp-call"))
+        return one(D::ExternalService, F::Live, S::Provider, QStringLiteral("server"));
+    if (id == QLatin1String("run-command"))
+        return one(D::ProcessExecution, F::TurnScoped, S::Operation, QStringLiteral("command"));
+    if (id == QLatin1String("app-launch") || id == QLatin1String("app-quit"))
+        return one(D::Application, F::TurnScoped, S::Operation, QStringLiteral("app"));
+    if (id == QLatin1String("open-url"))
+        return one(D::Browser, F::TurnScoped, S::Operation, QStringLiteral("url"));
+    return {};
+}
 } // namespace
 QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
     QList<ToolDescriptor> tools = {
@@ -620,6 +671,7 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                                QStringLiteral("process-list"), QStringLiteral("current-time")};
     for (auto& tool : tools) {
         tool.inputSchema = builtInSchema(tool);
+        tool.evidenceProduced = builtInEvidence(tool.id);
         tool.source = ToolSource::BuiltIn;
         tool.providerId = QStringLiteral("builtin");
         if (filesystem.contains(tool.id)) {

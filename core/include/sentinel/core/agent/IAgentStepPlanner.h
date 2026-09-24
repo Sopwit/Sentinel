@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sentinel/core/agent/ObservationEvidence.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 
@@ -41,6 +42,8 @@ struct AgentStepDecision {
     QString reason;
     bool requiresObservation = false;
     bool observationRequirementDeclared = false;
+    GroundingMode grounding = GroundingMode::Context;
+    bool groundingDeclared = false;
 };
 
 class IAgentStepPlanner {
@@ -49,6 +52,8 @@ public:
 
     virtual AgentStepDecision nextStep(const QString& goal,
                                        const QList<AgentStepRecord>& history) const = 0;
+    virtual void setObservationIntent(const ObservationIntent&) {}
+    virtual void setPlannerFeedback(const QString&) {}
 };
 
 inline QString agentStepRecordSummary(const AgentStepRecord& record) {

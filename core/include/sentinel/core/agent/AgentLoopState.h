@@ -51,6 +51,10 @@ struct AgentLoopState {
     QString goal;
     AgentLoopPhase phase = AgentLoopPhase::Idle;
     QList<AgentStepRecord> steps;
+    ObservationIntent observationIntent;
+    QList<EvidenceRecord> evidence;
+    FinalAnswerGrounding finalGrounding;
+    int rejectedFinalAnswers = 0;
     QString finalAnswer;
     QString abortReason;
     ToolInvocationPlan pendingApprovalPlan;

@@ -65,6 +65,9 @@ struct AgentRunEvent {
     int completedSteps = 0;
     AgentToolEvent pendingTool;
     QString pendingThought;
+    ObservationIntent observationIntent;
+    QList<EvidenceRecord> evidence;
+    FinalAnswerGrounding grounding;
 };
 
 using AgentEventPayload =

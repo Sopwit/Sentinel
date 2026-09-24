@@ -39,6 +39,8 @@ ToolDescriptor McpToolCatalog::mcpToolToDescriptor(const McpToolDefinition& mcpT
     // The gateway enforces this remote contract locally before tools/call.
     // A missing schema permits only an empty argument object.
     descriptor.inputSchema = mcpTool.inputSchema;
+    descriptor.evidenceProduced = {{ObservationDomain::ExternalService, EvidenceFreshness::Live,
+                                    EvidenceScope::Provider, {}}};
 
     // Convert input schema to parameter descriptors
     QJsonObject schema = mcpTool.inputSchema;

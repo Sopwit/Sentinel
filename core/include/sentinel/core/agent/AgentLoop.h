@@ -6,6 +6,7 @@
 
 #include "sentinel/core/agent/AgentLoopState.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
+#include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/doomloop/DoomLoopDetector.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
@@ -14,6 +15,7 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 
 #include <QList>
 #include <QObject>
@@ -72,8 +74,13 @@ public:
     void setOutputCallback(OutputCallback callback);
     void setToolCallIdProvider(ToolCallIdProvider provider);
     void setToolRegistry(const IToolRegistry* registry) {
+        toolRegistry_ = registry;
         gateway_.setRegistry(registry);
     }
+    void setObservationIntentPolicy(std::shared_ptr<IObservationIntentPolicy> policy) {
+        observationIntentPolicy_ = std::move(policy);
+    }
+    void setObservationContext(QString context) { observationContext_ = std::move(context); }
     void setToolHookService(IToolHookService* hooks) {
         gateway_.setHookService(hooks);
     }
@@ -98,6 +105,11 @@ private:
     void appendBlockedStep(AgentLoopState& state, const ToolInvocationPlan& plan,
                            const QString& thought, const QString& statusText,
                            const QString& observation);
+    void initializeObservationIntent(AgentLoopState& state);
+    bool acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision& decision);
+    void recordEvidence(AgentLoopState& state, const ToolDescriptor& descriptor,
+                        const ToolInvocationPlan& plan, ToolExecutionStatus status,
+                        const QString& summary, int stepIndex);
     ToolInvocationPlan planFromDecision(const AgentStepDecision& decision) const;
     bool cancellationRequested() const;
     void advanceAsync();
@@ -108,6 +120,9 @@ private:
 
     ExternalDirectoryGate* externalDirectoryGate_ = nullptr;
     IAgentStepPlanner& planner_;
+    const IToolRegistry* toolRegistry_ = nullptr;
+    std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
+    QString observationContext_;
     const IToolExecutor& executor_;
     const IApprovalPolicy& approvalPolicy_;
     const ISandboxPolicy& sandboxPolicy_;

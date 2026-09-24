@@ -24,7 +24,10 @@ Handlers may complete asynchronously. They should call completion once; the adap
 ignores later completions. Active calls retain the handler and module during unload.
 Unload removes tools from discovery immediately, then retires the library after active
 callbacks release it. Reload waits for active calls before loading the replacement.
-`inputSchema` is stored as descriptor metadata; argument validation is a later phase.
+`inputSchema` is enforced before execution. Tools may also declare
+`ToolDescriptor.evidenceProduced` to describe the domain, freshness, scope, and resource
+argument of observations they return. Undeclared plugin evidence defaults to
+`ExternalService`; this metadata does not grant permissions.
 
 ## Tool input contracts
 

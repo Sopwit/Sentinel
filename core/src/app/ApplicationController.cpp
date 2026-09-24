@@ -9338,6 +9338,13 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
                                  ? AgentActivityStatus::Recorded
                                  : AgentActivityStatus::Blocked,
                              summaryText);
+    if (state.phase == AgentLoopPhase::Completed) {
+        agentActivityLog_.append(
+            AgentActivityType::PipelineCompleted, AgentActivityStatus::Recorded,
+            QStringLiteral("Answer grounding: %1; evidence calls: %2.")
+                .arg(groundingModeName(state.finalGrounding.mode),
+                     state.finalGrounding.evidenceCallIds.join(QStringLiteral(", "))));
+    }
     const QString responseText =
         state.phase == AgentLoopPhase::Completed ? state.finalAnswer : finalText;
     if (lastAgentResponse_ != responseText) {
