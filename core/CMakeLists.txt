@@ -454,6 +454,7 @@ add_library(sentinel_core STATIC
     src/runtime/RuntimePipeline.cpp
     src/runtime/RuntimeProvider.cpp
     src/runtime/RuntimeSafety.cpp
+    src/runtime/ToolArgumentValidator.cpp
     src/runtime/ToolExecutionGateway.cpp
     src/runtime/tools/HtmlToMarkdown.cpp
     src/runtime/tools/WebFetchTool.cpp

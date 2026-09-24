@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <QJsonObject>
 #include <QList>
 #include <QString>
 
@@ -20,6 +21,9 @@ enum class ToolExecutionMode {
     Local,
 };
 
+enum class ToolSource { BuiltIn, MCP, Plugin, Internal };
+enum class ToolScope { Local, Cloud, LocalAndCloud };
+
 struct ToolParameterDescriptor {
     QString id;
     QString description;
@@ -33,6 +37,16 @@ struct ToolDescriptor {
     ToolRiskLevel riskLevel = ToolRiskLevel::Low;
     ToolExecutionMode executionMode = ToolExecutionMode::MetadataOnly;
     QList<ToolParameterDescriptor> parameters;
+    QString category;
+    ToolSource source = ToolSource::BuiltIn;
+    bool enabled = true;
+    bool exposedToModel = true;
+    // Runtime-enforced JSON Schema subset; also rendered for planner tool discovery.
+    QJsonObject inputSchema;
+    QString providerId;
+    QString version;
+    QString requiredPermissionDomain;
+    ToolScope scope = ToolScope::Local;
 };
 
 } // namespace sentinel::core

@@ -6,6 +6,7 @@
 
 #include "sentinel/core/runtime/ToolSandbox.h"
 
+#include <QJsonValue>
 #include <QList>
 #include <QString>
 
@@ -39,6 +40,8 @@ inline QString toolInvocationPlanStatusName(ToolInvocationPlanStatus status) {
 struct ToolInvocationArgument {
     QString id;
     QString value;
+    // Undefined means a legacy string argument. Model and normalized calls retain JSON type.
+    QJsonValue jsonValue = QJsonValue(QJsonValue::Undefined);
 };
 
 struct PlannedToolInvocation {
