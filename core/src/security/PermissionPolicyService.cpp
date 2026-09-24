@@ -22,8 +22,8 @@ QList<PermissionPolicyDomain> permissionDomains() {
          QStringLiteral("No folder selection, folder reading, scanning, indexing, or workspace "
                         "prompt context is enabled.")},
         {QStringLiteral("tool-execution"), QStringLiteral("Tool Execution"),
-         QStringLiteral("Future gateway-mediated tool calls."),
-         QStringLiteral("No tool, plugin, MCP, or external command execution is enabled.")},
+         QStringLiteral("Gateway-mediated tool calls."),
+         QStringLiteral("MCP calls require gateway approval, permission, and sandbox checks.")},
         {QStringLiteral("agent-execution"), QStringLiteral("Agent Execution"),
          QStringLiteral("Future foreground agent runtime authority."),
          QStringLiteral("No autonomous agent runtime, background loop, or delegated action is "
@@ -79,6 +79,13 @@ PermissionPolicyService::permissionSummaries(const QString& defaultState) const 
     const auto state = permissionPolicyStateName(stateFromName(defaultState));
     QList<PermissionPolicySummary> summaries;
     for (const auto& domain : permissionDomains()) {
+        const auto grant =
+            domain.id == QStringLiteral("tool-execution")
+                ? (state == QStringLiteral("Disabled") ? QStringLiteral("Execution grant: denied")
+                   : state == QStringLiteral("Ask Every Time")
+                       ? QStringLiteral("Execution grant: requires approval")
+                       : QStringLiteral("Execution grant: allowed"))
+                : QStringLiteral("Execution grant: allowed");
         summaries.append({
             domain.id,
             domain.name,
@@ -88,7 +95,7 @@ PermissionPolicyService::permissionSummaries(const QString& defaultState) const 
             {
                 QStringLiteral("Domain: %1").arg(domain.name),
                 QStringLiteral("Policy state: %1").arg(state),
-                QStringLiteral("Execution grant: allowed"),
+                grant,
                 domain.safetyBoundary,
             },
         });
@@ -146,6 +153,23 @@ QStringList PermissionPolicyService::permissionStateLabels() const {
 
 QString PermissionPolicyService::normalizedState(const QString& state) const {
     return permissionPolicyStateName(stateFromName(state));
+}
+
+bool PermissionPolicyService::allowsToolExecution(const QString& domainId,
+                                                  const QString& defaultState,
+                                                  bool explicitlyApproved) const {
+    if (domainId != QStringLiteral("tool-execution"))
+        return false;
+    switch (stateFromName(defaultState)) {
+    case PermissionPolicyState::Disabled:
+        return false;
+    case PermissionPolicyState::AskEveryTime:
+        return explicitlyApproved;
+    case PermissionPolicyState::Trusted:
+    case PermissionPolicyState::Enabled:
+        return true;
+    }
+    return false;
 }
 
 QString permissionPolicyStateName(PermissionPolicyState state) {

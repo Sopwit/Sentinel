@@ -14,7 +14,7 @@ class PermissionPolicyServiceTest final : public QObject {
 private slots:
     void exposesDefaultDisabledRegistry();
     void normalizesPermissionStates();
-    void reportsMetadataOnlySafetyBoundaries();
+    void reportsPermissionBoundaries();
 };
 
 void PermissionPolicyServiceTest::exposesDefaultDisabledRegistry() {
@@ -42,7 +42,7 @@ void PermissionPolicyServiceTest::normalizesPermissionStates() {
     QCOMPARE(service.normalizedState(QStringLiteral("unknown")), QStringLiteral("Disabled"));
 }
 
-void PermissionPolicyServiceTest::reportsMetadataOnlySafetyBoundaries() {
+void PermissionPolicyServiceTest::reportsPermissionBoundaries() {
     const PermissionPolicyService service;
     const auto summaries = service.permissionSummaries(QStringLiteral("Trusted"));
 
@@ -50,7 +50,13 @@ void PermissionPolicyServiceTest::reportsMetadataOnlySafetyBoundaries() {
     QVERIFY(summaries.first().diagnostics.contains(QStringLiteral("Execution grant: allowed")));
     QVERIFY(service.registrySummary(QStringLiteral("Trusted"))
                 .developerDiagnostics.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("No tool, plugin, MCP, or external command execution")));
+                .contains(QStringLiteral("MCP calls require gateway approval")));
+    QVERIFY(!service.allowsToolExecution(QStringLiteral("tool-execution"),
+                                         QStringLiteral("Disabled"), true));
+    QVERIFY(!service.allowsToolExecution(QStringLiteral("tool-execution"),
+                                         QStringLiteral("Ask Every Time"), false));
+    QVERIFY(service.allowsToolExecution(QStringLiteral("tool-execution"),
+                                        QStringLiteral("Ask Every Time"), true));
     QVERIFY(service.registrySummary(QStringLiteral("Enabled"))
                 .developerDiagnostics.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("No cloud request")));
