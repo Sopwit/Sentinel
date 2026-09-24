@@ -40,6 +40,7 @@ inline QString agentActivityTypeName(AgentActivityType type) {
 enum class AgentActivityStatus {
     Recorded,
     Completed,
+    Failed,
     Blocked,
     Cleared,
 };
@@ -50,6 +51,8 @@ inline QString agentActivityStatusName(AgentActivityStatus status) {
         return QStringLiteral("Recorded");
     case AgentActivityStatus::Completed:
         return QStringLiteral("Completed");
+    case AgentActivityStatus::Failed:
+        return QStringLiteral("Failed");
     case AgentActivityStatus::Blocked:
         return QStringLiteral("Blocked");
     case AgentActivityStatus::Cleared:
