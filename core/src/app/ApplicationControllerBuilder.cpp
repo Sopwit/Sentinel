@@ -280,9 +280,9 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentTaskRuntime
 }
 
 std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
-    if (!m_agentStepPlanner && m_provider) {
+    if (!m_agentStepPlanner && m_agentRuntime) {
         m_agentStepPlanner =
-            std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(), m_provider.get());
+            std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(), nullptr);
     }
     if (m_toolExecutor && m_alarmStore) {
         if (auto* realExecutor = dynamic_cast<RealToolExecutor*>(m_toolExecutor.get())) {
