@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sentinel/core/agent/ObservationEvidence.h"
+
 #include <QJsonObject>
 #include <QList>
 #include <QString>
@@ -47,6 +49,8 @@ struct ToolDescriptor {
     QString version;
     QString requiredPermissionDomain;
     ToolScope scope = ToolScope::Local;
+    // Declares what a successful call can verify; never grants permissions.
+    QList<ToolEvidenceDescriptor> evidenceProduced;
 };
 
 } // namespace sentinel::core

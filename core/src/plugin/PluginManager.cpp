@@ -373,6 +373,10 @@ bool PluginManager::initializePlugin(const QString& pluginId) {
             descriptor.version = version;
             descriptor.executionMode = ToolExecutionMode::Local;
             descriptor.requiredPermissionDomain = QStringLiteral("tool-execution");
+            if (descriptor.evidenceProduced.isEmpty())
+                descriptor.evidenceProduced = {{ObservationDomain::ExternalService,
+                                                EvidenceFreshness::TurnScoped,
+                                                EvidenceScope::Provider, {}}};
             auto wrapped =
                 std::make_shared<PluginToolHandler>(module, std::move(handler), sandbox, pluginId);
             return registry->registerTool({std::move(descriptor), std::move(wrapped)});

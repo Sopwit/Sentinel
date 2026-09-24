@@ -159,3 +159,15 @@ schema defaults, and returns `InvalidArguments` as a recoverable observation. Ty
 JSON argument values travel alongside the legacy text form so native handlers,
 MCP calls, and plugins receive the same normalized invocation. Path authorization,
 shell safety, permissions, and sandbox checks remain separate from schema validation.
+
+# Agent observation evidence
+
+`ObservationIntentPolicy` classifies the goal before planning, independently of the
+planner action. `ToolDescriptor.evidenceProduced` declares the observations a tool
+can make. `AgentLoop` retains bounded, current-run evidence metadata with domain,
+resource, result, and tool call ID. `EvidencePolicy` gates final answers against
+these records. A successful compatible observation can support `verified` grounding;
+a failed or denied attempt can support only a neutral `unable_to_verify` answer.
+The final grounding and evidence IDs remain in runtime state and events; chat stores
+only the answer text. Tool schemas, authorization, and evidence policy have separate
+responsibilities.

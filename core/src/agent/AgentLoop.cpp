@@ -5,6 +5,7 @@
 #include "sentinel/core/agent/AgentLoop.h"
 
 #include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/runtime/IToolRegistry.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
@@ -12,6 +13,7 @@
 
 #include <QTimer>
 #include <QUuid>
+#include <optional>
 #include <utility>
 
 namespace sentinel::core {
@@ -130,6 +132,7 @@ void AgentLoop::runAsync(const QString& goal, const QString& sessionId, QObject*
     asyncState_.sessionId = sessionId;
     asyncState_.goal = goal;
     asyncState_.phase = AgentLoopPhase::Running;
+    initializeObservationIntent(asyncState_);
     asyncFinished_ = false;
     if (statusCallback_)
         statusCallback_(QStringLiteral("Agent loop running for goal: %1").arg(goal));
@@ -141,6 +144,7 @@ void AgentLoop::resumeAsync(AgentLoopState state, bool approved, QObject* contex
     asyncContext_ = context;
     completionCallback_ = std::move(completion);
     asyncState_ = std::move(state);
+    planner_.setObservationIntent(asyncState_.observationIntent);
     asyncState_.phase = AgentLoopPhase::Running;
     asyncFinished_ = false;
     if (statusCallback_)
@@ -213,6 +217,7 @@ void AgentLoop::advanceAsync() {
         planningCallback_(stepIndex, true);
     AgentStepDecision decision;
     try {
+        planner_.setObservationIntent(asyncState_.observationIntent);
         decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
     } catch (...) {
         if (planningCallback_)
@@ -231,10 +236,10 @@ void AgentLoop::advanceAsync() {
         return;
     }
     if (decision.kind == AgentStepDecision::Kind::FinalAnswer) {
-        asyncState_.finalAnswer =
-            decision.answer.trimmed().isEmpty() ? decision.thought : decision.answer;
-        asyncState_.phase = AgentLoopPhase::Completed;
-        completeAsync();
+        if (acceptFinalAnswer(asyncState_, decision))
+            completeAsync();
+        else
+            scheduleAsyncAdvance();
         return;
     }
     if (decision.kind == AgentStepDecision::Kind::GiveUp) {
@@ -313,6 +318,9 @@ void AgentLoop::advanceAsync() {
 void AgentLoop::executeStepAsync(const ToolInvocationPlan& plan, const QString& thought,
                                  ApprovalDecision approval) {
     const int index = asyncState_.steps.size() + 1;
+    const auto descriptor = toolRegistry_ && !plan.invocations.isEmpty()
+                                ? toolRegistry_->findToolById(plan.invocations.first().toolId)
+                                : std::optional<ToolDescriptor>{};
     const auto sandbox = sandboxPolicy_.evaluate(plan, approval);
     if (toolCallback_)
         toolCallback_(ToolTransition::ExecutionStarted, index, plan, nullptr);
@@ -324,7 +332,7 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& plan, const QString& 
             if (!asyncFinished_ && !cancellationRequested() && outputCallback_)
                 outputCallback_(index, processId, stream, bytes);
         },
-        [this, index, plan, thought](ToolExecutionResult result) {
+        [this, index, plan, thought, descriptor](ToolExecutionResult result) {
             if (asyncFinished_)
                 return;
             waitingForTool_ = false;
@@ -345,6 +353,9 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& plan, const QString& 
             record.observation =
                 truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
             asyncState_.steps.append(record);
+            if (descriptor)
+                recordEvidence(asyncState_, *descriptor, plan, result.status, result.summary,
+                               index);
             if (toolCallback_)
                 toolCallback_(ToolTransition::ExecutionFinished, index, plan, &record);
             if (stepCallback_)
@@ -370,10 +381,12 @@ AgentLoopState AgentLoop::run(const QString& goal, const QString& sessionId) {
                           : sessionId;
     state.goal = goal;
     state.phase = AgentLoopPhase::Running;
+    initializeObservationIntent(state);
     return advance(std::move(state));
 }
 
 AgentLoopState AgentLoop::resume(AgentLoopState state, bool approved) {
+    planner_.setObservationIntent(state.observationIntent);
     state.phase = AgentLoopPhase::Running;
 
     auto pendingPlan = state.pendingApprovalPlan;
@@ -422,6 +435,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
         AgentStepDecision decision;
         try {
+            planner_.setObservationIntent(state.observationIntent);
             decision = planner_.nextStep(state.goal, state.steps);
         } catch (...) {
             if (planningCallback_)
@@ -438,10 +452,9 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         if (decision.kind == AgentStepDecision::Kind::FinalAnswer) {
-            state.finalAnswer =
-                decision.answer.trimmed().isEmpty() ? decision.thought : decision.answer;
-            state.phase = AgentLoopPhase::Completed;
-            return state;
+            if (acceptFinalAnswer(state, decision))
+                return state;
+            continue;
         }
 
         if (decision.kind == AgentStepDecision::Kind::GiveUp) {
@@ -535,6 +548,9 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& pla
                             const QString& thought, ApprovalDecision approval) {
     const auto sandbox = sandboxPolicy_.evaluate(plan, approval);
     const int stepIndex = static_cast<int>(state.steps.size()) + 1;
+    const auto descriptor = toolRegistry_ && !plan.invocations.isEmpty()
+                                ? toolRegistry_->findToolById(plan.invocations.first().toolId)
+                                : std::optional<ToolDescriptor>{};
     if (toolCallback_) {
         toolCallback_(ToolTransition::ExecutionStarted, stepIndex, plan, nullptr);
     }
@@ -558,6 +574,8 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& pla
     record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
 
     state.steps.append(record);
+    if (descriptor)
+        recordEvidence(state, *descriptor, plan, result.status, result.summary, stepIndex);
     if (toolCallback_) {
         toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan, &record);
     }
@@ -583,9 +601,79 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
     record.observation = observation;
 
     state.steps.append(record);
+    if (statusText == QLatin1String("Denied") && toolRegistry_ && !plan.invocations.isEmpty()) {
+        const auto descriptor = toolRegistry_->findToolById(record.toolId);
+        if (descriptor)
+            recordEvidence(state, *descriptor, plan, ToolExecutionStatus::Blocked, observation,
+                           record.index);
+    }
+    if (statusText == QLatin1String("Unknown Tool") &&
+        (record.toolId.startsWith(QLatin1String("mcp.")) ||
+         record.toolId.startsWith(QLatin1String("plugin.")))) {
+        EvidenceRecord unavailable;
+        unavailable.toolId = record.toolId;
+        unavailable.toolCallId = toolCallIdProvider_
+                                     ? toolCallIdProvider_(record.index)
+                                     : QStringLiteral("%1:%2").arg(state.sessionId).arg(record.index);
+        unavailable.stepIndex = record.index;
+        unavailable.domain = ObservationDomain::ExternalService;
+        unavailable.scope = EvidenceScope::Provider;
+        unavailable.outcome = EvidenceOutcome::Unavailable;
+        unavailable.observedAtUtc = QDateTime::currentDateTimeUtc();
+        state.evidence.append(std::move(unavailable));
+    }
     if (stepCallback_) {
         stepCallback_(record);
     }
+}
+
+void AgentLoop::initializeObservationIntent(AgentLoopState& state) {
+    if (observationIntentPolicy_) {
+        if (statusCallback_)
+            statusCallback_(QStringLiteral("Determining required observations."));
+        state.observationIntent = observationIntentPolicy_->classify(
+            state.goal, observationContext_,
+            toolRegistry_ ? toolRegistry_->enabledTools() : QList<ToolDescriptor>{});
+    }
+    planner_.setObservationIntent(state.observationIntent);
+}
+
+bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision& decision) {
+    auto gate = EvidencePolicy::evaluate(state.observationIntent, state.evidence,
+                                         decision.grounding, decision.groundingDeclared);
+    if (gate.accepted && decision.observationRequirementDeclared &&
+        decision.requiresObservation && state.evidence.isEmpty()) {
+        gate.accepted = false;
+        gate.repair = QStringLiteral("You declared that observation is needed. Use an "
+                                     "appropriate tool before answering.");
+    }
+    if (gate.accepted) {
+        state.finalGrounding = std::move(gate.grounding);
+        state.finalAnswer = gate.answerOverride.isEmpty() ? decision.answer : gate.answerOverride;
+        state.phase = AgentLoopPhase::Completed;
+        return true;
+    }
+    ++state.rejectedFinalAnswers;
+    if (state.rejectedFinalAnswers >= 2) {
+        state.phase = AgentLoopPhase::Failed;
+        state.abortReason = QStringLiteral("Agent could not determine a grounded next action.");
+        return true;
+    }
+    planner_.setPlannerFeedback(gate.repair);
+    return false;
+}
+
+void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& descriptor,
+                               const ToolInvocationPlan& plan, ToolExecutionStatus status,
+                               const QString& summary, int stepIndex) {
+    if (plan.invocations.isEmpty())
+        return;
+    const auto callId = toolCallIdProvider_ ? toolCallIdProvider_(stepIndex)
+                                           : QStringLiteral("%1:%2").arg(state.sessionId).arg(stepIndex);
+    state.evidence.append(EvidencePolicy::record(descriptor, plan.invocations.first(), status,
+                                                 summary, stepIndex, callId));
+    while (state.evidence.size() > 48)
+        state.evidence.removeFirst();
 }
 
 ToolInvocationPlan AgentLoop::planFromDecision(const AgentStepDecision& decision) const {

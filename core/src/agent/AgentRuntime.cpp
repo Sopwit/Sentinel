@@ -5,6 +5,7 @@
 #include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/agent/AgentLoop.h"
 #include "sentinel/core/agent/LlmAgentRuntime.h"
+#include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
 #include "sentinel/core/mcp/McpToolProvider.h"
@@ -227,6 +228,9 @@ void AgentRuntime::finishTurn(const QString& sessionId, const AgentLoopState& st
     run.abortReason = state.abortReason;
     run.completedSteps = static_cast<int>(state.steps.size());
     run.pendingThought = state.pendingApprovalThought;
+    run.observationIntent = state.observationIntent;
+    run.evidence = state.evidence;
+    run.grounding = state.finalGrounding;
     if (!state.pendingApprovalPlan.invocations.isEmpty()) {
         const auto& invocation = state.pendingApprovalPlan.invocations.first();
         run.pendingTool = {invocation.toolId, invocation.arguments, invocation.riskLevel, {}};
@@ -535,6 +539,9 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         }
         AgentLoop loop(*planner_, executor_, approval_, sandbox_, readOnlyToolIds, config);
         loop.setToolRegistry(&toolRegistry_);
+        if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
+            loop.setObservationIntentPolicy(
+                std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
         loop.setExternalDirectoryGate(&externalDirectoryGate_);
         loop.setToolHookService(&toolHooks_);
         loop.setPermissionPolicy(&toolPermissionPolicy_, toolPermissionState_);
@@ -714,6 +721,19 @@ AgentPipelineResult AgentRuntime::executeApprovedPlanLocked(const ToolInvocation
 
 void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                  const AgentSessionOptions& options, const QString& goal) {
+    if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
+        loop.setObservationIntentPolicy(
+            std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
+    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+        const auto messages = chatHistoryStore_->loadMessages();
+        QStringList recent;
+        for (int i = qMax(0, static_cast<int>(messages.size()) - 7); i < messages.size(); ++i) {
+            const auto& message = messages.at(i);
+            if (!message.content.trimmed().isEmpty())
+                recent.append(message.content.simplified().left(240));
+        }
+        loop.setObservationContext(recent.join(QLatin1Char('\n')));
+    }
     loop.setCancelQuery([this] { return cancelRequested_.load(); });
     loop.setStepCallback([this, sessionId, callback = options.onStep](const AgentStepRecord& step) {
         publish(sessionId, AgentEventType::AgentStepCompleted, AgentStepEvent{step}, step.index,

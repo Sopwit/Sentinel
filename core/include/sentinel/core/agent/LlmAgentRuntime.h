@@ -12,7 +12,6 @@
 
 #include <QList>
 #include <QString>
-#include <optional>
 
 namespace sentinel::core {
 class IToolRegistry;
@@ -38,6 +37,9 @@ public:
     bool hasModelProvider() const {
         return provider_ != nullptr;
     }
+    IChatProvider* modelProvider() const { return provider_; }
+    void setObservationIntent(const ObservationIntent& intent) override { activeIntent_ = intent; }
+    void setPlannerFeedback(const QString& feedback) override { plannerFeedback_ = feedback; }
     // Called before an accepted run; the owned provider and binding stay fixed
     // for every planner iteration in that run.
     void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider);
@@ -51,9 +53,6 @@ public:
 private:
     QString buildPlannerPrompt(const QString& goal, const QList<AgentStepRecord>& history) const;
     AgentStepDecision decisionFromLlmOutput(const QString& output) const;
-    std::optional<QString> observationDomainForGoal(const QString& goal, QString* error) const;
-    bool hasRelevantObservation(const QString& domain,
-                                const QList<AgentStepRecord>& history) const;
     AgentStepDecision heuristicDecision(const QString& goal,
                                         const QList<AgentStepRecord>& history) const;
 
@@ -63,6 +62,8 @@ private:
     IChatProvider* provider_ = nullptr;
     std::shared_ptr<IChatProvider> boundProvider_;
     ModelBinding modelBinding_;
+    mutable ObservationIntent activeIntent_;
+    mutable QString plannerFeedback_;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable std::function<void(const QString&)> streamObserver_;
     mutable std::shared_ptr<std::atomic_bool> streamCancellationToken_;
