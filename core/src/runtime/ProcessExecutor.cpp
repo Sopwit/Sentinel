@@ -23,6 +23,17 @@ struct ProcessExecutor::Entry {
     bool cancelling = false;
 };
 
+namespace {
+void emitOutput(const ProcessExecutor::OutputCallback& callback, const QString& id,
+                ProcessStream stream, const QByteArray& bytes) {
+    if (!callback)
+        return;
+    constexpr qsizetype kChunkBytes = 16384;
+    for (qsizetype offset = 0; offset < bytes.size(); offset += kChunkBytes)
+        callback(id, stream, bytes.mid(offset, kChunkBytes));
+}
+} // namespace
+
 ProcessExecutor::ProcessExecutor(QObject* parent) : QObject(parent) {}
 
 ProcessExecutor::~ProcessExecutor() {
@@ -65,42 +76,43 @@ QString ProcessExecutor::start(const ProcessRequest& request, StateCallback stat
     });
     connect(entry->process, &QProcess::readyReadStandardOutput, this, [entry] {
         const auto bytes = entry->process->readAllStandardOutput();
-        if (!entry->terminal && !entry->cancelling && entry->output && !bytes.isEmpty())
-            entry->output(entry->record.processId, ProcessStream::Stdout, bytes);
+        if (!entry->terminal && !entry->cancelling && !bytes.isEmpty())
+            emitOutput(entry->output, entry->record.processId, ProcessStream::Stdout, bytes);
     });
     connect(entry->process, &QProcess::readyReadStandardError, this, [entry] {
         const auto bytes = entry->process->readAllStandardError();
-        if (!entry->terminal && !entry->cancelling && entry->output && !bytes.isEmpty())
-            entry->output(entry->record.processId, ProcessStream::Stderr, bytes);
+        if (!entry->terminal && !entry->cancelling && !bytes.isEmpty())
+            emitOutput(entry->output, entry->record.processId, ProcessStream::Stderr, bytes);
     });
     connect(entry->process, &QProcess::errorOccurred, this,
             [this, entry](QProcess::ProcessError error) {
                 if (error == QProcess::FailedToStart)
                     finish(entry, ProcessState::Failed, entry->process->errorString());
             });
-    connect(entry->process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
-            [this, entry](int code, QProcess::ExitStatus status) {
-                if (entry->terminal)
-                    return;
-                // Drain the final bytes before the terminal state.
-                const auto out = entry->process->readAllStandardOutput();
-                const auto err = entry->process->readAllStandardError();
-                if (!entry->cancelling && entry->output) {
-                    if (!out.isEmpty())
-                        entry->output(entry->record.processId, ProcessStream::Stdout, out);
-                    if (!err.isEmpty())
-                        entry->output(entry->record.processId, ProcessStream::Stderr, err);
-                }
-                entry->record.exitCode = code;
-                finish(entry,
-                       entry->record.timedOut          ? ProcessState::Failed
-                       : entry->cancelling             ? ProcessState::Cancelled
-                       : status == QProcess::CrashExit ? ProcessState::Failed
-                                                       : ProcessState::Exited,
-                       status == QProcess::CrashExit && !entry->cancelling
-                           ? QStringLiteral("Process crashed.")
-                           : QString());
-            });
+    connect(
+        entry->process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+        [this, entry](int code, QProcess::ExitStatus status) {
+            if (entry->terminal)
+                return;
+            // Drain the final bytes before the terminal state.
+            const auto out = entry->process->readAllStandardOutput();
+            const auto err = entry->process->readAllStandardError();
+            if (!entry->cancelling && entry->output) {
+                if (!out.isEmpty())
+                    emitOutput(entry->output, entry->record.processId, ProcessStream::Stdout, out);
+                if (!err.isEmpty())
+                    emitOutput(entry->output, entry->record.processId, ProcessStream::Stderr, err);
+            }
+            entry->record.exitCode = code;
+            finish(entry,
+                   entry->record.timedOut          ? ProcessState::Failed
+                   : entry->cancelling             ? ProcessState::Cancelled
+                   : status == QProcess::CrashExit ? ProcessState::Failed
+                                                   : ProcessState::Exited,
+                   status == QProcess::CrashExit && !entry->cancelling
+                       ? QStringLiteral("Process crashed.")
+                       : QString());
+        });
     connect(entry->timeout, &QTimer::timeout, this, [this, entry] { stop(entry, false, true); });
     connect(entry->grace, &QTimer::timeout, this, [entry] {
         if (!entry->terminal && entry->process->state() != QProcess::NotRunning)
@@ -110,7 +122,7 @@ QString ProcessExecutor::start(const ProcessRequest& request, StateCallback stat
     if (entry->state)
         entry->state(entry->record);
     entry->process->start(request.program, request.arguments);
-    if (request.timeoutMs > 0)
+    if (!entry->terminal && request.timeoutMs > 0)
         entry->timeout->start(request.timeoutMs);
     return id;
 }
@@ -119,6 +131,15 @@ bool ProcessExecutor::write(const QString& id, const QByteArray& bytes) {
     Q_ASSERT(thread() == QThread::currentThread());
     auto* entry = entries_.value(id, nullptr);
     return entry && !entry->terminal && entry->process->write(bytes) == bytes.size();
+}
+
+bool ProcessExecutor::closeWriteChannel(const QString& id) {
+    Q_ASSERT(thread() == QThread::currentThread());
+    auto* entry = entries_.value(id, nullptr);
+    if (!entry || entry->terminal)
+        return false;
+    entry->process->closeWriteChannel();
+    return true;
 }
 
 void ProcessExecutor::stop(Entry* entry, bool immediate, bool timeout) {
