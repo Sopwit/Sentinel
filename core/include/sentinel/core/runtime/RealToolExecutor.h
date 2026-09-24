@@ -17,11 +17,16 @@
 
 namespace sentinel::core {
 
+class ExternalDirectoryGate;
+
 class RealToolExecutor final : public IToolExecutor {
 public:
     RealToolExecutor();
     explicit RealToolExecutor(std::shared_ptr<AlarmStore> alarmStore);
 
+    void setExternalDirectoryGate(const ExternalDirectoryGate* gate) {
+        externalDirectoryGate_ = gate;
+    }
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void setAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
     // Snapshots long-term memory entries for the memory-search tool. Captured on the
@@ -35,6 +40,9 @@ public:
     void configureMcpServers(const QList<McpServerConfig>& configs);
     // Test seam: inject a custom MCP service implementation.
     void setMcpService(std::shared_ptr<IMcpService> service);
+    std::shared_ptr<IMcpService> mcpService() const {
+        return mcpService_;
+    }
     // Injects the subagent runner used by the spawn-agent tool. The runner
     // executes a bounded, read-only agent loop for the given task and returns
     // its final answer (or an error description).
@@ -45,7 +53,99 @@ public:
                         const QString& toolCallId, Output output,
                         Completion completion) const override;
 
+public:
+    using BuiltInMethod = ToolExecutionResult (RealToolExecutor::*)(const PlannedToolInvocation&,
+                                                                    QString&) const;
+    static BuiltInMethod builtInMethod(const QString& id);
+    ToolExecutionResult executeLocalPlanSummary(const PlannedToolInvocation& invocation,
+                                                QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeListDirectory(const PlannedToolInvocation& invocation,
+                                             QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeReadFile(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeWriteFile(const PlannedToolInvocation& invocation,
+                                         QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeEditFile(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeDeleteFile(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeMoveFile(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeApplyPatch(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeListCodeDefinitions(const PlannedToolInvocation& invocation,
+                                                   QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeGrep(const PlannedToolInvocation& invocation,
+                                    QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeGlob(const PlannedToolInvocation& invocation,
+                                    QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeRunCommand(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeAppLaunch(const PlannedToolInvocation& invocation,
+                                         QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeAppQuit(const PlannedToolInvocation& invocation,
+                                       QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeOpenUrl(const PlannedToolInvocation& invocation,
+                                       QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeMcpList(const PlannedToolInvocation& invocation,
+                                       QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeMcpCall(const PlannedToolInvocation& invocation,
+                                       QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeSpawnAgent(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeBrowserScreenshot(const PlannedToolInvocation& invocation,
+                                                 QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeBrowserPdf(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeSystemNotify(const PlannedToolInvocation& invocation,
+                                            QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeClipboardRead(const PlannedToolInvocation& invocation,
+                                             QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeClipboardWrite(const PlannedToolInvocation& invocation,
+                                              QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeSystemInfo(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeProcessList(const PlannedToolInvocation& invocation,
+                                           QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeCurrentTime(const PlannedToolInvocation& invocation,
+                                           QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeSetAlarm(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeListAlarms(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeCancelAlarm(const PlannedToolInvocation& invocation,
+                                           QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeTodoWrite(const PlannedToolInvocation& invocation,
+                                         QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeTodoRead(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeMemorySearch(const PlannedToolInvocation& invocation,
+                                            QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeHistorySearch(const PlannedToolInvocation& invocation,
+                                             QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeAskQuestion(const PlannedToolInvocation& invocation,
+                                           QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeWebFetch(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeVoiceTranscribe(const PlannedToolInvocation& invocation,
+                                               QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeVoiceSpeak(const PlannedToolInvocation& invocation,
+                                          QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeWebSearch(const PlannedToolInvocation& invocation,
+                                         QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeOpenWorkspace(const PlannedToolInvocation& invocation,
+                                             QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeSummarizeCurrentConversation(const PlannedToolInvocation& invocation,
+                                                            QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeProviderTestCall(const PlannedToolInvocation& invocation,
+                                                QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeExportConversation(const PlannedToolInvocation& invocation,
+                                                  QString& currentWorkingDirectory) const;
+
 private:
+    QString resolveToolPath(const QString& workingDirectory, const QString& rawPath,
+                            bool write = false) const;
+    const ExternalDirectoryGate* externalDirectoryGate_ = nullptr;
     mutable WebSearchTool webSearchTool_;
     mutable WebFetchTool webFetchTool_;
     std::shared_ptr<AlarmStore> alarmStore_;

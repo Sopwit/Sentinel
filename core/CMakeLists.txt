@@ -145,6 +145,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/reference/Reference.h
     include/sentinel/core/reference/ReferenceService.h
     include/sentinel/core/runtime/ExecutionLifecycle.h
+    include/sentinel/core/runtime/BuiltInToolProvider.h
     include/sentinel/core/runtime/InMemoryToolRegistry.h
     include/sentinel/core/runtime/IToolExecutor.h
     include/sentinel/core/runtime/IToolRegistry.h
@@ -440,6 +441,7 @@ add_library(sentinel_core STATIC
     src/runtime/AlarmStore.cpp
     src/runtime/ToolOutputTruncator.cpp
     src/runtime/ExecutionLifecycle.cpp
+    src/runtime/BuiltInToolProvider.cpp
     src/runtime/InMemoryToolRegistry.cpp
     src/runtime/LocalInference.cpp
     src/runtime/LocalRuntime.cpp
