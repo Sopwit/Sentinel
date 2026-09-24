@@ -13,6 +13,9 @@
 
 namespace sentinel::core {
 
+class IToolRegistry;
+class IToolHookService;
+
 enum class ToolGatewayRiskLevel {
     Low,
     Medium,
@@ -73,6 +76,17 @@ struct ToolGatewayRegistrySummary {
 
 class ToolExecutionGateway final {
 public:
+    explicit ToolExecutionGateway(const IToolRegistry* registry = nullptr) : registry_(registry) {}
+    void setRegistry(const IToolRegistry* registry) {
+        registry_ = registry;
+    }
+    void setHookService(IToolHookService* hooks) {
+        hooks_ = hooks;
+    }
+    void setPermissionPolicy(const PermissionPolicyService* policy, QString defaultState) {
+        permissionPolicy_ = policy;
+        defaultPermissionState_ = std::move(defaultState);
+    }
     QList<ToolGatewayMetadata> toolMetadata() const;
     QList<ToolGatewaySummary> toolSummaries(const QString& defaultPermissionState,
                                             const PermissionPolicyService& permissionPolicy) const;
@@ -80,12 +94,20 @@ public:
     registrySummary(const QString& defaultPermissionState,
                     const PermissionPolicyService& permissionPolicy) const;
 
+    // Validates against a registration snapshot and replaces raw arguments with normalized values.
+    ToolExecutionResult validatePlan(ToolInvocationPlan& plan) const;
     ToolExecutionResult execute(const ToolExecutionRequest& request,
                                 const IToolExecutor& executor) const;
     IToolExecutor::Cancel executeAsync(const ToolExecutionRequest& request,
                                        const IToolExecutor& executor, const QString& sessionId,
                                        const QString& toolCallId, IToolExecutor::Output output,
                                        IToolExecutor::Completion completion) const;
+
+private:
+    const IToolRegistry* registry_ = nullptr;
+    IToolHookService* hooks_ = nullptr;
+    const PermissionPolicyService* permissionPolicy_ = nullptr;
+    QString defaultPermissionState_;
 };
 
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel);

@@ -75,7 +75,7 @@ void AgentRuntimeServiceTest::producesPlanWithApprovalGate() {
         workspaces, QStringLiteral("personal"));
 
     QCOMPARE(plan.planId, QStringLiteral("agent-plan-coding-assistant"));
-    QCOMPARE(plan.estimatedRisk, QStringLiteral("Critical"));
+    QCOMPARE(plan.estimatedRisk, QStringLiteral("High"));
     QCOMPARE(plan.approvalState, QStringLiteral("Approval required before execution"));
     QVERIFY(plan.refusalReason.contains(QStringLiteral("available through the approval")));
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Run Command")));
