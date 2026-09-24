@@ -31,6 +31,13 @@ add_sentinel_core_test(test_sqlite_chat_history_store core/test_sqlite_chat_hist
 add_sentinel_core_test(test_sqlite_conversation_store core/test_sqlite_conversation_store.cpp)
 add_sentinel_core_test(test_sqlite_memory_store core/test_sqlite_memory_store.cpp)
 add_sentinel_core_test(test_in_memory_tool_registry core/test_in_memory_tool_registry.cpp)
+add_sentinel_core_test(test_mcp_tool_provider core/test_mcp_tool_provider.cpp)
+qt_add_executable(test_mcp_server helpers/test_mcp_server.cpp)
+target_link_libraries(test_mcp_server PRIVATE Qt6::Core)
+add_sentinel_core_test(test_mcp_integration core/test_mcp_integration.cpp)
+add_dependencies(test_mcp_integration test_mcp_server)
+target_compile_definitions(test_mcp_integration PRIVATE
+    TEST_MCP_SERVER_PATH="$<TARGET_FILE:test_mcp_server>")
 add_sentinel_core_test(test_agent_activity_log core/test_agent_activity_log.cpp)
 add_sentinel_core_test(test_agent_pipeline_result core/test_agent_pipeline_result.cpp)
 add_sentinel_core_test(test_agent_runtime_context core/test_agent_runtime_context.cpp)

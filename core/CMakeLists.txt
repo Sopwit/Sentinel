@@ -94,6 +94,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/mcp/McpClient.h
     include/sentinel/core/mcp/McpService.h
     include/sentinel/core/mcp/McpToolCatalog.h
+    include/sentinel/core/mcp/McpToolProvider.h
     include/sentinel/core/memory/IMemoryCatalog.h
     include/sentinel/core/memory/InMemoryMemoryCandidateStore.h
     include/sentinel/core/memory/InMemorySettingsStore.h
@@ -343,6 +344,7 @@ add_library(sentinel_core STATIC
     src/mcp/McpClient.cpp
     src/mcp/McpService.cpp
     src/mcp/McpToolCatalog.cpp
+    src/mcp/McpToolProvider.cpp
     src/lsp/LspClient.cpp
     src/lsp/LspService.cpp
     src/memory/InMemoryStore.cpp
