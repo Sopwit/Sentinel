@@ -81,6 +81,18 @@
   API emit request start and completion without synthetic deltas.
   Desktop presentation uses the terminal and approval event payloads directly; it does not poll
   the runtime to discover live progress.
+  The foreground worker has a Qt event loop. `AgentLoop` suspends a process-backed step after
+  the gateway approves it, and resumes from the tool completion callback. `RealToolExecutor`
+  starts run-command, Docker, and other process-backed tools through `ProcessExecutor`; stdout
+  and stderr chunks become correlated `ToolOutput` events while bounded output is retained for
+  the final observation. Cancellation terminates the active process before the turn closes.
+- **Native Tool Registry:** `AgentRuntime` owns the registry used by planner discovery and
+  `ToolExecutionGateway`. `BuiltInToolProvider` registers each native descriptor with an
+  executable handler at runtime creation. Immediate handlers call focused native operations;
+  process-backed handlers retain the asynchronous `ProcessExecutor` path. An unregistered or
+  disabled tool cannot fall through to the synchronous compatibility executor.
+  Risk shown in gateway summaries now follows the planner's `ToolRiskLevel`; the former
+  gateway-only `Critical` labels for high-risk native tools are no longer authoritative.
 - **Explicit Human Approval Gate:** Every destructive or privileged tool execution (file modification, shell command, workspace deletion) halts for explicit user approval unless explicitly overridden.
 - **Tool Sandbox & Isolation:** Built-in workspace boundaries prevent tool execution outside the authorized project root directory.
 
@@ -107,3 +119,43 @@ Sentinel strictly implements zero-trust privacy boundaries:
 - **`sentinel-desktop`:** Primary native graphical shell with tray integration (`QSystemTrayIcon`), global hotkey handling (`Ctrl/Cmd+K`), and live visual monitors.
 - **`sentinel-cli`:** Headless command dispatcher for CLI automation, scripted queries, and pipeline integration.
 - **`sentinel-daemon`:** Background coordination service managing background jobs, notification dispatch, and inter-process session state.
+# MCP tool registration
+
+`McpToolCatalog` maps each discovered definition to a descriptor. `McpToolProvider`
+adds a handler and atomically replaces registrations owned by `mcp:<server-name>`
+in the agent runtime's production registry. The planner and gateway use that same
+registry. MCP tool IDs use `mcp.<server>.<tool>`; each UTF-8 byte outside lowercase
+ASCII letters and digits is escaped as `_hh_`, including underscores. This keeps
+IDs stable and distinct while the original server and tool names remain in the
+handler. Unknown or duplicate names reject a refresh and leave prior entries in
+place. Disconnect removes only that server's entries.
+
+Dynamic MCP tools default to medium risk. Their input schemas are retained without
+validation. MCP agent calls are asynchronous; cancellation suppresses late results
+locally and aborts an HTTP reply or drops a pending stdio response when possible.
+The MCP protocol cancellation notification is not implemented. The built-in
+`mcp-list` and `mcp-call` tools remain for compatibility.
+
+The gateway checks the MCP `tool-execution` permission domain before invoking
+its handler. Disabled blocks execution; Ask Every Time requires explicit approval;
+Trusted and Enabled allow it after the ordinary approval and sandbox gates. Tool
+hooks run before the handler and after its result (or receive its error). The
+stdio integration test uses a local MCP helper to cover the handshake, discovery,
+AgentLoop observation, approval, permission and sandbox denial, hooks, runtime
+events, reconnect, process failure, and cancellation.
+
+# Tool argument contracts
+
+`ToolDescriptor.inputSchema` is the model-visible and runtime-enforced argument contract.
+`BuiltInToolProvider` generates strict schemas from built-in parameter descriptors;
+MCP and plugin registrations retain their provider schemas. The registry rejects
+malformed structural contracts, and executable plugins require a schema. A missing
+MCP schema permits only an empty argument object. Unsupported structural composition
+keywords are rejected; unknown descriptive keywords are ignored.
+
+`AgentLoop` prevalidates planned calls before approval. `ToolExecutionGateway` validates
+again against the resolved registration snapshot before hooks or handlers, applies
+schema defaults, and returns `InvalidArguments` as a recoverable observation. Typed
+JSON argument values travel alongside the legacy text form so native handlers,
+MCP calls, and plugins receive the same normalized invocation. Path authorization,
+shell safety, permissions, and sandbox checks remain separate from schema validation.
