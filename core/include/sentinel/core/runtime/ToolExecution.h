@@ -17,6 +17,9 @@ enum class ToolExecutionStatus {
     NotRequested,
     PlaceholderSucceeded,
     Succeeded,
+    Failed,
+    InvalidArguments,
+    InvalidToolContract,
     Blocked,
     EmptyPlan,
     UnknownTool,
@@ -30,6 +33,12 @@ inline QString toolExecutionStatusName(ToolExecutionStatus status) {
         return QStringLiteral("Placeholder Succeeded");
     case ToolExecutionStatus::Succeeded:
         return QStringLiteral("Succeeded");
+    case ToolExecutionStatus::Failed:
+        return QStringLiteral("Failed");
+    case ToolExecutionStatus::InvalidArguments:
+        return QStringLiteral("Invalid Arguments");
+    case ToolExecutionStatus::InvalidToolContract:
+        return QStringLiteral("Invalid Tool Contract");
     case ToolExecutionStatus::Blocked:
         return QStringLiteral("Blocked");
     case ToolExecutionStatus::EmptyPlan:
