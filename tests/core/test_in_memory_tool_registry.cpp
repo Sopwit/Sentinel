@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
 
 #include <QtTest>
 
@@ -23,6 +25,9 @@ private slots:
     void listsToolsDeterministicallyById();
     void rejectsDuplicateIds();
     void preservesDescriptorMetadata();
+    void handlerRegistrationAndProviderRemoval();
+    void builtInHandlersExecuteThroughRegistry();
+    void rejectsNonExecutableDynamicTools();
 };
 
 static ToolDescriptor makeTool(const QString& id, const QString& name) {
@@ -138,6 +143,131 @@ void InMemoryToolRegistryTest::preservesDescriptorMetadata() {
     QVERIFY(tool.parameters.first().required);
     QCOMPARE(tool.parameters.last().id, QStringLiteral("style"));
     QVERIFY(!tool.parameters.last().required);
+}
+
+void InMemoryToolRegistryTest::handlerRegistrationAndProviderRemoval() {
+    class Handler final : public sentinel::core::IToolHandler {
+    public:
+        sentinel::core::IToolExecutor::Cancel
+        execute(const sentinel::core::ToolExecutionRequest&, const QString&, const QString&,
+                sentinel::core::IToolExecutor::Output,
+                sentinel::core::IToolExecutor::Completion completion) override {
+            completion({sentinel::core::ToolExecutionStatus::Succeeded, QStringLiteral("done")});
+            return {};
+        }
+    };
+    InMemoryToolRegistry registry;
+    auto descriptor = makeTool(QStringLiteral("plugin.example.action"), QStringLiteral("Action"));
+    descriptor.source = sentinel::core::ToolSource::Plugin;
+    descriptor.providerId = QStringLiteral("example");
+    descriptor.inputSchema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                         {QStringLiteral("additionalProperties"), false}};
+    auto handler = std::make_shared<Handler>();
+    QVERIFY(registry.registerTool({descriptor, handler}));
+    QVERIFY(!registry.registerTool({descriptor, handler}));
+    auto resolved = registry.findRegistration(descriptor.id);
+    QVERIFY(resolved.has_value());
+    QCOMPARE(resolved->handler, handler);
+    QCOMPARE(registry.enabledTools().size(), 1);
+    QCOMPARE(
+        registry.unregisterProvider(sentinel::core::ToolSource::MCP, QStringLiteral("example")), 0);
+    QCOMPARE(
+        registry.unregisterProvider(sentinel::core::ToolSource::Plugin, QStringLiteral("example")),
+        1);
+    QVERIFY(!registry.findRegistration(descriptor.id).has_value());
+    QVERIFY(resolved->handler == handler); // Active invocation snapshot retains its handler.
+}
+
+void InMemoryToolRegistryTest::rejectsNonExecutableDynamicTools() {
+    InMemoryToolRegistry registry;
+    auto descriptor = makeTool(QStringLiteral("mcp.server.search"), QStringLiteral("Search"));
+    descriptor.source = sentinel::core::ToolSource::MCP;
+    descriptor.providerId = QStringLiteral("mcp:server");
+    QVERIFY(!registry.registerTool(descriptor));
+    QVERIFY(registry.enabledTools().isEmpty());
+    descriptor.id = QStringLiteral("read-file");
+    QVERIFY(!registry.registerTool(descriptor));
+}
+
+void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
+    class NoFallback final : public sentinel::core::IToolExecutor {
+    public:
+        mutable int calls = 0;
+        sentinel::core::ToolExecutionResult
+        execute(const sentinel::core::ToolExecutionRequest&) const override {
+            ++calls;
+            return {sentinel::core::ToolExecutionStatus::Blocked, QStringLiteral("fallback")};
+        }
+    } fallback;
+    sentinel::core::RealToolExecutor executor;
+    InMemoryToolRegistry registry;
+    QVERIFY(sentinel::core::BuiltInToolProvider::registerTools(registry, executor));
+    QCOMPARE(registry.enabledTools().size(), 42);
+    for (const auto& id :
+         {QStringLiteral("read-file"), QStringLiteral("write-file"), QStringLiteral("grep"),
+          QStringLiteral("run-command"), QStringLiteral("web-search"),
+          QStringLiteral("memory-search"), QStringLiteral("spawn-agent")}) {
+        const auto registration = registry.findRegistration(id);
+        QVERIFY(registration && registration->handler);
+        QCOMPARE(registration->descriptor.source, sentinel::core::ToolSource::BuiltIn);
+        QCOMPARE(registration->descriptor.providerId, QStringLiteral("builtin"));
+    }
+    sentinel::core::ToolExecutionGateway gateway(&registry);
+    auto run = [&](const QString& id, const QList<sentinel::core::ToolInvocationArgument>& args,
+                   sentinel::core::ApprovalStatus approval =
+                       sentinel::core::ApprovalStatus::Approved,
+                   sentinel::core::SandboxStatus sandbox = sentinel::core::SandboxStatus::Allowed) {
+        sentinel::core::ToolExecutionRequest request;
+        request.plan.status = sentinel::core::ToolInvocationPlanStatus::Planned;
+        sentinel::core::PlannedToolInvocation invocation;
+        invocation.toolId = id;
+        invocation.arguments = args;
+        request.plan.invocations.append(invocation);
+        request.knownToolIds = {id};
+        request.approval.status = approval;
+        request.sandbox.status = sandbox;
+        sentinel::core::ToolExecutionResult result;
+        bool done = false;
+        auto active = gateway.executeAsync(request, fallback, QStringLiteral("session"),
+                                           QStringLiteral("call"), {}, [&](auto value) {
+                                               result = std::move(value);
+                                               done = true;
+                                           });
+        if (!QTest::qWaitFor([&done] { return done; }, 5000))
+            return sentinel::core::ToolExecutionResult{sentinel::core::ToolExecutionStatus::Blocked,
+                                                       QStringLiteral("timed out")};
+        return result;
+    };
+    QCOMPARE(
+        run(QStringLiteral("read-file"), {{QStringLiteral("path"), QStringLiteral("AGENTS.md")}})
+            .status,
+        sentinel::core::ToolExecutionStatus::Succeeded);
+    QVERIFY(run(QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")},
+                                         {QStringLiteral("path"), QStringLiteral("AGENTS.md")}})
+                .summary.contains(QStringLiteral("Sentinel")));
+#ifndef Q_OS_WIN
+    const auto commandResult =
+        run(QStringLiteral("run-command"),
+            {{QStringLiteral("command"), QStringLiteral("printf native-registry")}});
+    QVERIFY2(commandResult.summary.contains(QStringLiteral("native-registry")),
+             qPrintable(commandResult.summary));
+    QCOMPARE(run(QStringLiteral("run-command"),
+                 {{QStringLiteral("command"), QStringLiteral("printf denied")}},
+                 sentinel::core::ApprovalStatus::Denied)
+                 .status,
+             sentinel::core::ToolExecutionStatus::Blocked);
+    QCOMPARE(run(QStringLiteral("run-command"),
+                 {{QStringLiteral("command"), QStringLiteral("printf denied")}},
+                 sentinel::core::ApprovalStatus::Approved, sentinel::core::SandboxStatus::Denied)
+                 .status,
+             sentinel::core::ToolExecutionStatus::Blocked);
+#endif
+    QCOMPARE(fallback.calls, 0);
+    QVERIFY(registry.setEnabled(QStringLiteral("grep"), false));
+    QCOMPARE(run(QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")}})
+                 .status,
+             sentinel::core::ToolExecutionStatus::Blocked);
+    QVERIFY(registry.setEnabled(QStringLiteral("grep"), true));
 }
 
 QTEST_MAIN(InMemoryToolRegistryTest)
