@@ -43,6 +43,8 @@ public:
     QStringList permissionDomainNames() const;
     QStringList permissionStateLabels() const;
     QString normalizedState(const QString& state) const;
+    bool allowsToolExecution(const QString& domainId, const QString& defaultState,
+                             bool explicitlyApproved) const;
 };
 
 QString permissionPolicyStateName(PermissionPolicyState state);
