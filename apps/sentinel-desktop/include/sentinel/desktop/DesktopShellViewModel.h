@@ -2626,6 +2626,7 @@ private:
     core::ToolExecutionGateway toolExecutionGateway_;
     core::WorkspaceService workspaceService_;
     core::ControlledAgentTaskService controlledAgentTaskService_;
+    QSet<QString> controlledStepsInFlight_;
     std::unique_ptr<core::LocalRagStore> localRagStore_;
     QList<core::RagDocumentRecord> attachments_;
     QString workspaceLastActionStatus_ = QStringLiteral("Ready");

@@ -1877,7 +1877,8 @@ public:
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
     QStringList planAgentStepsForGoal(const QString& goal) const;
-    AgentPipelineResult executeApprovedAgentGoal(const QString& goal);
+    void executeApprovedAgentGoalAsync(const QString& goal,
+                                       std::function<void(AgentPipelineResult)> completion);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
@@ -1918,7 +1919,7 @@ signals:
     void promptContextInjectionChanged();
 
 private:
-    AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request);
+    void completeLegacyAgentPipeline(AgentPipelineResult result, const QString& trimmed);
     void appendPipelineActivity(const AgentPipelineResult& result);
     void startAgentLoopRun(const QString& goal);
     void resumeAgentLoopWithApproval(bool approved, bool alwaysAllow = false);
@@ -1927,7 +1928,7 @@ private:
     void onAgentEvent(const AgentEvent& event);
     void onAgentLoopStatus(const QString& status);
     void onAgentLoopFinished(const AgentLoopState& state);
-    void appendAgentLoopChatMessage(const QString& text);
+    void appendAgentLoopChatMessage(const QString& text, bool persist = true);
     QString agentApprovalRequestText(const AgentLoopState& state) const;
     void checkDueAlarms();
     void resetCompletedConversationState();
@@ -2007,6 +2008,7 @@ private:
     void setConversationRuntimeResult(bool succeeded, const QString& summary,
                                       qint64 latencyMs = -1);
     void setChatSendLifecycle(const QString& state, const QString& summary);
+    void bindAgentPlannerToSelectedModel();
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;

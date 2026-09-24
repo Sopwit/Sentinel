@@ -29,6 +29,7 @@
 #include <QNetworkInformation>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSaveFile>
@@ -5549,22 +5550,38 @@ bool DesktopShellViewModel::startControlledAgentTask(const QString& taskId) {
 }
 
 bool DesktopShellViewModel::executeControlledAgentStep(const QString& taskId) {
+    if (controlledStepsInFlight_.contains(taskId))
+        return false;
     auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
     auto task = controlledAgentTaskService_.taskById(tasks, taskId);
     if (task.id.isEmpty()) {
         return false;
     }
-    const auto pipelineResult = controller_.executeApprovedAgentGoal(task.description);
-    const bool succeeded =
-        pipelineResult.execution.status == core::ToolExecutionStatus::Succeeded ||
-        pipelineResult.execution.status == core::ToolExecutionStatus::PlaceholderSucceeded;
-    const auto outcome =
-        QStringLiteral("%1: %2").arg(core::toolExecutionStatusName(pipelineResult.execution.status),
-                                     pipelineResult.execution.summary);
-    task = controlledAgentTaskService_.executeCurrentStep(task, outcome, succeeded);
-    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
-    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
-    emit controlledAgentTasksChanged();
+    controlledStepsInFlight_.insert(taskId);
+    QPointer<DesktopShellViewModel> self(this);
+    controller_.executeApprovedAgentGoalAsync(
+        task.description, [self, taskId](core::AgentPipelineResult pipelineResult) {
+            if (!self)
+                return;
+            self->controlledStepsInFlight_.remove(taskId);
+            auto currentTasks = self->controlledAgentTaskService_.tasksFromJson(
+                self->settings_.controlledAgentTasksJson());
+            auto current = self->controlledAgentTaskService_.taskById(currentTasks, taskId);
+            if (current.id.isEmpty() || current.state != core::ControlledTaskState::Running)
+                return;
+            const bool succeeded =
+                pipelineResult.execution.status == core::ToolExecutionStatus::Succeeded ||
+                pipelineResult.execution.status == core::ToolExecutionStatus::PlaceholderSucceeded;
+            const auto outcome = QStringLiteral("%1: %2").arg(
+                core::toolExecutionStatusName(pipelineResult.execution.status),
+                pipelineResult.execution.summary);
+            current =
+                self->controlledAgentTaskService_.executeCurrentStep(current, outcome, succeeded);
+            currentTasks = self->controlledAgentTaskService_.upsertTask(currentTasks, current);
+            self->settings_.setControlledAgentTasksJson(
+                self->controlledAgentTaskService_.tasksToJson(currentTasks));
+            emit self->controlledAgentTasksChanged();
+        });
     return true;
 }
 

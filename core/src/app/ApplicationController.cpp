@@ -5,10 +5,12 @@
 #include "sentinel/core/app/ApplicationController.h"
 
 #include "sentinel/core/agent/AgentRuntime.h"
+#include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/StaticTaskPlanner.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
+#include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/memory/StaticMemoryCatalog.h"
@@ -46,6 +48,41 @@
 namespace sentinel::core {
 
 namespace {
+
+class SelectedEndpointChatProvider final : public IChatProvider {
+public:
+    SelectedEndpointChatProvider(ModelBinding binding, LMStudioConfig config, int timeoutMs)
+        : binding_(std::move(binding)), config_(std::move(config)), timeoutMs_(timeoutMs) {}
+
+    QString name() const override { return binding_.providerId; }
+    ChatProviderStatus status() const override {
+        return config_.isAllowedEndpoint() ? ChatProviderStatus::Ready
+                                           : ChatProviderStatus::Unavailable;
+    }
+    ChatProviderReply sendMessage(const QString& message) override {
+        if (!config_.isAllowedEndpoint())
+            return {false, {}, QStringLiteral("Selected provider '%1' is unavailable or not configured.")
+                                   .arg(binding_.providerId)};
+        LocalInferenceRequest request;
+        request.prompt = message;
+        request.options.model = binding_.modelId;
+        request.options.timeoutMs = timeoutMs_;
+        LMStudioLocalInferenceClient client(config_, timeoutMs_);
+        const auto result = client.infer(request);
+        if (result.status == LocalInferenceStatus::Succeeded)
+            return {true, result.text, {}};
+        if (result.error == LocalInferenceError::ModelUnavailable)
+            return {false, {}, QStringLiteral("Selected model '%1' is unavailable from provider '%2'.")
+                                   .arg(binding_.modelId, binding_.providerId)};
+        return {false, {}, QStringLiteral("Provider '%1': %2")
+                               .arg(binding_.providerId, result.summary)};
+    }
+
+private:
+    ModelBinding binding_;
+    LMStudioConfig config_;
+    int timeoutMs_ = 0;
+};
 
 int toInt(qsizetype value) {
     return static_cast<int>(value);
@@ -960,6 +997,7 @@ ApplicationController::~ApplicationController() {
     if (agentRuntime_) {
         agentRuntime_->unsubscribe(agentEventSubscriptionId_);
         agentRuntime_->shutdown();
+        agentRuntime_.reset();
     }
     if (ollamaCheckThread_) {
         ollamaCheckThread_->wait();
@@ -2116,6 +2154,8 @@ void ApplicationController::configureMcpServers(const QString& serversJson) {
 
     if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
         executor->configureMcpServers(configs);
+        if (auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get()))
+            runtime->setMcpService(executor->mcpService());
     }
 }
 
@@ -8786,7 +8826,8 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         appendAgentLoopChatMessage(
             QStringLiteral("⏳ **Ajan Çalışıyor / Agent Busy**\n\n"
                            "Ajan şu anda bir görevi üzerinde çalışıyor. Beklemek için **durdur** "
-                           "(veya **cancel**) yazın."));
+                           "(veya **cancel**) yazın."),
+            false);
         return true;
     }
 
@@ -8822,32 +8863,27 @@ bool ApplicationController::runAgentRequest(const QString& request) {
                                       args,
                                       {}});
 
-            const auto execResult =
-                agentRuntime_
-                    ->executeApprovedPlan(planToRun,
-                                          QStringLiteral("User approved execution in chat."))
-                    .execution;
-
-            QString assistantText =
-                QStringLiteral("**Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
-                               "**Çalıştırılan Komut / Executed Command:**\n"
-                               "```bash\n"
-                               "%1\n"
-                               "```\n\n"
-                               "**Sonuç / Output:**\n"
-                               "%2")
-                    .arg(cmdToRun, execResult.summary);
-
-            auto assistantMsg =
-                chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
-            assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
-            assistantMsg.roleUsed = QStringLiteral("agent");
-            persistActiveConversationMessage(assistantMsg);
-            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-                chatHistoryStore_->appendMessage(assistantMsg);
-            }
-            refreshConversationHistorySummary();
-            emit chatMessagesChanged();
+            QPointer<ApplicationController> self(this);
+            agentRuntime_->executeApprovedPlanAsync(
+                planToRun, QStringLiteral("User approved execution in chat."),
+                [self, cmdToRun](AgentPipelineResult result) {
+                    if (!self)
+                        return;
+                    const QString assistantText =
+                        QStringLiteral("**Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
+                                       "**Çalıştırılan Komut / Executed Command:**\n"
+                                       "```bash\n%1\n```\n\n**Sonuç / Output:**\n%2")
+                            .arg(cmdToRun, result.execution.summary);
+                    auto assistantMsg = self->chatSession_->appendAssistantMessage(
+                        assistantText, ChatMessageStatus::Received);
+                    assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
+                    assistantMsg.roleUsed = QStringLiteral("assistant");
+                    self->persistActiveConversationMessage(assistantMsg);
+                    if (self->chatHistoryStore_ && self->chatHistoryStore_->isAvailable())
+                        self->chatHistoryStore_->appendMessage(assistantMsg);
+                    self->refreshConversationHistorySummary();
+                    emit self->chatMessagesChanged();
+                });
             return true;
         } else if (lowerRequest == QStringLiteral("iptal") ||
                    lowerRequest == QStringLiteral("cancel") ||
@@ -8916,7 +8952,18 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         startAgentLoopRun(trimmed);
         return true;
     }
-    latestAgentPipelineResult_ = buildAgentPipelineResult(AgentRequest{trimmed});
+    QPointer<ApplicationController> self(this);
+    agentRuntime_->executePipelineAsync(
+        AgentRequest{trimmed}, agentAutonomousMode_, [self, trimmed](AgentPipelineResult result) {
+            if (self)
+                self->completeLegacyAgentPipeline(std::move(result), trimmed);
+        });
+    return true;
+}
+
+void ApplicationController::completeLegacyAgentPipeline(AgentPipelineResult result,
+                                                        const QString& trimmed) {
+    latestAgentPipelineResult_ = std::move(result);
     appendPipelineActivity(latestAgentPipelineResult_);
     runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
 
@@ -9073,7 +9120,6 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         emit agentResponseChanged();
     }
     emit agentStatusChanged();
-    return true;
 }
 
 bool ApplicationController::cancelAgentRun() {
@@ -9097,6 +9143,7 @@ bool ApplicationController::agentLoopActive() const {
 }
 
 void ApplicationController::startAgentLoopRun(const QString& goal) {
+    bindAgentPlannerToSelectedModel();
     activeAgentSessionId_ = agentRuntime_->createSession();
     AgentSessionOptions options;
     options.autonomousMode = agentAutonomousMode_;
@@ -9106,13 +9153,44 @@ void ApplicationController::startAgentLoopRun(const QString& goal) {
                                 QStringLiteral("agent loop planning started"));
     agentActivityLog_.append(
         AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
-        QStringLiteral("Agent loop request received (autonomous=%1).")
-            .arg(agentAutonomousMode_ ? QStringLiteral("true") : QStringLiteral("false")));
+        QStringLiteral("Agent loop request received (autonomous=%1; provider=%2; model=%3).")
+            .arg(agentAutonomousMode_ ? QStringLiteral("true") : QStringLiteral("false"),
+                 selectedRuntimeProvider_, selectedLocalModel_));
     emit agentActivityChanged();
 
     if (!agentRuntime_->start(activeAgentSessionId_, goal)) {
         onAgentLoopFinished(currentAgentSessionState());
     }
+}
+
+void ApplicationController::bindAgentPlannerToSelectedModel() {
+    auto* planner = dynamic_cast<LlmAgentRuntime*>(agentStepPlanner_.get());
+    if (!planner)
+        return;
+
+    const ModelBinding requested{selectedRuntimeProvider_, selectedLocalModel_.trimmed()};
+    const auto route = modelRouter_ ? modelRouter_->resolveSelection(requested) : ModelRoute{};
+    if (!requested.isConfigured() || (modelRouter_ && route.status != ModelRoutingStatus::Routed)) {
+        planner->bindModel(requested, {});
+        return;
+    }
+
+    if (requested.providerId == QLatin1String("ollama")) {
+        auto provider = std::make_shared<OllamaChatProvider>(
+            OllamaConfig::fromEndpoint(ollamaEndpoint()), localInferenceTimeoutMs_);
+        provider->setSelectedModel(requested.modelId);
+        planner->bindModel(requested, std::move(provider));
+        return;
+    }
+
+    auto config = currentCloudOrLMStudioConfig();
+    if (requested.providerId == QLatin1String("lm-studio") ||
+        requested.providerId == QLatin1String("openai-compatible-local"))
+        config.endpoint = QUrl(lmStudioEndpoint());
+    else if (requested.providerId == QLatin1String("llama-cpp-server"))
+        config.endpoint = QUrl(llamaCppEndpoint());
+    planner->bindModel(requested, std::make_shared<SelectedEndpointChatProvider>(
+                                      requested, std::move(config), localInferenceTimeoutMs_));
 }
 
 void ApplicationController::resumeAgentLoopWithApproval(bool approved, bool alwaysAllow) {
@@ -9130,7 +9208,10 @@ void ApplicationController::resumeAgentLoopWithApproval(bool approved, bool alwa
 void ApplicationController::onAgentEvent(const AgentEvent& event) {
     if (event.sessionId != activeAgentSessionId_)
         return;
-    if (event.type == AgentEventType::AgentStepCompleted) {
+    if (event.type == AgentEventType::ToolOutput) {
+        // Live process output belongs to agent activity; the assistant response is
+        // reserved for the planner's final answer.
+    } else if (event.type == AgentEventType::AgentStepCompleted) {
         if (const auto* step = std::get_if<AgentStepEvent>(&event.payload)) {
             onAgentStepRecord(step->step);
         }
@@ -9164,27 +9245,13 @@ void ApplicationController::onAgentStepRecord(const AgentStepRecord& record) {
                              : argument.value));
     }
 
-    const QString text =
-        QStringLiteral("**Adım %1 — %2 / Step %1: %2**\n\n"
-                       "%3\n\n"
-                       "**Girdiler / Inputs:** %4\n\n"
-                       "**Durum / Status:** `%5`\n\n"
-                       "**Gözlem / Observation:**\n"
-                       "```text\n%6\n```")
-            .arg(QString::number(record.index), record.toolName,
-                 record.thought.isEmpty()
-                     ? QString()
-                     : QStringLiteral("**Düşünce / Thought:** %1\n").arg(record.thought),
-                 argumentParts.isEmpty() ? QStringLiteral("—")
-                                         : argumentParts.join(QStringLiteral(" · ")),
-                 record.statusText, record.observation);
-
-    appendAgentLoopChatMessage(text);
+    const QString activity = QStringLiteral("Step %1 — %2 | %3 | %4 | %5")
+                                 .arg(QString::number(record.index), record.toolName,
+                                      argumentParts.join(QStringLiteral(", ")).left(250),
+                                      record.statusText, record.observation.left(250));
     agentActivityLog_.append(
         AgentActivityType::PlanCreated,
-        record.succeeded ? AgentActivityStatus::Recorded : AgentActivityStatus::Blocked,
-        QStringLiteral("Agent loop step %1 (%2): %3")
-            .arg(QString::number(record.index), record.toolName, record.statusText));
+        record.succeeded ? AgentActivityStatus::Recorded : AgentActivityStatus::Blocked, activity);
     emit agentActivityChanged();
 }
 
@@ -9206,10 +9273,6 @@ QString ApplicationController::agentApprovalRequestText(const AgentLoopState& st
                                                      ? QStringLiteral("no arguments")
                                                      : argumentParts.join(QStringLiteral(" · "))));
     }
-    if (!state.pendingApprovalThought.isEmpty()) {
-        lines.append(
-            QStringLiteral("**Ajan Gerekçesi / Rationale:** %1").arg(state.pendingApprovalThought));
-    }
 
     return QStringLiteral(
                "⚠️ **Onay Bekliyor / Approval Required (Adım %1 / Step %1)**\n\n"
@@ -9230,9 +9293,7 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
                                     QStringLiteral("agent loop awaiting user approval"));
         break;
     case AgentLoopPhase::Completed:
-        finalText = QStringLiteral("**Ajan Görevi Tamamlandı / Agent Task Completed**\n\n%1\n\n"
-                                   "*%2 adım çalıştırıldı / %2 steps executed.*")
-                        .arg(state.finalAnswer, QString::number(state.steps.size()));
+        finalText = state.finalAnswer;
         transitionConversationState(ConversationState::ReadyToRespond,
                                     QStringLiteral("agent loop response ready"));
         transitionConversationState(ConversationState::Responding,
@@ -9266,7 +9327,7 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
     }
 
     if (!finalText.isEmpty()) {
-        appendAgentLoopChatMessage(finalText);
+        appendAgentLoopChatMessage(finalText, state.phase == AgentLoopPhase::Completed);
     }
 
     const auto summaryText =
@@ -9277,8 +9338,10 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
                                  ? AgentActivityStatus::Recorded
                                  : AgentActivityStatus::Blocked,
                              summaryText);
-    if (lastAgentResponse_ != summaryText) {
-        lastAgentResponse_ = summaryText;
+    const QString responseText =
+        state.phase == AgentLoopPhase::Completed ? state.finalAnswer : finalText;
+    if (lastAgentResponse_ != responseText) {
+        lastAgentResponse_ = responseText;
         emit agentResponseChanged();
     }
 
@@ -9290,15 +9353,16 @@ void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
     emit orchestrationSnapshotChanged();
 }
 
-void ApplicationController::appendAgentLoopChatMessage(const QString& text) {
+void ApplicationController::appendAgentLoopChatMessage(const QString& text, bool persist) {
     auto assistantMsg = chatSession_->appendAssistantMessage(text, ChatMessageStatus::Received);
     assistantMsg.providerUsed = QStringLiteral("AgentLoop");
     assistantMsg.roleUsed = QStringLiteral("agent");
-    persistActiveConversationMessage(assistantMsg);
-    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-        chatHistoryStore_->appendMessage(assistantMsg);
+    if (persist) {
+        persistActiveConversationMessage(assistantMsg);
+        if (chatHistoryStore_ && chatHistoryStore_->isAvailable())
+            chatHistoryStore_->appendMessage(assistantMsg);
+        refreshConversationHistorySummary();
     }
-    refreshConversationHistorySummary();
     emit chatMessagesChanged();
 }
 
@@ -9336,11 +9400,6 @@ void ApplicationController::checkDueAlarms() {
     }
 }
 
-AgentPipelineResult ApplicationController::buildAgentPipelineResult(const AgentRequest& request) {
-    return agentRuntime_ ? agentRuntime_->executePipeline(request, agentAutonomousMode_)
-                         : AgentPipelineResult{};
-}
-
 QStringList ApplicationController::planAgentStepsForGoal(const QString& goal) const {
     const auto trimmed = goal.trimmed();
     if (!agentRuntime_ || trimmed.isEmpty()) {
@@ -9365,18 +9424,24 @@ QStringList ApplicationController::planAgentStepsForGoal(const QString& goal) co
     return steps;
 }
 
-AgentPipelineResult ApplicationController::executeApprovedAgentGoal(const QString& goal) {
-    if (goal.trimmed().isEmpty()) {
+void ApplicationController::executeApprovedAgentGoalAsync(
+    const QString& goal, std::function<void(AgentPipelineResult)> completion) {
+    if (!agentRuntime_ || goal.trimmed().isEmpty()) {
         AgentPipelineResult result;
-        result.summary = QStringLiteral("Agent request was empty.");
-        return result;
+        result.summary = QStringLiteral("Agent request was empty or runtime unavailable.");
+        completion(std::move(result));
+        return;
     }
-    AgentPipelineResult result =
-        agentRuntime_ ? agentRuntime_->executeApprovedGoal(goal) : AgentPipelineResult{};
-    latestAgentPipelineResult_ = result;
-    appendPipelineActivity(result);
-    emit agentPipelineChanged();
-    return result;
+    QPointer<ApplicationController> self(this);
+    agentRuntime_->executeApprovedGoalAsync(
+        goal, [self, completion = std::move(completion)](AgentPipelineResult result) mutable {
+            if (!self)
+                return;
+            self->latestAgentPipelineResult_ = result;
+            self->appendPipelineActivity(result);
+            emit self->agentPipelineChanged();
+            completion(std::move(result));
+        });
 }
 
 void ApplicationController::appendPipelineActivity(const AgentPipelineResult& result) {
@@ -10151,12 +10216,6 @@ QString ApplicationController::effectiveLocalModel(const QString& requestedModel
     const auto models = currentOllamaModels();
     auto selectedModel = selectedLocalModel_.trimmed();
     if (!selectedModel.isEmpty()) {
-        if (!models.isEmpty() && discoveredModelNamesContain(selectedModel, models)) {
-            return selectedModel;
-        }
-        if (!models.isEmpty() && isLMStudioProvider()) {
-            return models.first().name;
-        }
         return selectedModel;
     }
 
@@ -10233,9 +10292,9 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
         config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
         config.apiKey = settings.openAiApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
-        config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:8080"));
+        config.endpoint = QUrl(llamaCppEndpoint());
     } else {
-        config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
+        config.endpoint = QUrl(lmStudioEndpoint());
     }
     return config;
 }
