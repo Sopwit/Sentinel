@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentLoopState.h"
+#include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/doomloop/DoomLoopDetector.h"
@@ -32,6 +33,8 @@ class IToolRegistry;
 class IToolHookService;
 class ExternalDirectoryGate;
 class PermissionService;
+class IMemoryStore;
+class IChatHistoryStore;
 
 class AgentLoop {
 public:
@@ -49,6 +52,7 @@ public:
     using ToolCallback =
         std::function<void(ToolTransition, int, const ToolInvocationPlan&, const AgentStepRecord*)>;
     using PlanningCallback = std::function<void(int, bool)>;
+    using ContextCallback = std::function<void(int, const AgentPlanningContext&)>;
     using OutputCallback =
         std::function<void(int, const QString&, ProcessStream, const QByteArray&)>;
     using CompletionCallback = std::function<void(const AgentLoopState&)>;
@@ -78,6 +82,7 @@ public:
     void setCancellationToken(std::shared_ptr<std::atomic_bool> token);
     void setToolCallback(ToolCallback callback);
     void setPlanningCallback(PlanningCallback callback);
+    void setContextCallback(ContextCallback callback) { contextCallback_ = std::move(callback); }
     void setOutputCallback(OutputCallback callback);
     void setToolCallIdProvider(ToolCallIdProvider provider);
     void setToolRegistry(const IToolRegistry* registry) {
@@ -88,6 +93,12 @@ public:
         observationIntentPolicy_ = std::move(policy);
     }
     void setObservationContext(QString context) { observationContext_ = std::move(context); }
+    void setContextSources(const IMemoryStore* memory, const IChatHistoryStore* history,
+                           int contextWindowTokens) {
+        memoryStore_ = memory;
+        chatHistoryStore_ = history;
+        contextWindowTokens_ = contextWindowTokens;
+    }
     void setToolHookService(IToolHookService* hooks) {
         gateway_.setHookService(hooks);
     }
@@ -125,6 +136,7 @@ private:
                            const QString& observation,
                            StructuredObservationPtr structuredObservation = {});
     void initializeObservationIntent(AgentLoopState& state);
+    void preparePlanningContext(const AgentLoopState& state);
     bool acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision& decision);
     void recordEvidence(AgentLoopState& state, const ToolDescriptor& descriptor,
                         const ToolInvocationPlan& plan, ToolExecutionStatus status,
@@ -146,6 +158,10 @@ private:
     const IToolRegistry* toolRegistry_ = nullptr;
     std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
     QString observationContext_;
+    ContextEngine contextEngine_;
+    const IMemoryStore* memoryStore_ = nullptr;
+    const IChatHistoryStore* chatHistoryStore_ = nullptr;
+    int contextWindowTokens_ = 0;
     const IToolExecutor& executor_;
     const IApprovalPolicy& approvalPolicy_;
     const ISandboxPolicy& sandboxPolicy_;
@@ -161,6 +177,7 @@ private:
     std::shared_ptr<std::atomic_bool> cancellationToken_;
     ToolCallback toolCallback_;
     PlanningCallback planningCallback_;
+    ContextCallback contextCallback_;
     OutputCallback outputCallback_;
     ToolCallIdProvider toolCallIdProvider_;
     CompletionCallback completionCallback_;

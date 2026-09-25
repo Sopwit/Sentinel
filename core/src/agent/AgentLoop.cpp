@@ -4,6 +4,8 @@
 
 #include "sentinel/core/agent/AgentLoop.h"
 #include "sentinel/core/agent/ClaimGroundingResolver.h"
+#include "sentinel/core/chat/IChatHistoryStore.h"
+#include "sentinel/core/interfaces/IMemoryStore.h"
 
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
@@ -22,6 +24,28 @@
 #include <utility>
 
 namespace sentinel::core {
+
+void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
+    AgentContextInput input;
+    input.goal = state.goal;
+    input.workspace = QDir::currentPath();
+    input.steps = state.steps;
+    input.evidence = state.evidence;
+    input.intent = state.observationIntent;
+    input.facts = ClaimGroundingResolver::facts(state.observationIntent, state.evidence);
+    input.contextWindowTokens = contextWindowTokens_;
+    input.memoryStore = memoryStore_;
+    input.chatHistoryStore = chatHistoryStore_;
+    if (toolRegistry_) {
+        for (const auto& tool : toolRegistry_->enabledTools())
+            if (knownToolIds_.contains(tool.id))
+                input.tools.append(tool);
+    }
+    const auto context = contextEngine_.build(input);
+    if (contextCallback_)
+        contextCallback_(static_cast<int>(state.steps.size()) + 1, context);
+    planner_.setPlanningContext(context);
+}
 
 namespace {
 
@@ -367,6 +391,7 @@ void AgentLoop::advanceAsync() {
     try {
         planner_.setObservationIntent(asyncState_.observationIntent);
         planner_.setStructuredFacts(ClaimGroundingResolver::facts(asyncState_.observationIntent, asyncState_.evidence));
+        preparePlanningContext(asyncState_);
         decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
     } catch (...) {
         if (planningCallback_)
@@ -649,6 +674,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         try {
             planner_.setObservationIntent(state.observationIntent);
             planner_.setStructuredFacts(ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
+            preparePlanningContext(state);
             decision = planner_.nextStep(state.goal, state.steps);
         } catch (...) {
             if (planningCallback_)
@@ -932,6 +958,7 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
     }
     if (gate.accepted) {
         state.finalGrounding = std::move(gate.grounding);
+        state.finalClaims = decision.claims;
         state.finalAnswer = gate.answerOverride.isEmpty() ? decision.answer : gate.answerOverride;
         state.phase = AgentLoopPhase::Completed;
         return true;

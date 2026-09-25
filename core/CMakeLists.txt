@@ -8,7 +8,10 @@ add_library(sentinel_core STATIC
     include/sentinel/core/AppBuildConfig.h.in
     include/sentinel/core/agent/AgentActivityLog.h
     include/sentinel/core/agent/AgentLoop.h
+    include/sentinel/core/agent/ContextEngine.h
     include/sentinel/core/agent/AgentEvent.h
+    include/sentinel/core/agent/IAgentRunStore.h
+    include/sentinel/core/agent/SQLiteAgentRunStore.h
     include/sentinel/core/agent/AgentLoopState.h
     include/sentinel/core/agent/AgentMetadata.h
     include/sentinel/core/agent/AgentPipelineResult.h
@@ -300,6 +303,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/util/MemoMap.h
     src/agent/AgentActivityLog.cpp
     src/agent/AgentLoop.cpp
+    src/agent/SQLiteAgentRunStore.cpp
+    src/agent/ContextEngine.cpp
     src/agent/AgentRuntimeContext.cpp
     src/agent/AgentRuntime.cpp
     src/agent/AgentRuntimeService.cpp

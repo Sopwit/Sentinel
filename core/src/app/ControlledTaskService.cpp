@@ -157,6 +157,7 @@ bool ControlledTaskService::startTask(const QString& taskId) {
         return false;
     }
     AgentSessionOptions options;
+    options.runType = QStringLiteral("controlled-task");
     for (const auto& descriptor : runtime_.availableTools())
         options.availableToolIds.append(descriptor.id);
     runtime_.configureSession(sessionId, std::move(options));
