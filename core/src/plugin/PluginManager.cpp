@@ -14,6 +14,7 @@
 #include <QLibrary>
 #include <QStandardPaths>
 #include <QTimer>
+#include <algorithm>
 #include <atomic>
 
 namespace sentinel::core::plugin {
@@ -48,6 +49,33 @@ struct PluginModuleState {
 };
 
 namespace {
+QStringList hostPermissionsFor(const ToolDescriptor& descriptor) {
+    QStringList permissions{Permissions::ToolExecution};
+    for (const auto& requirement : descriptor.authorizationRequirements) {
+        QString permission;
+        switch (requirement.domain) {
+        case SecurityDomain::FileSystem:
+            permission = requirement.access == AccessMode::Read ? Permissions::FileSystemRead
+                                                                 : Permissions::FileSystemWrite;
+            break;
+        case SecurityDomain::Network:
+        case SecurityDomain::Browser:
+        case SecurityDomain::ExternalService:
+            permission = Permissions::NetworkExternal;
+            break;
+        case SecurityDomain::Memory:
+        case SecurityDomain::Conversation:
+            permission = Permissions::DatabaseAccess;
+            break;
+        default:
+            break;
+        }
+        if (!permission.isEmpty() && !permissions.contains(permission))
+            permissions.append(permission);
+    }
+    return permissions;
+}
+
 QString escapedId(const QString& value) {
     QString result;
     for (const auto byte : value.toUtf8()) {
@@ -65,15 +93,18 @@ class PluginToolHandler final : public IToolHandler,
 public:
     PluginToolHandler(std::shared_ptr<PluginModuleState> module,
                       std::shared_ptr<IToolHandler> inner, std::shared_ptr<PluginSandbox> sandbox,
-                      QString pluginId)
+                      QString pluginId, QStringList requiredPermissions)
         : module_(std::move(module)), inner_(std::move(inner)), sandbox_(std::move(sandbox)),
-          pluginId_(std::move(pluginId)) {}
+          pluginId_(std::move(pluginId)), requiredPermissions_(std::move(requiredPermissions)) {}
 
     IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString& sessionId,
                                   const QString& toolCallId, IToolExecutor::Output output,
                                   IToolExecutor::Completion completion) override {
-        if (module_->unloading ||
-            !sandbox_->checkPermission(pluginId_, Permissions::ToolExecution)) {
+        const bool permissionsGranted = std::all_of(
+            requiredPermissions_.cbegin(), requiredPermissions_.cend(), [this](const QString& item) {
+                return sandbox_->checkPermission(pluginId_, item);
+            });
+        if (module_->unloading || !permissionsGranted) {
             completion({ToolExecutionStatus::Blocked,
                         QStringLiteral("Plugin tool unavailable or permission denied.")});
             return {};
@@ -109,6 +140,7 @@ private:
     std::shared_ptr<IToolHandler> inner_;
     std::shared_ptr<PluginSandbox> sandbox_;
     QString pluginId_;
+    QStringList requiredPermissions_;
 };
 } // namespace
 
@@ -373,12 +405,22 @@ bool PluginManager::initializePlugin(const QString& pluginId) {
             descriptor.version = version;
             descriptor.executionMode = ToolExecutionMode::Local;
             descriptor.requiredPermissionDomain = QStringLiteral("tool-execution");
+            if (descriptor.authorizationRequirements.isEmpty())
+                descriptor.authorizationRequirements = {
+                    {SecurityDomain::ExternalService, AccessMode::Invoke,
+                     AuthorizationResourceKind::Provider, {}, descriptor.providerId}};
             if (descriptor.evidenceProduced.isEmpty())
                 descriptor.evidenceProduced = {{ObservationDomain::ExternalService,
                                                 EvidenceFreshness::TurnScoped,
                                                 EvidenceScope::Provider, {}}};
+            const auto requiredPermissions = hostPermissionsFor(descriptor);
+            for (const auto& permission : requiredPermissions) {
+                if (!sandbox->checkPermission(pluginId, permission))
+                    return false;
+            }
             auto wrapped =
-                std::make_shared<PluginToolHandler>(module, std::move(handler), sandbox, pluginId);
+                std::make_shared<PluginToolHandler>(module, std::move(handler), sandbox, pluginId,
+                                                    requiredPermissions);
             return registry->registerTool({std::move(descriptor), std::move(wrapped)});
         });
 

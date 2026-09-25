@@ -6,12 +6,12 @@
 
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
-#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/model/ModelRouting.h"
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 namespace sentinel::core {
 class IToolRegistry;
@@ -40,6 +40,7 @@ public:
     IChatProvider* modelProvider() const { return provider_; }
     void setObservationIntent(const ObservationIntent& intent) override { activeIntent_ = intent; }
     void setPlannerFeedback(const QString& feedback) override { plannerFeedback_ = feedback; }
+    void setStructuredFacts(const QList<StructuredFact>& facts) override { structuredFacts_ = facts; }
     // Called before an accepted run; the owned provider and binding stay fixed
     // for every planner iteration in that run.
     void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider);
@@ -49,20 +50,20 @@ public:
     void setToolRegistry(const IToolRegistry* registry) {
         registry_ = registry;
     }
+    void setAllowedToolIds(const QStringList& ids) { allowedToolIds_ = ids; }
 
 private:
     QString buildPlannerPrompt(const QString& goal, const QList<AgentStepRecord>& history) const;
     AgentStepDecision decisionFromLlmOutput(const QString& output) const;
-    AgentStepDecision heuristicDecision(const QString& goal,
-                                        const QList<AgentStepRecord>& history) const;
 
-    NullAgentRuntime heuristic_;
     QList<ToolDescriptor> tools_;
     const IToolRegistry* registry_ = nullptr;
+    QStringList allowedToolIds_;
     IChatProvider* provider_ = nullptr;
     std::shared_ptr<IChatProvider> boundProvider_;
     ModelBinding modelBinding_;
     mutable ObservationIntent activeIntent_;
+    mutable QList<StructuredFact> structuredFacts_;
     mutable QString plannerFeedback_;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable std::function<void(const QString&)> streamObserver_;

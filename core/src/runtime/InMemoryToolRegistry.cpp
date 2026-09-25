@@ -4,6 +4,7 @@
 
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
+#include "sentinel/core/security/AuthorizationResolver.h"
 
 #include <QReadLocker>
 #include <QSet>
@@ -17,7 +18,8 @@ bool InMemoryToolRegistry::registerTool(ToolDescriptor descriptor) {
 
 bool InMemoryToolRegistry::registerTool(Registration registration) {
     const auto id = registration.descriptor.id.trimmed();
-    if (!ToolArgumentValidator::validateSchema(registration.descriptor.inputSchema).isEmpty())
+    if (!ToolArgumentValidator::validateSchema(registration.descriptor.inputSchema).isEmpty() ||
+        !AuthorizationResolver::validDescriptor(registration.descriptor))
         return false;
     if (registration.descriptor.source == ToolSource::Plugin &&
         registration.descriptor.inputSchema.isEmpty())
@@ -81,6 +83,7 @@ bool InMemoryToolRegistry::replaceProvider(ToolSource source, const QString& pro
         auto& descriptor = registration.descriptor;
         descriptor.id = descriptor.id.trimmed();
         if (!ToolArgumentValidator::validateSchema(descriptor.inputSchema).isEmpty() ||
+            !AuthorizationResolver::validDescriptor(descriptor) ||
             (source == ToolSource::Plugin && descriptor.inputSchema.isEmpty()))
             return false;
         if (descriptor.source != source || descriptor.providerId != providerId ||

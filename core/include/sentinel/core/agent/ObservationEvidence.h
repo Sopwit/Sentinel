@@ -5,6 +5,8 @@
 #include <QDateTime>
 #include <QList>
 #include <QString>
+#include <QJsonObject>
+#include <memory>
 
 namespace sentinel::core {
 
@@ -15,7 +17,29 @@ enum class ObservationDomain {
 enum class EvidenceFreshness { Live, TurnScoped, SessionStable };
 enum class EvidenceScope { ExactResource, DirectoryEntries, SearchScope, Provider, Operation };
 enum class ObservationPurpose { Inspect, Operate };
-enum class EvidenceOutcome { Verified, Unavailable, Denied, Failed };
+enum class EvidenceOutcome { Verified, Partial, Unavailable, Denied, Failed, Stale };
+enum class StructuredObservationKind { None, DirectoryListing, PathMatches, FileContent, TextSearch, CodeDefinitions, FileSystemFailure, FileSystemFact, PatchResult, Generic };
+enum class FileSystemFailure { None, NotFound, PermissionDenied, NotFile, NotDirectory, InvalidPath, AlreadyExists, ReadFailed, WriteFailed, IOError, Unavailable };
+enum class FileSystemOperation { Stat, ListDirectory, ReadFile, WriteFile, EditFile, Delete, Move, Glob, Grep, ApplyPatch };
+struct PatchPathOutcome {
+    QString resource;
+    QString action;
+    FileSystemFailure failure = FileSystemFailure::None;
+    bool committed = false;
+    bool cancelled = false;
+};
+struct StructuredObservation {
+    StructuredObservationKind kind = StructuredObservationKind::None;
+    QJsonObject data;
+    FileSystemFailure fileSystemFailure = FileSystemFailure::None;
+    FileSystemOperation fileSystemOperation = FileSystemOperation::Stat;
+    QString failureResource;
+    QList<PatchPathOutcome> patchPaths;
+};
+using StructuredObservationPtr = std::shared_ptr<const StructuredObservation>;
+enum class ClaimType { None, PathExists, FileExists, DirectoryExists, TextContains, SearchHasMatches };
+struct ClaimAssertion { QString id; bool value = false; };
+struct StructuredFact { QString id; QString resource; bool value = false; QStringList evidenceCallIds; };
 enum class GroundingMode { Context, Verified, UnableToVerify };
 
 struct ToolEvidenceDescriptor {
@@ -31,6 +55,9 @@ struct ObservationRequirement {
     QString resourceHint;
     EvidenceFreshness freshness = EvidenceFreshness::TurnScoped;
     ObservationPurpose purpose = ObservationPurpose::Inspect;
+    ClaimType claimType = ClaimType::None;
+    QString claimId;
+    QString claimQuery;
 };
 
 struct ObservationIntent {
@@ -51,6 +78,7 @@ struct EvidenceRecord {
     QString qualifier;
     EvidenceOutcome outcome = EvidenceOutcome::Failed;
     QDateTime observedAtUtc;
+    StructuredObservationPtr structuredObservation;
 };
 
 struct FinalAnswerGrounding {

@@ -17,6 +17,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/agent/AgentRuntimeService.h
     include/sentinel/core/agent/AgentTaskRuntime.h
     include/sentinel/core/agent/ControlledAgentTasks.h
+    include/sentinel/core/app/ControlledTaskService.h
     include/sentinel/core/agent/DynamicAgentRegistry.h
     include/sentinel/core/agent/IAgentRegistry.h
     include/sentinel/core/agent/IAgentRuntime.h
@@ -115,6 +116,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/ModelManagement.h
     include/sentinel/core/model/ModelRegistry.h
     include/sentinel/core/model/ModelRouting.h
+    include/sentinel/core/model/ModelService.h
     include/sentinel/core/model/ProviderCatalog.h
     include/sentinel/core/model/StaticModelRouter.h
     include/sentinel/core/model/StaticProviderCatalog.h
@@ -157,6 +159,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/runtime/LocalRuntimeSession.h
     include/sentinel/core/runtime/NullToolExecutor.h
     include/sentinel/core/runtime/OllamaRuntime.h
+    include/sentinel/core/runtime/IFileSystemService.h
+    include/sentinel/core/runtime/FileSystemPatch.h
     include/sentinel/core/runtime/RealToolExecutor.h
     include/sentinel/core/runtime/ProcessExecutor.h
     include/sentinel/core/runtime/RuntimeCapabilities.h
@@ -223,6 +227,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/ModelLifecycleService.h
     include/sentinel/core/runtime/IFileChangeService.h
     include/sentinel/core/security/ExternalDirectoryGate.h
+    include/sentinel/core/security/AuthorizationResolver.h
+    include/sentinel/core/security/ResourceAuthorizationResolver.h
     include/sentinel/core/acp/IAcpService.h
     include/sentinel/core/acp/AcpService.h
     include/sentinel/core/cache/IPromptCacheService.h
@@ -302,10 +308,12 @@ add_library(sentinel_core STATIC
     src/agent/DynamicAgentRegistry.cpp
     src/agent/LlmAgentRuntime.cpp
     src/agent/ObservationPolicy.cpp
+    src/agent/ClaimGroundingResolver.cpp
     src/agent/NullAgentRuntime.cpp
     src/agent/StaticAgentRegistry.cpp
     src/agent/SubagentService.cpp
     src/app/ApplicationController.cpp
+    src/app/ControlledTaskService.cpp
     src/app/ApplicationControllerBuilder.cpp
     src/app/AppMetadata.cpp
     src/app/AppSettings.cpp
@@ -362,6 +370,7 @@ add_library(sentinel_core STATIC
     src/platform/DefaultPlatformService.cpp
     src/model/ModelManagement.cpp
     src/model/ModelRegistry.cpp
+    src/model/ModelService.cpp
     src/model/StaticModelRouter.cpp
     src/model/StaticProviderCatalog.cpp
     src/platform/DpapiEncryptedSettingsStore.cpp
@@ -401,6 +410,8 @@ add_library(sentinel_core STATIC
     src/mcp/McpOAuthService.cpp
     src/model/ModelLifecycleService.cpp
     src/security/ExternalDirectoryGate.cpp
+    src/security/AuthorizationResolver.cpp
+    src/security/ResourceAuthorizationResolver.cpp
     src/acp/AcpService.cpp
     src/cache/PromptCacheService.cpp
     src/provider/ProviderMessageNormalizer.cpp
@@ -453,6 +464,8 @@ add_library(sentinel_core STATIC
     src/runtime/LocalRuntimeSession.cpp
     src/runtime/NullToolExecutor.cpp
     src/runtime/OllamaRuntime.cpp
+    src/runtime/FileSystemPatch.cpp
+    src/runtime/QtFileSystemService.cpp
     src/runtime/RealToolExecutor.cpp
     src/runtime/ProcessExecutor.cpp
     src/runtime/RuntimeCapabilities.cpp

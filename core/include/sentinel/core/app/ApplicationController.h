@@ -33,6 +33,7 @@
 #include "sentinel/core/model/IProviderCatalog.h"
 #include "sentinel/core/model/ModelManagement.h"
 #include "sentinel/core/model/ModelRegistry.h"
+#include "sentinel/core/model/ModelService.h"
 #include "sentinel/core/runtime/ExecutionLifecycle.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/runtime/LocalInference.h"
@@ -53,6 +54,7 @@
 #include "sentinel/core/voice/Voice.h"
 #include "sentinel/core/voice/WhisperTranscription.h"
 
+#include <QHash>
 #include <QObject>
 #include <QStringList>
 #include <memory>
@@ -63,6 +65,8 @@ class QThread;
 namespace sentinel::core {
 
 class AlarmStore;
+class AppSettings;
+class ControlledTaskService;
 
 class ApplicationController final : public QObject {
     Q_OBJECT
@@ -1090,7 +1094,8 @@ public:
         std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
         std::unique_ptr<IConversationStore> conversationStore = nullptr,
         std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime = nullptr,
-        std::unique_ptr<IAgentStepPlanner> agentStepPlanner = nullptr, QObject* parent = nullptr);
+        std::unique_ptr<IAgentStepPlanner> agentStepPlanner = nullptr,
+        std::unique_ptr<ModelService> modelService = nullptr, QObject* parent = nullptr);
     ~ApplicationController() override;
 
     QString providerName() const;
@@ -1876,9 +1881,11 @@ public:
     void attachAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
-    QStringList planAgentStepsForGoal(const QString& goal) const;
-    void executeApprovedAgentGoalAsync(const QString& goal,
-                                       std::function<void(AgentPipelineResult)> completion);
+    void attachControlledTaskSettings(AppSettings& settings);
+    void setToolPermissionPolicyState(const QString& state);
+    ControlledTaskService* controlledTasks() const {
+        return controlledTaskService_.get();
+    }
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
@@ -1919,9 +1926,7 @@ signals:
     void promptContextInjectionChanged();
 
 private:
-    void completeLegacyAgentPipeline(AgentPipelineResult result, const QString& trimmed);
-    void appendPipelineActivity(const AgentPipelineResult& result);
-    void startAgentLoopRun(const QString& goal);
+    bool startAgentLoopRun(const QString& goal);
     void resumeAgentLoopWithApproval(bool approved, bool alwaysAllow = false);
     AgentLoopState currentAgentSessionState() const;
     void onAgentStepRecord(const AgentStepRecord& record);
@@ -2008,7 +2013,7 @@ private:
     void setConversationRuntimeResult(bool succeeded, const QString& summary,
                                       qint64 latencyMs = -1);
     void setChatSendLifecycle(const QString& state, const QString& summary);
-    void bindAgentPlannerToSelectedModel();
+    bool bindAgentPlannerToResolvedModel(const ModelBindingResolution& resolution);
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
@@ -2035,8 +2040,9 @@ private:
     WhisperTranscriptionRequest currentWhisperTranscriptionRequest() const;
     WhisperTranscriptionReadiness currentWhisperTranscriptionReadiness() const;
 
-    std::unique_ptr<IChatProvider> provider_;
+    std::unique_ptr<ModelService> modelService_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
+    std::unique_ptr<ControlledTaskService> controlledTaskService_;
     std::unique_ptr<IAgentStepPlanner> agentStepPlanner_;
     std::unique_ptr<IApprovalPolicy> approvalPolicy_;
     std::unique_ptr<ISandboxPolicy> sandboxPolicy_;
@@ -2065,32 +2071,29 @@ private:
     bool localInferenceStreamClientIsRealOllama_ = false;
 
     bool isLMStudioProvider() const {
-        return selectedRuntimeProvider_ == QStringLiteral("lm-studio") ||
-               selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ||
-               selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai") ||
-               selectedRuntimeProvider_ == QStringLiteral("claude") ||
-               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-               selectedRuntimeProvider_ == QStringLiteral("groq") ||
-               selectedRuntimeProvider_ == QStringLiteral("mistral");
+        const auto providerId = selectedRuntimeProvider();
+        return providerId == QStringLiteral("lm-studio") ||
+               providerId == QStringLiteral("llama-cpp-server") ||
+               providerId == QStringLiteral("openai-compatible-local") ||
+               providerId == QStringLiteral("cloud-api") ||
+               providerId == QStringLiteral("openai") || providerId == QStringLiteral("claude") ||
+               providerId == QStringLiteral("gemini") || providerId == QStringLiteral("deepseek") ||
+               providerId == QStringLiteral("groq") || providerId == QStringLiteral("mistral");
     }
     bool isLocalChatProvider() const {
-        return selectedRuntimeProvider_ == QStringLiteral("ollama") ||
-               selectedRuntimeProvider_ == QStringLiteral("lm-studio") ||
-               selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ||
-               selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai") ||
-               selectedRuntimeProvider_ == QStringLiteral("claude") ||
-               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-               selectedRuntimeProvider_ == QStringLiteral("groq") ||
-               selectedRuntimeProvider_ == QStringLiteral("mistral");
+        const auto providerId = selectedRuntimeProvider();
+        return providerId == QStringLiteral("ollama") ||
+               providerId == QStringLiteral("lm-studio") ||
+               providerId == QStringLiteral("llama-cpp-server") ||
+               providerId == QStringLiteral("openai-compatible-local") ||
+               providerId == QStringLiteral("cloud-api") ||
+               providerId == QStringLiteral("openai") || providerId == QStringLiteral("claude") ||
+               providerId == QStringLiteral("gemini") || providerId == QStringLiteral("deepseek") ||
+               providerId == QStringLiteral("groq") || providerId == QStringLiteral("mistral");
     }
     bool hasActiveLocalInferenceRuntime() const;
     LMStudioConfig currentCloudOrLMStudioConfig() const;
+    LMStudioConfig currentCloudOrLMStudioConfig(const ModelBinding& binding) const;
     ILocalInferenceWorker* activeLocalInferenceWorker() const;
     void updatePiperTtsProviderConfig();
     void updateWhisperSttProviderConfig();
@@ -2149,11 +2152,8 @@ private:
     ConversationSessionStore conversationSession_;
     StaticConversationStateGraph conversationStateGraph_;
     AgentActivityLog agentActivityLog_;
-    QString selectedLocalModel_;
-    QString selectedRuntimeProvider_ = QStringLiteral("ollama");
     bool localChatInferenceEnabled_ = false;
     bool agentAutonomousMode_ = false;
-    QString pendingCommand_;
     QString activeAgentSessionId_;
     QString agentEventSubscriptionId_;
     std::shared_ptr<AlarmStore> alarmStore_;

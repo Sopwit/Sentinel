@@ -18,42 +18,40 @@ struct PermissionPolicyDomain {
 QList<PermissionPolicyDomain> permissionDomains() {
     return {
         {QStringLiteral("workspace-access"), QStringLiteral("Workspace Access"),
-         QStringLiteral("Future named workspace/path scopes."),
-         QStringLiteral("No folder selection, folder reading, scanning, indexing, or workspace "
-                        "prompt context is enabled.")},
+         QStringLiteral("Filesystem requests carry canonical resource paths."),
+         QStringLiteral("External paths require a matching runtime grant; sensitive paths remain "
+                        "blocked by the resource guard.")},
         {QStringLiteral("tool-execution"), QStringLiteral("Tool Execution"),
-         QStringLiteral("Gateway-mediated tool calls."),
-         QStringLiteral("MCP calls require gateway approval, permission, and sandbox checks.")},
+         QStringLiteral("Registered built-in, MCP, and plugin invocations."),
+         QStringLiteral("Calls pass argument validation, authorization, approval where required, "
+                        "resource checks, and sandbox evaluation.")},
         {QStringLiteral("agent-execution"), QStringLiteral("Agent Execution"),
-         QStringLiteral("Future foreground agent runtime authority."),
-         QStringLiteral("No autonomous agent runtime, background loop, or delegated action is "
-                        "enabled.")},
+         QStringLiteral("AgentRuntime sessions and delegated tasks."),
+         QStringLiteral("Subagents use a restricted tool set and do not inherit parent session "
+                        "grants.")},
         {QStringLiteral("voice-capture"), QStringLiteral("Voice Capture"),
-         QStringLiteral("Future microphone and STT authority."),
-         QStringLiteral("No microphone capture, recording session, or STT activation is enabled.")},
+         QStringLiteral("Audio input and transcription tools."),
+         QStringLiteral("Sentinel authorization is separate from operating-system microphone "
+                        "permission.")},
         {QStringLiteral("voice-playback"), QStringLiteral("Voice Playback"),
-         QStringLiteral("Future playback and TTS authority."),
-         QStringLiteral("No audio playback, speaker output, or TTS activation is enabled.")},
+         QStringLiteral("Speech synthesis and audio output tools."),
+         QStringLiteral("Sentinel authorization is separate from operating-system audio policy.")},
         {QStringLiteral("cloud-provider-access"), QStringLiteral("Cloud Provider Access"),
-         QStringLiteral("Future opt-in cloud/API provider authority."),
-         QStringLiteral("No cloud request, API-key use, provider test call, or remote model lookup "
-                        "is enabled.")},
+         QStringLiteral("ModelService resolves configured providers and credentials."),
+         QStringLiteral("Provider access requires a resolved provider and user-configured "
+                        "credentials.")},
         {QStringLiteral("filesystem-write"), QStringLiteral("Filesystem Write"),
-         QStringLiteral("Future explicit local write authority."),
-         QStringLiteral("No filesystem mutation, export write, patch write, or generated file "
-                        "write is enabled by policy.")},
+         QStringLiteral("Descriptor requirements distinguish filesystem read, write, and delete."),
+         QStringLiteral("PathGuard and ExternalDirectoryGate remain mandatory after approval.")},
         {QStringLiteral("subprocess-execution"), QStringLiteral("Subprocess Execution"),
-         QStringLiteral("Future process-launch authority."),
-         QStringLiteral("No subprocess launch, shell command, binary execution, or runtime process "
-                        "startup is enabled.")},
+         QStringLiteral("Process execution uses ProcessExecutor and command security analysis."),
+         QStringLiteral("Approval and sandbox evaluation remain separate from command analysis.")},
         {QStringLiteral("memory-commit"), QStringLiteral("Memory Commit"),
-         QStringLiteral("Future committed-memory authority."),
-         QStringLiteral("No automatic committed-memory write is enabled; existing explicit user "
-                        "memory actions remain unchanged.")},
+         QStringLiteral("Memory search is declared as a semantic read request."),
+         QStringLiteral("Memory persistence remains behind IMemoryStore.")},
         {QStringLiteral("context-injection"), QStringLiteral("Context Injection"),
-         QStringLiteral("Future prompt-context authority."),
-         QStringLiteral("No hidden prompt mutation, workspace-derived prompt block, or automatic "
-                        "context injection is enabled by this policy.")},
+         QStringLiteral("Conversation and agent operations declare their own authorization semantics."),
+         QStringLiteral("Model provider identity does not alter authorization decisions.")},
     };
 }
 
@@ -79,22 +77,24 @@ PermissionPolicyService::permissionSummaries(const QString& defaultState) const 
     const auto state = permissionPolicyStateName(stateFromName(defaultState));
     QList<PermissionPolicySummary> summaries;
     for (const auto& domain : permissionDomains()) {
+        const bool policyApplies = domain.id == QStringLiteral("tool-execution");
         const auto grant =
-            domain.id == QStringLiteral("tool-execution")
+            policyApplies
                 ? (state == QStringLiteral("Disabled") ? QStringLiteral("Execution grant: denied")
                    : state == QStringLiteral("Ask Every Time")
                        ? QStringLiteral("Execution grant: requires approval")
                        : QStringLiteral("Execution grant: allowed"))
-                : QStringLiteral("Execution grant: allowed");
+                : QStringLiteral("Execution decision: descriptor, risk, and resource policy");
         summaries.append({
             domain.id,
             domain.name,
-            state,
+            policyApplies ? state : QStringLiteral("Descriptor based"),
             domain.summary,
             domain.safetyBoundary,
             {
                 QStringLiteral("Domain: %1").arg(domain.name),
-                QStringLiteral("Policy state: %1").arg(state),
+                policyApplies ? QStringLiteral("Policy state: %1").arg(state)
+                              : QStringLiteral("Policy state: descriptor and risk metadata"),
                 grant,
                 domain.safetyBoundary,
             },
@@ -117,8 +117,8 @@ PermissionPolicyService::registrySummary(const QString& defaultState) const {
 
     return {
         QStringLiteral("Operational"),
-        QStringLiteral("Permission policy registry is operational; user-controlled authority "
-                       "states govern active tool execution and environment access."),
+        QStringLiteral("The default permission state governs ExternalService invocations. Other "
+                       "operations use descriptor requirements, risk policy, and explicit grants."),
         state,
         permissionStateLabels(),
         domainSummaries,
@@ -155,21 +155,25 @@ QString PermissionPolicyService::normalizedState(const QString& state) const {
     return permissionPolicyStateName(stateFromName(state));
 }
 
-bool PermissionPolicyService::allowsToolExecution(const QString& domainId,
-                                                  const QString& defaultState,
-                                                  bool explicitlyApproved) const {
-    if (domainId != QStringLiteral("tool-execution"))
-        return false;
+bool PermissionPolicyService::allowsAuthorization(const AuthorizationRequest& request,
+                                                   const QString& defaultState,
+                                                   bool explicitlyApproved) const {
+    const auto effect = defaultEffect(request, defaultState);
+    return effect == PermissionEffect::Allow ||
+           (effect == PermissionEffect::Ask && explicitlyApproved);
+}
+
+PermissionEffect PermissionPolicyService::defaultEffect(const AuthorizationRequest& request,
+                                                         const QString& defaultState) const {
+    if (request.domain != SecurityDomain::ExternalService)
+        return PermissionEffect::Allow;
     switch (stateFromName(defaultState)) {
-    case PermissionPolicyState::Disabled:
-        return false;
-    case PermissionPolicyState::AskEveryTime:
-        return explicitlyApproved;
+    case PermissionPolicyState::Disabled: return PermissionEffect::Deny;
+    case PermissionPolicyState::AskEveryTime: return PermissionEffect::Ask;
     case PermissionPolicyState::Trusted:
-    case PermissionPolicyState::Enabled:
-        return true;
+    case PermissionPolicyState::Enabled: return PermissionEffect::Allow;
     }
-    return false;
+    return PermissionEffect::Deny;
 }
 
 QString permissionPolicyStateName(PermissionPolicyState state) {

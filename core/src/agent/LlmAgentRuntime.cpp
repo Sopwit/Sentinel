@@ -5,6 +5,7 @@
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
+#include "sentinel/core/security/AuthorizationResolver.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -58,19 +59,35 @@ bool isContentFree(const QString& answer) {
 }
 
 QString toolRiskLine(const ToolDescriptor& tool) {
-    return QStringLiteral("- %1 | risk: %2 | %3 | %4")
+    QStringList authorization;
+    for (const auto& requirement : tool.authorizationRequirements) {
+        QString entry = QStringLiteral("%1/%2")
+                            .arg(securityDomainName(requirement.domain),
+                                 accessModeName(requirement.access));
+        if (!requirement.resourceArgument.isEmpty())
+            entry += QStringLiteral(" (%1)").arg(requirement.resourceArgument);
+        authorization.append(std::move(entry));
+    }
+    if (authorization.isEmpty() &&
+        (tool.source == ToolSource::MCP || tool.source == ToolSource::Plugin))
+        authorization.append(QStringLiteral("External service/Invoke"));
+    const QString authorizationLine = authorization.isEmpty()
+                                          ? QStringLiteral("none")
+                                          : authorization.join(QStringLiteral(", "));
+    return QStringLiteral("- %1 | risk: %2 | authorization: %3 | %4 | %5")
         .arg(tool.id,
              tool.riskLevel == ToolRiskLevel::High
                  ? QStringLiteral("High")
                  : (tool.riskLevel == ToolRiskLevel::Medium ? QStringLiteral("Medium")
                                                             : QStringLiteral("Low")),
-             tool.description, ToolArgumentValidator::compactContract(tool));
+             authorizationLine, tool.description,
+             ToolArgumentValidator::compactContract(tool));
 }
 
 } // namespace
 
 LlmAgentRuntime::LlmAgentRuntime(QList<ToolDescriptor> tools, IChatProvider* provider)
-    : heuristic_(tools), tools_(std::move(tools)), provider_(provider) {}
+    : tools_(std::move(tools)), provider_(provider) {}
 
 void LlmAgentRuntime::bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider) {
     boundProvider_ = std::move(provider);
@@ -94,7 +111,12 @@ QList<AgentCapabilityDescriptor> LlmAgentRuntime::capabilities() const {
 }
 
 QList<ToolDescriptor> LlmAgentRuntime::availableTools() const {
-    return registry_ ? registry_->enabledTools() : tools_;
+    const auto enabled = registry_ ? registry_->enabledTools() : tools_;
+    QList<ToolDescriptor> visible;
+    for (const auto& tool : enabled)
+        if (allowedToolIds_.isEmpty() || allowedToolIds_.contains(tool.id))
+            visible.append(tool);
+    return visible;
 }
 
 bool LlmAgentRuntime::lastDecisionUsedLlm() const {
@@ -203,6 +225,12 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
             decision.grounding = GroundingMode::Context;
             decision.groundingDeclared = true;
         }
+        for (const auto& claim : object.value(QStringLiteral("claims")).toArray()) {
+            const auto item = claim.toObject();
+            if (item.value(QStringLiteral("assertion")).isBool())
+                decision.claims.append({item.value(QStringLiteral("id")).toString(),
+                                        item.value(QStringLiteral("assertion")).toBool()});
+        }
         if (!decision.groundingDeclared || decision.answer.trimmed().isEmpty()) {
             return invalid;
         }
@@ -265,43 +293,6 @@ AgentStepDecision LlmAgentRuntime::decisionFromLlmOutput(const QString& output) 
     return decision;
 }
 
-AgentStepDecision LlmAgentRuntime::heuristicDecision(const QString& goal,
-                                                     const QList<AgentStepRecord>& history) const {
-    AgentStepDecision decision;
-
-    if (!history.isEmpty()) {
-        decision.kind = AgentStepDecision::Kind::FinalAnswer;
-        decision.thought = QStringLiteral("Local heuristic planner: summarizing completed steps.");
-        QStringList parts;
-        for (const auto& record : history) {
-            const QString observation = record.observation.size() > 400
-                                            ? record.observation.left(400) + QStringLiteral("…")
-                                            : record.observation;
-            parts.append(QStringLiteral("Step %1 (%2): %3")
-                             .arg(QString::number(record.index), record.toolName, observation));
-        }
-        decision.answer = parts.join(QStringLiteral("\n"));
-        return decision;
-    }
-
-    const auto plan = heuristic_.plan(AgentRequest{goal, QString()});
-    if (plan.status != ToolInvocationPlanStatus::Planned || plan.invocations.isEmpty()) {
-        decision.kind = AgentStepDecision::Kind::GiveUp;
-        decision.reason = plan.summary;
-        return decision;
-    }
-
-    const auto& invocation = plan.invocations.first();
-    decision.kind = AgentStepDecision::Kind::ToolCall;
-    decision.toolId = invocation.toolId;
-    decision.toolName = invocation.toolName;
-    decision.riskLevel = invocation.riskLevel;
-    decision.executionMode = invocation.executionMode;
-    decision.arguments = invocation.arguments;
-    decision.thought = QStringLiteral("Heuristic plan: %1").arg(plan.summary);
-    return decision;
-}
-
 QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
     QStringList toolLines;
@@ -337,7 +328,7 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                "exactly one JSON object, no prose or markdown.\n"
                "Tool: {\"action\":\"tool\",\"tool\":\"id\",\"args\":{}}\n"
                "Final: {\"action\":\"final\",\"grounding\":\"context|verified|"
-               "unable_to_verify\",\"answer\":\"specific answer\"}\n"
+               "unable_to_verify\",\"claims\":[{\"id\":\"claim-1\",\"assertion\":true}],\"answer\":\"specific answer\"}\n"
                "Failure: {\"action\":\"giveup\",\"reason\":\"why\"}\n"
                "If the answer depends on current files, workspace, processes, clipboard, "
                "network, or external services, use an observation tool BEFORE final. Never "
@@ -345,10 +336,10 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                "explain that verification failed. Do not echo the goal. Prefer list-directory, "
                "glob, read-file, and grep over shell for filesystem questions. Use only "
                "listed tools and valid JSON arguments. Use grounding=context for knowledge, "
-               "verified only after successful relevant observations, unable_to_verify after a "
+               "verified only after successful relevant observations and with claims matching verified facts, unable_to_verify after a "
                "failed observation. Answer in the user's language.\n"
                "REQUIRED EVIDENCE: %5\nENVIRONMENT: %4\nTOOLS:\n%1\nGOAL: %2\n"
-               "CURRENT TURN OBSERVATIONS:\n%3\n"
+               "CURRENT TURN OBSERVATIONS:\n%3\nVERIFIED FACTS:\n%6\n"
                "NEXT JSON ACTION:")
         .arg(toolLines.join(QLatin1Char('\n')), goal,
              historyLines.isEmpty() ? QStringLiteral("(none yet)")
@@ -357,7 +348,8 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
              [&] {
                  QStringList requirements;
                  for (const auto& item : activeIntent_.requirements)
-                     requirements.append(observationDomainName(item.domain) +
+                     requirements.append((item.claimId.isEmpty() ? QString{} : item.claimId + QLatin1Char(' ')) +
+                                         observationDomainName(item.domain) +
                                          (item.resourceHint.isEmpty()
                                               ? QString{}
                                               : QStringLiteral(" %1").arg(item.resourceHint)));
@@ -366,6 +358,15 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                                              "claiming live state")
                             : requirements.isEmpty() ? QStringLiteral("none")
                                                      : requirements.join(QStringLiteral(", "));
+             }(),
+             [&] {
+                 QStringList facts;
+                 for (const auto& fact : structuredFacts_)
+                     facts.append(QStringLiteral("%1 %2 = %3 [evidence %4]")
+                                      .arg(fact.id, fact.resource,
+                                           fact.value ? QStringLiteral("true") : QStringLiteral("false"),
+                                           fact.evidenceCallIds.join(QLatin1Char(','))));
+                 return facts.isEmpty() ? QStringLiteral("(none)") : facts.join(QLatin1Char('\n'));
              }());
 }
 
@@ -414,7 +415,8 @@ ToolInvocationPlan LlmAgentRuntime::plan(const AgentRequest& request) const {
 }
 
 AgentResponse LlmAgentRuntime::execute(const AgentRequest& request) {
-    return heuristic_.execute(request);
+    Q_UNUSED(request)
+    return {false, QStringLiteral("Agent Mode execution requires AgentRuntime."), status()};
 }
 
 } // namespace sentinel::core

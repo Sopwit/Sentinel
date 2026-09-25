@@ -59,6 +59,7 @@ struct AgentLoopState {
     QString abortReason;
     ToolInvocationPlan pendingApprovalPlan;
     QString pendingApprovalThought;
+    QList<AuthorizationRequest> pendingAuthorizationRequests;
 };
 
 } // namespace sentinel::core

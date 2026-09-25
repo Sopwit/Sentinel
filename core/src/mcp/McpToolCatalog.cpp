@@ -36,11 +36,19 @@ ToolDescriptor McpToolCatalog::mcpToolToDescriptor(const McpToolDefinition& mcpT
     descriptor.source = ToolSource::MCP;
     descriptor.providerId = QStringLiteral("mcp:%1").arg(mcpTool.serverName);
     descriptor.requiredPermissionDomain = QStringLiteral("tool-execution");
+    descriptor.authorizationRequirements = {{SecurityDomain::ExternalService, AccessMode::Invoke,
+                                             AuthorizationResourceKind::Provider, {},
+                                             descriptor.providerId}};
     // The gateway enforces this remote contract locally before tools/call.
     // A missing schema permits only an empty argument object.
     descriptor.inputSchema = mcpTool.inputSchema;
-    descriptor.evidenceProduced = {{ObservationDomain::ExternalService, EvidenceFreshness::Live,
-                                    EvidenceScope::Provider, {}}};
+    descriptor.structuredObservationKind = StructuredObservationKind::Generic;
+    descriptor.filesystemFailureSemanticContract = mcpTool.filesystemSemanticContract;
+    descriptor.evidenceProduced = mcpTool.filesystemSemanticContract
+        ? QList<ToolEvidenceDescriptor>{{ObservationDomain::FileSystem, EvidenceFreshness::Live,
+                                         EvidenceScope::ExactResource, QStringLiteral("path")}}
+        : QList<ToolEvidenceDescriptor>{{ObservationDomain::ExternalService, EvidenceFreshness::Live,
+                                         EvidenceScope::Provider, {}}};
 
     // Convert input schema to parameter descriptors
     QJsonObject schema = mcpTool.inputSchema;

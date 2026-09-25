@@ -51,6 +51,8 @@ struct FuzzyEditResult {
 class FuzzyEditor {
 public:
     FuzzyEditResult edit(const FuzzyEditRequest& request) const;
+    FuzzyEditResult transform(const QString& content, const FuzzyEditRequest& request,
+                              QString& output) const;
     FuzzyMatchResult findBestMatch(const QString& content, const QString& needle) const;
     QString readFile(const QString& filePath) const;
     bool writeFile(const QString& filePath, const QString& content) const;

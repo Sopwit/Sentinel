@@ -8,6 +8,7 @@
 
 namespace sentinel::core {
 class IChatProvider;
+QString normalizedObservationResource(const QString& resource, ObservationDomain domain);
 
 class IObservationIntentPolicy {
 public:
@@ -41,7 +42,7 @@ public:
                                         const PlannedToolInvocation& invocation,
                                         ToolExecutionStatus status, const QString& summary,
                                         int stepIndex,
-                                        const QString& toolCallId);
+                                        const QString& toolCallId, StructuredObservationPtr structuredObservation = {});
     static EvidenceGateResult evaluate(const ObservationIntent& intent,
                                        const QList<EvidenceRecord>& evidence,
                                        GroundingMode mode, bool groundingDeclared);

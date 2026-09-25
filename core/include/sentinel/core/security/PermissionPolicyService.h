@@ -7,6 +7,8 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include "sentinel/core/security/IPermissionService.h"
+#include "sentinel/core/runtime/ToolDescriptor.h"
 
 namespace sentinel::core {
 
@@ -43,8 +45,10 @@ public:
     QStringList permissionDomainNames() const;
     QStringList permissionStateLabels() const;
     QString normalizedState(const QString& state) const;
-    bool allowsToolExecution(const QString& domainId, const QString& defaultState,
+    bool allowsAuthorization(const AuthorizationRequest& request, const QString& defaultState,
                              bool explicitlyApproved) const;
+    PermissionEffect defaultEffect(const AuthorizationRequest& request,
+                                  const QString& defaultState) const;
 };
 
 QString permissionPolicyStateName(PermissionPolicyState state);

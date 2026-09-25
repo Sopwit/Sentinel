@@ -8,6 +8,7 @@
 #include "sentinel/core/mcp/IMcpService.h"
 #include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/runtime/IFileSystemService.h"
 #include "sentinel/core/runtime/tools/WebFetchTool.h"
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
 
@@ -26,6 +27,7 @@ public:
 
     void setExternalDirectoryGate(const ExternalDirectoryGate* gate) {
         externalDirectoryGate_ = gate;
+        fileSystemService_.setExternalDirectoryGate(gate);
     }
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void setAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
@@ -35,7 +37,7 @@ public:
     void setMemorySnapshot(MemoryEntries entries);
     // Snapshots chat history lines ("[role] content") for the history-search tool.
     void setHistorySnapshot(QStringList entries);
-    // Replaces the MCP server set used by the mcp-list/mcp-call tools and connects
+    // Replaces the MCP server set used by the dynamic MCP provider and connects
     // to every enabled server.
     void configureMcpServers(const QList<McpServerConfig>& configs);
     // Test seam: inject a custom MCP service implementation.
@@ -56,7 +58,6 @@ public:
 public:
     using BuiltInMethod = ToolExecutionResult (RealToolExecutor::*)(const PlannedToolInvocation&,
                                                                     QString&) const;
-    static BuiltInMethod builtInMethod(const QString& id);
     ToolExecutionResult executeLocalPlanSummary(const PlannedToolInvocation& invocation,
                                                 QString& currentWorkingDirectory) const;
     ToolExecutionResult executeListDirectory(const PlannedToolInvocation& invocation,
@@ -86,10 +87,6 @@ public:
     ToolExecutionResult executeAppQuit(const PlannedToolInvocation& invocation,
                                        QString& currentWorkingDirectory) const;
     ToolExecutionResult executeOpenUrl(const PlannedToolInvocation& invocation,
-                                       QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeMcpList(const PlannedToolInvocation& invocation,
-                                       QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeMcpCall(const PlannedToolInvocation& invocation,
                                        QString& currentWorkingDirectory) const;
     ToolExecutionResult executeSpawnAgent(const PlannedToolInvocation& invocation,
                                           QString& currentWorkingDirectory) const;
@@ -146,6 +143,7 @@ private:
     QString resolveToolPath(const QString& workingDirectory, const QString& rawPath,
                             bool write = false) const;
     const ExternalDirectoryGate* externalDirectoryGate_ = nullptr;
+    QtFileSystemService fileSystemService_;
     mutable WebSearchTool webSearchTool_;
     mutable WebFetchTool webFetchTool_;
     std::shared_ptr<AlarmStore> alarmStore_;

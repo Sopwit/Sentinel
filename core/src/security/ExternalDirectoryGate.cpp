@@ -61,43 +61,22 @@ bool ExternalDirectoryGate::canRequestPermission(const QString& path,
 bool ExternalDirectoryGate::isAccessAllowed(const QString& path, const QString& workingDir,
                                             bool write) const {
     const QString canonical = resolvePath(path, workingDir);
-    if (canonical.isEmpty() || isSensitive(canonical))
+    if (!isPathSafe(canonical, workingDir))
         return false;
     if (isWithinDirectory(canonical, workingDir))
         return true;
     if (!canRequestPermission(canonical, workingDir))
         return false;
-    const auto& grants = write ? m_writeGrants : m_readGrants;
-    for (const auto& grant : grants) {
-        if (isWithinDirectory(canonical, grant))
-            return true;
-    }
-    return false;
+    return m_authorizationCheck && m_authorizationCheck(canonical, write, m_sessionId);
 }
 
-bool ExternalDirectoryGate::checkAndRequestPermission(const QString& path,
-                                                      const QString& workingDir) const {
-    return isAccessAllowed(path, workingDir);
+bool ExternalDirectoryGate::isPathSafe(const QString& path, const QString& workingDir) const {
+    const QString canonical = resolvePath(path, workingDir);
+    return !canonical.isEmpty() && !isSensitive(canonical) &&
+           (isWithinDirectory(canonical, workingDir) ||
+            canRequestPermission(canonical, workingDir));
 }
 
-void ExternalDirectoryGate::grantPermission(const QString& path, bool write) {
-    const QString canonical = resolvePath(path, m_workingDir);
-    if (canRequestPermission(canonical, m_workingDir))
-        (write ? m_writeGrants : m_readGrants).insert(canonical);
-}
-void ExternalDirectoryGate::revokePermission(const QString& path) {
-    const auto canonical = resolvePath(path, m_workingDir);
-    m_readGrants.remove(canonical);
-    m_writeGrants.remove(canonical);
-}
-bool ExternalDirectoryGate::hasPermission(const QString& path) const {
-    return m_readGrants.contains(resolvePath(path, m_workingDir)) ||
-           m_writeGrants.contains(resolvePath(path, m_workingDir));
-}
-void ExternalDirectoryGate::clearPermissions() {
-    m_readGrants.clear();
-    m_writeGrants.clear();
-}
 void ExternalDirectoryGate::setWorkingDirectory(const QString& dir) {
     m_workingDir = dir;
 }

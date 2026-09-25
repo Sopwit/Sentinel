@@ -19,6 +19,7 @@ struct McpToolDefinition {
     QString description;
     QString serverName;
     QJsonObject inputSchema;
+    bool filesystemSemanticContract = false;
 };
 
 struct McpServerConfig {

@@ -15,6 +15,8 @@ namespace sentinel::core {
 
 class IToolRegistry;
 class IToolHookService;
+class ExternalDirectoryGate;
+class PermissionService;
 
 enum class ToolGatewayRiskLevel {
     Low,
@@ -83,6 +85,8 @@ public:
     void setHookService(IToolHookService* hooks) {
         hooks_ = hooks;
     }
+    void setResourceGate(const ExternalDirectoryGate* gate) { resourceGate_ = gate; }
+    void setPermissionService(const PermissionService* service) { permissionService_ = service; }
     void setPermissionPolicy(const PermissionPolicyService* policy, QString defaultState) {
         permissionPolicy_ = policy;
         defaultPermissionState_ = std::move(defaultState);
@@ -106,6 +110,8 @@ public:
 private:
     const IToolRegistry* registry_ = nullptr;
     IToolHookService* hooks_ = nullptr;
+    const ExternalDirectoryGate* resourceGate_ = nullptr;
+    const PermissionService* permissionService_ = nullptr;
     const PermissionPolicyService* permissionPolicy_ = nullptr;
     QString defaultPermissionState_;
 };

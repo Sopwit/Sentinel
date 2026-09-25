@@ -3,7 +3,10 @@
 #include "sentinel/core/mcp/McpToolProvider.h"
 #include "sentinel/core/mcp/McpToolCatalog.h"
 #include <QDebug>
+#include <QDir>
+#include <optional>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QSet>
 #include <QThread>
 #include <atomic>
@@ -11,11 +14,80 @@
 
 namespace sentinel::core {
 namespace {
+std::optional<FileSystemFailure> declaredFailure(const QString& value) {
+    if (value == QLatin1String("not-found")) return FileSystemFailure::NotFound;
+    if (value == QLatin1String("permission-denied")) return FileSystemFailure::PermissionDenied;
+    if (value == QLatin1String("not-file")) return FileSystemFailure::NotFile;
+    if (value == QLatin1String("not-directory")) return FileSystemFailure::NotDirectory;
+    if (value == QLatin1String("already-exists")) return FileSystemFailure::AlreadyExists;
+    if (value == QLatin1String("invalid-path")) return FileSystemFailure::InvalidPath;
+    if (value == QLatin1String("read-failed")) return FileSystemFailure::ReadFailed;
+    if (value == QLatin1String("write-failed")) return FileSystemFailure::WriteFailed;
+    if (value == QLatin1String("io-error")) return FileSystemFailure::IOError;
+    if (value == QLatin1String("unavailable")) return FileSystemFailure::Unavailable;
+    return {};
+}
+QList<FileMutation> declaredMutations(const QJsonObject& data, bool contract) {
+    QList<FileMutation> mutations;
+    if (!contract || data.value(QStringLiteral("kind")).toString() != QLatin1String("filesystem-mutation") ||
+        !data.value(QStringLiteral("mutations")).isArray()) return mutations;
+    for (const auto& item : data.value(QStringLiteral("mutations")).toArray()) {
+        const auto object = item.toObject();
+        const auto path = object.value(QStringLiteral("path")).toString();
+        const auto action = object.value(QStringLiteral("kind")).toString();
+        if (!QDir::isAbsolutePath(path)) return {};
+        FileMutationKind kind;
+        if (action == QLatin1String("created")) kind = FileMutationKind::Created;
+        else if (action == QLatin1String("modified")) kind = FileMutationKind::Modified;
+        else if (action == QLatin1String("deleted")) kind = FileMutationKind::Deleted;
+        else if (action == QLatin1String("moved-from")) kind = FileMutationKind::MovedFrom;
+        else if (action == QLatin1String("moved-to")) kind = FileMutationKind::MovedTo;
+        else return {};
+        mutations.append({QDir::cleanPath(path), kind});
+    }
+    return mutations;
+}
+std::optional<FileSystemOperation> declaredOperation(const QString& value) {
+    if (value == QLatin1String("read-file")) return FileSystemOperation::ReadFile;
+    if (value == QLatin1String("list-directory")) return FileSystemOperation::ListDirectory;
+    if (value == QLatin1String("write-file")) return FileSystemOperation::WriteFile;
+    if (value == QLatin1String("delete-file")) return FileSystemOperation::Delete;
+    if (value == QLatin1String("move-file")) return FileSystemOperation::Move;
+    if (value == QLatin1String("glob")) return FileSystemOperation::Glob;
+    if (value == QLatin1String("grep")) return FileSystemOperation::Grep;
+    return {};
+}
+StructuredObservationPtr declaredObservation(const QJsonObject& data, bool contract) {
+    if (!contract) return data.isEmpty() ? StructuredObservationPtr{} :
+        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::Generic, data});
+    const auto kind = data.value(QStringLiteral("kind")).toString();
+    const auto resource = data.value(QStringLiteral("resource")).toString();
+    if (kind == QLatin1String("filesystem-failure") && QDir::isAbsolutePath(resource)) {
+        const auto reason = declaredFailure(data.value(QStringLiteral("reason")).toString());
+        const auto operation = declaredOperation(data.value(QStringLiteral("operation")).toString());
+        if (!reason || !operation) return {};
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->kind = StructuredObservationKind::FileSystemFailure;
+        observation->fileSystemFailure = *reason;
+        observation->fileSystemOperation = *operation;
+        observation->failureResource = QDir::cleanPath(resource);
+        observation->data = {{QStringLiteral("resource"), observation->failureResource}};
+        return observation;
+    }
+    if (kind == QLatin1String("directory-listing") &&
+        QDir::isAbsolutePath(data.value(QStringLiteral("path")).toString()) &&
+        data.value(QStringLiteral("entries")).isArray() &&
+        data.value(QStringLiteral("complete")).isBool() &&
+        data.value(QStringLiteral("truncated")).isBool())
+        return std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::DirectoryListing, data});
+    return {};
+}
 class McpToolHandler final : public IToolHandler {
 public:
-    McpToolHandler(std::shared_ptr<IMcpService> service, QString server, QString remoteTool)
+    McpToolHandler(std::shared_ptr<IMcpService> service, QString server, QString remoteTool,
+                   bool filesystemContract)
         : service_(std::move(service)), server_(std::move(server)),
-          remoteTool_(std::move(remoteTool)) {}
+          remoteTool_(std::move(remoteTool)), filesystemContract_(filesystemContract) {}
 
     IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString&,
                                   const QString&, IToolExecutor::Output,
@@ -32,7 +104,7 @@ public:
             IMcpService::Cancel cancel;
         };
         auto invocation = std::make_shared<Invocation>();
-        auto onResult = [invocation, completion = std::move(completion)](QJsonObject response) {
+        auto onResult = [invocation, contract = filesystemContract_, completion = std::move(completion)](QJsonObject response) {
             if (!invocation->active.exchange(false))
                 return;
             if (response.contains(QStringLiteral("error"))) {
@@ -50,14 +122,15 @@ public:
                 return;
             }
             const auto result = response.value(QStringLiteral("result")).toObject();
+            const QJsonObject data = result.value(QStringLiteral("structuredContent")).toObject();
+            const auto observation = declaredObservation(data, contract);
+            const auto summary = QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact));
             if (result.value(QStringLiteral("isError")).toBool()) {
-                completion(
-                    {ToolExecutionStatus::Blocked,
-                     QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact))});
+                completion({ToolExecutionStatus::Failed, summary, observation});
                 return;
             }
-            completion({ToolExecutionStatus::Succeeded,
-                        QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact))});
+            completion({ToolExecutionStatus::Succeeded, summary, observation,
+                        declaredMutations(data, contract)});
         };
         if (auto* object = dynamic_cast<McpService*>(service_.get());
             object && object->thread() != QThread::currentThread()) {
@@ -108,6 +181,7 @@ private:
     std::shared_ptr<IMcpService> service_;
     QString server_;
     QString remoteTool_;
+    bool filesystemContract_ = false;
 };
 } // namespace
 
@@ -159,7 +233,8 @@ bool McpToolProvider::refresh(const QString& serverName) {
             return false;
         }
         next.append({std::move(descriptor),
-                     std::make_shared<McpToolHandler>(service_, serverName, tool.name)});
+                     std::make_shared<McpToolHandler>(service_, serverName, tool.name,
+                                                      tool.filesystemSemanticContract)});
     }
     if (!registry_.replaceProvider(ToolSource::MCP, providerId, std::move(next)))
         return false;
