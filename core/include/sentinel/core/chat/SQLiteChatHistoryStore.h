@@ -22,6 +22,9 @@ public:
     SQLiteChatHistoryStore& operator=(SQLiteChatHistoryStore&&) = delete;
 
     QList<ChatMessage> loadMessages() const override;
+    QList<ChatMessage> recentMessages(int limit) const override;
+    QList<ChatMessage> searchMessages(const QString& query, int limit,
+                                       int beforeId = 0) const override;
     void appendMessage(const ChatMessage& message) override;
     void clear() override;
     bool isAvailable() const override;
@@ -35,11 +38,12 @@ private:
     void initializeSchema();
     void setLastError(QString error) const;
 
-    static constexpr int currentSchemaVersion = 2;
+    static constexpr int currentSchemaVersion = 3;
 
     QString databasePath_;
     QString connectionName_;
     QSqlDatabase database_;
+    bool ftsReady_ = false;
     mutable QString lastError_;
 };
 

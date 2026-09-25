@@ -7,6 +7,8 @@
 namespace sentinel::core {
 
 void InMemoryStore::put(QString key, QString value) {
+    if (!ids_.contains(key))
+        ids_.insert(key, nextId_++);
     entries_.insert(key, value);
 }
 
@@ -25,8 +27,27 @@ MemoryEntries InMemoryStore::entries() const {
     return result;
 }
 
+MemoryEntries InMemoryStore::searchRelevant(const QString& query, int limit) const {
+    MemoryEntries result;
+    for (const auto& record : searchRelevantRecords(query, limit))
+        result.append({record.key, record.value});
+    return result;
+}
+
+QList<MemoryRecord> InMemoryStore::searchRelevantRecords(const QString& query, int limit) const {
+    QList<MemoryRecord> result;
+    if (query.trimmed().isEmpty() || limit <= 0)
+        return result;
+    for (auto it = entries_.cbegin(); it != entries_.cend() && result.size() < limit; ++it)
+        if (it.key().contains(query, Qt::CaseInsensitive) ||
+            it.value().contains(query, Qt::CaseInsensitive))
+            result.append({ids_.value(it.key()), it.key(), it.value()});
+    return result;
+}
+
 void InMemoryStore::clear() {
     entries_.clear();
+    ids_.clear();
 }
 
 } // namespace sentinel::core
