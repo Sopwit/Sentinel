@@ -14,14 +14,15 @@ Item {
     signal pageRequested(string pageName)
 
     implicitHeight: 72
-    implicitWidth: 260
+    implicitWidth: 380
 
     property var dockItems: buildDockItems()
 
     function buildDockItems() {
         return [
             { id: "Dashboard", label: qsTr("Home"),   icon: "home" },
-            { id: "Models",    label: qsTr("Models"), icon: "brain" }
+            { id: "Models",    label: qsTr("Models"), icon: "brain" },
+            { id: "Inspector", label: qsTr("Inspector"), icon: "eye" }
         ]
     }
 

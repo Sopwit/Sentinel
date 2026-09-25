@@ -181,6 +181,9 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     // Clean dependency injection using ApplicationControllerBuilder
     sentinel::core::ApplicationControllerBuilder builder;
     m_controller = builder.withStandardDefaults(m_pathProvider, *m_settings).build();
+    m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(
+        m_controller->agentRunStore());
+    m_inspectorViewModel = std::make_unique<AgentInspectorViewModel>(*m_inspectorService);
     m_controller->setConversationExportDirectory(m_pathProvider.conversationExportDirectoryPath());
 
     m_modeManager = std::make_unique<sentinel::core::ModeManager>();
@@ -254,6 +257,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
 
     m_engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"),
                                                m_shellViewModel.get());
+    m_engine.rootContext()->setContextProperty(QStringLiteral("agentInspectorViewModel"),
+                                               m_inspectorViewModel.get());
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaPuller"), ollamaPuller);
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"),
                                                ollamaLibraryFetcher);

@@ -2,9 +2,11 @@ add_library(sentinel_desktop_viewmodels STATIC
     include/sentinel/desktop/ChatMessageListModel.h
     include/sentinel/desktop/DesktopShellViewModel.h
     include/sentinel/desktop/viewmodels/ChatViewModel.h
+    include/sentinel/desktop/viewmodels/AgentInspectorViewModel.h
     src/ChatMessageListModel.cpp
     src/DesktopShellViewModel.cpp
     src/viewmodels/ChatViewModel.cpp
+    src/viewmodels/AgentInspectorViewModel.cpp
 )
 
 add_library(sentinel_desktop_startup STATIC
@@ -213,6 +215,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationToast.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/AgentInspectorPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelsPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/LocalModelsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/OnlineRegistryTab.qml
