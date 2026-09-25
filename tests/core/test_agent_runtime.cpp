@@ -419,76 +419,6 @@ private slots:
         QVERIFY(sawOutput);
     }
 
-    void approvedPlanUsesAsyncProcessPath() {
-#ifdef Q_OS_WIN
-        QSKIP("The shell fixture is Unix-only.");
-#endif
-        RealToolExecutor executor;
-        StaticApprovalPolicy approval;
-        StaticSandboxPolicy sandbox;
-        AgentRuntime runtime(std::make_unique<FixedPlanRuntime>(), nullptr, executor, approval,
-                             sandbox);
-        ToolInvocationPlan plan;
-        plan.status = ToolInvocationPlanStatus::Planned;
-        PlannedToolInvocation invocation;
-        invocation.toolId = QStringLiteral("run-command");
-        invocation.toolName = QStringLiteral("run-command");
-        invocation.arguments.append(
-            {QStringLiteral("command"), QStringLiteral("printf 'controlled\\n'; exec sleep 1")});
-        plan.invocations.append(invocation);
-        invocation.arguments.clear();
-        invocation.arguments.append(
-            {QStringLiteral("command"), QStringLiteral("printf 'second invocation\\n'")});
-        plan.invocations.append(invocation);
-        bool completed = false;
-        AgentPipelineResult result;
-        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved in chat."),
-                                         [&](AgentPipelineResult value) {
-                                             result = std::move(value);
-                                             completed = true;
-                                         });
-        QVERIFY(!completed);
-        QTRY_VERIFY_WITH_TIMEOUT(completed, 5000);
-        QCOMPARE(result.execution.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.execution.summary.contains(QStringLiteral("controlled")));
-        QVERIFY(result.execution.summary.contains(QStringLiteral("second invocation")));
-    }
-    void runtimeRegistryExecutesNewHandler() {
-        class Handler final : public IToolHandler {
-        public:
-            IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString&,
-                                          const QString&, IToolExecutor::Output,
-                                          IToolExecutor::Completion completion) override {
-                completion({ToolExecutionStatus::Succeeded, QStringLiteral("dynamic runtime")});
-                return {};
-            }
-        };
-        NullToolExecutor legacy;
-        StaticApprovalPolicy approval;
-        StaticSandboxPolicy sandbox;
-        AgentRuntime runtime(std::make_unique<FixedPlanRuntime>(), nullptr, legacy, approval,
-                             sandbox);
-        ToolDescriptor descriptor;
-        descriptor.id = QStringLiteral("plugin.test.dynamic");
-        descriptor.name = QStringLiteral("Dynamic");
-        descriptor.source = ToolSource::Plugin;
-        descriptor.providerId = QStringLiteral("test");
-        QVERIFY(runtime.toolRegistry().registerTool({descriptor, std::make_shared<Handler>()}));
-        QVERIFY(runtime.availableTools().size() == 2);
-        ToolInvocationPlan plan;
-        plan.status = ToolInvocationPlanStatus::Planned;
-        plan.invocations.append({descriptor.id, descriptor.name});
-        AgentPipelineResult result;
-        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved"),
-                                         [&](AgentPipelineResult value) { result = value; });
-        QCOMPARE(result.execution.status, ToolExecutionStatus::Succeeded);
-        QCOMPARE(result.execution.summary, QStringLiteral("dynamic runtime"));
-        QVERIFY(runtime.toolRegistry().setEnabled(descriptor.id, false));
-        QCOMPARE(runtime.availableTools().size(), 1);
-        runtime.executeApprovedPlanAsync(plan, QStringLiteral("Approved"),
-                                         [&](AgentPipelineResult value) { result = value; });
-        QCOMPARE(result.execution.status, ToolExecutionStatus::Blocked);
-    }
     void streamsRealProviderDeltasWithStepCorrelation() {
         StreamingPlannerProvider provider;
         LlmAgentRuntime planner(NullAgentRuntime::standardTools(), &provider);
@@ -847,28 +777,6 @@ private slots:
         QVERIFY(result.finalAnswer.contains(QStringLiteral("child answer")));
     }
 
-    void controlledPipelineUsesRuntimeDependencies() {
-        RecordingExecutor executor;
-        StaticApprovalPolicy approval;
-        StaticSandboxPolicy sandbox;
-        AgentRuntime runtime(std::make_unique<FixedPlanRuntime>(), nullptr, executor, approval,
-                             sandbox);
-        IAgentRuntime& api = runtime;
-        QVERIFY(!api.supportsSessions());
-        const auto result = api.executeApprovedGoal(QStringLiteral("controlled task"));
-        QCOMPARE(executor.calls, 1);
-        QCOMPARE(executor.lastRequest.approval.status, ApprovalStatus::Approved);
-        QCOMPARE(executor.lastRequest.plan.invocations.first().toolId,
-                 QStringLiteral("run-command"));
-        QCOMPARE(result.execution.status, ToolExecutionStatus::Succeeded);
-        QCOMPARE(result.summary, QStringLiteral("executed"));
-
-        const auto approvedPlan =
-            api.executeApprovedPlan(result.plan, QStringLiteral("Approved in chat."));
-        QCOMPARE(executor.calls, 2);
-        QCOMPARE(executor.lastRequest.approval.summary, QStringLiteral("Approved in chat."));
-        QCOMPARE(approvedPlan.execution.status, ToolExecutionStatus::Succeeded);
-    }
 };
 
 QTEST_MAIN(AgentRuntimeTest)

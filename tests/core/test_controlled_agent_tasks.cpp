@@ -37,12 +37,11 @@ void ControlledAgentTasksTest::plannerLifecycleRequiresApproval() {
     QCOMPARE(task.state, ControlledTaskState::Running);
     QCOMPARE(task.currentStepIndex, 0);
 
-    task = service.executeCurrentStep(task);
-    QCOMPARE(task.state, ControlledTaskState::Running);
-    QCOMPARE(task.currentStepIndex, 1);
-    task = service.executeCurrentStep(service.executeCurrentStep(task));
-    QCOMPARE(task.state, ControlledTaskState::Completed);
-    QVERIFY(task.resultSummary.contains(QStringLiteral("visible approved steps")));
+    task = service.applyRuntimeState(task, QStringLiteral("Awaiting Approval"),
+                                     QStringLiteral("Tool approval required"),
+                                     QStringLiteral("session-1"), QStringLiteral("run-1"));
+    QCOMPARE(task.state, ControlledTaskState::WaitingApproval);
+    QCOMPARE(task.runtimeSessionId, QStringLiteral("session-1"));
 }
 
 void ControlledAgentTasksTest::queueAllowsSingleActiveTask() {

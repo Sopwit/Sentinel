@@ -62,6 +62,12 @@ public:
         return {ToolExecutionStatus::Blocked, QStringLiteral("fallback used")};
     }
 };
+class DenyApprovalPolicy final : public IApprovalPolicy {
+public:
+    ApprovalDecision evaluate(const ToolInvocationPlan&) const override {
+        return {ApprovalStatus::Denied, QStringLiteral("Denied for this test."), {}};
+    }
+};
 QStringList calls(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
@@ -174,7 +180,7 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
     QObject context;
 
     Planner deniedPlanner(registry);
-    StaticApprovalPolicy denial({{id, ApprovalStatus::Denied}});
+    DenyApprovalPolicy denial;
     StaticSandboxPolicy sandbox(
         {QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.medium")});
     AgentLoop denied(deniedPlanner, fallback, denial, sandbox, {id});

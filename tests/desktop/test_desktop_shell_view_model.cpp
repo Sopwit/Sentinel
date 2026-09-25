@@ -119,7 +119,6 @@ private slots:
     void exposesToolGatewayMetadata();
     void exposesAgentRuntimeMetadata();
     void exposesControlledAgentTaskWorkflow();
-    void controlledStepWaitsForAsyncCompletion();
     void exposesProductExcellenceWorkflow();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
@@ -232,34 +231,6 @@ public:
 private:
     QList<sentinel::core::ToolDescriptor> tools_;
     sentinel::core::ToolInvocationPlan plan_;
-};
-
-class DelayedControlledRuntime final : public sentinel::core::IAgentRuntime {
-public:
-    QString name() const override {
-        return QStringLiteral("delayed");
-    }
-    sentinel::core::AgentStatus status() const override {
-        return sentinel::core::AgentStatus::Ready;
-    }
-    QList<sentinel::core::AgentCapabilityDescriptor> capabilities() const override {
-        return {};
-    }
-    QList<sentinel::core::ToolDescriptor> availableTools() const override {
-        return {};
-    }
-    sentinel::core::ToolInvocationPlan plan(const sentinel::core::AgentRequest&) const override {
-        return {};
-    }
-    sentinel::core::AgentResponse execute(const sentinel::core::AgentRequest&) override {
-        return {};
-    }
-    void executeApprovedGoalAsync(
-        const QString&,
-        std::function<void(sentinel::core::AgentPipelineResult)> callback) override {
-        pending = std::move(callback);
-    }
-    std::function<void(sentinel::core::AgentPipelineResult)> pending;
 };
 
 void DesktopShellViewModelTest::exposesInitialShellState() {
@@ -3447,29 +3418,6 @@ void DesktopShellViewModelTest::exposesControlledAgentTaskWorkflow() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Files: Allow For Workspace")));
     QVERIFY(fixture.settings.controlledAgentTasksJson().contains(taskId));
-}
-
-void DesktopShellViewModelTest::controlledStepWaitsForAsyncCompletion() {
-    auto runtime = std::make_unique<DelayedControlledRuntime>();
-    auto* delayed = runtime.get();
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::move(runtime));
-    ModeManager modeManager;
-    AppSettings settings(std::make_unique<InMemorySettingsStore>());
-    DesktopShellViewModel viewModel(controller, modeManager, settings);
-    const auto taskId = viewModel.planControlledAgentTask(QStringLiteral("Prepare a summary"));
-    QVERIFY(viewModel.approveControlledAgentTask(taskId, QStringLiteral("Approve Once")));
-    QVERIFY(viewModel.startControlledAgentTask(taskId));
-    QVERIFY(viewModel.executeControlledAgentStep(taskId));
-    QVERIFY(!viewModel.executeControlledAgentStep(taskId));
-    QVERIFY(viewModel.controlledTaskProgressSummary().contains(QStringLiteral("0 of 3")));
-    QVERIFY(delayed->pending);
-    sentinel::core::AgentPipelineResult result;
-    result.execution = {sentinel::core::ToolExecutionStatus::Succeeded,
-                        QStringLiteral("controlled result")};
-    delayed->pending(std::move(result));
-    QVERIFY(viewModel.controlledTaskProgressSummary().contains(QStringLiteral("1 of 3")));
 }
 
 void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {

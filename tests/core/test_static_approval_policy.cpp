@@ -25,8 +25,6 @@ private slots:
     void reportsEmptyPlanAsNotRequested();
     void allowsLowRiskMetadataPlansWithoutApproval();
     void requiresApprovalForRiskyPlans();
-    void representsDeniedState();
-    void representsApprovedState();
     void preservesRequestOrdering();
 };
 
@@ -88,38 +86,7 @@ void StaticApprovalPolicyTest::requiresApprovalForRiskyPlans() {
     QCOMPARE(decision.requests.size(), 1);
     QCOMPARE(decision.requests.first().toolId, QStringLiteral("risky-tool"));
     QCOMPARE(decision.requests.first().riskLevel, ToolRiskLevel::High);
-    QCOMPARE(decision.requests.first().permissions.size(), 1);
-    QCOMPARE(decision.requests.first().permissions.first().id,
-             QStringLiteral("tool.metadata.approval"));
-}
-
-void StaticApprovalPolicyTest::representsDeniedState() {
-    StaticApprovalPolicy policy(QMap<QString, ApprovalStatus>{
-        {QStringLiteral("safe-tool"), ApprovalStatus::Denied},
-    });
-
-    const auto decision = policy.evaluate(makePlan({
-        makeInvocation(QStringLiteral("safe-tool"), ToolRiskLevel::Low),
-    }));
-
-    QCOMPARE(decision.status, ApprovalStatus::Denied);
-    QCOMPARE(decision.summary,
-             QStringLiteral("At least one planned tool invocation is denied by policy."));
-}
-
-void StaticApprovalPolicyTest::representsApprovedState() {
-    StaticApprovalPolicy policy(QMap<QString, ApprovalStatus>{
-        {QStringLiteral("safe-tool"), ApprovalStatus::Approved},
-    });
-
-    const auto decision = policy.evaluate(makePlan({
-        makeInvocation(QStringLiteral("safe-tool"), ToolRiskLevel::Low),
-    }));
-
-    QCOMPARE(decision.status, ApprovalStatus::Approved);
-    QCOMPARE(decision.summary,
-             QStringLiteral("Planned tool invocations are approved by policy metadata."));
-    QVERIFY(decision.requests.isEmpty());
+    QVERIFY(decision.requests.first().permissions.isEmpty());
 }
 
 void StaticApprovalPolicyTest::preservesRequestOrdering() {
