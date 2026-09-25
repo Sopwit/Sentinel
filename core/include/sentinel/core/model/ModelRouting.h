@@ -198,6 +198,7 @@ struct ModelRoute {
 struct ModelBinding {
     QString providerId;
     QString modelId;
+    int contextWindowTokens = 0;
 
     bool isConfigured() const { return !providerId.isEmpty() && !modelId.isEmpty(); }
 };

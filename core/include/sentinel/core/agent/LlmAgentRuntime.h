@@ -6,6 +6,7 @@
 
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
+#include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/model/ModelRouting.h"
 
@@ -41,6 +42,7 @@ public:
     void setObservationIntent(const ObservationIntent& intent) override { activeIntent_ = intent; }
     void setPlannerFeedback(const QString& feedback) override { plannerFeedback_ = feedback; }
     void setStructuredFacts(const QList<StructuredFact>& facts) override { structuredFacts_ = facts; }
+    void setPlanningContext(const AgentPlanningContext& context) override { planningContext_ = context; }
     // Called before an accepted run; the owned provider and binding stay fixed
     // for every planner iteration in that run.
     void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider);
@@ -64,6 +66,7 @@ private:
     ModelBinding modelBinding_;
     mutable ObservationIntent activeIntent_;
     mutable QList<StructuredFact> structuredFacts_;
+    mutable AgentPlanningContext planningContext_;
     mutable QString plannerFeedback_;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable std::function<void(const QString&)> streamObserver_;

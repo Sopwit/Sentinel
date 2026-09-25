@@ -11,6 +11,7 @@
 #include "sentinel/core/agent/AgentTaskRuntime.h"
 #include "sentinel/core/agent/IAgentRegistry.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
+#include "sentinel/core/agent/IAgentRunStore.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/app/ContextAssembly.h"
 #include "sentinel/core/app/ITaskPlanner.h"
@@ -1058,6 +1059,7 @@ class ApplicationController final : public QObject {
         QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
 
 public:
+    const IAgentRunStore* agentRunStore() const { return agentRunStore_.get(); }
     ApplicationController(
         std::unique_ptr<IChatProvider> provider, std::unique_ptr<IMemoryStore> memoryStore,
         std::unique_ptr<ChatSession> chatSession = nullptr,
@@ -2041,6 +2043,7 @@ private:
     WhisperTranscriptionReadiness currentWhisperTranscriptionReadiness() const;
 
     std::unique_ptr<ModelService> modelService_;
+    std::unique_ptr<IAgentRunStore> agentRunStore_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
     std::unique_ptr<ControlledTaskService> controlledTaskService_;
     std::unique_ptr<IAgentStepPlanner> agentStepPlanner_;

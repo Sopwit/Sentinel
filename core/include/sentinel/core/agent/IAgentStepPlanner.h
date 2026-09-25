@@ -12,6 +12,7 @@
 #include <QString>
 
 namespace sentinel::core {
+struct AgentPlanningContext;
 
 struct AgentStepRecord {
     int index = 0;
@@ -57,6 +58,7 @@ public:
     virtual void setObservationIntent(const ObservationIntent&) {}
     virtual void setPlannerFeedback(const QString&) {}
     virtual void setStructuredFacts(const QList<StructuredFact>&) {}
+    virtual void setPlanningContext(const AgentPlanningContext&) {}
 };
 
 inline QString agentStepRecordSummary(const AgentStepRecord& record) {

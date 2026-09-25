@@ -54,6 +54,7 @@ struct AgentLoopState {
     ObservationIntent observationIntent;
     QList<EvidenceRecord> evidence;
     FinalAnswerGrounding finalGrounding;
+    QList<ClaimAssertion> finalClaims;
     int rejectedFinalAnswers = 0;
     QString finalAnswer;
     QString abortReason;

@@ -228,6 +228,7 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
                 QStringLiteral("Provider '%1' has no available model route.").arg(provider);
             return resolution;
         }
+        resolution.binding.contextWindowTokens = route.model.contextWindowTokens;
     }
     if (provider != QLatin1String("ollama")) {
         const auto config = providerConfig(resolution.binding);

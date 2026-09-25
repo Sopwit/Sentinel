@@ -6,6 +6,7 @@
 
 #include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/agent/LlmAgentRuntime.h"
+#include "sentinel/core/agent/SQLiteAgentRunStore.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ControlledTaskService.h"
@@ -879,9 +880,12 @@ ApplicationController::ApplicationController(
     modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
     modelService_->setLocalInferenceTimeoutMs(localInferenceTimeoutMs_);
     if (agentRuntime_) {
+        agentRunStore_ = std::make_unique<SQLiteAgentRunStore>(
+            QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                .filePath(QStringLiteral("agent_runs.sqlite3")));
         agentRuntime_ = std::make_unique<AgentRuntime>(
             std::move(agentRuntime_), agentStepPlanner_.get(), *toolExecutor_, *approvalPolicy_,
-            *sandboxPolicy_, memoryStore_.get(), chatHistoryStore_.get());
+            *sandboxPolicy_, memoryStore_.get(), chatHistoryStore_.get(), agentRunStore_.get());
         QPointer<ApplicationController> self(this);
         agentEventSubscriptionId_ = agentRuntime_->subscribe([self](const AgentEvent& event) {
             if (!self)

@@ -16,6 +16,7 @@ namespace sentinel::core {
 enum class AgentEventType {
     SessionCreated,
     RunStarted,
+    ContextSnapshot,
     ModelRequestStarted,
     ModelOutputDelta,
     ModelRequestCompleted,
@@ -41,12 +42,27 @@ struct AgentTextEvent {
     QString text;
 };
 
+struct AgentRunStartedEvent {
+    QString goalSummary;
+    QString runType = QStringLiteral("interactive");
+    QString parentRunId;
+    QString parentToolCallId;
+};
+
+struct AgentContextEvent {
+    int estimatedTokens = 0;
+    int includedItems = 0;
+    int omittedItems = 0;
+    bool compacted = false;
+};
+
 struct AgentToolEvent {
     QString toolId;
     ToolRiskLevel risk = ToolRiskLevel::Low;
     QString output;
     QList<AuthorizationRequest> authorizationRequests;
     QString displayName;
+    QString source;
 };
 
 struct AgentStepEvent {
@@ -70,10 +86,12 @@ struct AgentRunEvent {
     ObservationIntent observationIntent;
     QList<EvidenceRecord> evidence;
     FinalAnswerGrounding grounding;
+    QList<ClaimAssertion> finalClaims;
 };
 
 using AgentEventPayload =
-    std::variant<std::monostate, AgentStateEvent, AgentTextEvent, AgentToolEvent,
+    std::variant<std::monostate, AgentStateEvent, AgentTextEvent, AgentRunStartedEvent,
+                 AgentContextEvent, AgentToolEvent,
                  AgentToolOutputEvent, AgentStepEvent, AgentRunEvent>;
 
 struct AgentEvent {
@@ -84,6 +102,7 @@ struct AgentEvent {
     QString toolCallId;
     QString providerId;
     QString modelId;
+    int stepIndex = 0;
     AgentEventType type = AgentEventType::SessionCreated;
     QDateTime timestamp;
     AgentEventPayload payload;

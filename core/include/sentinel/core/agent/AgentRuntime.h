@@ -28,6 +28,7 @@ class IApprovalPolicy;
 class ISandboxPolicy;
 class IMemoryStore;
 class IChatHistoryStore;
+class IAgentRunStore;
 class AgentLoop;
 class McpToolProvider;
 class IMcpService;
@@ -39,7 +40,8 @@ public:
     AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPlanner* planner,
                  IToolExecutor& executor, const IApprovalPolicy& approval,
                  const ISandboxPolicy& sandbox, const IMemoryStore* memoryStore = nullptr,
-                 const IChatHistoryStore* chatHistoryStore = nullptr);
+                 const IChatHistoryStore* chatHistoryStore = nullptr,
+                 IAgentRunStore* runStore = nullptr);
     AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPlanner& planner,
                  IToolExecutor& executor, const IApprovalPolicy& approval,
                  const ISandboxPolicy& sandbox)
@@ -122,6 +124,8 @@ private:
     const ISandboxPolicy& sandbox_;
     const IMemoryStore* memoryStore_;
     const IChatHistoryStore* chatHistoryStore_;
+    IAgentRunStore* runStore_ = nullptr;
+    std::atomic_bool persistenceWarningEmitted_{false};
     mutable std::mutex mutex_;
     std::mutex workerMutex_;
     std::mutex executionMutex_;
