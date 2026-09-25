@@ -17,29 +17,10 @@ CapabilityDescriptor metadataCapability() {
     };
 }
 
-CapabilityDescriptor riskCapability(ToolRiskLevel riskLevel) {
-    if (riskLevel == ToolRiskLevel::Medium) {
-        return {
-            QStringLiteral("tool.risk.medium"),
-            QStringLiteral("Future runtime support for medium-risk tool capability."),
-        };
-    }
-
-    return {
-        QStringLiteral("tool.risk.high"),
-        QStringLiteral("Future runtime support for high-risk tool capability."),
-    };
-}
-
 QList<CapabilityDescriptor> capabilitiesForInvocation(const PlannedToolInvocation& invocation) {
     auto capabilities = invocation.requiredCapabilities;
     if (capabilities.isEmpty()) {
         capabilities.append(metadataCapability());
-    }
-
-    if (invocation.riskLevel == ToolRiskLevel::Medium ||
-        invocation.riskLevel == ToolRiskLevel::High) {
-        capabilities.append(riskCapability(invocation.riskLevel));
     }
 
     return capabilities;

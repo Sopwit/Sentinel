@@ -15,6 +15,7 @@ enum class ControlledTaskState {
     Draft,
     PendingApproval,
     Running,
+    WaitingApproval,
     Completed,
     Failed,
     Cancelled,
@@ -46,6 +47,8 @@ struct ControlledAgentTask {
     QString workspaceId;
     QString provider;
     QString model;
+    QString runtimeSessionId;
+    QString runtimeRunId;
     QList<ControlledAgentStep> steps;
     QList<ControlledAgentApproval> approvals;
     QString resultSummary;
@@ -98,9 +101,9 @@ public:
     ControlledAgentTask cancel(ControlledAgentTask task) const;
     ControlledAgentTask start(ControlledAgentTask task,
                               const QList<ControlledAgentTask>& allTasks) const;
-    ControlledAgentTask executeCurrentStep(ControlledAgentTask task) const;
-    ControlledAgentTask executeCurrentStep(ControlledAgentTask task, const QString& outcome,
-                                           bool succeeded) const;
+    ControlledAgentTask applyRuntimeState(ControlledAgentTask task, const QString& state,
+                                          const QString& detail, const QString& sessionId,
+                                          const QString& runId) const;
     ControlledAgentTask skipCurrentStep(ControlledAgentTask task) const;
     ControlledAgentTask retryCurrentStep(ControlledAgentTask task) const;
     QList<ControlledAgentTask> reorderQueue(QList<ControlledAgentTask> tasks, const QString& taskId,

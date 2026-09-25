@@ -9,7 +9,6 @@
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/chat/LocalEchoProvider.h"
-#include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 #include "sentinel/core/chat/SQLiteConversationStore.h"
 #include "sentinel/core/memory/SQLiteMemoryStore.h"
@@ -26,10 +25,11 @@ ApplicationControllerBuilder::~ApplicationControllerBuilder() = default;
 
 ApplicationControllerBuilder&
 ApplicationControllerBuilder::withStandardDefaults(const StandardPathProvider& pathProvider,
-                                                   const AppSettings& settings) {
+                                                   AppSettings& settings) {
     const auto ollamaConfig = OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
 
-    m_provider = std::make_unique<OllamaChatProvider>(ollamaConfig);
+    if (!m_modelService)
+        m_modelService = std::make_unique<ModelService>(&settings);
     m_localRuntime = std::make_unique<OllamaLocalRuntime>(ollamaConfig);
     m_runtimeCapabilities = std::make_unique<OllamaRuntimeCapabilityRegistry>(ollamaConfig);
     m_localRuntimeSessions = std::make_unique<OllamaRuntimeSessionManager>(ollamaConfig);
@@ -43,8 +43,7 @@ ApplicationControllerBuilder::withStandardDefaults(const StandardPathProvider& p
                                      QStringLiteral("/alarms.json"));
     m_agentRuntime = std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools());
     m_sandboxPolicy = std::make_unique<StaticSandboxPolicy>(
-        QSet<QString>{QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.medium"),
-                      QStringLiteral("tool.risk.high")});
+        QSet<QString>{QStringLiteral("tool.metadata.read")});
     m_toolExecutor = std::make_unique<RealToolExecutor>(m_alarmStore);
     m_runtimePermissionPolicy = std::make_unique<LocalOnlyRuntimePermissionPolicy>();
     m_ollamaRuntimeClient = std::make_unique<OllamaHttpRuntimeClient>(ollamaConfig);
@@ -279,6 +278,12 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentTaskRuntime
     return *this;
 }
 
+ApplicationControllerBuilder&
+ApplicationControllerBuilder::withModelService(std::unique_ptr<ModelService> modelService) {
+    m_modelService = std::move(modelService);
+    return *this;
+}
+
 std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
     if (!m_agentStepPlanner && m_agentRuntime) {
         m_agentStepPlanner =
@@ -306,7 +311,7 @@ std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
         std::move(m_speechToTextProvider), std::move(m_voiceRuntimeCoordinator),
         std::move(m_voiceRuntimeEnvironment), std::move(m_piperTextToSpeechProvider),
         std::move(m_localInferenceWorker), std::move(m_conversationStore),
-        std::move(m_agentTaskRuntime), std::move(m_agentStepPlanner));
+        std::move(m_agentTaskRuntime), std::move(m_agentStepPlanner), std::move(m_modelService));
     controller->attachAlarmStore(m_alarmStore);
     return controller;
 }

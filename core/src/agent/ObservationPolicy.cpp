@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "sentinel/core/agent/ObservationPolicy.h"
+#include "sentinel/core/agent/ClaimGroundingResolver.h"
 
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/security/ExternalDirectoryGate.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -46,9 +48,7 @@ QString normalizedResource(QString resource, ObservationDomain domain) {
                 }
             }
         }
-        if (QDir::isAbsolutePath(resource))
-            return QDir::cleanPath(resource);
-        return QDir::cleanPath(QDir::current().absoluteFilePath(resource));
+        return ExternalDirectoryGate{}.resolvePath(resource, QDir::currentPath());
     }
     if (domain == ObservationDomain::Network || domain == ObservationDomain::Browser) {
         const QUrl url(resource);
@@ -150,6 +150,10 @@ QList<ObservationRequirement> explicitResourceQuestions(const QString& goal) {
 }
 } // namespace
 
+QString normalizedObservationResource(const QString& resource, ObservationDomain domain) {
+    return normalizedResource(resource, domain);
+}
+
 QString observationDomainName(ObservationDomain domain) {
     switch (domain) {
     case ObservationDomain::FileSystem: return QStringLiteral("filesystem");
@@ -201,7 +205,7 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         "{\"requirements\":[{\"domain\":\"filesystem|workspace|process|system|"
         "clipboard|network|browser|memory|history|external|application|execution\","
         "\"resource\":\"absolute path, ~/path, URL, or empty\","
-        "\"purpose\":\"inspect|operate\"}]}. Use an empty array for general knowledge, "
+        "\"purpose\":\"inspect|operate\",\"operation\":\"exists|contains|search_matches|none\",\"query\":\"exact text or search pattern if applicable\"}]}. Use exists for concrete file existence questions and a full target path. Use an empty array for general knowledge, "
         "rewriting, or conversation-only reasoning. Multiple domains are allowed. "
         "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
                             .arg(capabilities.join(QLatin1Char(',')),
@@ -250,6 +254,27 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         requirement.freshness = *domain == ObservationDomain::ConversationHistory
                                     ? EvidenceFreshness::SessionStable
                                     : EvidenceFreshness::TurnScoped;
+        const auto operation = object.value(QStringLiteral("operation")).toString();
+        if ((*domain == ObservationDomain::FileSystem || *domain == ObservationDomain::Workspace) &&
+            !requirement.resourceHint.isEmpty() && requirement.purpose == ObservationPurpose::Inspect) {
+            if (operation == QLatin1String("exists") || operation == QLatin1String("file_exists"))
+                requirement.claimType = ClaimType::FileExists;
+            else if (operation == QLatin1String("path_exists"))
+                requirement.claimType = ClaimType::PathExists;
+            else if (operation == QLatin1String("directory_exists"))
+                requirement.claimType = ClaimType::DirectoryExists;
+            else if (operation == QLatin1String("contains"))
+                requirement.claimType = ClaimType::TextContains;
+            else if (operation == QLatin1String("search_matches"))
+                requirement.claimType = ClaimType::SearchHasMatches;
+            if (requirement.claimType != ClaimType::None) {
+                requirement.claimId = QStringLiteral("claim-%1").arg(intent.requirements.size() + 1);
+                requirement.claimQuery = object.value(QStringLiteral("query")).toString().left(256);
+                if (requirement.claimType != ClaimType::FileExists && requirement.claimType != ClaimType::PathExists &&
+                    requirement.claimType != ClaimType::DirectoryExists && requirement.claimQuery.isEmpty())
+                    requirement.claimType = ClaimType::None;
+            }
+        }
         intent.requirements.append(std::move(requirement));
     }
     for (const auto& structural : explicitResourceQuestions(goal)) {
@@ -268,7 +293,7 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
 QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
                                               const PlannedToolInvocation& invocation,
                                               ToolExecutionStatus status, const QString& summary,
-                                              int stepIndex, const QString& toolCallId) {
+                                              int stepIndex, const QString& toolCallId, StructuredObservationPtr structuredObservation) {
     QList<EvidenceRecord> records;
     if (status == ToolExecutionStatus::InvalidArguments ||
         status == ToolExecutionStatus::InvalidToolContract ||
@@ -295,16 +320,19 @@ QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
         record.freshness = produced.freshness;
         record.scope = produced.scope;
         record.outcome = succeeded ? EvidenceOutcome::Verified
+                                 : status == ToolExecutionStatus::Cancelled ? EvidenceOutcome::Partial
                                  : denied ? EvidenceOutcome::Denied
                                  : unavailable ? EvidenceOutcome::Unavailable
                                                : EvidenceOutcome::Failed;
-        // A bounded directory listing cannot prove absence outside its returned page.
-        if (succeeded && produced.scope == EvidenceScope::DirectoryEntries) {
-            const auto document = QJsonDocument::fromJson(summary.toUtf8());
-            if (document.isObject() &&
-                document.object().value(QStringLiteral("truncated")).toBool())
-                record.outcome = EvidenceOutcome::Unavailable;
-        }
+        if (structuredObservation &&
+            (descriptor.structuredObservationKind == structuredObservation->kind ||
+             ((descriptor.source == ToolSource::BuiltIn || descriptor.filesystemFailureSemanticContract) &&
+              (structuredObservation->kind == StructuredObservationKind::FileSystemFailure ||
+               structuredObservation->kind == StructuredObservationKind::DirectoryListing ||
+               (descriptor.source == ToolSource::BuiltIn &&
+                (structuredObservation->kind == StructuredObservationKind::FileSystemFact ||
+                 structuredObservation->kind == StructuredObservationKind::PatchResult))))))
+            record.structuredObservation = structuredObservation;
         record.observedAtUtc = QDateTime::currentDateTimeUtc();
         records.append(std::move(record));
     }
@@ -359,7 +387,11 @@ EvidenceGateResult EvidencePolicy::evaluate(const ObservationIntent& intent,
             if (!latest || item.stepIndex >= latest->stepIndex)
                 latest = &item;
         }
-        if (latest && latest->outcome == EvidenceOutcome::Verified) {
+        const bool supportedPartial = latest && latest->outcome == EvidenceOutcome::Partial &&
+            requirement.claimType != ClaimType::None &&
+            ClaimGroundingResolver::resolve(requirement, evidence,
+                {requirement.claimId, true}).verdict == ClaimVerdict::Supported;
+        if (latest && (latest->outcome == EvidenceOutcome::Verified || supportedPartial)) {
             result.grounding.evidenceCallIds.append(latest->toolCallId);
             continue;
         }
@@ -385,8 +417,18 @@ EvidenceGateResult EvidencePolicy::evaluate(const ObservationIntent& intent,
     }
     if (mode == GroundingMode::UnableToVerify) {
         if (failures.isEmpty()) {
-            result.repair = QStringLiteral("All required observations succeeded; provide a "
-                                           "verified answer.");
+            bool unresolvedClaim = false;
+            for (const auto& requirement : intent.requirements)
+                if (requirement.claimType != ClaimType::None &&
+                    ClaimGroundingResolver::resolve(requirement, evidence, {requirement.claimId, true}).verdict == ClaimVerdict::Unknown)
+                    unresolvedClaim = true;
+            if (!unresolvedClaim) {
+                result.repair = QStringLiteral("All required observations succeeded; provide a verified answer.");
+                return result;
+            }
+            result.accepted = true;
+            result.answerOverride = QStringLiteral("I could not verify the requested fact from the available observation.");
+            result.grounding.evidenceCallIds.removeDuplicates();
             return result;
         }
         // Do not publish the model's wording after failed observations: it could

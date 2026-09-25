@@ -8,6 +8,7 @@
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/ControlledTaskService.h"
 #include "sentinel/core/app/StaticTaskPlanner.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
 #include "sentinel/core/chat/OllamaChatProvider.h"
@@ -20,6 +21,7 @@
 #include "sentinel/core/runtime/LocalRuntime.h"
 #include "sentinel/core/runtime/NullToolExecutor.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/security/AuthorizationResolver.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
@@ -48,41 +50,6 @@
 namespace sentinel::core {
 
 namespace {
-
-class SelectedEndpointChatProvider final : public IChatProvider {
-public:
-    SelectedEndpointChatProvider(ModelBinding binding, LMStudioConfig config, int timeoutMs)
-        : binding_(std::move(binding)), config_(std::move(config)), timeoutMs_(timeoutMs) {}
-
-    QString name() const override { return binding_.providerId; }
-    ChatProviderStatus status() const override {
-        return config_.isAllowedEndpoint() ? ChatProviderStatus::Ready
-                                           : ChatProviderStatus::Unavailable;
-    }
-    ChatProviderReply sendMessage(const QString& message) override {
-        if (!config_.isAllowedEndpoint())
-            return {false, {}, QStringLiteral("Selected provider '%1' is unavailable or not configured.")
-                                   .arg(binding_.providerId)};
-        LocalInferenceRequest request;
-        request.prompt = message;
-        request.options.model = binding_.modelId;
-        request.options.timeoutMs = timeoutMs_;
-        LMStudioLocalInferenceClient client(config_, timeoutMs_);
-        const auto result = client.infer(request);
-        if (result.status == LocalInferenceStatus::Succeeded)
-            return {true, result.text, {}};
-        if (result.error == LocalInferenceError::ModelUnavailable)
-            return {false, {}, QStringLiteral("Selected model '%1' is unavailable from provider '%2'.")
-                                   .arg(binding_.modelId, binding_.providerId)};
-        return {false, {}, QStringLiteral("Provider '%1': %2")
-                               .arg(binding_.providerId, result.summary)};
-    }
-
-private:
-    ModelBinding binding_;
-    LMStudioConfig config_;
-    int timeoutMs_ = 0;
-};
 
 int toInt(qsizetype value) {
     return static_cast<int>(value);
@@ -818,9 +785,11 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ILocalInferenceWorker> localInferenceWorker,
     std::unique_ptr<IConversationStore> conversationStore,
     std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime,
-    std::unique_ptr<IAgentStepPlanner> agentStepPlanner, QObject* parent)
-    : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
-      agentStepPlanner_(std::move(agentStepPlanner)),
+    std::unique_ptr<IAgentStepPlanner> agentStepPlanner, std::unique_ptr<ModelService> modelService,
+    QObject* parent)
+    : QObject(parent),
+      modelService_(modelService ? std::move(modelService) : std::make_unique<ModelService>()),
+      agentRuntime_(std::move(agentRuntime)), agentStepPlanner_(std::move(agentStepPlanner)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
       sandboxPolicy_(sandboxPolicy ? std::move(sandboxPolicy)
@@ -898,6 +867,17 @@ ApplicationController::ApplicationController(
       conversationStore_(conversationStore ? std::move(conversationStore)
                                            : std::make_unique<InMemoryConversationStore>()),
       conversationExportDirectory_(defaultConversationExportDirectory()) {
+    if (provider) {
+        std::shared_ptr<IChatProvider> legacyProvider(std::move(provider));
+        modelService_->registerProvider(
+            QStringLiteral("ollama"),
+            [legacyProvider](const ModelBinding&) { return legacyProvider; });
+    }
+    modelService_->setModelRouter(modelRouter_.get());
+    modelService_->setOllamaEndpoint(ollamaEndpoint());
+    modelService_->setLmStudioEndpoint(lmStudioEndpoint());
+    modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
+    modelService_->setLocalInferenceTimeoutMs(localInferenceTimeoutMs_);
     if (agentRuntime_) {
         agentRuntime_ = std::make_unique<AgentRuntime>(
             std::move(agentRuntime_), agentStepPlanner_.get(), *toolExecutor_, *approvalPolicy_,
@@ -994,6 +974,7 @@ ApplicationController::ApplicationController(
 }
 
 ApplicationController::~ApplicationController() {
+    controlledTaskService_.reset();
     if (agentRuntime_) {
         agentRuntime_->unsubscribe(agentEventSubscriptionId_);
         agentRuntime_->shutdown();
@@ -1007,11 +988,14 @@ ApplicationController::~ApplicationController() {
 }
 
 QString ApplicationController::providerName() const {
-    return provider_ ? provider_->name() : QStringLiteral("No Provider");
+    const auto resolved = modelService_->resolve(modelService_->selectedModel());
+    return resolved.ok() ? resolved.provider->name() : QStringLiteral("No Provider");
 }
 
 QString ApplicationController::providerStatus() const {
-    return provider_ ? chatProviderStatusName(provider_->status()) : QStringLiteral("Unavailable");
+    const auto resolved = modelService_->resolve(modelService_->selectedModel());
+    return resolved.ok() ? chatProviderStatusName(resolved.provider->status())
+                         : QStringLiteral("Unavailable");
 }
 
 QString ApplicationController::agentStatus() const {
@@ -1874,28 +1858,16 @@ QStringList ApplicationController::runtimeIntegrationReadinessChecks() const {
 }
 
 QString ApplicationController::selectedRuntimeProvider() const {
-    return selectedRuntimeProvider_;
+    return modelService_->selectedModel().providerId;
 }
 
 void ApplicationController::setSelectedRuntimeProvider(const QString& providerId) {
-    const auto normalized = providerId.trimmed().toLower();
-    const auto selected =
-        (normalized == QStringLiteral("ollama") ||
-         normalized == QStringLiteral("openai-compatible-local") ||
-         normalized == QStringLiteral("lm-studio") ||
-         normalized == QStringLiteral("llama-cpp-server") ||
-         normalized == QStringLiteral("openai-compatible") ||
-         normalized == QStringLiteral("cloud-api") || normalized == QStringLiteral("openai") ||
-         normalized == QStringLiteral("deepseek") || normalized == QStringLiteral("groq") ||
-         normalized == QStringLiteral("mistral") || normalized == QStringLiteral("claude") ||
-         normalized == QStringLiteral("gemini"))
-            ? normalized
-            : QStringLiteral("ollama");
-    if (selected == selectedRuntimeProvider_) {
+    const auto before = modelService_->selectedModel();
+    modelService_->setSelectedProviderId(providerId);
+    if (modelService_->selectedModel() == before) {
         return;
     }
 
-    selectedRuntimeProvider_ = selected;
     emit ollamaStatusChanged();
     emit runtimeProviderRegistryChanged();
     emit localModelSelectionChanged();
@@ -2042,6 +2014,7 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
         std::make_unique<OllamaLocalInferenceClient>(config),
         std::make_unique<OllamaLocalInferenceStreamClient>(config), this,
         localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
+    modelService_->setOllamaEndpoint(ollamaEndpoint());
     emit ollamaStatusChanged();
 }
 
@@ -2054,6 +2027,7 @@ void ApplicationController::setLmStudioEndpoint(const QString& endpoint) {
     if (lmStudioEndpoint_ == endpoint)
         return;
     lmStudioEndpoint_ = endpoint;
+    modelService_->setLmStudioEndpoint(lmStudioEndpoint());
     pollOllama();
     emit ollamaStatusChanged();
 }
@@ -2067,6 +2041,7 @@ void ApplicationController::setLlamaCppEndpoint(const QString& endpoint) {
     if (llamaCppEndpoint_ == endpoint)
         return;
     llamaCppEndpoint_ = endpoint;
+    modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
     pollOllama();
     emit ollamaStatusChanged();
 }
@@ -2247,16 +2222,16 @@ QStringList ApplicationController::ollamaModelSummaries() const {
 }
 
 QString ApplicationController::selectedLocalModel() const {
-    return selectedLocalModel_;
+    return modelService_->selectedModel().modelId;
 }
 
 void ApplicationController::setSelectedLocalModel(const QString& model) {
-    const auto normalized = model.trimmed();
-    if (normalized == selectedLocalModel_) {
+    const auto before = modelService_->selectedModel();
+    modelService_->setSelectedModelId(model);
+    if (modelService_->selectedModel() == before) {
         return;
     }
 
-    selectedLocalModel_ = normalized;
     emit localModelSelectionChanged();
     emit runtimeProviderRegistryChanged();
     emit localChatInferenceRoutingChanged();
@@ -2264,7 +2239,7 @@ void ApplicationController::setSelectedLocalModel(const QString& model) {
 
 QString ApplicationController::selectedLocalModelStatus() const {
     const auto models = currentOllamaModels();
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     if (selected.isEmpty()) {
         return QStringLiteral("Missing");
     }
@@ -2277,7 +2252,7 @@ QString ApplicationController::selectedLocalModelStatus() const {
 
 QString ApplicationController::selectedLocalModelSummary() const {
     const auto models = currentOllamaModels();
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     const auto providerLabel =
         isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
     const auto installWord =
@@ -2313,7 +2288,7 @@ QString ApplicationController::selectedLocalModelSummary() const {
 
 QString ApplicationController::selectedLocalModelMetadataSummary() const {
     const auto models = currentOllamaModels();
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     const auto effective = effectiveLocalModel({});
 
     if (effective.isEmpty()) {
@@ -3562,7 +3537,7 @@ QString ApplicationController::localChatInferenceStatus() const {
     if (!localInferenceEndpointAllowed()) {
         return QStringLiteral("Blocked");
     }
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     if (selected.isEmpty()) {
         return QStringLiteral("Missing Model");
     }
@@ -3607,7 +3582,7 @@ QString ApplicationController::localChatInferenceSummary() const {
         return QString::fromUtf8("%1 API key is missing or endpoint is not allowed.")
             .arg(providerLabel);
     }
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     if (selected.isEmpty()) {
         return QString::fromUtf8("Select a model for %1 in Settings before sending.")
             .arg(providerLabel);
@@ -3641,7 +3616,7 @@ bool ApplicationController::localChatSendAvailable() const {
         return false;
     }
 
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     if (selected.isEmpty()) {
         return false;
     }
@@ -3689,7 +3664,7 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
                    : QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
     }
 
-    const auto selected = selectedLocalModel_.trimmed();
+    const auto selected = selectedLocalModel().trimmed();
     if (selected.isEmpty()) {
         return isLMStudioProvider()
                    ? QString::fromUtf8("Select a model for %1 in Settings before sending.")
@@ -5030,6 +5005,7 @@ void ApplicationController::setLocalInferenceTimeoutMs(int timeoutMs) {
     }
 
     localInferenceTimeoutMs_ = normalized;
+    modelService_->setLocalInferenceTimeoutMs(localInferenceTimeoutMs_);
     emit localInferenceChanged();
     emit localChatInferenceRoutingChanged();
 }
@@ -7963,7 +7939,7 @@ bool ApplicationController::sendMessage(const QString& message) {
             status = LocalInferenceStatus::Busy;
         } else if (!localInferenceEndpointAllowed()) {
             error = LocalInferenceError::EndpointBlocked;
-        } else if (selectedLocalModel_.trimmed().isEmpty() || localChatEffectiveModel.isEmpty()) {
+        } else if (selectedLocalModel().trimmed().isEmpty() || localChatEffectiveModel.isEmpty()) {
             error = LocalInferenceError::MissingModel;
             status = LocalInferenceStatus::InvalidRequest;
         } else if (!isLMStudioProvider() &&
@@ -8080,11 +8056,14 @@ bool ApplicationController::sendMessage(const QString& message) {
         return true;
     }
 
-    if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
+    auto resolvedChat = modelService_->resolve(modelService_->selectedModel());
+    if (!resolvedChat.ok() || resolvedChat.provider->status() != ChatProviderStatus::Ready) {
         transitionConversationState(ConversationState::Error,
                                     QStringLiteral("provider metadata unavailable"));
         const auto errorMessage = chatSession_->appendAssistantMessage(
-            QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus()),
+            resolvedChat.ok()
+                ? QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus())
+                : modelBindingFailureSummary(resolvedChat),
             ChatMessageStatus::Error);
         persistActiveConversationMessage(errorMessage);
         if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
@@ -8116,7 +8095,7 @@ bool ApplicationController::sendMessage(const QString& message) {
                                 QStringLiteral("chat response metadata ready"));
     transitionConversationState(ConversationState::Responding,
                                 QStringLiteral("chat response metadata active"));
-    const auto reply = provider_->sendMessage(effectivePrompt);
+    const auto reply = resolvedChat.provider->sendMessage(effectivePrompt);
     if (!reply.success) {
         transitionConversationState(ConversationState::Error,
                                     QStringLiteral("chat provider returned error metadata"));
@@ -8139,8 +8118,9 @@ bool ApplicationController::sendMessage(const QString& message) {
         conversationHistorySummary_.lastSavedStatus =
             QStringLiteral("Runtime-only transcript; persistence unavailable.");
     }
-    setConversationRuntimeRequest(QStringLiteral("provider-chat-request"), QStringLiteral("None"),
-                                  QStringLiteral("Provider: %1").arg(providerName()), false);
+    setConversationRuntimeRequest(
+        QStringLiteral("provider-chat-request"), resolvedChat.binding.modelId,
+        QStringLiteral("Provider: %1").arg(resolvedChat.provider->name()), false);
     setConversationRuntimeResult(reply.success, assistantMessage.content);
     setChatSendLifecycle(reply.success ? QStringLiteral("completed") : QStringLiteral("failed"),
                          assistantMessage.content);
@@ -8345,7 +8325,8 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
 }
 
 bool ApplicationController::cancelLocalInference() {
-    if (currentAgentSessionState().phase == AgentLoopPhase::Running) {
+    if (currentAgentSessionState().phase == AgentLoopPhase::Running ||
+        currentAgentSessionState().phase == AgentLoopPhase::Cancelling) {
         return cancelAgentRun();
     }
 
@@ -8789,6 +8770,11 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         }
         return false;
     }
+    if (controlledTaskService_ && controlledTaskService_->sessionActive()) {
+        lastAgentResponse_ = QStringLiteral("A controlled task is using the agent runtime.");
+        emit agentResponseChanged();
+        return false;
+    }
 
     if (currentAgentSessionState().phase == AgentLoopPhase::AwaitingApproval) {
         const auto lowerRequest = trimmed.toLower();
@@ -8812,7 +8798,11 @@ bool ApplicationController::runAgentRequest(const QString& request) {
             resumeAgentLoopWithApproval(wantsApproval, wantsAlways);
             return true;
         }
-        activeAgentSessionId_.clear();
+        appendAgentLoopChatMessage(
+            QStringLiteral("Agent approval is pending. Approve or cancel the current request "
+                           "before starting another."),
+            false);
+        return true;
     }
 
     if (currentAgentSessionState().phase == AgentLoopPhase::Running) {
@@ -8829,88 +8819,6 @@ bool ApplicationController::runAgentRequest(const QString& request) {
                            "(veya **cancel**) yazın."),
             false);
         return true;
-    }
-
-    if (!pendingCommand_.isEmpty()) {
-        const auto lowerRequest = trimmed.toLower();
-        if (lowerRequest == QStringLiteral("onayla") || lowerRequest == QStringLiteral("approve") ||
-            lowerRequest == QStringLiteral("y")) {
-            const QString cmdToRun = pendingCommand_;
-            pendingCommand_.clear();
-
-            const auto userMessage = chatSession_->appendUserMessage(trimmed);
-            persistActiveConversationMessage(userMessage);
-            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-                chatHistoryStore_->appendMessage(userMessage);
-            }
-            refreshConversationHistorySummary();
-            emit chatMessagesChanged();
-
-            ToolInvocationPlan planToRun;
-            planToRun.status = ToolInvocationPlanStatus::Planned;
-            planToRun.summary = QStringLiteral("User approved pending command.");
-
-            QList<ToolInvocationArgument> args;
-            args.append(ToolInvocationArgument{QStringLiteral("command"), cmdToRun});
-
-            planToRun.invocations.append(
-                PlannedToolInvocation{QStringLiteral("run-command"),
-                                      QStringLiteral("Run Command"),
-                                      QStringLiteral("User approved running command."),
-                                      QStringLiteral("Execution of approved command."),
-                                      ToolRiskLevel::High,
-                                      ToolExecutionMode::Local,
-                                      args,
-                                      {}});
-
-            QPointer<ApplicationController> self(this);
-            agentRuntime_->executeApprovedPlanAsync(
-                planToRun, QStringLiteral("User approved execution in chat."),
-                [self, cmdToRun](AgentPipelineResult result) {
-                    if (!self)
-                        return;
-                    const QString assistantText =
-                        QStringLiteral("**Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
-                                       "**Çalıştırılan Komut / Executed Command:**\n"
-                                       "```bash\n%1\n```\n\n**Sonuç / Output:**\n%2")
-                            .arg(cmdToRun, result.execution.summary);
-                    auto assistantMsg = self->chatSession_->appendAssistantMessage(
-                        assistantText, ChatMessageStatus::Received);
-                    assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
-                    assistantMsg.roleUsed = QStringLiteral("assistant");
-                    self->persistActiveConversationMessage(assistantMsg);
-                    if (self->chatHistoryStore_ && self->chatHistoryStore_->isAvailable())
-                        self->chatHistoryStore_->appendMessage(assistantMsg);
-                    self->refreshConversationHistorySummary();
-                    emit self->chatMessagesChanged();
-                });
-            return true;
-        } else if (lowerRequest == QStringLiteral("iptal") ||
-                   lowerRequest == QStringLiteral("cancel") ||
-                   lowerRequest == QStringLiteral("n")) {
-            pendingCommand_.clear();
-
-            const auto userMessage = chatSession_->appendUserMessage(trimmed);
-            persistActiveConversationMessage(userMessage);
-            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-                chatHistoryStore_->appendMessage(userMessage);
-            }
-            refreshConversationHistorySummary();
-            emit chatMessagesChanged();
-
-            auto assistantMsg = chatSession_->appendAssistantMessage(
-                QStringLiteral("Agent Tool Execution Cancelled.\n\nPending command was discarded."),
-                ChatMessageStatus::Received);
-            assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
-            assistantMsg.roleUsed = QStringLiteral("agent");
-            persistActiveConversationMessage(assistantMsg);
-            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-                chatHistoryStore_->appendMessage(assistantMsg);
-            }
-            refreshConversationHistorySummary();
-            emit chatMessagesChanged();
-            return true;
-        }
     }
 
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
@@ -8948,178 +8856,15 @@ bool ApplicationController::runAgentRequest(const QString& request) {
 
     transitionConversationState(ConversationState::Routing,
                                 QStringLiteral("agent route metadata selected"));
-    if (agentRuntime_->supportsSessions()) {
-        startAgentLoopRun(trimmed);
-        return true;
-    }
-    QPointer<ApplicationController> self(this);
-    agentRuntime_->executePipelineAsync(
-        AgentRequest{trimmed}, agentAutonomousMode_, [self, trimmed](AgentPipelineResult result) {
-            if (self)
-                self->completeLegacyAgentPipeline(std::move(result), trimmed);
-        });
-    return true;
-}
-
-void ApplicationController::completeLegacyAgentPipeline(AgentPipelineResult result,
-                                                        const QString& trimmed) {
-    latestAgentPipelineResult_ = std::move(result);
-    appendPipelineActivity(latestAgentPipelineResult_);
-    runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
-
-    if (!agentAutonomousMode_ &&
-        latestAgentPipelineResult_.approvalStatus() == ApprovalStatus::RequiresApproval) {
-        QString commandToRun;
-        for (const auto& invocation : latestAgentPipelineResult_.plan.invocations) {
-            if (invocation.toolId == QStringLiteral("run-command")) {
-                for (const auto& arg : invocation.arguments) {
-                    if (arg.id == QStringLiteral("command")) {
-                        commandToRun = arg.value;
-                    }
-                }
-            }
-        }
-        if (commandToRun.isEmpty()) {
-            commandToRun = trimmed;
-        }
-
-        pendingCommand_ = commandToRun;
-
-        QString approvalText =
-            QStringLiteral("⚠️ **Onay Bekliyor (Approval Required)**\n\n"
-                           "Ajan aşağıdaki terminal komutunu çalıştırmak istiyor:\n"
-                           "```bash\n"
-                           "%1\n"
-                           "```\n"
-                           "Çalıştırmak için lütfen **onayla** (veya **approve**), iptal etmek "
-                           "için **iptal** (veya **cancel**) yazın.")
-                .arg(commandToRun);
-
-        auto assistantMsg =
-            chatSession_->appendAssistantMessage(approvalText, ChatMessageStatus::Received);
-        assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
-        assistantMsg.roleUsed = QStringLiteral("agent");
-        persistActiveConversationMessage(assistantMsg);
-        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-            chatHistoryStore_->appendMessage(assistantMsg);
-        }
-        refreshConversationHistorySummary();
-        emit chatMessagesChanged();
-
-        transitionConversationState(ConversationState::WaitingForApproval,
-                                    QStringLiteral("approval metadata required"));
-    } else {
-        QString assistantText;
-        if (latestAgentPipelineResult_.executionStatus() == ToolExecutionStatus::Succeeded) {
-            QString detailsText;
-            for (const auto& invocation : latestAgentPipelineResult_.plan.invocations) {
-                if (invocation.toolId == QStringLiteral("run-command")) {
-                    QString cmd;
-                    for (const auto& arg : invocation.arguments) {
-                        if (arg.id == QStringLiteral("command")) {
-                            cmd = arg.value;
-                        }
-                    }
-                    detailsText +=
-                        QStringLiteral(
-                            "**Çalıştırılan Komut / Executed Command:**\n```bash\n%1\n```\n")
-                            .arg(cmd);
-                } else {
-                    detailsText +=
-                        QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
-                }
-            }
-
-            assistantText =
-                QStringLiteral("**Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
-                               "%1\n"
-                               "**Sonuç / Output:**\n"
-                               "%2")
-                    .arg(detailsText, latestAgentPipelineResult_.execution.summary);
-        } else {
-            QString detailsText;
-            for (const auto& invocation : latestAgentPipelineResult_.plan.invocations) {
-                if (invocation.toolId == QStringLiteral("run-command")) {
-                    QString cmd;
-                    for (const auto& arg : invocation.arguments) {
-                        if (arg.id == QStringLiteral("command")) {
-                            cmd = arg.value;
-                        }
-                    }
-                    detailsText += QStringLiteral("**Çalıştırılmak İstenen Komut / Attempted "
-                                                  "Command:**\n```bash\n%1\n```\n")
-                                       .arg(cmd);
-                } else {
-                    detailsText +=
-                        QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
-                }
-            }
-
-            assistantText =
-                QStringLiteral(
-                    "**Eylem Başarısız Oldu veya Engellendi (Execution Failed/Blocked)**\n\n"
-                    "%1\n"
-                    "**Detaylar / Details:**\n"
-                    "* **Durum / Status:** `%2`\n"
-                    "* **Açıklama / Explanation:** %3")
-                    .arg(detailsText,
-                         toolExecutionStatusName(latestAgentPipelineResult_.executionStatus()),
-                         latestAgentPipelineResult_.execution.summary);
-        }
-
-        auto assistantMsg =
-            chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
-        assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
-        assistantMsg.roleUsed = QStringLiteral("agent");
-        persistActiveConversationMessage(assistantMsg);
-        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-            chatHistoryStore_->appendMessage(assistantMsg);
-        }
-        refreshConversationHistorySummary();
-        emit chatMessagesChanged();
-
-        if (latestAgentPipelineResult_.executionStatus() ==
-                ToolExecutionStatus::PlaceholderSucceeded ||
-            latestAgentPipelineResult_.executionStatus() == ToolExecutionStatus::Succeeded) {
-            transitionConversationState(ConversationState::ReadyToRespond,
-                                        QStringLiteral("agent response metadata ready"));
-            transitionConversationState(ConversationState::Responding,
-                                        QStringLiteral("agent response metadata active"));
-            transitionConversationState(ConversationState::Completed,
-                                        QStringLiteral("agent response metadata completed"));
-        } else {
-            transitionConversationState(ConversationState::Error,
-                                        QStringLiteral("agent pipeline metadata blocked"));
-        }
-    }
-
-    refreshConversationSession();
-    emit toolPlanChanged();
-    emit approvalChanged();
-    emit sandboxChanged();
-    emit toolExecutionChanged();
-    emit agentPipelineChanged();
-    emit runtimeContextChanged();
-    emit conversationSessionChanged();
-    emit agentActivityChanged();
-    emit orchestrationSnapshotChanged();
-
-    QString nextMessage;
-    const auto executionStatus = latestAgentPipelineResult_.executionStatus();
-    if (executionStatus == ToolExecutionStatus::Succeeded) {
-        nextMessage = latestAgentPipelineResult_.execution.summary;
-    } else if (executionStatus == ToolExecutionStatus::Blocked) {
-        nextMessage = QStringLiteral("Agent execution blocked: %1")
-                          .arg(latestAgentPipelineResult_.execution.summary);
-    } else {
-        nextMessage = QStringLiteral("Agent execution status: %1")
-                          .arg(toolExecutionStatusName(executionStatus));
-    }
-    if (lastAgentResponse_ != nextMessage) {
-        lastAgentResponse_ = nextMessage;
+    if (!agentRuntime_->supportsSessions()) {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("Agent session runtime unavailable"));
+        lastAgentResponse_ = QStringLiteral("Agent Mode requires a session runtime.");
         emit agentResponseChanged();
+        emit agentStatusChanged();
+        return false;
     }
-    emit agentStatusChanged();
+    return startAgentLoopRun(trimmed);
 }
 
 bool ApplicationController::cancelAgentRun() {
@@ -9142,8 +8887,25 @@ bool ApplicationController::agentLoopActive() const {
            phase == AgentLoopPhase::AwaitingApproval;
 }
 
-void ApplicationController::startAgentLoopRun(const QString& goal) {
-    bindAgentPlannerToSelectedModel();
+bool ApplicationController::startAgentLoopRun(const QString& goal) {
+    const auto resolved = modelService_->resolve(modelService_->selectedModel());
+    if (!bindAgentPlannerToResolvedModel(resolved)) {
+        const auto summary = modelBindingFailureSummary(resolved);
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent model binding unavailable"));
+        agentActivityLog_.append(AgentActivityType::PipelineCompleted, AgentActivityStatus::Blocked,
+                                 QStringLiteral("Agent pipeline blocked: %1").arg(summary));
+        refreshConversationSession();
+        emit agentActivityChanged();
+        emit conversationSessionChanged();
+        emit orchestrationSnapshotChanged();
+        if (lastAgentResponse_ != summary) {
+            lastAgentResponse_ = summary;
+            emit agentResponseChanged();
+        }
+        return false;
+    }
+
     activeAgentSessionId_ = agentRuntime_->createSession();
     AgentSessionOptions options;
     options.autonomousMode = agentAutonomousMode_;
@@ -9155,42 +8917,28 @@ void ApplicationController::startAgentLoopRun(const QString& goal) {
         AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
         QStringLiteral("Agent loop request received (autonomous=%1; provider=%2; model=%3).")
             .arg(agentAutonomousMode_ ? QStringLiteral("true") : QStringLiteral("false"),
-                 selectedRuntimeProvider_, selectedLocalModel_));
+                 resolved.binding.providerId, resolved.binding.modelId));
     emit agentActivityChanged();
 
     if (!agentRuntime_->start(activeAgentSessionId_, goal)) {
         onAgentLoopFinished(currentAgentSessionState());
     }
+    return true;
 }
 
-void ApplicationController::bindAgentPlannerToSelectedModel() {
+bool ApplicationController::bindAgentPlannerToResolvedModel(
+    const ModelBindingResolution& resolution) {
     auto* planner = dynamic_cast<LlmAgentRuntime*>(agentStepPlanner_.get());
     if (!planner)
-        return;
+        return true;
 
-    const ModelBinding requested{selectedRuntimeProvider_, selectedLocalModel_.trimmed()};
-    const auto route = modelRouter_ ? modelRouter_->resolveSelection(requested) : ModelRoute{};
-    if (!requested.isConfigured() || (modelRouter_ && route.status != ModelRoutingStatus::Routed)) {
-        planner->bindModel(requested, {});
-        return;
+    if (!resolution.ok()) {
+        planner->bindModel(resolution.binding, {});
+        return false;
     }
 
-    if (requested.providerId == QLatin1String("ollama")) {
-        auto provider = std::make_shared<OllamaChatProvider>(
-            OllamaConfig::fromEndpoint(ollamaEndpoint()), localInferenceTimeoutMs_);
-        provider->setSelectedModel(requested.modelId);
-        planner->bindModel(requested, std::move(provider));
-        return;
-    }
-
-    auto config = currentCloudOrLMStudioConfig();
-    if (requested.providerId == QLatin1String("lm-studio") ||
-        requested.providerId == QLatin1String("openai-compatible-local"))
-        config.endpoint = QUrl(lmStudioEndpoint());
-    else if (requested.providerId == QLatin1String("llama-cpp-server"))
-        config.endpoint = QUrl(llamaCppEndpoint());
-    planner->bindModel(requested, std::make_shared<SelectedEndpointChatProvider>(
-                                      requested, std::move(config), localInferenceTimeoutMs_));
+    planner->bindModel(resolution.binding, resolution.provider);
+    return true;
 }
 
 void ApplicationController::resumeAgentLoopWithApproval(bool approved, bool alwaysAllow) {
@@ -9223,10 +8971,12 @@ void ApplicationController::onAgentEvent(const AgentEvent& event) {
             state.abortReason = run->abortReason;
             state.steps.resize(run->completedSteps);
             state.pendingApprovalThought = run->pendingThought;
+            state.pendingAuthorizationRequests = run->pendingAuthorizationRequests;
             if (!run->pendingTool.toolId.isEmpty()) {
                 PlannedToolInvocation invocation;
                 invocation.toolId = run->pendingTool.toolId;
-                invocation.arguments = run->pendingTool.arguments;
+                invocation.toolName = run->pendingTool.displayName;
+                invocation.riskLevel = run->pendingTool.risk;
                 state.pendingApprovalPlan.invocations.append(invocation);
             }
             onAgentLoopFinished(state);
@@ -9263,22 +9013,35 @@ QString ApplicationController::agentApprovalRequestText(const AgentLoopState& st
     QStringList lines;
     if (!state.pendingApprovalPlan.invocations.isEmpty()) {
         const auto& invocation = state.pendingApprovalPlan.invocations.first();
-        QStringList argumentParts;
-        for (const auto& argument : invocation.arguments) {
-            argumentParts.append(
-                QStringLiteral("`%1=%2`").arg(argument.id, argument.value.left(500)));
-        }
-        lines.append(QStringLiteral("**Araç / Tool:** `%1` (%2)")
-                         .arg(invocation.toolId, argumentParts.isEmpty()
-                                                     ? QStringLiteral("no arguments")
-                                                     : argumentParts.join(QStringLiteral(" · "))));
+        const QString risk = invocation.riskLevel == ToolRiskLevel::High
+                                 ? QStringLiteral("High")
+                             : invocation.riskLevel == ToolRiskLevel::Medium
+                                 ? QStringLiteral("Medium")
+                                 : QStringLiteral("Low");
+        lines.append(QStringLiteral("**Araç / Tool:** %1 · Risk: %2")
+                         .arg(invocation.toolName.isEmpty() ? invocation.toolId : invocation.toolName,
+                              risk));
     }
+    for (const auto& request : state.pendingAuthorizationRequests.mid(0, 8)) {
+        QString operation = QStringLiteral("%1 / %2")
+                                .arg(securityDomainName(request.domain),
+                                     accessModeName(request.access));
+        if (request.domain == SecurityDomain::Process && request.access == AccessMode::Execute) {
+            operation += QStringLiteral(" (command details omitted)");
+        } else if (!request.resource.isEmpty()) {
+            operation += QStringLiteral(" · %1").arg(request.resource);
+        }
+        lines.append(QStringLiteral("**Requested access:** %1").arg(operation));
+    }
+    if (state.pendingAuthorizationRequests.size() > 8)
+        lines.append(QStringLiteral("**Additional exact requests:** %1")
+                         .arg(state.pendingAuthorizationRequests.size() - 8));
 
     return QStringLiteral(
                "⚠️ **Onay Bekliyor / Approval Required (Adım %1 / Step %1)**\n\n"
                "%2\n\n"
-               "Devam etmek için **onayla** (veya **approve**), bu oturum boyunca bu araca "
-               "her zaman izin vermek için **her zaman onayla** (veya **always**), reddetmek "
+               "Devam etmek için **onayla** (veya **approve**), bu izin kapsamını runtime "
+               "boyunca kaydetmek için **her zaman onayla** (veya **always**), reddetmek "
                "için **iptal** (veya **cancel**) yazın.")
         .arg(QString::number(state.steps.size() + 1), lines.join(QStringLiteral("\n\n")));
 }
@@ -9407,70 +9170,24 @@ void ApplicationController::checkDueAlarms() {
     }
 }
 
-QStringList ApplicationController::planAgentStepsForGoal(const QString& goal) const {
-    const auto trimmed = goal.trimmed();
-    if (!agentRuntime_ || trimmed.isEmpty()) {
-        return {};
-    }
-    const auto plan = agentRuntime_->plan(AgentRequest{trimmed, QString()});
-    if (plan.status != ToolInvocationPlanStatus::Planned || plan.invocations.isEmpty()) {
-        return {};
-    }
-    QStringList steps;
-    for (const auto& invocation : plan.invocations) {
-        QStringList argumentParts;
-        for (const auto& argument : invocation.arguments) {
-            argumentParts.append(QStringLiteral("%1: %2").arg(argument.id, argument.value));
-        }
-        steps.append(
-            QStringLiteral("%1 - %2 (%3)")
-                .arg(invocation.toolName,
-                     invocation.summary.isEmpty() ? invocation.rationale : invocation.summary,
-                     argumentParts.join(QStringLiteral(", "))));
-    }
-    return steps;
+void ApplicationController::setToolPermissionPolicyState(const QString& state) {
+    if (agentRuntime_)
+        agentRuntime_->setToolPermissionState(state);
 }
 
-void ApplicationController::executeApprovedAgentGoalAsync(
-    const QString& goal, std::function<void(AgentPipelineResult)> completion) {
-    if (!agentRuntime_ || goal.trimmed().isEmpty()) {
-        AgentPipelineResult result;
-        result.summary = QStringLiteral("Agent request was empty or runtime unavailable.");
-        completion(std::move(result));
+void ApplicationController::attachControlledTaskSettings(AppSettings& settings) {
+    if (controlledTaskService_ || !agentRuntime_ || !modelRouter_)
         return;
-    }
-    QPointer<ApplicationController> self(this);
-    agentRuntime_->executeApprovedGoalAsync(
-        goal, [self, completion = std::move(completion)](AgentPipelineResult result) mutable {
-            if (!self)
-                return;
-            self->latestAgentPipelineResult_ = result;
-            self->appendPipelineActivity(result);
-            emit self->agentPipelineChanged();
-            completion(std::move(result));
-        });
-}
-
-void ApplicationController::appendPipelineActivity(const AgentPipelineResult& result) {
-    agentActivityLog_.append(AgentActivityType::PlanCreated,
-                             planActivityStatus(result.planningStatus()),
-                             QStringLiteral("Tool planning evaluated: %1")
-                                 .arg(toolInvocationPlanStatusName(result.planningStatus())));
-    agentActivityLog_.append(AgentActivityType::ApprovalEvaluated,
-                             approvalActivityStatus(result.approvalStatus()),
-                             QStringLiteral("Approval metadata evaluated: %1")
-                                 .arg(approvalStatusName(result.approvalStatus())));
-    agentActivityLog_.append(AgentActivityType::SandboxEvaluated,
-                             sandboxActivityStatus(result.sandboxStatus()),
-                             QStringLiteral("Sandbox metadata evaluated: %1")
-                                 .arg(sandboxStatusName(result.sandboxStatus())));
-    agentActivityLog_.append(AgentActivityType::PlaceholderExecutionEvaluated,
-                             executionActivityStatus(result.executionStatus()),
-                             QStringLiteral("Tool execution evaluated: %1")
-                                 .arg(toolExecutionStatusName(result.executionStatus())));
-    agentActivityLog_.append(
-        AgentActivityType::PipelineCompleted, executionActivityStatus(result.executionStatus()),
-        QStringLiteral("Agent pipeline finished: %1").arg(agentPipelineStatusName(result)));
+    controlledTaskService_ = std::make_unique<ControlledTaskService>(
+        settings, *agentRuntime_, *modelService_,
+        [this](const ModelBindingResolution& resolved) {
+            if (!bindAgentPlannerToResolvedModel(resolved))
+                return false;
+            const auto* planner = dynamic_cast<const LlmAgentRuntime*>(agentStepPlanner_.get());
+            return planner && planner->hasModelProvider() &&
+                   planner->modelProvider()->status() == ChatProviderStatus::Ready;
+        },
+        [this] { return agentLoopActive(); });
 }
 
 void ApplicationController::resetCompletedConversationState() {
@@ -9804,30 +9521,32 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
     const auto health = currentOllamaHealthCheck();
     const auto models = currentOllamaModels();
     const OllamaRuntimeProvider ollamaProvider{
-        ollamaEndpoint(),   health, models, selectedLocalModel_, localChatInferenceEnabled_,
+        ollamaEndpoint(),   health, models, selectedLocalModel(), localChatInferenceEnabled_,
         localInferenceBusy_};
     const OpenAICompatibleLocalRuntimeProvider openAiCompatibleLocalProvider{
         QStringLiteral("openai-compatible-local"), QStringLiteral("OpenAI-compatible Local"),
         QStringLiteral("Loopback endpoint not configured"),
-        selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ? selectedLocalModel_
-                                                                              : QString()};
+        selectedRuntimeProvider() == QStringLiteral("openai-compatible-local")
+            ? selectedLocalModel()
+            : QString()};
     const OpenAICompatibleLocalRuntimeProvider lmStudioProvider{
         QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
         QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
-        selectedRuntimeProvider_ == QStringLiteral("lm-studio") ? selectedLocalModel_ : QString()};
+        selectedRuntimeProvider() == QStringLiteral("lm-studio") ? selectedLocalModel()
+                                                                 : QString()};
     const OpenAICompatibleLocalRuntimeProvider llamaCppProvider{
         QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server"),
         QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
-        selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ? selectedLocalModel_
-                                                                       : QString()};
+        selectedRuntimeProvider() == QStringLiteral("llama-cpp-server") ? selectedLocalModel()
+                                                                        : QString()};
     const QString settingsPath =
         QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
             .filePath(QStringLiteral("settings.json"));
     AppSettings cloudSettings(std::make_unique<JsonSettingsStore>(settingsPath));
     const auto cloudProvider = cloudSettings.selectedCloudProvider();
     const auto cloudModels = currentOllamaModels();
-    const bool cloudSelected = selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-                               selectedRuntimeProvider_ == cloudProvider;
+    const bool cloudSelected = selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
+                               selectedRuntimeProvider() == cloudProvider;
     const bool hasCloudKey = [&]() {
         if (cloudProvider == QStringLiteral("claude"))
             return !cloudSettings.claudeApiKey().trimmed().isEmpty();
@@ -9876,7 +9595,7 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
     return RuntimeProviderRegistry{
         {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
          lmStudioProvider.descriptor(), llamaCppProvider.descriptor(), cloudApiDescriptor},
-        selectedRuntimeProvider_,
+        selectedRuntimeProvider(),
     };
 }
 
@@ -9896,27 +9615,27 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
         QString label;
     };
     const ProviderMeta activeMeta = [&]() -> ProviderMeta {
-        if (selectedRuntimeProvider_ == QStringLiteral("lm-studio"))
+        if (selectedRuntimeProvider() == QStringLiteral("lm-studio"))
             return {QStringLiteral("lm-studio"), QStringLiteral("LM Studio")};
-        if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server"))
+        if (selectedRuntimeProvider() == QStringLiteral("llama-cpp-server"))
             return {QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server")};
-        if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local"))
+        if (selectedRuntimeProvider() == QStringLiteral("openai-compatible-local"))
             return {QStringLiteral("openai-compatible-local"),
                     QStringLiteral("OpenAI-compatible Local")};
-        if (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-            selectedRuntimeProvider_ == QStringLiteral("openai") ||
-            selectedRuntimeProvider_ == QStringLiteral("claude") ||
-            selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-            selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-            selectedRuntimeProvider_ == QStringLiteral("groq") ||
-            selectedRuntimeProvider_ == QStringLiteral("mistral"))
+        if (selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
+            selectedRuntimeProvider() == QStringLiteral("openai") ||
+            selectedRuntimeProvider() == QStringLiteral("claude") ||
+            selectedRuntimeProvider() == QStringLiteral("gemini") ||
+            selectedRuntimeProvider() == QStringLiteral("deepseek") ||
+            selectedRuntimeProvider() == QStringLiteral("groq") ||
+            selectedRuntimeProvider() == QStringLiteral("mistral"))
             return {QStringLiteral("cloud-api"), QStringLiteral("Cloud")};
         return {QStringLiteral("ollama"), QStringLiteral("Ollama")};
     }();
 
     auto models = modelSummariesFromOllama(currentOllamaModels(), activeMeta.id, activeMeta.label);
-    const auto selectedModel = isLocalChatProvider() ? selectedLocalModel_ : QString();
-    return ModelRegistry{models, selectedRuntimeProvider_, selectedModel};
+    const auto selectedModel = isLocalChatProvider() ? selectedLocalModel() : QString();
+    return ModelRegistry{models, selectedRuntimeProvider(), selectedModel};
 }
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
@@ -9930,36 +9649,36 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
     if (!ollamaCacheInitialized_) {
         initializeOllamaCache();
     }
-    if (selectedRuntimeProvider_ == QStringLiteral("lm-studio")) {
+    if (selectedRuntimeProvider() == QStringLiteral("lm-studio")) {
         return cachedLMStudioModels_;
-    } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
+    } else if (selectedRuntimeProvider() == QStringLiteral("llama-cpp-server")) {
         return cachedLlamaCppModels_;
-    } else if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local")) {
+    } else if (selectedRuntimeProvider() == QStringLiteral("openai-compatible-local")) {
         return cachedOpenAiCompatibleLocalModels_;
-    } else if (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai") ||
-               selectedRuntimeProvider_ == QStringLiteral("claude") ||
-               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-               selectedRuntimeProvider_ == QStringLiteral("groq") ||
-               selectedRuntimeProvider_ == QStringLiteral("mistral")) {
+    } else if (selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
+               selectedRuntimeProvider() == QStringLiteral("openai") ||
+               selectedRuntimeProvider() == QStringLiteral("claude") ||
+               selectedRuntimeProvider() == QStringLiteral("gemini") ||
+               selectedRuntimeProvider() == QStringLiteral("deepseek") ||
+               selectedRuntimeProvider() == QStringLiteral("groq") ||
+               selectedRuntimeProvider() == QStringLiteral("mistral")) {
         const QString settingsPath =
             QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
                 .filePath(QStringLiteral("settings.json"));
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
         const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
         const bool isClaude = cloudProv == QStringLiteral("claude") ||
-                              selectedRuntimeProvider_ == QStringLiteral("claude");
+                              selectedRuntimeProvider() == QStringLiteral("claude");
         const bool isGemini = cloudProv == QStringLiteral("gemini") ||
-                              selectedRuntimeProvider_ == QStringLiteral("gemini");
+                              selectedRuntimeProvider() == QStringLiteral("gemini");
         const bool isDeepSeek = cloudProv == QStringLiteral("deepseek") ||
-                                selectedRuntimeProvider_ == QStringLiteral("deepseek");
+                                selectedRuntimeProvider() == QStringLiteral("deepseek");
         const bool isGroq = cloudProv == QStringLiteral("groq") ||
-                            selectedRuntimeProvider_ == QStringLiteral("groq");
+                            selectedRuntimeProvider() == QStringLiteral("groq");
         const bool isMistral = cloudProv == QStringLiteral("mistral") ||
-                               selectedRuntimeProvider_ == QStringLiteral("mistral");
+                               selectedRuntimeProvider() == QStringLiteral("mistral");
         const bool isOpenAi = (!isClaude && !isGemini && !isDeepSeek && !isGroq && !isMistral) ||
-                              selectedRuntimeProvider_ == QStringLiteral("openai");
+                              selectedRuntimeProvider() == QStringLiteral("openai");
 
         // Use dynamically fetched models when cache matches the current provider
         if (!cachedCloudProviderModels_.isEmpty() && !cachedCloudProviderOriginId_.isEmpty()) {
@@ -10023,7 +9742,7 @@ void ApplicationController::pollOllama() {
             health = NullOllamaRuntimeClient{}.healthCheck();
         }
 
-        const auto provider = selectedRuntimeProvider_;
+        const auto provider = selectedRuntimeProvider();
         if (provider == QStringLiteral("lm-studio")) {
             const auto lmUrl = lmStudioEndpoint_.isEmpty()
                                    ? QStringLiteral("http://127.0.0.1:1234/v1/models")
@@ -10221,7 +9940,7 @@ QString ApplicationController::effectiveLocalModel(const QString& requestedModel
     }
 
     const auto models = currentOllamaModels();
-    auto selectedModel = selectedLocalModel_.trimmed();
+    auto selectedModel = selectedLocalModel().trimmed();
     if (!selectedModel.isEmpty()) {
         return selectedModel;
     }
@@ -10240,70 +9959,12 @@ bool ApplicationController::discoveredModelNamesContain(
 }
 
 LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
-    const QString settingsPath =
-        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
-            .filePath(QStringLiteral("settings.json"));
-    AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
-    LMStudioConfig config;
-    QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
+    return currentCloudOrLMStudioConfig({selectedRuntimeProvider(), selectedLocalModel()});
+}
 
-    // Infer cloud provider from selected model name if cloud-api is active
-    const auto modelLower = selectedLocalModel_.trimmed().toLower();
-    if (modelLower.startsWith(QLatin1String("gemini"))) {
-        cloudProv = QStringLiteral("gemini");
-    } else if (modelLower.startsWith(QLatin1String("claude"))) {
-        cloudProv = QStringLiteral("claude");
-    } else if (modelLower.startsWith(QLatin1String("deepseek"))) {
-        cloudProv = QStringLiteral("deepseek");
-    } else if (modelLower.startsWith(QLatin1String("llama")) ||
-               modelLower.startsWith(QLatin1String("mixtral"))) {
-        cloudProv = QStringLiteral("groq");
-    } else if (modelLower.startsWith(QLatin1String("mistral")) ||
-               modelLower.startsWith(QLatin1String("pixtral")) ||
-               modelLower.startsWith(QLatin1String("codestral"))) {
-        cloudProv = QStringLiteral("mistral");
-    } else if (modelLower.startsWith(QLatin1String("gpt")) ||
-               modelLower.startsWith(QLatin1String("o1")) ||
-               modelLower.startsWith(QLatin1String("o3"))) {
-        cloudProv = QStringLiteral("openai");
-    }
-
-    if (selectedRuntimeProvider_ == QStringLiteral("claude") ||
-        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
-         cloudProv == QStringLiteral("claude"))) {
-        config.endpoint = QUrl(QStringLiteral("https://api.anthropic.com"));
-        config.apiKey = settings.claudeApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
-                cloudProv == QStringLiteral("gemini"))) {
-        config.endpoint = QUrl(QStringLiteral("https://generativelanguage.googleapis.com"));
-        config.apiKey = settings.geminiApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
-                cloudProv == QStringLiteral("deepseek"))) {
-        config.endpoint = QUrl(QStringLiteral("https://api.deepseek.com"));
-        config.apiKey = settings.deepseekApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("groq") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
-                cloudProv == QStringLiteral("groq"))) {
-        config.endpoint = QUrl(QStringLiteral("https://api.groq.com/openai"));
-        config.apiKey = settings.groqApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("mistral") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
-                cloudProv == QStringLiteral("mistral"))) {
-        config.endpoint = QUrl(QStringLiteral("https://api.mistral.ai"));
-        config.apiKey = settings.mistralApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("openai") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai-compatible") ||
-               selectedRuntimeProvider_ == QStringLiteral("cloud-api")) {
-        config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
-        config.apiKey = settings.openAiApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
-        config.endpoint = QUrl(llamaCppEndpoint());
-    } else {
-        config.endpoint = QUrl(lmStudioEndpoint());
-    }
-    return config;
+LMStudioConfig
+ApplicationController::currentCloudOrLMStudioConfig(const ModelBinding& binding) const {
+    return modelService_->providerConfig(binding);
 }
 
 ILocalInferenceWorker* ApplicationController::activeLocalInferenceWorker() const {

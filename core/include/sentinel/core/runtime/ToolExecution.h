@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "sentinel/core/agent/ObservationEvidence.h"
 #include "sentinel/core/runtime/ToolApproval.h"
+#include "sentinel/core/runtime/IFileSystemService.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 #include "sentinel/core/runtime/ToolSandbox.h"
 
@@ -21,6 +23,7 @@ enum class ToolExecutionStatus {
     InvalidArguments,
     InvalidToolContract,
     Blocked,
+    Cancelled,
     EmptyPlan,
     UnknownTool,
 };
@@ -41,6 +44,8 @@ inline QString toolExecutionStatusName(ToolExecutionStatus status) {
         return QStringLiteral("Invalid Tool Contract");
     case ToolExecutionStatus::Blocked:
         return QStringLiteral("Blocked");
+    case ToolExecutionStatus::Cancelled:
+        return QStringLiteral("Cancelled");
     case ToolExecutionStatus::EmptyPlan:
         return QStringLiteral("Empty Plan");
     case ToolExecutionStatus::UnknownTool:
@@ -60,6 +65,8 @@ struct ToolExecutionRequest {
 struct ToolExecutionResult {
     ToolExecutionStatus status = ToolExecutionStatus::NotRequested;
     QString summary;
+    StructuredObservationPtr structuredObservation;
+    QList<FileMutation> mutations;
 };
 
 } // namespace sentinel::core

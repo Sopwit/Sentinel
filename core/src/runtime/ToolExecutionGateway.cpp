@@ -7,11 +7,48 @@
 #include "sentinel/core/runtime/IToolHookService.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
+#include "sentinel/core/security/AuthorizationResolver.h"
+#include "sentinel/core/security/ExternalDirectoryGate.h"
+#include "sentinel/core/security/ResourceAuthorizationResolver.h"
+#include <QDir>
 #include <QTimer>
+#include <algorithm>
 
 namespace sentinel::core {
 
 namespace {
+
+bool sameAuthorizationSnapshot(const ToolDescriptor& captured, const ToolDescriptor& current) {
+    return captured.id == current.id && captured.providerId == current.providerId &&
+           captured.version == current.version && captured.source == current.source &&
+           captured.riskLevel == current.riskLevel && captured.executionMode == current.executionMode &&
+           captured.enabled == current.enabled && captured.inputSchema == current.inputSchema &&
+           captured.authorizationRequirements == current.authorizationRequirements;
+}
+
+bool sameResources(const ResourceAuthorizationSnapshot& captured,
+                   const ResourceAuthorizationSnapshot& expected) {
+    if (captured.normalizedArguments != expected.normalizedArguments ||
+        captured.workingDirectory != expected.workingDirectory ||
+        captured.requests.size() != expected.requests.size() ||
+        captured.files.size() != expected.files.size()) return false;
+    for (int i = 0; i < captured.requests.size(); ++i) {
+        const auto& a = captured.requests.at(i);
+        const auto& b = expected.requests.at(i);
+        if (a.domain != b.domain || a.access != b.access || a.resource != b.resource ||
+            a.providerId != b.providerId || a.toolId != b.toolId || a.risk != b.risk)
+            return false;
+    }
+    for (int i = 0; i < captured.files.size(); ++i) {
+        const auto& a = captured.files.at(i);
+        const auto& b = expected.files.at(i);
+        if (a.argument != b.argument || a.patchAction != b.patchAction || a.access != b.access ||
+            a.path.canonicalPath != b.path.canonicalPath ||
+            a.path.access != b.path.access || a.path.displayPath != b.path.displayPath)
+            return false;
+    }
+    return true;
+}
 
 QString permissionPostureForDomain(const QString& domainId, const QString& defaultPermissionState,
                                    const PermissionPolicyService& permissionPolicy) {
@@ -146,11 +183,18 @@ ToolExecutionResult ToolExecutionGateway::validatePlan(ToolInvocationPlan& plan)
         if (!registration || !registration->handler || !registration->descriptor.enabled)
             return {ToolExecutionStatus::UnknownTool,
                     QStringLiteral("Tool unavailable: %1").arg(invocation.toolId)};
+        if (invocation.descriptorSnapshot &&
+            !sameAuthorizationSnapshot(*invocation.descriptorSnapshot, registration->descriptor))
+            return {ToolExecutionStatus::InvalidToolContract,
+                    QStringLiteral("Tool authorization metadata changed; request a new plan for %1.")
+                        .arg(invocation.toolId)};
         const auto contractErrors =
             ToolArgumentValidator::validateSchema(registration->descriptor.inputSchema);
-        if (!contractErrors.isEmpty())
+        if (!contractErrors.isEmpty() ||
+            !AuthorizationResolver::validDescriptor(registration->descriptor))
             return {ToolExecutionStatus::InvalidToolContract,
-                    QStringLiteral("Tool contract is invalid for %1.").arg(invocation.toolId)};
+                    QStringLiteral("Tool or authorization contract is invalid for %1.")
+                        .arg(invocation.toolId)};
         const auto validation =
             ToolArgumentValidator::validate(registration->descriptor, invocation.arguments);
         if (!validation.valid) {
@@ -163,6 +207,14 @@ ToolExecutionResult ToolExecutionGateway::validatePlan(ToolInvocationPlan& plan)
         }
         invocation.arguments =
             ToolArgumentValidator::toInvocationArguments(validation.normalizedArguments);
+        if (invocation.resourceSnapshot &&
+            invocation.resourceSnapshot->normalizedArguments != invocation.arguments)
+            return {ToolExecutionStatus::InvalidToolContract,
+                    QStringLiteral("Normalized arguments changed after resource authorization.")};
+        invocation.riskLevel = registration->descriptor.riskLevel;
+        invocation.executionMode = registration->descriptor.executionMode;
+        invocation.descriptorSnapshot =
+            std::make_shared<const ToolDescriptor>(registration->descriptor);
     }
     return {ToolExecutionStatus::Succeeded, QStringLiteral("Arguments validated.")};
 }
@@ -269,8 +321,11 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
             const auto* execution = &executor;
             auto* hooks = hooks_;
             const auto* permissionPolicy = permissionPolicy_;
+            const auto* resourceGate = resourceGate_;
+            const auto* permissionService = permissionService_;
             const auto defaultPermissionState = defaultPermissionState_;
-            batch->next = [weak, registry, execution, hooks, permissionPolicy,
+            batch->next = [weak, registry, execution, hooks, permissionPolicy, resourceGate,
+                           permissionService,
                            defaultPermissionState, sessionId, toolCallId] {
                 auto state = weak.lock();
                 if (!state || state->finished)
@@ -290,6 +345,8 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 state->active = true;
                 ToolExecutionGateway gateway(registry);
                 gateway.setHookService(hooks);
+                gateway.setResourceGate(resourceGate);
+                gateway.setPermissionService(permissionService);
                 gateway.setPermissionPolicy(permissionPolicy, defaultPermissionState);
                 state->cancel = gateway.executeAsync(
                     one, *execution, sessionId, toolCallId, state->output,
@@ -342,8 +399,17 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
         }
         {
             ToolExecutionRequest resolved = request;
+            if (!resolved.plan.invocations.first().descriptorSnapshot ||
+                !sameAuthorizationSnapshot(
+                    *resolved.plan.invocations.first().descriptorSnapshot,
+                    registration->descriptor)) {
+                completion({ToolExecutionStatus::InvalidToolContract,
+                            QStringLiteral("Tool authorization metadata changed before execution.")});
+                return {};
+            }
             if (!ToolArgumentValidator::validateSchema(registration->descriptor.inputSchema)
-                     .isEmpty()) {
+                     .isEmpty() ||
+                !AuthorizationResolver::validDescriptor(registration->descriptor)) {
                 completion({ToolExecutionStatus::InvalidToolContract,
                             QStringLiteral("Tool contract is invalid for %1.")
                                 .arg(registration->descriptor.id)});
@@ -363,6 +429,33 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
             resolved.plan.invocations.first().arguments =
                 ToolArgumentValidator::toInvocationArguments(
                     snapshotValidation.normalizedArguments);
+            const auto& invocation = resolved.plan.invocations.first();
+            const bool usesFileSystem = std::any_of(
+                registration->descriptor.authorizationRequirements.cbegin(),
+                registration->descriptor.authorizationRequirements.cend(),
+                [](const auto& item) { return item.domain == SecurityDomain::FileSystem; }) ||
+                (registration->descriptor.source == ToolSource::BuiltIn &&
+                 registration->descriptor.id == QLatin1String("apply-patch"));
+            if (usesFileSystem) {
+                if (!invocation.resourceSnapshot || !invocation.resourceSnapshot->authorized ||
+                    invocation.resourceSnapshot->normalizedArguments != invocation.arguments) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Filesystem resource authorization is missing.")});
+                    return {};
+                }
+                const auto expected = ResourceAuthorizationResolver::resolve(
+                    registration->descriptor, invocation,
+                    invocation.resourceSnapshot->workingDirectory, resourceGate_);
+                if (!expected.ok() ||
+                    !sameResources(*invocation.resourceSnapshot, expected.snapshot) ||
+                    !ResourceAuthorizationResolver::authorize(
+                         *invocation.resourceSnapshot, resourceGate_, permissionService_,
+                         sessionId).ok()) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Filesystem resource authorization changed.")});
+                    return {};
+                }
+            }
             if (!registration->descriptor.enabled) {
                 completion(
                     {ToolExecutionStatus::Blocked, QStringLiteral("Registered tool is disabled.")});
@@ -376,15 +469,19 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                          "Tool gateway blocked execution until explicit approval is granted.")});
                 return {};
             }
-            if (permissionPolicy_ &&
-                (registration->descriptor.source == ToolSource::MCP ||
-                 registration->descriptor.source == ToolSource::Plugin) &&
-                !permissionPolicy_->allowsToolExecution(
-                    registration->descriptor.requiredPermissionDomain, defaultPermissionState_,
-                    request.approval.status == ApprovalStatus::Approved)) {
-                completion({ToolExecutionStatus::Blocked,
-                            QStringLiteral("MCP tool permission policy denied execution.")});
-                return {};
+            if (permissionPolicy_) {
+                for (const auto& authorization : AuthorizationResolver::resolve(
+                         registration->descriptor, resolved.plan.invocations.first())) {
+                    if (!permissionPolicy_->allowsAuthorization(
+                            authorization, defaultPermissionState_,
+                            request.approval.status == ApprovalStatus::Approved)) {
+                        completion({ToolExecutionStatus::Blocked,
+                                    QStringLiteral("Authorization policy denied %1 / %2.")
+                                        .arg(securityDomainName(authorization.domain),
+                                             accessModeName(authorization.access))});
+                        return {};
+                    }
+                }
             }
             if (request.sandbox.status == SandboxStatus::Denied ||
                 request.sandbox.status == SandboxStatus::BlockedByApproval) {

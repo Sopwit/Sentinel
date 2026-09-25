@@ -43,9 +43,10 @@ struct AgentTextEvent {
 
 struct AgentToolEvent {
     QString toolId;
-    QList<ToolInvocationArgument> arguments;
     ToolRiskLevel risk = ToolRiskLevel::Low;
     QString output;
+    QList<AuthorizationRequest> authorizationRequests;
+    QString displayName;
 };
 
 struct AgentStepEvent {
@@ -64,6 +65,7 @@ struct AgentRunEvent {
     QString abortReason;
     int completedSteps = 0;
     AgentToolEvent pendingTool;
+    QList<AuthorizationRequest> pendingAuthorizationRequests;
     QString pendingThought;
     ObservationIntent observationIntent;
     QList<EvidenceRecord> evidence;

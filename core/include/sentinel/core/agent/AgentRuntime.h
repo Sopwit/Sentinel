@@ -10,6 +10,7 @@
 #include "sentinel/core/runtime/ToolHookService.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/PermissionPolicyService.h"
+#include "sentinel/core/security/PermissionService.h"
 
 #include <QHash>
 #include <QPointer>
@@ -64,16 +65,6 @@ public:
     bool start(const QString& sessionId, const QString& goal) override;
     bool continueSession(const QString& sessionId, bool approved) override;
     void shutdown() override;
-    AgentPipelineResult executePipeline(const AgentRequest& request, bool autonomous) override;
-    void executePipelineAsync(const AgentRequest& request, bool autonomous,
-                              std::function<void(AgentPipelineResult)> completion) override;
-    AgentPipelineResult executeApprovedGoal(const QString& goal) override;
-    AgentPipelineResult executeApprovedPlan(const ToolInvocationPlan& plan,
-                                            const QString& approvalSummary) override;
-    void executeApprovedPlanAsync(const ToolInvocationPlan& plan, const QString& approvalSummary,
-                                  std::function<void(AgentPipelineResult)> completion) override;
-    void executeApprovedGoalAsync(const QString& goal,
-                                  std::function<void(AgentPipelineResult)> completion) override;
     bool supportsSessions() const override;
     QString subscribe(AgentEventCallback callback) override;
     void unsubscribe(const QString& id) override;
@@ -90,9 +81,7 @@ public:
     plugin::PluginManager& pluginManager() {
         return pluginManager_;
     }
-    void setToolPermissionState(QString state) {
-        toolPermissionState_ = std::move(state);
-    }
+    void setToolPermissionState(QString state) override;
     void setMcpService(std::shared_ptr<IMcpService> service);
 
 private:
@@ -103,13 +92,10 @@ private:
     void configureLoop(AgentLoop& loop, const QString& sessionId,
                        const AgentSessionOptions& options, const QString& goal);
     void commitResult(const QString& sessionId, AgentLoopState& result);
+    void recordDeniedAuthorization(const QString& sessionId);
     bool launch(const QString& sessionId, bool isResume, bool approved, const QString& goal);
     void prepareExecution(const QStringList& toolIds);
     QStringList toolIds() const;
-    AgentPipelineResult executeApprovedPlanLocked(const ToolInvocationPlan& plan,
-                                                  const QString& approvalSummary);
-    void executePipelineResultAsync(AgentPipelineResult result,
-                                    std::function<void(AgentPipelineResult)> completion);
     void publish(const QString& sessionId, AgentEventType type, AgentEventPayload payload = {},
                  int stepIndex = 0, bool toolCall = false);
     void beginTurn(const QString& sessionId);
@@ -126,6 +112,7 @@ private:
     ToolHookService toolHooks_;
     plugin::PluginManager pluginManager_;
     PermissionPolicyService toolPermissionPolicy_;
+    PermissionService permissionService_;
     ExternalDirectoryGate externalDirectoryGate_;
     QString toolPermissionState_ = QStringLiteral("ask-every-time");
     std::unique_ptr<McpToolProvider> mcpToolProvider_;
@@ -141,13 +128,10 @@ private:
     QHash<QString, AgentLoopState> sessions_;
     QHash<QString, AgentSessionOptions> options_;
     QHash<QString, AgentRuntimeError> errors_;
-    QHash<QString, std::function<void()>> controlledCancels_;
-    QStringList approvedToolIds_;
     QString activeSessionId_;
     std::atomic<bool> cancelRequested_{false};
     std::shared_ptr<std::atomic_bool> modelCancellationToken_ =
         std::make_shared<std::atomic_bool>(false);
-    std::shared_ptr<std::atomic_bool> callbacksAlive_ = std::make_shared<std::atomic_bool>(true);
     std::condition_variable cancellationPublished_;
     bool cancellationEventPending_ = false;
     QThread* worker_ = nullptr;

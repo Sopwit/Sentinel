@@ -9,7 +9,6 @@ namespace sentinel::core {
 class BuiltInToolProvider {
 public:
     static QList<ToolDescriptor> descriptors();
-    static RealToolExecutor::BuiltInMethod methodFor(const QString& id);
     static bool registerTools(IToolRegistry& registry, RealToolExecutor& executor);
 };
 } // namespace sentinel::core

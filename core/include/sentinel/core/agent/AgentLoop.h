@@ -12,6 +12,7 @@
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 #include "sentinel/core/runtime/ToolOutputTruncator.h"
+#include "sentinel/core/security/ResourceAuthorizationResolver.h"
 
 #include <atomic>
 #include <functional>
@@ -30,6 +31,7 @@ class IToolExecutor;
 class IToolRegistry;
 class IToolHookService;
 class ExternalDirectoryGate;
+class PermissionService;
 
 class AgentLoop {
 public:
@@ -38,7 +40,6 @@ public:
         bool autonomousMode = false;
         int observationPreviewLines = 60;
         qint64 observationMaxBytes = 8192;
-        QStringList sessionApprovedToolIds;
     };
 
     using StepCallback = std::function<void(const AgentStepRecord&)>;
@@ -65,10 +66,16 @@ public:
 
     void setExternalDirectoryGate(ExternalDirectoryGate* gate) {
         externalDirectoryGate_ = gate;
+        gateway_.setResourceGate(gate);
+    }
+    void setPermissionService(PermissionService* service) {
+        permissionService_ = service;
+        gateway_.setPermissionService(service);
     }
     void setStepCallback(StepCallback callback);
     void setStatusCallback(StatusCallback callback);
     void setCancelQuery(CancelQuery query);
+    void setCancellationToken(std::shared_ptr<std::atomic_bool> token);
     void setToolCallback(ToolCallback callback);
     void setPlanningCallback(PlanningCallback callback);
     void setOutputCallback(OutputCallback callback);
@@ -85,7 +92,9 @@ public:
         gateway_.setHookService(hooks);
     }
     void setPermissionPolicy(const PermissionPolicyService* policy, QString defaultState) {
-        gateway_.setPermissionPolicy(policy, std::move(defaultState));
+        defaultPermissionState_ = std::move(defaultState);
+        permissionPolicy_ = policy;
+        gateway_.setPermissionPolicy(policy, defaultPermissionState_);
     }
 
     AgentLoopState run(const QString& goal, const QString& sessionId = QString());
@@ -97,19 +106,30 @@ public:
     void cancelAsync();
 
 private:
-    QStringList externalPathsRequiringApproval(const ToolInvocationPlan& plan) const;
-    void grantExternalPaths(const ToolInvocationPlan& plan);
+    QStringList externalPathsRequiringApproval(const ToolInvocationPlan& plan,
+                                               const QString& sessionId) const;
+    void grantExternalPaths(const ToolInvocationPlan& plan, const QString& sessionId);
+    bool hasAuthorizationGrants(const ToolInvocationPlan& plan, const QString& sessionId) const;
+    bool hasAuthorizationDeny(const ToolInvocationPlan& plan, const QString& sessionId) const;
+    void applyPermissionPolicy(const ToolInvocationPlan& plan, ApprovalDecision& approval) const;
+    QList<AuthorizationRequest> resolveAuthorizationRequests(
+        const ToolInvocationPlan& plan) const;
+    ResourceAuthorizationResult prepareResources(ToolInvocationPlan& plan) const;
+    ResourceAuthorizationResult authorizeResources(ToolInvocationPlan& plan,
+                                                   const QString& sessionId) const;
     AgentLoopState advance(AgentLoopState state);
     void executeStep(AgentLoopState& state, const ToolInvocationPlan& plan, const QString& thought,
                      ApprovalDecision approval);
     void appendBlockedStep(AgentLoopState& state, const ToolInvocationPlan& plan,
                            const QString& thought, const QString& statusText,
-                           const QString& observation);
+                           const QString& observation,
+                           StructuredObservationPtr structuredObservation = {});
     void initializeObservationIntent(AgentLoopState& state);
     bool acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision& decision);
     void recordEvidence(AgentLoopState& state, const ToolDescriptor& descriptor,
                         const ToolInvocationPlan& plan, ToolExecutionStatus status,
-                        const QString& summary, int stepIndex);
+                        const QString& summary, int stepIndex, StructuredObservationPtr structuredObservation = {},
+                        const QList<FileMutation>& mutations = {});
     ToolInvocationPlan planFromDecision(const AgentStepDecision& decision) const;
     bool cancellationRequested() const;
     void advanceAsync();
@@ -119,6 +139,9 @@ private:
     void scheduleAsyncAdvance();
 
     ExternalDirectoryGate* externalDirectoryGate_ = nullptr;
+    PermissionService* permissionService_ = nullptr;
+    const PermissionPolicyService* permissionPolicy_ = nullptr;
+    QString defaultPermissionState_;
     IAgentStepPlanner& planner_;
     const IToolRegistry* toolRegistry_ = nullptr;
     std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
@@ -135,6 +158,7 @@ private:
     StepCallback stepCallback_;
     StatusCallback statusCallback_;
     CancelQuery cancelQuery_;
+    std::shared_ptr<std::atomic_bool> cancellationToken_;
     ToolCallback toolCallback_;
     PlanningCallback planningCallback_;
     OutputCallback outputCallback_;

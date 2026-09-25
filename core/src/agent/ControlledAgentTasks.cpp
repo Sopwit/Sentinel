@@ -143,6 +143,8 @@ QJsonObject taskToJson(const ControlledAgentTask& task) {
     object.insert(QStringLiteral("workspaceId"), task.workspaceId);
     object.insert(QStringLiteral("provider"), task.provider);
     object.insert(QStringLiteral("model"), task.model);
+    object.insert(QStringLiteral("runtimeSessionId"), task.runtimeSessionId);
+    object.insert(QStringLiteral("runtimeRunId"), task.runtimeRunId);
     object.insert(QStringLiteral("steps"), steps);
     object.insert(QStringLiteral("approvals"), approvals);
     object.insert(QStringLiteral("resultSummary"), task.resultSummary);
@@ -161,6 +163,8 @@ ControlledAgentTask taskFromJson(const QJsonObject& object) {
     task.workspaceId = object.value(QStringLiteral("workspaceId")).toString();
     task.provider = object.value(QStringLiteral("provider")).toString();
     task.model = object.value(QStringLiteral("model")).toString();
+    task.runtimeSessionId = object.value(QStringLiteral("runtimeSessionId")).toString();
+    task.runtimeRunId = object.value(QStringLiteral("runtimeRunId")).toString();
     for (const auto& value : object.value(QStringLiteral("steps")).toArray()) {
         task.steps.append(stepFromJson(value.toObject()));
     }
@@ -185,6 +189,8 @@ QString controlledTaskStateName(ControlledTaskState state) {
         return QStringLiteral("Pending Approval");
     case ControlledTaskState::Running:
         return QStringLiteral("Running");
+    case ControlledTaskState::WaitingApproval:
+        return QStringLiteral("Waiting Approval");
     case ControlledTaskState::Completed:
         return QStringLiteral("Completed");
     case ControlledTaskState::Failed:
@@ -202,6 +208,9 @@ ControlledTaskState controlledTaskStateFromName(const QString& name) {
     }
     if (normalized == QStringLiteral("running")) {
         return ControlledTaskState::Running;
+    }
+    if (normalized == QStringLiteral("waiting approval")) {
+        return ControlledTaskState::WaitingApproval;
     }
     if (normalized == QStringLiteral("completed")) {
         return ControlledTaskState::Completed;
@@ -318,14 +327,12 @@ ControlledAgentTask ControlledAgentTaskService::createPlan(
     task.description = cleanGoal;
     task.createdAtUtc = timestampUtc();
     task.workspaceId = workspaceId.trimmed().isEmpty() ? QStringLiteral("personal") : workspaceId;
-    task.provider = provider.trimmed().isEmpty() ? QStringLiteral("Local") : provider.trimmed();
-    task.model = model.trimmed().isEmpty() ? QStringLiteral("Selected model") : model.trimmed();
+    task.provider = provider.trimmed();
+    task.model = model.trimmed();
     task.state = ControlledTaskState::PendingApproval;
     task.currentStepIndex = -1;
     task.resultSummary = QStringLiteral("Plan generated. Approval required before execution.");
-    const QStringList titles{QStringLiteral("Analyze visible task context"),
-                             QStringLiteral("Extract key findings"),
-                             QStringLiteral("Prepare final user-facing result")};
+    const QStringList titles{QStringLiteral("Run agent task")};
     for (int index = 0; index < titles.size(); ++index) {
         task.steps.append(
             {QStringLiteral("%1-step-%2").arg(task.id).arg(index + 1), index + 1, titles.at(index),
@@ -363,7 +370,8 @@ ControlledAgentTaskService::upsertTask(QList<ControlledAgentTask> tasks,
 
 ControlledAgentTask ControlledAgentTaskService::setSteps(ControlledAgentTask task,
                                                          const QStringList& orderedSteps) const {
-    if (task.state == ControlledTaskState::Running) {
+    if (task.state == ControlledTaskState::Running ||
+        task.state == ControlledTaskState::WaitingApproval) {
         task.approvals.append({timestampUtc(), QStringLiteral("Modify Denied"),
                                QStringLiteral("Running tasks cannot be self-modified.")});
         return task;
@@ -431,7 +439,8 @@ ControlledAgentTask
 ControlledAgentTaskService::start(ControlledAgentTask task,
                                   const QList<ControlledAgentTask>& allTasks) const {
     for (const auto& other : allTasks) {
-        if (other.id != task.id && other.state == ControlledTaskState::Running) {
+        if (other.id != task.id && (other.state == ControlledTaskState::Running ||
+                                    other.state == ControlledTaskState::WaitingApproval)) {
             task.resultSummary = QStringLiteral("Start refused: another task is already running.");
             task.approvals.append({timestampUtc(), QStringLiteral("Start Refused"),
                                    QStringLiteral("Single active task only in this phase.")});
@@ -448,53 +457,57 @@ ControlledAgentTaskService::start(ControlledAgentTask task,
         return task;
     }
     task.state = ControlledTaskState::Running;
+    task.runtimeSessionId.clear();
+    task.runtimeRunId.clear();
+    task.completedAtUtc.clear();
     task.currentStepIndex = 0;
     for (qsizetype index = 0; index < task.steps.size(); ++index) {
         task.steps[index].state =
             index == 0 ? ControlledTaskState::Running : ControlledTaskState::PendingApproval;
     }
-    task.resultSummary = QStringLiteral("Task started. Execute one visible step at a time.");
+    task.resultSummary = QStringLiteral("Task ready for an AgentRuntime session.");
     task.approvals.append({timestampUtc(), QStringLiteral("Task Started"),
                            QStringLiteral("Foreground controlled execution started.")});
     return task;
 }
 
-ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAgentTask task) const {
-    return executeCurrentStep(
-        std::move(task),
-        QStringLiteral("Completed as a visible controlled metadata step. No hidden tools ran."),
-        true);
-}
-
-ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAgentTask task,
-                                                                   const QString& outcome,
-                                                                   bool succeeded) const {
-    if (task.state != ControlledTaskState::Running || task.currentStepIndex < 0 ||
-        task.currentStepIndex >= task.steps.size()) {
-        task.resultSummary = QStringLiteral("No visible running step is available.");
+ControlledAgentTask ControlledAgentTaskService::applyRuntimeState(
+    ControlledAgentTask task, const QString& state, const QString& detail,
+    const QString& sessionId, const QString& runId) const {
+    if (task.id.isEmpty())
         return task;
-    }
-    auto& step = task.steps[task.currentStepIndex];
-    step.state = succeeded ? ControlledTaskState::Completed : ControlledTaskState::Failed;
-    step.outcome = outcome;
-    const auto nextIndex = task.currentStepIndex + 1;
-    if (nextIndex >= task.steps.size()) {
-        const bool anyFailed = std::any_of(
-            task.steps.cbegin(), task.steps.cend(), [](const ControlledAgentStep& completedStep) {
-                return completedStep.state == ControlledTaskState::Failed;
-            });
-        task.state = anyFailed ? ControlledTaskState::Failed : ControlledTaskState::Completed;
-        task.currentStepIndex = -1;
-        task.completedAtUtc = timestampUtc();
-        task.resultSummary = anyFailed
-                                 ? QStringLiteral("Task finished with failed steps.")
-                                 : QStringLiteral("Task completed after visible approved steps.");
+    task.runtimeSessionId = sessionId;
+    if (!runId.isEmpty())
+        task.runtimeRunId = runId;
+    if (state == QLatin1String("Awaiting Approval")) {
+        task.state = ControlledTaskState::WaitingApproval;
+        task.resultSummary = detail.isEmpty()
+                                 ? QStringLiteral("Agent approval is required to continue.")
+                                 : detail;
+    } else if (state == QLatin1String("Completed") && !detail.trimmed().isEmpty()) {
+        task.state = ControlledTaskState::Cancelled;
+        task.resultSummary = detail;
+    } else if (state == QLatin1String("Cancelled")) {
+        task.state = ControlledTaskState::Cancelled;
+        task.resultSummary = detail.isEmpty() ? QStringLiteral("Agent run cancelled.") : detail;
+    } else if (state == QLatin1String("Failed") || state == QLatin1String("Stuck") ||
+               state == QLatin1String("Completed")) {
+        task.state = ControlledTaskState::Failed;
+        task.resultSummary = detail.isEmpty() ? QStringLiteral("Agent run failed.") : detail;
     } else {
-        task.currentStepIndex = nextIndex;
-        task.steps[nextIndex].state = ControlledTaskState::Running;
-        task.resultSummary =
-            succeeded ? QStringLiteral("Step completed. Next step is visible and waiting.")
-                      : QStringLiteral("Step failed. Next step is visible and waiting.");
+        task.state = ControlledTaskState::Running;
+        if (!detail.isEmpty())
+            task.resultSummary = detail;
+    }
+    if (task.state == ControlledTaskState::Completed || task.state == ControlledTaskState::Failed ||
+        task.state == ControlledTaskState::Cancelled) {
+        task.completedAtUtc = timestampUtc();
+        if (task.currentStepIndex >= 0 && task.currentStepIndex < task.steps.size()) {
+            auto& step = task.steps[task.currentStepIndex];
+            step.state = task.state;
+            step.outcome = task.resultSummary;
+        }
+        task.currentStepIndex = -1;
     }
     return task;
 }
@@ -512,7 +525,7 @@ ControlledAgentTask ControlledAgentTaskService::skipCurrentStep(ControlledAgentT
         task.state = ControlledTaskState::Completed;
         task.completedAtUtc = timestampUtc();
         task.currentStepIndex = -1;
-        task.resultSummary = QStringLiteral("Task completed with skipped final step.");
+        task.resultSummary = QStringLiteral("Task cancelled after its final step was skipped.");
     } else {
         task.currentStepIndex = nextIndex;
         task.steps[nextIndex].state = ControlledTaskState::Running;

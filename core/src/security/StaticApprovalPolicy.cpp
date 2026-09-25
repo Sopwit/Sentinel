@@ -4,12 +4,7 @@
 
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 
-#include <utility>
-
 namespace sentinel::core {
-
-StaticApprovalPolicy::StaticApprovalPolicy(QMap<QString, ApprovalStatus> toolDecisions)
-    : toolDecisions_(std::move(toolDecisions)) {}
 
 ApprovalDecision StaticApprovalPolicy::evaluate(const ToolInvocationPlan& plan) const {
     if (plan.status != ToolInvocationPlanStatus::Planned || plan.invocations.isEmpty()) {
@@ -21,41 +16,16 @@ ApprovalDecision StaticApprovalPolicy::evaluate(const ToolInvocationPlan& plan) 
     }
 
     QList<ToolApprovalRequest> requests;
-    auto hasDenied = false;
-    auto hasApprovedOverride = false;
-
     for (const auto& invocation : plan.invocations) {
-        const auto overrideDecision = toolDecisions_.find(invocation.toolId);
-        if (overrideDecision != toolDecisions_.end()) {
-            if (overrideDecision.value() == ApprovalStatus::Denied) {
-                hasDenied = true;
-            } else if (overrideDecision.value() == ApprovalStatus::Approved) {
-                hasApprovedOverride = true;
-            }
-        }
-
         if (invocation.riskLevel == ToolRiskLevel::Medium ||
             invocation.riskLevel == ToolRiskLevel::High) {
             requests.append(ToolApprovalRequest{
                 invocation.toolId,
                 invocation.summary,
                 invocation.riskLevel,
-                {
-                    PermissionDescriptor{
-                        QStringLiteral("tool.metadata.approval"),
-                        QStringLiteral("Approval metadata for planned tool invocation."),
-                    },
-                },
+                {},
             });
         }
-    }
-
-    if (hasDenied) {
-        return {
-            ApprovalStatus::Denied,
-            QStringLiteral("At least one planned tool invocation is denied by policy."),
-            requests,
-        };
     }
 
     if (!requests.isEmpty()) {
@@ -63,14 +33,6 @@ ApprovalDecision StaticApprovalPolicy::evaluate(const ToolInvocationPlan& plan) 
             ApprovalStatus::RequiresApproval,
             QStringLiteral("One or more planned tool invocations require approval."),
             requests,
-        };
-    }
-
-    if (hasApprovedOverride) {
-        return {
-            ApprovalStatus::Approved,
-            QStringLiteral("Planned tool invocations are approved by policy metadata."),
-            {},
         };
     }
 

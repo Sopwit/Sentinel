@@ -11,70 +11,55 @@
 namespace sentinel::core {
 
 FuzzyEditResult FuzzyEditor::edit(const FuzzyEditRequest& request) const {
-    FuzzyEditResult result;
-
-    QString content = readFile(request.filePath);
+    const QString content = readFile(request.filePath);
     if (content.isEmpty()) {
+        FuzzyEditResult result;
         result.error = QStringLiteral("Could not read file: %1").arg(request.filePath);
         return result;
     }
-
-    if (content.contains(request.oldString)) {
-        QString newContent = content;
-        int count = 0;
-        if (request.replaceAll) {
-            count = newContent.count(request.oldString);
-            newContent.replace(request.oldString, request.newString);
-        } else {
-            count = 1;
-            newContent.replace(request.oldString, request.newString);
-        }
-
-        if (writeFile(request.filePath, newContent)) {
-            result.success = true;
-            result.linesChanged = count;
-            result.usedStrategy = MatchStrategy::Exact;
-            result.confidence = 100;
-        } else {
-            result.error = QStringLiteral("Could not write file: %1").arg(request.filePath);
-        }
-        return result;
-    }
-
-    FuzzyMatchResult match = findBestMatch(content, request.oldString);
-    if (!match.found) {
-        result.error = "Could not find matching text in file";
-        return result;
-    }
-
-    if (match.confidence < 70) {
-        result.error = QStringLiteral("Match confidence too low (%1%). Best match: \"%2\"")
-                           .arg(match.confidence)
-                           .arg(match.suggestion.left(100));
-        return result;
-    }
-
-    QString newContent = content;
-    QStringList lines = newContent.split('\n');
-    for (int i = match.lineStart; i <= match.lineEnd && i < lines.size(); ++i) {
-        if (i == match.lineStart) {
-            lines[i] = request.newString;
-        } else {
-            lines.removeAt(i);
-            i--;
-        }
-    }
-    newContent = lines.join('\n');
-
-    if (writeFile(request.filePath, newContent)) {
-        result.success = true;
-        result.linesChanged = match.lineEnd - match.lineStart + 1;
-        result.usedStrategy = match.strategy;
-        result.confidence = match.confidence;
-    } else {
+    QString output;
+    auto result = transform(content, request, output);
+    if (result.success && !writeFile(request.filePath, output)) {
+        result.success = false;
         result.error = QStringLiteral("Could not write file: %1").arg(request.filePath);
     }
+    return result;
+}
 
+FuzzyEditResult FuzzyEditor::transform(const QString& content, const FuzzyEditRequest& request,
+                                       QString& output) const {
+    FuzzyEditResult result;
+    if (content.contains(request.oldString)) {
+        output = content;
+        result.linesChanged = request.replaceAll ? output.count(request.oldString) : 1;
+        if (request.replaceAll) output.replace(request.oldString, request.newString);
+        else output.replace(request.oldString, request.newString);
+        result.success = true;
+        result.usedStrategy = MatchStrategy::Exact;
+        result.confidence = 100;
+        return result;
+    }
+    const auto match = findBestMatch(content, request.oldString);
+    if (!match.found) {
+        result.error = QStringLiteral("Could not find matching text in file");
+        return result;
+    }
+    if (match.confidence < 70 || match.lineStart < 0 || match.lineEnd < match.lineStart) {
+        result.error = QStringLiteral("Match confidence too low (%1%).").arg(match.confidence);
+        return result;
+    }
+    QStringList lines = content.split(QLatin1Char('\n'));
+    if (match.lineEnd >= lines.size()) {
+        result.error = QStringLiteral("Match exceeds file bounds");
+        return result;
+    }
+    for (int i = match.lineEnd; i > match.lineStart; --i) lines.removeAt(i);
+    lines[match.lineStart] = request.newString;
+    output = lines.join(QLatin1Char('\n'));
+    result.success = true;
+    result.linesChanged = match.lineEnd - match.lineStart + 1;
+    result.usedStrategy = match.strategy;
+    result.confidence = match.confidence;
     return result;
 }
 

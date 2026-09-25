@@ -22,6 +22,7 @@ struct AgentStepRecord {
     QString observation;
     QString statusText;
     bool succeeded = false;
+    StructuredObservationPtr structuredObservation;
 };
 
 struct AgentStepDecision {
@@ -44,6 +45,7 @@ struct AgentStepDecision {
     bool observationRequirementDeclared = false;
     GroundingMode grounding = GroundingMode::Context;
     bool groundingDeclared = false;
+    QList<ClaimAssertion> claims;
 };
 
 class IAgentStepPlanner {
@@ -54,6 +56,7 @@ public:
                                        const QList<AgentStepRecord>& history) const = 0;
     virtual void setObservationIntent(const ObservationIntent&) {}
     virtual void setPlannerFeedback(const QString&) {}
+    virtual void setStructuredFacts(const QList<StructuredFact>&) {}
 };
 
 inline QString agentStepRecordSummary(const AgentStepRecord& record) {

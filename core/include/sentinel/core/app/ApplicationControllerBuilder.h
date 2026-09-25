@@ -20,7 +20,7 @@ public:
     ~ApplicationControllerBuilder();
 
     ApplicationControllerBuilder& withStandardDefaults(const StandardPathProvider& pathProvider,
-                                                       const AppSettings& settings);
+                                                       AppSettings& settings);
 
     ApplicationControllerBuilder& withProvider(std::unique_ptr<IChatProvider> provider);
     ApplicationControllerBuilder& withMemoryStore(std::unique_ptr<IMemoryStore> memoryStore);
@@ -85,11 +85,13 @@ public:
     withConversationStore(std::unique_ptr<IConversationStore> conversationStore);
     ApplicationControllerBuilder&
     withAgentTaskRuntime(std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime);
+    ApplicationControllerBuilder& withModelService(std::unique_ptr<ModelService> modelService);
 
     std::unique_ptr<ApplicationController> build();
 
 private:
     std::unique_ptr<IChatProvider> m_provider;
+    std::unique_ptr<ModelService> m_modelService;
     std::unique_ptr<IMemoryStore> m_memoryStore;
     std::unique_ptr<ChatSession> m_chatSession;
     std::unique_ptr<IChatHistoryStore> m_chatHistoryStore;

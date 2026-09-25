@@ -6,7 +6,6 @@
 
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
-#include "sentinel/core/runtime/RealToolExecutor.h"
 
 namespace sentinel::core {
 
@@ -25,7 +24,6 @@ public:
 
 private:
     InMemoryToolRegistry toolRegistry_;
-    RealToolExecutor executor_;
 };
 
 } // namespace sentinel::core

@@ -349,6 +349,9 @@ void McpService::listTools(McpServerState& state) {
         tool.description = toolObj["description"].toString();
         tool.serverName = state.config.name;
         tool.inputSchema = toolObj["inputSchema"].toObject();
+        // Explicit MCP tool metadata opts into Sentinel's validated filesystem evidence adapter.
+        tool.filesystemSemanticContract = toolObj.value(QStringLiteral("_meta")).toObject()
+            .value(QStringLiteral("sentinel.failureSemanticContract")).toString() == QLatin1String("filesystem");
         state.tools.append(tool);
     }
 

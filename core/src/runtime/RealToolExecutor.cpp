@@ -6,6 +6,7 @@
 #include "sentinel/core/editor/FuzzyEditor.h"
 #include "sentinel/core/mcp/McpService.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/FileSystemPatch.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/PathGuard.h"
@@ -833,48 +834,6 @@ bool isForbiddenWorkspacePath(const QString& canonicalPath) {
     return isSensitiveToolPath(clean);
 }
 
-bool hasBinaryExtension(const QString& path) {
-    static const QSet<QString> extensions{
-        QStringLiteral("zip"),  QStringLiteral("exe"),   QStringLiteral("so"),
-        QStringLiteral("dll"),  QStringLiteral("dylib"), QStringLiteral("wasm"),
-        QStringLiteral("pyc"),  QStringLiteral("jpg"),   QStringLiteral("jpeg"),
-        QStringLiteral("png"),  QStringLiteral("gif"),   QStringLiteral("webp"),
-        QStringLiteral("ico"),  QStringLiteral("pdf"),   QStringLiteral("mp3"),
-        QStringLiteral("mp4"),  QStringLiteral("mov"),   QStringLiteral("avi"),
-        QStringLiteral("mkv"),  QStringLiteral("wav"),   QStringLiteral("ogg"),
-        QStringLiteral("flac"), QStringLiteral("ttf"),   QStringLiteral("otf"),
-        QStringLiteral("woff"), QStringLiteral("woff2"), QStringLiteral("class"),
-        QStringLiteral("jar"),  QStringLiteral("7z"),    QStringLiteral("tar"),
-        QStringLiteral("gz"),   QStringLiteral("rar"),
-    };
-    return extensions.contains(QFileInfo(path).suffix().toLower());
-}
-
-bool looksBinary(const QString& path) {
-    if (hasBinaryExtension(path)) {
-        return true;
-    }
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
-    }
-    const QByteArray sample = file.read(4096);
-    if (sample.isEmpty()) {
-        return false;
-    }
-    if (sample.contains('\0')) {
-        return true;
-    }
-    int nonPrintable = 0;
-    for (char c : sample) {
-        const unsigned char uc = static_cast<unsigned char>(c);
-        if (uc < 9 || (uc > 13 && uc < 32)) {
-            ++nonPrintable;
-        }
-    }
-    return nonPrintable * 100 / sample.size() > 30;
-}
-
 QString runSynchronousProcess(const QString& program, const QStringList& args,
                               const QString& workingDirectory, int timeoutMs,
                               QString* errorOut = nullptr) {
@@ -1113,149 +1072,6 @@ bool looksLikeDomainName(const QString& text) {
     return true;
 }
 
-struct PatchHunk {
-    int oldStart{0};
-    int oldCount{0};
-    QStringList oldLines;
-    QStringList newLines;
-};
-
-struct PatchFile {
-    QString action; // "update", "add", "delete"
-    QString path;
-    QList<PatchHunk> hunks;
-    QString addContent;
-};
-
-// Strips the a/ or b/ prefix used by git-style diffs.
-QString stripDiffPrefix(const QString& path) {
-    if (path.startsWith(QStringLiteral("a/")) || path.startsWith(QStringLiteral("b/"))) {
-        return path.mid(2);
-    }
-    return path;
-}
-
-// Parses a unified diff into per-file hunks. Supports git-style Update
-// (--- a/f / +++ b/f), Add (--- /dev/null), and Delete (+++ /dev/null).
-bool parseUnifiedDiff(const QString& patch, QList<PatchFile>& files, QString& error) {
-    const QStringList lines = patch.split(QLatin1Char('\n'));
-    PatchFile current;
-    PatchHunk hunk;
-    bool inHunk = false;
-
-    auto finishHunk = [&]() {
-        if (!hunk.oldLines.isEmpty() || !hunk.newLines.isEmpty()) {
-            current.hunks.append(hunk);
-        }
-        hunk = PatchHunk{};
-    };
-    auto finishFile = [&]() {
-        finishHunk();
-        inHunk = false;
-        if (!current.path.isEmpty()) {
-            files.append(current);
-        }
-        current = PatchFile{};
-    };
-
-    static const QRegularExpression hunkHeader(
-        QStringLiteral("^@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@"));
-
-    for (int i = 0; i < lines.size(); ++i) {
-        const QString& line = lines.at(i);
-        if (line.startsWith(QStringLiteral("--- "))) {
-            finishFile();
-            const QString oldPath = stripDiffPrefix(line.mid(4).trimmed());
-            current.action = oldPath == QStringLiteral("/dev/null") ? QStringLiteral("add")
-                                                                    : QStringLiteral("update");
-            current.path = oldPath;
-            continue;
-        }
-        if (line.startsWith(QStringLiteral("+++ "))) {
-            const QString newPath = stripDiffPrefix(line.mid(4).trimmed());
-            if (newPath == QStringLiteral("/dev/null")) {
-                current.action = QStringLiteral("delete");
-            } else if (current.path.isEmpty() || current.path == QStringLiteral("/dev/null")) {
-                current.path = newPath;
-            }
-            continue;
-        }
-        const auto match = hunkHeader.match(line);
-        if (match.hasMatch()) {
-            finishHunk();
-            hunk.oldStart = match.captured(1).toInt();
-            hunk.oldCount = match.captured(2).isEmpty() ? 1 : match.captured(2).toInt();
-            inHunk = true;
-            continue;
-        }
-        if (!inHunk) {
-            continue;
-        }
-        if (line.startsWith(QLatin1Char('+'))) {
-            hunk.newLines.append(line.mid(1));
-        } else if (line.startsWith(QLatin1Char('-'))) {
-            hunk.oldLines.append(line.mid(1));
-        } else if (line.startsWith(QLatin1Char(' '))) {
-            hunk.oldLines.append(line.mid(1));
-            hunk.newLines.append(line.mid(1));
-        } else if (line.trimmed().isEmpty() && i + 1 < lines.size()) {
-            // Tolerate missing leading space on empty context lines.
-            hunk.oldLines.append(QString());
-            hunk.newLines.append(QString());
-        }
-    }
-    finishFile();
-
-    if (files.isEmpty()) {
-        error = QStringLiteral("No file sections found. The patch must use unified diff headers "
-                               "(--- a/file, +++ b/file, @@ ... @@).");
-        return false;
-    }
-    return true;
-}
-
-// Applies one hunk at the given 0-based position with exact context matching.
-bool applyHunkAt(QStringList& fileLines, int position, const PatchHunk& hunk) {
-    for (int i = 0; i < hunk.oldLines.size(); ++i) {
-        const int target = position + i;
-        if (target >= fileLines.size() || fileLines.at(target) != hunk.oldLines.at(i)) {
-            return false;
-        }
-    }
-    for (int i = 0; i < hunk.oldLines.size(); ++i) {
-        fileLines.removeAt(position);
-    }
-    for (int i = 0; i < hunk.newLines.size(); ++i) {
-        fileLines.insert(position + i, hunk.newLines.at(i));
-    }
-    return true;
-}
-
-// Applies a hunk searching from the claimed line downward then upward (fuzz),
-// mirroring how patch tools tolerate offset drift.
-bool applyHunkWithFuzz(QStringList& fileLines, int claimedStart, const PatchHunk& hunk,
-                       int& appliedAt) {
-    const int claimed = claimedStart - 1;
-    const int maxOffset = fileLines.size();
-    for (int offset = 0; offset <= maxOffset; ++offset) {
-        const int down = claimed + offset;
-        if (down + hunk.oldLines.size() <= fileLines.size() && applyHunkAt(fileLines, down, hunk)) {
-            appliedAt = down;
-            return true;
-        }
-        if (offset > 0) {
-            const int up = claimed - offset;
-            if (up >= 0 && up + hunk.oldLines.size() <= fileLines.size() &&
-                applyHunkAt(fileLines, up, hunk)) {
-                appliedAt = up;
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// True when the docker CLI is available (checked with a fast --version call).
 bool dockerAvailable() {
     return !runSynchronousProcess(QStringLiteral("docker"), {QStringLiteral("--version")},
                                   QString(), 5000)
@@ -1359,124 +1175,13 @@ QString runPlaywrightCli(const QString& mode, const QString& url, const QString&
     return QStringLiteral("browser-%1: saved '%2'.").arg(mode, outputPath);
 }
 
-QString applyPatchReport(const QString& patch, const QString& workingDirectory,
-                         const std::function<QString(const QString&)>& scopePath) {
-    QList<PatchFile> files;
-    QString parseError;
-    if (!parseUnifiedDiff(patch, files, parseError)) {
-        return QStringLiteral("apply-patch: %1").arg(parseError);
-    }
-
-    QStringList applied;
-    QStringList failures;
-
-    for (const auto& file : files) {
-        const QString scoped = scopePath(file.path);
-        if (scoped.isEmpty()) {
-            failures.append(QStringLiteral("%1: outside the approved workspace").arg(file.path));
-            continue;
-        }
-
-        if (file.action == QStringLiteral("add")) {
-            QFile out(scoped);
-            if (QFile::exists(scoped)) {
-                failures.append(QStringLiteral("%1: file already exists").arg(scoped));
-                continue;
-            }
-            QDir().mkpath(QFileInfo(scoped).absolutePath());
-            QStringList contentLines;
-            for (const auto& hunk : file.hunks) {
-                contentLines.append(hunk.newLines);
-            }
-            if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                failures.append(QStringLiteral("%1: %2").arg(scoped, out.errorString()));
-                continue;
-            }
-            out.write(contentLines.join(QLatin1Char('\n')).toUtf8());
-            applied.append(QStringLiteral("added %1 (%2 lines)")
-                               .arg(scoped, QString::number(contentLines.size())));
-            continue;
-        }
-
-        if (file.action == QStringLiteral("delete")) {
-            if (!QFile::exists(scoped)) {
-                failures.append(QStringLiteral("%1: file not found").arg(scoped));
-                continue;
-            }
-            if (QFile::remove(scoped)) {
-                applied.append(QStringLiteral("deleted %1").arg(scoped));
-            } else {
-                failures.append(QStringLiteral("%1: delete failed").arg(scoped));
-            }
-            continue;
-        }
-
-        // Update
-        QFile in(scoped);
-        if (!in.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            failures.append(QStringLiteral("%1: file not found").arg(scoped));
-            continue;
-        }
-        QString content = QString::fromUtf8(in.readAll());
-        in.close();
-        QStringList fileLines = content.split(QLatin1Char('\n'));
-        if (fileLines.size() > 1 && fileLines.last().isEmpty()) {
-            fileLines.removeLast();
-        }
-
-        bool fileOk = true;
-        int hunksApplied = 0;
-        for (const auto& hunk : file.hunks) {
-            int appliedAt = -1;
-            if (!applyHunkWithFuzz(fileLines, hunk.oldStart, hunk, appliedAt)) {
-                failures.append(QStringLiteral("%1: hunk at line %2 did not match the file "
-                                               "context")
-                                    .arg(scoped, QString::number(hunk.oldStart)));
-                fileOk = false;
-                break;
-            }
-            ++hunksApplied;
-        }
-        if (!fileOk) {
-            continue;
-        }
-
-        QFile out(scoped);
-        if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            failures.append(QStringLiteral("%1: %2").arg(scoped, out.errorString()));
-            continue;
-        }
-        out.write(fileLines.join(QLatin1Char('\n')).toUtf8());
-        applied.append(
-            QStringLiteral("updated %1 (%2 hunk(s))").arg(scoped, QString::number(hunksApplied)));
-    }
-
-    QStringList report;
-    if (!applied.isEmpty()) {
-        report.append(QStringLiteral("apply-patch: applied to %1 file(s):")
-                          .arg(QString::number(applied.size())));
-        report.append(applied);
-    }
-    if (!failures.isEmpty()) {
-        report.append(
-            QStringLiteral("apply-patch: %1 failure(s):").arg(QString::number(failures.size())));
-        report.append(failures);
-    }
-    if (report.isEmpty()) {
-        report.append(QStringLiteral("apply-patch: nothing to apply."));
-    }
-    return report.join(QLatin1Char('\n'));
-}
-
 // Extracts code symbols (classes, functions, methods) with line numbers for
 // common language families. Ported concept from Cline's
 // list_code_definition_names tool.
-QStringList extractCodeDefinitions(const QString& path) {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return {};
-    }
-    const QString content = QString::fromUtf8(file.readAll());
+QStringList extractCodeDefinitions(const QString& path, const QByteArray& bytes,
+                                   const FileSystemOperationContext& context,
+                                   bool& cancelled, bool& truncated) {
+    const QString content = QString::fromUtf8(bytes);
     const QStringList lines = content.split(QLatin1Char('\n'));
     const QString suffix = QFileInfo(path).suffix().toLower();
 
@@ -1506,6 +1211,7 @@ QStringList extractCodeDefinitions(const QString& path) {
 
     QStringList definitions;
     for (int i = 0; i < lines.size(); ++i) {
+        if ((i & 127) == 0 && context.isCancelled()) { cancelled = true; break; }
         const QString& line = lines.at(i);
         auto add = [&](const QString& kind, const QString& name) {
             definitions.append(
@@ -1546,6 +1252,7 @@ QStringList extractCodeDefinitions(const QString& path) {
         }
         if (definitions.size() >= 100) {
             definitions.append(QStringLiteral("(truncated at 100 definitions)"));
+            truncated = true;
             break;
         }
     }
@@ -1583,160 +1290,12 @@ QDateTime parseAlarmTime(const QString& raw) {
     return QDateTime();
 }
 
-QString readToolReport(const QString& path, int offset, int limit) {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return QStringLiteral("read-file: Failed to open '%1'.").arg(path);
-    }
-    const QString content = QString::fromUtf8(file.readAll());
-    QStringList lines = content.split(QLatin1Char('\n'));
-    if (lines.size() > 1 && lines.last().isEmpty()) {
-        lines.removeLast();
-    }
-
-    if (offset < 1) {
-        offset = 1;
-    }
-    if (offset > lines.size()) {
-        return QStringLiteral("read-file: Offset %1 is out of range for this file (%2 lines).")
-            .arg(QString::number(offset), QString::number(lines.size()));
-    }
-
-    int end = qMin(lines.size(), offset + limit - 1);
-    int bytes = 0;
-    QStringList numbered;
-    for (int i = offset - 1; i < end; ++i) {
-        QString line = lines.at(i);
-        if (line.size() > kMaxLineLength) {
-            line = line.left(kMaxLineLength) + QStringLiteral("... (line truncated)");
-        }
-        bytes += line.size() + 8;
-        if (bytes > kMaxReadBytes) {
-            end = i;
-            break;
-        }
-        numbered.append(QStringLiteral("%1: %2").arg(QString::number(i + 1), line));
-    }
-
-    QString footer;
-    if (bytes > kMaxReadBytes) {
-        footer = QStringLiteral("(Output capped at 50 KB. Showing lines %1-%2 of %3. Use offset=%4 "
-                                "to continue.)")
-                     .arg(QString::number(offset), QString::number(end),
-                          QString::number(lines.size()), QString::number(end + 1));
-    } else if (end < lines.size()) {
-        footer = QStringLiteral("(Showing lines %1-%2 of %3. Use offset=%4 to continue.)")
-                     .arg(QString::number(offset), QString::number(end),
-                          QString::number(lines.size()), QString::number(end + 1));
-    } else {
-        footer =
-            QStringLiteral("(End of file - total %1 lines.)").arg(QString::number(lines.size()));
-    }
-
-    return QStringLiteral("<path>%1</path>\n<type>file</type>\n<content>\n%2\n</content>\n\n%3")
-        .arg(QDir::toNativeSeparators(path), numbered.join(QLatin1Char('\n')), footer);
-}
-
-QString directoryListingReport(const QString& path, int offset) {
-    const QDir dir(path);
-    const auto entries = dir.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
-                                       QDir::DirsFirst | QDir::Name);
-
-    if (offset < 1) {
-        offset = 1;
-    }
-    if (offset > entries.size()) {
-        return QStringLiteral(
-                   "read-file: Offset %1 is out of range for this directory (%2 entries).")
-            .arg(QString::number(offset), QString::number(entries.size()));
-    }
-
-    QStringList listed;
-    const int end = qMin(entries.size(), offset + kDirListLimit - 1);
-    for (int i = offset - 1; i < end; ++i) {
-        const QString suffix =
-            QFileInfo(dir, entries.at(i)).isDir() ? QStringLiteral("/") : QString();
-        listed.append(entries.at(i) + suffix);
-    }
-
-    QString footer =
-        end < entries.size()
-            ? QStringLiteral("(Showing %1 of %2 entries. Use offset=%3 to continue.)")
-                  .arg(QString::number(listed.size()), QString::number(entries.size()),
-                       QString::number(end + 1))
-            : QStringLiteral("(Total %1 entries.)").arg(QString::number(entries.size()));
-
-    return QStringLiteral(
-               "<path>%1</path>\n<type>directory</type>\n<entries>\n%2\n</entries>\n\n%3")
-        .arg(QDir::toNativeSeparators(path), listed.join(QLatin1Char('\n')), footer);
-}
-
 } // namespace
 
-RealToolExecutor::BuiltInMethod RealToolExecutor::builtInMethod(const QString& id) {
-    return BuiltInToolProvider::methodFor(id);
-}
-
-ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& originalRequest) const {
-    ToolExecutionRequest normalizedRequest = originalRequest;
-    const auto validation = validateCompatibilityRequest(normalizedRequest);
-    if (validation.status != ToolExecutionStatus::Succeeded)
-        return validation;
-    const auto& request = normalizedRequest;
-    // Compatibility entry point for direct synchronous callers. Foreground agent
-    // turns and desktop controlled tasks use executeAsync(), which owns all
-    // process-backed execution through ProcessExecutor.
-    if (request.plan.status != ToolInvocationPlanStatus::Planned ||
-        request.plan.invocations.isEmpty()) {
-        return {
-            ToolExecutionStatus::EmptyPlan,
-            QStringLiteral("No planned tool invocation reached the execution boundary."),
-        };
-    }
-
-    for (const auto& invocation : request.plan.invocations) {
-        if (!request.knownToolIds.contains(invocation.toolId)) {
-            return {
-                ToolExecutionStatus::UnknownTool,
-                QStringLiteral("Execution boundary rejected unknown tool metadata: %1")
-                    .arg(invocation.toolId),
-            };
-        }
-    }
-
-    if (request.approval.status == ApprovalStatus::Denied ||
-        request.approval.status == ApprovalStatus::RequiresApproval) {
-        return {
-            ToolExecutionStatus::Blocked,
-            request.approval.status == ApprovalStatus::RequiresApproval
-                ? QStringLiteral("Execution boundary blocked: explicit user approval is required.")
-                : QStringLiteral("Execution boundary blocked: approval denied."),
-        };
-    }
-
-    if (request.sandbox.status == SandboxStatus::Denied ||
-        request.sandbox.status == SandboxStatus::BlockedByApproval) {
-        return {
-            ToolExecutionStatus::Blocked,
-            QStringLiteral("Execution boundary blocked by sandbox capability."),
-        };
-    }
-
-    // Synchronous compatibility API. Production AgentLoop uses registered handlers.
-    QStringList summaries;
-    QString currentWorkingDirectory = QDir::currentPath();
-    for (const auto& invocation : request.plan.invocations) {
-        const auto method = builtInMethod(invocation.toolId);
-        if (!method)
-            return {ToolExecutionStatus::UnknownTool,
-                    QStringLiteral("Execution boundary rejected unimplemented tool: %1")
-                        .arg(invocation.toolId)};
-        auto result = (this->*method)(invocation, currentWorkingDirectory);
-        if (result.status != ToolExecutionStatus::Succeeded)
-            return result;
-        summaries.append(std::move(result.summary));
-    }
-    return {ToolExecutionStatus::Succeeded, summaries.join(QStringLiteral("\n\n"))};
+ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& request) const {
+    Q_UNUSED(request)
+    return {ToolExecutionStatus::Blocked,
+            QStringLiteral("Registered tools must execute through ToolExecutionGateway.")};
 }
 
 ToolExecutionResult
@@ -1750,486 +1309,358 @@ RealToolExecutor::executeLocalPlanSummary(const PlannedToolInvocation& invocatio
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
 }
 
-QString RealToolExecutor::resolveToolPath(const QString& workingDirectory, const QString& rawPath,
-                                          bool write) const {
-    if (!externalDirectoryGate_)
-        return scopedPath(workingDirectory, rawPath);
-    const QString canonical = externalDirectoryGate_->resolvePath(rawPath, workingDirectory);
-    if (canonical.isEmpty() || isSensitiveToolPath(canonical) ||
-        !externalDirectoryGate_->isAccessAllowed(canonical, workingDirectory, write))
-        return {};
-    return canonical;
+QString RealToolExecutor::resolveToolPath(const QString& cwd, const QString& raw, bool write) const {
+    const auto result = fileSystemService_.resolve(raw, cwd, write ? FileSystemAccess::Write : FileSystemAccess::Read);
+    return result.ok() ? result.value->canonicalPath : QString{};
 }
-
-ToolExecutionResult RealToolExecutor::executeListDirectory(const PlannedToolInvocation& invocation,
-                                                           QString& currentWorkingDirectory) const {
-    const QString path =
-        resolveToolPath(currentWorkingDirectory, getArgument(invocation, QStringLiteral("path")));
-    if (path.isEmpty())
-        return {ToolExecutionStatus::Blocked,
-                QStringLiteral("list-directory: Path is outside the approved workspace.")};
-    QDir directory(path);
-    if (!directory.exists())
-        return {ToolExecutionStatus::Failed,
-                QStringLiteral("list-directory: Directory does not exist: %1").arg(path)};
-    if (!QFileInfo(path).isDir())
-        return {ToolExecutionStatus::Failed,
-                QStringLiteral("list-directory: Path is not a directory: %1").arg(path)};
-    QDir::Filters filters = QDir::AllEntries | QDir::NoDotAndDotDot;
-    if (getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true"))
-        filters |= QDir::Hidden;
-    QJsonArray entries;
-    const auto all = directory.entryInfoList(filters, QDir::DirsFirst | QDir::Name);
-    bool truncated = false;
-    for (const QFileInfo& entry : all) {
-        if (resolveToolPath(currentWorkingDirectory, entry.absoluteFilePath()).isEmpty())
-            continue;
-        if (entries.size() >= 500) {
-            truncated = true;
-            break;
-        }
-        entries.append(
-            QJsonObject{{QStringLiteral("name"), entry.fileName()},
-                        {QStringLiteral("type"),
-                         entry.isDir() ? QStringLiteral("directory") : QStringLiteral("file")}});
+namespace {
+FileSystemOperationContext operationContext(const PlannedToolInvocation& invocation) {
+    return {invocation.cancellation, invocation.toolCancellation};
+}
+QJsonArray traversalIssues(const TraversalStatus& status) {
+    QJsonArray issues;
+    for (const auto& issue : status.issues)
+        issues.append(QJsonObject{{QStringLiteral("resource"), issue.resource},
+                                  {QStringLiteral("failure"), static_cast<int>(issue.failure)}});
+    return issues;
+}
+template <typename T> ToolExecutionResult fileToolFailure(const QString& tool, const FileSystemResult<T>& result) {
+    auto observation = std::make_shared<StructuredObservation>();
+    observation->kind = StructuredObservationKind::FileSystemFailure;
+    observation->fileSystemFailure = result.failure;
+    observation->fileSystemOperation = result.operation;
+    if (tool == QLatin1String("grep")) observation->fileSystemOperation = FileSystemOperation::Grep;
+    else if (tool == QLatin1String("glob")) observation->fileSystemOperation = FileSystemOperation::Glob;
+    else if (result.operation == FileSystemOperation::Stat) {
+        if (tool == QLatin1String("list-directory")) observation->fileSystemOperation = FileSystemOperation::ListDirectory;
+        else if (tool == QLatin1String("read-file")) observation->fileSystemOperation = FileSystemOperation::ReadFile;
+        else if (tool == QLatin1String("write-file")) observation->fileSystemOperation = FileSystemOperation::WriteFile;
+        else if (tool == QLatin1String("edit-file")) observation->fileSystemOperation = FileSystemOperation::EditFile;
+        else if (tool == QLatin1String("delete-file")) observation->fileSystemOperation = FileSystemOperation::Delete;
+        else if (tool == QLatin1String("move-file")) observation->fileSystemOperation = FileSystemOperation::Move;
+        else if (tool == QLatin1String("glob")) observation->fileSystemOperation = FileSystemOperation::Glob;
+        else if (tool == QLatin1String("grep")) observation->fileSystemOperation = FileSystemOperation::Grep;
     }
-    const QJsonObject result{
-        {QStringLiteral("path"), getArgument(invocation, QStringLiteral("path"))},
-        {QStringLiteral("entries"), entries},
-        {QStringLiteral("truncated"), truncated}};
+    observation->failureResource = result.resource;
+    observation->data = {{QStringLiteral("resource"), result.resource}};
+    const auto status = result.failure == FileSystemFailure::PermissionDenied ? ToolExecutionStatus::Blocked
+                      : result.failure == FileSystemFailure::InvalidPath ? ToolExecutionStatus::InvalidArguments
+                      : ToolExecutionStatus::Failed;
+    QString detail = result.diagnostic;
+    if (detail.isEmpty()) {
+        if (result.failure == FileSystemFailure::PermissionDenied)
+            detail = QStringLiteral("Access denied: %1").arg(result.resource);
+        else if (result.failure == FileSystemFailure::InvalidPath)
+            detail = QStringLiteral("Invalid path");
+        else if (result.failure == FileSystemFailure::NotFound)
+            detail = QStringLiteral("Not found: %1").arg(result.resource);
+        else if (result.failure == FileSystemFailure::AlreadyExists)
+            detail = QStringLiteral("Already exists: %1").arg(result.resource);
+        else detail = QStringLiteral("Filesystem operation failed: %1").arg(result.resource);
+    }
+    return {status, QStringLiteral("%1: %2").arg(tool, detail), observation};
+}
+FileSystemResult<AuthorizedPath> authorizedFilePath(
+    const IFileSystemService& service, const PlannedToolInvocation& invocation,
+    const QString& argument, AccessMode access, const QString& cwd) {
+    if (invocation.resourceSnapshot && invocation.resourceSnapshot->authorized &&
+        invocation.resourceSnapshot->workingDirectory == PathGuard::canonicalPath(cwd)) {
+        for (const auto& resource : invocation.resourceSnapshot->files) {
+            if (resource.argument == argument && resource.patchAction.isEmpty() &&
+                resource.access == access)
+                return service.revalidateAuthorized(resource.path, cwd);
+        }
+    }
+    FileSystemResult<AuthorizedPath> denied;
+    denied.failure = FileSystemFailure::PermissionDenied;
+    denied.resource = argument;
+    denied.diagnostic = QStringLiteral("Pre-execution filesystem authorization is missing.");
+    return denied;
+}
+}
+ToolExecutionResult RealToolExecutor::executeListDirectory(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("list-directory"), path);
+    const auto listing = fileSystemService_.listDirectory(*path.value,
+        getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true"),
+        500, operationContext(invocation));
+    if (!listing.ok()) return fileToolFailure(QStringLiteral("list-directory"), listing);
+    QJsonArray entries;
+    for (const auto& entry : listing.value->entries)
+        entries.append(QJsonObject{{QStringLiteral("name"), entry.name},
+            {QStringLiteral("type"), entry.directory ? QStringLiteral("directory")
+                : entry.regularFile ? QStringLiteral("file") : QStringLiteral("other")}});
+    const QJsonObject data{{QStringLiteral("path"), listing.resource}, {QStringLiteral("entries"), entries},
+        {QStringLiteral("recursive"), false},
+        {QStringLiteral("includeHidden"), getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true")},
+        {QStringLiteral("complete"), listing.value->status.complete},
+        {QStringLiteral("truncated"), listing.value->status.truncated},
+        {QStringLiteral("cancelled"), listing.value->status.cancelled},
+        {QStringLiteral("issues"), traversalIssues(listing.value->status)}};
+    const QString summary = listing.value->status.cancelled
+        ? QStringLiteral("Directory listing stopped after %1 entries. Scope not fully inspected.\n%2")
+              .arg(entries.size()).arg(QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)))
+        : QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact));
+    return {listing.value->status.cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
+            summary,
+        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::DirectoryListing, data})};
+}
+ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("read-file"), path);
+    const auto read = fileSystemService_.readFile(*path.value, 64 * 1024);
+    if (!read.ok()) return fileToolFailure(QStringLiteral("read-file"), read);
+    if (read.value->binary) {
+        FileSystemResult<FileRead> rejected;
+        rejected.resource = read.resource;
+        rejected.failure = FileSystemFailure::ReadFailed;
+        rejected.diagnostic = QStringLiteral("Cannot read binary file: %1").arg(read.resource);
+        return fileToolFailure(QStringLiteral("read-file"), rejected);
+    }
+    const int offset = getIntArgument(invocation, QStringLiteral("offset"), 1);
+    const int limit = getIntArgument(invocation, QStringLiteral("limit"), kDefaultReadLimit);
+    const auto lines = QString::fromUtf8(read.value->content).split(QLatin1Char('\n'));
+    QStringList output;
+    for (int i = qMax(0, offset - 1); i < lines.size() && output.size() < limit; ++i)
+        output.append(QStringLiteral("%1: %2").arg(i + 1).arg(lines.at(i).left(kMaxLineLength)));
+    const QJsonObject data{{QStringLiteral("path"), read.resource},
+        {QStringLiteral("content"), QString::fromUtf8(read.value->content)},
+        {QStringLiteral("complete"), read.value->complete && offset == 1},
+        {QStringLiteral("truncated"), read.value->truncated || offset != 1}};
+    return {ToolExecutionStatus::Succeeded, output.join(QLatin1Char('\n')),
+        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::FileContent, data})};
+}
+ToolExecutionResult RealToolExecutor::executeWriteFile(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Write, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("write-file"), path);
+    const auto written = fileSystemService_.writeFile(*path.value, getArgument(invocation, QStringLiteral("content")).toUtf8());
+    if (!written.ok()) return fileToolFailure(QStringLiteral("write-file"), written);
     return {ToolExecutionStatus::Succeeded,
-            QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact))};
+        QStringLiteral("write-file: Wrote %1 bytes to '%2'.").arg(written.value->bytesWritten).arg(written.resource),
+        {}, written.mutations};
+}
+ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Write, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("edit-file"), path);
+    const auto oldText = getArgument(invocation, QStringLiteral("oldString"));
+    const auto newText = getArgument(invocation, QStringLiteral("newString"));
+    const auto stat = fileSystemService_.stat(*path.value);
+    if (!stat.ok() && !(stat.failure == FileSystemFailure::NotFound && oldText.trimmed().isEmpty()))
+        return fileToolFailure(QStringLiteral("edit-file"), stat);
+    if (stat.ok() && stat.value->directory) {
+        FileSystemResult<bool> rejected;
+        rejected.resource = path.value->canonicalPath;
+        rejected.failure = FileSystemFailure::NotFile;
+        return fileToolFailure(QStringLiteral("edit-file"), rejected);
+    }
+    if (!stat.ok()) {
+        const auto written = fileSystemService_.writeFile(*path.value, newText.toUtf8(), true);
+        if (!written.ok()) return fileToolFailure(QStringLiteral("edit-file"), written);
+        return {ToolExecutionStatus::Succeeded,
+            QStringLiteral("edit-file: Created '%1'.").arg(written.resource), {}, written.mutations};
+    }
+    if (oldText == newText)
+        return {ToolExecutionStatus::Failed, QStringLiteral("edit-file: oldString and newString are identical.")};
+    const auto read = fileSystemService_.readFile(*path.value, 16 * 1024 * 1024);
+    if (!read.ok()) return fileToolFailure(QStringLiteral("edit-file"), read);
+    if (!read.value->complete) {
+        FileSystemResult<bool> rejected;
+        rejected.resource = path.value->canonicalPath;
+        rejected.failure = FileSystemFailure::ReadFailed;
+        rejected.diagnostic = QStringLiteral("File is too large to edit safely");
+        return fileToolFailure(QStringLiteral("edit-file"), rejected);
+    }
+    if (read.value->content.isEmpty()) {
+        FileSystemResult<bool> rejected;
+        rejected.resource = path.value->canonicalPath;
+        rejected.failure = FileSystemFailure::ReadFailed;
+        rejected.diagnostic = QStringLiteral("Cannot edit an empty file with the current edit contract");
+        return fileToolFailure(QStringLiteral("edit-file"), rejected);
+    }
+    FuzzyEditRequest request;
+    request.filePath = path.value->canonicalPath;
+    request.oldString = oldText;
+    request.newString = newText;
+    request.replaceAll = getArgument(invocation, QStringLiteral("replaceAll")) == QLatin1String("true");
+    QString output;
+    const auto edited = FuzzyEditor{}.transform(QString::fromUtf8(read.value->content), request, output);
+    if (!edited.success) {
+        FileSystemResult<bool> rejected;
+        rejected.resource = path.value->canonicalPath;
+        rejected.failure = FileSystemFailure::WriteFailed;
+        rejected.diagnostic = edited.error;
+        return fileToolFailure(QStringLiteral("edit-file"), rejected);
+    }
+    const auto written = fileSystemService_.writeFile(*path.value, output.toUtf8());
+    if (!written.ok()) return fileToolFailure(QStringLiteral("edit-file"), written);
+    return {ToolExecutionStatus::Succeeded,
+        QStringLiteral("edit-file: Edited %1 line(s) in '%2'.").arg(edited.linesChanged).arg(path.value->canonicalPath),
+        {}, written.mutations};
+}
+ToolExecutionResult RealToolExecutor::executeDeleteFile(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Delete, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("delete-file"), path);
+    const auto deleted = fileSystemService_.deleteFile(*path.value);
+    if (!deleted.ok()) return fileToolFailure(QStringLiteral("delete-file"), deleted);
+    return {ToolExecutionStatus::Succeeded, QStringLiteral("delete-file: Deleted '%1'.").arg(deleted.resource), {}, deleted.mutations};
+}
+ToolExecutionResult RealToolExecutor::executeMoveFile(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const auto source = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("source"), AccessMode::Delete, cwd);
+    if (!source.ok()) return fileToolFailure(QStringLiteral("move-file"), source);
+    const auto destination = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("destination"), AccessMode::Write, cwd);
+    if (!destination.ok()) return fileToolFailure(QStringLiteral("move-file"), destination);
+    const auto moved = fileSystemService_.moveFile(*source.value, *destination.value);
+    if (!moved.ok()) return fileToolFailure(QStringLiteral("move-file"), moved);
+    return {ToolExecutionStatus::Succeeded, QStringLiteral("move-file: Moved '%1' to '%2'.").arg(moved.value->source, moved.value->destination),
+        {}, moved.mutations};
+}
+ToolExecutionResult RealToolExecutor::executeApplyPatch(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const QString patch = getArgument(invocation, QStringLiteral("patch"));
+    if (patch.trimmed().isEmpty())
+        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("apply-patch: No patch argument provided.")};
+    return applyPatchWithFileSystem(patch, cwd, fileSystemService_, operationContext(invocation),
+                                    invocation.resourceSnapshot.get());
 }
 
-ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocation& invocation,
-                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        QString path = getArgument(invocation, QStringLiteral("path"));
-        if (path.isEmpty()) {
-            path = getArgument(invocation, QStringLiteral("topic"));
-        }
-        if (path.isEmpty()) {
-            logs.append(QStringLiteral("read-file: No path argument provided."));
-            continue;
-        }
-        const QString scoped = resolveToolPath(currentWorkingDirectory, path);
-        if (scoped.isEmpty()) {
-            logs.append(QStringLiteral("read-file: Path is outside the approved workspace."));
-            continue;
-        }
-        QFileInfo info(scoped);
-        if (!info.exists()) {
-            const QDir parent = info.dir();
-            const QString needle = info.fileName().toLower();
-            QStringList candidates;
-            for (const auto& entry : parent.entryList(QDir::Files | QDir::Dirs)) {
-                if (needle.size() > 2 && entry.toLower().contains(needle)) {
-                    candidates.append(entry);
-                }
-                if (candidates.size() >= 3) {
-                    break;
-                }
-            }
-            logs.append(candidates.isEmpty()
-                            ? QStringLiteral("read-file: File not found: %1").arg(scoped)
-                            : QStringLiteral("read-file: File not found: %1. Did you mean one "
-                                             "of these? %2")
-                                  .arg(scoped, candidates.join(QStringLiteral(", "))));
-            continue;
-        }
-        if (info.isDir()) {
-            logs.append(directoryListingReport(
-                scoped, getIntArgument(invocation, QStringLiteral("offset"), 1)));
-            continue;
-        }
-        if (looksBinary(scoped)) {
-            logs.append(QStringLiteral("read-file: Cannot read binary file: %1").arg(scoped));
-            continue;
-        }
-        logs.append(
-            readToolReport(scoped, getIntArgument(invocation, QStringLiteral("offset"), 1),
-                           getIntArgument(invocation, QStringLiteral("limit"), kDefaultReadLimit)));
-
-    } while (false);
-    return {logs.first().startsWith(QStringLiteral("read-file:")) ? ToolExecutionStatus::Failed
-                                                                  : ToolExecutionStatus::Succeeded,
-            logs.join(QStringLiteral("\n\n"))};
+ToolExecutionResult RealToolExecutor::executeListCodeDefinitions(const PlannedToolInvocation& invocation,
+                                                                 QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("list-code-definitions"), path);
+    const auto read = fileSystemService_.readFile(*path.value, 2 * 1024 * 1024);
+    if (!read.ok()) return fileToolFailure(QStringLiteral("list-code-definitions"), read);
+    bool cancelled = false;
+    bool truncated = read.value->truncated;
+    const auto definitions = extractCodeDefinitions(read.resource, read.value->content,
+                                                     operationContext(invocation), cancelled, truncated);
+    const bool complete = read.value->complete && !cancelled && !truncated;
+    const QJsonObject data{{QStringLiteral("path"), read.resource},
+        {QStringLiteral("definitions"), QJsonArray::fromStringList(definitions)},
+        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
+        {QStringLiteral("cancelled"), cancelled}};
+    const QString summary = cancelled
+        ? QStringLiteral("Definition scan stopped after %1 result(s); file not fully inspected.\n%2")
+              .arg(definitions.size()).arg(definitions.join(QLatin1Char('\n')))
+        : truncated
+            ? QStringLiteral("Definition scan returned %1 result(s); file not fully inspected.\n%2")
+                  .arg(definitions.size()).arg(definitions.join(QLatin1Char('\n')))
+        : definitions.isEmpty()
+            ? QStringLiteral("list-code-definitions: No definitions found in '%1'.").arg(read.resource)
+            : QStringLiteral("list-code-definitions: %1 definition(s) in '%2':\n%3")
+                  .arg(definitions.size()).arg(read.resource, definitions.join(QLatin1Char('\n')));
+    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
+            summary,
+            std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::CodeDefinitions, data})};
 }
 
-ToolExecutionResult RealToolExecutor::executeWriteFile(const PlannedToolInvocation& invocation,
-                                                       QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        QString path = getArgument(invocation, QStringLiteral("path"));
-        const QString content = getArgument(invocation, QStringLiteral("content"));
-        if (path.isEmpty()) {
-            logs.append(QStringLiteral("write-file: No path argument provided."));
-            continue;
-        }
-        const QString scoped = resolveToolPath(currentWorkingDirectory, path, true);
-        if (scoped.isEmpty()) {
-            logs.append(QStringLiteral("write-file: Path is outside the approved workspace."));
-            continue;
-        }
-        QFile file(scoped);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            logs.append(QStringLiteral("write-file: Failed to open '%1': %2")
-                            .arg(scoped, file.errorString()));
-            continue;
-        }
-        file.write(content.toUtf8());
-        logs.append(QStringLiteral("write-file: Successfully wrote %1 bytes to '%2'")
-                        .arg(QString::number(content.toUtf8().size()), scoped));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocation& invocation,
-                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString rawPath = getArgument(invocation, QStringLiteral("path"));
-        const QString oldString = getArgument(invocation, QStringLiteral("oldString"));
-        const QString newString = getArgument(invocation, QStringLiteral("newString"));
-        const bool replaceAll =
-            getArgument(invocation, QStringLiteral("replaceAll")).trimmed().toLower() ==
-            QStringLiteral("true");
-
-        if (rawPath.isEmpty()) {
-            logs.append(QStringLiteral("edit-file: No path argument provided."));
-            continue;
-        }
-        const QString scoped = resolveToolPath(currentWorkingDirectory, rawPath, true);
-        if (scoped.isEmpty()) {
-            logs.append(QStringLiteral("edit-file: Path is outside the approved workspace."));
-            continue;
-        }
-
-        if (!QFile::exists(scoped) && oldString.trimmed().isEmpty()) {
-            QDir().mkpath(QFileInfo(scoped).absolutePath());
-            QFile file(scoped);
-            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                file.write(newString.toUtf8());
-                logs.append(QStringLiteral("edit-file: Created new file '%1' (%2 bytes).")
-                                .arg(scoped, QString::number(newString.toUtf8().size())));
-            } else {
-                logs.append(QStringLiteral("edit-file: Failed to create '%1': %2")
-                                .arg(scoped, file.errorString()));
-            }
-            continue;
-        }
-        if (!QFile::exists(scoped)) {
-            logs.append(QStringLiteral("edit-file: File not found: %1").arg(scoped));
-            continue;
-        }
-        if (oldString == newString) {
-            logs.append(QStringLiteral("edit-file: oldString and newString are identical."));
-            continue;
-        }
-
-        FuzzyEditRequest editRequest;
-        editRequest.filePath = scoped;
-        editRequest.oldString = oldString;
-        editRequest.newString = newString;
-        editRequest.replaceAll = replaceAll;
-        const FuzzyEditor editor;
-        const auto result = editor.edit(editRequest);
-        if (result.success) {
-            logs.append(
-                QStringLiteral("edit-file: Edited %1 line(s) in '%2' (match strategy: %3, "
-                               "confidence: %4%%).")
-                    .arg(QString::number(result.linesChanged), scoped,
-                         QStringLiteral("strategy #%1").arg(static_cast<int>(result.usedStrategy)),
-                         QString::number(result.confidence)));
-        } else {
-            logs.append(QStringLiteral("edit-file: %1").arg(result.error));
-        }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeDeleteFile(const PlannedToolInvocation& invocation,
-                                                        QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString rawPath = getArgument(invocation, QStringLiteral("path"));
-        if (rawPath.isEmpty()) {
-            logs.append(QStringLiteral("delete-file: No path argument provided."));
-            continue;
-        }
-        const QString scoped = resolveToolPath(currentWorkingDirectory, rawPath, true);
-        if (scoped.isEmpty()) {
-            logs.append(QStringLiteral("delete-file: Path is outside the approved workspace."));
-            continue;
-        }
-        QFileInfo info(scoped);
-        if (!info.exists()) {
-            logs.append(QStringLiteral("delete-file: File not found: %1").arg(scoped));
-            continue;
-        }
-        if (info.isDir()) {
-            logs.append(
-                QStringLiteral("delete-file: Refusing to delete a directory: %1").arg(scoped));
-            continue;
-        }
-        if (QFile::remove(scoped)) {
-            logs.append(QStringLiteral("delete-file: Deleted '%1'.").arg(scoped));
-        } else {
-            logs.append(QStringLiteral("delete-file: Failed to delete '%1'.").arg(scoped));
-        }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeMoveFile(const PlannedToolInvocation& invocation,
-                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString rawSource = getArgument(invocation, QStringLiteral("source"));
-        const QString rawDestination = getArgument(invocation, QStringLiteral("destination"));
-        if (rawSource.isEmpty() || rawDestination.isEmpty()) {
-            logs.append(QStringLiteral("move-file: Both source and destination are required."));
-            continue;
-        }
-        const QString source = resolveToolPath(currentWorkingDirectory, rawSource, true);
-        const QString destination = resolveToolPath(currentWorkingDirectory, rawDestination, true);
-        if (source.isEmpty() || destination.isEmpty()) {
-            logs.append(QStringLiteral("move-file: Path is outside the approved workspace."));
-            continue;
-        }
-        QFileInfo sourceInfo(source);
-        if (!sourceInfo.exists()) {
-            logs.append(QStringLiteral("move-file: Source not found: %1").arg(source));
-            continue;
-        }
-        if (sourceInfo.isDir()) {
-            logs.append(QStringLiteral("move-file: Refusing to move a directory: %1").arg(source));
-            continue;
-        }
-        if (QFile::exists(destination)) {
-            logs.append(
-                QStringLiteral("move-file: Destination already exists: %1").arg(destination));
-            continue;
-        }
-        QDir().mkpath(QFileInfo(destination).absolutePath());
-        if (QFile::rename(source, destination)) {
-            logs.append(QStringLiteral("move-file: Moved '%1' to '%2'.").arg(source, destination));
-        } else {
-            logs.append(
-                QStringLiteral("move-file: Failed to move '%1' to '%2'.").arg(source, destination));
-        }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeApplyPatch(const PlannedToolInvocation& invocation,
-                                                        QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString patch = getArgument(invocation, QStringLiteral("patch"));
-        if (patch.trimmed().isEmpty()) {
-            logs.append(QStringLiteral("apply-patch: No patch argument provided."));
-            continue;
-        }
-        logs.append(applyPatchReport(patch, currentWorkingDirectory,
-                                     [this, &currentWorkingDirectory](const QString& p) {
-                                         return resolveToolPath(currentWorkingDirectory, p, true);
-                                     }));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult
-RealToolExecutor::executeListCodeDefinitions(const PlannedToolInvocation& invocation,
-                                             QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        QString path = getArgument(invocation, QStringLiteral("path"));
-        if (path.isEmpty()) {
-            logs.append(QStringLiteral("list-code-definitions: No path argument provided."));
-            continue;
-        }
-        const QString scoped = resolveToolPath(currentWorkingDirectory, path);
-        if (scoped.isEmpty()) {
-            logs.append(
-                QStringLiteral("list-code-definitions: Path is outside the approved workspace."));
-            continue;
-        }
-        if (!QFile::exists(scoped)) {
-            logs.append(QStringLiteral("list-code-definitions: File not found: %1").arg(scoped));
-            continue;
-        }
-        const auto definitions = extractCodeDefinitions(scoped);
-        logs.append(
-            definitions.isEmpty()
-                ? QStringLiteral("list-code-definitions: No definitions found in '%1'.").arg(scoped)
-                : QStringLiteral("list-code-definitions: %1 definition(s) in '%2':\n%3")
-                      .arg(QString::number(definitions.size()), scoped,
-                           definitions.join(QLatin1Char('\n'))));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& invocation,
-                                                  QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
-        if (pattern.trimmed().isEmpty()) {
-            return {ToolExecutionStatus::Failed,
-                    QStringLiteral("grep: No pattern argument provided.")};
-        }
-        QRegularExpression regex(pattern);
-        if (!regex.isValid()) {
-            return {
-                ToolExecutionStatus::Failed,
+ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
+    if (pattern.trimmed().isEmpty())
+        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("grep: No pattern argument provided.")};
+    const QRegularExpression regex(pattern);
+    if (!regex.isValid())
+        return {ToolExecutionStatus::InvalidArguments,
                 QStringLiteral("grep: Invalid regular expression: %1").arg(regex.errorString())};
-        }
-        const QString rawPath = getArgument(invocation, QStringLiteral("path"));
-        QString searchRoot = rawPath.trimmed().isEmpty()
-                                 ? currentWorkingDirectory
-                                 : resolveToolPath(currentWorkingDirectory, rawPath);
-        if (searchRoot.isEmpty())
-            return {ToolExecutionStatus::Blocked,
-                    QStringLiteral("Filesystem search path is outside approved scope.")};
-        const QString include = getArgument(invocation, QStringLiteral("include")).trimmed();
-
-        static const QSet<QString> skippedDirs{
-            QStringLiteral(".git"),   QStringLiteral("node_modules"), QStringLiteral("build"),
-            QStringLiteral("dist"),   QStringLiteral("target"),       QStringLiteral("__pycache__"),
-            QStringLiteral(".cache"), QStringLiteral("venv"),         QStringLiteral(".venv"),
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("grep"), path);
+    const auto context = operationContext(invocation);
+    const bool includeHidden = getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
+    const QString include = getArgument(invocation, QStringLiteral("include")).trimmed();
+    int count = 0;
+    QStringList output;
+    QJsonArray readIssues;
+    bool filesComplete = true;
+    bool outputCapped = false;
+    bool cancelled = false;
+    auto onFile = [&](const FileSystemEntry& entry) {
+        if (context.isCancelled()) { cancelled = true; return false; }
+        if (!include.isEmpty() && !QDir::match(include, entry.name)) return true;
+        auto issue = [&](FileSystemFailure failure) {
+            filesComplete = false;
+            if (readIssues.size() < 16)
+                readIssues.append(QJsonObject{{QStringLiteral("resource"), entry.path},
+                    {QStringLiteral("failure"), static_cast<int>(failure)}});
         };
-
-        int matches = 0;
-        int filesWithMatches = 0;
-        QString currentFile;
-        QStringList output;
-        bool truncated = false;
-
-        QDirIterator it(searchRoot, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            const QString filePath = it.next();
-            if (resolveToolPath(currentWorkingDirectory, filePath).isEmpty())
-                continue;
-            if (skippedDirs.contains(QFileInfo(filePath).dir().dirName())) {
-                continue;
-            }
-            if (!include.isEmpty() && !QDir::match(include, QFileInfo(filePath).fileName())) {
-                continue;
-            }
-            QFileInfo info(filePath);
-            if (info.size() > 2 * 1024 * 1024 || looksBinary(filePath)) {
-                continue;
-            }
-            QFile file(filePath);
-            if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                continue;
-            }
-            int lineNumber = 0;
-            bool fileHeaderWritten = false;
-            while (!file.atEnd()) {
-                ++lineNumber;
-                const QString line = QString::fromUtf8(file.readLine());
-                if (regex.match(line).hasMatch()) {
-                    if (matches >= kGrepGlobLimit) {
-                        truncated = true;
-                        break;
-                    }
-                    if (!fileHeaderWritten) {
-                        output.append(
-                            QStringLiteral("%1:").arg(QDir::toNativeSeparators(filePath)));
-                        fileHeaderWritten = true;
-                        ++filesWithMatches;
-                    }
-                    QString trimmedLine = line;
-                    if (trimmedLine.endsWith(QLatin1Char('\n'))) {
-                        trimmedLine.chop(1);
-                    }
-                    if (trimmedLine.size() > kMaxLineLength) {
-                        trimmedLine = trimmedLine.left(kMaxLineLength) +
-                                      QStringLiteral("... (line truncated)");
-                    }
-                    output.append(QStringLiteral("  Line %1: %2")
-                                      .arg(QString::number(lineNumber), trimmedLine));
-                    ++matches;
-                }
-            }
-            if (truncated) {
-                break;
-            }
+        if (entry.size > 2 * 1024 * 1024) { issue(FileSystemFailure::Unavailable); return true; }
+        const auto child = fileSystemService_.resolve(entry.path, cwd, FileSystemAccess::Read);
+        if (!child.ok()) { issue(child.failure); return true; }
+        const auto read = fileSystemService_.readFile(*child.value, 2 * 1024 * 1024);
+        if (!read.ok() || !read.value->complete || read.value->binary) {
+            issue(read.ok() ? FileSystemFailure::Unavailable : read.failure);
+            return true;
         }
-
-        if (matches == 0) {
-            logs.append(QStringLiteral("grep: No matches found for '%1' under '%2'.")
-                            .arg(pattern, searchRoot));
-        } else {
-            logs.append(output.join(QLatin1Char('\n')));
-            logs.append(QStringLiteral("\nFound %1 match(es) in %2 file(s).%3")
-                            .arg(QString::number(matches), QString::number(filesWithMatches),
-                                 truncated ? QStringLiteral(" (Results truncated. Consider a more "
-                                                            "specific path or pattern.)")
-                                           : QString()));
+        const auto lines = QString::fromUtf8(read.value->content).split(QLatin1Char('\n'));
+        for (int i = 0; i < lines.size(); ++i) {
+            if ((i & 127) == 0 && context.isCancelled()) { cancelled = true; return false; }
+            if (!regex.match(lines.at(i)).hasMatch()) continue;
+            if (count >= kGrepGlobLimit) { outputCapped = true; return false; }
+            output.append(QStringLiteral("%1:%2: %3").arg(entry.path).arg(i + 1)
+                          .arg(lines.at(i).left(kMaxLineLength)));
+            ++count;
         }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+        return true;
+    };
+    const auto tree = fileSystemService_.traverseFiles(*path.value, includeHidden, 5000,
+        [this, &cwd](const QString& child) { return !resolveToolPath(cwd, child).isEmpty(); },
+        context, onFile);
+    if (!tree.ok()) return fileToolFailure(QStringLiteral("grep"), tree);
+    cancelled = cancelled || tree.value->status.cancelled;
+    const bool truncated = outputCapped || tree.value->status.truncated;
+    const bool complete = tree.value->status.complete && filesComplete && !cancelled && !outputCapped;
+    QJsonArray issues = traversalIssues(tree.value->status);
+    for (const auto& issue : readIssues)
+        if (issues.size() < 16) issues.append(issue);
+    const QJsonObject data{{QStringLiteral("scope"), path.value->canonicalPath},
+        {QStringLiteral("query"), pattern}, {QStringLiteral("matchCount"), count},
+        {QStringLiteral("recursive"), true}, {QStringLiteral("includeHidden"), includeHidden},
+        {QStringLiteral("maxDepth"), 128}, {QStringLiteral("followSymlinks"), false},
+        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
+        {QStringLiteral("cancelled"), cancelled}, {QStringLiteral("issues"), issues}};
+    const QString summary = cancelled
+        ? QStringLiteral("Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
+              .arg(count).arg(output.join(QLatin1Char('\n')))
+        : output.isEmpty()
+            ? QStringLiteral("grep: No matches found for '%1' under '%2'.").arg(pattern, path.value->canonicalPath)
+            : output.join(QLatin1Char('\n'));
+    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
+            summary,
+            std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::TextSearch, data})};
 }
-
-ToolExecutionResult RealToolExecutor::executeGlob(const PlannedToolInvocation& invocation,
-                                                  QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
-        if (pattern.trimmed().isEmpty()) {
-            return {ToolExecutionStatus::Failed,
-                    QStringLiteral("glob: No pattern argument provided.")};
-        }
-        const QString rawPath = getArgument(invocation, QStringLiteral("path"));
-        QString searchRoot = rawPath.trimmed().isEmpty()
-                                 ? currentWorkingDirectory
-                                 : resolveToolPath(currentWorkingDirectory, rawPath);
-        if (searchRoot.isEmpty())
-            return {ToolExecutionStatus::Blocked,
-                    QStringLiteral("Filesystem search path is outside approved scope.")};
-
-        QStringList found;
-        QDirIterator it(searchRoot, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            const QString filePath = it.next();
-            if (resolveToolPath(currentWorkingDirectory, filePath).isEmpty())
-                continue;
-            if (QDir::match(pattern, QFileInfo(filePath).fileName()) ||
-                QDir::match(pattern, filePath)) {
-                found.append(QDir::toNativeSeparators(filePath));
-                if (found.size() >= kGrepGlobLimit) {
-                    break;
-                }
-            }
-        }
-        found.sort();
-
-        if (found.isEmpty()) {
-            logs.append(QStringLiteral("glob: No files matching '%1' under '%2'.")
-                            .arg(pattern, searchRoot));
-        } else {
-            logs.append(found.join(QLatin1Char('\n')));
-            logs.append(QStringLiteral("\nFound %1 file(s).%2")
-                            .arg(QString::number(found.size()),
-                                 found.size() >= kGrepGlobLimit
-                                     ? QStringLiteral(" (Results truncated. Use a more "
-                                                      "specific pattern or path.)")
-                                     : QString()));
-        }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+ToolExecutionResult RealToolExecutor::executeGlob(const PlannedToolInvocation& invocation, QString& cwd) const {
+    const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
+    if (pattern.trimmed().isEmpty())
+        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("glob: No pattern argument provided.")};
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
+    if (!path.ok()) return fileToolFailure(QStringLiteral("glob"), path);
+    const bool includeHidden = getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
+    const auto tree = fileSystemService_.traverseFiles(*path.value, includeHidden, 5000,
+        [this, &cwd](const QString& child) { return !resolveToolPath(cwd, child).isEmpty(); },
+        operationContext(invocation));
+    if (!tree.ok()) return fileToolFailure(QStringLiteral("glob"), tree);
+    QJsonArray matches;
+    QStringList output;
+    bool truncated = tree.value->status.truncated;
+    bool cancelled = tree.value->status.cancelled;
+    const auto context = operationContext(invocation);
+    for (const auto& entry : tree.value->files) {
+        // Matching already inspected paths is cheap and preserves positive partial evidence.
+        if (context.isCancelled() && !tree.value->status.cancelled) { cancelled = true; break; }
+        if (!QDir::match(pattern, entry.name) && !QDir::match(pattern, entry.path)) continue;
+        if (matches.size() >= kGrepGlobLimit) { truncated = true; break; }
+        matches.append(entry.path);
+        output.append(entry.path);
+    }
+    const bool complete = tree.value->status.complete && !cancelled;
+    const QJsonObject data{{QStringLiteral("root"), path.value->canonicalPath},
+        {QStringLiteral("pattern"), pattern}, {QStringLiteral("matches"), matches},
+        {QStringLiteral("recursive"), true}, {QStringLiteral("includeHidden"), includeHidden},
+        {QStringLiteral("maxDepth"), 128}, {QStringLiteral("followSymlinks"), false},
+        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
+        {QStringLiteral("cancelled"), cancelled}, {QStringLiteral("issues"), traversalIssues(tree.value->status)}};
+    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
+        cancelled ? QStringLiteral("Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
+                        .arg(matches.size()).arg(output.join(QLatin1Char('\n'))) : output.isEmpty() ? QStringLiteral("glob: No files matching '%1' under '%2'.").arg(pattern, path.value->canonicalPath)
+                         : output.join(QLatin1Char('\n')),
+        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::PathMatches, data})};
 }
 
 ToolExecutionResult RealToolExecutor::executeRunCommand(const PlannedToolInvocation& invocation,
@@ -2460,117 +1891,6 @@ ToolExecutionResult RealToolExecutor::executeOpenUrl(const PlannedToolInvocation
                              : QStringLiteral("open-url: Failed to open '%1' in the default "
                                               "browser.")
                                    .arg(parsed.toString()));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeMcpList(const PlannedToolInvocation& invocation,
-                                                     QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        if (!mcpService_) {
-            logs.append(QStringLiteral(
-                "mcp-list: No MCP servers are configured. Add servers in Settings to "
-                "extend the toolset."));
-            continue;
-        }
-        const auto servers = mcpService_->servers();
-        if (servers.isEmpty()) {
-            logs.append(QStringLiteral("mcp-list: No MCP servers are configured."));
-            continue;
-        }
-        QStringList lines;
-        for (const auto& server : servers) {
-            const QString stateName = [this, &server]() {
-                switch (mcpService_->connectionState(server.name)) {
-                case McpConnectionState::Connected:
-                    return QStringLiteral("connected");
-                case McpConnectionState::Connecting:
-                    return QStringLiteral("connecting");
-                case McpConnectionState::Error:
-                    return QStringLiteral("error");
-                case McpConnectionState::Disconnected:
-                    return QStringLiteral("disconnected");
-                }
-                return QStringLiteral("unknown");
-            }();
-            lines.append(QStringLiteral("%1 (%2, %3)").arg(server.name, server.type, stateName));
-            for (const auto& tool : mcpService_->tools(server.name)) {
-                lines.append(QStringLiteral("  - %1: %2")
-                                 .arg(tool.name, tool.description.simplified().left(200)));
-            }
-        }
-        logs.append(QStringLiteral("mcp-list: %1 server(s):\n%2")
-                        .arg(QString::number(servers.size()), lines.join(QLatin1Char('\n'))));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeMcpCall(const PlannedToolInvocation& invocation,
-                                                     QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        if (!mcpService_) {
-            logs.append(QStringLiteral(
-                "mcp-call: No MCP servers are configured. Use mcp-list after configuring "
-                "servers in Settings."));
-            continue;
-        }
-        const QString server = getArgument(invocation, QStringLiteral("server")).trimmed();
-        const QString tool = getArgument(invocation, QStringLiteral("tool")).trimmed();
-        if (server.isEmpty() || tool.isEmpty()) {
-            logs.append(QStringLiteral("mcp-call: Both server and tool arguments are required."));
-            continue;
-        }
-        const QString argumentsRaw = getArgument(invocation, QStringLiteral("arguments"));
-        QJsonObject arguments;
-        if (!argumentsRaw.trimmed().isEmpty()) {
-            const auto document = QJsonDocument::fromJson(argumentsRaw.toUtf8());
-            if (!document.isObject()) {
-                logs.append(QStringLiteral("mcp-call: 'arguments' must be a JSON object, e.g. "
-                                           "{\"key\": \"value\"}. Rewrite the input."));
-                continue;
-            }
-            arguments = document.object();
-        }
-
-        const auto result = mcpService_->callTool(server, tool, arguments);
-        if (result.contains(QStringLiteral("error"))) {
-            logs.append(QStringLiteral("mcp-call: %1/%2 failed: %3")
-                            .arg(server, tool,
-                                 result.value(QStringLiteral("error"))
-                                     .toObject()
-                                     .value(QStringLiteral("message"))
-                                     .toString()));
-            continue;
-        }
-
-        QStringList contentParts;
-        const auto content = result.value(QStringLiteral("result"))
-                                 .toObject()
-                                 .value(QStringLiteral("content"))
-                                 .toArray();
-        for (const auto& item : content) {
-            const auto object = item.toObject();
-            if (object.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
-                contentParts.append(object.value(QStringLiteral("text")).toString());
-            }
-        }
-        if (contentParts.isEmpty()) {
-            contentParts.append(
-                QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact)));
-        }
-        const bool isError = result.value(QStringLiteral("result"))
-                                 .toObject()
-                                 .value(QStringLiteral("isError"))
-                                 .toBool();
-        logs.append(
-            QStringLiteral("mcp-call: %1/%2 %3\n%4")
-                .arg(server, tool,
-                     isError ? QStringLiteral("returned an error:") : QStringLiteral("result:"),
-                     contentParts.join(QLatin1Char('\n'))));
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
@@ -3223,17 +2543,17 @@ ToolExecutionResult RealToolExecutor::executeOpenWorkspace(const PlannedToolInvo
                 QStringLiteral("open-workspace: path argument is required."),
             };
         }
-        const QString workspacePath = PathGuard::canonicalPath(path);
+        const auto authorized = authorizedFilePath(fileSystemService_, invocation,
+                                                   QStringLiteral("path"), AccessMode::Read,
+                                                   currentWorkingDirectory);
+        if (!authorized.ok())
+            return fileToolFailure(QStringLiteral("open-workspace"), authorized);
+        const QString workspacePath = authorized.value->canonicalPath;
         if (workspacePath.isEmpty() || !QDir(workspacePath).exists()) {
             return {
                 ToolExecutionStatus::Blocked,
                 QStringLiteral("open-workspace: requested workspace does not exist."),
             };
-        }
-        if (externalDirectoryGate_ &&
-            !externalDirectoryGate_->isAccessAllowed(workspacePath, QDir::currentPath())) {
-            return {ToolExecutionStatus::Blocked,
-                    QStringLiteral("open-workspace: external directory approval is required.")};
         }
         if (isForbiddenWorkspacePath(workspacePath)) {
             return {
