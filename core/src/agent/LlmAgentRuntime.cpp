@@ -115,17 +115,36 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
     QString repair = feedback.isEmpty() ? QString{} : prompt + QStringLiteral("\nREPAIR: %1").arg(feedback);
     for (int attempt = 0; attempt < 2; ++attempt) {
         const auto request = attempt == 0 ? (repair.isEmpty() ? prompt : repair) : repair;
-        const auto reply = attempt == 0 && provider_->supportsStreaming() && streamObserver_
+        ChatRequestOptions options;
+        options.structuredOutput = attempt == 0 &&
+            modelBinding_.capabilities.structuredOutput == CapabilitySupport::Supported;
+        options.nativeToolCalling = attempt == 0 &&
+            modelBinding_.capabilities.nativeToolCalling == CapabilitySupport::Supported;
+        const auto reply = attempt == 0 && !options.structuredOutput &&
+                                   !options.nativeToolCalling &&
+                                   modelBinding_.capabilities.streaming ==
+                                       CapabilitySupport::Supported &&
+                                   streamObserver_
                                ? provider_->sendMessageStreaming(request, streamObserver_,
                                                                  streamCancellationToken_)
-                               : provider_->sendMessage(request);
+                               : provider_->sendRequest(request, options);
         if (!reply.success) {
             AgentStepDecision failure;
             failure.kind = AgentStepDecision::Kind::GiveUp;
             failure.reason = QStringLiteral("Model planning failed: %1").arg(reply.errorMessage);
             return failure;
         }
-        const auto decision = decisionFromLlmOutput(reply.message);
+        AgentStepDecision decision;
+        if (reply.toolCalls.size() == 1 && options.nativeToolCalling) {
+            const auto& call = reply.toolCalls.first();
+            QJsonObject action{{QStringLiteral("action"), QStringLiteral("tool")},
+                               {QStringLiteral("tool"), call.toolId},
+                               {QStringLiteral("args"), call.arguments}};
+            decision = decisionFromLlmOutput(
+                QString::fromUtf8(QJsonDocument(action).toJson(QJsonDocument::Compact)));
+        } else if (reply.toolCalls.isEmpty()) {
+            decision = decisionFromLlmOutput(reply.message);
+        }
         bool valid = decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty();
         QString repairReason = QStringLiteral("Return one valid JSON action.");
         if (valid && decision.kind == AgentStepDecision::Kind::FinalAnswer) {
@@ -273,7 +292,8 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
         AgentContextInput input;
         input.goal = goal;
         input.tools = availableTools();
-        input.contextWindowTokens = modelBinding_.contextWindowTokens;
+        input.contextWindowTokens = modelBinding_.capabilities.contextWindow.value_or(0);
+        input.maxOutputTokens = modelBinding_.capabilities.maxOutputTokens.value_or(0);
         context = ContextEngine{}.build(input);
     }
     QJsonArray items;

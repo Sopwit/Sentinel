@@ -80,14 +80,15 @@ StoredAgentRun readRun(const QSqlQuery& query) {
             query.value(9).toString(), query.value(10).toString(), parsedTime(query.value(11)),
             parsedTime(query.value(12)), query.value(13).toString(), query.value(14).toInt(),
             query.value(15).toInt(), query.value(16).toInt(), query.value(17).toBool(),
-            query.value(18).toInt()};
+            query.value(18).toInt(), query.value(19).toString()};
 }
 
 const QString runColumns = QStringLiteral(
     "run_id,session_id,parent_run_id,parent_tool_call_id,run_type,state,provider_id,model_id,"
     "goal_summary,final_answer,failure,started_at,finished_at,grounding_mode,context_tokens,"
     "context_items,context_omitted,context_compacted,"
-    "(SELECT COUNT(*) FROM agent_steps s WHERE s.run_id=agent_runs.run_id)");
+    "(SELECT COUNT(*) FROM agent_steps s WHERE s.run_id=agent_runs.run_id),"
+    "capability_snapshot");
 
 bool ensureColumn(QSqlDatabase& db, const QString& table, const QString& column,
                   const QString& declaration, QString& error) {
@@ -136,7 +137,7 @@ bool SQLiteAgentRunStore::initialize() {
                        "finished_at TEXT,state TEXT NOT NULL,provider_id TEXT,model_id TEXT,"
                        "goal_summary TEXT,final_answer TEXT,failure TEXT,grounding_mode TEXT,"
                        "context_tokens INTEGER,context_items INTEGER,context_omitted INTEGER,"
-                       "context_compacted INTEGER)"),
+                       "context_compacted INTEGER,capability_snapshot TEXT)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS agent_steps("
                        "step_id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES agent_runs(run_id) "
                        "ON DELETE CASCADE,sequence INTEGER NOT NULL,step_type TEXT NOT NULL,"
@@ -177,7 +178,10 @@ bool SQLiteAgentRunStore::initialize() {
             lastError_ = query.lastError().text();
             return false;
         }
-    if (!ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
+    if (!ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("capability_snapshot"),
+                      QStringLiteral("capability_snapshot TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
                       QStringLiteral("mutation_summary"),
                       QStringLiteral("mutation_summary TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_evidence"),
@@ -263,13 +267,14 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
     if (event.type == AgentEventType::RunStarted) {
         const auto* start = std::get_if<AgentRunStartedEvent>(&event.payload);
         exec(QStringLiteral("INSERT OR IGNORE INTO agent_runs(run_id,session_id,parent_run_id,"
-                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary) "
-                            "VALUES(?,?,?,?,?,?,'Running',?,?,?)"),
+                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary,capability_snapshot) "
+                            "VALUES(?,?,?,?,?,?,'Running',?,?,?,?)"),
              {event.turnId, event.sessionId, start ? start->parentRunId : QString{},
               start ? start->parentToolCallId : QString{},
               start ? start->runType : QStringLiteral("interactive"), at,
               event.providerId, event.modelId,
-              bounded(start ? start->goalSummary : QString{}, 180)});
+              bounded(start ? start->goalSummary : QString{}, 180),
+              event.capabilitySnapshot.left(160)});
         exec(QStringLiteral("DELETE FROM agent_runs WHERE run_id IN ("
                             "SELECT run_id FROM agent_runs ORDER BY started_at DESC,run_id DESC "
                             "LIMIT -1 OFFSET 500)"), {});

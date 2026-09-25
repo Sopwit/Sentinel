@@ -7,6 +7,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <optional>
 
 namespace sentinel::core {
 
@@ -41,6 +42,35 @@ enum class ModelRoutingStatus {
     Routed,
     NoAvailableModel,
 };
+
+enum class CapabilitySupport { Unknown, Unsupported, Supported };
+
+struct ModelCapabilities {
+    CapabilitySupport streaming = CapabilitySupport::Unknown;
+    CapabilitySupport structuredOutput = CapabilitySupport::Unknown;
+    CapabilitySupport nativeToolCalling = CapabilitySupport::Unknown;
+    CapabilitySupport visionInput = CapabilitySupport::Unknown;
+    CapabilitySupport audioInput = CapabilitySupport::Unknown;
+    CapabilitySupport audioOutput = CapabilitySupport::Unknown;
+    std::optional<int> contextWindow;
+    std::optional<int> maxOutputTokens;
+};
+
+inline QString capabilitySnapshotSummary(const ModelCapabilities& capabilities) {
+    auto state = [](CapabilitySupport value) {
+        switch (value) {
+        case CapabilitySupport::Supported: return QStringLiteral("yes");
+        case CapabilitySupport::Unsupported: return QStringLiteral("no");
+        case CapabilitySupport::Unknown: return QStringLiteral("unknown");
+        }
+        return QStringLiteral("unknown");
+    };
+    return QStringLiteral("Context %1, streaming %2, structured %3, native tools %4")
+        .arg(capabilities.contextWindow ? QString::number(*capabilities.contextWindow)
+                                        : QStringLiteral("unknown"),
+             state(capabilities.streaming), state(capabilities.structuredOutput),
+             state(capabilities.nativeToolCalling));
+}
 
 inline QString providerKindName(ProviderKind kind) {
     switch (kind) {
@@ -164,6 +194,7 @@ struct ProviderDescriptor {
     QString name;
     ProviderKind kind = ProviderKind::Local;
     ProviderCapabilityProfile capabilityProfile;
+    ModelCapabilities modelCapabilities;
 };
 
 struct ModelDescriptor {
@@ -176,6 +207,7 @@ struct ModelDescriptor {
     QString qualityClass;
     QString latencyClass;
     QStringList recommendedTaskTypes;
+    ModelCapabilities capabilities;
 };
 
 struct TaskClassification {
@@ -199,6 +231,7 @@ struct ModelBinding {
     QString providerId;
     QString modelId;
     int contextWindowTokens = 0;
+    ModelCapabilities capabilities;
 
     bool isConfigured() const { return !providerId.isEmpty() && !modelId.isEmpty(); }
 };

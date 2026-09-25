@@ -29,6 +29,7 @@ struct StoredAgentRun {
     int contextOmitted = 0;
     bool contextCompacted = false;
     int stepCount = 0;
+    QString capabilitySnapshot;
 };
 
 struct StoredAgentStep {

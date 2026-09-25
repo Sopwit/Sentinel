@@ -34,6 +34,7 @@ void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
     input.intent = state.observationIntent;
     input.facts = ClaimGroundingResolver::facts(state.observationIntent, state.evidence);
     input.contextWindowTokens = contextWindowTokens_;
+    input.maxOutputTokens = maxOutputTokens_;
     input.memoryStore = memoryStore_;
     input.chatHistoryStore = chatHistoryStore_;
     if (toolRegistry_) {

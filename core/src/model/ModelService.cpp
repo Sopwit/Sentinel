@@ -80,6 +80,24 @@ QString defaultProviderId() {
     return QStringLiteral("ollama");
 }
 
+ModelCapabilities mergedCapabilities(ModelCapabilities base, const ModelCapabilities& override) {
+    auto merge = [](CapabilitySupport& target, CapabilitySupport value) {
+        if (value != CapabilitySupport::Unknown)
+            target = value;
+    };
+    merge(base.streaming, override.streaming);
+    merge(base.structuredOutput, override.structuredOutput);
+    merge(base.nativeToolCalling, override.nativeToolCalling);
+    merge(base.visionInput, override.visionInput);
+    merge(base.audioInput, override.audioInput);
+    merge(base.audioOutput, override.audioOutput);
+    if (override.contextWindow && *override.contextWindow > 0)
+        base.contextWindow = override.contextWindow;
+    if (override.maxOutputTokens && *override.maxOutputTokens > 0)
+        base.maxOutputTokens = override.maxOutputTokens;
+    return base;
+}
+
 } // namespace
 
 QString modelBindingErrorName(ModelBindingError error) {
@@ -122,12 +140,16 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
         selection_.providerId = defaultProviderId();
     }
 
+    ModelCapabilities ollamaCapabilities;
+    ollamaCapabilities.streaming = CapabilitySupport::Supported;
+    ollamaCapabilities.structuredOutput = CapabilitySupport::Unsupported;
+    ollamaCapabilities.nativeToolCalling = CapabilitySupport::Unsupported;
     registerProvider(defaultProviderId(), [this](const ModelBinding& binding) {
         auto provider = std::make_shared<OllamaChatProvider>(
             OllamaConfig::fromEndpoint(ollamaEndpoint_), localInferenceTimeoutMs_);
         provider->setSelectedModel(binding.modelId);
         return std::shared_ptr<IChatProvider>(std::move(provider));
-    });
+    }, ollamaCapabilities);
     static const QStringList endpointProviderIds{
         QStringLiteral("lm-studio"),        QStringLiteral("openai-compatible-local"),
         QStringLiteral("llama-cpp-server"), QStringLiteral("cloud-api"),
@@ -136,10 +158,14 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
         QStringLiteral("deepseek"),         QStringLiteral("groq"),
         QStringLiteral("mistral")};
     for (const auto& providerId : endpointProviderIds) {
+        ModelCapabilities endpointCapabilities;
+        endpointCapabilities.streaming = CapabilitySupport::Unsupported;
+        endpointCapabilities.structuredOutput = CapabilitySupport::Unsupported;
+        endpointCapabilities.nativeToolCalling = CapabilitySupport::Unsupported;
         registerProvider(providerId, [this](const ModelBinding& binding) {
             return std::make_shared<SelectedEndpointChatProvider>(binding, providerConfig(binding),
                                                                   localInferenceTimeoutMs_);
-        });
+        }, endpointCapabilities);
     }
 }
 
@@ -149,12 +175,42 @@ void ModelService::setModelRouter(IModelRouter* router) {
     router_ = router;
 }
 
-void ModelService::registerProvider(const QString& providerId, ModelProviderFactory factory) {
+void ModelService::registerProvider(const QString& providerId, ModelProviderFactory factory,
+                                    ModelCapabilities defaults) {
     const auto normalized = normalizedProviderId(providerId);
     if (normalized.isEmpty() || !factory)
         return;
     providerFactories_.insert(normalized, std::move(factory));
+    providerCapabilities_.insert(normalized, std::move(defaults));
     emit providerRegistryChanged();
+}
+
+void ModelService::setModelCapabilities(const QString& providerId, const QString& modelId,
+                                         ModelCapabilities capabilities) {
+    const auto provider = normalizedProviderId(providerId);
+    const auto model = modelId.trimmed();
+    if (!provider.isEmpty() && !model.isEmpty())
+        modelCapabilities_[provider].insert(model, std::move(capabilities));
+}
+
+ModelCapabilities ModelService::capabilities(const QString& providerId,
+                                              const QString& modelId) const {
+    const auto provider = normalizedProviderId(providerId);
+    auto result = providerCapabilities_.value(provider);
+    if (router_) {
+        const auto route = router_->resolveSelection(ModelBinding{provider, modelId.trimmed()});
+        if (route.status == ModelRoutingStatus::Routed) {
+            if (route.provider.id == provider)
+                result = mergedCapabilities(result, route.provider.modelCapabilities);
+            if (route.model.providerId == provider && route.model.id == modelId.trimmed()) {
+                result = mergedCapabilities(result, route.model.capabilities);
+                if (route.model.contextWindowTokens > 0 && !result.contextWindow)
+                    result.contextWindow = route.model.contextWindowTokens;
+            }
+        }
+    }
+    return mergedCapabilities(result,
+                              modelCapabilities_.value(provider).value(modelId.trimmed()));
 }
 
 bool ModelService::isKnownProvider(const QString& providerId) const {
@@ -207,6 +263,7 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
     const auto provider = normalizedProviderId(providerId);
     const auto model = modelId.trimmed();
     resolution.binding = ModelBinding{provider, model};
+    resolution.selection = ModelSelection{provider, model};
 
     if (provider.isEmpty() || !providerFactories_.contains(provider)) {
         resolution.error = ModelBindingError::ProviderNotFound;
@@ -228,8 +285,10 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
                 QStringLiteral("Provider '%1' has no available model route.").arg(provider);
             return resolution;
         }
-        resolution.binding.contextWindowTokens = route.model.contextWindowTokens;
     }
+    resolution.binding.capabilities = capabilities(provider, model);
+    resolution.binding.contextWindowTokens =
+        resolution.binding.capabilities.contextWindow.value_or(0);
     if (provider != QLatin1String("ollama")) {
         const auto config = providerConfig(resolution.binding);
         if (isCloudProviderId(provider) && config.apiKey.trimmed().isEmpty()) {

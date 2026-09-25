@@ -8049,7 +8049,10 @@ bool ApplicationController::sendMessage(const QString& message) {
         emit chatMessagesChanged();
         emit contextAssemblyChanged();
         activeLocalInferenceIsChatRequest_ = true;
-        const auto startedLocalInference = localInferenceStreamingAvailable()
+        const auto selected = modelService_->selectedModel();
+        const auto canStream = modelService_->capabilities(selected.providerId, selected.modelId)
+                                   .streaming == CapabilitySupport::Supported;
+        const auto startedLocalInference = canStream && localInferenceStreamingAvailable()
                                                ? runLocalInferenceStream(effectivePrompt, {})
                                                : runLocalInference(effectivePrompt, {});
         if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {

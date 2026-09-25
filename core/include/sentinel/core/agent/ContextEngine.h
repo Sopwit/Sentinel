@@ -41,6 +41,7 @@ struct AgentContextInput {
     ObservationIntent intent;
     QList<ToolDescriptor> tools;
     int contextWindowTokens = 0;
+    int maxOutputTokens = 0;
 };
 
 class ContextEngine final {

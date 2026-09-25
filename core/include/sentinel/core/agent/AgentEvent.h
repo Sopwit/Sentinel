@@ -102,6 +102,7 @@ struct AgentEvent {
     QString toolCallId;
     QString providerId;
     QString modelId;
+    QString capabilitySnapshot;
     int stepIndex = 0;
     AgentEventType type = AgentEventType::SessionCreated;
     QDateTime timestamp;
