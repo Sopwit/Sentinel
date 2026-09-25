@@ -172,6 +172,7 @@ void AgentRuntime::publish(const QString& sessionId, AgentEventType type, AgentE
         const auto binding = llm->modelBinding();
         event.providerId = binding.providerId;
         event.modelId = binding.modelId;
+        event.capabilitySnapshot = capabilitySnapshotSummary(binding.capabilities);
     }
     event.timestamp = QDateTime::currentDateTimeUtc();
     event.payload = std::move(payload);
@@ -599,7 +600,8 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         AgentLoop loop(*planner_, executor_, approval_, sandbox_, readOnlyToolIds, config);
         loop.setToolRegistry(&toolRegistry_);
         loop.setContextSources(memoryStore_, nullptr,
-            subagentPlanner ? subagentPlanner->modelBinding().contextWindowTokens : 0);
+            subagentPlanner ? subagentPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
+            subagentPlanner ? subagentPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0) : 0);
         if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
             loop.setObservationIntentPolicy(
                 std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
@@ -700,9 +702,10 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
         loop.setObservationIntentPolicy(
             std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
     }
+    const auto* boundPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
     loop.setContextSources(memoryStore_, chatHistoryStore_,
-        dynamic_cast<LlmAgentRuntime*>(planner_)
-            ? dynamic_cast<LlmAgentRuntime*>(planner_)->modelBinding().contextWindowTokens : 0);
+        boundPlanner ? boundPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
+        boundPlanner ? boundPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0) : 0);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         const auto messages = chatHistoryStore_->recentMessages(7);
         QStringList recent;

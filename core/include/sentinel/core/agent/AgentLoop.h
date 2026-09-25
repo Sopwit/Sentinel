@@ -94,10 +94,11 @@ public:
     }
     void setObservationContext(QString context) { observationContext_ = std::move(context); }
     void setContextSources(const IMemoryStore* memory, const IChatHistoryStore* history,
-                           int contextWindowTokens) {
+                           int contextWindowTokens, int maxOutputTokens = 0) {
         memoryStore_ = memory;
         chatHistoryStore_ = history;
         contextWindowTokens_ = contextWindowTokens;
+        maxOutputTokens_ = maxOutputTokens;
     }
     void setToolHookService(IToolHookService* hooks) {
         gateway_.setHookService(hooks);
@@ -162,6 +163,7 @@ private:
     const IMemoryStore* memoryStore_ = nullptr;
     const IChatHistoryStore* chatHistoryStore_ = nullptr;
     int contextWindowTokens_ = 0;
+    int maxOutputTokens_ = 0;
     const IToolExecutor& executor_;
     const IApprovalPolicy& approvalPolicy_;
     const ISandboxPolicy& sandboxPolicy_;

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <QString>
+#include <QJsonObject>
+#include <QList>
 #include <QtGlobal>
 #include <atomic>
 #include <functional>
@@ -22,6 +24,16 @@ struct ChatProviderReply {
     bool success = false;
     QString message;
     QString errorMessage;
+    struct ToolCall {
+        QString toolId;
+        QJsonObject arguments;
+    };
+    QList<ToolCall> toolCalls;
+};
+
+struct ChatRequestOptions {
+    bool structuredOutput = false;
+    bool nativeToolCalling = false;
 };
 
 inline QString chatProviderStatusName(ChatProviderStatus status) {
@@ -46,6 +58,11 @@ public:
     virtual QString name() const = 0;
     virtual ChatProviderStatus status() const = 0;
     virtual ChatProviderReply sendMessage(const QString& message) = 0;
+    virtual ChatProviderReply sendRequest(const QString& message, const ChatRequestOptions& options) {
+        if (options.structuredOutput || options.nativeToolCalling)
+            return {false, {}, QStringLiteral("Requested model capability is unavailable through this provider.")};
+        return sendMessage(message);
+    }
     virtual bool supportsStreaming() const {
         return false;
     }

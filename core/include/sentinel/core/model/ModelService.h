@@ -55,6 +55,7 @@ QString modelBindingErrorName(ModelBindingError error);
 struct ModelBindingResolution {
     ModelBindingError error = ModelBindingError::None;
     ModelBinding binding;
+    ModelSelection selection;
     std::shared_ptr<IChatProvider> provider;
     QString reason;
 
@@ -88,7 +89,11 @@ public:
 
     // One authoritative provider registry: providerId -> factory. Built-in
     // providers register at construction; composition roots may override.
-    void registerProvider(const QString& providerId, ModelProviderFactory factory);
+    void registerProvider(const QString& providerId, ModelProviderFactory factory,
+                          ModelCapabilities defaults = {});
+    void setModelCapabilities(const QString& providerId, const QString& modelId,
+                              ModelCapabilities capabilities);
+    ModelCapabilities capabilities(const QString& providerId, const QString& modelId) const;
     bool isKnownProvider(const QString& providerId) const;
     QStringList knownProviderIds() const;
 
@@ -125,6 +130,8 @@ private:
     IModelRouter* router_ = nullptr;
     ModelSelection selection_;
     QHash<QString, ModelProviderFactory> providerFactories_;
+    QHash<QString, ModelCapabilities> providerCapabilities_;
+    QHash<QString, QHash<QString, ModelCapabilities>> modelCapabilities_;
     QString ollamaEndpoint_;
     QString lmStudioEndpoint_;
     QString llamaCppEndpoint_;

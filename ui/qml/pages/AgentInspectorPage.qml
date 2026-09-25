@@ -179,6 +179,7 @@ Item {
                             Text { text: qsTr("Run ID: ") + parent.run.runId + "\n" + qsTr("Session: ") + parent.run.sessionId; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; font.pixelSize: 12 }
                             Text { text: parent.run.provider + " / " + parent.run.model + "\n" + page.stamp(parent.run.startedAt) + " - " + page.stamp(parent.run.finishedAt) + "  " + parent.run.duration; color: SentinelTheme.textPrimary; Layout.fillWidth: true; wrapMode: Text.Wrap }
                             Text { text: qsTr("Context: %1 tokens, %2 items, %3 omitted%4").arg(parent.run.contextTokens).arg(parent.run.contextItems).arg(parent.run.contextOmitted).arg(parent.run.contextCompacted ? qsTr(", compacted") : ""); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                            Text { text: parent.run.capabilitySnapshot; visible: text.length > 0; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.Wrap }
                             Text { text: qsTr("Grounding: ") + (parent.run.grounding || qsTr("Not recorded")); color: SentinelTheme.textMuted }
                             Button {
                                 visible: parent.run.parentRunId && parent.run.parentRunId.length > 0

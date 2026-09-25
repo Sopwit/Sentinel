@@ -42,7 +42,8 @@ QVariantMap runRow(const sentinel::core::StoredAgentRun& run) {
             {QStringLiteral("contextTokens"), run.contextTokens},
             {QStringLiteral("contextItems"), run.contextItems},
             {QStringLiteral("contextOmitted"), run.contextOmitted},
-            {QStringLiteral("contextCompacted"), run.contextCompacted}};
+            {QStringLiteral("contextCompacted"), run.contextCompacted},
+            {QStringLiteral("capabilitySnapshot"), run.capabilitySnapshot}};
 }
 
 QString outcomeName(int outcome) {

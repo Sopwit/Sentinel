@@ -29,7 +29,8 @@ int cost(const AgentContextItem& item) {
 AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const {
     AgentPlanningContext result;
     const int window = input.contextWindowTokens > 0 ? input.contextWindowTokens : 8192;
-    const int budget = qMax(1200, qMin(window - qMax(1024, window / 5), 24000));
+    const int reserve = qMax(qMax(1024, window / 5), input.maxOutputTokens);
+    const int budget = qMax(256, qMin(window - reserve, 24000));
     int remaining = budget - 550; // Planner contract and JSON response framing.
     auto add = [&](AgentContextItem item, int sectionCap) {
         const int allowed = qMin(sectionCap, remaining);
