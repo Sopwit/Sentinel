@@ -62,6 +62,7 @@ NotificationToast 1.0 components/notifications/NotificationToast.qml
 # Pages
 ChatPanel 1.0 pages/ChatPanel.qml
 DashboardPage 1.0 pages/DashboardPage.qml
+AgentInspectorPage 1.0 pages/AgentInspectorPage.qml
 ModelsPage 1.0 pages/models/ModelsPage.qml
 LocalModelsTab 1.0 pages/models/LocalModelsTab.qml
 OnlineRegistryTab 1.0 pages/models/OnlineRegistryTab.qml

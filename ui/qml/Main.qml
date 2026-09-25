@@ -84,7 +84,7 @@ ApplicationWindow {
             root.openSettings()
             return
         }
-        if (pageName === "Dashboard" || pageName === "Models") {
+        if (pageName === "Dashboard" || pageName === "Models" || pageName === "Inspector") {
             root.currentShellPage = pageName
             return
         }
@@ -198,6 +198,13 @@ ApplicationWindow {
                         Behavior on opacity {
                             NumberAnimation { duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName); easing.type: Easing.OutCubic }
                         }
+                    }
+
+                    AgentInspectorPage {
+                        id: inspectorPage
+                        anchors.fill: parent
+                        visible: root.currentShellPage === "Inspector"
+                        viewModel: agentInspectorViewModel
                     }
 
                     Behavior on dashSlide {
