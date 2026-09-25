@@ -27,8 +27,8 @@
 ┌────────────────────────────────────────────────────────────────────────┐
 │                         C++20 Core Subsystems                          │
 ├────────────────────────────────────────────────────────────────────────┤
-│ • AgentLoop & Runtime          • TaskPlanner & ApprovalPolicy          │
-│ • RealToolExecutor             • LocalRagStore & Embeddings            │
+│ • AgentRuntime & AgentLoop     • TaskPlanner & ApprovalPolicy          │
+│ • ToolRegistry & Gateway       • LocalRagStore & Embeddings            │
 │ • ModelRouter & ProviderCatalog• MemoryManager & ContextAssembly       │
 │ • FuzzyEditor & DiffEngine     • PlatformServices (Audio/Tray/Sys)     │
 └───────────────┬────────────────────────────────────┬───────────────────┘
@@ -52,6 +52,13 @@
 - **Abstract Provider Interface (`IChatProvider`):** Standardizes streaming text tokens, model discovery, and health inspection.
 - **Ollama Loopback Provider:** Communicates over local HTTP loopback (`127.0.0.1:11434`) for high-throughput zero-telemetry streaming.
 - **Model Router:** Dynamically routes queries between fast reasoners, coding LLMs, and compact models based on workspace requirements and task tags.
+- **Model Service (`ModelService`):** Application-lifetime owner of provider registration and
+  construction, the single authoritative provider/model `ModelSelection` (restored from and
+  persisted through settings), and run-level `ModelBinding` creation for Chat Mode,
+  interactive Agent Mode, and controlled tasks. Resolution validates provider, model,
+  routing, endpoint, and credential behind `IModelRouter` policy and returns
+  provider-neutral `ModelBindingResolution` failures, so callers never construct providers
+  themselves.
 
 ### B. Workspace Isolation & Storage Separation
 - **Strict Scope Isolation:** Memory scopes, conversational history, and document embeddings are strictly separated by `workspace_id` (`Personal`, `Engineering`, `Student`, `Custom`).
@@ -86,6 +93,15 @@
   starts run-command, Docker, and other process-backed tools through `ProcessExecutor`; stdout
   and stderr chunks become correlated `ToolOutput` events while bounded output is retained for
   the final observation. Cancellation terminates the active process before the turn closes.
+- **Local Filesystem Boundary:** Normalized filesystem calls receive canonical resource
+  snapshots before sandbox evaluation. Handlers consume those paths through
+  `IFileSystemService`, which revalidates path safety at operation time.
+  `QtFileSystemService` owns Qt file operations, typed failures, bounded listings and
+  traversal, and committed mutation results. Traversal receives the active run/tool
+  cancellation token and reports complete, truncated, cancelled, and bounded child
+  issues separately. `ToolExecutionResult` carries mutation metadata into evidence
+  invalidation and claim grounding. Remote MCP tools remain
+  separate and need an explicit semantic contract for filesystem evidence.
 - **Native Tool Registry:** `AgentRuntime` owns the registry used by planner discovery and
   `ToolExecutionGateway`. `BuiltInToolProvider` registers each native descriptor with an
   executable handler at runtime creation. Immediate handlers call focused native operations;
@@ -93,6 +109,19 @@
   disabled tool cannot fall through to the synchronous compatibility executor.
   Risk shown in gateway summaries now follows the planner's `ToolRiskLevel`; the former
   gateway-only `Critical` labels for high-risk native tools are no longer authoritative.
+- **Agent completion:** Agent Mode enters through `AgentRuntime` sessions. An accepted
+  `FinalAnswer` passes the observation and claim-grounding gate before a run completes.
+  Tool output and approval events are activity, not assistant answers. The heuristic
+  metadata planner cannot infer tool calls from user prose; direct synchronous native
+  execution is closed. Discovered MCP tools are registered through `McpToolProvider`,
+  rather than generic model-visible MCP proxy tools.
+- **Controlled tasks:** `ControlledTaskService` owns one in-memory task collection,
+  settings-backed persistence, and the live task-to-session mapping. It subscribes to
+  `AgentEvent` and projects runtime state into durable task state. Execution uses the
+  same `AgentRuntime` session, planner, registry, evidence, and final-answer gate as
+  interactive Agent Mode. Captured provider and model IDs are resolved for each task
+  independently of the current UI selection. Accepted final answers become task
+  results without entering chat history; stale active records become failed on startup.
 - **Explicit Human Approval Gate:** Every destructive or privileged tool execution (file modification, shell command, workspace deletion) halts for explicit user approval unless explicitly overridden.
 - **Tool Sandbox & Isolation:** Built-in workspace boundaries prevent tool execution outside the authorized project root directory.
 
@@ -157,8 +186,37 @@ keywords are rejected; unknown descriptive keywords are ignored.
 again against the resolved registration snapshot before hooks or handlers, applies
 schema defaults, and returns `InvalidArguments` as a recoverable observation. Typed
 JSON argument values travel alongside the legacy text form so native handlers,
-MCP calls, and plugins receive the same normalized invocation. Path authorization,
-shell safety, permissions, and sandbox checks remain separate from schema validation.
+MCP calls, and plugins receive the same normalized invocation.
+
+### Authorization
+
+`ToolDescriptor.authorizationRequirements` declares each tool's semantic security
+domain, access mode, and optional resource argument. `AuthorizationResolver` runs after
+argument normalization and describes the requested access. `ResourceAuthorizationResolver`
+binds normalized path arguments to canonical resources. It inspects unified diff targets
+before `apply-patch` approval and requires read/write for updates, write for additions,
+and delete for removals. Unsupported renames and unsafe patch paths are rejected.
+Invalid or unbound filesystem requirements fail closed at the gateway.
+
+`PermissionService` owns explicit semantic grants. Session grants are scoped to the
+active `AgentRuntime` session and cleared on completion, failure, cancellation, or
+shutdown; runtime-wide grants remain in memory for the lifetime of the runtime. Grants
+match domain, access, and resource scope, so read does not imply write and a tool ID does
+not define the grant. `PermissionPolicyService` evaluates defaults for external-service
+invocations; `IApprovalPolicy` turns risk-based Ask decisions into user approval.
+Approval itself does not retain grants. “Always allow” records the resolved semantic
+requests in `PermissionService`.
+
+`AgentLoop` resolves resource identity before approval, checks exact session grants and
+hard path policy after approval, then evaluates `ISandboxPolicy`. The plan carries the
+authorized resource snapshot into the sandbox and handler. The gateway checks that
+descriptor, normalized arguments, and resource identities still match before execution.
+`ExternalDirectoryGate` and `PathGuard` retain hard path boundaries, while the file
+service revalidates canonical paths at the operation boundary without a second prompt.
+Plugin manifest permissions remain an outer
+host boundary; plugin tool calls still pass through the normal gateway and approval flow.
+Controlled tasks use their runtime session. Subagents use a separate session and do not
+inherit parent session grants.
 
 # Agent observation evidence
 
