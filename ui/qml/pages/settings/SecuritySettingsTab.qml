@@ -15,7 +15,8 @@ Item {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
     property string activeTaskId: ""
-    readonly property bool taskRunning: root.viewModel.controlledTaskActiveSummary.indexOf("[Running]") >= 0
+    readonly property bool taskAwaitingApproval: root.viewModel.controlledTaskActiveSummary.indexOf("[Waiting Approval]") >= 0
+    readonly property bool taskRunning: root.viewModel.controlledTaskActiveSummary.indexOf("[Running]") >= 0 || root.taskAwaitingApproval
 
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
@@ -223,7 +224,7 @@ Item {
         SettingCard {
             visible: root.activeTaskId.length > 0
             title: qsTr("3. Approve & Run")
-            subtitle: qsTr("Approve the plan, start the task, then run each step. Every step executes for real through the sandbox.")
+            subtitle: qsTr("Approve the task, start its agent session, then review any tool approval requests.")
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -261,27 +262,21 @@ Item {
                     SentinelButton {
                         visible: root.taskRunning
                         Layout.fillWidth: true
-                        text: qsTr("Run Current Step")
+                        text: root.taskAwaitingApproval ? qsTr("Approve Tool & Continue") :
+                              root.viewModel.controlledTaskSessionActive ? qsTr("Agent Running") : qsTr("Run Agent Task")
+                        enabled: !root.viewModel.controlledTaskSessionActive || root.taskAwaitingApproval
                         accent: root.modeAccent
                         onClicked: root.viewModel.executeControlledAgentStep(root.activeTaskId)
                     }
+
+                    SentinelButton {
+                        visible: root.taskRunning
+                        text: qsTr("Cancel")
+                        accent: SentinelTheme.warning
+                        onClicked: root.viewModel.cancelControlledAgentTask(root.activeTaskId)
+                    }
                 }
 
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Approval")
-                    value: root.viewModel.latestApprovalSummary
-                    visible: root.viewModel.latestApprovalSummary.length > 0
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Sandbox")
-                    value: root.viewModel.latestSandboxSummary
-                    visible: root.viewModel.latestSandboxSummary.length > 0
-                    Layout.fillWidth: true
-                }
             }
         }
 

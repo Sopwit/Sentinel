@@ -1469,6 +1469,8 @@ class DesktopShellViewModel final : public QObject {
         QStringList agentPlanDiagnostics READ agentPlanDiagnostics NOTIFY agentRuntimeChanged)
     Q_PROPERTY(QString controlledTaskActiveSummary READ controlledTaskActiveSummary NOTIFY
                    controlledAgentTasksChanged)
+    Q_PROPERTY(bool controlledTaskSessionActive READ controlledTaskSessionActive NOTIFY
+                   controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledTaskCurrentStep READ controlledTaskCurrentStep NOTIFY
                    controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledTaskProgressSummary READ controlledTaskProgressSummary NOTIFY
@@ -2404,6 +2406,7 @@ public:
     QString agentPlanRefusalReason() const;
     QStringList agentPlanDiagnostics() const;
     QString controlledTaskActiveSummary() const;
+    bool controlledTaskSessionActive() const;
     QString controlledTaskCurrentStep() const;
     QString controlledTaskProgressSummary() const;
     QStringList controlledTaskPlanSteps() const;
@@ -2625,8 +2628,6 @@ private:
     core::SkillProfileService skillProfileService_;
     core::ToolExecutionGateway toolExecutionGateway_;
     core::WorkspaceService workspaceService_;
-    core::ControlledAgentTaskService controlledAgentTaskService_;
-    QSet<QString> controlledStepsInFlight_;
     std::unique_ptr<core::LocalRagStore> localRagStore_;
     QList<core::RagDocumentRecord> attachments_;
     QString workspaceLastActionStatus_ = QStringLiteral("Ready");
