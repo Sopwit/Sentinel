@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/editor/FuzzyEditor.h"
 #include "sentinel/core/mcp/McpService.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
@@ -49,14 +50,6 @@ RealToolExecutor::RealToolExecutor(std::shared_ptr<AlarmStore> alarmStore)
 
 void RealToolExecutor::setAlarmStore(std::shared_ptr<AlarmStore> alarmStore) {
     alarmStore_ = std::move(alarmStore);
-}
-
-void RealToolExecutor::setMemorySnapshot(MemoryEntries entries) {
-    memorySnapshot_ = std::move(entries);
-}
-
-void RealToolExecutor::setHistorySnapshot(QStringList entries) {
-    historySnapshot_ = std::move(entries);
 }
 
 void RealToolExecutor::configureMcpServers(const QList<McpServerConfig>& configs) {
@@ -2283,37 +2276,26 @@ ToolExecutionResult RealToolExecutor::executeMemorySearch(const PlannedToolInvoc
             logs.append(QStringLiteral("memory-search: No query argument provided."));
             continue;
         }
-        if (memorySnapshot_.isEmpty()) {
+        if (!memoryStore_ || !memoryStore_->isAvailable()) {
             logs.append(
                 QStringLiteral("memory-search: No memory entries are available for this session."));
             continue;
         }
         const int limit = qBound(1, getIntArgument(invocation, QStringLiteral("limit"), 10), 50);
-        const QString needle = query.toLower();
-
+        const auto entries = memoryStore_->searchRelevant(query, limit);
         QStringList matches;
-        int totalMatches = 0;
-        for (const auto& entry : memorySnapshot_) {
-            if (!entry.first.toLower().contains(needle) &&
-                !entry.second.toLower().contains(needle)) {
-                continue;
-            }
-            ++totalMatches;
-            if (matches.size() < limit) {
-                QString value = entry.second.simplified();
-                if (value.size() > 400) {
-                    value = value.left(400) + QStringLiteral("...");
-                }
-                matches.append(QStringLiteral("%1: %2").arg(entry.first, value));
-            }
+        for (const auto& entry : entries) {
+            QString value = entry.second.simplified();
+            if (value.size() > 400)
+                value = value.left(400) + QStringLiteral("...");
+            matches.append(QStringLiteral("%1: %2").arg(entry.first, value));
         }
 
         if (matches.isEmpty()) {
             logs.append(QStringLiteral("memory-search: No memory entries match '%1'.").arg(query));
         } else {
-            logs.append(QStringLiteral("memory-search: %1 match(es) for '%2' (showing %3):\n%4")
-                            .arg(QString::number(totalMatches), query,
-                                 QString::number(matches.size()), matches.join(QLatin1Char('\n'))));
+            logs.append(QStringLiteral("memory-search: showing up to %1 match(es) for '%2':\n%3")
+                            .arg(QString::number(limit), query, matches.join(QLatin1Char('\n'))));
         }
 
     } while (false);
@@ -2329,37 +2311,28 @@ ToolExecutionResult RealToolExecutor::executeHistorySearch(const PlannedToolInvo
             logs.append(QStringLiteral("history-search: No query argument provided."));
             continue;
         }
-        if (historySnapshot_.isEmpty()) {
+        if (!chatHistoryStore_ || !chatHistoryStore_->isAvailable()) {
             logs.append(
                 QStringLiteral("history-search: No chat history is available for this session."));
             continue;
         }
         const int limit = qBound(1, getIntArgument(invocation, QStringLiteral("limit"), 10), 50);
-        const QString needle = query.toLower();
-
+        const auto messages = chatHistoryStore_->searchMessages(query, limit);
         QStringList matches;
-        int totalMatches = 0;
-        for (const auto& entry : historySnapshot_) {
-            if (!entry.toLower().contains(needle)) {
-                continue;
-            }
-            ++totalMatches;
-            if (matches.size() < limit) {
-                QString preview = entry.simplified();
-                if (preview.size() > 400) {
-                    preview = preview.left(400) + QStringLiteral("...");
-                }
-                matches.append(preview);
-            }
+        for (const auto& message : messages) {
+            QString preview = QStringLiteral("[%1] %2")
+                                  .arg(chatRoleName(message.role), message.content.simplified());
+            if (preview.size() > 400)
+                preview = preview.left(400) + QStringLiteral("...");
+            matches.append(preview);
         }
 
         if (matches.isEmpty()) {
             logs.append(
                 QStringLiteral("history-search: No history entries match '%1'.").arg(query));
         } else {
-            logs.append(QStringLiteral("history-search: %1 match(es) for '%2' (showing %3):\n%4")
-                            .arg(QString::number(totalMatches), query,
-                                 QString::number(matches.size()), matches.join(QLatin1Char('\n'))));
+            logs.append(QStringLiteral("history-search: showing up to %1 match(es) for '%2':\n%3")
+                            .arg(QString::number(limit), query, matches.join(QLatin1Char('\n'))));
         }
 
     } while (false);

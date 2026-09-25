@@ -24,6 +24,8 @@ public:
     void put(QString key, QString value) override;
     QString get(const QString& key) const override;
     MemoryEntries entries() const override;
+    MemoryEntries searchRelevant(const QString& query, int limit) const override;
+    QList<MemoryRecord> searchRelevantRecords(const QString& query, int limit) const override;
     void clear() override;
     bool isAvailable() const override;
     QString lastError() const override;
@@ -36,11 +38,13 @@ private:
     void initializeSchema();
     void setLastError(QString error) const;
 
-    static constexpr int currentSchemaVersion = 1;
+    static constexpr int currentSchemaVersion = 3;
 
     QString databasePath_;
     QString connectionName_;
     QSqlDatabase database_;
+    bool identityReady_ = false;
+    bool ftsReady_ = false;
     mutable QString lastError_;
 };
 

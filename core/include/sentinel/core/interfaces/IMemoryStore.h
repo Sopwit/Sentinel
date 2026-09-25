@@ -13,6 +13,11 @@ namespace sentinel::core {
 
 using MemoryEntry = std::pair<QString, QString>;
 using MemoryEntries = QList<MemoryEntry>;
+struct MemoryRecord {
+    qint64 id = 0;
+    QString key;
+    QString value;
+};
 
 class IMemoryStore {
 public:
@@ -23,6 +28,16 @@ public:
     virtual void put(QString key, QString value) = 0;
     virtual QString get(const QString& key) const = 0;
     virtual MemoryEntries entries() const = 0;
+    virtual MemoryEntries searchRelevant(const QString& query, int limit) const {
+        Q_UNUSED(query)
+        Q_UNUSED(limit)
+        return {};
+    }
+    virtual QList<MemoryRecord> searchRelevantRecords(const QString& query, int limit) const {
+        Q_UNUSED(query)
+        Q_UNUSED(limit)
+        return {};
+    }
     virtual void clear() = 0;
     virtual bool isAvailable() const {
         return true;
@@ -38,4 +53,5 @@ namespace sentinel::core::interfaces {
 using IMemoryStore = ::sentinel::core::IMemoryStore;
 using MemoryEntry = ::sentinel::core::MemoryEntry;
 using MemoryEntries = ::sentinel::core::MemoryEntries;
+using MemoryRecord = ::sentinel::core::MemoryRecord;
 } // namespace sentinel::core::interfaces

@@ -5,6 +5,7 @@
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
 #include "sentinel/core/memory/SqlitePragmas.h"
+#include "sentinel/core/memory/FtsQuery.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -12,6 +13,7 @@
 #include <QSqlQuery>
 #include <QUuid>
 #include <QVariant>
+#include <algorithm>
 
 namespace sentinel::core {
 
@@ -36,6 +38,26 @@ ChatMessageStatus statusFromName(const QString& status) {
     }
     return ChatMessageStatus::Received;
 }
+
+ChatMessage messageFromQuery(const QSqlQuery& query) {
+    return ChatMessage{
+        query.value(0).toInt(), roleFromName(query.value(1).toString()),
+        query.value(2).toString(),
+        QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs),
+        statusFromName(query.value(4).toString()),
+        query.value(5).toString(), query.value(6).toString(), query.value(7).toString(),
+        query.value(8).isNull() ? -1 : query.value(8).toLongLong(),
+        query.value(9).isNull() ? -1 : query.value(9).toLongLong(),
+        query.value(10).isNull() ? 0.0 : query.value(10).toDouble()};
+}
+
+const QString kMessageColumns = QStringLiteral(
+    "id, role, content, timestamp, status, provider_used, model_used, role_used, "
+    "response_duration_ms, first_token_latency_ms, approx_tokens_per_second");
+const QString kJoinedMessageColumns = QStringLiteral(
+    "m.id, m.role, m.content, m.timestamp, m.status, m.provider_used, m.model_used, "
+    "m.role_used, m.response_duration_ms, m.first_token_latency_ms, "
+    "m.approx_tokens_per_second");
 
 static const QStringList kKnownTables = {
     QStringLiteral("chat_messages"),
@@ -92,22 +114,97 @@ QList<ChatMessage> SQLiteChatHistoryStore::loadMessages() const {
 
     setLastError({});
     while (query.next()) {
-        const auto timestamp = QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs);
-        result.append(ChatMessage{
-            query.value(0).toInt(),
-            roleFromName(query.value(1).toString()),
-            query.value(2).toString(),
-            timestamp,
-            statusFromName(query.value(4).toString()),
-            query.value(5).toString(),
-            query.value(6).toString(),
-            query.value(7).toString(),
-            query.value(8).isNull() ? -1 : query.value(8).toLongLong(),
-            query.value(9).isNull() ? -1 : query.value(9).toLongLong(),
-            query.value(10).isNull() ? 0.0 : query.value(10).toDouble(),
-        });
+        result.append(messageFromQuery(query));
     }
 
+    return result;
+}
+
+QList<ChatMessage> SQLiteChatHistoryStore::recentMessages(int limit) const {
+    QList<ChatMessage> result;
+    if (limit <= 0 || !database_.isOpen())
+        return result;
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("SELECT %1 FROM chat_messages WHERE role IN ('user','assistant') "
+                                 "AND status != 'error' ORDER BY id DESC LIMIT ?").arg(kMessageColumns));
+    query.addBindValue(qBound(1, limit, 100));
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return result;
+    }
+    setLastError({});
+    while (query.next())
+        result.prepend(messageFromQuery(query));
+    return result;
+}
+
+QList<ChatMessage> SQLiteChatHistoryStore::searchMessages(const QString& text, int limit,
+                                                           int beforeId) const {
+    QList<ChatMessage> result;
+    if (text.trimmed().isEmpty() || limit <= 0 || !database_.isOpen())
+        return result;
+    const QString match = ftsMatchQuery(text);
+    if (ftsReady_ && !match.isEmpty()) {
+        QSqlQuery indexed(database_);
+        indexed.prepare(QStringLiteral(
+            "SELECT %1 FROM chat_messages_fts "
+            "JOIN chat_messages AS m ON m.id = chat_messages_fts.rowid "
+            "WHERE chat_messages_fts MATCH ? AND m.role IN ('user','assistant') "
+            "AND m.status != 'error' AND (? = 0 OR m.id < ?) "
+            "ORDER BY bm25(chat_messages_fts), m.id DESC LIMIT ?")
+            .arg(kJoinedMessageColumns));
+        indexed.addBindValue(match);
+        indexed.addBindValue(beforeId);
+        indexed.addBindValue(beforeId);
+        indexed.addBindValue(qBound(1, limit, 50));
+        if (indexed.exec()) {
+            setLastError({});
+            while (indexed.next())
+                result.append(messageFromQuery(indexed));
+            return result;
+        }
+        setLastError(indexed.lastError().text());
+    }
+    QStringList words = text.simplified().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    words.erase(std::remove_if(words.begin(), words.end(), [](const QString& word) {
+        return word.size() < 3;
+    }), words.end());
+    words = words.mid(0, 5);
+    if (words.isEmpty())
+        words.append(text.trimmed().left(80));
+    QStringList conditions;
+    QStringList scores;
+    for (const auto& word : words) {
+        Q_UNUSED(word)
+        conditions.append(QStringLiteral("content LIKE ? ESCAPE '\\'"));
+        scores.append(QStringLiteral("CASE WHEN content LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END"));
+    }
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("SELECT %1 FROM chat_messages WHERE role IN ('user','assistant') "
+                                 "AND status != 'error' AND (? = 0 OR id < ?) AND (%2) "
+                                 "ORDER BY (%3) DESC, id DESC LIMIT ?")
+                      .arg(kMessageColumns, conditions.join(QStringLiteral(" OR ")),
+                           scores.join(QLatin1Char('+'))));
+    auto pattern = [](QString word) {
+        word.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
+        word.replace(QLatin1Char('%'), QStringLiteral("\\%"));
+        word.replace(QLatin1Char('_'), QStringLiteral("\\_"));
+        return QLatin1Char('%') + word + QLatin1Char('%');
+    };
+    query.addBindValue(beforeId);
+    query.addBindValue(beforeId);
+    for (const auto& word : words)
+        query.addBindValue(pattern(word));
+    for (const auto& word : words)
+        query.addBindValue(pattern(word));
+    query.addBindValue(qBound(1, limit, 50));
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return result;
+    }
+    setLastError({});
+    while (query.next())
+        result.append(messageFromQuery(query));
     return result;
 }
 
@@ -266,6 +363,13 @@ void SQLiteChatHistoryStore::initializeSchema() {
         }
     }
 
+    if (!query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS chat_messages_recent_idx "
+                                   "ON chat_messages(id DESC) WHERE role IN ('user','assistant') "
+                                   "AND status != 'error'"))) {
+        setLastError(query.lastError().text());
+        return;
+    }
+
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS chat_history_schema_metadata("
                                    "key TEXT PRIMARY KEY NOT NULL,"
                                    "value INTEGER NOT NULL)"))) {
@@ -273,11 +377,58 @@ void SQLiteChatHistoryStore::initializeSchema() {
         return;
     }
 
+    const int previousVersion = schemaVersion();
+    QSqlQuery existing(database_);
+    existing.prepare(QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' AND name=?"));
+    existing.addBindValue(QStringLiteral("chat_messages_fts"));
+    const bool hadIndex = existing.exec() && existing.next();
+    QSqlQuery triggerCheck(database_);
+    triggerCheck.exec(QStringLiteral("SELECT count(*) FROM sqlite_master WHERE type='trigger' "
+                                           "AND name IN ('chat_fts_insert','chat_fts_delete','chat_fts_update')"));
+    const bool hadTriggers = triggerCheck.next() && triggerCheck.value(0).toInt() == 3;
+    triggerCheck.finish();
+    existing.finish();
+    if (database_.transaction()) {
+        const QStringList statements{
+            QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS chat_messages_fts USING fts5("
+                           "content, tokenize='unicode61')"),
+            QStringLiteral("CREATE TRIGGER IF NOT EXISTS chat_fts_insert AFTER INSERT ON chat_messages "
+                           "WHEN new.role IN ('user','assistant') AND new.status != 'error' "
+                           "BEGIN INSERT INTO chat_messages_fts(rowid, content) "
+                           "VALUES(new.id, new.content); END"),
+            QStringLiteral("CREATE TRIGGER IF NOT EXISTS chat_fts_delete AFTER DELETE ON chat_messages "
+                           "WHEN old.role IN ('user','assistant') AND old.status != 'error' "
+                           "BEGIN DELETE FROM chat_messages_fts WHERE rowid=old.id; END"),
+            QStringLiteral("CREATE TRIGGER IF NOT EXISTS chat_fts_update AFTER UPDATE ON chat_messages "
+                           "BEGIN DELETE FROM chat_messages_fts WHERE rowid=old.id; "
+                           "INSERT INTO chat_messages_fts(rowid, content) "
+                           "SELECT new.id, new.content WHERE new.role IN ('user','assistant') "
+                           "AND new.status != 'error'; END")};
+        bool ready = true;
+        for (const auto& statement : statements)
+            if (!query.exec(statement)) {
+                ready = false;
+                break;
+            }
+        if (ready && (previousVersion < currentSchemaVersion || !hadIndex || !hadTriggers)) {
+            ready = query.exec(QStringLiteral("DELETE FROM chat_messages_fts"));
+            if (ready)
+                ready = query.exec(QStringLiteral("INSERT INTO chat_messages_fts(rowid, content) "
+                                                   "SELECT id, content FROM chat_messages "
+                                                   "WHERE role IN ('user','assistant') "
+                                                   "AND status != 'error'"));
+        }
+        if (ready && database_.commit())
+            ftsReady_ = true;
+        else
+            database_.rollback();
+    }
+
     query.prepare(QStringLiteral("INSERT INTO chat_history_schema_metadata(key, value) "
                                  "VALUES(?, ?) "
                                  "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
     query.addBindValue(QStringLiteral("schema_version"));
-    query.addBindValue(currentSchemaVersion);
+    query.addBindValue(ftsReady_ ? currentSchemaVersion : qMax(2, previousVersion));
     if (!query.exec()) {
         setLastError(query.lastError().text());
         return;

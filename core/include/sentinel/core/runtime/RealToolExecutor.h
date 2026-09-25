@@ -19,6 +19,7 @@
 namespace sentinel::core {
 
 class ExternalDirectoryGate;
+class IChatHistoryStore;
 
 class RealToolExecutor final : public IToolExecutor {
 public:
@@ -31,12 +32,10 @@ public:
     }
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void setAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
-    // Snapshots long-term memory entries for the memory-search tool. Captured on the
-    // calling thread before an agent run starts so tool threads never touch the
-    // SQLite-backed store directly.
-    void setMemorySnapshot(MemoryEntries entries);
-    // Snapshots chat history lines ("[role] content") for the history-search tool.
-    void setHistorySnapshot(QStringList entries);
+    void setSearchStores(const IMemoryStore* memory, const IChatHistoryStore* history) {
+        memoryStore_ = memory;
+        chatHistoryStore_ = history;
+    }
     // Replaces the MCP server set used by the dynamic MCP provider and connects
     // to every enabled server.
     void configureMcpServers(const QList<McpServerConfig>& configs);
@@ -147,8 +146,8 @@ private:
     mutable WebSearchTool webSearchTool_;
     mutable WebFetchTool webFetchTool_;
     std::shared_ptr<AlarmStore> alarmStore_;
-    MemoryEntries memorySnapshot_;
-    QStringList historySnapshot_;
+    const IMemoryStore* memoryStore_ = nullptr;
+    const IChatHistoryStore* chatHistoryStore_ = nullptr;
     std::shared_ptr<IMcpService> mcpService_;
     std::function<QString(const QString& task)> subagentRunner_;
     mutable bool subagentActive_ = false;
