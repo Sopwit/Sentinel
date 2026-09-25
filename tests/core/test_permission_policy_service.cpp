@@ -47,19 +47,17 @@ void PermissionPolicyServiceTest::reportsPermissionBoundaries() {
     const auto summaries = service.permissionSummaries(QStringLiteral("Trusted"));
 
     QCOMPARE(summaries.size(), 10);
-    QVERIFY(summaries.first().diagnostics.contains(QStringLiteral("Execution grant: allowed")));
+    QVERIFY(summaries.first().diagnostics.contains(
+        QStringLiteral("Execution decision: descriptor, risk, and resource policy")));
     QVERIFY(service.registrySummary(QStringLiteral("Trusted"))
                 .developerDiagnostics.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("MCP calls require gateway approval")));
-    QVERIFY(!service.allowsToolExecution(QStringLiteral("tool-execution"),
-                                         QStringLiteral("Disabled"), true));
-    QVERIFY(!service.allowsToolExecution(QStringLiteral("tool-execution"),
-                                         QStringLiteral("Ask Every Time"), false));
-    QVERIFY(service.allowsToolExecution(QStringLiteral("tool-execution"),
-                                        QStringLiteral("Ask Every Time"), true));
-    QVERIFY(service.registrySummary(QStringLiteral("Enabled"))
-                .developerDiagnostics.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("No cloud request")));
+                .contains(QStringLiteral("Subagents use a restricted tool set")));
+    const sentinel::core::AuthorizationRequest external{
+        sentinel::core::SecurityDomain::ExternalService,
+        sentinel::core::AccessMode::Invoke, QStringLiteral("mcp:test-server")};
+    QVERIFY(!service.allowsAuthorization(external, QStringLiteral("Disabled"), true));
+    QVERIFY(!service.allowsAuthorization(external, QStringLiteral("Ask Every Time"), false));
+    QVERIFY(service.allowsAuthorization(external, QStringLiteral("Ask Every Time"), true));
 }
 
 QTEST_MAIN(PermissionPolicyServiceTest)
