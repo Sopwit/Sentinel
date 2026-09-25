@@ -30,6 +30,13 @@ described below.
 ## Architecture Rules
 
 - Preserve the modular monolith structure.
+- Agent Mode enters through `AgentRuntime`; only an accepted `AgentLoop` final answer completes a run. Chat Mode remains a provider conversation.
+- Controlled tasks also execute through `AgentRuntime` sessions. `ControlledTaskService` owns their records, settings persistence, live session mapping, and `AgentEvent` projection; the view model only presents state and requests actions. Tool completion alone never completes a controlled task.
+- Resolve the selected provider and model through `IModelRouter` and keep one `ModelBinding` for an active run.
+- `ToolRegistry` registrations and `ToolDescriptor` contracts are authoritative for built-in, MCP, and plugin tools. `ToolExecutionGateway` validates arguments before handlers execute.
+- Filesystem built-ins use `IFileSystemService`; process-backed tools use `ProcessExecutor`.
+- `ObservationIntentPolicy` specifies required observations, and `ClaimGroundingResolver` decides supported deterministic claims from current evidence. Partial searches can support positive observations but cannot prove absence.
+- Natural-language user text must never become a shell command through heuristic planning.
 - Keep C++ core logic separate from QML presentation.
 - Expose QML-safe view models, not raw core objects.
 - Keep provider behavior behind `IChatProvider`.
