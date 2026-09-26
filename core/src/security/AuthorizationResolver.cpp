@@ -95,13 +95,14 @@ QList<AuthorizationRequest> AuthorizationResolver::resolve(
             resource = url.host().toLower();
         }
         requests.append({requirement.domain, requirement.access, resource,
-                         descriptor.riskLevel, descriptor.providerId, descriptor.id});
+                         descriptor.riskLevel, descriptor.providerId, descriptor.id,
+                         requirement.resourceKind});
     }
     if (requests.isEmpty() &&
         (descriptor.source == ToolSource::MCP || descriptor.source == ToolSource::Plugin)) {
         requests.append({SecurityDomain::ExternalService, AccessMode::Invoke,
                          descriptor.providerId, descriptor.riskLevel, descriptor.providerId,
-                         descriptor.id});
+                         descriptor.id, AuthorizationResourceKind::Provider});
     }
     return requests;
 }

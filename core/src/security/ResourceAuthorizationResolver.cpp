@@ -46,7 +46,8 @@ bool appendFile(ResourceAuthorizationResult& result, const ToolDescriptor& descr
     result.snapshot.files.append({argument, action, access,
                                   {canonical, path, filesystemAccess}});
     result.snapshot.requests.append({SecurityDomain::FileSystem, access, canonical,
-                                     descriptor.riskLevel, descriptor.providerId, descriptor.id});
+                                     descriptor.riskLevel, descriptor.providerId, descriptor.id,
+                                     AuthorizationResourceKind::FileSystemPath});
     return true;
 }
 } // namespace
@@ -115,7 +116,7 @@ ResourceAuthorizationResult ResourceAuthorizationResolver::authorize(
     ResourceAuthorizationResult result;
     result.snapshot = snapshot;
     QtFileSystemService service(gate);
-    for (const auto& resource : snapshot.files) {
+    for (auto& resource : result.snapshot.files) {
         if (gate && !PathGuard::contains(snapshot.workingDirectory,
                                          resource.path.canonicalPath)) {
             const bool granted = permissions && std::any_of(
@@ -146,6 +147,7 @@ ResourceAuthorizationResult ResourceAuthorizationResolver::authorize(
                                 .arg(resource.path.displayPath);
             return result;
         }
+        resource.path = *checked.value;
     }
     result.snapshot.authorized = true;
     return result;
