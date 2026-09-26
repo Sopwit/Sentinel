@@ -45,6 +45,28 @@ enum class ModelRoutingStatus {
 
 enum class CapabilitySupport { Unknown, Unsupported, Supported };
 
+enum class ModelMetadataSource {
+    Unknown,
+    ProviderDefault,
+    ProviderCatalog,
+    ProviderOwnedMetadata,
+    RuntimeReported,
+    ProgrammaticMetadata,
+    UserOverride,
+};
+
+struct ModelCapabilityProvenance {
+    ModelMetadataSource streaming = ModelMetadataSource::Unknown;
+    ModelMetadataSource structuredOutput = ModelMetadataSource::Unknown;
+    ModelMetadataSource nativeToolCalling = ModelMetadataSource::Unknown;
+    ModelMetadataSource combinedToolsAndStructuredOutput = ModelMetadataSource::Unknown;
+    ModelMetadataSource visionInput = ModelMetadataSource::Unknown;
+    ModelMetadataSource audioInput = ModelMetadataSource::Unknown;
+    ModelMetadataSource audioOutput = ModelMetadataSource::Unknown;
+    ModelMetadataSource contextWindow = ModelMetadataSource::Unknown;
+    ModelMetadataSource maxOutputTokens = ModelMetadataSource::Unknown;
+};
+
 struct ModelCapabilities {
     CapabilitySupport streaming = CapabilitySupport::Unknown;
     CapabilitySupport structuredOutput = CapabilitySupport::Unknown;
@@ -55,6 +77,7 @@ struct ModelCapabilities {
     CapabilitySupport audioOutput = CapabilitySupport::Unknown;
     std::optional<int> contextWindow;
     std::optional<int> maxOutputTokens;
+    ModelCapabilityProvenance provenance;
 };
 
 inline QString capabilitySnapshotSummary(const ModelCapabilities& capabilities) {

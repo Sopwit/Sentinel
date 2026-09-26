@@ -416,11 +416,15 @@ OllamaModelDiscoveryResult OllamaHttpRuntimeClient::discoverModels(
         if (name.isEmpty()) {
             continue;
         }
-        result.models.append(OllamaModelSummary{
+        OllamaModelSummary model{
             name,
             object.value(QStringLiteral("modified_at")).toString(),
             object.value(QStringLiteral("size")).toVariant().toLongLong(),
-        });
+        };
+        const auto details = object.value(QStringLiteral("details")).toObject();
+        model.family = details.value(QStringLiteral("family")).toString();
+        model.architecture = model.family;
+        result.models.append(std::move(model));
     }
     result.lifecycle = ChatRequestLifecycle::Completed;
     result.errorCategory = ChatProviderErrorCategory::None;
@@ -1532,6 +1536,34 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
         if (!model.capabilities.contextWindow)
             model.capabilities.contextWindow = positiveLimit(QStringLiteral("max_context_length"));
         model.capabilities.maxOutputTokens = positiveLimit(QStringLiteral("max_output_tokens"));
+        const auto reportedSupport = [&object](const QString& key) {
+            const auto value = object.value(key);
+            return value.isBool() ? (value.toBool() ? CapabilitySupport::Supported
+                                                   : CapabilitySupport::Unsupported)
+                                  : CapabilitySupport::Unknown;
+        };
+        const auto reported = object.value(QStringLiteral("capabilities")).toObject();
+        const auto booleanCapability = [&reported](const QString& key) {
+            const auto value = reported.value(key);
+            return value.isBool() ? (value.toBool() ? CapabilitySupport::Supported
+                                                   : CapabilitySupport::Unsupported)
+                                  : CapabilitySupport::Unknown;
+        };
+        model.capabilities.nativeToolCalling = booleanCapability(QStringLiteral("trained_for_tool_use"));
+        if (model.capabilities.nativeToolCalling == CapabilitySupport::Unknown)
+            model.capabilities.nativeToolCalling = reportedSupport(QStringLiteral("tool_calling"));
+        model.capabilities.structuredOutput = reportedSupport(QStringLiteral("structured_output"));
+        model.capabilities.visionInput = booleanCapability(QStringLiteral("vision"));
+        if (model.capabilities.visionInput == CapabilitySupport::Unknown)
+            model.capabilities.visionInput = reportedSupport(QStringLiteral("vision"));
+        model.capabilities.audioInput = reportedSupport(QStringLiteral("audio_input"));
+        model.capabilities.audioOutput = reportedSupport(QStringLiteral("audio_output"));
+        model.capabilities.streaming = reportedSupport(QStringLiteral("streaming"));
+        model.publisher = object.value(QStringLiteral("publisher")).toString();
+        model.family = object.value(QStringLiteral("family")).toString();
+        model.architecture = object.value(QStringLiteral("architecture")).toString();
+        if (model.architecture.isEmpty())
+            model.architecture = object.value(QStringLiteral("arch")).toString();
         models.append(std::move(model));
     }
     return models;
