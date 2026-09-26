@@ -58,6 +58,7 @@ struct AgentLoopState {
     int rejectedFinalAnswers = 0;
     QString finalAnswer;
     QString abortReason;
+    std::optional<ProviderFailureMetadata> providerFailure;
     ToolInvocationPlan pendingApprovalPlan;
     QString pendingApprovalThought;
     QList<AuthorizationRequest> pendingAuthorizationRequests;

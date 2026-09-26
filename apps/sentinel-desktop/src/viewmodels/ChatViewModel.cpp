@@ -63,7 +63,9 @@ void ChatViewModel::sendPrompt() {
 
     const auto assistantText = reply.success
                                    ? reply.message
-                                   : QStringLiteral("Provider error: %1").arg(reply.errorMessage);
+                                   : QStringLiteral("Provider error [%1]: %2")
+                                         .arg(chatProviderErrorCategoryName(reply.category),
+                                              reply.errorMessage);
     Q_EMIT messageReceived(QStringLiteral("assistant"), assistantText);
 
     if (m_historyStore) {

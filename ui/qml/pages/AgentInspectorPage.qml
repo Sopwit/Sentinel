@@ -175,7 +175,7 @@ Item {
                             property var run: page.viewModel.selectedRun
 
                             Text { text: parent.run.goal || qsTr("Agent run"); color: SentinelTheme.textPrimary; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                            Text { text: parent.run.runType + "  /  " + parent.run.state; color: SentinelTheme.accent; font.bold: true }
+                            Text { text: parent.run.runType + (parent.run.role ? "  /  " + parent.run.role : "") + "  /  " + parent.run.state; color: SentinelTheme.accent; font.bold: true }
                             Text { text: qsTr("Run ID: ") + parent.run.runId + "\n" + qsTr("Session: ") + parent.run.sessionId; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; font.pixelSize: 12 }
                             Text { text: parent.run.provider + " / " + parent.run.model + "\n" + page.stamp(parent.run.startedAt) + " - " + page.stamp(parent.run.finishedAt) + "  " + parent.run.duration; color: SentinelTheme.textPrimary; Layout.fillWidth: true; wrapMode: Text.Wrap }
                             Text { text: qsTr("Context: %1 tokens, %2 items, %3 omitted%4").arg(parent.run.contextTokens).arg(parent.run.contextItems).arg(parent.run.contextOmitted).arg(parent.run.contextCompacted ? qsTr(", compacted") : ""); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.Wrap }
@@ -205,7 +205,7 @@ Item {
                                     spacing: 2
                                     Text { text: entry.kind + "  /  " + entry.title + (entry.duration ? "  " + entry.duration : ""); color: SentinelTheme.textPrimary; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
                                     Text { text: entry.detail || ""; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
-                                    Text { text: [entry.source, entry.observation, entry.observationKind !== undefined ? qsTr("Observation %1").arg(entry.observationKind) : "", entry.failure, entry.mutation, entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
+                                    Text { text: [entry.batchId ? qsTr("Batch %1").arg(entry.batchId.slice(0, 8)) : "", entry.source, entry.observation, entry.observationKind !== undefined ? qsTr("Observation %1").arg(entry.observationKind) : "", entry.failure, entry.mutation, entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
                                 }
                             }
                             Text { text: qsTr("Approvals"); color: SentinelTheme.textPrimary; font.bold: true }
@@ -243,6 +243,16 @@ Item {
                             Text { text: qsTr("Final answer"); color: SentinelTheme.textPrimary; font.bold: true; visible: !!parent.run.answer }
                             Text { text: parent.run.answer || ""; color: SentinelTheme.textPrimary; Layout.fillWidth: true; wrapMode: Text.Wrap; visible: text.length > 0 }
                             Text { text: qsTr("Failure: ") + parent.run.failure; color: "#c94c4c"; Layout.fillWidth: true; wrapMode: Text.Wrap; visible: !!parent.run.failure }
+                            Text {
+                                text: qsTr("Provider failure: ") + parent.run.providerErrorCategory
+                                      + (parent.run.providerHttpStatus ? qsTr("  /  HTTP: ") + parent.run.providerHttpStatus : "")
+                                      + qsTr("  /  Attempts: ") + parent.run.providerAttempts
+                                      + qsTr("  /  Retry: ") + (parent.run.providerRetryOccurred ? qsTr("yes") : qsTr("no"))
+                                color: "#c94c4c"
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                visible: !!parent.run.providerErrorCategory
+                            }
                         }
                     }
                 }

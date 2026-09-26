@@ -30,10 +30,10 @@ ApplicationControllerBuilder::withStandardDefaults(const StandardPathProvider& p
 
     if (!m_modelService)
         m_modelService = std::make_unique<ModelService>(&settings);
-    m_localRuntime = std::make_unique<OllamaLocalRuntime>(ollamaConfig);
-    m_runtimeCapabilities = std::make_unique<OllamaRuntimeCapabilityRegistry>(ollamaConfig);
-    m_localRuntimeSessions = std::make_unique<OllamaRuntimeSessionManager>(ollamaConfig);
-    m_localRuntimeAdapter = std::make_unique<OllamaLocalRuntimeAdapter>(ollamaConfig);
+    m_localRuntime = std::make_unique<OllamaLocalRuntime>(ollamaConfig, m_modelService.get());
+    m_runtimeCapabilities = std::make_unique<OllamaRuntimeCapabilityRegistry>(ollamaConfig, m_modelService.get());
+    m_localRuntimeSessions = std::make_unique<OllamaRuntimeSessionManager>(ollamaConfig, m_modelService.get());
+    m_localRuntimeAdapter = std::make_unique<OllamaLocalRuntimeAdapter>(ollamaConfig, m_modelService.get());
     m_providerRuntimeBridge = std::make_unique<OllamaProviderRuntimeBridge>(ollamaConfig);
     m_memoryStore = std::make_unique<SQLiteMemoryStore>(pathProvider.memoryDatabasePath());
     m_chatHistoryStore =
@@ -281,6 +281,14 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentTaskRuntime
 ApplicationControllerBuilder&
 ApplicationControllerBuilder::withModelService(std::unique_ptr<ModelService> modelService) {
     m_modelService = std::move(modelService);
+    if (auto* runtime = dynamic_cast<OllamaLocalRuntime*>(m_localRuntime.get()))
+        runtime->setModelService(m_modelService.get());
+    if (auto* sessions = dynamic_cast<OllamaRuntimeSessionManager*>(m_localRuntimeSessions.get()))
+        sessions->setModelService(m_modelService.get());
+    if (auto* capabilities = dynamic_cast<OllamaRuntimeCapabilityRegistry*>(m_runtimeCapabilities.get()))
+        capabilities->setModelService(m_modelService.get());
+    if (auto* adapter = dynamic_cast<OllamaLocalRuntimeAdapter*>(m_localRuntimeAdapter.get()))
+        adapter->setModelService(m_modelService.get());
     return *this;
 }
 

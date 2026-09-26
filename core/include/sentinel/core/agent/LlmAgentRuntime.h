@@ -13,6 +13,8 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <memory>
+#include <mutex>
 
 namespace sentinel::core {
 class IToolRegistry;
@@ -45,7 +47,9 @@ public:
     void setPlanningContext(const AgentPlanningContext& context) override { planningContext_ = context; }
     // Called before an accepted run; the owned provider and binding stay fixed
     // for every planner iteration in that run.
-    void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider);
+    using ProviderFactory = std::function<std::shared_ptr<IChatProvider>(const ModelBinding&)>;
+    void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider,
+                   ProviderFactory providerFactory = {});
     ModelBinding modelBinding() const { return modelBinding_; }
     void setStreamObserver(std::function<void(const QString&)> onDelta,
                            std::shared_ptr<std::atomic_bool> cancellationToken = {}) const;
@@ -53,21 +57,30 @@ public:
         registry_ = registry;
     }
     void setAllowedToolIds(const QStringList& ids) { allowedToolIds_ = ids; }
+    std::unique_ptr<LlmAgentRuntime> forkForSubagent(const QStringList& allowedTools) const;
 
 private:
     QString buildPlannerPrompt(const QString& goal, const QList<AgentStepRecord>& history) const;
     AgentStepDecision decisionFromLlmOutput(const QString& output) const;
+    AgentStepDecision decisionFromObject(const QJsonObject& object) const;
+    AgentStepDecision decisionFromNativeCall(const ChatProviderReply::ToolCall& call) const;
 
     QList<ToolDescriptor> tools_;
     const IToolRegistry* registry_ = nullptr;
     QStringList allowedToolIds_;
     IChatProvider* provider_ = nullptr;
     std::shared_ptr<IChatProvider> boundProvider_;
+    ProviderFactory providerFactory_;
+    std::shared_ptr<std::mutex> providerSerialization_;
+    bool serializeProviderRequests_ = false;
     ModelBinding modelBinding_;
     mutable ObservationIntent activeIntent_;
     mutable QList<StructuredFact> structuredFacts_;
     mutable AgentPlanningContext planningContext_;
     mutable QString plannerFeedback_;
+    mutable QList<ChatProviderReply::ToolCall> nativeCalls_;
+    mutable QList<ChatRequestOptions::ToolResult> nativeResults_;
+    mutable int awaitingNativeResults_ = 0;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable std::function<void(const QString&)> streamObserver_;
     mutable std::shared_ptr<std::atomic_bool> streamCancellationToken_;

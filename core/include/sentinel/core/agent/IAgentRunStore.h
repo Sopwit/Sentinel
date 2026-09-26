@@ -30,6 +30,12 @@ struct StoredAgentRun {
     bool contextCompacted = false;
     int stepCount = 0;
     QString capabilitySnapshot;
+    QString role;
+    QString providerErrorCategory;
+    int providerHttpStatus = 0;
+    int providerAttempts = 0;
+    bool providerRetryOccurred = false;
+    QString providerRequestLifecycle;
 };
 
 struct StoredAgentStep {
@@ -57,6 +63,7 @@ struct StoredAgentToolCall {
     QDateTime finishedAt;
     QString failureCategory;
     QString mutationSummary;
+    QString batchId;
 };
 
 struct StoredAgentEvidence {

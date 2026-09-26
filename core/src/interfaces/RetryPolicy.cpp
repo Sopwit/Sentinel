@@ -4,8 +4,8 @@
 
 #include "sentinel/core/interfaces/IRetryPolicy.h"
 #include <QDateTime>
+#include <QRandomGenerator>
 #include <QtMath>
-#include <cstdlib>
 
 namespace sentinel::core {
 
@@ -31,7 +31,8 @@ int RetryPolicy::delayMs(int attempt, const QString& retryAfterHeader) const {
     double baseDelay = m_config.initialDelayMs * qPow(m_config.backoffMultiplier, attempt);
     baseDelay = qMin(baseDelay, static_cast<double>(m_config.maxDelayMs));
 
-    double jitter = baseDelay * m_config.jitterRange * ((std::rand() % 2000 - 1000) / 1000.0);
+    double jitter = baseDelay * m_config.jitterRange *
+                    (QRandomGenerator::global()->generateDouble() * 2.0 - 1.0);
     return static_cast<int>(baseDelay + jitter);
 }
 
@@ -49,15 +50,16 @@ QString RetryPolicy::retryReason(int attempt, int statusCode, const QString& err
 
 int RetryPolicy::parseRetryAfter(const QString& header) const {
     bool ok;
-    int seconds = header.toInt(&ok);
+    qint64 seconds = header.toLongLong(&ok);
     if (ok && seconds > 0)
-        return seconds * 1000;
+        return seconds >= (static_cast<qint64>(m_config.maxDelayMs) + 999) / 1000
+                   ? m_config.maxDelayMs : static_cast<int>(seconds * 1000);
 
     QDateTime date = QDateTime::fromString(header, Qt::RFC2822Date);
     if (date.isValid()) {
         qint64 delayMs = date.toMSecsSinceEpoch() - QDateTime::currentMSecsSinceEpoch();
         if (delayMs > 0)
-            return static_cast<int>(delayMs);
+            return static_cast<int>(qMin(delayMs, static_cast<qint64>(m_config.maxDelayMs)));
     }
     return 0;
 }

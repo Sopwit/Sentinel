@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentLoopState.h"
+#include "sentinel/core/agent/AgentExecutionScheduler.h"
 #include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
@@ -35,6 +36,7 @@ class ExternalDirectoryGate;
 class PermissionService;
 class IMemoryStore;
 class IChatHistoryStore;
+class AgentExecutionScheduler;
 
 class AgentLoop {
 public:
@@ -43,6 +45,8 @@ public:
         bool autonomousMode = false;
         int observationPreviewLines = 60;
         qint64 observationMaxBytes = 8192;
+        int maxParallelTools = 3;
+        std::shared_ptr<AgentExecutionScheduler::Budget> executionBudget;
     };
 
     using StepCallback = std::function<void(const AgentStepRecord&)>;
@@ -93,6 +97,7 @@ public:
         observationIntentPolicy_ = std::move(policy);
     }
     void setObservationContext(QString context) { observationContext_ = std::move(context); }
+    void setResourceScope(QString root) { resourceScope_ = std::move(root); }
     void setContextSources(const IMemoryStore* memory, const IChatHistoryStore* history,
                            int contextWindowTokens, int maxOutputTokens = 0) {
         memoryStore_ = memory;
@@ -148,6 +153,8 @@ private:
     void advanceAsync();
     void executeStepAsync(const ToolInvocationPlan& plan, const QString& thought,
                           ApprovalDecision approval);
+    void executeBatchAsync(const ToolInvocationPlan& plan, const QString& thought,
+                           ApprovalDecision approval);
     void completeAsync();
     void scheduleAsyncAdvance();
 
@@ -159,6 +166,7 @@ private:
     const IToolRegistry* toolRegistry_ = nullptr;
     std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
     QString observationContext_;
+    QString resourceScope_;
     ContextEngine contextEngine_;
     const IMemoryStore* memoryStore_ = nullptr;
     const IChatHistoryStore* chatHistoryStore_ = nullptr;
@@ -186,6 +194,7 @@ private:
     AgentLoopState asyncState_;
     QObject* asyncContext_ = nullptr;
     IToolExecutor::Cancel cancelTool_;
+    std::shared_ptr<AgentExecutionScheduler> scheduler_;
     bool asyncFinished_ = false;
     bool waitingForTool_ = false;
 };

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sentinel/core/agent/AgentExecutionScheduler.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/plugin/PluginManager.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
@@ -41,7 +42,8 @@ public:
                  IToolExecutor& executor, const IApprovalPolicy& approval,
                  const ISandboxPolicy& sandbox, const IMemoryStore* memoryStore = nullptr,
                  const IChatHistoryStore* chatHistoryStore = nullptr,
-                 IAgentRunStore* runStore = nullptr);
+                 IAgentRunStore* runStore = nullptr,
+                 std::shared_ptr<IPermissionGrantStore> permissionGrantStore = {});
     AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPlanner& planner,
                  IToolExecutor& executor, const IApprovalPolicy& approval,
                  const ISandboxPolicy& sandbox)
@@ -59,6 +61,10 @@ public:
     AgentLoopState submit(const QString& sessionId, const QString& goal) override;
     AgentLoopState resume(const QString& sessionId, bool approved) override;
     bool approve(const QString& sessionId, bool alwaysAllow) override;
+    QList<PersistentPermissionGrant> persistentPermissionGrants() const;
+    bool revokePersistentPermission(const QString& id);
+    bool clearPersistentPermissions();
+    QString permissionStoreError() const;
     bool cancel(const QString& sessionId) override;
     AgentLoopState sessionState(const QString& sessionId) const override;
     AgentRuntimeError error(const QString& sessionId) const override;
@@ -100,7 +106,7 @@ private:
     QStringList toolIds() const;
     void publish(const QString& sessionId, AgentEventType type, AgentEventPayload payload = {},
                  int stepIndex = 0, bool toolCall = false);
-    void beginTurn(const QString& sessionId);
+    void beginTurn(const QString& sessionId, bool child = false);
     void finishTurn(const QString& sessionId, const AgentLoopState& state);
     struct TurnContext {
         QString id;
@@ -126,6 +132,8 @@ private:
     const IChatHistoryStore* chatHistoryStore_;
     IAgentRunStore* runStore_ = nullptr;
     std::atomic_bool persistenceWarningEmitted_{false};
+    std::atomic_int subagentsThisRun_{0};
+    std::shared_ptr<AgentExecutionScheduler::Budget> executionBudget_;
     mutable std::mutex mutex_;
     std::mutex workerMutex_;
     std::mutex executionMutex_;

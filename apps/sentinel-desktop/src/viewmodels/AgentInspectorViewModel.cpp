@@ -28,12 +28,18 @@ QVariantMap runRow(const sentinel::core::StoredAgentRun& run) {
             {QStringLiteral("parentRunId"), run.parentRunId},
             {QStringLiteral("parentToolCallId"), run.parentToolCallId},
             {QStringLiteral("runType"), run.runType},
+            {QStringLiteral("role"), run.role},
             {QStringLiteral("state"), run.state},
             {QStringLiteral("provider"), run.providerId},
             {QStringLiteral("model"), run.modelId},
             {QStringLiteral("goal"), run.goalSummary},
             {QStringLiteral("answer"), run.finalAnswer},
             {QStringLiteral("failure"), run.failure},
+            {QStringLiteral("providerErrorCategory"), run.providerErrorCategory},
+            {QStringLiteral("providerHttpStatus"), run.providerHttpStatus},
+            {QStringLiteral("providerAttempts"), run.providerAttempts},
+            {QStringLiteral("providerRetryOccurred"), run.providerRetryOccurred},
+            {QStringLiteral("providerRequestLifecycle"), run.providerRequestLifecycle},
             {QStringLiteral("startedAt"), run.startedAt},
             {QStringLiteral("finishedAt"), run.finishedAt},
             {QStringLiteral("duration"), duration(run.startedAt, run.finishedAt)},
@@ -235,6 +241,8 @@ void AgentInspectorViewModel::selectRun(const QString& runId) {
                          {QStringLiteral("observation"), tool.observationSummary},
                          {QStringLiteral("failure"), tool.failureCategory},
                          {QStringLiteral("mutation"), tool.mutationSummary}});
+        if (!tool.batchId.isEmpty())
+            timeline.last().insert(QStringLiteral("batchId"), tool.batchId);
     }
     for (const auto& approval : detail.authorizations)
         timeline.append({{QStringLiteral("kind"), QStringLiteral("Approval")},

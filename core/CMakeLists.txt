@@ -7,6 +7,7 @@ configure_file(
 add_library(sentinel_core STATIC
     include/sentinel/core/AppBuildConfig.h.in
     include/sentinel/core/agent/AgentActivityLog.h
+    include/sentinel/core/agent/AgentExecutionScheduler.h
     include/sentinel/core/agent/AgentLoop.h
     include/sentinel/core/agent/ContextEngine.h
     include/sentinel/core/agent/AgentEvent.h
@@ -159,11 +160,13 @@ add_library(sentinel_core STATIC
     include/sentinel/core/runtime/IToolExecutor.h
     include/sentinel/core/runtime/IToolRegistry.h
     include/sentinel/core/runtime/LocalInference.h
+    include/sentinel/core/runtime/ProviderRequestRuntime.h
     include/sentinel/core/runtime/LocalRuntime.h
     include/sentinel/core/runtime/LocalRuntimeSession.h
     include/sentinel/core/runtime/NullToolExecutor.h
     include/sentinel/core/runtime/OllamaRuntime.h
     include/sentinel/core/runtime/IFileSystemService.h
+    include/sentinel/core/runtime/SecureFileMutationBackend.h
     include/sentinel/core/runtime/FileSystemPatch.h
     include/sentinel/core/runtime/RealToolExecutor.h
     include/sentinel/core/runtime/ProcessExecutor.h
@@ -191,6 +194,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/security/ISandboxPolicy.h
     include/sentinel/core/security/PermissionPolicyService.h
     include/sentinel/core/security/PermissionService.h
+    include/sentinel/core/security/IPermissionGrantStore.h
+    include/sentinel/core/security/SQLitePermissionGrantStore.h
     include/sentinel/core/security/ProviderCredentials.h
     include/sentinel/core/security/StaticApprovalPolicy.h
     include/sentinel/core/security/StaticSandboxPolicy.h
@@ -308,6 +313,7 @@ add_library(sentinel_core STATIC
     src/agent/ContextEngine.cpp
     src/agent/AgentRuntimeContext.cpp
     src/agent/AgentRuntime.cpp
+    src/agent/AgentExecutionScheduler.cpp
     src/agent/AgentRuntimeService.cpp
     src/agent/AgentTaskRuntime.cpp
     src/agent/ControlledAgentTasks.cpp
@@ -467,12 +473,15 @@ add_library(sentinel_core STATIC
     src/runtime/BuiltInToolProvider.cpp
     src/runtime/InMemoryToolRegistry.cpp
     src/runtime/LocalInference.cpp
+    src/runtime/ProviderRequestRuntime.cpp
     src/runtime/LocalRuntime.cpp
     src/runtime/LocalRuntimeSession.cpp
     src/runtime/NullToolExecutor.cpp
     src/runtime/OllamaRuntime.cpp
     src/runtime/FileSystemPatch.cpp
     src/runtime/QtFileSystemService.cpp
+    src/runtime/SecureFileMutationBackend.cpp
+    src/runtime/WindowsSecureFileMutationBackend.cpp
     src/runtime/RealToolExecutor.cpp
     src/runtime/ProcessExecutor.cpp
     src/runtime/RuntimeCapabilities.cpp
@@ -489,6 +498,7 @@ add_library(sentinel_core STATIC
     src/security/CredentialStore.cpp
     src/security/PermissionPolicyService.cpp
     src/security/PermissionService.cpp
+    src/security/SQLitePermissionGrantStore.cpp
     src/security/ProviderCredentials.cpp
     src/security/StaticApprovalPolicy.cpp
     src/security/StaticSandboxPolicy.cpp

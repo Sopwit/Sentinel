@@ -78,12 +78,16 @@ struct PlannedToolInvocation {
     std::shared_ptr<std::atomic_bool> toolCancellation;
     std::shared_ptr<const ToolDescriptor> descriptorSnapshot;
     std::shared_ptr<const ResourceAuthorizationSnapshot> resourceSnapshot;
+    QList<int> dependsOn;
+    QString providerCallId;
+    QString runtimeToolCallId;
 };
 
 struct ToolInvocationPlan {
     ToolInvocationPlanStatus status = ToolInvocationPlanStatus::NotRequested;
     QString summary;
     QList<PlannedToolInvocation> invocations;
+    QString batchId;
 };
 
 } // namespace sentinel::core
