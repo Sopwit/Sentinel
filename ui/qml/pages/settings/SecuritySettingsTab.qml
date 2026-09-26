@@ -15,6 +15,9 @@ Item {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
     property string activeTaskId: ""
+    property var displayedPermissionGrants: []
+    property bool confirmClearPermissions: false
+    onVisibleChanged: if (visible) displayedPermissionGrants = viewModel.persistentPermissionGrants
     readonly property bool taskAwaitingApproval: root.viewModel.controlledTaskActiveSummary.indexOf("[Waiting Approval]") >= 0
     readonly property bool taskRunning: root.viewModel.controlledTaskActiveSummary.indexOf("[Running]") >= 0 || root.taskAwaitingApproval
 
@@ -99,6 +102,74 @@ Item {
                 accent: root.modeAccent
                 compact: root.compact
                 onToggled: (checked) => root.viewModel.agentAutonomousMode = checked
+            }
+        }
+
+        SettingCard {
+            title: qsTr("Persistent Permissions")
+            subtitle: qsTr("Approvals that remain after restarting Sentinel.")
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceSm
+
+                Label {
+                    Layout.fillWidth: true
+                    visible: root.displayedPermissionGrants.length === 0
+                    text: qsTr("No persistent permissions")
+                    color: SentinelTheme.textMuted
+                }
+
+                Repeater {
+                    model: root.displayedPermissionGrants
+                    delegate: RowLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Label {
+                            Layout.fillWidth: true
+                            text: modelData.scope || qsTr("General access")
+                            elide: Text.ElideMiddle
+                            color: SentinelTheme.textPrimary
+                        }
+                        Label {
+                            text: modelData.createdAt
+                            color: SentinelTheme.textMuted
+                        }
+                        SentinelButton {
+                            text: qsTr("Revoke")
+                            accent: root.modeAccent
+                            onClicked: {
+                                if (root.viewModel.revokePersistentPermission(modelData.id))
+                                    root.displayedPermissionGrants = root.viewModel.persistentPermissionGrants
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    visible: root.displayedPermissionGrants.length > 0
+                    Layout.fillWidth: true
+                    SentinelButton {
+                        text: root.confirmClearPermissions ? qsTr("Confirm Clear") : qsTr("Clear All")
+                        accent: root.modeAccent
+                        onClicked: {
+                            if (!root.confirmClearPermissions) {
+                                root.confirmClearPermissions = true
+                                return
+                            }
+                            if (root.viewModel.clearPersistentPermissions())
+                                root.displayedPermissionGrants = root.viewModel.persistentPermissionGrants
+                            root.confirmClearPermissions = false
+                        }
+                    }
+                    SentinelButton {
+                        visible: root.confirmClearPermissions
+                        text: qsTr("Cancel")
+                        accent: root.modeAccent
+                        onClicked: root.confirmClearPermissions = false
+                    }
+                }
             }
         }
 
