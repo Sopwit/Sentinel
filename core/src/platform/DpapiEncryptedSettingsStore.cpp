@@ -64,6 +64,10 @@ void DpapiEncryptedSettingsStore::setValue(QString key, QString value) {
     }
 }
 
+void DpapiEncryptedSettingsStore::remove(const QString& key) {
+    inner_->remove(key);
+}
+
 #if defined(Q_OS_WIN)
 
 QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {

@@ -96,11 +96,13 @@ public:
 
 class OllamaLocalRuntimeAdapter final : public ILocalRuntimeAdapter {
 public:
-    explicit OllamaLocalRuntimeAdapter(OllamaConfig config = OllamaConfig{});
+    explicit OllamaLocalRuntimeAdapter(OllamaConfig config = OllamaConfig{}, class ModelService* modelService = nullptr);
+    void setModelService(ModelService* modelService) { modelService_ = modelService; }
     LocalRuntimeAdapterDescriptor descriptor() const override;
 
 private:
     OllamaConfig config_;
+    ModelService* modelService_ = nullptr;
 };
 
 enum class ProviderRuntimeBridgeStatus : std::uint8_t {

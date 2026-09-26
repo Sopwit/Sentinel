@@ -49,7 +49,19 @@ int executeModelCommand(const QStringList& args) {
         std::cout << "Ollama Health:    " << controller->ollamaHealthStatus().toStdString() << " ("
                   << controller->ollamaConnectionStatus().toStdString() << ")" << std::endl;
 
-        const auto models = controller->currentOllamaModels();
+        const auto discovery = controller->ollamaDiscovery();
+        if (!statusRefreshed || discovery.lifecycle == sentinel::core::ChatRequestLifecycle::Pending ||
+            discovery.lifecycle == sentinel::core::ChatRequestLifecycle::Cancelled) {
+            std::cerr << "Model discovery did not complete: "
+                      << discovery.safeDetail.toStdString() << std::endl;
+            return 1;
+        }
+        if (!discovery.succeeded()) {
+            std::cerr << "Model discovery failed: " << discovery.safeDetail.toStdString()
+                      << std::endl;
+            return 1;
+        }
+        const auto& models = discovery.models;
         if (models.isEmpty()) {
             std::cout << "Installed models: none" << std::endl;
         } else {

@@ -6,6 +6,7 @@
 
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/model/ModelRouting.h"
+#include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QHash>
 #include <QObject>
@@ -20,6 +21,10 @@ namespace sentinel::core {
 class AppSettings;
 class IModelRouter;
 struct LMStudioConfig;
+struct ProviderHealthRegistry;
+
+enum class ProviderHealth { Unknown, Available, Degraded, Unavailable };
+QString providerHealthName(ProviderHealth health);
 
 // Authoritative provider/model selection for new interactive requests.
 struct ModelSelection {
@@ -94,6 +99,10 @@ public:
     void setModelCapabilities(const QString& providerId, const QString& modelId,
                               ModelCapabilities capabilities);
     ModelCapabilities capabilities(const QString& providerId, const QString& modelId) const;
+    ModelCapabilities capabilityOverrides(const QString& providerId, const QString& modelId) const;
+    void setCapabilityOverrides(const QString& providerId, const QString& modelId,
+                                const ModelCapabilities& overrides);
+    void clearCapabilityOverrides(const QString& providerId, const QString& modelId);
     bool isKnownProvider(const QString& providerId) const;
     QStringList knownProviderIds() const;
 
@@ -110,6 +119,17 @@ public:
 
     // Endpoint/credential configuration used for provider construction.
     LMStudioConfig providerConfig(const ModelBinding& binding) const;
+    std::shared_ptr<IChatProvider> constructProvider(const ModelBinding& binding) const;
+    ProviderHealth providerHealth(const QString& providerId) const;
+    void acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result, quint64 sequence);
+    OllamaModelDiscoveryResult ollamaDiscovery() const;
+    QList<OllamaModelSummary> discoveredOllamaModels() const;
+    quint64 beginProviderHealthObservation() const;
+    void reportProviderDiscovery(const QString& providerId, quint64 sequence,
+                                 bool completed, ChatProviderErrorCategory category);
+    void reportProviderRequest(const QString& providerId, quint64 sequence,
+                               bool completed, ChatProviderErrorCategory category,
+                               const QString& source);
 
     // Construction inputs pushed by the application composition. Endpoint and
     // timeout settings are applied here so provider construction never reaches
@@ -122,10 +142,9 @@ public:
 signals:
     void selectedModelChanged();
     void providerRegistryChanged();
+    void modelCapabilitiesChanged();
 
 private:
-    std::shared_ptr<IChatProvider> constructProvider(const ModelBinding& binding) const;
-
     AppSettings* settings_ = nullptr;
     IModelRouter* router_ = nullptr;
     ModelSelection selection_;
@@ -136,6 +155,7 @@ private:
     QString lmStudioEndpoint_;
     QString llamaCppEndpoint_;
     int localInferenceTimeoutMs_ = 0;
+    std::shared_ptr<ProviderHealthRegistry> providerHealthRegistry_;
 };
 
 } // namespace sentinel::core

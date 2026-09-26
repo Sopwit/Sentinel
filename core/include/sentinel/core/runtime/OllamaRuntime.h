@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sentinel/core/interfaces/IChatProvider.h"
+
 #include <QElapsedTimer>
 #include <QList>
 #include <QObject>
@@ -12,6 +14,8 @@
 #include <QUrl>
 #include <QVariant>
 #include <cstdint>
+#include <atomic>
+#include <memory>
 
 class QNetworkAccessManager;
 
@@ -88,12 +92,35 @@ struct OllamaModelSummary {
     qint64 sizeBytes = 0;
 };
 
+struct OllamaModelDiscoveryResult {
+    QList<OllamaModelSummary> models;
+    ChatRequestLifecycle lifecycle = ChatRequestLifecycle::Failed;
+    ChatProviderErrorCategory errorCategory = ChatProviderErrorCategory::ProviderUnavailable;
+    QString safeDetail;
+    int httpStatus = 0;
+    int attemptCount = 0;
+    bool retried = false;
+    QString requestId;
+
+    bool succeeded() const { return lifecycle == ChatRequestLifecycle::Completed; }
+};
+
 struct OllamaHealthCheckResult {
     OllamaConnectionStatus connectionStatus = OllamaConnectionStatus::Unavailable;
     OllamaHealthStatus healthStatus = OllamaHealthStatus::Unavailable;
     QString endpoint;
     QString summary = QStringLiteral("Ollama runtime client is unavailable.");
     int timeoutMs = 0;
+    ChatProviderErrorCategory providerErrorCategory = ChatProviderErrorCategory::None;
+    int httpStatus = 0;
+    QString requestId;
+};
+
+struct ProviderDiscoveryOutcome {
+    bool completed = false;
+    ChatProviderErrorCategory category = ChatProviderErrorCategory::None;
+    int httpStatus = 0;
+    QString requestId;
 };
 
 QString ollamaModelSummary(const OllamaModelSummary& model);
@@ -102,13 +129,21 @@ QString safeOllamaHealthSummary(const OllamaHealthCheckResult& result);
 QList<OllamaModelSummary>
 fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
                             const QMap<QByteArray, QByteArray>& headers = {},
-                            QString* errorOut = nullptr);
+                            QString* errorOut = nullptr,
+                            const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                            ProviderDiscoveryOutcome* outcome = nullptr);
 QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000,
-                                                 QString* errorOut = nullptr);
+                                                 QString* errorOut = nullptr,
+                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                                                 ProviderDiscoveryOutcome* outcome = nullptr);
 QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs = 4000,
-                                                    QString* errorOut = nullptr);
+                                                    QString* errorOut = nullptr,
+                                                    const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                                                    ProviderDiscoveryOutcome* outcome = nullptr);
 QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
-                                                 int timeoutMs = 4000, QString* errorOut = nullptr);
+                                                 int timeoutMs = 4000, QString* errorOut = nullptr,
+                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                                                 ProviderDiscoveryOutcome* outcome = nullptr);
 
 class IOllamaRuntimeClient {
 public:
@@ -117,6 +152,18 @@ public:
     virtual OllamaConfig config() const = 0;
     virtual OllamaHealthCheckResult healthCheck() const = 0;
     virtual QList<OllamaModelSummary> installedModels() const = 0;
+    virtual OllamaHealthCheckResult healthCheck(
+        const std::shared_ptr<std::atomic_bool>&) const { return healthCheck(); }
+    virtual QList<OllamaModelSummary> installedModels(
+        const std::shared_ptr<std::atomic_bool>&) const { return installedModels(); }
+    virtual OllamaModelDiscoveryResult discoverModels(
+        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const {
+        OllamaModelDiscoveryResult result;
+        result.models = installedModels(cancellationToken);
+        result.lifecycle = ChatRequestLifecycle::Completed;
+        result.errorCategory = ChatProviderErrorCategory::None;
+        return result;
+    }
 };
 
 class NullOllamaRuntimeClient final : public IOllamaRuntimeClient {
@@ -126,6 +173,8 @@ public:
     OllamaConfig config() const override;
     OllamaHealthCheckResult healthCheck() const override;
     QList<OllamaModelSummary> installedModels() const override;
+    OllamaModelDiscoveryResult discoverModels(
+        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const override;
 
 private:
     OllamaConfig config_;
@@ -138,6 +187,12 @@ public:
     OllamaConfig config() const override;
     OllamaHealthCheckResult healthCheck() const override;
     QList<OllamaModelSummary> installedModels() const override;
+    OllamaHealthCheckResult healthCheck(
+        const std::shared_ptr<std::atomic_bool>& cancellationToken) const override;
+    QList<OllamaModelSummary> installedModels(
+        const std::shared_ptr<std::atomic_bool>& cancellationToken) const override;
+    OllamaModelDiscoveryResult discoverModels(
+        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const override;
 
 private:
     QUrl endpointUrl(const QString& path) const;

@@ -13,6 +13,7 @@ Item {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property var voiceFileDialog: null
     property var soundManager: null
+    property string capabilityError: ""
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property var cloudProviderNames: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
     readonly property string currentProvider: root.viewModel.selectedRuntimeProvider
@@ -46,6 +47,27 @@ Item {
 
     function hasSelectableModels() {
         return root.modelList.length > 0
+    }
+
+    function capabilityTitle(id) {
+        switch (id) {
+        case "streaming": return qsTr("Streaming")
+        case "structuredOutput": return qsTr("Structured Output")
+        case "nativeToolCalling": return qsTr("Native Tool Calling")
+        case "visionInput": return qsTr("Vision Input")
+        case "audioInput": return qsTr("Audio Input")
+        case "audioOutput": return qsTr("Audio Output")
+        case "contextWindow": return qsTr("Context Window")
+        case "maxOutputTokens": return qsTr("Maximum Output Tokens")
+        default: return id
+        }
+    }
+
+    function capabilityOverrideLabel(value) {
+        if (value === "supported") return qsTr("Supported")
+        if (value === "unsupported") return qsTr("Unsupported")
+        if (value === "custom") return qsTr("Custom")
+        return qsTr("Automatic")
     }
 
     function inferencePresetIndex() {
@@ -125,7 +147,9 @@ Item {
 
             SettingControlRow {
                 title: qsTr("Runtime Status")
-                subtitle: root.viewModel.localInferenceHealthSummary
+                subtitle: root.currentProvider === "ollama" && root.viewModel.ollamaDiscoveryStatus.length > 0
+                          ? root.viewModel.ollamaDiscoveryStatus
+                          : root.viewModel.localInferenceHealthSummary
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -145,6 +169,25 @@ Item {
             }
 
             SettingControlRow {
+                title: qsTr("Provider Health")
+                subtitle: root.viewModel.activeRuntimeProviderLabel
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                StatusChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    width: parent.width
+                    value: root.viewModel.providerStatus
+                    accent: root.modeAccent
+                    active: root.viewModel.providerStatus === "Available"
+                         || root.viewModel.providerStatus === "Ready"
+                    muted: root.viewModel.providerStatus === "Unknown"
+                }
+            }
+
+            SettingControlRow {
                 title: qsTr("Active Model")
                 subtitle: root.hasSelectableModels()
                           ? root.viewModel.selectedLocalModelSummary
@@ -154,7 +197,9 @@ Item {
                                      : root.viewModel.activeRuntimeReadinessSummary.length > 0
                                            ? root.viewModel.activeRuntimeReadinessSummary
                                            : qsTr("No models returned by the provider API."))
-                              : qsTr("Model selection is available after the active local runtime reports models.")
+                              : root.currentProvider === "ollama" && root.viewModel.ollamaDiscoveryStatus.length > 0
+                                  ? root.viewModel.ollamaDiscoveryStatus
+                                  : qsTr("Model selection is available after the active local runtime reports models.")
                 accent: root.modeAccent
                 compact: root.compact
 
@@ -178,6 +223,128 @@ Item {
                     onActivated: (index) => {
                         if (index >= 0 && index < root.modelList.length)
                             root.viewModel.selectedLocalModel = root.modelList[index]
+                    }
+                }
+            }
+        }
+
+        SettingCard {
+            title: qsTr("Model Capabilities")
+            subtitle: root.currentProvider + " / " + (root.viewModel.selectedLocalModel || qsTr("No model selected"))
+
+            Text {
+                visible: root.viewModel.modelCapabilitySettings.length === 0
+                text: qsTr("Select a model to edit capabilities.")
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+            }
+
+            Repeater {
+                model: root.viewModel.modelCapabilitySettings
+
+                delegate: SettingControlRow {
+                    id: capabilityRow
+                    required property var modelData
+                    required property int index
+                    title: root.capabilityTitle(modelData.id)
+                    subtitle: qsTr("Resolved: %1 | Override: %2")
+                                  .arg(modelData.resolved)
+                                  .arg(root.capabilityOverrideLabel(modelData.override))
+                    accent: root.modeAccent
+                    compact: root.compact
+                    controlWidth: root.compact ? 180 : 240
+                    showDivider: index < root.viewModel.modelCapabilitySettings.length - 1
+
+                    SentinelComboBox {
+                        visible: !capabilityRow.modelData.numeric
+                        anchors.fill: parent
+                        accent: root.modeAccent
+                        model: [qsTr("Automatic"), qsTr("Supported"), qsTr("Unsupported")]
+                        currentIndex: capabilityRow.modelData.override === "supported" ? 1
+                                      : capabilityRow.modelData.override === "unsupported" ? 2 : 0
+                        onActivated: (choice) => {
+                            var value = ["automatic", "supported", "unsupported"][choice]
+                            root.capabilityError = root.viewModel.setModelCapabilityOverride(
+                                capabilityRow.modelData.id, value) ? "" : qsTr("Unable to save capability override.")
+                        }
+                    }
+
+                    RowLayout {
+                        visible: capabilityRow.modelData.numeric
+                        anchors.fill: parent
+                        spacing: SentinelTheme.spaceXs
+
+                        SentinelComboBox {
+                            id: numberMode
+                            Layout.preferredWidth: numberField.visible ? 92 : parent.width
+                            Layout.fillHeight: true
+                            accent: root.modeAccent
+                            model: [qsTr("Automatic"), qsTr("Custom")]
+                            currentIndex: capabilityRow.modelData.override === "custom" ? 1 : 0
+                            onActivated: (choice) => {
+                                var value = choice === 0 ? 0
+                                          : capabilityRow.modelData.id === "contextWindow" ? 8192 : 256
+                                root.capabilityError = root.viewModel.setModelCapabilityNumberOverride(
+                                    capabilityRow.modelData.id, value) ? "" : qsTr("Output tokens must be below the context window.")
+                            }
+                        }
+
+                        SentinelTextField {
+                            id: numberField
+                            visible: capabilityRow.modelData.override === "custom"
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            text: capabilityRow.modelData.overrideValue > 0
+                                  ? String(capabilityRow.modelData.overrideValue) : ""
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: IntValidator { bottom: 1; top: 1000000 }
+                            onEditingFinished: {
+                                var value = Number(text)
+                                root.capabilityError = Number.isInteger(value) && value > 0 &&
+                                    root.viewModel.setModelCapabilityNumberOverride(capabilityRow.modelData.id, value)
+                                    ? "" : qsTr("Enter a positive value below the context window.")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.viewModel.modelCapabilityCompatibilitySummary.length > 0
+                text: root.viewModel.modelCapabilityCompatibilitySummary
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+            }
+
+            Text {
+                visible: root.capabilityError.length > 0
+                text: root.capabilityError
+                color: SentinelTheme.errorText
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+            }
+
+            Item {
+                visible: root.viewModel.modelCapabilitySettings.length > 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+
+                SentinelButton {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin: SentinelTheme.spaceMd
+                    text: qsTr("Reset capability overrides")
+                    accent: root.modeAccent
+                    onClicked: {
+                        root.viewModel.resetModelCapabilityOverrides()
+                        root.capabilityError = ""
                     }
                 }
             }

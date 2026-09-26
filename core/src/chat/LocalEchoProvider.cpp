@@ -15,12 +15,12 @@ ChatProviderStatus LocalEchoProvider::status() const {
 }
 
 ChatProviderReply LocalEchoProvider::sendMessage(const QString& message) {
-    return {
-        true,
-        QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] %1")
-            .arg(message.trimmed()),
-        {},
-    };
+    ChatProviderReply reply;
+    reply.success = true;
+    reply.lifecycle = ChatRequestLifecycle::Completed;
+    reply.message = QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] %1")
+                        .arg(message.trimmed());
+    return reply;
 }
 
 } // namespace sentinel::core

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/RuntimeIntegration.h"
+#include "sentinel/core/model/ModelService.h"
 
 #include <utility>
 
@@ -71,15 +72,17 @@ LocalRuntimeAdapterDescriptor StaticLocalRuntimeAdapter::descriptor() const {
     };
 }
 
-OllamaLocalRuntimeAdapter::OllamaLocalRuntimeAdapter(OllamaConfig config)
-    : config_(std::move(config)) {}
+OllamaLocalRuntimeAdapter::OllamaLocalRuntimeAdapter(OllamaConfig config, ModelService* modelService)
+    : config_(std::move(config)), modelService_(modelService) {}
 
 LocalRuntimeAdapterDescriptor OllamaLocalRuntimeAdapter::descriptor() const {
     const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
-    const auto health = client.healthCheck();
-    const auto models = client.installedModels();
-    const bool connected = health.healthStatus == OllamaHealthStatus::Healthy;
-    const bool executable = connected && !models.isEmpty();
+    const auto health = modelService_ ? OllamaHealthCheckResult{} : client.healthCheck();
+    const auto discovery = modelService_ ? modelService_->ollamaDiscovery() : client.discoverModels();
+    const bool healthy = modelService_ ? modelService_->providerHealth(QStringLiteral("ollama")) == ProviderHealth::Available
+                                      : health.healthStatus == OllamaHealthStatus::Healthy;
+    const bool connected = healthy && discovery.succeeded();
+    const bool executable = connected && !discovery.models.isEmpty();
     return {
         QStringLiteral("ollama-local-runtime-adapter"),
         QStringLiteral("Ollama Local Runtime Adapter"),
@@ -88,13 +91,14 @@ LocalRuntimeAdapterDescriptor OllamaLocalRuntimeAdapter::descriptor() const {
                    : (connected ? LocalRuntimeAdapterHealth::NotExecutable
                                 : LocalRuntimeAdapterHealth::NotConnected),
         executable ? QStringLiteral("Ollama is connected and %1 local model(s) are available.")
-                         .arg(models.size())
-                   : safeOllamaHealthSummary(health),
+                         .arg(discovery.models.size())
+                   : !discovery.succeeded() || discovery.models.isEmpty() || modelService_
+                         ? discovery.safeDetail : safeOllamaHealthSummary(health),
         {
             {QStringLiteral("adapter.endpoint-configuration"),
              QStringLiteral("Endpoint Configuration"), health.endpoint, connected, connected},
             {QStringLiteral("adapter.model-discovery"), QStringLiteral("Model Discovery"),
-             QStringLiteral("%1 installed model(s) discovered.").arg(models.size()), connected,
+             discovery.safeDetail, connected,
              executable},
             {QStringLiteral("adapter.inference-execution"), QStringLiteral("Inference Execution"),
              executable ? QStringLiteral("Local inference is available.")

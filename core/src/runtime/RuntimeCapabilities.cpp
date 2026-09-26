@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/RuntimeCapabilities.h"
+#include "sentinel/core/model/ModelService.h"
 
 #include <algorithm>
 #include <utility>
@@ -189,21 +190,25 @@ StaticRuntimeCapabilityRegistry::StaticRuntimeCapabilityRegistry(
     sortCapabilities(capabilities_);
 }
 
-OllamaRuntimeCapabilityRegistry::OllamaRuntimeCapabilityRegistry(OllamaConfig config)
-    : config_(std::move(config)) {}
+OllamaRuntimeCapabilityRegistry::OllamaRuntimeCapabilityRegistry(OllamaConfig config, ModelService* modelService)
+    : config_(std::move(config)), modelService_(modelService) {}
 
 QList<RuntimeCapabilityDescriptor> OllamaRuntimeCapabilityRegistry::capabilities() const {
     const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
-    const auto health = client.healthCheck();
-    const auto models = client.installedModels();
-    const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
+    const auto health = modelService_ ? OllamaHealthCheckResult{} : client.healthCheck();
+    const auto discovery = modelService_ ? modelService_->ollamaDiscovery() : client.discoverModels();
+    const bool healthy = modelService_ ? modelService_->providerHealth(QStringLiteral("ollama")) == ProviderHealth::Available
+                                      : health.healthStatus == OllamaHealthStatus::Healthy;
+    const bool ready = healthy &&
+                       discovery.succeeded() && !discovery.models.isEmpty();
     const auto state =
         ready ? RuntimeCapabilityState::Enabled : RuntimeCapabilityState::Unavailable;
     return {
         {QStringLiteral("local-inference"), QStringLiteral("Local Inference"),
          RuntimeCapabilityGroup::Inference, state,
          ready ? QStringLiteral("Ollama inference is available.")
-               : QStringLiteral("Ollama health and an installed model are required.")},
+               : !discovery.succeeded() || discovery.models.isEmpty() || modelService_
+                     ? discovery.safeDetail : safeOllamaHealthSummary(health)},
         {QStringLiteral("streaming"), QStringLiteral("Streaming"),
          RuntimeCapabilityGroup::Inference, state,
          ready ? QStringLiteral("Ollama streaming endpoint is available.")

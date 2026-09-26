@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/interfaces/ISettingsStore.h"
+#include "sentinel/core/model/ModelRouting.h"
 
 #include <QObject>
 #include <QString>
@@ -217,6 +218,10 @@ public:
     void setSelectedLocalModel(const QString& model);
     QString selectedModelForProvider(const QString& providerId) const;
     void setSelectedModelForProvider(const QString& providerId, const QString& model);
+    ModelCapabilities modelCapabilitiesOverride(const QString& providerId,
+                                                 const QString& modelId) const;
+    void setModelCapabilitiesOverride(const QString& providerId, const QString& modelId,
+                                      const ModelCapabilities& capabilities);
     QString selectedModelForRole(const QString& roleId) const;
     void setSelectedModelForRole(const QString& roleId, const QString& modelId);
 
