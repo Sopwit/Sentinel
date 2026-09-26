@@ -52,6 +52,7 @@ struct AuthorizationRequest {
     ToolRiskLevel risk = ToolRiskLevel::Low;
     QString providerId;
     QString toolId;
+    AuthorizationResourceKind resourceKind = AuthorizationResourceKind::None;
 };
 
 enum class ToolExecutionMode {
@@ -90,6 +91,7 @@ struct ToolDescriptor {
     QList<ToolEvidenceDescriptor> evidenceProduced;
     StructuredObservationKind structuredObservationKind = StructuredObservationKind::None;
     bool filesystemFailureSemanticContract = false;
+    bool parallelSafe = false;
 };
 
 } // namespace sentinel::core

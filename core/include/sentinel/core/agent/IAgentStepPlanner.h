@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/ObservationEvidence.h"
+#include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 
@@ -24,6 +25,17 @@ struct AgentStepRecord {
     QString statusText;
     bool succeeded = false;
     StructuredObservationPtr structuredObservation;
+    QString batchId;
+};
+
+struct AgentToolAction {
+    QString toolId;
+    QString toolName;
+    ToolRiskLevel riskLevel = ToolRiskLevel::Low;
+    ToolExecutionMode executionMode = ToolExecutionMode::Local;
+    QList<ToolInvocationArgument> arguments;
+    QList<int> dependsOn;
+    QString providerCallId;
 };
 
 struct AgentStepDecision {
@@ -40,8 +52,10 @@ struct AgentStepDecision {
     ToolRiskLevel riskLevel = ToolRiskLevel::Low;
     ToolExecutionMode executionMode = ToolExecutionMode::Local;
     QList<ToolInvocationArgument> arguments;
+    QList<AgentToolAction> toolBatch;
     QString answer;
     QString reason;
+    std::optional<ProviderFailureMetadata> providerFailure;
     bool requiresObservation = false;
     bool observationRequirementDeclared = false;
     GroundingMode grounding = GroundingMode::Context;

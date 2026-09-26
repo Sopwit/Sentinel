@@ -5,6 +5,7 @@
 #include "sentinel/core/app/ApplicationController.h"
 
 #include "sentinel/core/agent/AgentRuntime.h"
+#include "sentinel/core/security/SQLitePermissionGrantStore.h"
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/SQLiteAgentRunStore.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
@@ -875,6 +876,8 @@ ApplicationController::ApplicationController(
             [legacyProvider](const ModelBinding&) { return legacyProvider; });
     }
     modelService_->setModelRouter(modelRouter_.get());
+    connect(modelService_.get(), &ModelService::modelCapabilitiesChanged, this,
+            &ApplicationController::modelCapabilitiesChanged);
     modelService_->setOllamaEndpoint(ollamaEndpoint());
     modelService_->setLmStudioEndpoint(lmStudioEndpoint());
     modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
@@ -885,7 +888,10 @@ ApplicationController::ApplicationController(
                 .filePath(QStringLiteral("agent_runs.sqlite3")));
         agentRuntime_ = std::make_unique<AgentRuntime>(
             std::move(agentRuntime_), agentStepPlanner_.get(), *toolExecutor_, *approvalPolicy_,
-            *sandboxPolicy_, memoryStore_.get(), chatHistoryStore_.get(), agentRunStore_.get());
+            *sandboxPolicy_, memoryStore_.get(), chatHistoryStore_.get(), agentRunStore_.get(),
+            std::make_shared<SQLitePermissionGrantStore>(
+                QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                    .filePath(QStringLiteral("permission_grants.sqlite3"))));
         QPointer<ApplicationController> self(this);
         agentEventSubscriptionId_ = agentRuntime_->subscribe([self](const AgentEvent& event) {
             if (!self)
@@ -985,6 +991,7 @@ ApplicationController::~ApplicationController() {
         agentRuntime_.reset();
     }
     if (ollamaCheckThread_) {
+        if (discoveryCancellation_) discoveryCancellation_->store(true);
         ollamaCheckThread_->wait();
         ollamaCheckThread_->deleteLater();
         ollamaCheckThread_ = nullptr;
@@ -998,8 +1005,11 @@ QString ApplicationController::providerName() const {
 
 QString ApplicationController::providerStatus() const {
     const auto resolved = modelService_->resolve(modelService_->selectedModel());
-    return resolved.ok() ? chatProviderStatusName(resolved.provider->status())
-                         : QStringLiteral("Unavailable");
+    if (!resolved.ok()) return QStringLiteral("Unavailable");
+    const auto health = modelService_->providerHealth(modelService_->selectedModel().providerId);
+    return health == ProviderHealth::Unknown
+               ? chatProviderStatusName(resolved.provider->status())
+               : providerHealthName(health);
 }
 
 QString ApplicationController::agentStatus() const {
@@ -2009,6 +2019,8 @@ QString ApplicationController::ollamaEndpoint() const {
 }
 
 void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
+    ++discoveryGeneration_;
+    if (discoveryCancellation_) discoveryCancellation_->store(true);
     if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
         ollamaCheckThread_->wait();
     }
@@ -2019,6 +2031,7 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
         std::make_unique<OllamaLocalInferenceStreamClient>(config), this,
         localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
     modelService_->setOllamaEndpoint(ollamaEndpoint());
+    refreshModelDiscovery();
     emit ollamaStatusChanged();
 }
 
@@ -2032,7 +2045,7 @@ void ApplicationController::setLmStudioEndpoint(const QString& endpoint) {
         return;
     lmStudioEndpoint_ = endpoint;
     modelService_->setLmStudioEndpoint(lmStudioEndpoint());
-    pollOllama();
+    refreshModelDiscovery();
     emit ollamaStatusChanged();
 }
 
@@ -2046,7 +2059,7 @@ void ApplicationController::setLlamaCppEndpoint(const QString& endpoint) {
         return;
     llamaCppEndpoint_ = endpoint;
     modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
-    pollOllama();
+    refreshModelDiscovery();
     emit ollamaStatusChanged();
 }
 
@@ -2058,7 +2071,9 @@ void ApplicationController::configureWebSearch(const QString& provider, const QS
 }
 
 void ApplicationController::refreshModelDiscovery() {
-    if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
+    ++discoveryGeneration_;
+    if (discoveryCancellation_) discoveryCancellation_->store(true);
+    if (ollamaCheckThread_) {
         // Thread is busy; remember to re-poll as soon as it finishes so that
         // the credential or provider change is not silently dropped.
         pendingModelRefresh_ = true;
@@ -2192,6 +2207,11 @@ QString ApplicationController::ollamaHealthSummary() const {
     return safeOllamaHealthSummary(currentOllamaHealthCheck());
 }
 
+QString ApplicationController::ollamaDiscoveryStatus() const {
+    if (!ollamaCacheInitialized_) initializeOllamaCache();
+    return modelService_->ollamaDiscovery().safeDetail;
+}
+
 int ApplicationController::ollamaModelCount() const {
     return static_cast<int>(currentOllamaModels().size());
 }
@@ -2207,7 +2227,7 @@ QStringList ApplicationController::ollamaModelNames() const {
 
 QStringList ApplicationController::installedOllamaModelNames() const {
     QStringList names;
-    for (const auto& model : cachedOllamaModels_) {
+    for (const auto& model : modelService_->discoveredOllamaModels()) {
         names.append(model.name);
     }
     return names;
@@ -2244,6 +2264,13 @@ void ApplicationController::setSelectedLocalModel(const QString& model) {
 QString ApplicationController::selectedLocalModelStatus() const {
     const auto models = currentOllamaModels();
     const auto selected = selectedLocalModel().trimmed();
+    if (selectedRuntimeProvider() == QLatin1String("ollama")) {
+        const auto discovery = modelService_->ollamaDiscovery();
+        if (discovery.lifecycle == ChatRequestLifecycle::Cancelled)
+            return QStringLiteral("Cancelled");
+        if (discovery.lifecycle != ChatRequestLifecycle::Pending && !discovery.succeeded())
+            return QStringLiteral("Discovery Failed");
+    }
     if (selected.isEmpty()) {
         return QStringLiteral("Missing");
     }
@@ -2256,6 +2283,13 @@ QString ApplicationController::selectedLocalModelStatus() const {
 
 QString ApplicationController::selectedLocalModelSummary() const {
     const auto models = currentOllamaModels();
+    if (selectedRuntimeProvider() == QLatin1String("ollama")) {
+        const auto discovery = modelService_->ollamaDiscovery();
+        if (discovery.lifecycle != ChatRequestLifecycle::Pending && !discovery.succeeded())
+            return discovery.safeDetail;
+        if (discovery.succeeded() && discovery.models.isEmpty())
+            return discovery.safeDetail;
+    }
     const auto selected = selectedLocalModel().trimmed();
     const auto providerLabel =
         isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
@@ -2399,6 +2433,121 @@ QStringList ApplicationController::benchmarkHubSummaries() const {
 
 QStringList ApplicationController::selectedModelCapabilityLabels() const {
     return currentModelRegistry().selectedModelCapabilityLabels();
+}
+
+QVariantList ApplicationController::modelCapabilitySettings() const {
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid())
+        return {};
+    const auto resolved = modelService_->capabilities(selected.providerId, selected.modelId);
+    const auto overrides = modelService_->capabilityOverrides(selected.providerId, selected.modelId);
+    auto supportName = [](CapabilitySupport value) {
+        switch (value) {
+        case CapabilitySupport::Supported: return QStringLiteral("Supported");
+        case CapabilitySupport::Unsupported: return QStringLiteral("Unsupported");
+        case CapabilitySupport::Unknown: return QStringLiteral("Unknown");
+        }
+        return QStringLiteral("Unknown");
+    };
+    QVariantList rows;
+    auto addFlag = [&](const QString& id, CapabilitySupport value, CapabilitySupport overrideValue) {
+        rows.append(QVariantMap{{QStringLiteral("id"), id},
+                                {QStringLiteral("numeric"), false},
+                                {QStringLiteral("resolved"), supportName(value)},
+                                {QStringLiteral("override"),
+                                 overrideValue == CapabilitySupport::Unknown
+                                     ? QStringLiteral("automatic")
+                                     : overrideValue == CapabilitySupport::Supported
+                                           ? QStringLiteral("supported")
+                                           : QStringLiteral("unsupported")}});
+    };
+    addFlag(QStringLiteral("streaming"), resolved.streaming, overrides.streaming);
+    addFlag(QStringLiteral("structuredOutput"), resolved.structuredOutput,
+            overrides.structuredOutput);
+    addFlag(QStringLiteral("nativeToolCalling"), resolved.nativeToolCalling,
+            overrides.nativeToolCalling);
+    addFlag(QStringLiteral("visionInput"), resolved.visionInput, overrides.visionInput);
+    addFlag(QStringLiteral("audioInput"), resolved.audioInput, overrides.audioInput);
+    addFlag(QStringLiteral("audioOutput"), resolved.audioOutput, overrides.audioOutput);
+    auto addNumber = [&](const QString& id, std::optional<int> value,
+                         std::optional<int> overrideValue) {
+        rows.append(QVariantMap{{QStringLiteral("id"), id},
+                                {QStringLiteral("numeric"), true},
+                                {QStringLiteral("resolved"),
+                                 value ? QString::number(*value) : QStringLiteral("Unknown")},
+                                {QStringLiteral("override"),
+                                 overrideValue ? QStringLiteral("custom")
+                                               : QStringLiteral("automatic")},
+                                {QStringLiteral("overrideValue"), overrideValue.value_or(0)}});
+    };
+    addNumber(QStringLiteral("contextWindow"), resolved.contextWindow, overrides.contextWindow);
+    addNumber(QStringLiteral("maxOutputTokens"), resolved.maxOutputTokens,
+              overrides.maxOutputTokens);
+    return rows;
+}
+
+QString ApplicationController::modelCapabilityCompatibilitySummary() const {
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid())
+        return {};
+    const auto capabilities = modelService_->capabilities(selected.providerId, selected.modelId);
+    if (capabilities.nativeToolCalling == CapabilitySupport::Supported &&
+        capabilities.structuredOutput == CapabilitySupport::Supported &&
+        capabilities.combinedToolsAndStructuredOutput != CapabilitySupport::Supported)
+        return QStringLiteral("Structured output handles agent actions; simultaneous native "
+                              "tool calls and structured output are not declared for this model.");
+    return {};
+}
+
+bool ApplicationController::setModelCapabilityOverride(const QString& capabilityId,
+                                                        const QString& value) {
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid())
+        return false;
+    CapabilitySupport state = CapabilitySupport::Unknown;
+    if (value == QLatin1String("supported"))
+        state = CapabilitySupport::Supported;
+    else if (value == QLatin1String("unsupported"))
+        state = CapabilitySupport::Unsupported;
+    else if (value != QLatin1String("automatic"))
+        return false;
+    auto overrides = modelService_->capabilityOverrides(selected.providerId, selected.modelId);
+    if (capabilityId == QLatin1String("streaming")) overrides.streaming = state;
+    else if (capabilityId == QLatin1String("structuredOutput")) overrides.structuredOutput = state;
+    else if (capabilityId == QLatin1String("nativeToolCalling")) overrides.nativeToolCalling = state;
+    else if (capabilityId == QLatin1String("visionInput")) overrides.visionInput = state;
+    else if (capabilityId == QLatin1String("audioInput")) overrides.audioInput = state;
+    else if (capabilityId == QLatin1String("audioOutput")) overrides.audioOutput = state;
+    else return false;
+    modelService_->setCapabilityOverrides(selected.providerId, selected.modelId, overrides);
+    return true;
+}
+
+bool ApplicationController::setModelCapabilityNumberOverride(const QString& capabilityId,
+                                                              int value) {
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid() || value < 0 || value > 1000000)
+        return false;
+    auto overrides = modelService_->capabilityOverrides(selected.providerId, selected.modelId);
+    if (capabilityId == QLatin1String("contextWindow"))
+        overrides.contextWindow = value > 0 ? std::optional<int>(value) : std::nullopt;
+    else if (capabilityId == QLatin1String("maxOutputTokens"))
+        overrides.maxOutputTokens = value > 0 ? std::optional<int>(value) : std::nullopt;
+    else
+        return false;
+    const auto resolved = modelService_->capabilities(selected.providerId, selected.modelId);
+    const int window = overrides.contextWindow.value_or(resolved.contextWindow.value_or(0));
+    const int output = overrides.maxOutputTokens.value_or(resolved.maxOutputTokens.value_or(0));
+    if (value > 0 && window > 0 && output >= window)
+        return false;
+    modelService_->setCapabilityOverrides(selected.providerId, selected.modelId, overrides);
+    return true;
+}
+
+void ApplicationController::resetModelCapabilityOverrides() {
+    const auto selected = modelService_->selectedModel();
+    if (selected.isValid())
+        modelService_->clearCapabilityOverrides(selected.providerId, selected.modelId);
 }
 
 QString ApplicationController::modelManagementStatus() const {
@@ -3549,6 +3698,11 @@ QString ApplicationController::localChatInferenceStatus() const {
     if (isLMStudioProvider()) {
         return QStringLiteral("Ready");
     }
+    const auto discovery = modelService_->ollamaDiscovery();
+    if (discovery.lifecycle == ChatRequestLifecycle::Cancelled)
+        return QStringLiteral("Discovery Cancelled");
+    if (discovery.lifecycle != ChatRequestLifecycle::Pending && !discovery.succeeded())
+        return QStringLiteral("Discovery Failed");
     const auto health = currentOllamaHealthCheck();
     if (health.healthStatus != OllamaHealthStatus::Healthy) {
         return health.connectionStatus == OllamaConnectionStatus::Blocked
@@ -3556,9 +3710,7 @@ QString ApplicationController::localChatInferenceStatus() const {
                    : QStringLiteral("Ollama Unreachable");
     }
     const auto models = currentOllamaModels();
-    if (models.isEmpty()) {
-        return QStringLiteral("Model List Unavailable");
-    }
+    if (models.isEmpty()) return QStringLiteral("No Models Installed");
     if (!discoveredModelNamesContain(selected, models)) {
         return QStringLiteral("Invalid Model");
     }
@@ -3595,16 +3747,15 @@ QString ApplicationController::localChatInferenceSummary() const {
     if (isLMStudioProvider()) {
         return QString::fromUtf8("%1 is ready to send.").arg(providerLabel);
     }
+    const auto discovery = modelService_->ollamaDiscovery();
+    if (discovery.lifecycle != ChatRequestLifecycle::Pending && !discovery.succeeded())
+        return discovery.safeDetail;
     const auto health = currentOllamaHealthCheck();
     if (health.healthStatus != OllamaHealthStatus::Healthy) {
         return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
     }
     const auto models = currentOllamaModels();
-    if (models.isEmpty()) {
-        return QString::fromUtf8(
-                   "%1 is reachable, but no loaded/installed model list is available.")
-            .arg(providerLabel);
-    }
+    if (models.isEmpty()) return discovery.safeDetail;
     if (!discoveredModelNamesContain(selected, models)) {
         return QString::fromUtf8(
                    "Local chat inference is enabled but the selected model is missing "
@@ -7001,10 +7152,24 @@ bool ApplicationController::startConversationSummaryInference(
     LocalInferenceRequest request;
     request.prompt = buildConversationSummaryPrompt(plannedResult);
     request.options.model = effectiveLocalModel({});
+    request.options.discoverySnapshot = modelService_->ollamaDiscovery();
     const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
     request.options.timeoutMs = config.generateTimeoutMs;
     request.id =
         QStringLiteral("conversation-summary-request-%1").arg(++localInferenceRequestSequence_);
+
+    if (!request.options.discoverySnapshot->succeeded()) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            request.options.discoverySnapshot->safeDetail,
+            QStringLiteral("No local summary was generated."));
+        return false;
+    }
+    if (request.options.discoverySnapshot->models.isEmpty()) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            request.options.discoverySnapshot->safeDetail,
+            QStringLiteral("No local summary was generated."));
+        return false;
+    }
 
     if (request.prompt.trimmed().isEmpty() || request.options.model.trimmed().isEmpty()) {
         latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
@@ -8112,7 +8277,9 @@ bool ApplicationController::sendMessage(const QString& message) {
     }
     const auto assistantMessage = chatSession_->appendAssistantMessage(
         reply.success ? reply.message
-                      : QStringLiteral("Provider error: %1").arg(reply.errorMessage),
+                      : QStringLiteral("Provider error [%1]: %2")
+                            .arg(chatProviderErrorCategoryName(reply.category),
+                                 reply.errorMessage),
         reply.success ? ChatMessageStatus::Received : ChatMessageStatus::Error);
     persistActiveConversationMessage(assistantMessage);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
@@ -8161,6 +8328,8 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     LocalInferenceRequest request;
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
+    if (!isLMStudioProvider())
+        request.options.discoverySnapshot = modelService_->ollamaDiscovery();
     request.options.timeoutMs = localInferenceTimeoutMs_;
     request.options.temperature = localInferenceTemperature_;
     request.options.topP = localInferenceTopP_;
@@ -8172,6 +8341,31 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
             request, LocalInferenceError::BlankPrompt,
             QStringLiteral("Local inference request rejected: prompt is blank."));
         latestLocalInferenceResponse_.status = LocalInferenceStatus::InvalidRequest;
+        emit localInferenceChanged();
+        return false;
+    }
+
+    if (request.options.discoverySnapshot &&
+        request.options.discoverySnapshot->lifecycle != ChatRequestLifecycle::Pending &&
+        !request.options.discoverySnapshot->succeeded()) {
+        const auto& discovery = *request.options.discoverySnapshot;
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::RequestFailed, discovery.safeDetail);
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::Error;
+        latestLocalInferenceResponse_.providerErrorCategory =
+            static_cast<int>(discovery.errorCategory);
+        emit localInferenceChanged();
+        return false;
+    }
+    if (request.options.discoverySnapshot &&
+        request.options.discoverySnapshot->succeeded() &&
+        request.options.discoverySnapshot->models.isEmpty()) {
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::MissingModel,
+            request.options.discoverySnapshot->safeDetail);
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::ModelUnavailable;
+        latestLocalInferenceResponse_.providerErrorCategory =
+            static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
         emit localInferenceChanged();
         return false;
     }
@@ -8522,6 +8716,8 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     emit promptContextInjectionChanged();
 
     request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
+    activeLocalInferenceHealthSequence_ = modelService_->beginProviderHealthObservation();
+    activeLocalInferenceProviderId_ = selectedRuntimeProvider();
     activeLocalInferenceRequestId_ = request.id;
     activeLocalInferenceConversationId_ = activeConversationId_;
     localInferenceBusy_ = true;
@@ -8576,6 +8772,7 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         localInferenceBusy_ = false;
         activeLocalInferenceRequestId_.clear();
         activeLocalInferenceConversationId_.clear();
+        activeLocalInferenceHealthSequence_ = 0;
         const auto blocked =
             blockStream(LocalInferenceError::BusyRequest,
                         QStringLiteral("Local streaming request rejected: worker is busy."),
@@ -8672,6 +8869,7 @@ void ApplicationController::finishLocalInferenceStreamRequest(
         activeLocalInferenceIsChatRequest_ = false;
         activeLocalInferenceRequestId_.clear();
         activeLocalInferenceConversationId_.clear();
+        activeLocalInferenceHealthSequence_ = 0;
         latestLocalInferenceStreamResult_.accumulatedText.clear();
         setChatSendLifecycle(
             QStringLiteral("cancelled"),
@@ -8679,6 +8877,20 @@ void ApplicationController::finishLocalInferenceStreamRequest(
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
         return;
+    }
+
+    if (activeLocalInferenceHealthSequence_ != 0) {
+        const auto category = result.providerErrorCategory > 0
+                                  ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+                                  : result.status == LocalInferenceStreamStatus::Cancelled
+                                      ? ChatProviderErrorCategory::Cancelled
+                                      : ChatProviderErrorCategory::MalformedResponse;
+        modelService_->reportProviderRequest(
+            activeLocalInferenceProviderId_, activeLocalInferenceHealthSequence_,
+            result.status == LocalInferenceStreamStatus::Completed,
+            category, QStringLiteral("stream"));
+        activeLocalInferenceHealthSequence_ = 0;
+        emit ollamaStatusChanged();
     }
 
     localInferenceBusy_ = false;
@@ -8944,7 +9156,11 @@ bool ApplicationController::bindAgentPlannerToResolvedModel(
         return false;
     }
 
-    planner->bindModel(resolution.binding, resolution.provider);
+    planner->bindModel(resolution.binding, resolution.provider,
+                       [this](const ModelBinding& binding) {
+                           return modelService_ ? modelService_->constructProvider(binding)
+                                                : std::shared_ptr<IChatProvider>{};
+                       });
     return true;
 }
 
@@ -8953,11 +9169,41 @@ void ApplicationController::resumeAgentLoopWithApproval(bool approved, bool alwa
         return;
     }
     if (approved) {
-        agentRuntime_->approve(activeAgentSessionId_, alwaysAllow);
+        if (!agentRuntime_->approve(activeAgentSessionId_, alwaysAllow)) {
+            onAgentLoopStatus(QStringLiteral("Persistent permission could not be saved; approval is still pending."));
+            return;
+        }
     }
     if (!agentRuntime_->continueSession(activeAgentSessionId_, approved)) {
         onAgentLoopFinished(currentAgentSessionState());
     }
+}
+
+QVariantList ApplicationController::persistentPermissionGrants() const {
+    QVariantList result;
+    const auto* runtime = dynamic_cast<const AgentRuntime*>(agentRuntime_.get());
+    if (!runtime)
+        return result;
+    for (const auto& grant : runtime->persistentPermissionGrants()) {
+        QVariantMap item;
+        item.insert(QStringLiteral("id"), grant.id);
+        item.insert(QStringLiteral("domain"), static_cast<int>(grant.domain));
+        item.insert(QStringLiteral("access"), static_cast<int>(grant.access));
+        item.insert(QStringLiteral("scope"), grant.scope);
+        item.insert(QStringLiteral("createdAt"), grant.createdAt.toLocalTime().toString(Qt::DefaultLocaleShortDate));
+        result.append(item);
+    }
+    return result;
+}
+
+bool ApplicationController::revokePersistentPermission(const QString& id) {
+    auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get());
+    return runtime && runtime->revokePersistentPermission(id);
+}
+
+bool ApplicationController::clearPersistentPermissions() {
+    auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get());
+    return runtime && runtime->clearPersistentPermissions();
 }
 
 void ApplicationController::onAgentEvent(const AgentEvent& event) {
@@ -9702,7 +9948,14 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
         // Do not advertise models that were not returned by the provider API.
         return {};
     }
-    return cachedOllamaModels_;
+    return modelService_->ollamaDiscovery().succeeded()
+               ? modelService_->discoveredOllamaModels()
+               : QList<OllamaModelSummary>{};
+}
+
+OllamaModelDiscoveryResult ApplicationController::ollamaDiscovery() const {
+    if (!ollamaCacheInitialized_) initializeOllamaCache();
+    return modelService_->ollamaDiscovery();
 }
 
 void ApplicationController::initializeOllamaCache() const {
@@ -9712,17 +9965,21 @@ void ApplicationController::initializeOllamaCache() const {
     ollamaCacheInitialized_ = true;
     if (ollamaRuntimeClient_) {
         cachedOllamaHealthCheck_ = ollamaRuntimeClient_->healthCheck();
-        cachedOllamaModels_ = ollamaRuntimeClient_->installedModels();
+        const auto discovery = ollamaRuntimeClient_->discoverModels();
+        modelService_->acceptOllamaDiscovery(
+            discovery, modelService_->beginProviderHealthObservation());
     } else {
         cachedOllamaHealthCheck_ = NullOllamaRuntimeClient{}.healthCheck();
-        cachedOllamaModels_ = {};
+        modelService_->acceptOllamaDiscovery(
+            NullOllamaRuntimeClient{}.discoverModels(),
+            modelService_->beginProviderHealthObservation());
     }
 }
 
 void ApplicationController::pollOllama() {
     checkDueAlarms();
 
-    if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
+    if (ollamaCheckThread_) {
         return;
     }
 
@@ -9732,37 +9989,49 @@ void ApplicationController::pollOllama() {
         ollamaRuntimeClient_ = std::make_unique<OllamaHttpRuntimeClient>(config);
     }
 
-    ollamaCheckThread_ = QThread::create([this]() {
+    const auto token = std::make_shared<std::atomic_bool>(false);
+    discoveryCancellation_ = token;
+    const auto generation = ++discoveryGeneration_;
+    const auto healthSequence = modelService_->beginProviderHealthObservation();
+    const auto provider = selectedRuntimeProvider();
+    const auto lmStudioEndpointSnapshot = lmStudioEndpoint_;
+    const auto llamaCppEndpointSnapshot = llamaCppEndpoint_;
+    ollamaCheckThread_ = QThread::create([this, token, generation, healthSequence, provider,
+                                         lmStudioEndpointSnapshot, llamaCppEndpointSnapshot]() {
         OllamaHealthCheckResult health;
-        QList<OllamaModelSummary> ollamaModels;
+        OllamaModelDiscoveryResult ollamaDiscovery;
         QList<OllamaModelSummary> lmStudioModels;
         QList<OllamaModelSummary> llamaCppModels;
         QList<OllamaModelSummary> openAiModels;
         QList<OllamaModelSummary> cloudModels;
         QString cloudOriginId;
         QString cloudError;
+        ProviderDiscoveryOutcome selectedOutcome;
 
         if (ollamaRuntimeClient_) {
-            health = ollamaRuntimeClient_->healthCheck();
-            ollamaModels = ollamaRuntimeClient_->installedModels();
+            health = ollamaRuntimeClient_->healthCheck(token);
+            if (!token->load()) ollamaDiscovery = ollamaRuntimeClient_->discoverModels(token);
         } else {
             health = NullOllamaRuntimeClient{}.healthCheck();
+            ollamaDiscovery = NullOllamaRuntimeClient{}.discoverModels(token);
         }
 
-        const auto provider = selectedRuntimeProvider();
         if (provider == QStringLiteral("lm-studio")) {
-            const auto lmUrl = lmStudioEndpoint_.isEmpty()
+            const auto lmUrl = lmStudioEndpointSnapshot.isEmpty()
                                    ? QStringLiteral("http://127.0.0.1:1234/v1/models")
-                                   : lmStudioEndpoint_ + QStringLiteral("/v1/models");
-            lmStudioModels = fetchOpenAiCompatibleModels(QUrl(lmUrl), 1000);
+                                   : lmStudioEndpointSnapshot + QStringLiteral("/v1/models");
+            lmStudioModels = fetchOpenAiCompatibleModels(QUrl(lmUrl), 1000, {}, nullptr,
+                                                          token, &selectedOutcome);
         } else if (provider == QStringLiteral("llama-cpp-server")) {
-            const auto llamaUrl = llamaCppEndpoint_.isEmpty()
+            const auto llamaUrl = llamaCppEndpointSnapshot.isEmpty()
                                       ? QStringLiteral("http://127.0.0.1:8080/v1/models")
-                                      : llamaCppEndpoint_ + QStringLiteral("/v1/models");
-            llamaCppModels = fetchOpenAiCompatibleModels(QUrl(llamaUrl), 1000);
+                                      : llamaCppEndpointSnapshot + QStringLiteral("/v1/models");
+            llamaCppModels = fetchOpenAiCompatibleModels(QUrl(llamaUrl), 1000, {}, nullptr,
+                                                          token, &selectedOutcome);
         } else if (provider == QStringLiteral("openai-compatible-local")) {
             openAiModels = fetchOpenAiCompatibleModels(
-                QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000);
+                QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000,
+                {}, nullptr, token, &selectedOutcome);
         } else if (provider == QStringLiteral("cloud-api") ||
                    provider == QStringLiteral("openai") || provider == QStringLiteral("claude") ||
                    provider == QStringLiteral("gemini") || provider == QStringLiteral("deepseek") ||
@@ -9793,41 +10062,85 @@ void ApplicationController::pollOllama() {
                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
 
             if (isGemini) {
-                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, &cloudError);
+                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, &cloudError,
+                                                     token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("gemini");
             } else if (isClaude) {
-                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError);
+                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError,
+                                                        token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("claude");
             } else if (isDeepSeek) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.deepseek.com/v1/models")),
-                    settings.deepseekApiKey(), 4000, &cloudError);
+                    settings.deepseekApiKey(), 4000, &cloudError, token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("deepseek");
             } else if (isGroq) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")),
-                    settings.groqApiKey(), 4000, &cloudError);
+                    settings.groqApiKey(), 4000, &cloudError, token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("groq");
             } else if (isMistral) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
-                                           settings.mistralApiKey(), 4000, &cloudError);
+                                           settings.mistralApiKey(), 4000, &cloudError,
+                                           token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("mistral");
             } else if (isOpenAi) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")),
-                                           settings.openAiApiKey(), 4000, &cloudError);
+                                           settings.openAiApiKey(), 4000, &cloudError,
+                                           token, &selectedOutcome);
                 cloudOriginId = QStringLiteral("openai");
             }
         }
 
         QMetaObject::invokeMethod(
             this,
-            [this, health = std::move(health), ollamaModels = std::move(ollamaModels),
+            [this, health = std::move(health), ollamaDiscovery = std::move(ollamaDiscovery),
              lmStudioModels = std::move(lmStudioModels), llamaCppModels = std::move(llamaCppModels),
              openAiModels = std::move(openAiModels), cloudModels = std::move(cloudModels),
-             cloudOriginId = std::move(cloudOriginId), cloudError = std::move(cloudError)]() {
+             cloudOriginId = std::move(cloudOriginId), cloudError = std::move(cloudError),
+             selectedOutcome, provider, generation, healthSequence, token]() {
+                if (generation != discoveryGeneration_ || token->load()) {
+                    if (ollamaCheckThread_) {
+                        ollamaCheckThread_->deleteLater();
+                        ollamaCheckThread_ = nullptr;
+                    }
+                    if (pendingModelRefresh_) {
+                        pendingModelRefresh_ = false;
+                        pollOllama();
+                    }
+                    return;
+                }
                 bool changed = false;
+                const auto oldOllamaHealth = modelService_->providerHealth(QStringLiteral("ollama"));
+                const auto oldDiscovery = modelService_->ollamaDiscovery();
+                const auto oldOllamaModels = modelService_->discoveredOllamaModels();
+                modelService_->acceptOllamaDiscovery(ollamaDiscovery, healthSequence);
+                changed |= oldOllamaHealth != modelService_->providerHealth(QStringLiteral("ollama"));
+                changed |= oldDiscovery.lifecycle != ollamaDiscovery.lifecycle ||
+                           oldDiscovery.errorCategory != ollamaDiscovery.errorCategory ||
+                           oldDiscovery.safeDetail != ollamaDiscovery.safeDetail;
+                const auto currentOllamaModels = modelService_->discoveredOllamaModels();
+                changed |= oldOllamaModels.size() != currentOllamaModels.size();
+                if (!changed) {
+                    for (int i = 0; i < currentOllamaModels.size(); ++i) {
+                        if (oldOllamaModels[i].name != currentOllamaModels[i].name ||
+                            oldOllamaModels[i].sizeBytes != currentOllamaModels[i].sizeBytes) {
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+                if (provider != QLatin1String("ollama") &&
+                    (selectedOutcome.completed ||
+                     selectedOutcome.category != ChatProviderErrorCategory::None)) {
+                    const auto oldHealth = modelService_->providerHealth(provider);
+                    modelService_->reportProviderDiscovery(
+                        provider, healthSequence, selectedOutcome.completed,
+                        selectedOutcome.category);
+                    changed |= oldHealth != modelService_->providerHealth(provider);
+                }
                 ollamaCacheInitialized_ = true;
 
                 if (cachedOllamaHealthCheck_.connectionStatus != health.connectionStatus ||
@@ -9835,20 +10148,6 @@ void ApplicationController::pollOllama() {
                     cachedOllamaHealthCheck_.summary != health.summary) {
                     cachedOllamaHealthCheck_ = health;
                     changed = true;
-                }
-
-                if (cachedOllamaModels_.size() != ollamaModels.size()) {
-                    cachedOllamaModels_ = ollamaModels;
-                    changed = true;
-                } else {
-                    for (int i = 0; i < ollamaModels.size(); ++i) {
-                        if (cachedOllamaModels_[i].name != ollamaModels[i].name ||
-                            cachedOllamaModels_[i].sizeBytes != ollamaModels[i].sizeBytes) {
-                            cachedOllamaModels_ = ollamaModels;
-                            changed = true;
-                            break;
-                        }
-                    }
                 }
 
                 if (cachedLMStudioModels_.size() != lmStudioModels.size()) {
@@ -9937,7 +10236,7 @@ void ApplicationController::pollOllama() {
 }
 
 void ApplicationController::refreshOllamaStatus() {
-    pollOllama();
+    refreshModelDiscovery();
 }
 
 QString ApplicationController::effectiveLocalModel(const QString& requestedModel) const {

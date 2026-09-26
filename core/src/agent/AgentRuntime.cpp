@@ -15,6 +15,7 @@
 #include "sentinel/core/security/AuthorizationResolver.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
+#include "sentinel/core/security/PathGuard.h"
 
 #include <QTimer>
 #include <QUuid>
@@ -43,10 +44,12 @@ AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPl
                            IToolExecutor& executor, const IApprovalPolicy& approval,
                            const ISandboxPolicy& sandbox, const IMemoryStore* memoryStore,
                            const IChatHistoryStore* chatHistoryStore,
-                           IAgentRunStore* runStore)
-    : metadata_(std::move(metadata)), planner_(planner), executor_(executor), approval_(approval),
-      sandbox_(sandbox), memoryStore_(memoryStore), chatHistoryStore_(chatHistoryStore),
-      runStore_(runStore) {
+                           IAgentRunStore* runStore,
+                           std::shared_ptr<IPermissionGrantStore> permissionGrantStore)
+    : metadata_(std::move(metadata)), permissionService_(std::move(permissionGrantStore)),
+      planner_(planner), executor_(executor),
+      approval_(approval), sandbox_(sandbox), memoryStore_(memoryStore),
+      chatHistoryStore_(chatHistoryStore), runStore_(runStore) {
     externalDirectoryGate_.setAuthorizationCheck([this](const QString& path, bool write,
                                                         const QString& sessionId) {
         const QList<AccessMode> modes = write
@@ -248,7 +251,8 @@ void AgentRuntime::publish(const QString& sessionId, AgentEventType type, AgentE
     }
 }
 
-void AgentRuntime::beginTurn(const QString& sessionId) {
+void AgentRuntime::beginTurn(const QString& sessionId, bool child) {
+    if (!child) subagentsThisRun_ = 0;
     std::lock_guard lock(eventMutex_);
     turns_[sessionId] =
         TurnContext{QUuid::createUuid().toString(QUuid::WithoutBraces), {}, {}, false};
@@ -259,6 +263,7 @@ void AgentRuntime::finishTurn(const QString& sessionId, const AgentLoopState& st
     run.phase = state.phase;
     run.finalAnswer = state.finalAnswer;
     run.abortReason = state.abortReason;
+    run.providerFailure = state.providerFailure;
     run.completedSteps = static_cast<int>(state.steps.size());
     run.pendingThought = state.pendingApprovalThought;
     run.pendingAuthorizationRequests = state.pendingAuthorizationRequests;
@@ -345,19 +350,41 @@ bool AgentRuntime::approve(const QString& sessionId, bool alwaysAllow) {
         return false;
     }
     if (alwaysAllow) {
+        QList<AuthorizationRequest> requests;
         for (const auto& invocation : state.pendingApprovalPlan.invocations) {
             const auto registration = toolRegistry_.findRegistration(invocation.toolId);
             const auto* descriptor = invocation.descriptorSnapshot
                                          ? invocation.descriptorSnapshot.get()
                                          : (registration ? &registration->descriptor : nullptr);
             if (!descriptor)
-                continue;
-            for (const auto& request : AuthorizationResolver::resolve(
-                     *descriptor, invocation, &externalDirectoryGate_, QDir::currentPath()))
-                permissionService_.grantAuthorization(request, {}, true);
+                return false;
+            requests.append(AuthorizationResolver::resolve(
+                *descriptor, invocation, &externalDirectoryGate_, QDir::currentPath()));
         }
+        if (!permissionService_.grantAuthorizations(requests, {}, true))
+            return false;
     }
     return true;
+}
+
+QList<PersistentPermissionGrant> AgentRuntime::persistentPermissionGrants() const {
+    std::lock_guard lock(mutex_);
+    return permissionService_.persistentGrants();
+}
+
+bool AgentRuntime::revokePersistentPermission(const QString& id) {
+    std::lock_guard lock(mutex_);
+    return permissionService_.removePersistentGrant(id);
+}
+
+bool AgentRuntime::clearPersistentPermissions() {
+    std::lock_guard lock(mutex_);
+    return permissionService_.clearPersistentGrants();
+}
+
+QString AgentRuntime::permissionStoreError() const {
+    std::lock_guard lock(mutex_);
+    return permissionService_.lastError();
 }
 
 bool AgentRuntime::cancel(const QString& sessionId) {
@@ -468,8 +495,11 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
         runType = options_.value(sessionId).runType;
         sessions_[sessionId].phase = AgentLoopPhase::Running;
         cancelRequested_ = false;
-        if (!isResume)
+        if (!isResume) {
             modelCancellationToken_ = std::make_shared<std::atomic_bool>(false);
+            executionBudget_ = std::make_shared<AgentExecutionScheduler::Budget>(4);
+            subagentsThisRun_.store(0);
+        }
     }
     if (worker_) {
         worker_->wait();
@@ -559,28 +589,39 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
     }
     executor->setSearchStores(memoryStore_, chatHistoryStore_);
 
-    executor->setSubagentRunner([this, availableToolIds](const QString& task) {
+    executor->setSubagentRunnerWithContext(
+        [this, availableToolIds](const RealToolExecutor::SubagentAssignment& assignment,
+                                 const QString& invokingToolCallId) {
+        if (subagentsThisRun_.fetch_add(1) >= 3)
+            return QStringLiteral("Subagent limit reached for this run.");
         QString parentSessionId;
         {
             std::lock_guard lock(mutex_);
             parentSessionId = activeSessionId_;
         }
         QString parentRunId;
-        QString parentToolCallId;
+        QString parentToolCallId = invokingToolCallId;
         {
             std::lock_guard lock(eventMutex_);
             const auto parent = turns_.value(parentSessionId);
             parentRunId = parent.id;
-            int latestStep = 0;
-            for (auto it = parent.toolCallIds.cbegin(); it != parent.toolCallIds.cend(); ++it)
-                if (it.key() > latestStep) {
-                    latestStep = it.key();
-                    parentToolCallId = it.value();
-                }
+            if (parentToolCallId.isEmpty()) {
+                int latestStep = 0;
+                for (auto it = parent.toolCallIds.cbegin(); it != parent.toolCallIds.cend(); ++it)
+                    if (it.key() > latestStep) {
+                        latestStep = it.key();
+                        parentToolCallId = it.value();
+                    }
+            }
         }
         AgentLoop::Config config;
         config.autonomousMode = true;
         config.maxIterations = 6;
+        config.maxParallelTools = 1;
+        {
+            std::lock_guard lock(mutex_);
+            config.executionBudget = executionBudget_;
+        }
         static const QSet<QString> kSubagentTools{
             QStringLiteral("read-file"),     QStringLiteral("grep"),
             QStringLiteral("glob"),          QStringLiteral("list-code-definitions"),
@@ -590,14 +631,28 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         };
         QStringList readOnlyToolIds;
         for (const auto& id : availableToolIds) {
-            if (kSubagentTools.contains(id)) {
+            if (kSubagentTools.contains(id) &&
+                (assignment.allowedToolIds.isEmpty() || assignment.allowedToolIds.contains(id))) {
                 readOnlyToolIds.append(id);
             }
         }
-        auto* subagentPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
-        if (subagentPlanner)
-            subagentPlanner->setAllowedToolIds(readOnlyToolIds);
-        AgentLoop loop(*planner_, executor_, approval_, sandbox_, readOnlyToolIds, config);
+        if (readOnlyToolIds.isEmpty())
+            return QStringLiteral("Subagent has no permitted read-only tools.");
+        auto* parentPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
+        if (!assignment.modelId.isEmpty() &&
+            (!parentPlanner || parentPlanner->modelBinding().modelId != assignment.modelId))
+            return QStringLiteral("Subagent model differs from the active model binding.");
+        const QString root = PathGuard::canonicalPath(QDir::currentPath());
+        const QString childScope = assignment.workspace.isEmpty()
+            ? root : PathGuard::canonicalPath(QDir(root).absoluteFilePath(assignment.workspace));
+        if (!PathGuard::contains(root, childScope))
+            return QStringLiteral("Subagent workspace is outside the parent workspace.");
+        auto childPlanner = parentPlanner
+            ? parentPlanner->forkForSubagent(readOnlyToolIds) : std::unique_ptr<LlmAgentRuntime>{};
+        auto* subagentPlanner = childPlanner.get();
+        AgentLoop loop(childPlanner ? static_cast<IAgentStepPlanner&>(*childPlanner) : *planner_,
+                       executor_, approval_, sandbox_, readOnlyToolIds, config);
+        loop.setResourceScope(childScope);
         loop.setToolRegistry(&toolRegistry_);
         loop.setContextSources(memoryStore_, nullptr,
             subagentPlanner ? subagentPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
@@ -614,12 +669,14 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             permissionState = toolPermissionState_;
         }
         loop.setPermissionPolicy(&toolPermissionPolicy_, permissionState);
+        loop.setCancelQuery([this] { return cancelRequested_.load(); });
+        loop.setCancellationToken(modelCancellationToken_);
         const auto subagentSessionId = QStringLiteral("subagent-%1").arg(
             QUuid::createUuid().toString(QUuid::WithoutBraces));
-        beginTurn(subagentSessionId);
+        beginTurn(subagentSessionId, true);
         publish(subagentSessionId, AgentEventType::RunStarted,
-                AgentRunStartedEvent{task, QStringLiteral("subagent"), parentRunId,
-                                     parentToolCallId});
+                AgentRunStartedEvent{assignment.goal, QStringLiteral("subagent"), parentRunId,
+                                     parentToolCallId, assignment.role});
         loop.setPlanningCallback([this, subagentSessionId](int index, bool started) {
             publish(subagentSessionId,
                     started ? AgentEventType::ModelRequestStarted
@@ -646,6 +703,7 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             if (plan.invocations.isEmpty()) return;
             const auto& tool = plan.invocations.first();
             AgentToolEvent payload{tool.toolId, tool.riskLevel, {}, {}, tool.toolName};
+            payload.batchId = plan.batchId;
             if (tool.descriptorSnapshot) {
                 switch (tool.descriptorSnapshot->source) {
                 case ToolSource::BuiltIn: payload.source = QStringLiteral("built-in"); break;
@@ -671,17 +729,15 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         });
         AgentLoopState state;
         try {
-            state = loop.run(task, subagentSessionId);
+            state = loop.run(assignment.goal, subagentSessionId);
         } catch (...) {
             state.sessionId = subagentSessionId;
-            state.goal = task;
+            state.goal = assignment.goal;
             state.phase = AgentLoopPhase::Failed;
             state.abortReason = QStringLiteral("Subagent execution failed.");
         }
         finishTurn(subagentSessionId, state);
         permissionService_.clearSessionGrants(subagentSessionId);
-        if (subagentPlanner)
-            subagentPlanner->setAllowedToolIds(availableToolIds);
         if (state.phase == AgentLoopPhase::Completed) {
             return state.finalAnswer;
         }
@@ -767,6 +823,7 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
         AgentToolEvent payload{invocation.toolId, invocation.riskLevel,
                                record ? record->observation : QString{},
                                authorizationRequests, invocation.toolName};
+        payload.batchId = plan.batchId;
         const auto registration = toolRegistry_.findRegistration(invocation.toolId);
         const auto* descriptor = invocation.descriptorSnapshot
                                      ? invocation.descriptorSnapshot.get()
@@ -853,6 +910,8 @@ void AgentRuntime::advanceAsync(const QString& sessionId, bool isResume, bool ap
     auto executionLock = std::make_shared<std::unique_lock<std::mutex>>(executionMutex_);
     AgentLoop::Config config;
     config.autonomousMode = options.autonomousMode;
+    config.maxParallelTools = qBound(1, options.maxParallelTools, 4);
+    config.executionBudget = executionBudget_;
     auto loop = std::make_shared<AgentLoop>(*planner_, executor_, approval_, sandbox_,
                                             availableToolIds, config);
     loop->setToolRegistry(&toolRegistry_);
@@ -929,8 +988,11 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
         if (!prepared) {
             activeSessionId_ = sessionId;
             cancelRequested_ = false;
-            if (!isResume)
+            if (!isResume) {
                 modelCancellationToken_ = std::make_shared<std::atomic_bool>(false);
+                executionBudget_ = std::make_shared<AgentExecutionScheduler::Budget>(4);
+                subagentsThisRun_.store(0);
+            }
         }
         if (!cancelRequested_)
             sessions_[sessionId].phase = AgentLoopPhase::Running;
@@ -958,6 +1020,8 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
         options.availableToolIds.isEmpty() ? toolIds() : options.availableToolIds;
     AgentLoop::Config config;
     config.autonomousMode = options.autonomousMode;
+    config.maxParallelTools = qBound(1, options.maxParallelTools, 4);
+    config.executionBudget = executionBudget_;
     AgentLoopState result;
     try {
         prepareExecution(availableToolIds);

@@ -4,6 +4,7 @@
 
 #include "sentinel/core/agent/AgentLoop.h"
 #include "sentinel/core/agent/ClaimGroundingResolver.h"
+#include "sentinel/core/agent/AgentExecutionScheduler.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
 
@@ -14,6 +15,7 @@
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
 #include "sentinel/core/security/PermissionService.h"
+#include "sentinel/core/security/PathGuard.h"
 #include <QDir>
 #include <QFileInfo>
 
@@ -55,7 +57,13 @@ QString decisionActionKey(const AgentStepDecision& decision) {
     for (const auto& argument : decision.arguments) {
         argumentParts.append(QStringLiteral("%1=%2").arg(argument.id, argument.value));
     }
-    return decision.toolId + QLatin1Char('|') + argumentParts.join(QLatin1Char(';'));
+    QString key = decision.toolId + QLatin1Char('|') + argumentParts.join(QLatin1Char(';'));
+    for (const auto& call : decision.toolBatch) {
+        key += QLatin1Char('|') + call.toolId;
+        for (const auto& argument : call.arguments)
+            key += QStringLiteral(";%1=%2").arg(argument.id, argument.value);
+    }
+    return key;
 }
 
 void fillRecordFromPlan(AgentStepRecord& record, const ToolInvocationPlan& plan) {
@@ -75,6 +83,14 @@ StructuredObservationPtr resourceFailureObservation(const ResourceAuthorizationR
     observation->failureResource = result.resource;
     observation->data.insert(QStringLiteral("resource"), result.resource);
     return observation;
+}
+
+bool securityFailure(FileSystemFailure failure) {
+    return failure == FileSystemFailure::PermissionDenied ||
+           failure == FileSystemFailure::ResourceChanged ||
+           failure == FileSystemFailure::SymlinkEscape ||
+           failure == FileSystemFailure::UnsafeParent ||
+           failure == FileSystemFailure::SecurityBoundaryViolation;
 }
 
 } // namespace
@@ -198,6 +214,15 @@ ResourceAuthorizationResult AgentLoop::prepareResources(ToolInvocationPlan& plan
             *invocation.descriptorSnapshot, invocation, QDir::currentPath(),
             externalDirectoryGate_);
         if (!resolved.ok()) return resolved;
+        if (!resourceScope_.isEmpty()) {
+            for (const auto& file : resolved.snapshot.files)
+                if (!PathGuard::contains(resourceScope_, file.path.canonicalPath)) {
+                    resolved.failure = FileSystemFailure::SecurityBoundaryViolation;
+                    resolved.resource = file.path.canonicalPath;
+                    resolved.reason = QStringLiteral("Resource is outside this agent's assigned workspace.");
+                    return resolved;
+                }
+        }
         invocation.resourceSnapshot =
             std::make_shared<const ResourceAuthorizationSnapshot>(std::move(resolved.snapshot));
     }
@@ -342,6 +367,7 @@ void AgentLoop::cancelAsync() {
     if (cancellationToken_) cancellationToken_->store(true);
     if (asyncFinished_)
         return;
+    if (scheduler_) scheduler_->cancel();
     if (waitingForTool_ && cancelTool_) {
         cancelTool_();
         asyncState_.phase = AgentLoopPhase::Cancelled;
@@ -367,6 +393,7 @@ void AgentLoop::completeAsync() {
     asyncFinished_ = true;
     waitingForTool_ = false;
     cancelTool_ = {};
+    scheduler_.reset();
     if (completionCallback_)
         completionCallback_(asyncState_);
 }
@@ -418,6 +445,7 @@ void AgentLoop::advanceAsync() {
         return;
     }
     if (decision.kind == AgentStepDecision::Kind::GiveUp) {
+        asyncState_.providerFailure = decision.providerFailure;
         asyncState_.phase = AgentLoopPhase::Failed;
         asyncState_.abortReason =
             decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
@@ -425,7 +453,8 @@ void AgentLoop::advanceAsync() {
         return;
     }
     auto plan = planFromDecision(decision);
-    if (!knownToolIds_.contains(decision.toolId)) {
+    if (std::any_of(plan.invocations.cbegin(), plan.invocations.cend(),
+                    [this](const auto& call) { return !knownToolIds_.contains(call.toolId); })) {
         appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Unknown Tool"),
                           QStringLiteral("Unknown tool requested: %1").arg(decision.toolId));
         scheduleAsyncAdvance();
@@ -440,7 +469,11 @@ void AgentLoop::advanceAsync() {
         return;
     }
     if (toolCallback_)
-        toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
+        for (int i = 0; i < plan.invocations.size(); ++i) {
+            auto one = plan;
+            one.invocations = {plan.invocations.at(i)};
+            toolCallback_(ToolTransition::Requested, stepIndex + i, one, nullptr);
+        }
     const auto validation = gateway_.validatePlan(plan);
     if (validation.status != ToolExecutionStatus::Succeeded) {
         appendBlockedStep(asyncState_, plan, decision.thought,
@@ -454,7 +487,7 @@ void AgentLoop::advanceAsync() {
     const auto resources = prepareResources(plan);
     if (!resources.ok()) {
         appendBlockedStep(asyncState_, plan, decision.thought,
-                          resources.failure == FileSystemFailure::PermissionDenied
+                          securityFailure(resources.failure)
                               ? QStringLiteral("Denied") : QStringLiteral("Invalid Arguments"),
                           resources.reason, resourceFailureObservation(resources));
         if (toolCallback_)
@@ -532,6 +565,10 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
         scheduleAsyncAdvance();
         return;
     }
+    if (plan.invocations.size() > 1) {
+        executeBatchAsync(plan, thought, approval);
+        return;
+    }
     const auto sandbox = sandboxPolicy_.evaluate(plan, approval);
     if (toolCallback_)
         toolCallback_(ToolTransition::ExecutionStarted, index, plan, nullptr);
@@ -540,7 +577,7 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
     for (auto& invocation : cancellablePlan.invocations)
         invocation.cancellation = cancellationToken_;
     cancelTool_ = gateway_.executeAsync(
-        {cancellablePlan, approval, sandbox, knownToolIds_}, executor_, asyncState_.sessionId,
+        {cancellablePlan, approval, sandbox, knownToolIds_, asyncContext_}, executor_, asyncState_.sessionId,
         toolCallIdProvider_ ? toolCallIdProvider_(index) : QString::number(index),
         [this, index](const QString& processId, ProcessStream stream, const QByteArray& bytes) {
             if (!asyncFinished_ && !cancellationRequested() && outputCallback_)
@@ -555,6 +592,7 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
                 AgentStepRecord partial;
                 partial.index = index;
                 partial.thought = thought;
+                partial.batchId = plan.batchId;
                 fillRecordFromPlan(partial, plan);
                 partial.statusText = toolExecutionStatusName(ToolExecutionStatus::Cancelled);
                 partial.observation = truncator_.truncate(result.summary.toUtf8(), partial.toolId).preview;
@@ -579,6 +617,7 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
             AgentStepRecord record;
             record.index = index;
             record.thought = thought;
+            record.batchId = plan.batchId;
             fillRecordFromPlan(record, plan);
             record.succeeded = result.status == ToolExecutionStatus::Succeeded ||
                                result.status == ToolExecutionStatus::PlaceholderSucceeded;
@@ -605,6 +644,76 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
         });
     if (!waitingForTool_)
         cancelTool_ = {};
+}
+
+void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString& thought,
+                                  ApprovalDecision approval) {
+    const int firstIndex = asyncState_.steps.size() + 1;
+    QList<ToolExecutionRequest> requests;
+    QStringList callIds;
+    for (int i = 0; i < plan.invocations.size(); ++i) {
+        auto one = plan;
+        one.invocations = {plan.invocations.at(i)};
+        one.invocations.first().cancellation = cancellationToken_;
+        requests.append({one, approval, sandboxPolicy_.evaluate(one, approval), knownToolIds_,
+                         asyncContext_});
+        callIds.append(toolCallIdProvider_ ? toolCallIdProvider_(firstIndex + i)
+                                           : QString::number(firstIndex + i));
+    }
+    waitingForTool_ = true;
+    scheduler_ = std::make_shared<AgentExecutionScheduler>(gateway_, executor_,
+                                                           config_.maxParallelTools,
+                                                           config_.executionBudget);
+    scheduler_->start(
+        std::move(requests), asyncState_.sessionId, std::move(callIds),
+        [this, plan, firstIndex](int i) {
+            if (!toolCallback_) return;
+            auto one = plan;
+            one.invocations = {plan.invocations.at(i)};
+            toolCallback_(ToolTransition::ExecutionStarted, firstIndex + i, one, nullptr);
+        },
+        [this, firstIndex](int i, const QString& processId, ProcessStream stream,
+                           const QByteArray& bytes) {
+            if (!asyncFinished_ && !cancellationRequested() && outputCallback_)
+                outputCallback_(firstIndex + i, processId, stream, bytes);
+        },
+        [this, plan, thought, firstIndex](QList<ToolExecutionResult> results) {
+            if (asyncFinished_) return;
+            waitingForTool_ = false;
+            bool cancelled = cancellationRequested();
+            for (int i = 0; i < results.size(); ++i) {
+                auto one = plan;
+                one.invocations = {plan.invocations.at(i)};
+                auto& result = results[i];
+                AgentStepRecord record;
+                record.index = firstIndex + i;
+                record.thought = thought;
+                record.batchId = plan.batchId;
+                fillRecordFromPlan(record, one);
+                record.succeeded = result.status == ToolExecutionStatus::Succeeded ||
+                                   result.status == ToolExecutionStatus::PlaceholderSucceeded;
+                record.statusText = toolExecutionStatusName(result.status);
+                record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
+                record.structuredObservation = result.structuredObservation;
+                asyncState_.steps.append(record);
+                if (one.invocations.first().descriptorSnapshot)
+                    recordEvidence(asyncState_, *one.invocations.first().descriptorSnapshot,
+                                   one, result.status, result.summary, record.index,
+                                   result.structuredObservation, result.mutations);
+                if (toolCallback_)
+                    toolCallback_(ToolTransition::ExecutionFinished, record.index, one, &record);
+                if (stepCallback_) stepCallback_(record);
+                cancelled |= result.status == ToolExecutionStatus::Cancelled;
+            }
+            scheduler_.reset();
+            if (cancelled) {
+                asyncState_.phase = AgentLoopPhase::Cancelled;
+                asyncState_.abortReason = QStringLiteral("Agent batch cancelled.");
+                completeAsync();
+            } else {
+                scheduleAsyncAdvance();
+            }
+        });
 }
 
 bool AgentLoop::cancellationRequested() const {
@@ -698,13 +807,18 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         if (decision.kind == AgentStepDecision::Kind::GiveUp) {
+            state.providerFailure = decision.providerFailure;
             state.phase = AgentLoopPhase::Failed;
             state.abortReason =
                 decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
             return state;
         }
 
-        if (!knownToolIds_.contains(decision.toolId)) {
+        const auto known = decision.toolBatch.isEmpty()
+            ? knownToolIds_.contains(decision.toolId)
+            : std::all_of(decision.toolBatch.cbegin(), decision.toolBatch.cend(),
+                          [this](const auto& call) { return knownToolIds_.contains(call.toolId); });
+        if (!known) {
             appendBlockedStep(state, planFromDecision(decision), decision.thought,
                               QStringLiteral("Unknown Tool"),
                               QStringLiteral("Unknown tool requested: %1").arg(decision.toolId));
@@ -720,7 +834,11 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             return state;
         }
         if (toolCallback_) {
-            toolCallback_(ToolTransition::Requested, stepIndex, plan, nullptr);
+            for (int i = 0; i < plan.invocations.size(); ++i) {
+                auto one = plan;
+                one.invocations = {plan.invocations.at(i)};
+                toolCallback_(ToolTransition::Requested, stepIndex + i, one, nullptr);
+            }
         }
         const auto validation = gateway_.validatePlan(plan);
         if (validation.status != ToolExecutionStatus::Succeeded) {
@@ -734,7 +852,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         const auto resources = prepareResources(plan);
         if (!resources.ok()) {
             appendBlockedStep(state, plan, decision.thought,
-                              resources.failure == FileSystemFailure::PermissionDenied
+                              securityFailure(resources.failure)
                                   ? QStringLiteral("Denied") : QStringLiteral("Invalid Arguments"),
                               resources.reason, resourceFailureObservation(resources));
             if (toolCallback_)
@@ -805,6 +923,15 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
 
 void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& originalPlan,
                             const QString& thought, ApprovalDecision approval) {
+    if (originalPlan.invocations.size() > 1) {
+        for (const auto& invocation : originalPlan.invocations) {
+            auto one = originalPlan;
+            one.invocations = {invocation};
+            executeStep(state, one, thought, approval);
+            if (cancellationRequested()) break;
+        }
+        return;
+    }
     ToolInvocationPlan plan = originalPlan;
     if (externalDirectoryGate_)
         externalDirectoryGate_->setSecuritySessionId(state.sessionId);
@@ -838,6 +965,7 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
     AgentStepRecord record;
     record.index = static_cast<int>(state.steps.size()) + 1;
     record.thought = thought;
+    record.batchId = plan.batchId;
     fillRecordFromPlan(record, plan);
     record.succeeded = result.status == ToolExecutionStatus::Succeeded ||
                        result.status == ToolExecutionStatus::PlaceholderSucceeded;
@@ -865,9 +993,18 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
                                   const QString& thought, const QString& statusText,
                                   const QString& observation,
                                   StructuredObservationPtr structuredObservation) {
+    if (plan.invocations.size() > 1) {
+        for (const auto& invocation : plan.invocations) {
+            auto one = plan;
+            one.invocations = {invocation};
+            appendBlockedStep(state, one, thought, statusText, observation, structuredObservation);
+        }
+        return;
+    }
     AgentStepRecord record;
     record.index = static_cast<int>(state.steps.size()) + 1;
     record.thought = thought;
+    record.batchId = plan.batchId;
     fillRecordFromPlan(record, plan);
     record.succeeded = false;
     record.statusText = statusText;
@@ -1035,6 +1172,23 @@ ToolInvocationPlan AgentLoop::planFromDecision(const AgentStepDecision& decision
     ToolInvocationPlan plan;
     plan.status = ToolInvocationPlanStatus::Planned;
     plan.summary = QStringLiteral("Agent loop step: %1").arg(decision.toolId);
+    if (!decision.toolBatch.isEmpty()) {
+        plan.batchId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        for (const auto& action : decision.toolBatch) {
+            PlannedToolInvocation invocation;
+            invocation.toolId = action.toolId;
+            invocation.toolName = action.toolName.isEmpty() ? action.toolId : action.toolName;
+            invocation.summary = QStringLiteral("Agent batch invocation for %1").arg(action.toolId);
+            invocation.rationale = decision.thought;
+            invocation.riskLevel = action.riskLevel;
+            invocation.executionMode = action.executionMode;
+            invocation.arguments = action.arguments;
+            invocation.dependsOn = action.dependsOn;
+            invocation.providerCallId = action.providerCallId;
+            plan.invocations.append(std::move(invocation));
+        }
+        return plan;
+    }
     plan.invocations.append(PlannedToolInvocation{
         decision.toolId,
         decision.toolName.isEmpty() ? decision.toolId : decision.toolName,

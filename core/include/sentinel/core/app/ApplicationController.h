@@ -58,6 +58,8 @@
 #include <QHash>
 #include <QObject>
 #include <QStringList>
+#include <QVariantList>
+#include <atomic>
 #include <memory>
 
 class QTimer;
@@ -322,6 +324,7 @@ class ApplicationController final : public QObject {
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaDiscoveryStatus READ ollamaDiscoveryStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
     Q_PROPERTY(
@@ -1060,6 +1063,9 @@ class ApplicationController final : public QObject {
 
 public:
     const IAgentRunStore* agentRunStore() const { return agentRunStore_.get(); }
+    QVariantList persistentPermissionGrants() const;
+    bool revokePersistentPermission(const QString& id);
+    bool clearPersistentPermissions();
     ApplicationController(
         std::unique_ptr<IChatProvider> provider, std::unique_ptr<IMemoryStore> memoryStore,
         std::unique_ptr<ChatSession> chatSession = nullptr,
@@ -1291,12 +1297,14 @@ public:
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
+    QString ollamaDiscoveryStatus() const;
     int ollamaModelCount() const;
     QStringList ollamaModelNames() const;
     QStringList installedOllamaModelNames() const;
     QStringList loadedLMStudioModelNames() const;
     QStringList ollamaModelSummaries() const;
     QList<OllamaModelSummary> currentOllamaModels() const;
+    OllamaModelDiscoveryResult ollamaDiscovery() const;
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
     QString selectedLocalModelStatus() const;
@@ -1316,6 +1324,11 @@ public:
     QStringList downloadsCenterSummaries() const;
     QStringList benchmarkHubSummaries() const;
     QStringList selectedModelCapabilityLabels() const;
+    QVariantList modelCapabilitySettings() const;
+    QString modelCapabilityCompatibilitySummary() const;
+    bool setModelCapabilityOverride(const QString& capabilityId, const QString& value);
+    bool setModelCapabilityNumberOverride(const QString& capabilityId, int value);
+    void resetModelCapabilityOverrides();
     QString modelManagementStatus() const;
     QString modelManagementSummary() const;
     QString modelManagementActionAvailability() const;
@@ -1922,6 +1935,7 @@ signals:
     void orchestrationSnapshotChanged();
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
+    void modelCapabilitiesChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
     void voiceConfigurationChanged();
@@ -2206,8 +2220,11 @@ private:
     QTimer* ollamaPollTimer_ = nullptr;
     QThread* ollamaCheckThread_ = nullptr;
     bool pendingModelRefresh_ = false;
+    std::shared_ptr<std::atomic_bool> discoveryCancellation_;
+    quint64 discoveryGeneration_ = 0;
+    quint64 activeLocalInferenceHealthSequence_ = 0;
+    QString activeLocalInferenceProviderId_;
     mutable OllamaHealthCheckResult cachedOllamaHealthCheck_;
-    mutable QList<OllamaModelSummary> cachedOllamaModels_;
     mutable QList<OllamaModelSummary> cachedLMStudioModels_;
     mutable QList<OllamaModelSummary> cachedLlamaCppModels_;
     mutable QString lmStudioEndpoint_;

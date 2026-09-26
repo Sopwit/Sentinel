@@ -58,6 +58,7 @@ struct AgentResponse {
 
 struct AgentSessionOptions {
     bool autonomousMode = false;
+    int maxParallelTools = 3;
     QString runType = QStringLiteral("interactive");
     QStringList availableToolIds;
     std::function<void(const AgentStepRecord&)> onStep;

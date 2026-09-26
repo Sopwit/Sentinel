@@ -80,7 +80,9 @@ StoredAgentRun readRun(const QSqlQuery& query) {
             query.value(9).toString(), query.value(10).toString(), parsedTime(query.value(11)),
             parsedTime(query.value(12)), query.value(13).toString(), query.value(14).toInt(),
             query.value(15).toInt(), query.value(16).toInt(), query.value(17).toBool(),
-            query.value(18).toInt(), query.value(19).toString()};
+            query.value(18).toInt(), query.value(19).toString(), query.value(20).toString(),
+            query.value(21).toString(), query.value(22).toInt(), query.value(23).toInt(),
+            query.value(24).toBool(), query.value(25).toString()};
 }
 
 const QString runColumns = QStringLiteral(
@@ -88,7 +90,21 @@ const QString runColumns = QStringLiteral(
     "goal_summary,final_answer,failure,started_at,finished_at,grounding_mode,context_tokens,"
     "context_items,context_omitted,context_compacted,"
     "(SELECT COUNT(*) FROM agent_steps s WHERE s.run_id=agent_runs.run_id),"
-    "capability_snapshot");
+    "capability_snapshot,role,provider_error_category,provider_http_status,"
+    "provider_attempts,provider_retry_occurred,provider_request_lifecycle");
+
+QString lifecycleName(ChatRequestLifecycle lifecycle) {
+    switch (lifecycle) {
+    case ChatRequestLifecycle::Pending: return QStringLiteral("Pending");
+    case ChatRequestLifecycle::Running: return QStringLiteral("Running");
+    case ChatRequestLifecycle::Completed: return QStringLiteral("Completed");
+    case ChatRequestLifecycle::Cancelled: return QStringLiteral("Cancelled");
+    case ChatRequestLifecycle::TimedOut: return QStringLiteral("TimedOut");
+    case ChatRequestLifecycle::RateLimited: return QStringLiteral("RateLimited");
+    case ChatRequestLifecycle::Failed: return QStringLiteral("Failed");
+    }
+    return QStringLiteral("Failed");
+}
 
 bool ensureColumn(QSqlDatabase& db, const QString& table, const QString& column,
                   const QString& declaration, QString& error) {
@@ -181,9 +197,29 @@ bool SQLiteAgentRunStore::initialize() {
     if (!ensureColumn(connection.db, QStringLiteral("agent_runs"),
                       QStringLiteral("capability_snapshot"),
                       QStringLiteral("capability_snapshot TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("role"), QStringLiteral("role TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_error_category"),
+                      QStringLiteral("provider_error_category TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_http_status"),
+                      QStringLiteral("provider_http_status INTEGER"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_attempts"),
+                      QStringLiteral("provider_attempts INTEGER"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_retry_occurred"),
+                      QStringLiteral("provider_retry_occurred INTEGER"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_request_lifecycle"),
+                      QStringLiteral("provider_request_lifecycle TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
                       QStringLiteral("mutation_summary"),
                       QStringLiteral("mutation_summary TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
+                      QStringLiteral("batch_id"),
+                      QStringLiteral("batch_id TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_evidence"),
                       QStringLiteral("freshness"), QStringLiteral("freshness INTEGER"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_claims"),
@@ -192,7 +228,7 @@ bool SQLiteAgentRunStore::initialize() {
                       QStringLiteral("scope"), QStringLiteral("scope TEXT"), lastError_))
         return false;
     if (!query.exec(QStringLiteral("INSERT INTO agent_run_schema_metadata(key,value) "
-                                   "VALUES('schema_version',2) ON CONFLICT(key) "
+                                   "VALUES('schema_version',4) ON CONFLICT(key) "
                                    "DO UPDATE SET value=excluded.value"))) {
         lastError_ = query.lastError().text();
         return false;
@@ -267,14 +303,14 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
     if (event.type == AgentEventType::RunStarted) {
         const auto* start = std::get_if<AgentRunStartedEvent>(&event.payload);
         exec(QStringLiteral("INSERT OR IGNORE INTO agent_runs(run_id,session_id,parent_run_id,"
-                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary,capability_snapshot) "
-                            "VALUES(?,?,?,?,?,?,'Running',?,?,?,?)"),
+                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary,capability_snapshot,role) "
+                            "VALUES(?,?,?,?,?,?,'Running',?,?,?,?,?)"),
              {event.turnId, event.sessionId, start ? start->parentRunId : QString{},
               start ? start->parentToolCallId : QString{},
               start ? start->runType : QStringLiteral("interactive"), at,
               event.providerId, event.modelId,
               bounded(start ? start->goalSummary : QString{}, 180),
-              event.capabilitySnapshot.left(160)});
+              event.capabilitySnapshot.left(160), start ? start->role.left(40) : QString{}});
         exec(QStringLiteral("DELETE FROM agent_runs WHERE run_id IN ("
                             "SELECT run_id FROM agent_runs ORDER BY started_at DESC,run_id DESC "
                             "LIMIT -1 OFFSET 500)"), {});
@@ -347,8 +383,10 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                  {event.toolCallId, event.stepId});
             if (const auto* tool = std::get_if<AgentToolEvent>(&event.payload))
                 exec(QStringLiteral("INSERT OR IGNORE INTO agent_tool_calls(tool_call_id,step_id,"
-                                    "tool_id,source,status,started_at) VALUES(?,?,?,?,'Requested',?)"),
-                     {event.toolCallId, event.stepId, tool->toolId, tool->source, at});
+                                    "tool_id,source,status,started_at,batch_id) "
+                                    "VALUES(?,?,?,?,'Requested',?,?)"),
+                     {event.toolCallId, event.stepId, tool->toolId, tool->source, at,
+                      tool->batchId});
         } else {
             QString status;
             switch (event.type) {
@@ -417,6 +455,16 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                      {event.turnId});
         }
         if (const auto* run = std::get_if<AgentRunEvent>(&event.payload)) {
+            if (run->providerFailure) {
+                const auto& failure = *run->providerFailure;
+                exec(QStringLiteral("UPDATE agent_runs SET provider_error_category=?,"
+                                    "provider_http_status=?,provider_attempts=?,"
+                                    "provider_retry_occurred=?,provider_request_lifecycle=? "
+                                    "WHERE run_id=?"),
+                     {chatProviderErrorCategoryName(failure.category), failure.httpStatus,
+                      failure.attempts, failure.attempts > 1 ? 1 : 0,
+                      lifecycleName(failure.lifecycle), event.turnId});
+            }
             if (run->phase == AgentLoopPhase::AwaitingApproval)
                 exec(QStringLiteral("UPDATE agent_runs SET state='AwaitingApproval' WHERE run_id=?"),
                      {event.turnId});
@@ -570,7 +618,7 @@ QList<StoredAgentToolCall> SQLiteAgentRunStore::toolCallsForRun(const QString& r
     QSqlQuery query(connection.db);
     query.prepare(QStringLiteral("SELECT t.tool_call_id,t.step_id,t.tool_id,t.source,t.status,"
                                  "t.resource_summary,t.observation_summary,t.started_at,t.finished_at,"
-                                 "t.failure_category,t.mutation_summary "
+                                 "t.failure_category,t.mutation_summary,t.batch_id "
                                  "FROM agent_tool_calls t JOIN agent_steps s ON s.step_id=t.step_id "
                                  "WHERE s.run_id=? ORDER BY s.sequence ASC LIMIT ?"));
     query.addBindValue(runId);
@@ -581,7 +629,7 @@ QList<StoredAgentToolCall> SQLiteAgentRunStore::toolCallsForRun(const QString& r
                        query.value(4).toString(), query.value(5).toString(),
                        query.value(6).toString(), parsedTime(query.value(7)),
                        parsedTime(query.value(8)), query.value(9).toString(),
-                       query.value(10).toString()});
+                       query.value(10).toString(), query.value(11).toString()});
     return result;
 }
 

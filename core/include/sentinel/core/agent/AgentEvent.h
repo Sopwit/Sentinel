@@ -47,6 +47,7 @@ struct AgentRunStartedEvent {
     QString runType = QStringLiteral("interactive");
     QString parentRunId;
     QString parentToolCallId;
+    QString role;
 };
 
 struct AgentContextEvent {
@@ -63,6 +64,7 @@ struct AgentToolEvent {
     QList<AuthorizationRequest> authorizationRequests;
     QString displayName;
     QString source;
+    QString batchId;
 };
 
 struct AgentStepEvent {
@@ -79,6 +81,7 @@ struct AgentRunEvent {
     AgentLoopPhase phase = AgentLoopPhase::Idle;
     QString finalAnswer;
     QString abortReason;
+    std::optional<ProviderFailureMetadata> providerFailure;
     int completedSteps = 0;
     AgentToolEvent pendingTool;
     QList<AuthorizationRequest> pendingAuthorizationRequests;

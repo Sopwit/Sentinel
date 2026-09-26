@@ -43,8 +43,9 @@ namespace sentinel::desktop {
 
 class DesktopShellViewModel final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QVariantList persistentPermissionGrants READ persistentPermissionGrants NOTIFY persistentPermissionGrantsChanged)
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
-    Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
+    Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY providerStatusChanged)
     Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
     Q_PROPERTY(QString lastAgentResponse READ lastAgentResponse NOTIFY agentResponseChanged)
     Q_PROPERTY(QString latestToolPlanStatus READ latestToolPlanStatus NOTIFY toolPlanChanged)
@@ -302,6 +303,7 @@ class DesktopShellViewModel final : public QObject {
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaDiscoveryStatus READ ollamaDiscoveryStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString localInferenceHealthSummary READ localInferenceHealthSummary NOTIFY
                    ollamaStatusChanged)
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
@@ -366,6 +368,10 @@ class DesktopShellViewModel final : public QObject {
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList selectedModelCapabilityLabels READ selectedModelCapabilityLabels NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QVariantList modelCapabilitySettings READ modelCapabilitySettings NOTIFY
+                   modelCapabilitySettingsChanged)
+    Q_PROPERTY(QString modelCapabilityCompatibilitySummary READ
+                   modelCapabilityCompatibilitySummary NOTIFY modelCapabilitySettingsChanged)
     Q_PROPERTY(
         QString modelManagementStatus READ modelManagementStatus NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString modelManagementSummary READ modelManagementSummary NOTIFY
@@ -1684,6 +1690,7 @@ public:
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
+    QString ollamaDiscoveryStatus() const;
     QString localInferenceHealthSummary() const;
     QString activeLocalModelName() const;
     QString selectedOllamaModel() const;
@@ -1730,6 +1737,12 @@ public:
     QStringList downloadsCenterSummaries() const;
     QStringList benchmarkHubSummaries() const;
     QStringList selectedModelCapabilityLabels() const;
+    QVariantList modelCapabilitySettings() const;
+    QString modelCapabilityCompatibilitySummary() const;
+    Q_INVOKABLE bool setModelCapabilityOverride(const QString& capabilityId,
+                                                const QString& value);
+    Q_INVOKABLE bool setModelCapabilityNumberOverride(const QString& capabilityId, int value);
+    Q_INVOKABLE void resetModelCapabilityOverrides();
     QString modelManagementStatus() const;
     QString modelManagementSummary() const;
     QString modelManagementActionAvailability() const;
@@ -2536,12 +2549,17 @@ public:
     void setWebSearchApiKey(const QString& key);
     int webSearchMaxResults() const;
     void setWebSearchMaxResults(int maxResults);
+    QVariantList persistentPermissionGrants() const;
+    Q_INVOKABLE bool revokePersistentPermission(const QString& id);
+    Q_INVOKABLE bool clearPersistentPermissions();
     QString semanticProvider() const;
     void setSemanticProvider(const QString& provider);
     QString semanticEmbeddingModel() const;
     void setSemanticEmbeddingModel(const QString& model);
 
 signals:
+    void providerStatusChanged();
+    void persistentPermissionGrantsChanged();
     void currentModeChanged();
     void chatMessagesChanged();
     void memoryEntriesChanged();
@@ -2587,6 +2605,7 @@ signals:
     void orchestrationSnapshotChanged();
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
+    void modelCapabilitySettingsChanged();
     void ollamaStatusChanged();
     void proxySettingsChanged();
     void onlineChanged();

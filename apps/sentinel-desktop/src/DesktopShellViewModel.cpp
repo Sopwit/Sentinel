@@ -271,6 +271,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
         chatMessages_.setMessages(controller_.chatHistory());
         emit chatMessagesChanged();
+        emit providerStatusChanged();
     });
     connect(&controller_, &core::ApplicationController::memoryEntriesChanged, this,
             &DesktopShellViewModel::memoryEntriesChanged);
@@ -278,6 +279,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::maintenanceStatusChanged);
     connect(&controller_, &core::ApplicationController::agentStatusChanged, this, [this]() {
         emit agentStatusChanged();
+        emit providerStatusChanged();
         const QString currentStatus = controller_.agentStatus();
         if (currentStatus == QLatin1String("Ready") && lastAgentStatus_ == QLatin1String("Busy")) {
             const QString response = controller_.lastAgentResponse();
@@ -337,8 +339,14 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::runtimeProviderRegistryChanged);
     connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
             &DesktopShellViewModel::localModelSelectionChanged);
+    connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
+            &DesktopShellViewModel::modelCapabilitySettingsChanged);
+    connect(&controller_, &core::ApplicationController::modelCapabilitiesChanged, this,
+            &DesktopShellViewModel::modelCapabilitySettingsChanged);
     connect(&controller_, &core::ApplicationController::ollamaStatusChanged, this,
             &DesktopShellViewModel::ollamaStatusChanged);
+    connect(&controller_, &core::ApplicationController::ollamaStatusChanged, this,
+            &DesktopShellViewModel::providerStatusChanged);
     connect(&controller_, &core::ApplicationController::localChatInferenceRoutingChanged, this,
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
@@ -617,6 +625,24 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     });
 
     setupBackgroundUpdateCheck();
+}
+
+QVariantList DesktopShellViewModel::persistentPermissionGrants() const {
+    return controller_.persistentPermissionGrants();
+}
+
+bool DesktopShellViewModel::revokePersistentPermission(const QString& id) {
+    const bool removed = controller_.revokePersistentPermission(id);
+    if (removed)
+        emit persistentPermissionGrantsChanged();
+    return removed;
+}
+
+bool DesktopShellViewModel::clearPersistentPermissions() {
+    const bool cleared = controller_.clearPersistentPermissions();
+    if (cleared)
+        emit persistentPermissionGrantsChanged();
+    return cleared;
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -1378,6 +1404,10 @@ QString DesktopShellViewModel::ollamaHealthSummary() const {
     return controller_.ollamaHealthSummary();
 }
 
+QString DesktopShellViewModel::ollamaDiscoveryStatus() const {
+    return controller_.ollamaDiscoveryStatus();
+}
+
 QString DesktopShellViewModel::localInferenceHealthSummary() const {
     return ollamaHealthSummary();
 }
@@ -1578,6 +1608,28 @@ QStringList DesktopShellViewModel::benchmarkHubSummaries() const {
 
 QStringList DesktopShellViewModel::selectedModelCapabilityLabels() const {
     return controller_.selectedModelCapabilityLabels();
+}
+
+QVariantList DesktopShellViewModel::modelCapabilitySettings() const {
+    return controller_.modelCapabilitySettings();
+}
+
+QString DesktopShellViewModel::modelCapabilityCompatibilitySummary() const {
+    return controller_.modelCapabilityCompatibilitySummary();
+}
+
+bool DesktopShellViewModel::setModelCapabilityOverride(const QString& capabilityId,
+                                                       const QString& value) {
+    return controller_.setModelCapabilityOverride(capabilityId, value);
+}
+
+bool DesktopShellViewModel::setModelCapabilityNumberOverride(const QString& capabilityId,
+                                                             int value) {
+    return controller_.setModelCapabilityNumberOverride(capabilityId, value);
+}
+
+void DesktopShellViewModel::resetModelCapabilityOverrides() {
+    controller_.resetModelCapabilityOverrides();
 }
 
 QString DesktopShellViewModel::modelManagementStatus() const {
