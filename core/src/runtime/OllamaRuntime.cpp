@@ -423,7 +423,6 @@ OllamaModelDiscoveryResult OllamaHttpRuntimeClient::discoverModels(
         };
         const auto details = object.value(QStringLiteral("details")).toObject();
         model.family = details.value(QStringLiteral("family")).toString();
-        model.architecture = model.family;
         result.models.append(std::move(model));
     }
     result.lifecycle = ChatRequestLifecycle::Completed;
