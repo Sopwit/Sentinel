@@ -21,12 +21,15 @@
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMetaObject>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QSettings>
 #include <QStorageInfo>
 #include <QSysInfo>
+#include <QThread>
 #include <QTimer>
 #include <QUrl>
 
@@ -69,6 +72,14 @@ void RealToolExecutor::setMcpService(std::shared_ptr<IMcpService> service) {
 }
 
 void RealToolExecutor::setSubagentRunner(std::function<QString(const QString& task)> runner) {
+    subagentRunner_ = [runner = std::move(runner)](const SubagentAssignment& assignment,
+                                                   const QString&) {
+        return runner(assignment.goal);
+    };
+}
+
+void RealToolExecutor::setSubagentRunnerWithContext(
+    std::function<QString(const SubagentAssignment&, const QString&)> runner) {
     subagentRunner_ = std::move(runner);
 }
 
@@ -236,6 +247,34 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         return QString{};
     };
     const QString toolId = invocation.toolId;
+    if (toolId == QLatin1String("spawn-agent")) {
+        auto cancelled = std::make_shared<std::atomic_bool>(false);
+        QPointer<QObject> context(request.callbackContext);
+        auto complete = [context, completion](ToolExecutionResult result) {
+            if (context) {
+                QMetaObject::invokeMethod(context, [completion, result = std::move(result)]() mutable {
+                    completion(std::move(result));
+                }, Qt::QueuedConnection);
+            } else {
+                completion(std::move(result));
+            }
+        };
+        auto* worker = QThread::create([this, request, complete, cancelled] {
+            if (cancelled->load()) {
+                complete({ToolExecutionStatus::Cancelled,
+                          QStringLiteral("Subagent execution cancelled.")});
+                return;
+            }
+            auto result = execute(request);
+            if (cancelled->load())
+                result = {ToolExecutionStatus::Cancelled,
+                          QStringLiteral("Subagent execution cancelled.")};
+            complete(std::move(result));
+        });
+        QObject::connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+        worker->start();
+        return [cancelled] { cancelled->store(true); };
+    }
     if (toolId != QLatin1String("run-command")) {
         static const QSet<QString> processTools{
             QStringLiteral("process-list"),  QStringLiteral("app-quit"),
@@ -1336,12 +1375,17 @@ template <typename T> ToolExecutionResult fileToolFailure(const QString& tool, c
     }
     observation->failureResource = result.resource;
     observation->data = {{QStringLiteral("resource"), result.resource}};
-    const auto status = result.failure == FileSystemFailure::PermissionDenied ? ToolExecutionStatus::Blocked
+    const bool securityFailure = result.failure == FileSystemFailure::PermissionDenied ||
+        result.failure == FileSystemFailure::ResourceChanged ||
+        result.failure == FileSystemFailure::SymlinkEscape ||
+        result.failure == FileSystemFailure::UnsafeParent ||
+        result.failure == FileSystemFailure::SecurityBoundaryViolation;
+    const auto status = securityFailure ? ToolExecutionStatus::Blocked
                       : result.failure == FileSystemFailure::InvalidPath ? ToolExecutionStatus::InvalidArguments
                       : ToolExecutionStatus::Failed;
     QString detail = result.diagnostic;
     if (detail.isEmpty()) {
-        if (result.failure == FileSystemFailure::PermissionDenied)
+        if (securityFailure)
             detail = QStringLiteral("Access denied: %1").arg(result.resource);
         else if (result.failure == FileSystemFailure::InvalidPath)
             detail = QStringLiteral("Invalid path");
@@ -1898,20 +1942,32 @@ ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocat
             logs.append(QStringLiteral("spawn-agent: No task argument provided."));
             continue;
         }
-        if (subagentActive_) {
-            logs.append(
-                QStringLiteral("spawn-agent: subagents cannot spawn further subagents; finish this "
-                               "subtask directly."));
-            continue;
-        }
         if (!subagentRunner_) {
             logs.append(
                 QStringLiteral("spawn-agent: No subagent runner is configured in this session."));
             continue;
         }
-        subagentActive_ = true;
-        const QString answer = subagentRunner_(task);
-        subagentActive_ = false;
+        SubagentAssignment assignment;
+        assignment.goal = task;
+        assignment.role = getArgument(invocation, QStringLiteral("role")).trimmed().left(40);
+        assignment.workspace = getArgument(invocation, QStringLiteral("workspace")).trimmed();
+        assignment.modelId = getArgument(invocation, QStringLiteral("modelId")).trimmed();
+        const QString requestedTools = getArgument(invocation, QStringLiteral("allowedTools"));
+        if (!requestedTools.isEmpty()) {
+            const auto document = QJsonDocument::fromJson(requestedTools.toUtf8());
+            if (!document.isArray() || document.array().size() > 12) {
+                return {ToolExecutionStatus::InvalidArguments,
+                        QStringLiteral("spawn-agent: allowedTools must be an array of up to 12 tool ids.")};
+            }
+            for (const auto& value : document.array()) {
+                if (!value.isString() || value.toString().trimmed().isEmpty())
+                    return {ToolExecutionStatus::InvalidArguments,
+                            QStringLiteral("spawn-agent: invalid allowed tool id.")};
+                assignment.allowedToolIds.append(value.toString());
+            }
+            assignment.allowedToolIds.removeDuplicates();
+        }
+        const QString answer = subagentRunner_(assignment, invocation.runtimeToolCallId);
         logs.append(QStringLiteral("spawn-agent: subagent finished the task '%1'.\n\n%2")
                         .arg(task.left(200), answer));
 

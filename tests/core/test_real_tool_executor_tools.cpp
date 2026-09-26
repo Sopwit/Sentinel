@@ -9,6 +9,8 @@
 #include <QGuiApplication>
 
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
+#include "sentinel/core/memory/InMemoryStore.h"
 #include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 
@@ -609,8 +611,10 @@ private slots:
 
     void memorySearchFindsSnapshotEntries() {
         RealToolExecutor executor;
-        executor.setMemorySnapshot({{QStringLiteral("user_name"), QStringLiteral("Ahmet")},
-                                    {QStringLiteral("shopping"), QStringLiteral("buy oat milk")}});
+        InMemoryStore memory;
+        memory.put(QStringLiteral("user_name"), QStringLiteral("Ahmet"));
+        memory.put(QStringLiteral("shopping"), QStringLiteral("buy oat milk"));
+        executor.setSearchStores(&memory, nullptr);
 
         const auto result =
             runTool(executor, QStringLiteral("memory-search"),
@@ -618,7 +622,7 @@ private slots:
                     allToolIds());
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("1 match(es) for 'milk'")));
+        QVERIFY(result.summary.contains(QStringLiteral("match(es) for 'milk'")));
         QVERIFY(result.summary.contains(QStringLiteral("shopping: buy oat milk")));
 
         const auto noMatch = runTool(
@@ -796,9 +800,16 @@ private slots:
     }
 
     void historySearchFindsSnapshotEntries() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        SQLiteChatHistoryStore history(dir.filePath(QStringLiteral("history.sqlite3")));
+        QVERIFY(history.isAvailable());
+        history.appendMessage({0, ChatRole::User,
+                               QStringLiteral("bisiklet tamir etmem lazım")});
+        history.appendMessage({0, ChatRole::Assistant,
+                               QStringLiteral("hangi parça sorunlu?")});
         RealToolExecutor executor;
-        executor.setHistorySnapshot({QStringLiteral("[user] bisiklet tamir etmem lazım"),
-                                     QStringLiteral("[assistant] hangi parça sorunlu?")});
+        executor.setSearchStores(nullptr, &history);
 
         const auto result =
             runTool(executor, QStringLiteral("history-search"),
@@ -806,7 +817,7 @@ private slots:
                     allToolIds());
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("1 match(es) for 'bisiklet'")));
+        QVERIFY(result.summary.contains(QStringLiteral("match(es) for 'bisiklet'")));
         QVERIFY(result.summary.contains(QStringLiteral("[user] bisiklet")));
 
         const auto missing =

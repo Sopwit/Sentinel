@@ -10,6 +10,8 @@
 #include <QJsonObject>
 #include <QSet>
 #include <QTimer>
+#include <QPointer>
+#include <QThreadPool>
 namespace sentinel::core {
 namespace {
 QJsonObject builtInSchema(const ToolDescriptor& tool) {
@@ -72,6 +74,12 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                      {QStringLiteral("required"),
                       QJsonArray{QStringLiteral("content"), QStringLiteral("status")}},
                      {QStringLiteral("additionalProperties"), false}}}};
+        } else if (tool.id == QLatin1String("spawn-agent") &&
+                   parameter.id == QLatin1String("allowedTools")) {
+            field = QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
+                                {QStringLiteral("items"),
+                                 QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}},
+                                {QStringLiteral("maxItems"), 12}};
         } else if (tool.id == QLatin1String("run-command") &&
                    parameter.id == QLatin1String("sandbox")) {
             field.insert(QStringLiteral("enum"),
@@ -526,6 +534,14 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                 ToolParameterDescriptor{
                     QStringLiteral("task"),
                     QStringLiteral("The complete, self-contained task description."), true},
+                ToolParameterDescriptor{QStringLiteral("role"),
+                                        QStringLiteral("Optional short role label."), false},
+                ToolParameterDescriptor{QStringLiteral("allowedTools"),
+                                        QStringLiteral("Optional subset of read-only tool ids."), false},
+                ToolParameterDescriptor{QStringLiteral("workspace"),
+                                        QStringLiteral("Optional workspace subdirectory scope."), false},
+                ToolParameterDescriptor{QStringLiteral("modelId"),
+                                        QStringLiteral("Optional current model id; other models are refused."), false},
             }},
         ToolDescriptor{
             QStringLiteral("browser-screenshot"),
@@ -643,6 +659,14 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                                QStringLiteral("app-quit"),     QStringLiteral("system-info"),
                                QStringLiteral("process-list"), QStringLiteral("current-time")};
     for (auto& tool : tools) {
+        static const QSet<QString> parallelBuiltIns{
+            QStringLiteral("list-directory"), QStringLiteral("read-file"),
+            QStringLiteral("grep"), QStringLiteral("glob"),
+            QStringLiteral("list-code-definitions"), QStringLiteral("write-file"),
+            QStringLiteral("edit-file"), QStringLiteral("delete-file"),
+            QStringLiteral("move-file"), QStringLiteral("web-search"),
+            QStringLiteral("web-fetch")};
+        tool.parallelSafe = parallelBuiltIns.contains(tool.id);
         tool.inputSchema = builtInSchema(tool);
         tool.evidenceProduced = builtInEvidence(tool.id);
         if (tool.id == QLatin1String("list-directory"))
@@ -827,6 +851,31 @@ public:
                                  id == QLatin1String("glob") || id == QLatin1String("grep") ||
                                  id == QLatin1String("list-code-definitions") ||
                                  id == QLatin1String("apply-patch");
+        if (request.callbackContext && request.plan.invocations.first().descriptorSnapshot &&
+            request.plan.invocations.first().descriptorSnapshot->parallelSafe) {
+            auto invocation = request.plan.invocations.first();
+            auto token = std::make_shared<std::atomic_bool>(false);
+            invocation.toolCancellation = token;
+            auto self = shared_from_this();
+            QPointer<QObject> context(request.callbackContext);
+            const QString cwd = QDir::currentPath();
+            pool_.start([self, invocation = std::move(invocation), cwd, context, token,
+                         completion = std::move(completion)]() mutable {
+                ToolExecutionResult result;
+                if (token->load() || (invocation.cancellation && invocation.cancellation->load()))
+                    result = {ToolExecutionStatus::Cancelled, QStringLiteral("Tool cancelled before execution.")};
+                else {
+                    QString workingDirectory = cwd;
+                    result = (self->executor_.*self->method_)(invocation, workingDirectory);
+                }
+                if (context)
+                    QMetaObject::invokeMethod(context.data(), [completion = std::move(completion),
+                                                         result = std::move(result)]() mutable {
+                        completion(std::move(result));
+                    }, Qt::QueuedConnection);
+            });
+            return [token] { token->store(true); };
+        }
         if (cancellable && !sessionId.isEmpty()) {
             auto invocation = request.plan.invocations.first();
             auto token = std::make_shared<std::atomic_bool>(false);
@@ -864,6 +913,7 @@ private:
     RealToolExecutor& executor_;
     RealToolExecutor::BuiltInMethod method_;
     bool processBacked_;
+    QThreadPool pool_;
 };
 } // namespace
 bool BuiltInToolProvider::registerTools(IToolRegistry& registry, RealToolExecutor& executor) {

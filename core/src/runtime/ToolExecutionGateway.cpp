@@ -23,7 +23,8 @@ bool sameAuthorizationSnapshot(const ToolDescriptor& captured, const ToolDescrip
            captured.version == current.version && captured.source == current.source &&
            captured.riskLevel == current.riskLevel && captured.executionMode == current.executionMode &&
            captured.enabled == current.enabled && captured.inputSchema == current.inputSchema &&
-           captured.authorizationRequirements == current.authorizationRequirements;
+           captured.authorizationRequirements == current.authorizationRequirements &&
+           captured.parallelSafe == current.parallelSafe;
 }
 
 bool sameResources(const ResourceAuthorizationSnapshot& captured,
@@ -429,6 +430,7 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
             resolved.plan.invocations.first().arguments =
                 ToolArgumentValidator::toInvocationArguments(
                     snapshotValidation.normalizedArguments);
+            resolved.plan.invocations.first().runtimeToolCallId = toolCallId;
             const auto& invocation = resolved.plan.invocations.first();
             const bool usesFileSystem = std::any_of(
                 registration->descriptor.authorizationRequirements.cbegin(),
