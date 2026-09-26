@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "sentinel/core/runtime/IFileSystemService.h"
+#include "sentinel/core/runtime/SecureFileMutationBackend.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/PathGuard.h"
 #include <QDir>
@@ -11,6 +12,11 @@
 #include <QSet>
 #include <algorithm>
 #include <utility>
+#if defined(Q_OS_UNIX)
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 namespace sentinel::core {
 namespace {
@@ -51,6 +57,36 @@ bool sensitive(const QString& path) {
 FileSystemEntry entryOf(const QFileInfo& info) {
     return {info.fileName(), info.absoluteFilePath(), info.isDir(), info.size(), info.isFile()};
 }
+void captureIdentity(AuthorizedPath& path) {
+#if defined(Q_OS_UNIX)
+    struct stat info {};
+    const QByteArray encoded = QFile::encodeName(path.canonicalPath);
+    if (::lstat(encoded.constData(), &info) == 0) {
+        path.existedAtAuthorization = true;
+        path.deviceId = static_cast<quint64>(info.st_dev);
+        path.fileId = static_cast<quint64>(info.st_ino);
+    }
+    QString parent = QFileInfo(path.canonicalPath).absolutePath();
+    while (!parent.isEmpty()) {
+        const QByteArray parentName = QFile::encodeName(parent);
+        if (::lstat(parentName.constData(), &info) == 0) {
+            if (S_ISDIR(info.st_mode)) {
+                path.parentAnchorPath = parent;
+                path.parentDeviceId = static_cast<quint64>(info.st_dev);
+                path.parentFileId = static_cast<quint64>(info.st_ino);
+            }
+            break;
+        }
+        const QString next = QFileInfo(parent).absolutePath();
+        if (next == parent) break;
+        parent = next;
+    }
+#elif defined(Q_OS_WIN)
+    securefs::captureIdentity(path);
+#else
+    path.existedAtAuthorization = QFileInfo::exists(path.canonicalPath);
+#endif
+}
 }
 FileSystemResult<AuthorizedPath> QtFileSystemService::resolve(const QString& raw,
         const QString& cwd, FileSystemAccess access) const {
@@ -79,23 +115,56 @@ FileSystemResult<AuthorizedPath> QtFileSystemService::resolve(const QString& raw
     FileSystemResult<AuthorizedPath> result;
     result.resource = path;
     result.value = AuthorizedPath{path, raw, access};
+    captureIdentity(*result.value);
     return result;
+}
+FileSystemFailure QtFileSystemService::validateFinal(const AuthorizedPath& path, bool creating) const {
+    if (path.canonicalPath.isEmpty() || sensitive(path.canonicalPath))
+        return FileSystemFailure::SecurityBoundaryViolation;
+    const QString current = PathGuard::canonicalPath(path.canonicalPath);
+    if (current != path.canonicalPath)
+        return FileSystemFailure::SymlinkEscape;
+    const QFileInfo parent(QFileInfo(path.canonicalPath).absolutePath());
+    if ((!parent.exists() && !creating) ||
+        (parent.exists() && !parent.isDir()) ||
+        PathGuard::canonicalPath(parent.absoluteFilePath()) != parent.absoluteFilePath() ||
+        sensitive(parent.absoluteFilePath()))
+        return FileSystemFailure::UnsafeParent;
+    const QFileInfo target(path.canonicalPath);
+    if (target.isSymLink())
+        return FileSystemFailure::SymlinkEscape;
+    if (path.existedAtAuthorization && !target.exists())
+        return FileSystemFailure::ResourceChanged;
+    if (!path.existedAtAuthorization && target.exists() && creating)
+        return FileSystemFailure::ResourceChanged;
+#if defined(Q_OS_UNIX)
+    if (path.existedAtAuthorization) {
+        struct stat info {};
+        const QByteArray encoded = QFile::encodeName(path.canonicalPath);
+        if (::lstat(encoded.constData(), &info) != 0 ||
+            static_cast<quint64>(info.st_dev) != path.deviceId ||
+            static_cast<quint64>(info.st_ino) != path.fileId)
+            return FileSystemFailure::ResourceChanged;
+    }
+#endif
+    return FileSystemFailure::None;
 }
 FileSystemResult<AuthorizedPath> QtFileSystemService::revalidateAuthorized(
     const AuthorizedPath& path, const QString& cwd) const {
-    const QString current = PathGuard::canonicalPath(path.canonicalPath);
-    if (current.isEmpty() || current != path.canonicalPath ||
-        (QFileInfo(current).isSymLink() && !QFileInfo(current).exists()) ||
-        sensitive(current) ||
-        (gate_ ? !gate_->isPathSafe(current, cwd) : !PathGuard::contains(cwd, current)))
+    if (const auto security = validateFinal(path, true); security != FileSystemFailure::None)
+        return failure<AuthorizedPath>(FileSystemOperation::Stat, path.displayPath, security);
+    if (gate_ ? !gate_->isPathSafe(path.canonicalPath, cwd)
+              : !PathGuard::contains(cwd, path.canonicalPath))
         return failure<AuthorizedPath>(FileSystemOperation::Stat, path.displayPath,
-                                       FileSystemFailure::PermissionDenied);
+                                       FileSystemFailure::SecurityBoundaryViolation);
     FileSystemResult<AuthorizedPath> result;
-    result.resource = current;
+    result.resource = path.canonicalPath;
     result.value = path;
     return result;
 }
 FileSystemResult<FileSystemEntry> QtFileSystemService::stat(const AuthorizedPath& path) const {
+    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
+        return failure<FileSystemEntry>(FileSystemOperation::Stat, path.canonicalPath, security);
     const QFileInfo info(path.canonicalPath);
     if (!info.exists()) return failure<FileSystemEntry>(FileSystemOperation::Stat, path.canonicalPath,
                                                          requiredType(info, false));
@@ -158,6 +227,8 @@ QList<QFileInfo> enumerateDirectory(const QString& directoryPath, bool includeHi
 }
 FileSystemResult<DirectoryListing> QtFileSystemService::listDirectory(const AuthorizedPath& path,
         bool includeHidden, int limit, const FileSystemOperationContext& context) const {
+    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
+        return failure<DirectoryListing>(FileSystemOperation::ListDirectory, path.canonicalPath, security);
     const QFileInfo info(path.canonicalPath);
     const auto reason = requiredType(info, true);
     if (reason != FileSystemFailure::None)
@@ -175,11 +246,16 @@ FileSystemResult<DirectoryListing> QtFileSystemService::listDirectory(const Auth
             break;
         }
         const auto allowed = resolve(entry.absoluteFilePath(), path.canonicalPath, FileSystemAccess::Read);
-        if (!allowed.ok()) {
-            addIssue(listing.status, entry.absoluteFilePath(), allowed.failure);
+        if (!allowed.ok() || !PathGuard::contains(path.canonicalPath, allowed.value->canonicalPath)) {
+            addIssue(listing.status, entry.absoluteFilePath(), allowed.ok()
+                         ? FileSystemFailure::SymlinkEscape : allowed.failure);
             continue;
         }
-        listing.entries.append(entryOf(entry));
+        if (const auto security = validateFinal(*allowed.value); security != FileSystemFailure::None) {
+            addIssue(listing.status, entry.absoluteFilePath(), security);
+            continue;
+        }
+        listing.entries.append(entryOf(QFileInfo(allowed.value->canonicalPath)));
     }
     FileSystemResult<DirectoryListing> result;
     result.operation = FileSystemOperation::ListDirectory;
@@ -189,13 +265,34 @@ FileSystemResult<DirectoryListing> QtFileSystemService::listDirectory(const Auth
     return result;
 }
 FileSystemResult<FileRead> QtFileSystemService::readFile(const AuthorizedPath& path, qint64 maxBytes) const {
+    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
+        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, security);
     const QFileInfo info(path.canonicalPath);
     const auto reason = requiredType(info, false);
     if (reason != FileSystemFailure::None)
         return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, reason);
     QFile file(path.canonicalPath);
+#if defined(Q_OS_UNIX)
+    const QByteArray encoded = QFile::encodeName(path.canonicalPath);
+    int fd = ::open(encoded.constData(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0)
+        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, FileSystemFailure::ResourceChanged);
+    struct stat opened {};
+    if (::fstat(fd, &opened) != 0 ||
+        (path.existedAtAuthorization &&
+         (static_cast<quint64>(opened.st_dev) != path.deviceId ||
+          static_cast<quint64>(opened.st_ino) != path.fileId))) {
+        ::close(fd);
+        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, FileSystemFailure::ResourceChanged);
+    }
+    if (!file.open(fd, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) {
+        ::close(fd);
+        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, FileSystemFailure::ReadFailed);
+    }
+#else
     if (!file.open(QIODevice::ReadOnly))
         return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, FileSystemFailure::ReadFailed, file.errorString());
+#endif
     FileRead read;
     read.path = path.canonicalPath;
     read.content = file.read(maxBytes + 1);
@@ -228,9 +325,21 @@ FileSystemResult<FileWrite> QtFileSystemService::writeFile(const AuthorizedPath&
         const QByteArray& bytes, bool makeParents) const {
     if (path.access != FileSystemAccess::Write)
         return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, FileSystemFailure::PermissionDenied);
+    if (const auto security = validateFinal(path, true); security != FileSystemFailure::None)
+        return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, security);
+#if defined(Q_OS_UNIX)
+    return securefs::writeFile(path, bytes, makeParents);
+#elif defined(Q_OS_WIN)
+    return securefs::writeFile(path, bytes, makeParents);
+#else
     const QFileInfo info(path.canonicalPath);
+    if (PathGuard::canonicalPath(info.absolutePath()) != info.absolutePath() ||
+        sensitive(info.absolutePath()))
+        return failure<FileWrite>(FileSystemOperation::WriteFile, info.absolutePath(), FileSystemFailure::UnsafeParent);
     if (makeParents && !QDir().mkpath(info.absolutePath()))
         return failure<FileWrite>(FileSystemOperation::WriteFile, info.absolutePath(), FileSystemFailure::WriteFailed);
+    if (const auto security = validateFinal(path, true); security != FileSystemFailure::None)
+        return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, security);
     const auto parentReason = requiredType(QFileInfo(info.absolutePath()), true);
     if (parentReason != FileSystemFailure::None)
         return failure<FileWrite>(FileSystemOperation::WriteFile, info.absolutePath(), parentReason);
@@ -240,7 +349,11 @@ FileSystemResult<FileWrite> QtFileSystemService::writeFile(const AuthorizedPath&
     QSaveFile file(path.canonicalPath);
     if (!file.open(QIODevice::WriteOnly))
         return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, FileSystemFailure::WriteFailed, file.errorString());
-    if (file.write(bytes) != bytes.size() || !file.commit())
+    if (file.write(bytes) != bytes.size())
+        return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, FileSystemFailure::WriteFailed, file.errorString());
+    if (const auto security = validateFinal(path, true); security != FileSystemFailure::None)
+        return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, security);
+    if (!file.commit())
         return failure<FileWrite>(FileSystemOperation::WriteFile, path.canonicalPath, FileSystemFailure::WriteFailed, file.errorString());
     FileSystemResult<FileWrite> result;
     result.operation = FileSystemOperation::WriteFile;
@@ -248,14 +361,24 @@ FileSystemResult<FileWrite> QtFileSystemService::writeFile(const AuthorizedPath&
     result.value = FileWrite{path.canonicalPath, bytes.size(), created};
     result.mutations.append({path.canonicalPath, created ? FileMutationKind::Created : FileMutationKind::Modified});
     return result;
+#endif
 }
 FileSystemResult<bool> QtFileSystemService::deleteFile(const AuthorizedPath& path) const {
     if (path.access != FileSystemAccess::Write)
         return failure<bool>(FileSystemOperation::Delete, path.canonicalPath, FileSystemFailure::PermissionDenied);
+    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
+        return failure<bool>(FileSystemOperation::Delete, path.canonicalPath, security);
+#if defined(Q_OS_UNIX)
+    return securefs::deleteFile(path);
+#elif defined(Q_OS_WIN)
+    return securefs::deleteFile(path);
+#else
     const QFileInfo info(path.canonicalPath);
     const auto reason = requiredType(info, false);
     if (reason != FileSystemFailure::None)
         return failure<bool>(FileSystemOperation::Delete, path.canonicalPath, reason);
+    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
+        return failure<bool>(FileSystemOperation::Delete, path.canonicalPath, security);
     if (!QFile::remove(path.canonicalPath))
         return failure<bool>(FileSystemOperation::Delete, path.canonicalPath, FileSystemFailure::IOError);
     FileSystemResult<bool> result;
@@ -264,19 +387,40 @@ FileSystemResult<bool> QtFileSystemService::deleteFile(const AuthorizedPath& pat
     result.value = true;
     result.mutations.append({path.canonicalPath, FileMutationKind::Deleted});
     return result;
+#endif
 }
 FileSystemResult<FileMove> QtFileSystemService::moveFile(const AuthorizedPath& source,
         const AuthorizedPath& destination) const {
     if (source.access != FileSystemAccess::Write || destination.access != FileSystemAccess::Write)
         return failure<FileMove>(FileSystemOperation::Move, source.canonicalPath, FileSystemFailure::PermissionDenied);
+    if (const auto security = validateFinal(source); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, source.canonicalPath, security);
+#if defined(Q_OS_UNIX)
+    if (const auto security = validateFinal(destination, true); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, security);
+    return securefs::moveFile(source, destination);
+#elif defined(Q_OS_WIN)
+    if (const auto security = validateFinal(destination, true); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, security);
+    return securefs::moveFile(source, destination);
+#else
     const QFileInfo info(source.canonicalPath);
     const auto reason = requiredType(info, false);
     if (reason != FileSystemFailure::None)
         return failure<FileMove>(FileSystemOperation::Move, source.canonicalPath, reason);
     if (QFileInfo(destination.canonicalPath).exists())
         return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, FileSystemFailure::AlreadyExists);
+    if (PathGuard::canonicalPath(QFileInfo(destination.canonicalPath).absolutePath()) !=
+        QFileInfo(destination.canonicalPath).absolutePath())
+        return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, FileSystemFailure::UnsafeParent);
     if (!QDir().mkpath(QFileInfo(destination.canonicalPath).absolutePath()))
         return failure<FileMove>(FileSystemOperation::Move, QFileInfo(destination.canonicalPath).absolutePath(), FileSystemFailure::WriteFailed);
+    if (const auto security = validateFinal(destination, true); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, security);
+    if (const auto security = validateFinal(source); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, source.canonicalPath, security);
+    if (const auto security = validateFinal(destination, true); security != FileSystemFailure::None)
+        return failure<FileMove>(FileSystemOperation::Move, destination.canonicalPath, security);
     if (!QFile::rename(source.canonicalPath, destination.canonicalPath))
         return failure<FileMove>(FileSystemOperation::Move, source.canonicalPath, FileSystemFailure::IOError);
     FileSystemResult<FileMove> result;
@@ -286,11 +430,14 @@ FileSystemResult<FileMove> QtFileSystemService::moveFile(const AuthorizedPath& s
     result.mutations = {{source.canonicalPath, FileMutationKind::MovedFrom},
                         {destination.canonicalPath, FileMutationKind::MovedTo}};
     return result;
+#endif
 }
 FileSystemResult<FileTraversal> QtFileSystemService::traverseFiles(const AuthorizedPath& root,
         bool includeHidden, int limit, const std::function<bool(const QString&)>& allowPath,
         const FileSystemOperationContext& context,
         const std::function<bool(const FileSystemEntry&)>& onFile) const {
+    if (const auto security = validateFinal(root); security != FileSystemFailure::None)
+        return failure<FileTraversal>(FileSystemOperation::Glob, root.canonicalPath, security);
     const QFileInfo rootInfo(root.canonicalPath);
     const auto reason = requiredType(rootInfo, true);
     if (reason != FileSystemFailure::None)
@@ -314,7 +461,12 @@ FileSystemResult<FileTraversal> QtFileSystemService::traverseFiles(const Authori
         }
         const QFileInfo directoryInfo(directoryPath);
         const QString canonical = directoryInfo.canonicalFilePath();
-        if (canonical.isEmpty() || visited.contains(canonical)) {
+        if (canonical.isEmpty() || canonical != directoryPath ||
+            !PathGuard::contains(root.canonicalPath, canonical) || sensitive(canonical)) {
+            addIssue(traversal.status, directoryPath, FileSystemFailure::SymlinkEscape);
+            return;
+        }
+        if (visited.contains(canonical)) {
             addIssue(traversal.status, directoryPath, FileSystemFailure::IOError);
             return;
         }
@@ -332,8 +484,13 @@ FileSystemResult<FileTraversal> QtFileSystemService::traverseFiles(const Authori
                 continue;
             }
             const auto allowed = resolve(child, root.canonicalPath, FileSystemAccess::Read);
-            if (!allowed.ok()) {
-                addIssue(traversal.status, child, allowed.failure);
+            if (!allowed.ok() || !PathGuard::contains(root.canonicalPath, allowed.value->canonicalPath)) {
+                addIssue(traversal.status, child, allowed.ok()
+                             ? FileSystemFailure::SymlinkEscape : allowed.failure);
+                continue;
+            }
+            if (const auto security = validateFinal(*allowed.value); security != FileSystemFailure::None) {
+                addIssue(traversal.status, child, security);
                 continue;
             }
             if (info.isDir()) { walk(child, depth + 1); continue; }

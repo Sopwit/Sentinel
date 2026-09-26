@@ -12,6 +12,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QObject>
 
 namespace sentinel::core {
 
@@ -60,6 +61,7 @@ struct ToolExecutionRequest {
     ApprovalDecision approval;
     SandboxEvaluationResult sandbox;
     QStringList knownToolIds;
+    QObject* callbackContext = nullptr;
 };
 
 struct ToolExecutionResult {

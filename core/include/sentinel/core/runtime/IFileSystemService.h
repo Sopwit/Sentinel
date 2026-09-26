@@ -40,6 +40,12 @@ struct AuthorizedPath {
     QString canonicalPath;
     QString displayPath;
     FileSystemAccess access = FileSystemAccess::Read;
+    quint64 deviceId = 0;
+    quint64 fileId = 0;
+    bool existedAtAuthorization = false;
+    QString parentAnchorPath;
+    quint64 parentDeviceId = 0;
+    quint64 parentFileId = 0;
 };
 template <typename T> struct FileSystemResult {
     std::optional<T> value;
@@ -114,6 +120,7 @@ public:
         const FileSystemOperationContext& context = {},
         const std::function<bool(const FileSystemEntry&)>& onFile = {}) const override;
 private:
+    FileSystemFailure validateFinal(const AuthorizedPath& path, bool creating = false) const;
     const ExternalDirectoryGate* gate_ = nullptr;
 };
 

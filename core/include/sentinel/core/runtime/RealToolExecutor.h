@@ -13,6 +13,7 @@
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
 
 #include <QJsonArray>
+#include <QStringList>
 #include <functional>
 #include <memory>
 
@@ -48,6 +49,15 @@ public:
     // executes a bounded, read-only agent loop for the given task and returns
     // its final answer (or an error description).
     void setSubagentRunner(std::function<QString(const QString& task)> runner);
+    struct SubagentAssignment {
+        QString goal;
+        QString role;
+        QStringList allowedToolIds;
+        QString workspace;
+        QString modelId;
+    };
+    void setSubagentRunnerWithContext(
+        std::function<QString(const SubagentAssignment&, const QString& parentToolCallId)> runner);
     WebSearchResponse searchWeb(const QString& query) const;
     ToolExecutionResult execute(const ToolExecutionRequest& request) const override;
     Cancel executeAsync(const ToolExecutionRequest& request, const QString& sessionId,
@@ -149,8 +159,7 @@ private:
     const IMemoryStore* memoryStore_ = nullptr;
     const IChatHistoryStore* chatHistoryStore_ = nullptr;
     std::shared_ptr<IMcpService> mcpService_;
-    std::function<QString(const QString& task)> subagentRunner_;
-    mutable bool subagentActive_ = false;
+    std::function<QString(const SubagentAssignment&, const QString& parentToolCallId)> subagentRunner_;
     mutable QJsonArray todos_;
 };
 

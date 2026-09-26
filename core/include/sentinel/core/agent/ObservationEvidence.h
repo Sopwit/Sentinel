@@ -19,7 +19,7 @@ enum class EvidenceScope { ExactResource, DirectoryEntries, SearchScope, Provide
 enum class ObservationPurpose { Inspect, Operate };
 enum class EvidenceOutcome { Verified, Partial, Unavailable, Denied, Failed, Stale };
 enum class StructuredObservationKind { None, DirectoryListing, PathMatches, FileContent, TextSearch, CodeDefinitions, FileSystemFailure, FileSystemFact, PatchResult, Generic };
-enum class FileSystemFailure { None, NotFound, PermissionDenied, NotFile, NotDirectory, InvalidPath, AlreadyExists, ReadFailed, WriteFailed, IOError, Unavailable };
+enum class FileSystemFailure { None, NotFound, PermissionDenied, NotFile, NotDirectory, InvalidPath, AlreadyExists, ReadFailed, WriteFailed, IOError, Unavailable, ResourceChanged, SymlinkEscape, UnsafeParent, SecurityBoundaryViolation };
 enum class FileSystemOperation { Stat, ListDirectory, ReadFile, WriteFile, EditFile, Delete, Move, Glob, Grep, ApplyPatch };
 struct PatchPathOutcome {
     QString resource;
