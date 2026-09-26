@@ -9,6 +9,7 @@
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/model/IModelRouter.h"
 #include "sentinel/core/runtime/LocalInference.h"
+#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QDir>
 #include <QCryptographicHash>
@@ -36,6 +37,13 @@ struct ProviderHealthRegistry {
     OllamaModelDiscoveryResult ollamaDiscovery;
     QList<OllamaModelSummary> ollamaModels;
     quint64 ollamaDiscoverySequence = 0;
+    struct Catalog {
+        QList<OllamaModelSummary> models;
+        ProviderDiscoveryOutcome outcome;
+        quint64 sequence = 0;
+        bool observed = false;
+    };
+    QHash<QString, Catalog> catalogs;
 };
 
 QString providerHealthName(ProviderHealth health) {
@@ -91,9 +99,11 @@ private:
         if (reply.success) entry.health = ProviderHealth::Available;
         else if (reply.category == ChatProviderErrorCategory::RateLimited ||
                  reply.category == ChatProviderErrorCategory::ConnectionFailed ||
-                 reply.category == ChatProviderErrorCategory::Timeout)
+                 reply.category == ChatProviderErrorCategory::Timeout ||
+                 reply.category == ChatProviderErrorCategory::MalformedResponse)
             entry.health = ProviderHealth::Degraded;
-        else if (reply.category == ChatProviderErrorCategory::ProviderUnavailable)
+        else if (reply.category == ChatProviderErrorCategory::ProviderUnavailable ||
+                 reply.category == ChatProviderErrorCategory::AuthenticationRequired)
             entry.health = ProviderHealth::Unavailable;
     }
     QString id_;
@@ -154,29 +164,6 @@ ChatProviderErrorCategory categoryFromLocalInference(LocalInferenceError error,
     return ChatProviderErrorCategory::ProviderUnavailable;
 }
 
-ChatProviderErrorCategory categoryFromHttp(int status, const QString& detail) {
-    if (status == 401 || status == 403)
-        return ChatProviderErrorCategory::AuthenticationRequired;
-    if (status == 404)
-        return ChatProviderErrorCategory::ModelNotFound;
-    if (status == 408)
-        return ChatProviderErrorCategory::Timeout;
-    if (status == 429)
-        return ChatProviderErrorCategory::RateLimited;
-    if (status == 400 || status == 422)
-        return ChatProviderErrorCategory::RequestRejected;
-    if (status == 501)
-        return ChatProviderErrorCategory::CapabilityUnsupported;
-    const auto folded = detail.toCaseFolded();
-    if (folded.contains(QLatin1String("timeout")))
-        return ChatProviderErrorCategory::Timeout;
-    if (folded.contains(QLatin1String("connection")) || folded.contains(QLatin1String("network")))
-        return ChatProviderErrorCategory::ConnectionFailed;
-    if (status >= 500)
-        return ChatProviderErrorCategory::ProviderUnavailable;
-    return ChatProviderErrorCategory::ProviderUnavailable;
-}
-
 ChatRequestLifecycle lifecycleForCategory(ChatProviderErrorCategory category) {
     if (category == ChatProviderErrorCategory::Timeout)
         return ChatRequestLifecycle::TimedOut;
@@ -222,6 +209,9 @@ public:
     ChatProviderConcurrency concurrency() const override {
         return ChatProviderConcurrency::Supported;
     }
+    bool supportsStreaming() const override {
+        return binding_.capabilities.streaming == CapabilitySupport::Supported;
+    }
     ChatProviderReply sendMessage(const QString& message) override {
         return sendMessageWithToken(message, {});
     }
@@ -266,6 +256,15 @@ public:
 
     ChatProviderReply sendRequest(const QString& message,
                                   const ChatRequestOptions& options) override {
+        if ((options.nativeToolCalling &&
+             binding_.capabilities.nativeToolCalling != CapabilitySupport::Supported) ||
+            (options.structuredOutput &&
+             binding_.capabilities.structuredOutput != CapabilitySupport::Supported) ||
+            (options.nativeToolCalling && options.structuredOutput &&
+             binding_.capabilities.combinedToolsAndStructuredOutput != CapabilitySupport::Supported))
+            return providerFailure(QStringLiteral("Selected model does not support the requested native capability."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
         if (!options.nativeToolCalling && !options.structuredOutput)
             return sendMessageWithToken(message, options.cancellationToken);
         if (!config_.isAllowedEndpoint())
@@ -341,7 +340,9 @@ public:
                          : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
                          : completion.providerErrorCategory > 0
                              ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
-                             : categoryFromHttp(completion.httpStatus, completion.error),
+                             : ProviderRequestRuntime::classify(
+                                   completion.httpStatus, completion.networkError,
+                                   completion.timedOut, completion.cancelled),
                 rejected ? ChatProviderReply::Error::CapabilityRejected
                          : ChatProviderReply::Error::ProviderFailure,
                 completion.httpStatus, completion.attempts, completion.retrySummary);
@@ -402,6 +403,40 @@ public:
         if (result.message.isEmpty() && result.toolCalls.isEmpty())
             return malformed(QStringLiteral("Chat completion returned no content or tool calls."));
         return result;
+    }
+
+    ChatProviderReply sendMessageStreaming(
+        const QString& message, const std::function<void(const QString&)>& onDelta,
+        const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
+        if (binding_.capabilities.streaming != CapabilitySupport::Supported)
+            return providerFailure(QStringLiteral("Selected model does not support streaming."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
+        LocalInferenceRequest request;
+        request.prompt = message;
+        request.options.model = binding_.modelId;
+        request.options.timeoutMs = timeoutMs_;
+        request.options.cancellationToken = cancellationToken;
+        LMStudioLocalInferenceStreamClient client(config_, timeoutMs_);
+        const auto result = client.startStream(request, [&](const LocalInferenceStreamChunk& chunk) {
+            if (!chunk.text.isEmpty() && onDelta) onDelta(chunk.text);
+        });
+        if (result.status == LocalInferenceStreamStatus::Completed) {
+            ChatProviderReply reply{true, result.accumulatedText, {}};
+            reply.lifecycle = ChatRequestLifecycle::Completed;
+            reply.requestId = result.requestId;
+            return reply;
+        }
+        auto reply = providerFailure(result.summary,
+                                     result.providerErrorCategory > 0
+                                         ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+                                         : result.cancelled ? ChatProviderErrorCategory::Cancelled
+                                         : categoryFromLocalInference(result.error, LocalInferenceStatus::Error),
+                                     ChatProviderReply::Error::ProviderFailure,
+                                     result.httpStatus, result.attempts, result.retrySummary);
+        reply.lifecycle = result.lifecycle;
+        reply.requestId = result.requestId;
+        return reply;
     }
 
 private:
@@ -512,7 +547,7 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
         QStringLiteral("mistral")};
     for (const auto& providerId : endpointProviderIds) {
         ModelCapabilities endpointCapabilities;
-        endpointCapabilities.streaming = CapabilitySupport::Unsupported;
+        endpointCapabilities.streaming = CapabilitySupport::Supported;
         endpointCapabilities.structuredOutput = CapabilitySupport::Unsupported;
         endpointCapabilities.nativeToolCalling = CapabilitySupport::Unsupported;
         registerProvider(providerId, [this](const ModelBinding& binding) {
@@ -707,6 +742,27 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
                     .arg(provider);
             return resolution;
         }
+        const auto catalog = providerStatus(provider, model);
+        if (catalog.catalog == ProviderCatalogState::AuthenticationRequired) {
+            resolution.error = ModelBindingError::AuthenticationRequired;
+            resolution.reason = catalog.safeDetail;
+            return resolution;
+        }
+        if (catalog.catalog == ProviderCatalogState::Failed ||
+            catalog.catalog == ProviderCatalogState::EndpointUnavailable) {
+            resolution.error = ModelBindingError::ProviderUnavailable;
+            resolution.reason = catalog.safeDetail;
+            return resolution;
+        }
+        if (catalog.catalog == ProviderCatalogState::Empty ||
+            (catalog.catalog == ProviderCatalogState::Available &&
+             !catalog.modelIds.contains(model))) {
+            resolution.error = ModelBindingError::ModelNotFound;
+            resolution.reason = catalog.catalog == ProviderCatalogState::Empty
+                ? catalog.safeDetail
+                : QStringLiteral("Selected model is unavailable in the provider catalog.");
+            return resolution;
+        }
     }
 
     resolution.provider = constructProvider(resolution.binding);
@@ -728,6 +784,111 @@ std::shared_ptr<IChatProvider> ModelService::constructProvider(const ModelBindin
 ProviderHealth ModelService::providerHealth(const QString& providerId) const {
     std::lock_guard lock(providerHealthRegistry_->mutex);
     return providerHealthRegistry_->entries.value(normalizedProviderId(providerId)).health;
+}
+
+ProviderCompletenessStatus ModelService::providerStatus(const QString& providerId,
+                                                        const QString& modelId) const {
+    ProviderCompletenessStatus status;
+    status.providerId = normalizedProviderId(providerId);
+    status.health = providerHealth(status.providerId);
+    const auto selected = modelId.trimmed().isEmpty() && selection_.providerId == status.providerId
+        ? selection_.modelId : modelId.trimmed();
+    status.capabilities = capabilities(status.providerId, selected);
+    if (!isKnownProvider(status.providerId)) {
+        status.catalog = ProviderCatalogState::Failed;
+        status.errorCategory = ChatProviderErrorCategory::ProviderUnavailable;
+        status.safeDetail = QStringLiteral("Provider is not registered.");
+        return status;
+    }
+    if (status.providerId == QLatin1String("ollama")) {
+        const auto discovery = ollamaDiscovery();
+        status.errorCategory = discovery.errorCategory;
+        status.safeDetail = discovery.safeDetail;
+        if (discovery.succeeded()) {
+            for (const auto& model : discovery.models) status.modelIds.append(model.name);
+            status.catalog = status.modelIds.isEmpty() ? ProviderCatalogState::Empty
+                                                        : ProviderCatalogState::Available;
+        } else if (discovery.lifecycle == ChatRequestLifecycle::Pending ||
+                   discovery.lifecycle == ChatRequestLifecycle::Running) {
+            status.catalog = ProviderCatalogState::Pending;
+        } else {
+            for (const auto& model : discoveredOllamaModels())
+                status.modelIds.append(model.name);
+            status.catalog = !status.modelIds.isEmpty() ? ProviderCatalogState::Stale
+                : discovery.errorCategory == ChatProviderErrorCategory::AuthenticationRequired
+                    ? ProviderCatalogState::AuthenticationRequired
+                : discovery.errorCategory == ChatProviderErrorCategory::ConnectionFailed
+                    ? ProviderCatalogState::EndpointUnavailable
+                    : ProviderCatalogState::Failed;
+        }
+        return status;
+    }
+    const ModelBinding binding{status.providerId, selected};
+    const auto config = providerConfig(binding);
+    if (config.isCloud() && config.apiKey.trimmed().isEmpty()) {
+        status.catalog = ProviderCatalogState::AuthenticationRequired;
+        status.errorCategory = ChatProviderErrorCategory::AuthenticationRequired;
+        status.safeDetail = QStringLiteral("Provider API key is not configured.");
+    } else if (!config.isAllowedEndpoint()) {
+        status.catalog = ProviderCatalogState::EndpointUnavailable;
+        status.errorCategory = ChatProviderErrorCategory::ProviderUnavailable;
+        status.safeDetail = QStringLiteral("Provider endpoint is not configured or allowed.");
+    } else {
+        ProviderHealthRegistry::Catalog catalog;
+        {
+            std::lock_guard lock(providerHealthRegistry_->mutex);
+            catalog = providerHealthRegistry_->catalogs.value(status.providerId);
+        }
+        if (catalog.observed) {
+            status.errorCategory = catalog.outcome.category;
+            for (const auto& model : catalog.models) status.modelIds.append(model.name);
+            if (catalog.outcome.completed) {
+                status.catalog = status.modelIds.isEmpty() ? ProviderCatalogState::Empty
+                                                            : ProviderCatalogState::Available;
+                status.safeDetail = status.modelIds.isEmpty()
+                    ? QStringLiteral("Provider returned an empty model catalog.")
+                    : QStringLiteral("Provider model catalog is available.");
+            } else {
+                if (config.isCloud() && catalog.outcome.httpStatus == 404) {
+                    status.catalog = ProviderCatalogState::ConfiguredModelOnly;
+                    if (status.modelIds.isEmpty() && !selected.isEmpty())
+                        status.modelIds.append(selected);
+                    status.safeDetail = QStringLiteral(
+                        "Provider model-list endpoint is unavailable; configured model is unverified.");
+                    return status;
+                }
+                status.catalog = !status.modelIds.isEmpty() ? ProviderCatalogState::Stale
+                    : catalog.outcome.category == ChatProviderErrorCategory::AuthenticationRequired
+                        ? ProviderCatalogState::AuthenticationRequired
+                    : catalog.outcome.category == ChatProviderErrorCategory::ConnectionFailed
+                        ? ProviderCatalogState::EndpointUnavailable
+                        : ProviderCatalogState::Failed;
+                status.safeDetail = QStringLiteral("Provider model discovery failed (%1).")
+                                        .arg(chatProviderErrorCategoryName(catalog.outcome.category));
+            }
+        } else if (config.isCloud()) {
+            status.catalog = ProviderCatalogState::ConfiguredModelOnly;
+            if (!selected.isEmpty()) status.modelIds.append(selected);
+            status.safeDetail = QStringLiteral("Configured model; live provider catalog is unavailable.");
+        } else {
+            status.catalog = ProviderCatalogState::Unverified;
+            status.safeDetail = QStringLiteral("Local endpoint catalog has not been observed yet.");
+        }
+    }
+    return status;
+}
+
+void ModelService::acceptProviderDiscovery(const QString& providerId,
+                                           const QList<OllamaModelSummary>& models,
+                                           const ProviderDiscoveryOutcome& outcome,
+                                           quint64 sequence) {
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    auto& catalog = providerHealthRegistry_->catalogs[normalizedProviderId(providerId)];
+    if (sequence < catalog.sequence) return;
+    catalog.sequence = sequence;
+    catalog.observed = true;
+    catalog.outcome = outcome;
+    if (outcome.completed) catalog.models = models;
 }
 
 void ModelService::acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result,
@@ -796,29 +957,7 @@ LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
     }
 
     LMStudioConfig config;
-    QString cloudProv = liveSettings->selectedCloudProvider().toLower().trimmed();
-
-    // The generic cloud-api provider keeps its legacy credential disambiguation
-    // by model-name prefix; explicit provider ids never depend on model names.
-    const auto modelLower = binding.modelId.trimmed().toLower();
-    if (modelLower.startsWith(QLatin1String("gemini"))) {
-        cloudProv = QStringLiteral("gemini");
-    } else if (modelLower.startsWith(QLatin1String("claude"))) {
-        cloudProv = QStringLiteral("claude");
-    } else if (modelLower.startsWith(QLatin1String("deepseek"))) {
-        cloudProv = QStringLiteral("deepseek");
-    } else if (modelLower.startsWith(QLatin1String("llama")) ||
-               modelLower.startsWith(QLatin1String("mixtral"))) {
-        cloudProv = QStringLiteral("groq");
-    } else if (modelLower.startsWith(QLatin1String("mistral")) ||
-               modelLower.startsWith(QLatin1String("pixtral")) ||
-               modelLower.startsWith(QLatin1String("codestral"))) {
-        cloudProv = QStringLiteral("mistral");
-    } else if (modelLower.startsWith(QLatin1String("gpt")) ||
-               modelLower.startsWith(QLatin1String("o1")) ||
-               modelLower.startsWith(QLatin1String("o3"))) {
-        cloudProv = QStringLiteral("openai");
-    }
+    const QString cloudProv = liveSettings->selectedCloudProvider().toLower().trimmed();
 
     if (binding.providerId == QStringLiteral("claude") ||
         (binding.providerId == QStringLiteral("cloud-api") &&
@@ -852,6 +991,8 @@ LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
         config.apiKey = liveSettings->openAiApiKey();
     } else if (binding.providerId == QStringLiteral("llama-cpp-server")) {
         config.endpoint = QUrl(llamaCppEndpoint_);
+    } else if (binding.providerId == QStringLiteral("openai-compatible-local")) {
+        config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:8000"));
     } else {
         config.endpoint = QUrl(lmStudioEndpoint_);
     }
@@ -873,10 +1014,18 @@ void ModelService::setOllamaEndpoint(const QString& endpoint) {
 }
 
 void ModelService::setLmStudioEndpoint(const QString& endpoint) {
+    if (lmStudioEndpoint_ != endpoint) {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        providerHealthRegistry_->catalogs.remove(QStringLiteral("lm-studio"));
+    }
     lmStudioEndpoint_ = endpoint;
 }
 
 void ModelService::setLlamaCppEndpoint(const QString& endpoint) {
+    if (llamaCppEndpoint_ != endpoint) {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        providerHealthRegistry_->catalogs.remove(QStringLiteral("llama-cpp-server"));
+    }
     llamaCppEndpoint_ = endpoint;
 }
 

@@ -8,6 +8,7 @@
 
 #include <QUuid>
 
+#include <algorithm>
 #include <utility>
 
 namespace sentinel::core {
@@ -110,7 +111,7 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
                             ChatProviderErrorCategory::RequestRejected);
     }
 
-    auto model = selectedModel_.trimmed();
+    const auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
         if (!discoverySnapshot_)
             return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
@@ -129,7 +130,8 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
                                "Run 'sentinel-cli model pull <name>' to install one."),
                 ChatProviderErrorCategory::ModelNotFound);
         }
-        model = discovery.models.first().name;
+        return failureReply(QStringLiteral("An Ollama model must be selected explicitly."),
+                            ChatProviderErrorCategory::ModelNotFound);
     }
 
     OllamaLocalInferenceClient inferenceClient(config_, timeoutMs_);
@@ -175,7 +177,7 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
         return failureReply(QStringLiteral("Prompt is blank."),
                             ChatProviderErrorCategory::RequestRejected);
 
-    auto model = selectedModel_.trimmed();
+    const auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
         if (!discoverySnapshot_)
             return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
@@ -194,13 +196,33 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
                                "Run 'sentinel-cli model pull <name>' to install one."),
                 ChatProviderErrorCategory::ModelNotFound);
         }
-        model = discovery.models.first().name;
+        return failureReply(QStringLiteral("An Ollama model must be selected explicitly."),
+                            ChatProviderErrorCategory::ModelNotFound);
+    }
+    if (discoverySnapshot_) {
+        const auto& discovery = *discoverySnapshot_;
+        if (!discovery.succeeded()) {
+            auto reply = failureReply(discovery.safeDetail, discovery.errorCategory);
+            reply.httpStatus = discovery.httpStatus;
+            reply.attempts = discovery.attemptCount;
+            reply.requestId = discovery.requestId;
+            return reply;
+        }
+        if (discovery.models.isEmpty())
+            return failureReply(QStringLiteral("No Ollama model is installed."),
+                                ChatProviderErrorCategory::ModelNotFound);
+        if (std::none_of(discovery.models.cbegin(), discovery.models.cend(),
+                         [&](const OllamaModelSummary& item) { return item.name == model; }))
+            return failureReply(QStringLiteral("Selected Ollama model is unavailable."),
+                                ChatProviderErrorCategory::ModelNotFound);
     }
 
     LocalInferenceRequest request;
     request.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     request.prompt = trimmed;
     request.options.model = model;
+    if (discoverySnapshot_)
+        request.options.modelValidation = *discoverySnapshot_;
     request.options.timeoutMs = timeoutMs_;
     request.options.temperature = 0.7;
     request.options.topP = 0.9;
