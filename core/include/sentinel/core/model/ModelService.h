@@ -37,6 +37,7 @@ enum class ProviderCatalogState {
     ConfiguredModelOnly,
     Unverified,
 };
+QString providerCatalogStateName(ProviderCatalogState state);
 
 struct ProviderCompletenessStatus {
     QString providerId;
@@ -145,6 +146,7 @@ public:
     ProviderHealth providerHealth(const QString& providerId) const;
     ProviderCompletenessStatus providerStatus(const QString& providerId,
                                               const QString& modelId = {}) const;
+    QList<OllamaModelSummary> providerDiscoveredModels(const QString& providerId) const;
     void acceptProviderDiscovery(const QString& providerId,
                                  const QList<OllamaModelSummary>& models,
                                  const ProviderDiscoveryOutcome& outcome, quint64 sequence);

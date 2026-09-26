@@ -96,6 +96,7 @@ struct ChatProviderReply {
         QString callId;
         QString toolId;
         QJsonObject arguments;
+        QString providerContinuation;
     };
     QList<ToolCall> toolCalls;
     std::optional<QJsonObject> structuredResult;

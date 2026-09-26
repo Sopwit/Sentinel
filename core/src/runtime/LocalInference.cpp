@@ -1107,6 +1107,51 @@ LMStudioLocalInferenceClient::completeOpenAiChat(
     return result;
 }
 
+LMStudioLocalInferenceClient::OpenAiCompletionResult
+LMStudioLocalInferenceClient::completeNativeChat(
+    NativeProtocol protocol, const QJsonObject& body,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
+    if (!endpointAllowed())
+        return {false, {}, QStringLiteral("Native provider endpoint is unavailable."), 0};
+    const auto host = config_.endpoint.host().toLower();
+    QUrl url;
+    QMap<QByteArray, QByteArray> headers;
+    if (protocol == NativeProtocol::Claude && host == QLatin1String("api.anthropic.com")) {
+        url = QUrl(QStringLiteral("https://api.anthropic.com/v1/messages"));
+        headers.insert("x-api-key", config_.apiKey.toUtf8());
+        headers.insert("anthropic-version", "2023-06-01");
+    } else if (protocol == NativeProtocol::Gemini &&
+               host == QLatin1String("generativelanguage.googleapis.com")) {
+        const auto model = body.value(QStringLiteral("model")).toString();
+        if (model.isEmpty())
+            return {false, {}, QStringLiteral("Native Gemini model is missing."), 400};
+        url = QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
+                       .arg(QString::fromLatin1(QUrl::toPercentEncoding(model))));
+        headers.insert("x-goog-api-key", config_.apiKey.toUtf8());
+    } else {
+        return {false, {}, QStringLiteral("Native provider protocol does not match endpoint."), 501};
+    }
+    auto payload = body;
+    if (protocol == NativeProtocol::Gemini) payload.remove(QStringLiteral("model"));
+    const auto reply = postJson(url, payload, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs,
+                                headers, cancellationToken);
+    if (!reply.ok)
+        return {false, {}, safeNetworkFailureSummary(reply, QStringLiteral("Native provider request"),
+                                                      timeoutMs_), reply.httpStatus, reply.retryAfter,
+                reply.networkError, reply.timedOut,
+                reply.networkError == QNetworkReply::UnknownContentError, reply.cancelled,
+                reply.attempts, reply.retrySummary, reply.requestId,
+                static_cast<int>(reply.category)};
+    OpenAiCompletionResult result;
+    result.ok = true;
+    result.body = reply.document.object();
+    result.httpStatus = reply.httpStatus;
+    result.attempts = reply.attempts;
+    result.retrySummary = reply.retrySummary;
+    result.requestId = reply.requestId;
+    return result;
+}
+
 LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceRequest& request) {
     LocalInferenceResponse response;
     response.endpoint = config_.toString();

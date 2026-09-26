@@ -184,6 +184,7 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(
         m_controller->agentRunStore());
     m_inspectorViewModel = std::make_unique<AgentInspectorViewModel>(*m_inspectorService);
+    m_inspectorViewModel->setProviderStatusSource(m_controller.get());
     m_controller->setConversationExportDirectory(m_pathProvider.conversationExportDirectoryPath());
 
     m_modeManager = std::make_unique<sentinel::core::ModeManager>();

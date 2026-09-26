@@ -25,10 +25,6 @@ Item {
     readonly property var modelList: {
         if (root.currentProvider === "ollama") return root.viewModel.ollamaModelNames
         if (root.currentProvider === "lm-studio") return root.viewModel.loadedLMStudioModelNames
-        // Cloud providers (cloud-api, openai, claude, gemini, deepseek, groq, mistral)
-        // and other OpenAI-compatible local runtimes:
-        // ollamaModelNames() routes through currentOllamaModels() which returns
-        // cachedCloudProviderModels_ when a cloud provider is active.
         return root.viewModel.ollamaModelNames
     }
     readonly property var inferencePresetModel: [
@@ -169,7 +165,7 @@ Item {
             }
 
             SettingControlRow {
-                title: qsTr("Provider Health")
+                title: qsTr("Provider Catalog")
                 subtitle: root.viewModel.activeRuntimeProviderLabel
                 accent: root.modeAccent
                 compact: root.compact
@@ -182,8 +178,9 @@ Item {
                     value: root.viewModel.providerStatus
                     accent: root.modeAccent
                     active: root.viewModel.providerStatus === "Available"
-                         || root.viewModel.providerStatus === "Ready"
-                    muted: root.viewModel.providerStatus === "Unknown"
+                         || root.viewModel.providerStatus === "Configured model only"
+                    muted: root.viewModel.providerStatus === "Pending"
+                        || root.viewModel.providerStatus === "Unverified"
                 }
             }
 

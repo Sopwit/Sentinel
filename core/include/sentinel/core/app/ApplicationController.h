@@ -74,7 +74,7 @@ class ControlledTaskService;
 class ApplicationController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
-    Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
+    Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
     Q_PROPERTY(QString lastAgentResponse READ lastAgentResponse NOTIFY agentResponseChanged)
     Q_PROPERTY(QString latestToolPlanStatus READ latestToolPlanStatus NOTIFY toolPlanChanged)
@@ -1108,6 +1108,8 @@ public:
 
     QString providerName() const;
     QString providerStatus() const;
+    QString providerCatalogStatus(const QString& providerId, const QString& modelId) const;
+    QString providerCatalogDetail(const QString& providerId, const QString& modelId) const;
     QString agentStatus() const;
     QString lastAgentResponse() const;
     QString latestToolPlanStatus() const;
@@ -2225,14 +2227,8 @@ private:
     quint64 activeLocalInferenceHealthSequence_ = 0;
     QString activeLocalInferenceProviderId_;
     mutable OllamaHealthCheckResult cachedOllamaHealthCheck_;
-    mutable QList<OllamaModelSummary> cachedLMStudioModels_;
-    mutable QList<OllamaModelSummary> cachedLlamaCppModels_;
     mutable QString lmStudioEndpoint_;
     mutable QString llamaCppEndpoint_;
-    mutable QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
-    mutable QList<OllamaModelSummary> cachedCloudProviderModels_;
-    mutable QString cachedCloudProviderOriginId_;
-    mutable QString cachedCloudProviderError_;
     mutable bool ollamaCacheInitialized_ = false;
 
     void pollOllama();

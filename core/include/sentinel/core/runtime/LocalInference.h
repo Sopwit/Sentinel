@@ -330,6 +330,7 @@ struct LMStudioConfig {
 
 class LMStudioLocalInferenceClient final : public ILocalInferenceClient {
 public:
+    enum class NativeProtocol { Claude, Gemini };
     struct OpenAiCompletionResult {
         bool ok = false;
         QJsonObject body;
@@ -351,6 +352,9 @@ public:
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
     OpenAiCompletionResult completeOpenAiChat(
         const QJsonObject& body,
+        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
+    OpenAiCompletionResult completeNativeChat(
+        NativeProtocol protocol, const QJsonObject& body,
         const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
     QString statusSummary() const override;
 
