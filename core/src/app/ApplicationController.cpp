@@ -2335,9 +2335,7 @@ QString ApplicationController::selectedLocalModelMetadataSummary() const {
 
     for (const auto& model : models) {
         if (model.name == effective) {
-            const auto prefix =
-                selected.isEmpty() ? QStringLiteral("Fallback") : QStringLiteral("Selected");
-            return QStringLiteral("%1 model: %2").arg(prefix, ollamaModelSummary(model));
+            return QStringLiteral("Selected model: %1").arg(ollamaModelSummary(model));
         }
     }
 
@@ -10133,6 +10131,14 @@ void ApplicationController::pollOllama() {
                 if (provider != QLatin1String("ollama") &&
                     (selectedOutcome.completed ||
                      selectedOutcome.category != ChatProviderErrorCategory::None)) {
+                    const auto& selectedModels = provider == QLatin1String("lm-studio")
+                        ? lmStudioModels
+                        : provider == QLatin1String("llama-cpp-server")
+                            ? llamaCppModels
+                        : provider == QLatin1String("openai-compatible-local")
+                            ? openAiModels : cloudModels;
+                    modelService_->acceptProviderDiscovery(provider, selectedModels,
+                                                           selectedOutcome, healthSequence);
                     const auto oldHealth = modelService_->providerHealth(provider);
                     modelService_->reportProviderDiscovery(
                         provider, healthSequence, selectedOutcome.completed,
@@ -10243,13 +10249,7 @@ QString ApplicationController::effectiveLocalModel(const QString& requestedModel
         return explicitModel;
     }
 
-    const auto models = currentOllamaModels();
-    auto selectedModel = selectedLocalModel().trimmed();
-    if (!selectedModel.isEmpty()) {
-        return selectedModel;
-    }
-
-    return models.isEmpty() ? QString() : models.first().name;
+    return selectedLocalModel().trimmed();
 }
 
 bool ApplicationController::discoveredModelNamesContain(

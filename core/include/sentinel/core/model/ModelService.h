@@ -26,6 +26,28 @@ struct ProviderHealthRegistry;
 enum class ProviderHealth { Unknown, Available, Degraded, Unavailable };
 QString providerHealthName(ProviderHealth health);
 
+enum class ProviderCatalogState {
+    Pending,
+    Available,
+    Empty,
+    Failed,
+    AuthenticationRequired,
+    EndpointUnavailable,
+    Stale,
+    ConfiguredModelOnly,
+    Unverified,
+};
+
+struct ProviderCompletenessStatus {
+    QString providerId;
+    ProviderCatalogState catalog = ProviderCatalogState::Unverified;
+    ProviderHealth health = ProviderHealth::Unknown;
+    ChatProviderErrorCategory errorCategory = ChatProviderErrorCategory::None;
+    ModelCapabilities capabilities;
+    QStringList modelIds;
+    QString safeDetail;
+};
+
 // Authoritative provider/model selection for new interactive requests.
 struct ModelSelection {
     QString providerId;
@@ -121,6 +143,11 @@ public:
     LMStudioConfig providerConfig(const ModelBinding& binding) const;
     std::shared_ptr<IChatProvider> constructProvider(const ModelBinding& binding) const;
     ProviderHealth providerHealth(const QString& providerId) const;
+    ProviderCompletenessStatus providerStatus(const QString& providerId,
+                                              const QString& modelId = {}) const;
+    void acceptProviderDiscovery(const QString& providerId,
+                                 const QList<OllamaModelSummary>& models,
+                                 const ProviderDiscoveryOutcome& outcome, quint64 sequence);
     void acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result, quint64 sequence);
     OllamaModelDiscoveryResult ollamaDiscovery() const;
     QList<OllamaModelSummary> discoveredOllamaModels() const;
