@@ -527,7 +527,7 @@ target_link_libraries(sentinel_core
 )
 
 if(WIN32)
-    target_link_libraries(sentinel_core PRIVATE dbghelp crypt32)
+    target_link_libraries(sentinel_core PRIVATE dbghelp crypt32 advapi32)
 endif()
 
 if(APPLE)

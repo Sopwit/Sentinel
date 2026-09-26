@@ -4,7 +4,6 @@
 
 #include "sentinel/core/runtime/FormatService.h"
 #include <QFileInfo>
-#include <QProcess>
 
 namespace sentinel::core {
 
@@ -32,18 +31,12 @@ QString FormatService::detectFormatter(const QString& filePath) const {
 }
 
 bool FormatService::formatFile(const QString& filePath) {
-    QString formatter = detectFormatter(filePath);
-    if (formatter.isEmpty())
-        return false;
-
-    QProcess process;
-    process.start("sh", {"-c", QStringLiteral("%1 \"%2\"").arg(formatter, filePath)});
-    process.waitForFinished(10000);
-    return process.exitCode() == 0;
+    Q_UNUSED(filePath);
+    return false;
 }
 
 bool FormatService::isAvailable() const {
-    return m_config.enabled;
+    return false;
 }
 
 } // namespace sentinel::core

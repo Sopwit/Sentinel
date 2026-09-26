@@ -806,7 +806,7 @@ const QHash<QString, BuiltInOperation> kMethods = {
     {QStringLiteral("run-command"), {&RealToolExecutor::executeRunCommand, true}},
     {QStringLiteral("app-launch"), {&RealToolExecutor::executeAppLaunch, true}},
     {QStringLiteral("app-quit"), {&RealToolExecutor::executeAppQuit, true}},
-    {QStringLiteral("open-url"), {&RealToolExecutor::executeOpenUrl, false}},
+    {QStringLiteral("open-url"), {&RealToolExecutor::executeOpenUrl, true}},
     {QStringLiteral("system-notify"), {&RealToolExecutor::executeSystemNotify, true}},
     {QStringLiteral("clipboard-read"), {&RealToolExecutor::executeClipboardRead, false}},
     {QStringLiteral("clipboard-write"), {&RealToolExecutor::executeClipboardWrite, false}},

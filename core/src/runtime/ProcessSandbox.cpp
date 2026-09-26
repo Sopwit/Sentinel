@@ -7,6 +7,9 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QSet>
+#if defined(Q_OS_WIN)
+#include "WindowsProcessSandbox.h"
+#endif
 
 namespace sentinel::core {
 
@@ -26,6 +29,12 @@ QProcessEnvironment restrictedEnvironment(const QProcessEnvironment& source,
         const auto name = QString::fromLatin1(key);
         if (source.contains(name)) result.insert(name, source.value(name));
     }
+#if defined(Q_OS_WIN)
+    for (const auto& key : {"SystemRoot", "WINDIR"}) {
+        const auto name = QString::fromLatin1(key);
+        if (source.contains(name)) result.insert(name, source.value(name));
+    }
+#endif
     if (!plan.temporaryDirectory.isEmpty()) {
         result.insert(QStringLiteral("TMPDIR"), plan.temporaryDirectory);
         result.insert(QStringLiteral("TMP"), plan.temporaryDirectory);
@@ -38,9 +47,11 @@ QProcessEnvironment restrictedEnvironment(const QProcessEnvironment& source,
 
 PlatformProcessSandbox::PlatformProcessSandbox() {
 #if defined(Q_OS_MACOS)
-    launcher_ = QStandardPaths::findExecutable(QStringLiteral("sandbox-exec"));
+    static const QString launcher = QStandardPaths::findExecutable(QStringLiteral("sandbox-exec"));
+    launcher_ = launcher;
 #elif defined(Q_OS_LINUX)
-    launcher_ = QStandardPaths::findExecutable(QStringLiteral("bwrap"));
+    static const QString launcher = QStandardPaths::findExecutable(QStringLiteral("bwrap"));
+    launcher_ = launcher;
 #endif
 }
 
@@ -58,10 +69,12 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
 #else
         QStringLiteral("Windows restricted process");
 #endif
+#if !defined(Q_OS_WIN)
     if (launcher_.isEmpty()) {
         launch.result.failureCategory = QStringLiteral("BackendUnavailable");
         return launch;
     }
+#endif
     const QFileInfo workdir(plan.workingDirectory);
     if (!workdir.exists() || !workdir.isDir() || workdir.canonicalFilePath().isEmpty()) {
         launch.result.enforcement = SandboxEnforcement::Failed;
@@ -70,9 +83,16 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     }
     const auto canonicalWorkdir = workdir.canonicalFilePath();
     const auto home = QFileInfo(QDir::homePath()).canonicalFilePath();
-    if (canonicalWorkdir == QLatin1String("/") ||
+    const auto pathCase =
+#if defined(Q_OS_WIN)
+        Qt::CaseInsensitive;
+#else
+        Qt::CaseSensitive;
+#endif
+    if (QDir(canonicalWorkdir).isRoot() ||
         (!home.isEmpty() &&
-         (canonicalWorkdir == home || home.startsWith(canonicalWorkdir + QLatin1Char('/'))))) {
+         (canonicalWorkdir.compare(home, pathCase) == 0 ||
+          home.startsWith(canonicalWorkdir + QLatin1Char('/'), pathCase)))) {
         launch.result.enforcement = SandboxEnforcement::Failed;
         launch.result.failureCategory = QStringLiteral("WorkingDirectoryTooBroad");
         return launch;
@@ -89,7 +109,72 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
             return launch;
         }
     }
-#if defined(Q_OS_MACOS)
+    const auto temporaryRoot = QFileInfo(QDir::tempPath()).canonicalFilePath();
+    const auto temporaryPath = QFileInfo(plan.temporaryDirectory).canonicalFilePath();
+    if (temporaryRoot.isEmpty() || temporaryPath.isEmpty() ||
+        !temporaryPath.startsWith(temporaryRoot + QLatin1Char('/'), pathCase)) {
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("InvalidTemporaryDirectory");
+        return launch;
+    }
+#if defined(Q_OS_WIN)
+    launch.program = program;
+    launch.arguments = arguments;
+    launch.result.environmentRestricted = plan.restrictedEnvironment;
+    auto native = std::make_shared<WindowsSandboxState>();
+    HANDLE currentToken = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE | TOKEN_QUERY |
+                                                 TOKEN_ASSIGN_PRIMARY, &currentToken)) {
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("TokenUnavailable");
+        return launch;
+    }
+    BYTE administratorsSid[SECURITY_MAX_SID_SIZE];
+    DWORD sidBytes = sizeof(administratorsSid);
+    if (!CreateWellKnownSid(WinBuiltinAdministratorsSid, nullptr, administratorsSid,
+                            &sidBytes)) {
+        CloseHandle(currentToken);
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("AdministratorsSidUnavailable");
+        return launch;
+    }
+    SID_AND_ATTRIBUTES disabledAdmin{administratorsSid, 0};
+    const BOOL restricted = CreateRestrictedToken(currentToken, DISABLE_MAX_PRIVILEGE,
+                                                  1, &disabledAdmin, 0, nullptr, 0, nullptr,
+                                                  &native->token);
+    CloseHandle(currentToken);
+    if (!restricted) {
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("RestrictedTokenUnavailable");
+        return launch;
+    }
+    launch.result.restrictedToken = true;
+    native->job = CreateJobObjectW(nullptr, nullptr);
+    if (!native->job) {
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("JobUnavailable");
+        return launch;
+    }
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (!SetInformationJobObject(native->job, JobObjectExtendedLimitInformation,
+                                 &limits, sizeof(limits))) {
+        launch.result.enforcement = SandboxEnforcement::Failed;
+        launch.result.failureCategory = QStringLiteral("JobConfigurationFailed");
+        return launch;
+    }
+    launch.result.processTreeControlled = true;
+    launch.result.filesystemRestricted = false;
+    launch.result.networkDenied = false;
+    launch.result.enforcement = SandboxEnforcement::PartiallyEnforced;
+    launch.result.failureCategory = !plan.networkAllowed
+        ? QStringLiteral("NetworkDenialUnavailable")
+        : QStringLiteral("FilesystemConfinementUnavailable");
+    if (plan.requireEnforcement) return launch;
+    launch.windows = std::move(native);
+    launch.permitted = true;
+    return launch;
+#elif defined(Q_OS_MACOS)
     if (plan.forbidDetachedChildren) {
         launch.result.enforcement = SandboxEnforcement::PartiallyEnforced;
         launch.result.failureCategory = QStringLiteral("DetachedProcessControlUnavailable");
@@ -119,7 +204,8 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     launch.result.processTreeControlled = false;
 #elif defined(Q_OS_LINUX)
     launch.program = launcher_;
-    launch.arguments = {QStringLiteral("--die-with-parent"), QStringLiteral("--unshare-pid"),
+    launch.arguments = {QStringLiteral("--die-with-parent"), QStringLiteral("--unshare-user"),
+                        QStringLiteral("--unshare-pid"), QStringLiteral("--unshare-ipc"),
                         QStringLiteral("--proc"), QStringLiteral("/proc"),
                         QStringLiteral("--dev"), QStringLiteral("/dev")};
     if (!plan.networkAllowed) launch.arguments.append(QStringLiteral("--unshare-net"));
@@ -137,7 +223,12 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
         }
     };
     for (const auto& path : {"/usr", "/bin", "/sbin", "/lib", "/lib64"}) {
-        if (QFileInfo::exists(QString::fromLatin1(path)))
+        const QFileInfo systemPath(QString::fromLatin1(path));
+        if (!systemPath.exists()) continue;
+        if (systemPath.isSymLink())
+            launch.arguments.append({QStringLiteral("--symlink"), systemPath.symLinkTarget(),
+                                     QString::fromLatin1(path)});
+        else
             launch.arguments.append({QStringLiteral("--ro-bind"), QString::fromLatin1(path),
                                      QString::fromLatin1(path)});
     }
@@ -170,6 +261,7 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     launch.result.enforcement = SandboxEnforcement::Enforced;
     launch.result.networkDenied = !plan.networkAllowed;
     launch.result.filesystemRestricted = true;
+    launch.result.environmentRestricted = plan.restrictedEnvironment;
     launch.permitted = true;
     return launch;
 }

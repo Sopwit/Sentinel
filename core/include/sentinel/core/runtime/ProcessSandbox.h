@@ -4,6 +4,7 @@
 
 #include <QProcessEnvironment>
 #include <QStringList>
+#include <memory>
 
 namespace sentinel::core {
 
@@ -27,7 +28,14 @@ struct SandboxExecutionResult {
     bool networkDenied = false;
     bool filesystemRestricted = false;
     bool processTreeControlled = false;
+    bool environmentRestricted = false;
+    bool restrictedToken = false;
+    bool mitigationsApplied = false;
 };
+
+#if defined(Q_OS_WIN)
+struct WindowsSandboxState;
+#endif
 
 struct SandboxLaunch {
     QString program;
@@ -35,6 +43,9 @@ struct SandboxLaunch {
     QProcessEnvironment environment;
     SandboxExecutionResult result;
     bool permitted = false;
+#if defined(Q_OS_WIN)
+    std::shared_ptr<WindowsSandboxState> windows;
+#endif
 };
 
 class IProcessSandbox {

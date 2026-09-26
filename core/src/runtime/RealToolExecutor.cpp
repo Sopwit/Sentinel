@@ -15,7 +15,6 @@
 #include <QClipboard>
 #include <QDateTime>
 #include <QDir>
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -26,10 +25,10 @@
 #include <QProcessEnvironment>
 #include <QPointer>
 #include <QRegularExpression>
-#include <QSettings>
 #include <QStorageInfo>
 #include <QSysInfo>
 #include <QThread>
+#include <QTemporaryDir>
 #include <QTimer>
 #include <QUrl>
 
@@ -280,7 +279,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             QStringLiteral("process-list"),  QStringLiteral("app-quit"),
             QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
             QStringLiteral("browser-pdf"),   QStringLiteral("voice-transcribe"),
-            QStringLiteral("voice-speak"),   QStringLiteral("app-launch")};
+            QStringLiteral("voice-speak"),   QStringLiteral("app-launch"),
+            QStringLiteral("open-url")};
         if (!processTools.contains(toolId))
             return IToolExecutor::executeAsync(request, sessionId, toolCallId, std::move(output),
                                                std::move(completion));
@@ -297,6 +297,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         process.workingDirectory = invocation.processSandbox->workingDirectory;
         std::function<QString(const ProcessRecord&, const QString&, const QString&)> format;
         QByteArray input;
+        std::shared_ptr<QTemporaryDir> outputDirectory;
         if (toolId == QLatin1String("process-list")) {
 #if defined(Q_OS_WIN)
             process.program = QStringLiteral("tasklist");
@@ -360,9 +361,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 return {};
             }
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
-            // Linux launch uses the existing nonblocking desktop-entry path.
-            QString cwd = QDir::currentPath();
-            completion(executeAppLaunch(invocation, cwd));
+            completion({ToolExecutionStatus::Blocked,
+                        QStringLiteral("app-launch: detached desktop launch has no process sandbox guarantee.")});
             return {};
 #else
             const QString extra = argument(QStringLiteral("args")).trimmed();
@@ -387,6 +387,29 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                            : QStringLiteral("app-launch: %1 (%2)").arg(error, app);
             };
 #endif
+        } else if (toolId == QLatin1String("open-url")) {
+            const QUrl parsed = QUrl::fromUserInput(argument(QStringLiteral("url")).trimmed());
+            if (!parsed.isValid() || (parsed.scheme() != QLatin1String("http") &&
+                                      parsed.scheme() != QLatin1String("https"))) {
+                completion({ToolExecutionStatus::InvalidArguments,
+                            QStringLiteral("open-url: Only http and https URLs can be opened.")});
+                return {};
+            }
+#if defined(Q_OS_MACOS)
+            process.program = QStringLiteral("open");
+#elif defined(Q_OS_WIN)
+            process.program = QStringLiteral("cmd.exe");
+            process.arguments = {QStringLiteral("/c"), QStringLiteral("start"), QString()};
+#else
+            process.program = QStringLiteral("xdg-open");
+#endif
+            process.arguments.append(parsed.toString(QUrl::FullyEncoded));
+            format = [](const ProcessRecord& record, const QString&, const QString& err) {
+                if (record.state == ProcessState::Failed || record.exitCode != 0)
+                    return QStringLiteral("open-url: Sandbox launch failed: %1")
+                        .arg(record.error.isEmpty() ? err : record.error);
+                return QStringLiteral("open-url: Browser launch requested.");
+            };
         } else if (toolId == QLatin1String("system-notify")) {
             const QString title = argument(QStringLiteral("title")).trimmed();
             const QString message = argument(QStringLiteral("message")).trimmed();
@@ -447,23 +470,23 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 return {};
             }
             QString path = argument(QStringLiteral("path")).trimmed();
-            if (path.isEmpty())
-                path =
-                    QDir(QDir::tempPath())
-                        .filePath(QStringLiteral("sentinel_browser_%1.%2")
-                                      .arg(QDateTime::currentMSecsSinceEpoch())
-                                      .arg(mode == QLatin1String("pdf") ? QStringLiteral("pdf")
-                                                                        : QStringLiteral("png")));
-            else {
-                path = scopedPath(QDir::currentPath(), path);
-                if (path.isEmpty()) {
-                    completion(
-                        {ToolExecutionStatus::Succeeded,
-                         QStringLiteral("browser-%1: Path is outside the approved workspace.")
-                             .arg(mode)});
-                    return {};
-                }
+            if (!path.isEmpty()) {
+                completion({ToolExecutionStatus::Blocked,
+                            QStringLiteral("browser-%1: explicit output path lacks filesystem authorization.")
+                                .arg(mode)});
+                return {};
             }
+            outputDirectory = std::make_shared<QTemporaryDir>();
+            if (!outputDirectory->isValid()) {
+                completion({ToolExecutionStatus::Failed,
+                            QStringLiteral("browser-%1: private output directory is unavailable.")
+                                .arg(mode)});
+                return {};
+            }
+            process.sandbox->temporaryDirectory = outputDirectory->path();
+            path = QDir(outputDirectory->path()).filePath(
+                mode == QLatin1String("pdf") ? QStringLiteral("capture.pdf")
+                                               : QStringLiteral("capture.png"));
             process.program = QStringLiteral("npx");
             process.arguments = {QStringLiteral("-y"), QStringLiteral("playwright"), mode};
             if (mode == QLatin1String("screenshot"))
@@ -517,8 +540,14 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
 #else
             process.program = QStringLiteral("piper");
 #endif
-            const QString path =
-                QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_tts.wav"));
+            outputDirectory = std::make_shared<QTemporaryDir>();
+            if (!outputDirectory->isValid()) {
+                completion({ToolExecutionStatus::Failed,
+                            QStringLiteral("voice-speak: private output directory is unavailable.")});
+                return {};
+            }
+            process.sandbox->temporaryDirectory = outputDirectory->path();
+            const QString path = QDir(outputDirectory->path()).filePath(QStringLiteral("speech.wav"));
             process.arguments = {QStringLiteral("--model"),
                                  QStringLiteral("en_US-lessac-medium.onnx"),
                                  QStringLiteral("--output_file"), path};
@@ -538,6 +567,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             Output output;
             Completion completion;
             std::function<QString(const ProcessRecord&, const QString&, const QString&)> format;
+            std::shared_ptr<QTemporaryDir> outputDirectory;
         };
         auto active = std::make_shared<Active>();
         active->executor = std::shared_ptr<ProcessExecutor>(
@@ -545,6 +575,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         active->output = std::move(output);
         active->completion = std::move(completion);
         active->format = std::move(format);
+        active->outputDirectory = std::move(outputDirectory);
         std::weak_ptr<Active> weak = active;
         active->id = active->executor->start(
             process,
@@ -567,6 +598,10 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                     result.sandbox.enforcement = SandboxEnforcement::Failed;
                     result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
                 }
+                if (result.status == ToolExecutionStatus::Succeeded &&
+                    current->outputDirectory &&
+                    !QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty())
+                    current->outputDirectory->setAutoRemove(false);
                 current->completion(std::move(result));
             },
             [weak](const QString& id, ProcessStream stream, const QByteArray& bytes) {
@@ -664,7 +699,6 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         Output output;
         Completion completion;
         bool docker = false;
-        QString command;
         int timeoutMs = 0;
     };
     auto active = std::make_shared<ActiveCommand>();
@@ -673,7 +707,6 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
     active->output = std::move(output);
     active->completion = std::move(completion);
     active->docker = docker;
-    active->command = command;
     active->timeoutMs = timeoutMs;
     std::weak_ptr<ActiveCommand> weak = active;
     active->id = active->executor->start(
@@ -695,10 +728,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                               .arg(current->timeoutMs)
                         : QStringLiteral(
                               "run-command: Shell tool terminated command after exceeding timeout "
-                              "%1 ms. If this command is expected to take longer, retry it with a "
-                              "larger timeout value in milliseconds.\nCommand: %2")
-                              .arg(current->timeoutMs)
-                              .arg(current->command);
+                              "%1 ms. Retry with a larger timeout if needed.")
+                              .arg(current->timeoutMs);
             } else if (record.state == ProcessState::Cancelled) {
                 summary = QStringLiteral("run-command: Command cancelled.");
             } else if (record.state == ProcessState::Failed && record.systemPid == 0) {
@@ -710,7 +741,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                         ? QStringLiteral(
                               "run-command: docker sandbox requested but the docker CLI is not "
                               "available. Install Docker or retry without sandbox=docker.")
-                        : QStringLiteral("run-command: Failed to start: %1").arg(current->command);
+                        : QStringLiteral("run-command: Failed to start the approved command.");
             } else if (current->docker) {
                 if (record.exitCode == 0)
                     summary =
@@ -1026,89 +1057,6 @@ QString processListReport() {
         .arg(QString::number(lines.size()), QString::number(shown.size()),
              shown.join(QLatin1Char('\n')));
 }
-
-// Freedesktop .desktop entry resolution (Linux/BSD app-launch support).
-#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
-struct DesktopEntry {
-    QString desktopId;
-    QString name;
-    QString exec;
-    QString icon;
-};
-
-// Locates a freedesktop .desktop entry for an application name such as
-// "Spotify" or "org.kde.dolphin". Searches the standard data directories.
-std::optional<DesktopEntry> findDesktopEntry(const QString& appName) {
-    const QString needle = appName.trimmed();
-    if (needle.isEmpty()) {
-        return std::nullopt;
-    }
-    const QString lowered = needle.toLower();
-
-    QStringList searchRoots;
-    const QString dataHome = qEnvironmentVariable("XDG_DATA_HOME").isEmpty()
-                                 ? QDir::home().filePath(QStringLiteral(".local/share"))
-                                 : qEnvironmentVariable("XDG_DATA_HOME");
-    searchRoots.append(dataHome);
-    const QString dataDirsEnv = qEnvironmentVariable("XDG_DATA_DIRS");
-    const QStringList dataDirs =
-        dataDirsEnv.isEmpty()
-            ? QStringList{QStringLiteral("/usr/share"), QStringLiteral("/usr/local/share")}
-            : dataDirsEnv.split(QLatin1Char(':'), Qt::SkipEmptyParts);
-    searchRoots.append(dataDirs);
-
-    std::optional<DesktopEntry> best;
-    for (const auto& root : searchRoots) {
-        QDirIterator it(QDir(root).filePath(QStringLiteral("applications")),
-                        {QStringLiteral("*.desktop")}, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            const QString path = it.next();
-            QSettings desktopFile(path, QSettings::IniFormat);
-            desktopFile.beginGroup(QStringLiteral("Desktop Entry"));
-
-            const QString type =
-                desktopFile.value(QStringLiteral("Type"), QString()).toString().trimmed();
-            const bool hidden = desktopFile.value(QStringLiteral("Hidden"), false).toBool();
-            if (type != QStringLiteral("Application") || hidden) {
-                continue;
-            }
-
-            const QString name =
-                desktopFile.value(QStringLiteral("Name"), QString()).toString().trimmed();
-            const QString desktopId = QFileInfo(path).completeBaseName();
-            const bool matches =
-                desktopId.compare(lowered, Qt::CaseInsensitive) == 0 ||
-                desktopId.endsWith(QStringLiteral(".") + lowered, Qt::CaseInsensitive) ||
-                name.compare(needle, Qt::CaseInsensitive) == 0;
-            if (!matches) {
-                continue;
-            }
-
-            DesktopEntry entry;
-            entry.desktopId = desktopId;
-            entry.name = name;
-            entry.exec = desktopFile.value(QStringLiteral("Exec"), QString()).toString();
-            entry.icon = desktopFile.value(QStringLiteral("Icon"), QString()).toString();
-            desktopFile.endGroup();
-
-            // Prefer exact id matches (e.g. "spotify") over suffix matches
-            // (e.g. "org.kde.dolphin" for "dolphin").
-            if (!best || (best->desktopId.toLower() != lowered && desktopId.toLower() == lowered)) {
-                best = entry;
-            }
-        }
-    }
-    return best;
-}
-
-// Strips freedesktop field codes (%f, %u, %F, %U) from an Exec= value.
-QString desktopExecToCommand(const QString& exec) {
-    static const QRegularExpression fieldCodes(QStringLiteral("%[fFuUdDnNickvm]"));
-    QString command = exec;
-    command.remove(fieldCodes);
-    return command.simplified();
-}
-#endif // !Q_OS_MACOS && !Q_OS_WIN
 
 // True when the text looks like a website address ("sahibinden.com",
 // "www.x.com", "https://x.com") rather than an application name.
@@ -1682,68 +1630,16 @@ ToolExecutionResult RealToolExecutor::executeRunCommand(const PlannedToolInvocat
 
 ToolExecutionResult RealToolExecutor::executeAppLaunch(const PlannedToolInvocation& invocation,
                                                        QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString app = getArgument(invocation, QStringLiteral("app")).trimmed();
-        if (app.isEmpty()) {
-            logs.append(QStringLiteral("app-launch: No app argument provided."));
-            continue;
-        }
-        // Safety net: domains are websites, not applications. Guide the
-        // caller to open-url instead of trying to launch a browser as an
-        // app.
-        if (looksLikeDomainName(app)) {
-            logs.append(QStringLiteral("app-launch: '%1' is a website address, not an application. "
-                                       "Retry with the open-url tool and url=%1 to open it in the "
-                                       "browser.")
-                            .arg(app));
-            continue;
-        }
-        const QString extraArgs = getArgument(invocation, QStringLiteral("args")).trimmed();
-
-        QString error;
-#if defined(Q_OS_MACOS)
-        QStringList args{QStringLiteral("-a"), app};
-        if (!extraArgs.isEmpty()) {
-            args.append(extraArgs);
-        }
-        runSynchronousProcess(QStringLiteral("open"), args, QString(), 15000, &error);
-#elif defined(Q_OS_WIN)
-        QStringList args{QStringLiteral("/c"), QStringLiteral("start"), QStringLiteral(""), app};
-        if (!extraArgs.isEmpty()) {
-            args.append(extraArgs);
-        }
-        runSynchronousProcess(QStringLiteral("cmd.exe"), args, QString(), 15000, &error);
-#else
-        // Linux/BSD: resolve the application through its freedesktop
-        // .desktop entry so names like "Files" launch org.kde.dolphin.
-        const auto entry = findDesktopEntry(app);
-        if (entry) {
-            QString command = desktopExecToCommand(entry->exec);
-            QStringList args;
-            if (!extraArgs.isEmpty()) {
-                args.append(extraArgs);
-            }
-            if (command.isEmpty()) {
-                command = entry->desktopId;
-            }
-            const bool started = QProcess::startDetached(command, args);
-            logs.append(
-                started ? QStringLiteral("app-launch: Launched '%1' (%2) via desktop entry.")
-                              .arg(app, entry->desktopId)
-                        : QStringLiteral("app-launch: Found desktop entry '%1' but failed to start "
-                                         "'%2'.")
-                              .arg(entry->desktopId, command));
-            continue;
-        }
-        QProcess::startDetached(app, extraArgs.isEmpty() ? QStringList{} : QStringList{extraArgs});
-#endif
-        logs.append(error.isEmpty()
-                        ? QStringLiteral("app-launch: Launch requested for '%1'.").arg(app)
-                        : QStringLiteral("app-launch: %1 (%2)").arg(error, app));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+    Q_UNUSED(currentWorkingDirectory);
+    const auto app = getArgument(invocation, QStringLiteral("app")).trimmed();
+    if (app.isEmpty())
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("app-launch: No app argument provided.")};
+    if (looksLikeDomainName(app))
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("app-launch: Use open-url for websites.")};
+    return {ToolExecutionStatus::Blocked,
+            QStringLiteral("app-launch requires the gateway process sandbox.")};
 }
 
 ToolExecutionResult RealToolExecutor::executeAppQuit(const PlannedToolInvocation& invocation,
@@ -1785,39 +1681,10 @@ ToolExecutionResult RealToolExecutor::executeAppQuit(const PlannedToolInvocation
 
 ToolExecutionResult RealToolExecutor::executeOpenUrl(const PlannedToolInvocation& invocation,
                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString url = getArgument(invocation, QStringLiteral("url")).trimmed();
-        if (url.isEmpty()) {
-            logs.append(QStringLiteral("open-url: No url argument provided."));
-            continue;
-        }
-        const QUrl parsed = QUrl::fromUserInput(url);
-        if (!parsed.isValid() || (parsed.scheme() != QStringLiteral("http") &&
-                                  parsed.scheme() != QStringLiteral("https"))) {
-            logs.append(QStringLiteral("open-url: Only http and https URLs can be opened. Got: %1")
-                            .arg(url));
-            continue;
-        }
-        const QString target = parsed.toString(QUrl::FullyEncoded);
-        bool launched = false;
-#if defined(Q_OS_MACOS)
-        launched = QProcess::startDetached(QStringLiteral("open"), {target});
-#elif defined(Q_OS_WIN)
-        launched = QProcess::startDetached(
-            QStringLiteral("cmd.exe"),
-            {QStringLiteral("/c"), QStringLiteral("start"), QString(), target});
-#else
-        launched = QProcess::startDetached(QStringLiteral("xdg-open"), {target});
-#endif
-        logs.append(launched ? QStringLiteral("open-url: Opened '%1' in the default browser.")
-                                   .arg(parsed.toString())
-                             : QStringLiteral("open-url: Failed to open '%1' in the default "
-                                              "browser.")
-                                   .arg(parsed.toString()));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+    Q_UNUSED(invocation);
+    Q_UNUSED(currentWorkingDirectory);
+    return {ToolExecutionStatus::Blocked,
+            QStringLiteral("open-url requires the gateway process sandbox.")};
 }
 
 ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocation& invocation,
