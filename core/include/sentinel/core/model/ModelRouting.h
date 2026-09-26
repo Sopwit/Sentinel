@@ -49,6 +49,7 @@ struct ModelCapabilities {
     CapabilitySupport streaming = CapabilitySupport::Unknown;
     CapabilitySupport structuredOutput = CapabilitySupport::Unknown;
     CapabilitySupport nativeToolCalling = CapabilitySupport::Unknown;
+    CapabilitySupport combinedToolsAndStructuredOutput = CapabilitySupport::Unknown;
     CapabilitySupport visionInput = CapabilitySupport::Unknown;
     CapabilitySupport audioInput = CapabilitySupport::Unknown;
     CapabilitySupport audioOutput = CapabilitySupport::Unknown;

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/OllamaRuntime.h"
+#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QEventLoop>
 #include <QJsonArray>
@@ -61,10 +62,16 @@ struct JsonReply {
     QJsonDocument document;
     QString error;
     QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
+    int httpStatus = 0;
+    QString retryAfter;
+    ChatProviderErrorCategory category = ChatProviderErrorCategory::None;
+    QString requestId;
+    int attempts = 1;
 };
 
-JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr,
-                  const QMap<QByteArray, QByteArray>& headers = {}) {
+JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager,
+                  const QMap<QByteArray, QByteArray>& headers = {},
+                  const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
     QNetworkAccessManager localManager;
     QNetworkAccessManager* activeManager = manager ? manager : &localManager;
     QNetworkRequest request{url};
@@ -78,30 +85,29 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
         request.setRawHeader(it.key(), it.value());
     }
 
-    QEventLoop loop;
-    QTimer timer;
-    timer.setSingleShot(true);
-
     QNetworkReply* reply = activeManager->get(request);
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(timeoutMs);
-    loop.exec();
-
-    if (timer.isActive()) {
-        timer.stop();
-    } else {
-        reply->abort();
+    const auto transport = ProviderRequestRuntime::wait(reply, timeoutMs, cancellationToken);
+    if (transport.cancelled) {
+        reply->deleteLater();
+        return JsonReply{false, false, {}, QStringLiteral("Request cancelled."),
+                         QNetworkReply::OperationCanceledError};
+    }
+    if (transport.timedOut) {
         reply->deleteLater();
         return JsonReply{
             false, true, {}, QStringLiteral("Request timed out."), QNetworkReply::TimeoutError};
     }
 
-    if (reply->error() != QNetworkReply::NoError) {
-        const auto error = reply->errorString();
+    if (transport.category != ChatProviderErrorCategory::None) {
+        const auto error = QStringLiteral("%1%2")
+                               .arg(chatProviderErrorCategoryName(transport.category),
+                                    transport.httpStatus > 0
+                                        ? QStringLiteral(" (HTTP %1)").arg(transport.httpStatus)
+                                        : QString{});
         const auto networkError = reply->error();
         reply->deleteLater();
-        return JsonReply{false, false, {}, error, networkError};
+        return JsonReply{false, false, {}, error, networkError,
+                         transport.httpStatus, transport.retryAfter, transport.category};
     }
 
     const auto payload = reply->readAll();
@@ -117,7 +123,52 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
                          QNetworkReply::UnknownContentError};
     }
 
-    return JsonReply{true, false, document, {}, QNetworkReply::NoError};
+    return JsonReply{true, false, document, {}, QNetworkReply::NoError,
+                     transport.httpStatus};
+}
+
+JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr,
+                  const QMap<QByteArray, QByteArray>& headers = {},
+                  const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                  ProviderRequestMode mode = ProviderRequestMode::Discovery) {
+    const auto requestId = ProviderRequestRuntime::requestId();
+    const int maxAttempts = mode == ProviderRequestMode::HealthProbe ? 1 : 2;
+    for (int attempt = 0; attempt < maxAttempts; ++attempt) {
+        if (cancellationToken && cancellationToken->load()) {
+            JsonReply cancelled;
+            cancelled.category = ChatProviderErrorCategory::Cancelled;
+            cancelled.requestId = requestId;
+            cancelled.attempts = attempt;
+            cancelled.error = QStringLiteral("Request cancelled.");
+            return cancelled;
+        }
+        auto reply = getJsonOnce(url, timeoutMs, manager, headers, cancellationToken);
+        reply.requestId = requestId;
+        reply.attempts = attempt + 1;
+        reply.category = ProviderRequestRuntime::classify(
+            reply.httpStatus, reply.networkError, reply.timedOut,
+            cancellationToken && cancellationToken->load());
+        ProviderTransportResult transport;
+        transport.httpStatus = reply.httpStatus;
+        transport.networkError = reply.networkError;
+        transport.timedOut = reply.timedOut;
+        transport.cancelled = cancellationToken && cancellationToken->load();
+        if (reply.ok || attempt + 1 == maxAttempts || !ProviderRequestRuntime::retryable(
+                                             transport, mode, false))
+            return reply;
+        if (!ProviderRequestRuntime::backoff(
+                ProviderRequestRuntime::retryDelayMs(attempt, reply.retryAfter,
+                                                      mode),
+                cancellationToken)) {
+            JsonReply cancelled;
+            cancelled.category = ChatProviderErrorCategory::Cancelled;
+            cancelled.requestId = requestId;
+            cancelled.attempts = attempt + 1;
+            cancelled.error = QStringLiteral("Request cancelled.");
+            return cancelled;
+        }
+    }
+    return {};
 }
 
 QString safeOllamaNetworkFailureSummary(const JsonReply& reply, const QString& operation,
@@ -239,7 +290,19 @@ OllamaHealthCheckResult NullOllamaRuntimeClient::healthCheck() const {
 }
 
 QList<OllamaModelSummary> NullOllamaRuntimeClient::installedModels() const {
-    return {};
+    return discoverModels().models;
+}
+
+OllamaModelDiscoveryResult NullOllamaRuntimeClient::discoverModels(
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
+    OllamaModelDiscoveryResult result;
+    result.errorCategory = cancellationToken && cancellationToken->load()
+                               ? ChatProviderErrorCategory::Cancelled
+                               : ChatProviderErrorCategory::ProviderUnavailable;
+    result.lifecycle = result.errorCategory == ChatProviderErrorCategory::Cancelled
+                           ? ChatRequestLifecycle::Cancelled : ChatRequestLifecycle::Failed;
+    result.safeDetail = QStringLiteral("Ollama runtime client is unavailable.");
+    return result;
 }
 
 OllamaHttpRuntimeClient::OllamaHttpRuntimeClient(OllamaConfig config, int timeoutMs)
@@ -253,6 +316,11 @@ OllamaConfig OllamaHttpRuntimeClient::config() const {
 }
 
 OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
+    return healthCheck({});
+}
+
+OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck(
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
     if (!endpointAllowed()) {
         return OllamaHealthCheckResult{
             OllamaConnectionStatus::Blocked,
@@ -260,12 +328,15 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
             config_.endpoint.toString(),
             QStringLiteral("Ollama health check blocked: endpoint must be local loopback HTTP."),
             config_.healthCheckTimeoutMs,
+            ChatProviderErrorCategory::RequestRejected,
         };
     }
 
     const auto timeoutMs =
         config_.healthCheckTimeoutMs > 0 ? config_.healthCheckTimeoutMs : timeoutMs_;
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs);
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs,
+                               nullptr, {}, cancellationToken,
+                               ProviderRequestMode::HealthProbe);
     if (!reply.ok) {
         return OllamaHealthCheckResult{
             OllamaConnectionStatus::Unavailable,
@@ -274,6 +345,7 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
             safeOllamaNetworkFailureSummary(reply, QStringLiteral("Ollama local health check"),
                                             timeoutMs),
             timeoutMs,
+            reply.category, reply.httpStatus, reply.requestId,
         };
     }
 
@@ -284,36 +356,76 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
         QStringLiteral("Ollama local endpoint is reachable; no prompt or model execution was "
                        "performed."),
         timeoutMs,
+        ChatProviderErrorCategory::None, reply.httpStatus, reply.requestId,
     };
 }
 
 QList<OllamaModelSummary> OllamaHttpRuntimeClient::installedModels() const {
+    return installedModels({});
+}
+
+QList<OllamaModelSummary> OllamaHttpRuntimeClient::installedModels(
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
+    return discoverModels(cancellationToken).models;
+}
+
+OllamaModelDiscoveryResult OllamaHttpRuntimeClient::discoverModels(
+    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
+    OllamaModelDiscoveryResult result;
     if (!config_.modelDiscoveryEnabled || !endpointAllowed()) {
-        return {};
+        result.errorCategory = ChatProviderErrorCategory::RequestRejected;
+        result.safeDetail = config_.modelDiscoveryEnabled
+                                ? QStringLiteral("Ollama discovery requires a local loopback HTTP endpoint.")
+                                : QStringLiteral("Ollama model discovery is disabled.");
+        return result;
     }
 
     const auto timeoutMs =
         config_.modelDiscoveryTimeoutMs > 0 ? config_.modelDiscoveryTimeoutMs : timeoutMs_;
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs);
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs,
+                               nullptr, {}, cancellationToken);
+    result.requestId = reply.requestId;
+    result.attemptCount = reply.attempts;
+    result.retried = reply.attempts > 1;
+    result.httpStatus = reply.httpStatus;
     if (!reply.ok) {
-        return {};
+        result.errorCategory = reply.category;
+        result.lifecycle = reply.category == ChatProviderErrorCategory::Timeout
+                               ? ChatRequestLifecycle::TimedOut
+                           : reply.category == ChatProviderErrorCategory::Cancelled
+                               ? ChatRequestLifecycle::Cancelled
+                           : reply.category == ChatProviderErrorCategory::RateLimited
+                               ? ChatRequestLifecycle::RateLimited : ChatRequestLifecycle::Failed;
+        result.safeDetail = safeOllamaNetworkFailureSummary(
+            reply, QStringLiteral("Ollama model discovery"), timeoutMs);
+        return result;
     }
 
-    QList<OllamaModelSummary> models;
-    const auto modelValues = reply.document.object().value(QStringLiteral("models")).toArray();
+    const auto modelsValue = reply.document.object().value(QStringLiteral("models"));
+    if (!modelsValue.isArray()) {
+        result.errorCategory = ChatProviderErrorCategory::MalformedResponse;
+        result.safeDetail = QStringLiteral("Ollama model discovery returned an invalid model catalog.");
+        return result;
+    }
+    const auto modelValues = modelsValue.toArray();
     for (const auto& value : modelValues) {
         const auto object = value.toObject();
         const auto name = object.value(QStringLiteral("name")).toString().trimmed();
         if (name.isEmpty()) {
             continue;
         }
-        models.append(OllamaModelSummary{
+        result.models.append(OllamaModelSummary{
             name,
             object.value(QStringLiteral("modified_at")).toString(),
             object.value(QStringLiteral("size")).toVariant().toLongLong(),
         });
     }
-    return models;
+    result.lifecycle = ChatRequestLifecycle::Completed;
+    result.errorCategory = ChatProviderErrorCategory::None;
+    result.safeDetail = result.models.isEmpty()
+                            ? QStringLiteral("Ollama is reachable; no models are installed.")
+                            : QStringLiteral("Ollama models are available.");
+    return result;
 }
 
 QUrl OllamaHttpRuntimeClient::endpointUrl(const QString& path) const {
@@ -1372,8 +1484,11 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 namespace sentinel::core {
 QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
                                                       const QMap<QByteArray, QByteArray>& headers,
-                                                      QString* errorOut) {
-    const auto reply = getJson(url, timeoutMs, nullptr, headers);
+                                                      QString* errorOut,
+                                                      const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                                      ProviderDiscoveryOutcome* outcome) {
+    const auto reply = getJson(url, timeoutMs, nullptr, headers, cancellationToken);
+    if (outcome) *outcome = {reply.ok, reply.category, reply.httpStatus, reply.requestId};
     if (!reply.ok) {
         if (errorOut) {
             *errorOut = reply.timedOut ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
@@ -1408,8 +1523,11 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
 }
 
 QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs,
-                                                 QString* errorOut) {
+                                                 QString* errorOut,
+                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                                 ProviderDiscoveryOutcome* outcome) {
     if (apiKey.trimmed().isEmpty()) {
+        if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
             *errorOut = QStringLiteral("Gemini API key is empty.");
         }
@@ -1419,7 +1537,8 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("key"), apiKey.trimmed());
     url.setQuery(query);
-    const auto reply = getJson(url, timeoutMs);
+    const auto reply = getJson(url, timeoutMs, nullptr, {}, cancellationToken);
+    if (outcome) *outcome = {reply.ok, reply.category, reply.httpStatus, reply.requestId};
     if (!reply.ok) {
         if (errorOut) {
             *errorOut = reply.timedOut ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
@@ -1447,8 +1566,11 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
 }
 
 QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs,
-                                                    QString* errorOut) {
+                                                    QString* errorOut,
+                                                    const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                                    ProviderDiscoveryOutcome* outcome) {
     if (apiKey.trimmed().isEmpty()) {
+        if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
             *errorOut = QStringLiteral("Anthropic API key is empty.");
         }
@@ -1457,12 +1579,15 @@ QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int t
     const QUrl url(QStringLiteral("https://api.anthropic.com/v1/models"));
     const QMap<QByteArray, QByteArray> headers{{"x-api-key", apiKey.trimmed().toUtf8()},
                                                {"anthropic-version", "2023-06-01"}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome);
 }
 
 QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
-                                                 int timeoutMs, QString* errorOut) {
+                                                 int timeoutMs, QString* errorOut,
+                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                                 ProviderDiscoveryOutcome* outcome) {
     if (apiKey.trimmed().isEmpty()) {
+        if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
             *errorOut = QStringLiteral("API key is empty.");
         }
@@ -1470,6 +1595,6 @@ QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString&
     }
     const QMap<QByteArray, QByteArray> headers{
         {"Authorization", ("Bearer " + apiKey.trimmed()).toUtf8()}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome);
 }
 } // namespace sentinel::core

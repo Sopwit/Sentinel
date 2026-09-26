@@ -14,6 +14,7 @@ class InMemorySettingsStore final : public ISettingsStore {
 public:
     QString value(const QString& key, const QString& defaultValue = QString()) const override;
     void setValue(QString key, QString value) override;
+    void remove(const QString& key) override;
 
 private:
     QMap<QString, QString> values_;

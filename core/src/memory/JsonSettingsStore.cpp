@@ -25,6 +25,11 @@ void JsonSettingsStore::setValue(QString key, QString value) {
     save();
 }
 
+void JsonSettingsStore::remove(const QString& key) {
+    if (values_.remove(key) > 0)
+        save();
+}
+
 QString JsonSettingsStore::filePath() const {
     return filePath_;
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/LocalRuntimeSession.h"
+#include "sentinel/core/model/ModelService.h"
 
 #include <utility>
 
@@ -57,8 +58,8 @@ QList<LocalRuntimeSession> NullLocalRuntimeSessionManager::sessions() const {
     return {currentSession()};
 }
 
-OllamaRuntimeSessionManager::OllamaRuntimeSessionManager(OllamaConfig config)
-    : config_(std::move(config)) {}
+OllamaRuntimeSessionManager::OllamaRuntimeSessionManager(OllamaConfig config, ModelService* modelService)
+    : config_(std::move(config)), modelService_(modelService) {}
 
 QList<LocalRuntimeSession> OllamaRuntimeSessionManager::sessions() const {
     return {currentSession()};
@@ -66,9 +67,12 @@ QList<LocalRuntimeSession> OllamaRuntimeSessionManager::sessions() const {
 
 LocalRuntimeSession OllamaRuntimeSessionManager::currentSession() const {
     const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
-    const auto health = client.healthCheck();
-    const auto models = client.installedModels();
-    const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
+    const auto health = modelService_ ? OllamaHealthCheckResult{} : client.healthCheck();
+    const auto discovery = modelService_ ? modelService_->ollamaDiscovery() : client.discoverModels();
+    const bool healthy = modelService_ ? modelService_->providerHealth(QStringLiteral("ollama")) == ProviderHealth::Available
+                                      : health.healthStatus == OllamaHealthStatus::Healthy;
+    const bool ready = healthy &&
+                       discovery.succeeded() && !discovery.models.isEmpty();
     LocalRuntimeSession session;
     session.id = {QStringLiteral("ollama-runtime-session-1")};
     session.status =
@@ -80,8 +84,9 @@ LocalRuntimeSession OllamaRuntimeSessionManager::currentSession() const {
         QStringLiteral("Ollama"),
         {QStringLiteral("local-runtime.metadata"), QStringLiteral("local-runtime.inference")},
         ready
-            ? QStringLiteral("Ollama runtime active with %1 installed model(s).").arg(models.size())
-            : safeOllamaHealthSummary(health),
+            ? QStringLiteral("Ollama runtime active with %1 installed model(s).").arg(discovery.models.size())
+            : !discovery.succeeded() || discovery.models.isEmpty() || modelService_
+                  ? discovery.safeDetail : safeOllamaHealthSummary(health),
     };
     session.reservation = {
         QStringLiteral("ollama-runtime-reservation-1"),

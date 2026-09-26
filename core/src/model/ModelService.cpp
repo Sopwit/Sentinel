@@ -11,13 +11,198 @@
 #include "sentinel/core/runtime/LocalInference.h"
 
 #include <QDir>
+#include <QCryptographicHash>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QRegularExpression>
 #include <QStandardPaths>
 
 #include <utility>
+#include <algorithm>
+#include <atomic>
+#include <mutex>
 
 namespace sentinel::core {
 
+struct ProviderHealthRegistry {
+    struct Entry {
+        ProviderHealth health = ProviderHealth::Unknown;
+        quint64 sequence = 0;
+        QString source;
+    };
+    std::mutex mutex;
+    std::atomic<quint64> nextSequence{0};
+    QHash<QString, Entry> entries;
+    OllamaModelDiscoveryResult ollamaDiscovery;
+    QList<OllamaModelSummary> ollamaModels;
+    quint64 ollamaDiscoverySequence = 0;
+};
+
+QString providerHealthName(ProviderHealth health) {
+    switch (health) {
+    case ProviderHealth::Unknown: return QStringLiteral("Unknown");
+    case ProviderHealth::Available: return QStringLiteral("Available");
+    case ProviderHealth::Degraded: return QStringLiteral("Degraded");
+    case ProviderHealth::Unavailable: return QStringLiteral("Unavailable");
+    }
+    return QStringLiteral("Unknown");
+}
+
 namespace {
+
+class HealthTrackedProvider final : public IChatProvider {
+public:
+    HealthTrackedProvider(QString id, std::shared_ptr<IChatProvider> delegate,
+                          std::shared_ptr<ProviderHealthRegistry> registry)
+        : id_(id.trimmed().toLower()), delegate_(std::move(delegate)),
+          registry_(std::move(registry)) {}
+    QString name() const override { return delegate_->name(); }
+    ChatProviderStatus status() const override { return delegate_->status(); }
+    ChatProviderConcurrency concurrency() const override { return delegate_->concurrency(); }
+    bool supportsStreaming() const override { return delegate_->supportsStreaming(); }
+    ChatProviderReply sendMessage(const QString& message) override {
+        const auto sequence = ++registry_->nextSequence;
+        auto reply = delegate_->sendMessage(message);
+        update(sequence, reply, QStringLiteral("generation"));
+        return reply;
+    }
+    ChatProviderReply sendRequest(const QString& message,
+                                  const ChatRequestOptions& options) override {
+        const auto sequence = ++registry_->nextSequence;
+        auto reply = delegate_->sendRequest(message, options);
+        update(sequence, reply, QStringLiteral("generation"));
+        return reply;
+    }
+    ChatProviderReply sendMessageStreaming(
+        const QString& message, const std::function<void(const QString&)>& onDelta,
+        const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
+        const auto sequence = ++registry_->nextSequence;
+        auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken);
+        update(sequence, reply, QStringLiteral("stream"));
+        return reply;
+    }
+private:
+    void update(quint64 sequence, const ChatProviderReply& reply, const QString& source) {
+        std::lock_guard lock(registry_->mutex);
+        auto& entry = registry_->entries[id_];
+        if (sequence < entry.sequence) return;
+        entry.sequence = sequence;
+        entry.source = source;
+        if (reply.success) entry.health = ProviderHealth::Available;
+        else if (reply.category == ChatProviderErrorCategory::RateLimited ||
+                 reply.category == ChatProviderErrorCategory::ConnectionFailed ||
+                 reply.category == ChatProviderErrorCategory::Timeout)
+            entry.health = ProviderHealth::Degraded;
+        else if (reply.category == ChatProviderErrorCategory::ProviderUnavailable)
+            entry.health = ProviderHealth::Unavailable;
+    }
+    QString id_;
+    std::shared_ptr<IChatProvider> delegate_;
+    std::shared_ptr<ProviderHealthRegistry> registry_;
+};
+
+QString nativeFunctionName(const QString& toolId) {
+    static const QRegularExpression valid(QStringLiteral("^[A-Za-z0-9_-]{1,64}$"));
+    if (valid.match(toolId).hasMatch())
+        return toolId;
+    return QStringLiteral("tool_%1").arg(QString::fromLatin1(
+        QCryptographicHash::hash(toolId.toUtf8(), QCryptographicHash::Sha256).toHex().left(48)));
+}
+
+QJsonObject nativeToolDefinition(const ToolDescriptor& tool) {
+    QJsonObject schema = tool.inputSchema;
+    if (schema.isEmpty()) {
+        QJsonObject properties;
+        QJsonArray required;
+        for (const auto& parameter : tool.parameters) {
+            properties.insert(parameter.id,
+                              QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                                          {QStringLiteral("description"), parameter.description}});
+            if (parameter.required)
+                required.append(parameter.id);
+        }
+        schema = {{QStringLiteral("type"), QStringLiteral("object")},
+                  {QStringLiteral("properties"), properties},
+                  {QStringLiteral("required"), required}};
+    }
+    return {{QStringLiteral("type"), QStringLiteral("function")},
+            {QStringLiteral("function"),
+             QJsonObject{{QStringLiteral("name"), nativeFunctionName(tool.id)},
+                         {QStringLiteral("description"), tool.description.left(1024)},
+                         {QStringLiteral("parameters"), schema}}}};
+}
+
+ChatProviderErrorCategory categoryFromLocalInference(LocalInferenceError error,
+                                                     LocalInferenceStatus status) {
+    if (error == LocalInferenceError::Timeout)
+        return ChatProviderErrorCategory::Timeout;
+    if (error == LocalInferenceError::MissingModel ||
+        error == LocalInferenceError::ModelUnavailable ||
+        status == LocalInferenceStatus::ModelUnavailable)
+        return ChatProviderErrorCategory::ModelNotFound;
+    if (error == LocalInferenceError::PermissionDenied)
+        return ChatProviderErrorCategory::AuthenticationRequired;
+    if (error == LocalInferenceError::InvalidResponse)
+        return ChatProviderErrorCategory::MalformedResponse;
+    if (error == LocalInferenceError::EndpointUnreachable ||
+        error == LocalInferenceError::OllamaNotRunning)
+        return ChatProviderErrorCategory::ConnectionFailed;
+    if (error == LocalInferenceError::BlankPrompt ||
+        error == LocalInferenceError::EndpointBlocked ||
+        error == LocalInferenceError::SafetyBlocked)
+        return ChatProviderErrorCategory::RequestRejected;
+    return ChatProviderErrorCategory::ProviderUnavailable;
+}
+
+ChatProviderErrorCategory categoryFromHttp(int status, const QString& detail) {
+    if (status == 401 || status == 403)
+        return ChatProviderErrorCategory::AuthenticationRequired;
+    if (status == 404)
+        return ChatProviderErrorCategory::ModelNotFound;
+    if (status == 408)
+        return ChatProviderErrorCategory::Timeout;
+    if (status == 429)
+        return ChatProviderErrorCategory::RateLimited;
+    if (status == 400 || status == 422)
+        return ChatProviderErrorCategory::RequestRejected;
+    if (status == 501)
+        return ChatProviderErrorCategory::CapabilityUnsupported;
+    const auto folded = detail.toCaseFolded();
+    if (folded.contains(QLatin1String("timeout")))
+        return ChatProviderErrorCategory::Timeout;
+    if (folded.contains(QLatin1String("connection")) || folded.contains(QLatin1String("network")))
+        return ChatProviderErrorCategory::ConnectionFailed;
+    if (status >= 500)
+        return ChatProviderErrorCategory::ProviderUnavailable;
+    return ChatProviderErrorCategory::ProviderUnavailable;
+}
+
+ChatRequestLifecycle lifecycleForCategory(ChatProviderErrorCategory category) {
+    if (category == ChatProviderErrorCategory::Timeout)
+        return ChatRequestLifecycle::TimedOut;
+    if (category == ChatProviderErrorCategory::RateLimited)
+        return ChatRequestLifecycle::RateLimited;
+    if (category == ChatProviderErrorCategory::Cancelled)
+        return ChatRequestLifecycle::Cancelled;
+    return ChatRequestLifecycle::Failed;
+}
+
+ChatProviderReply providerFailure(QString detail, ChatProviderErrorCategory category,
+                                  ChatProviderReply::Error error =
+                                      ChatProviderReply::Error::ProviderFailure,
+                                  int httpStatus = 0, int attempts = 1,
+                                  QString retrySummary = {}) {
+    ChatProviderReply reply;
+    reply.success = false;
+    reply.errorMessage = std::move(detail);
+    reply.error = error;
+    reply.category = category;
+    reply.lifecycle = lifecycleForCategory(category);
+    reply.httpStatus = httpStatus;
+    reply.attempts = qMax(1, attempts);
+    reply.retrySummary = std::move(retrySummary);
+    return reply;
+}
 
 // IChatProvider implementation for every non-Ollama provider id. The binding
 // fixes the model for the whole request/run; configuration comes from the
@@ -34,28 +219,189 @@ public:
         return config_.isAllowedEndpoint() ? ChatProviderStatus::Ready
                                            : ChatProviderStatus::Unavailable;
     }
+    ChatProviderConcurrency concurrency() const override {
+        return ChatProviderConcurrency::Supported;
+    }
     ChatProviderReply sendMessage(const QString& message) override {
+        return sendMessageWithToken(message, {});
+    }
+    ChatProviderReply sendMessageWithToken(
+        const QString& message,
+        const std::shared_ptr<std::atomic_bool>& cancellationToken) {
         if (!config_.isAllowedEndpoint())
-            return {false,
-                    {},
-                    QStringLiteral("Selected provider '%1' is unavailable or not configured.")
-                        .arg(binding_.providerId)};
+            return providerFailure(
+                QStringLiteral("Selected provider '%1' is unavailable or not configured.")
+                    .arg(binding_.providerId),
+                ChatProviderErrorCategory::ProviderUnavailable);
         LocalInferenceRequest request;
         request.prompt = message;
         request.options.model = binding_.modelId;
         request.options.timeoutMs = timeoutMs_;
+        request.options.cancellationToken = cancellationToken;
         LMStudioLocalInferenceClient client(config_, timeoutMs_);
         const auto result = client.infer(request);
-        if (result.status == LocalInferenceStatus::Succeeded)
-            return {true, result.text, {}};
+        if (result.status == LocalInferenceStatus::Succeeded) {
+            ChatProviderReply reply{true, result.text, {}};
+            reply.lifecycle = ChatRequestLifecycle::Completed;
+            reply.attempts = result.attempts;
+            reply.retrySummary = result.retrySummary;
+            reply.requestId = result.requestId;
+            return reply;
+        }
         if (result.error == LocalInferenceError::ModelUnavailable)
-            return {false,
-                    {},
-                    QStringLiteral("Selected model '%1' is unavailable from provider '%2'.")
-                        .arg(binding_.modelId, binding_.providerId)};
-        return {false,
-                {},
-                QStringLiteral("Provider '%1': %2").arg(binding_.providerId, result.summary)};
+            return providerFailure(
+                QStringLiteral("Selected model '%1' is unavailable from provider '%2'.")
+                    .arg(binding_.modelId, binding_.providerId),
+                ChatProviderErrorCategory::ModelNotFound);
+        auto reply = providerFailure(QStringLiteral("Provider '%1': %2")
+                                   .arg(binding_.providerId, result.summary),
+                               result.providerErrorCategory > 0
+                                   ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+                                   : categoryFromLocalInference(result.error, result.status),
+                               ChatProviderReply::Error::ProviderFailure, result.httpStatus,
+                               result.attempts, result.retrySummary);
+        reply.requestId = result.requestId;
+        return reply;
+    }
+
+    ChatProviderReply sendRequest(const QString& message,
+                                  const ChatRequestOptions& options) override {
+        if (!options.nativeToolCalling && !options.structuredOutput)
+            return sendMessageWithToken(message, options.cancellationToken);
+        if (!config_.isAllowedEndpoint())
+            return providerFailure(QStringLiteral("Selected endpoint is unavailable."),
+                                   ChatProviderErrorCategory::ProviderUnavailable);
+        QJsonArray messages{
+            QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+                        {QStringLiteral("content"), message}}};
+        if (!options.priorToolCalls.isEmpty()) {
+            if (options.priorToolCalls.size() != options.toolResults.size())
+                return providerFailure(QStringLiteral("Native tool results are incomplete."),
+                                       ChatProviderErrorCategory::MalformedResponse,
+                                       ChatProviderReply::Error::InvalidResponse);
+            QJsonArray calls;
+            for (const auto& call : options.priorToolCalls) {
+                calls.append(QJsonObject{
+                    {QStringLiteral("id"), call.callId},
+                    {QStringLiteral("type"), QStringLiteral("function")},
+                    {QStringLiteral("function"), QJsonObject{
+                        {QStringLiteral("name"), nativeFunctionName(call.toolId)},
+                        {QStringLiteral("arguments"), QString::fromUtf8(
+                            QJsonDocument(call.arguments).toJson(QJsonDocument::Compact))}}}});
+            }
+            messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("assistant")},
+                                        {QStringLiteral("tool_calls"), calls}});
+            for (int i = 0; i < options.toolResults.size(); ++i) {
+                const auto& result = options.toolResults.at(i);
+                if (result.callId != options.priorToolCalls.at(i).callId)
+                    return providerFailure(QStringLiteral("Native tool result IDs do not match."),
+                                           ChatProviderErrorCategory::MalformedResponse,
+                                           ChatProviderReply::Error::InvalidResponse);
+                messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("tool")},
+                                            {QStringLiteral("tool_call_id"), result.callId},
+                                            {QStringLiteral("content"), result.content.left(6800)}});
+            }
+        }
+        QJsonObject body{{QStringLiteral("model"), binding_.modelId},
+                         {QStringLiteral("messages"), messages},
+                         {QStringLiteral("stream"), false}};
+        if (options.nativeToolCalling) {
+            QJsonArray tools;
+            for (const auto& tool : options.tools)
+                if (tool.enabled && tool.exposedToModel)
+                    tools.append(nativeToolDefinition(tool));
+            if (!tools.isEmpty()) {
+                body.insert(QStringLiteral("tools"), tools);
+                body.insert(QStringLiteral("tool_choice"), QStringLiteral("auto"));
+            }
+        }
+        if (options.structuredOutput) {
+            if (options.structuredSchemaName.isEmpty() || options.structuredSchema.isEmpty())
+                return providerFailure(QStringLiteral("Structured planner schema is missing."),
+                                       ChatProviderErrorCategory::MalformedResponse,
+                                       ChatProviderReply::Error::InvalidResponse);
+            body.insert(QStringLiteral("response_format"),
+                        QJsonObject{
+                            {QStringLiteral("type"), QStringLiteral("json_schema")},
+                            {QStringLiteral("json_schema"), QJsonObject{
+                                {QStringLiteral("name"), options.structuredSchemaName},
+                                {QStringLiteral("strict"), options.strictStructuredOutput},
+                                {QStringLiteral("schema"), options.structuredSchema}}}});
+        }
+        LMStudioLocalInferenceClient client(config_, timeoutMs_);
+        const auto completion = client.completeOpenAiChat(body, options.cancellationToken);
+        if (!completion.ok) {
+            const bool rejected = (options.nativeToolCalling || options.structuredOutput) &&
+                (completion.httpStatus == 400 || completion.httpStatus == 422 ||
+                 completion.httpStatus == 501);
+            auto reply = providerFailure(
+                completion.error,
+                completion.cancelled ? ChatProviderErrorCategory::Cancelled
+                         : rejected ? ChatProviderErrorCategory::CapabilityUnsupported
+                         : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                         : completion.providerErrorCategory > 0
+                             ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
+                             : categoryFromHttp(completion.httpStatus, completion.error),
+                rejected ? ChatProviderReply::Error::CapabilityRejected
+                         : ChatProviderReply::Error::ProviderFailure,
+                completion.httpStatus, completion.attempts, completion.retrySummary);
+            reply.requestId = completion.requestId;
+            return reply;
+        }
+        const auto choices = completion.body.value(QStringLiteral("choices")).toArray();
+        if (choices.isEmpty()) {
+            auto reply = providerFailure(QStringLiteral("Chat completion has no choices."),
+                                   ChatProviderErrorCategory::MalformedResponse,
+                                   ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
+                                   completion.attempts, completion.retrySummary);
+            reply.requestId = completion.requestId;
+            return reply;
+        }
+        const auto replyMessage = choices.first().toObject().value(QStringLiteral("message")).toObject();
+        ChatProviderReply result;
+        result.success = true;
+        result.lifecycle = ChatRequestLifecycle::Completed;
+        result.attempts = completion.attempts;
+        result.retrySummary = completion.retrySummary;
+        result.requestId = completion.requestId;
+        result.message = replyMessage.value(QStringLiteral("content")).toString();
+        const auto malformed = [&](const QString& detail) {
+            auto reply = providerFailure(detail, ChatProviderErrorCategory::MalformedResponse,
+                                         ChatProviderReply::Error::InvalidResponse,
+                                         completion.httpStatus, completion.attempts,
+                                         completion.retrySummary);
+            reply.requestId = completion.requestId;
+            return reply;
+        };
+        for (const auto& value : replyMessage.value(QStringLiteral("tool_calls")).toArray()) {
+            const auto call = value.toObject();
+            const auto function = call.value(QStringLiteral("function")).toObject();
+            const auto name = function.value(QStringLiteral("name")).toString();
+            QString toolId;
+            for (const auto& tool : options.tools)
+                if (nativeFunctionName(tool.id) == name) {
+                    toolId = tool.id;
+                    break;
+                }
+            QJsonParseError parseError;
+            const auto arguments = QJsonDocument::fromJson(
+                function.value(QStringLiteral("arguments")).toString().toUtf8(), &parseError);
+            const auto callId = call.value(QStringLiteral("id")).toString();
+            if (toolId.isEmpty() || callId.isEmpty() || !arguments.isObject() ||
+                parseError.error != QJsonParseError::NoError)
+                return malformed(QStringLiteral("Invalid or unregistered native tool call."));
+            result.toolCalls.append({callId, toolId, arguments.object()});
+        }
+        if (options.structuredOutput && result.toolCalls.isEmpty()) {
+            QJsonParseError parseError;
+            const auto document = QJsonDocument::fromJson(result.message.toUtf8(), &parseError);
+            if (parseError.error != QJsonParseError::NoError || !document.isObject())
+                return malformed(QStringLiteral("Invalid native structured response."));
+            result.structuredResult = document.object();
+        }
+        if (result.message.isEmpty() && result.toolCalls.isEmpty())
+            return malformed(QStringLiteral("Chat completion returned no content or tool calls."));
+        return result;
     }
 
 private:
@@ -88,6 +434,7 @@ ModelCapabilities mergedCapabilities(ModelCapabilities base, const ModelCapabili
     merge(base.streaming, override.streaming);
     merge(base.structuredOutput, override.structuredOutput);
     merge(base.nativeToolCalling, override.nativeToolCalling);
+    merge(base.combinedToolsAndStructuredOutput, override.combinedToolsAndStructuredOutput);
     merge(base.visionInput, override.visionInput);
     merge(base.audioInput, override.audioInput);
     merge(base.audioOutput, override.audioOutput);
@@ -133,6 +480,11 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
       ollamaEndpoint_(OllamaEndpoint::defaultEndpoint().toString()),
       lmStudioEndpoint_(QStringLiteral("http://127.0.0.1:1234")),
       llamaCppEndpoint_(QStringLiteral("http://127.0.0.1:8080")) {
+    providerHealthRegistry_ = std::make_shared<ProviderHealthRegistry>();
+    providerHealthRegistry_->ollamaDiscovery.lifecycle = ChatRequestLifecycle::Pending;
+    providerHealthRegistry_->ollamaDiscovery.errorCategory = ChatProviderErrorCategory::None;
+    providerHealthRegistry_->ollamaDiscovery.safeDetail =
+        QStringLiteral("Ollama model discovery pending.");
     if (settings_) {
         selection_.providerId = normalizedProviderId(settings_->selectedRuntimeProvider());
         selection_.modelId = settings_->selectedModelForProvider(selection_.providerId).trimmed();
@@ -148,6 +500,7 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
         auto provider = std::make_shared<OllamaChatProvider>(
             OllamaConfig::fromEndpoint(ollamaEndpoint_), localInferenceTimeoutMs_);
         provider->setSelectedModel(binding.modelId);
+        provider->setDiscoverySnapshot(ollamaDiscovery());
         return std::shared_ptr<IChatProvider>(std::move(provider));
     }, ollamaCapabilities);
     static const QStringList endpointProviderIds{
@@ -189,8 +542,28 @@ void ModelService::setModelCapabilities(const QString& providerId, const QString
                                          ModelCapabilities capabilities) {
     const auto provider = normalizedProviderId(providerId);
     const auto model = modelId.trimmed();
-    if (!provider.isEmpty() && !model.isEmpty())
+    if (!provider.isEmpty() && !model.isEmpty()) {
         modelCapabilities_[provider].insert(model, std::move(capabilities));
+        emit modelCapabilitiesChanged();
+    }
+}
+
+ModelCapabilities ModelService::capabilityOverrides(const QString& providerId,
+                                                     const QString& modelId) const {
+    return settings_ ? settings_->modelCapabilitiesOverride(providerId, modelId)
+                     : ModelCapabilities{};
+}
+
+void ModelService::setCapabilityOverrides(const QString& providerId, const QString& modelId,
+                                           const ModelCapabilities& overrides) {
+    if (!settings_ || providerId.trimmed().isEmpty() || modelId.trimmed().isEmpty())
+        return;
+    settings_->setModelCapabilitiesOverride(providerId, modelId, overrides);
+    emit modelCapabilitiesChanged();
+}
+
+void ModelService::clearCapabilityOverrides(const QString& providerId, const QString& modelId) {
+    setCapabilityOverrides(providerId, modelId, {});
 }
 
 ModelCapabilities ModelService::capabilities(const QString& providerId,
@@ -209,6 +582,9 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
             }
         }
     }
+    if (settings_)
+        result = mergedCapabilities(result,
+                                    settings_->modelCapabilitiesOverride(provider, modelId.trimmed()));
     return mergedCapabilities(result,
                               modelCapabilities_.value(provider).value(modelId.trimmed()));
 }
@@ -272,6 +648,32 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
                                 : QStringLiteral("Provider '%1' is not configured.").arg(provider);
         return resolution;
     }
+    if (provider == QLatin1String("ollama")) {
+        const auto discovery = ollamaDiscovery();
+        if (discovery.lifecycle != ChatRequestLifecycle::Pending &&
+            discovery.lifecycle != ChatRequestLifecycle::Running &&
+            !discovery.succeeded()) {
+            resolution.error = ModelBindingError::ProviderUnavailable;
+            resolution.reason = discovery.safeDetail;
+            return resolution;
+        }
+        if (discovery.succeeded() && discovery.models.isEmpty()) {
+            resolution.error = ModelBindingError::ModelNotFound;
+            resolution.reason = discovery.safeDetail;
+            return resolution;
+        }
+        if (discovery.succeeded() && !model.isEmpty()) {
+            const bool available = std::any_of(discovery.models.cbegin(), discovery.models.cend(),
+                                               [&](const OllamaModelSummary& item) {
+                                                   return item.name == model;
+                                               });
+            if (!available) {
+                resolution.error = ModelBindingError::ModelNotFound;
+                resolution.reason = QStringLiteral("Selected Ollama model is unavailable.");
+                return resolution;
+            }
+        }
+    }
     if (model.isEmpty()) {
         resolution.error = ModelBindingError::ModelNotFound;
         resolution.reason = QStringLiteral("Provider '%1' has no configured model.").arg(provider);
@@ -317,7 +719,68 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
 
 std::shared_ptr<IChatProvider> ModelService::constructProvider(const ModelBinding& binding) const {
     const auto factory = providerFactories_.value(binding.providerId);
-    return factory ? factory(binding) : nullptr;
+    auto provider = factory ? factory(binding) : nullptr;
+    return provider ? std::make_shared<HealthTrackedProvider>(
+                          binding.providerId, std::move(provider), providerHealthRegistry_)
+                    : nullptr;
+}
+
+ProviderHealth ModelService::providerHealth(const QString& providerId) const {
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    return providerHealthRegistry_->entries.value(normalizedProviderId(providerId)).health;
+}
+
+void ModelService::acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result,
+                                         quint64 sequence) {
+    {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        if (sequence < providerHealthRegistry_->ollamaDiscoverySequence) return;
+        providerHealthRegistry_->ollamaDiscoverySequence = sequence;
+        providerHealthRegistry_->ollamaDiscovery = result;
+        if (result.succeeded()) providerHealthRegistry_->ollamaModels = result.models;
+    }
+    reportProviderDiscovery(QStringLiteral("ollama"), sequence, result.succeeded(),
+                            result.errorCategory);
+}
+
+OllamaModelDiscoveryResult ModelService::ollamaDiscovery() const {
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    return providerHealthRegistry_->ollamaDiscovery;
+}
+
+QList<OllamaModelSummary> ModelService::discoveredOllamaModels() const {
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    return providerHealthRegistry_->ollamaModels;
+}
+
+quint64 ModelService::beginProviderHealthObservation() const {
+    return ++providerHealthRegistry_->nextSequence;
+}
+
+void ModelService::reportProviderDiscovery(const QString& providerId, quint64 sequence,
+                                            bool completed, ChatProviderErrorCategory category) {
+    reportProviderRequest(providerId, sequence, completed, category,
+                          QStringLiteral("discovery"));
+}
+
+void ModelService::reportProviderRequest(const QString& providerId, quint64 sequence,
+                                          bool completed, ChatProviderErrorCategory category,
+                                          const QString& source) {
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    auto& entry = providerHealthRegistry_->entries[normalizedProviderId(providerId)];
+    if (sequence < entry.sequence) return;
+    entry.sequence = sequence;
+    entry.source = source;
+    if (completed) entry.health = ProviderHealth::Available;
+    else if (category == ChatProviderErrorCategory::RateLimited ||
+             category == ChatProviderErrorCategory::ConnectionFailed ||
+             category == ChatProviderErrorCategory::Timeout ||
+             category == ChatProviderErrorCategory::ProviderUnavailable)
+        entry.health = ProviderHealth::Degraded;
+    else if (category == ChatProviderErrorCategory::AuthenticationRequired ||
+             category == ChatProviderErrorCategory::RequestRejected ||
+             category == ChatProviderErrorCategory::MalformedResponse)
+        entry.health = ProviderHealth::Unavailable;
 }
 
 LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
@@ -396,6 +859,16 @@ LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
 }
 
 void ModelService::setOllamaEndpoint(const QString& endpoint) {
+    if (ollamaEndpoint_ != endpoint) {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        providerHealthRegistry_->ollamaModels.clear();
+        providerHealthRegistry_->ollamaDiscovery = {};
+        providerHealthRegistry_->ollamaDiscovery.lifecycle = ChatRequestLifecycle::Pending;
+        providerHealthRegistry_->ollamaDiscovery.errorCategory = ChatProviderErrorCategory::None;
+        providerHealthRegistry_->ollamaDiscovery.safeDetail =
+            QStringLiteral("Ollama model discovery pending.");
+        providerHealthRegistry_->entries.remove(QStringLiteral("ollama"));
+    }
     ollamaEndpoint_ = endpoint;
 }
 

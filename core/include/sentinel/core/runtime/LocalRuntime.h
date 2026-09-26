@@ -102,12 +102,14 @@ public:
 
 class OllamaLocalRuntime final : public ILocalRuntime {
 public:
-    explicit OllamaLocalRuntime(OllamaConfig config = OllamaConfig{});
+    explicit OllamaLocalRuntime(OllamaConfig config = OllamaConfig{}, class ModelService* modelService = nullptr);
+    void setModelService(ModelService* modelService) { modelService_ = modelService; }
     LocalRuntimeDescriptor descriptor() const override;
     LocalRuntimeResponse evaluate(const LocalRuntimeRequest& request) const override;
 
 private:
     OllamaConfig config_;
+    ModelService* modelService_ = nullptr;
 };
 
 } // namespace sentinel::core

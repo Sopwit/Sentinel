@@ -12,6 +12,9 @@ class LocalEchoProvider final : public IChatProvider {
 public:
     QString name() const override;
     ChatProviderStatus status() const override;
+    ChatProviderConcurrency concurrency() const override {
+        return ChatProviderConcurrency::Supported;
+    }
     ChatProviderReply sendMessage(const QString& message) override;
 };
 

@@ -111,12 +111,14 @@ private:
 
 class OllamaRuntimeCapabilityRegistry final : public IRuntimeCapabilityRegistry {
 public:
-    explicit OllamaRuntimeCapabilityRegistry(OllamaConfig config = OllamaConfig{});
+    explicit OllamaRuntimeCapabilityRegistry(OllamaConfig config = OllamaConfig{}, class ModelService* modelService = nullptr);
+    void setModelService(ModelService* modelService) { modelService_ = modelService; }
     QList<RuntimeCapabilityDescriptor> capabilities() const override;
     RuntimeNegotiationResult negotiate() const override;
 
 private:
     OllamaConfig config_;
+    ModelService* modelService_ = nullptr;
 };
 
 } // namespace sentinel::core

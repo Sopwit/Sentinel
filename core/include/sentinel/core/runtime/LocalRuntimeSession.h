@@ -107,12 +107,14 @@ public:
 
 class OllamaRuntimeSessionManager final : public ILocalRuntimeSessionManager {
 public:
-    explicit OllamaRuntimeSessionManager(OllamaConfig config = OllamaConfig{});
+    explicit OllamaRuntimeSessionManager(OllamaConfig config = OllamaConfig{}, class ModelService* modelService = nullptr);
+    void setModelService(ModelService* modelService) { modelService_ = modelService; }
     QList<LocalRuntimeSession> sessions() const override;
     LocalRuntimeSession currentSession() const override;
 
 private:
     OllamaConfig config_;
+    ModelService* modelService_ = nullptr;
 };
 
 } // namespace sentinel::core

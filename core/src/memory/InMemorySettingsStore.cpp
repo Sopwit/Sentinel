@@ -14,4 +14,8 @@ void InMemorySettingsStore::setValue(QString key, QString value) {
     values_.insert(key, value);
 }
 
+void InMemorySettingsStore::remove(const QString& key) {
+    values_.remove(key);
+}
+
 } // namespace sentinel::core

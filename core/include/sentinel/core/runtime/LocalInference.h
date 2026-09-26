@@ -5,8 +5,10 @@
 #pragma once
 
 #include "sentinel/core/runtime/OllamaRuntime.h"
+#include "sentinel/core/interfaces/IChatProvider.h"
 
 #include <QList>
+#include <QJsonObject>
 #include <QNetworkReply>
 #include <QObject>
 #include <QString>
@@ -17,16 +19,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace sentinel::core {
-
-struct ModelLookupReply {
-    bool ok = false;
-    bool timedOut = false;
-    QList<OllamaModelSummary> models;
-    QString error;
-    QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
-};
 
 enum class LocalInferenceStatus : std::uint8_t {
     NotRequested,
@@ -63,6 +58,7 @@ QString localInferenceErrorName(LocalInferenceError error);
 
 struct LocalInferenceOptions {
     QString model;
+    std::optional<OllamaModelDiscoveryResult> discoverySnapshot;
     // Zero means no client-side timeout. Cancellation remains available.
     int timeoutMs = 0;
     double temperature = 0.7;
@@ -99,6 +95,11 @@ struct LocalInferenceResponse {
     double approximateTokensPerSecond = 0.0;
     QList<LocalInferenceTrace> traces;
     int timeoutMs = 0;
+    int httpStatus = 0;
+    int attempts = 1;
+    QString retrySummary;
+    QString requestId;
+    int providerErrorCategory = 0;
 };
 
 enum class LocalInferenceStreamStatus : std::uint8_t {
@@ -137,6 +138,12 @@ struct LocalInferenceStreamResult {
     QList<LocalInferenceStreamChunk> chunks;
     QList<LocalInferenceTrace> traces;
     int timeoutMs = 0;
+    int httpStatus = 0;
+    int providerErrorCategory = 0;
+    QString requestId;
+    int attempts = 1;
+    QString retrySummary;
+    ChatRequestLifecycle lifecycle = ChatRequestLifecycle::Pending;
 };
 
 QString localInferenceTraceSummary(const LocalInferenceTrace& trace);
@@ -241,8 +248,6 @@ public:
 private:
     QUrl endpointUrl(const QString& path) const;
     bool endpointAllowed() const;
-    ModelLookupReply installedModels(int timeoutMs) const;
-
     OllamaConfig config_;
     int timeoutMs_ = 0;
 };
@@ -320,10 +325,28 @@ struct LMStudioConfig {
 
 class LMStudioLocalInferenceClient final : public ILocalInferenceClient {
 public:
+    struct OpenAiCompletionResult {
+        bool ok = false;
+        QJsonObject body;
+        QString error;
+        int httpStatus = 0;
+        QString retryAfter;
+        QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
+        bool timedOut = false;
+        bool malformed = false;
+        bool cancelled = false;
+        int attempts = 1;
+        QString retrySummary;
+        QString requestId;
+        int providerErrorCategory = 0;
+    };
     explicit LMStudioLocalInferenceClient(LMStudioConfig config = LMStudioConfig{},
                                           int timeoutMs = 0);
 
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
+    OpenAiCompletionResult completeOpenAiChat(
+        const QJsonObject& body,
+        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
     QString statusSummary() const override;
 
 private:

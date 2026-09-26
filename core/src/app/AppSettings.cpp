@@ -11,6 +11,8 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLocale>
 #include <QStandardPaths>
 #include <algorithm>
@@ -559,6 +561,77 @@ void AppSettings::setSelectedModelForProvider(const QString& providerId, const Q
         store_->setValue(QString::fromLatin1(selectedLocalModelKey), normalized);
     }
     emit selectedLocalModelChanged();
+}
+
+ModelCapabilities AppSettings::modelCapabilitiesOverride(const QString& providerId,
+                                                          const QString& modelId) const {
+    ModelCapabilities capabilities;
+    if (!store_ || providerId.trimmed().isEmpty() || modelId.trimmed().isEmpty())
+        return capabilities;
+    const auto key = QStringLiteral("modelCapabilities.%1.%2")
+                         .arg(providerId.trimmed().toLower(), modelId.trimmed());
+    const auto value = store_->value(key, QString{});
+    const auto document = QJsonDocument::fromJson(value.toUtf8());
+    if (!document.isObject())
+        return capabilities;
+    auto support = [](const QJsonValue& value) {
+        if (value.toString() == QLatin1String("supported"))
+            return CapabilitySupport::Supported;
+        if (value.toString() == QLatin1String("unsupported"))
+            return CapabilitySupport::Unsupported;
+        return CapabilitySupport::Unknown;
+    };
+    const auto object = document.object();
+    capabilities.streaming = support(object.value(QStringLiteral("streaming")));
+    capabilities.nativeToolCalling = support(object.value(QStringLiteral("nativeToolCalling")));
+    capabilities.structuredOutput = support(object.value(QStringLiteral("structuredOutput")));
+    capabilities.visionInput = support(object.value(QStringLiteral("visionInput")));
+    capabilities.audioInput = support(object.value(QStringLiteral("audioInput")));
+    capabilities.audioOutput = support(object.value(QStringLiteral("audioOutput")));
+    capabilities.combinedToolsAndStructuredOutput =
+        support(object.value(QStringLiteral("combinedToolsAndStructuredOutput")));
+    if (object.value(QStringLiteral("contextWindow")).isDouble()) {
+        const int value = object.value(QStringLiteral("contextWindow")).toInt();
+        if (value > 0)
+            capabilities.contextWindow = value;
+    }
+    if (object.value(QStringLiteral("maxOutputTokens")).isDouble()) {
+        const int value = object.value(QStringLiteral("maxOutputTokens")).toInt();
+        if (value > 0)
+            capabilities.maxOutputTokens = value;
+    }
+    return capabilities;
+}
+
+void AppSettings::setModelCapabilitiesOverride(const QString& providerId, const QString& modelId,
+                                                const ModelCapabilities& capabilities) {
+    if (!store_ || providerId.trimmed().isEmpty() || modelId.trimmed().isEmpty())
+        return;
+    QJsonObject object;
+    auto addSupport = [&object](const QString& key, CapabilitySupport value) {
+        if (value == CapabilitySupport::Supported)
+            object.insert(key, QStringLiteral("supported"));
+        else if (value == CapabilitySupport::Unsupported)
+            object.insert(key, QStringLiteral("unsupported"));
+    };
+    addSupport(QStringLiteral("streaming"), capabilities.streaming);
+    addSupport(QStringLiteral("nativeToolCalling"), capabilities.nativeToolCalling);
+    addSupport(QStringLiteral("structuredOutput"), capabilities.structuredOutput);
+    addSupport(QStringLiteral("visionInput"), capabilities.visionInput);
+    addSupport(QStringLiteral("audioInput"), capabilities.audioInput);
+    addSupport(QStringLiteral("audioOutput"), capabilities.audioOutput);
+    addSupport(QStringLiteral("combinedToolsAndStructuredOutput"),
+               capabilities.combinedToolsAndStructuredOutput);
+    if (capabilities.contextWindow && *capabilities.contextWindow > 0)
+        object.insert(QStringLiteral("contextWindow"), *capabilities.contextWindow);
+    if (capabilities.maxOutputTokens && *capabilities.maxOutputTokens > 0)
+        object.insert(QStringLiteral("maxOutputTokens"), *capabilities.maxOutputTokens);
+    const auto key = QStringLiteral("modelCapabilities.%1.%2")
+                         .arg(providerId.trimmed().toLower(), modelId.trimmed());
+    if (object.isEmpty())
+        store_->remove(key);
+    else
+        store_->setValue(key, QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact)));
 }
 
 QString AppSettings::selectedModelForRole(const QString& roleId) const {
