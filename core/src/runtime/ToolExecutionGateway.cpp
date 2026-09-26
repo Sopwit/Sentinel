@@ -57,6 +57,7 @@ bool usesLocalProcess(const QString& id) {
     static const QSet<QString> ids{
         QStringLiteral("run-command"), QStringLiteral("process-list"),
         QStringLiteral("app-quit"), QStringLiteral("app-launch"),
+        QStringLiteral("open-url"),
         QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
         QStringLiteral("browser-pdf"), QStringLiteral("voice-transcribe"),
         QStringLiteral("voice-speak")};

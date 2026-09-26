@@ -6,7 +6,6 @@
 
 #include "sentinel/core/runtime/IFormatService.h"
 #include <QObject>
-#include <QProcess>
 
 namespace sentinel::core {
 

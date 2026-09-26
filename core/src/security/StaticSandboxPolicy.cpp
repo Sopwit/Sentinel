@@ -82,7 +82,7 @@ SandboxEvaluationResult StaticSandboxPolicy::evaluate(const ToolInvocationPlan& 
 
     SandboxEvaluationResult allowed{
         SandboxStatus::Allowed,
-        QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."),
+        QStringLiteral("Planned capabilities are allowed; process confinement is enforced at launch."),
         capabilityDecisions,
     };
     allowed.processTreeRequired = std::any_of(

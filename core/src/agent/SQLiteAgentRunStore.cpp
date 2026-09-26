@@ -372,14 +372,26 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                           : QString{},
                       step.sandbox.backend.isEmpty()
                           ? QString{}
-                          : QStringLiteral("%1 | %2 | Network: %3 | Filesystem: %4")
+                          : (QStringLiteral("%1 | %2 | Network: %3 | Filesystem: %4 | Tree: %5 | Env: %6 | Token: %7 | Mitigations: %8")
                                 .arg(sandboxEnforcementName(step.sandbox.enforcement),
                                      step.sandbox.backend,
                                      step.sandbox.networkDenied ? QStringLiteral("Denied")
-                                                                : QStringLiteral("Allowed"),
-                                     step.sandbox.filesystemRestricted ? QStringLiteral("Restricted")
-                                                                       : QStringLiteral("Unrestricted"))
-                                .left(180),
+                                                                : QStringLiteral("Not denied"),
+                                     step.sandbox.filesystemRestricted
+                                         ? QStringLiteral("Restricted")
+                                         : QStringLiteral("Not restricted"),
+                                     step.sandbox.processTreeControlled ? QStringLiteral("Owned")
+                                                                        : QStringLiteral("Uncontrolled"),
+                                     step.sandbox.environmentRestricted ? QStringLiteral("Filtered")
+                                                                         : QStringLiteral("Unrestricted"),
+                                     step.sandbox.restrictedToken ? QStringLiteral("Restricted")
+                                                                  : QStringLiteral("None"),
+                                     step.sandbox.mitigationsApplied ? QStringLiteral("Applied")
+                                                                      : QStringLiteral("None")) +
+                             (step.sandbox.failureCategory.isEmpty()
+                                  ? QString{} : QStringLiteral(" | %1").arg(
+                                        step.sandbox.failureCategory)))
+                                .left(300),
                       event.toolCallId});
         }
     } else if (event.type == AgentEventType::ToolRequested ||

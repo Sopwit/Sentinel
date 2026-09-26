@@ -69,6 +69,11 @@ private:
     struct Entry;
     void finish(Entry* entry, ProcessState state, const QString& error = {});
     void stop(Entry* entry, bool immediate, bool timeout = false);
+#if defined(Q_OS_WIN)
+    bool startWindows(Entry* entry, const SandboxLaunch& launch,
+                      const QString& workingDirectory);
+    void pollWindows(Entry* entry);
+#endif
     QHash<QString, Entry*> entries_;
     QStringList order_;
     bool shuttingDown_ = false;
