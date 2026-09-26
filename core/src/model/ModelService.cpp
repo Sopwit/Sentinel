@@ -738,22 +738,32 @@ QString defaultProviderId() {
     return QStringLiteral("ollama");
 }
 
-ModelCapabilities mergedCapabilities(ModelCapabilities base, const ModelCapabilities& override) {
-    auto merge = [](CapabilitySupport& target, CapabilitySupport value) {
-        if (value != CapabilitySupport::Unknown)
+ModelCapabilities mergedCapabilities(ModelCapabilities base, const ModelCapabilities& override,
+                                     ModelMetadataSource source) {
+    auto merge = [source](CapabilitySupport& target, ModelMetadataSource& provenance,
+                          CapabilitySupport value, ModelMetadataSource suppliedSource) {
+        if (value != CapabilitySupport::Unknown) {
             target = value;
+            provenance = suppliedSource == ModelMetadataSource::Unknown ? source : suppliedSource;
+        }
     };
-    merge(base.streaming, override.streaming);
-    merge(base.structuredOutput, override.structuredOutput);
-    merge(base.nativeToolCalling, override.nativeToolCalling);
-    merge(base.combinedToolsAndStructuredOutput, override.combinedToolsAndStructuredOutput);
-    merge(base.visionInput, override.visionInput);
-    merge(base.audioInput, override.audioInput);
-    merge(base.audioOutput, override.audioOutput);
-    if (override.contextWindow && *override.contextWindow > 0)
+    merge(base.streaming, base.provenance.streaming, override.streaming, override.provenance.streaming);
+    merge(base.structuredOutput, base.provenance.structuredOutput, override.structuredOutput, override.provenance.structuredOutput);
+    merge(base.nativeToolCalling, base.provenance.nativeToolCalling, override.nativeToolCalling, override.provenance.nativeToolCalling);
+    merge(base.combinedToolsAndStructuredOutput, base.provenance.combinedToolsAndStructuredOutput, override.combinedToolsAndStructuredOutput, override.provenance.combinedToolsAndStructuredOutput);
+    merge(base.visionInput, base.provenance.visionInput, override.visionInput, override.provenance.visionInput);
+    merge(base.audioInput, base.provenance.audioInput, override.audioInput, override.provenance.audioInput);
+    merge(base.audioOutput, base.provenance.audioOutput, override.audioOutput, override.provenance.audioOutput);
+    if (override.contextWindow && *override.contextWindow > 0) {
         base.contextWindow = override.contextWindow;
-    if (override.maxOutputTokens && *override.maxOutputTokens > 0)
+        base.provenance.contextWindow = override.provenance.contextWindow == ModelMetadataSource::Unknown
+            ? source : override.provenance.contextWindow;
+    }
+    if (override.maxOutputTokens && *override.maxOutputTokens > 0) {
         base.maxOutputTokens = override.maxOutputTokens;
+        base.provenance.maxOutputTokens = override.provenance.maxOutputTokens == ModelMetadataSource::Unknown
+            ? source : override.provenance.maxOutputTokens;
+    }
     return base;
 }
 
@@ -903,25 +913,32 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
                                               const QString& modelId) const {
     const auto provider = normalizedProviderId(providerId);
     const auto model = modelId.trimmed();
-    auto result = providerCapabilities_.value(provider);
+    auto result = mergedCapabilities({}, providerCapabilities_.value(provider),
+                                     ModelMetadataSource::ProviderDefault);
     if (provider == QLatin1String("cloud-api")) {
         const auto host = providerConfig(ModelBinding{provider, model})
                               .endpoint.host().toLower();
         if (host == QLatin1String("api.anthropic.com") ||
             host == QLatin1String("generativelanguage.googleapis.com")) {
             result.nativeToolCalling = CapabilitySupport::Supported;
+            result.provenance.nativeToolCalling = ModelMetadataSource::ProviderDefault;
             result.structuredOutput = CapabilitySupport::Unknown;
+            result.provenance.structuredOutput = ModelMetadataSource::Unknown;
         }
     }
     if (router_) {
         const auto route = router_->resolveSelection(ModelBinding{provider, model});
         if (route.status == ModelRoutingStatus::Routed) {
             if (route.provider.id == provider)
-                result = mergedCapabilities(result, route.provider.modelCapabilities);
+                result = mergedCapabilities(result, route.provider.modelCapabilities,
+                                            ModelMetadataSource::ProviderOwnedMetadata);
             if (route.model.providerId == provider && route.model.id == model) {
-                result = mergedCapabilities(result, route.model.capabilities);
-                if (route.model.contextWindowTokens > 0 && !result.contextWindow)
+                result = mergedCapabilities(result, route.model.capabilities,
+                                            ModelMetadataSource::ProviderOwnedMetadata);
+                if (route.model.contextWindowTokens > 0 && !result.contextWindow) {
                     result.contextWindow = route.model.contextWindowTokens;
+                    result.provenance.contextWindow = ModelMetadataSource::ProviderOwnedMetadata;
+                }
             }
         }
     }
@@ -932,16 +949,45 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
                                  : providerHealthRegistry_->catalogs.value(provider).models;
         for (const auto& discovered : models) {
             if (discovered.name == model) {
-                result = mergedCapabilities(result, discovered.capabilities);
+                result = mergedCapabilities(result, discovered.capabilities,
+                    provider == QLatin1String("ollama") ||
+                    provider == QLatin1String("lm-studio") ||
+                    provider == QLatin1String("llama-cpp-server") ||
+                    provider == QLatin1String("openai-compatible-local")
+                        ? ModelMetadataSource::RuntimeReported
+                        : ModelMetadataSource::ProviderCatalog);
                 break;
             }
         }
     }
-    result = mergedCapabilities(result, modelCapabilities_.value(provider).value(model));
+    result = mergedCapabilities(result, modelCapabilities_.value(provider).value(model),
+                                ModelMetadataSource::ProgrammaticMetadata);
     if (settings_)
         result = mergedCapabilities(result,
-                                    settings_->modelCapabilitiesOverride(provider, model));
+                                    settings_->modelCapabilitiesOverride(provider, model),
+                                    ModelMetadataSource::UserOverride);
     return result;
+}
+
+CurrentModelMetadata ModelService::currentModelMetadata(const QString& providerId,
+                                                         const QString& modelId) const {
+    CurrentModelMetadata metadata;
+    metadata.providerId = normalizedProviderId(providerId);
+    metadata.modelId = modelId.trimmed();
+    metadata.providerKind = isCloudProviderId(metadata.providerId) ? ProviderKind::Cloud
+                                                                  : ProviderKind::Local;
+    metadata.catalog = providerStatus(metadata.providerId, metadata.modelId).catalog;
+    metadata.capabilities = capabilities(metadata.providerId, metadata.modelId);
+    const auto models = providerDiscoveredModels(metadata.providerId);
+    for (const auto& discovered : models) {
+        if (discovered.name == metadata.modelId) {
+            metadata.family = discovered.family;
+            metadata.publisher = discovered.publisher;
+            metadata.architecture = discovered.architecture;
+            break;
+        }
+    }
+    return metadata;
 }
 
 bool ModelService::isKnownProvider(const QString& providerId) const {

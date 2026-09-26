@@ -92,6 +92,9 @@ struct OllamaModelSummary {
     QString modifiedAt;
     qint64 sizeBytes = 0;
     ModelCapabilities capabilities;
+    QString family;
+    QString publisher;
+    QString architecture;
 };
 
 struct OllamaModelDiscoveryResult {

@@ -49,6 +49,17 @@ struct ProviderCompletenessStatus {
     QString safeDetail;
 };
 
+struct CurrentModelMetadata {
+    QString providerId;
+    QString modelId;
+    ProviderKind providerKind = ProviderKind::Local;
+    ProviderCatalogState catalog = ProviderCatalogState::Unverified;
+    ModelCapabilities capabilities;
+    QString family;
+    QString publisher;
+    QString architecture;
+};
+
 // Authoritative provider/model selection for new interactive requests.
 struct ModelSelection {
     QString providerId;
@@ -122,6 +133,8 @@ public:
     void setModelCapabilities(const QString& providerId, const QString& modelId,
                               ModelCapabilities capabilities);
     ModelCapabilities capabilities(const QString& providerId, const QString& modelId) const;
+    CurrentModelMetadata currentModelMetadata(const QString& providerId,
+                                              const QString& modelId) const;
     ModelCapabilities capabilityOverrides(const QString& providerId, const QString& modelId) const;
     void setCapabilityOverrides(const QString& providerId, const QString& modelId,
                                 const ModelCapabilities& overrides);
