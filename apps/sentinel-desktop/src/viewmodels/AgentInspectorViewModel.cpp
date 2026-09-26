@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
+#include "sentinel/core/app/ApplicationController.h"
 
 #include "sentinel/core/agent/ObservationEvidence.h"
 #include "sentinel/core/agent/ClaimGroundingResolver.h"
@@ -217,6 +218,14 @@ void AgentInspectorViewModel::selectRun(const QString& runId) {
     setError(service_.error());
     selectedRunId_ = detail.run.runId;
     selectedRun_ = selectedRunId_.isEmpty() ? QVariantMap{} : runRow(detail.run);
+    if (!selectedRunId_.isEmpty() && controller_) {
+        selectedRun_.insert(QStringLiteral("providerCatalogStatus"),
+                            controller_->providerCatalogStatus(detail.run.providerId,
+                                                               detail.run.modelId));
+        selectedRun_.insert(QStringLiteral("providerCatalogDetail"),
+                            controller_->providerCatalogDetail(detail.run.providerId,
+                                                               detail.run.modelId));
+    }
     emit selectedRunChanged();
     QList<QVariantMap> timeline;
     for (const auto& step : detail.steps) {

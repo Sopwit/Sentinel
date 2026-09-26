@@ -1004,12 +1004,18 @@ QString ApplicationController::providerName() const {
 }
 
 QString ApplicationController::providerStatus() const {
-    const auto resolved = modelService_->resolve(modelService_->selectedModel());
-    if (!resolved.ok()) return QStringLiteral("Unavailable");
-    const auto health = modelService_->providerHealth(modelService_->selectedModel().providerId);
-    return health == ProviderHealth::Unknown
-               ? chatProviderStatusName(resolved.provider->status())
-               : providerHealthName(health);
+    const auto selected = modelService_->selectedModel();
+    return providerCatalogStatus(selected.providerId, selected.modelId);
+}
+
+QString ApplicationController::providerCatalogStatus(const QString& providerId,
+                                                     const QString& modelId) const {
+    return providerCatalogStateName(modelService_->providerStatus(providerId, modelId).catalog);
+}
+
+QString ApplicationController::providerCatalogDetail(const QString& providerId,
+                                                     const QString& modelId) const {
+    return modelService_->providerStatus(providerId, modelId).safeDetail;
 }
 
 QString ApplicationController::agentStatus() const {
@@ -2086,7 +2092,9 @@ QString ApplicationController::cloudModelDiscoveryError() const {
     if (!ollamaCacheInitialized_) {
         initializeOllamaCache();
     }
-    return cachedCloudProviderError_;
+    const auto selected = modelService_->selectedModel();
+    const auto status = modelService_->providerStatus(selected.providerId, selected.modelId);
+    return status.catalog == ProviderCatalogState::Available ? QString{} : status.safeDetail;
 }
 
 void ApplicationController::configureMcpServers(const QString& serversJson) {
@@ -2235,7 +2243,10 @@ QStringList ApplicationController::installedOllamaModelNames() const {
 
 QStringList ApplicationController::loadedLMStudioModelNames() const {
     QStringList names;
-    for (const auto& model : cachedLMStudioModels_) {
+    if (modelService_->providerStatus(QStringLiteral("lm-studio")).catalog !=
+        ProviderCatalogState::Available)
+        return names;
+    for (const auto& model : modelService_->providerDiscoveredModels(QStringLiteral("lm-studio"))) {
         names.append(model.name);
     }
     return names;
@@ -9768,24 +9779,27 @@ RuntimeIntegrationReport ApplicationController::currentRuntimeIntegrationReport(
 
 RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() const {
     const auto health = currentOllamaHealthCheck();
-    const auto models = currentOllamaModels();
+    const auto models = modelService_->providerStatus(QStringLiteral("ollama")).catalog ==
+                                ProviderCatalogState::Available
+        ? modelService_->providerDiscoveredModels(QStringLiteral("ollama"))
+        : QList<OllamaModelSummary>{};
     const OllamaRuntimeProvider ollamaProvider{
         ollamaEndpoint(),   health, models, selectedLocalModel(), localChatInferenceEnabled_,
         localInferenceBusy_};
     const OpenAICompatibleLocalRuntimeProvider openAiCompatibleLocalProvider{
         QStringLiteral("openai-compatible-local"), QStringLiteral("OpenAI-compatible Local"),
-        QStringLiteral("Loopback endpoint not configured"),
+        modelService_->providerStatus(QStringLiteral("openai-compatible-local")).safeDetail,
         selectedRuntimeProvider() == QStringLiteral("openai-compatible-local")
             ? selectedLocalModel()
             : QString()};
     const OpenAICompatibleLocalRuntimeProvider lmStudioProvider{
         QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
-        QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
+        modelService_->providerStatus(QStringLiteral("lm-studio")).safeDetail,
         selectedRuntimeProvider() == QStringLiteral("lm-studio") ? selectedLocalModel()
                                                                  : QString()};
     const OpenAICompatibleLocalRuntimeProvider llamaCppProvider{
         QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server"),
-        QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
+        modelService_->providerStatus(QStringLiteral("llama-cpp-server")).safeDetail,
         selectedRuntimeProvider() == QStringLiteral("llama-cpp-server") ? selectedLocalModel()
                                                                         : QString()};
     const QString settingsPath =
@@ -9793,31 +9807,24 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
             .filePath(QStringLiteral("settings.json"));
     AppSettings cloudSettings(std::make_unique<JsonSettingsStore>(settingsPath));
     const auto cloudProvider = cloudSettings.selectedCloudProvider();
-    const auto cloudModels = currentOllamaModels();
     const bool cloudSelected = selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
-                               selectedRuntimeProvider() == cloudProvider;
-    const bool hasCloudKey = [&]() {
-        if (cloudProvider == QStringLiteral("claude"))
-            return !cloudSettings.claudeApiKey().trimmed().isEmpty();
-        if (cloudProvider == QStringLiteral("gemini"))
-            return !cloudSettings.geminiApiKey().trimmed().isEmpty();
-        if (cloudProvider == QStringLiteral("deepseek"))
-            return !cloudSettings.deepseekApiKey().trimmed().isEmpty();
-        if (cloudProvider == QStringLiteral("groq"))
-            return !cloudSettings.groqApiKey().trimmed().isEmpty();
-        if (cloudProvider == QStringLiteral("mistral"))
-            return !cloudSettings.mistralApiKey().trimmed().isEmpty();
-        return !cloudSettings.openAiApiKey().trimmed().isEmpty();
-    }();
-    const auto cloudReadiness = !cloudSelected          ? RuntimeReadinessState::Unavailable
-                                : !hasCloudKey          ? RuntimeReadinessState::Unauthorized
-                                : cloudModels.isEmpty() ? RuntimeReadinessState::Unavailable
-                                                        : RuntimeReadinessState::Ready;
-    const auto cloudReason =
-        !cloudSelected          ? QStringLiteral("Cloud provider is not selected.")
-        : !hasCloudKey          ? QStringLiteral("An API key is required for cloud inference.")
-        : cloudModels.isEmpty() ? QStringLiteral("No models were returned by the provider API.")
-                                : QStringLiteral("Provider API is configured and returned models.");
+                               selectedRuntimeProvider() == QStringLiteral("openai") ||
+                               selectedRuntimeProvider() == QStringLiteral("claude") ||
+                               selectedRuntimeProvider() == QStringLiteral("gemini") ||
+                               selectedRuntimeProvider() == QStringLiteral("deepseek") ||
+                               selectedRuntimeProvider() == QStringLiteral("groq") ||
+                               selectedRuntimeProvider() == QStringLiteral("mistral");
+    const auto cloudStatus = modelService_->providerStatus(
+        cloudSelected ? selectedRuntimeProvider() : cloudProvider);
+    const bool hasCloudKey = cloudStatus.catalog != ProviderCatalogState::AuthenticationRequired;
+    const bool hasCatalog = cloudStatus.catalog == ProviderCatalogState::Available;
+    const auto cloudReadiness = !cloudSelected ? RuntimeReadinessState::Unavailable
+        : !hasCloudKey ? RuntimeReadinessState::Unauthorized
+        : cloudStatus.catalog == ProviderCatalogState::Empty ? RuntimeReadinessState::MissingModel
+        : hasCatalog || cloudStatus.catalog == ProviderCatalogState::ConfiguredModelOnly
+            ? RuntimeReadinessState::Ready : RuntimeReadinessState::Unavailable;
+    const auto cloudReason = !cloudSelected ? QStringLiteral("Cloud provider is not selected.")
+                                      : cloudStatus.safeDetail;
     const RuntimeProviderDescriptor cloudApiDescriptor{
         QStringLiteral("cloud-api"),
         QStringLiteral("Cloud"),
@@ -9825,18 +9832,12 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         cloudReadiness,
         hasCloudKey ? QStringLiteral("API key configured") : QStringLiteral("API key missing"),
         QStringLiteral("Provider-specific HTTPS endpoint"),
-        cloudModels.isEmpty() ? QStringLiteral("No API model metadata")
-                              : QStringLiteral("%1 model(s) discovered").arg(cloudModels.size()),
+        providerCatalogStateName(cloudStatus.catalog),
         cloudReason,
         RuntimeCapabilitySet{false, true, false, true, true, true, true, true, true, true, true,
                              false},
-        [&]() {
-            QStringList names;
-            for (const auto& model : cloudModels)
-                names.append(model.name);
-            return names;
-        }(),
-        !cloudModels.isEmpty(),
+        cloudStatus.modelIds,
+        hasCatalog,
         hasCloudKey,
         true,
     };
@@ -9898,54 +9899,10 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
     if (!ollamaCacheInitialized_) {
         initializeOllamaCache();
     }
-    if (selectedRuntimeProvider() == QStringLiteral("lm-studio")) {
-        return cachedLMStudioModels_;
-    } else if (selectedRuntimeProvider() == QStringLiteral("llama-cpp-server")) {
-        return cachedLlamaCppModels_;
-    } else if (selectedRuntimeProvider() == QStringLiteral("openai-compatible-local")) {
-        return cachedOpenAiCompatibleLocalModels_;
-    } else if (selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
-               selectedRuntimeProvider() == QStringLiteral("openai") ||
-               selectedRuntimeProvider() == QStringLiteral("claude") ||
-               selectedRuntimeProvider() == QStringLiteral("gemini") ||
-               selectedRuntimeProvider() == QStringLiteral("deepseek") ||
-               selectedRuntimeProvider() == QStringLiteral("groq") ||
-               selectedRuntimeProvider() == QStringLiteral("mistral")) {
-        const QString settingsPath =
-            QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
-                .filePath(QStringLiteral("settings.json"));
-        AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
-        const QString cloudProv = settings.selectedCloudProvider().toLower().trimmed();
-        const bool isClaude = cloudProv == QStringLiteral("claude") ||
-                              selectedRuntimeProvider() == QStringLiteral("claude");
-        const bool isGemini = cloudProv == QStringLiteral("gemini") ||
-                              selectedRuntimeProvider() == QStringLiteral("gemini");
-        const bool isDeepSeek = cloudProv == QStringLiteral("deepseek") ||
-                                selectedRuntimeProvider() == QStringLiteral("deepseek");
-        const bool isGroq = cloudProv == QStringLiteral("groq") ||
-                            selectedRuntimeProvider() == QStringLiteral("groq");
-        const bool isMistral = cloudProv == QStringLiteral("mistral") ||
-                               selectedRuntimeProvider() == QStringLiteral("mistral");
-        const bool isOpenAi = (!isClaude && !isGemini && !isDeepSeek && !isGroq && !isMistral) ||
-                              selectedRuntimeProvider() == QStringLiteral("openai");
-
-        // Use dynamically fetched models when cache matches the current provider
-        if (!cachedCloudProviderModels_.isEmpty() && !cachedCloudProviderOriginId_.isEmpty()) {
-            if ((isGemini && cachedCloudProviderOriginId_ == QStringLiteral("gemini")) ||
-                (isClaude && cachedCloudProviderOriginId_ == QStringLiteral("claude")) ||
-                (isDeepSeek && cachedCloudProviderOriginId_ == QStringLiteral("deepseek")) ||
-                (isGroq && cachedCloudProviderOriginId_ == QStringLiteral("groq")) ||
-                (isMistral && cachedCloudProviderOriginId_ == QStringLiteral("mistral")) ||
-                (isOpenAi && cachedCloudProviderOriginId_ == QStringLiteral("openai"))) {
-                return cachedCloudProviderModels_;
-            }
-        }
-
-        // Do not advertise models that were not returned by the provider API.
-        return {};
-    }
-    return modelService_->ollamaDiscovery().succeeded()
-               ? modelService_->discoveredOllamaModels()
+    const auto provider = selectedRuntimeProvider();
+    const auto status = modelService_->providerStatus(provider);
+    return status.catalog == ProviderCatalogState::Available
+               ? modelService_->providerDiscoveredModels(provider)
                : QList<OllamaModelSummary>{};
 }
 
@@ -10000,8 +9957,6 @@ void ApplicationController::pollOllama() {
         QList<OllamaModelSummary> llamaCppModels;
         QList<OllamaModelSummary> openAiModels;
         QList<OllamaModelSummary> cloudModels;
-        QString cloudOriginId;
-        QString cloudError;
         ProviderDiscoveryOutcome selectedOutcome;
 
         if (ollamaRuntimeClient_) {
@@ -10058,35 +10013,29 @@ void ApplicationController::pollOllama() {
                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
 
             if (isGemini) {
-                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, &cloudError,
+                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000, nullptr,
                                                      token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("gemini");
             } else if (isClaude) {
-                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, &cloudError,
+                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000, nullptr,
                                                         token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("claude");
             } else if (isDeepSeek) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.deepseek.com/v1/models")),
-                    settings.deepseekApiKey(), 4000, &cloudError, token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("deepseek");
+                    settings.deepseekApiKey(), 4000, nullptr, token, &selectedOutcome);
             } else if (isGroq) {
                 cloudModels = fetchOpenAiCloudModels(
                     QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")),
-                    settings.groqApiKey(), 4000, &cloudError, token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("groq");
+                    settings.groqApiKey(), 4000, nullptr, token, &selectedOutcome);
             } else if (isMistral) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
-                                           settings.mistralApiKey(), 4000, &cloudError,
+                                           settings.mistralApiKey(), 4000, nullptr,
                                            token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("mistral");
             } else if (isOpenAi) {
                 cloudModels =
                     fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")),
-                                           settings.openAiApiKey(), 4000, &cloudError,
+                                           settings.openAiApiKey(), 4000, nullptr,
                                            token, &selectedOutcome);
-                cloudOriginId = QStringLiteral("openai");
             }
         }
 
@@ -10095,7 +10044,6 @@ void ApplicationController::pollOllama() {
             [this, health = std::move(health), ollamaDiscovery = std::move(ollamaDiscovery),
              lmStudioModels = std::move(lmStudioModels), llamaCppModels = std::move(llamaCppModels),
              openAiModels = std::move(openAiModels), cloudModels = std::move(cloudModels),
-             cloudOriginId = std::move(cloudOriginId), cloudError = std::move(cloudError),
              selectedOutcome, provider, generation, healthSequence, token]() {
                 if (generation != discoveryGeneration_ || token->load()) {
                     if (ollamaCheckThread_) {
@@ -10131,6 +10079,7 @@ void ApplicationController::pollOllama() {
                 if (provider != QLatin1String("ollama") &&
                     (selectedOutcome.completed ||
                      selectedOutcome.category != ChatProviderErrorCategory::None)) {
+                    const auto oldStatus = modelService_->providerStatus(provider);
                     const auto& selectedModels = provider == QLatin1String("lm-studio")
                         ? lmStudioModels
                         : provider == QLatin1String("llama-cpp-server")
@@ -10139,6 +10088,10 @@ void ApplicationController::pollOllama() {
                             ? openAiModels : cloudModels;
                     modelService_->acceptProviderDiscovery(provider, selectedModels,
                                                            selectedOutcome, healthSequence);
+                    const auto newStatus = modelService_->providerStatus(provider);
+                    changed |= oldStatus.catalog != newStatus.catalog ||
+                               oldStatus.modelIds != newStatus.modelIds ||
+                               oldStatus.errorCategory != newStatus.errorCategory;
                     const auto oldHealth = modelService_->providerHealth(provider);
                     modelService_->reportProviderDiscovery(
                         provider, healthSequence, selectedOutcome.completed,
@@ -10152,65 +10105,6 @@ void ApplicationController::pollOllama() {
                     cachedOllamaHealthCheck_.summary != health.summary) {
                     cachedOllamaHealthCheck_ = health;
                     changed = true;
-                }
-
-                if (cachedLMStudioModels_.size() != lmStudioModels.size()) {
-                    cachedLMStudioModels_ = lmStudioModels;
-                    changed = true;
-                } else {
-                    for (int i = 0; i < lmStudioModels.size(); ++i) {
-                        if (cachedLMStudioModels_[i].name != lmStudioModels[i].name) {
-                            cachedLMStudioModels_ = lmStudioModels;
-                            changed = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (cachedLlamaCppModels_.size() != llamaCppModels.size()) {
-                    cachedLlamaCppModels_ = llamaCppModels;
-                    changed = true;
-                } else {
-                    for (int i = 0; i < llamaCppModels.size(); ++i) {
-                        if (cachedLlamaCppModels_[i].name != llamaCppModels[i].name) {
-                            cachedLlamaCppModels_ = llamaCppModels;
-                            changed = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (cachedOpenAiCompatibleLocalModels_.size() != openAiModels.size()) {
-                    cachedOpenAiCompatibleLocalModels_ = openAiModels;
-                    changed = true;
-                } else {
-                    for (int i = 0; i < openAiModels.size(); ++i) {
-                        if (cachedOpenAiCompatibleLocalModels_[i].name != openAiModels[i].name) {
-                            cachedOpenAiCompatibleLocalModels_ = openAiModels;
-                            changed = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (cachedCloudProviderError_ != cloudError) {
-                    cachedCloudProviderError_ = cloudError;
-                    changed = true;
-                }
-
-                if (cachedCloudProviderOriginId_ != cloudOriginId ||
-                    cachedCloudProviderModels_.size() != cloudModels.size()) {
-                    cachedCloudProviderOriginId_ = cloudOriginId;
-                    cachedCloudProviderModels_ = cloudModels;
-                    changed = true;
-                } else {
-                    for (int i = 0; i < cloudModels.size(); ++i) {
-                        if (cachedCloudProviderModels_[i].name != cloudModels[i].name) {
-                            cachedCloudProviderModels_ = cloudModels;
-                            changed = true;
-                            break;
-                        }
-                    }
                 }
 
                 if (ollamaCheckThread_) {

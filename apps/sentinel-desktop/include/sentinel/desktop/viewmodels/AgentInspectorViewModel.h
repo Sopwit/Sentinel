@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QVariantMap>
 
+namespace sentinel::core { class ApplicationController; }
+
 namespace sentinel::desktop {
 
 class InspectorRowsModel final : public QAbstractListModel {
@@ -43,6 +45,9 @@ class AgentInspectorViewModel final : public QObject {
 public:
     explicit AgentInspectorViewModel(sentinel::core::AgentInspectorService& service,
                                      QObject* parent = nullptr);
+    void setProviderStatusSource(const sentinel::core::ApplicationController* controller) {
+        controller_ = controller;
+    }
     QAbstractItemModel* runs() { return &runs_; }
     QAbstractItemModel* timeline() { return &timeline_; }
     QAbstractItemModel* evidence() { return &evidence_; }
@@ -78,6 +83,7 @@ private:
     void poll();
     void setError(QString error);
     sentinel::core::AgentInspectorService& service_;
+    const sentinel::core::ApplicationController* controller_ = nullptr;
     InspectorRowsModel runs_{this};
     InspectorRowsModel timeline_{this};
     InspectorRowsModel evidence_{this};
