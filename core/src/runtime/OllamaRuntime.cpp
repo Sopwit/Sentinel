@@ -17,6 +17,8 @@
 #include <QUrlQuery>
 #include <QVariant>
 
+#include <cmath>
+#include <limits>
 #include <utility>
 
 namespace sentinel::core {
@@ -1517,7 +1519,20 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
             }
         }
 
-        models.append(OllamaModelSummary{id, createdStr, 0});
+        OllamaModelSummary model{id, createdStr, 0};
+        const auto positiveLimit = [&object](const QString& key) -> std::optional<int> {
+            const auto value = object.value(key);
+            if (!value.isDouble()) return std::nullopt;
+            const auto number = value.toDouble();
+            if (number <= 0 || number > std::numeric_limits<int>::max() ||
+                number != std::floor(number)) return std::nullopt;
+            return static_cast<int>(number);
+        };
+        model.capabilities.contextWindow = positiveLimit(QStringLiteral("context_window"));
+        if (!model.capabilities.contextWindow)
+            model.capabilities.contextWindow = positiveLimit(QStringLiteral("max_context_length"));
+        model.capabilities.maxOutputTokens = positiveLimit(QStringLiteral("max_output_tokens"));
+        models.append(std::move(model));
     }
     return models;
 }
@@ -1559,8 +1574,17 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
         if (name.isEmpty())
             continue;
         const auto displayName = obj.value(QStringLiteral("displayName")).toString().trimmed();
-        models.append(OllamaModelSummary{
-            name, displayName.isEmpty() ? QStringLiteral("Google Cloud") : displayName, 0});
+        OllamaModelSummary model{
+            name, displayName.isEmpty() ? QStringLiteral("Google Cloud") : displayName, 0};
+        const auto inputLimit = obj.value(QStringLiteral("inputTokenLimit"));
+        const auto outputLimit = obj.value(QStringLiteral("outputTokenLimit"));
+        if (inputLimit.isDouble() && inputLimit.toDouble() > 0 &&
+            inputLimit.toDouble() <= std::numeric_limits<int>::max())
+            model.capabilities.contextWindow = inputLimit.toInt();
+        if (outputLimit.isDouble() && outputLimit.toDouble() > 0 &&
+            outputLimit.toDouble() <= std::numeric_limits<int>::max())
+            model.capabilities.maxOutputTokens = outputLimit.toInt();
+        models.append(std::move(model));
     }
     return models;
 }
