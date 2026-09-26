@@ -5,12 +5,15 @@
 #include "sentinel/core/mcp/McpService.h"
 #include "sentinel/core/mcp/McpClient.h"
 #include <QDebug>
+#include <QDir>
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
+#include <QProcessEnvironment>
+#include <QStandardPaths>
 #include <QTimer>
 
 namespace sentinel::core {
@@ -259,16 +262,38 @@ void McpService::disconnectFromAll() {
 }
 
 bool McpService::connectToLocalServer(McpServerState& state) {
+    auto temporaryDirectory = std::make_shared<QTemporaryDir>();
+    if (!temporaryDirectory->isValid()) {
+        state.errorString = QStringLiteral("MCP sandbox temporary directory is unavailable.");
+        return false;
+    }
+    SandboxExecutionPlan plan;
+    plan.workingDirectory = QDir::currentPath();
+    plan.readablePaths = {plan.workingDirectory};
+    plan.temporaryDirectory = temporaryDirectory->path();
+    const auto environment = QProcessEnvironment::systemEnvironment();
+    const auto executable = QStandardPaths::findExecutable(state.config.command,
+        environment.value(QStringLiteral("PATH")).split(QDir::listSeparator(), Qt::SkipEmptyParts));
+    const auto launch = m_processSandbox.prepare(plan, executable, state.config.arguments,
+                                                  environment);
+    if (!launch.permitted) {
+        state.errorString = QStringLiteral("MCP sandbox unavailable: %1.")
+                                .arg(launch.result.failureCategory);
+        return false;
+    }
     QProcess* process = new QProcess(this);
     m_processes.append(process);
     state.process = process;
+    state.sandboxTemporaryDirectory = std::move(temporaryDirectory);
+    process->setWorkingDirectory(plan.workingDirectory);
+    process->setProcessEnvironment(launch.environment);
 
     connect(process, &QProcess::readyReadStandardOutput, this, &McpService::onProcessReadyRead);
     connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             &McpService::onProcessFinished);
     connect(process, &QProcess::errorOccurred, this, &McpService::onProcessErrorOccurred);
 
-    process->start(state.config.command, state.config.arguments);
+    process->start(launch.program, launch.arguments);
     if (!process->waitForStarted(5000)) {
         state.errorString = QStringLiteral("Failed to start MCP server process");
         state.process = nullptr;

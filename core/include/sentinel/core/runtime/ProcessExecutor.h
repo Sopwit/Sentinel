@@ -4,12 +4,15 @@
 
 #pragma once
 
+#include "sentinel/core/runtime/ProcessSandbox.h"
+
 #include <QDateTime>
 #include <QHash>
 #include <QObject>
 #include <QProcessEnvironment>
 #include <QStringList>
 #include <functional>
+#include <optional>
 
 namespace sentinel::core {
 
@@ -24,6 +27,8 @@ struct ProcessRequest {
     int timeoutMs = 30000;
     QString sessionId;
     QString toolCallId;
+    std::optional<SandboxExecutionPlan> sandbox;
+    bool unconfinedPermitted = false;
 };
 
 struct ProcessRecord {
@@ -38,6 +43,7 @@ struct ProcessRecord {
     int exitCode = -1;
     bool timedOut = false;
     QString error;
+    SandboxExecutionResult sandbox;
 };
 
 // All methods and callbacks run on the owning Qt event-loop thread. Callers on
@@ -66,6 +72,7 @@ private:
     QHash<QString, Entry*> entries_;
     QStringList order_;
     bool shuttingDown_ = false;
+    PlatformProcessSandbox sandbox_;
 };
 
 } // namespace sentinel::core

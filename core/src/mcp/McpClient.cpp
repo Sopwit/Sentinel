@@ -4,10 +4,13 @@
 
 #include "sentinel/core/mcp/McpClient.h"
 #include <QDebug>
+#include <QDir>
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkReply>
+#include <QProcessEnvironment>
+#include <QStandardPaths>
 #include <QTimer>
 
 namespace sentinel::core {
@@ -24,14 +27,37 @@ McpClient::~McpClient() {
 bool McpClient::connectLocal(const QString& command, const QStringList& arguments) {
     disconnectLocal();
 
+    m_sandboxTemporaryDirectory = std::make_unique<QTemporaryDir>();
+    if (!m_sandboxTemporaryDirectory->isValid()) {
+        m_errorString = QStringLiteral("MCP sandbox temporary directory is unavailable.");
+        emit clientError(m_errorString);
+        return false;
+    }
+    SandboxExecutionPlan plan;
+    plan.workingDirectory = QDir::currentPath();
+    plan.readablePaths = {plan.workingDirectory};
+    plan.temporaryDirectory = m_sandboxTemporaryDirectory->path();
+    const auto environment = QProcessEnvironment::systemEnvironment();
+    const auto executable = QStandardPaths::findExecutable(command,
+        environment.value(QStringLiteral("PATH")).split(QDir::listSeparator(), Qt::SkipEmptyParts));
+    const auto launch = m_processSandbox.prepare(plan, executable, arguments, environment);
+    if (!launch.permitted) {
+        m_errorString = QStringLiteral("MCP sandbox unavailable: %1.")
+                            .arg(launch.result.failureCategory);
+        emit clientError(m_errorString);
+        return false;
+    }
+
     m_process = std::make_unique<QProcess>();
+    m_process->setWorkingDirectory(plan.workingDirectory);
+    m_process->setProcessEnvironment(launch.environment);
 
     connect(m_process.get(), &QProcess::readyReadStandardOutput, this,
             &McpClient::onLocalProcessReadyRead);
     connect(m_process.get(), QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             &McpClient::onLocalProcessFinished);
 
-    m_process->start(command, arguments);
+    m_process->start(launch.program, launch.arguments);
     if (!m_process->waitForStarted(5000)) {
         m_errorString = QStringLiteral("Failed to start MCP server: %1").arg(command);
         emit clientError(m_errorString);
@@ -51,6 +77,7 @@ bool McpClient::disconnectLocal() {
         }
         m_process.reset();
     }
+    m_sandboxTemporaryDirectory.reset();
 
     if (m_transportType == TransportType::Local) {
         m_transportType = TransportType::None;

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sentinel/core/runtime/ProcessSandbox.h"
+
 #include <QByteArray>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -12,6 +14,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QString>
+#include <QTemporaryDir>
 #include <functional>
 #include <memory>
 
@@ -65,6 +68,8 @@ private:
 
     // Local transport (stdio)
     std::unique_ptr<QProcess> m_process;
+    std::unique_ptr<QTemporaryDir> m_sandboxTemporaryDirectory;
+    PlatformProcessSandbox m_processSandbox;
 
     // Remote transport (HTTP)
     QNetworkAccessManager* m_networkManager{nullptr};

@@ -49,6 +49,10 @@ struct SandboxEvaluationResult {
     SandboxStatus status = SandboxStatus::NotEvaluated;
     QString summary;
     QList<SandboxCapabilityDecision> capabilityDecisions;
+    bool processConfinementRequired = true;
+    bool processNetworkAllowed = false;
+    bool processEnvironmentRestricted = true;
+    bool processTreeRequired = true;
 };
 
 } // namespace sentinel::core

@@ -641,13 +641,16 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
     }
 
     const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
-    if (request.options.discoverySnapshot) {
-        const auto& discovery = *request.options.discoverySnapshot;
+    if (const auto* snapshot = request.options.discoverySnapshot()) {
+        const auto& discovery = *snapshot;
         if (!discovery.succeeded()) {
             response.httpStatus = discovery.httpStatus;
             response.providerErrorCategory = static_cast<int>(
                 discovery.errorCategory == ChatProviderErrorCategory::None
-                    ? ChatProviderErrorCategory::ProviderUnavailable : discovery.errorCategory);
+                    ? (discovery.lifecycle == ChatRequestLifecycle::Cancelled
+                           ? ChatProviderErrorCategory::Cancelled
+                           : ChatProviderErrorCategory::ProviderUnavailable)
+                    : discovery.errorCategory);
             response.requestId = discovery.requestId;
             response.attempts = discovery.attemptCount;
             response.status = discovery.lifecycle == ChatRequestLifecycle::Cancelled
@@ -657,16 +660,24 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
                              : discovery.errorCategory == ChatProviderErrorCategory::ConnectionFailed
                                  ? LocalInferenceError::EndpointUnreachable
                                  : LocalInferenceError::RequestFailed;
-            response.summary = discovery.safeDetail;
+            response.summary = discovery.safeDetail.isEmpty()
+                                   ? QStringLiteral("Ollama model discovery did not complete.")
+                                   : discovery.safeDetail;
             response.traces.append(trace(2, QStringLiteral("Model Discovery"),
-                                         QStringLiteral("Error"), response.summary));
+                                         discovery.lifecycle == ChatRequestLifecycle::Cancelled
+                                             ? QStringLiteral("Cancelled") : QStringLiteral("Error"),
+                                         response.summary));
             return response;
         }
         if (discovery.models.isEmpty()) {
             response.status = LocalInferenceStatus::ModelUnavailable;
             response.error = LocalInferenceError::MissingModel;
             response.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
-            response.summary = discovery.safeDetail;
+            response.summary = discovery.safeDetail.isEmpty()
+                                   ? QStringLiteral("No Ollama model is installed.")
+                                   : discovery.safeDetail;
+            response.traces.append(trace(2, QStringLiteral("Model Discovery"),
+                                         QStringLiteral("Empty"), response.summary));
             return response;
         }
         if (response.model.isEmpty()) {

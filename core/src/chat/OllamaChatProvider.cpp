@@ -83,9 +83,7 @@ ChatProviderStatus OllamaChatProvider::status() const {
         return ChatProviderStatus::Unavailable;
     }
 
-    const auto discovery = discoverySnapshot_.has_value() ? *discoverySnapshot_
-                                                          : client.discoverModels();
-    if (!discovery.succeeded()) {
+    if (discoverySnapshot_ && !discoverySnapshot_->succeeded()) {
         return ChatProviderStatus::Unavailable;
     }
 
@@ -114,9 +112,10 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
 
     auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
-        OllamaHttpRuntimeClient runtimeClient(config_, std::min(timeoutMs_, 750));
-        const auto discovery = discoverySnapshot_.has_value()
-                                   ? *discoverySnapshot_ : runtimeClient.discoverModels(cancellationToken);
+        if (!discoverySnapshot_)
+            return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
+                                ChatProviderErrorCategory::RequestRejected);
+        const auto& discovery = *discoverySnapshot_;
         if (!discovery.succeeded()) {
             auto reply = failureReply(discovery.safeDetail, discovery.errorCategory);
             reply.httpStatus = discovery.httpStatus;
@@ -138,7 +137,8 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
     request.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     request.prompt = trimmed;
     request.options.model = model;
-    request.options.discoverySnapshot = discoverySnapshot_;
+    if (discoverySnapshot_)
+        request.options.modelValidation = *discoverySnapshot_;
     request.options.timeoutMs = timeoutMs_;
     request.options.cancellationToken = cancellationToken;
     request.options.temperature = 0.7;
@@ -177,9 +177,10 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
 
     auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
-        OllamaHttpRuntimeClient runtimeClient(config_, std::min(timeoutMs_, 750));
-        const auto discovery = discoverySnapshot_.has_value()
-                                   ? *discoverySnapshot_ : runtimeClient.discoverModels(cancellationToken);
+        if (!discoverySnapshot_)
+            return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
+                                ChatProviderErrorCategory::RequestRejected);
+        const auto& discovery = *discoverySnapshot_;
         if (!discovery.succeeded()) {
             auto reply = failureReply(discovery.safeDetail, discovery.errorCategory);
             reply.httpStatus = discovery.httpStatus;

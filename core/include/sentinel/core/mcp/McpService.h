@@ -5,11 +5,13 @@
 #pragma once
 
 #include "sentinel/core/mcp/IMcpService.h"
+#include "sentinel/core/runtime/ProcessSandbox.h"
 #include <QMap>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QProcess>
 #include <QTimer>
+#include <QTemporaryDir>
 #include <memory>
 
 namespace sentinel::core {
@@ -18,6 +20,7 @@ struct McpServerState {
     McpServerConfig config;
     McpConnectionState state{McpConnectionState::Disconnected};
     QProcess* process{nullptr}; // Raw pointer, managed by McpService
+    std::shared_ptr<QTemporaryDir> sandboxTemporaryDirectory;
     QList<McpToolDefinition> tools;
     QString errorString;
     int requestId{0};
@@ -80,6 +83,7 @@ private:
     QMap<QString, McpServerState> m_servers;
     QList<QProcess*> m_processes; // Owned processes for cleanup
     QNetworkAccessManager m_networkManager;
+    PlatformProcessSandbox m_processSandbox;
     QMap<QString, QMap<int, ToolCompletion>> m_pendingCalls;
     QMap<QString, QByteArray> m_readBuffers;
 };

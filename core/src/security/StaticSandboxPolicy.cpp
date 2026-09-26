@@ -5,6 +5,7 @@
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
 #include <utility>
+#include <algorithm>
 
 namespace sentinel::core {
 
@@ -79,11 +80,17 @@ SandboxEvaluationResult StaticSandboxPolicy::evaluate(const ToolInvocationPlan& 
         };
     }
 
-    return {
+    SandboxEvaluationResult allowed{
         SandboxStatus::Allowed,
         QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."),
         capabilityDecisions,
     };
+    allowed.processTreeRequired = std::any_of(
+        plan.invocations.cbegin(), plan.invocations.cend(),
+        [](const PlannedToolInvocation& invocation) {
+            return invocation.toolId == QLatin1String("run-command");
+        });
+    return allowed;
 }
 
 } // namespace sentinel::core

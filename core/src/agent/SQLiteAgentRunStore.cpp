@@ -220,6 +220,9 @@ bool SQLiteAgentRunStore::initialize() {
         !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
                       QStringLiteral("batch_id"),
                       QStringLiteral("batch_id TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
+                      QStringLiteral("sandbox_summary"),
+                      QStringLiteral("sandbox_summary TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_evidence"),
                       QStringLiteral("freshness"), QStringLiteral("freshness INTEGER"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_claims"),
@@ -347,7 +350,8 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                   step.structuredObservation ? static_cast<int>(step.structuredObservation->fileSystemFailure) : 0});
             if (!event.toolCallId.isEmpty())
                 exec(QStringLiteral("UPDATE agent_tool_calls SET status=?,finished_at=?,"
-                                    "failure_category=?,observation_summary=?,mutation_summary=? "
+                                    "failure_category=?,observation_summary=?,mutation_summary=?,"
+                                    "sandbox_summary=? "
                                     "WHERE tool_call_id=?"),
                      {step.succeeded ? QStringLiteral("Succeeded") : QStringLiteral("Failed"), at,
                       step.structuredObservation
@@ -366,6 +370,16 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                                                        return path.committed;
                                                    }))
                           : QString{},
+                      step.sandbox.backend.isEmpty()
+                          ? QString{}
+                          : QStringLiteral("%1 | %2 | Network: %3 | Filesystem: %4")
+                                .arg(sandboxEnforcementName(step.sandbox.enforcement),
+                                     step.sandbox.backend,
+                                     step.sandbox.networkDenied ? QStringLiteral("Denied")
+                                                                : QStringLiteral("Allowed"),
+                                     step.sandbox.filesystemRestricted ? QStringLiteral("Restricted")
+                                                                       : QStringLiteral("Unrestricted"))
+                                .left(180),
                       event.toolCallId});
         }
     } else if (event.type == AgentEventType::ToolRequested ||
@@ -618,7 +632,7 @@ QList<StoredAgentToolCall> SQLiteAgentRunStore::toolCallsForRun(const QString& r
     QSqlQuery query(connection.db);
     query.prepare(QStringLiteral("SELECT t.tool_call_id,t.step_id,t.tool_id,t.source,t.status,"
                                  "t.resource_summary,t.observation_summary,t.started_at,t.finished_at,"
-                                 "t.failure_category,t.mutation_summary,t.batch_id "
+                                 "t.failure_category,t.mutation_summary,t.batch_id,t.sandbox_summary "
                                  "FROM agent_tool_calls t JOIN agent_steps s ON s.step_id=t.step_id "
                                  "WHERE s.run_id=? ORDER BY s.sequence ASC LIMIT ?"));
     query.addBindValue(runId);
@@ -629,7 +643,8 @@ QList<StoredAgentToolCall> SQLiteAgentRunStore::toolCallsForRun(const QString& r
                        query.value(4).toString(), query.value(5).toString(),
                        query.value(6).toString(), parsedTime(query.value(7)),
                        parsedTime(query.value(8)), query.value(9).toString(),
-                       query.value(10).toString(), query.value(11).toString()});
+                       query.value(10).toString(), query.value(11).toString(),
+                       query.value(12).toString()});
     return result;
 }
 

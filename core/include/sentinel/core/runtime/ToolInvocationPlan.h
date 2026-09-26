@@ -5,12 +5,14 @@
 #pragma once
 
 #include "sentinel/core/runtime/ToolSandbox.h"
+#include "sentinel/core/runtime/ProcessSandbox.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
 #include "sentinel/core/runtime/IFileSystemService.h"
 
 #include <QJsonValue>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <QList>
 #include <QString>
 
@@ -78,6 +80,7 @@ struct PlannedToolInvocation {
     std::shared_ptr<std::atomic_bool> toolCancellation;
     std::shared_ptr<const ToolDescriptor> descriptorSnapshot;
     std::shared_ptr<const ResourceAuthorizationSnapshot> resourceSnapshot;
+    std::optional<SandboxExecutionPlan> processSandbox;
     QList<int> dependsOn;
     QString providerCallId;
     QString runtimeToolCallId;

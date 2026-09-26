@@ -69,6 +69,7 @@ struct ToolExecutionResult {
     QString summary;
     StructuredObservationPtr structuredObservation;
     QList<FileMutation> mutations;
+    SandboxExecutionResult sandbox;
 };
 
 } // namespace sentinel::core

@@ -484,6 +484,7 @@ add_library(sentinel_core STATIC
     src/runtime/WindowsSecureFileMutationBackend.cpp
     src/runtime/RealToolExecutor.cpp
     src/runtime/ProcessExecutor.cpp
+    src/runtime/ProcessSandbox.cpp
     src/runtime/RuntimeCapabilities.cpp
     src/runtime/RuntimeIntegration.cpp
     src/runtime/RuntimePermissions.cpp
