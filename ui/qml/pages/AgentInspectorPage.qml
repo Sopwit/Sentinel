@@ -205,7 +205,7 @@ Item {
                                     spacing: 2
                                     Text { text: entry.kind + "  /  " + entry.title + (entry.duration ? "  " + entry.duration : ""); color: SentinelTheme.textPrimary; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
                                     Text { text: entry.detail || ""; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
-                                    Text { text: [entry.batchId ? qsTr("Batch %1").arg(entry.batchId.slice(0, 8)) : "", entry.source, entry.observation, entry.observationKind !== undefined ? qsTr("Observation %1").arg(entry.observationKind) : "", entry.failure, entry.mutation, entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
+                                    Text { text: [entry.batchId ? qsTr("Batch %1").arg(entry.batchId.slice(0, 8)) : "", entry.source, entry.observation, entry.observationKind !== undefined ? qsTr("Observation %1").arg(entry.observationKind) : "", entry.failure, entry.mutation, entry.sandbox, entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
                                 }
                             }
                             Text { text: qsTr("Approvals"); color: SentinelTheme.textPrimary; font.bold: true }

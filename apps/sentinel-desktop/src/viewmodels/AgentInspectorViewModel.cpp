@@ -240,7 +240,8 @@ void AgentInspectorViewModel::selectRun(const QString& runId) {
                          {QStringLiteral("source"), tool.source},
                          {QStringLiteral("observation"), tool.observationSummary},
                          {QStringLiteral("failure"), tool.failureCategory},
-                         {QStringLiteral("mutation"), tool.mutationSummary}});
+                         {QStringLiteral("mutation"), tool.mutationSummary},
+                         {QStringLiteral("sandbox"), tool.sandboxSummary}});
         if (!tool.batchId.isEmpty())
             timeline.last().insert(QStringLiteral("batchId"), tool.batchId);
     }

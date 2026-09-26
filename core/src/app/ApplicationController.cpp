@@ -7152,21 +7152,21 @@ bool ApplicationController::startConversationSummaryInference(
     LocalInferenceRequest request;
     request.prompt = buildConversationSummaryPrompt(plannedResult);
     request.options.model = effectiveLocalModel({});
-    request.options.discoverySnapshot = modelService_->ollamaDiscovery();
+    request.options.modelValidation = modelService_->ollamaDiscovery();
     const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
     request.options.timeoutMs = config.generateTimeoutMs;
     request.id =
         QStringLiteral("conversation-summary-request-%1").arg(++localInferenceRequestSequence_);
 
-    if (!request.options.discoverySnapshot->succeeded()) {
+    if (!request.options.discoverySnapshot()->succeeded()) {
         latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
-            request.options.discoverySnapshot->safeDetail,
+            request.options.discoverySnapshot()->safeDetail,
             QStringLiteral("No local summary was generated."));
         return false;
     }
-    if (request.options.discoverySnapshot->models.isEmpty()) {
+    if (request.options.discoverySnapshot()->models.isEmpty()) {
         latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
-            request.options.discoverySnapshot->safeDetail,
+            request.options.discoverySnapshot()->safeDetail,
             QStringLiteral("No local summary was generated."));
         return false;
     }
@@ -8329,7 +8329,7 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
     if (!isLMStudioProvider())
-        request.options.discoverySnapshot = modelService_->ollamaDiscovery();
+        request.options.modelValidation = modelService_->ollamaDiscovery();
     request.options.timeoutMs = localInferenceTimeoutMs_;
     request.options.temperature = localInferenceTemperature_;
     request.options.topP = localInferenceTopP_;
@@ -8345,10 +8345,9 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
-    if (request.options.discoverySnapshot &&
-        request.options.discoverySnapshot->lifecycle != ChatRequestLifecycle::Pending &&
-        !request.options.discoverySnapshot->succeeded()) {
-        const auto& discovery = *request.options.discoverySnapshot;
+    if (const auto* snapshot = request.options.discoverySnapshot(); snapshot &&
+        snapshot->lifecycle != ChatRequestLifecycle::Pending && !snapshot->succeeded()) {
+        const auto& discovery = *snapshot;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::RequestFailed, discovery.safeDetail);
         latestLocalInferenceResponse_.status = LocalInferenceStatus::Error;
@@ -8357,12 +8356,11 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         emit localInferenceChanged();
         return false;
     }
-    if (request.options.discoverySnapshot &&
-        request.options.discoverySnapshot->succeeded() &&
-        request.options.discoverySnapshot->models.isEmpty()) {
+    if (const auto* snapshot = request.options.discoverySnapshot(); snapshot &&
+        snapshot->succeeded() && snapshot->models.isEmpty()) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::MissingModel,
-            request.options.discoverySnapshot->safeDetail);
+            snapshot->safeDetail);
         latestLocalInferenceResponse_.status = LocalInferenceStatus::ModelUnavailable;
         latestLocalInferenceResponse_.providerErrorCategory =
             static_cast<int>(ChatProviderErrorCategory::ModelNotFound);

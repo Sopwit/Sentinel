@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <variant>
 
 namespace sentinel::core {
 
@@ -57,8 +58,12 @@ enum class LocalInferenceError : std::uint8_t {
 QString localInferenceErrorName(LocalInferenceError error);
 
 struct LocalInferenceOptions {
+    struct NoPrevalidation {};
     QString model;
-    std::optional<OllamaModelDiscoveryResult> discoverySnapshot;
+    std::variant<NoPrevalidation, OllamaModelDiscoveryResult> modelValidation = NoPrevalidation{};
+    const OllamaModelDiscoveryResult* discoverySnapshot() const {
+        return std::get_if<OllamaModelDiscoveryResult>(&modelValidation);
+    }
     // Zero means no client-side timeout. Cancellation remains available.
     int timeoutMs = 0;
     double temperature = 0.7;

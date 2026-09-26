@@ -64,6 +64,7 @@ struct StoredAgentToolCall {
     QString failureCategory;
     QString mutationSummary;
     QString batchId;
+    QString sandboxSummary;
 };
 
 struct StoredAgentEvidence {

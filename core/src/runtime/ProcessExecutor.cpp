@@ -5,10 +5,19 @@
 #include "sentinel/core/runtime/ProcessExecutor.h"
 
 #include <QProcess>
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QThread>
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
+#include <memory>
+#if defined(Q_OS_UNIX)
+#include <signal.h>
+#include <unistd.h>
+#endif
 
 namespace sentinel::core {
 
@@ -21,6 +30,7 @@ struct ProcessExecutor::Entry {
     OutputCallback output;
     bool terminal = false;
     bool cancelling = false;
+    std::unique_ptr<QTemporaryDir> sandboxTemporaryDirectory;
 };
 
 namespace {
@@ -60,9 +70,79 @@ QString ProcessExecutor::start(const ProcessRequest& request, StateCallback stat
     entry->grace = new QTimer(this);
     entry->timeout->setSingleShot(true);
     entry->grace->setSingleShot(true);
+    if (!request.sandbox && !request.unconfinedPermitted) {
+        const QString id = entry->record.processId;
+        entry->record.sandbox.enforcement = SandboxEnforcement::Failed;
+        entry->record.sandbox.backend = QStringLiteral("policy");
+        entry->record.sandbox.failureCategory = QStringLiteral("SandboxPlanMissing");
+        entries_.insert(id, entry);
+        order_.append(id);
+        finish(entry, ProcessState::Failed,
+               QStringLiteral("Process sandbox plan is missing."));
+        return id;
+    }
+    if (!request.sandbox) {
+        entry->record.sandbox.backend = QStringLiteral("none");
+        entry->record.sandbox.failureCategory = QStringLiteral("ExplicitUnconfined");
+    }
     entry->process->setWorkingDirectory(request.workingDirectory);
-    if (!request.environment.isEmpty())
-        entry->process->setProcessEnvironment(request.environment);
+    QString program = request.program;
+    QStringList arguments = request.arguments;
+    QProcessEnvironment environment = request.environment.isEmpty()
+        ? QProcessEnvironment::systemEnvironment() : request.environment;
+    if (request.sandbox) {
+        SandboxExecutionPlan plan = *request.sandbox;
+        const auto allowedRoot = QFileInfo(plan.workingDirectory).canonicalFilePath();
+        const auto requestedDirectory = request.workingDirectory.isEmpty()
+            ? allowedRoot : QFileInfo(request.workingDirectory).canonicalFilePath();
+        if (allowedRoot.isEmpty() || requestedDirectory.isEmpty() ||
+            (requestedDirectory != allowedRoot &&
+             !requestedDirectory.startsWith(allowedRoot + QLatin1Char('/')))) {
+            const QString id = entry->record.processId;
+            entry->record.sandbox.enforcement = SandboxEnforcement::Failed;
+            entry->record.sandbox.backend = QStringLiteral("policy");
+            entry->record.sandbox.failureCategory = QStringLiteral("WorkingDirectoryOutsidePlan");
+            entries_.insert(id, entry);
+            order_.append(id);
+            finish(entry, ProcessState::Failed,
+                   QStringLiteral("Process working directory is outside its sandbox plan."));
+            return id;
+        }
+        entry->process->setWorkingDirectory(requestedDirectory);
+        plan.workingDirectory = requestedDirectory;
+        entry->sandboxTemporaryDirectory = std::make_unique<QTemporaryDir>();
+        if (entry->sandboxTemporaryDirectory->isValid())
+            plan.temporaryDirectory = entry->sandboxTemporaryDirectory->path();
+        const auto paths = environment.value(QStringLiteral("PATH"))
+                               .split(QDir::listSeparator(), Qt::SkipEmptyParts);
+        const auto resolved = QStandardPaths::findExecutable(program, paths);
+        const auto launch = sandbox_.prepare(plan, resolved, arguments, environment);
+        entry->record.sandbox = launch.result;
+        if (!entry->sandboxTemporaryDirectory->isValid()) {
+            entry->record.sandbox.enforcement = SandboxEnforcement::Failed;
+            entry->record.sandbox.failureCategory = QStringLiteral("TemporaryDirectoryUnavailable");
+        }
+        if ((!launch.permitted || !entry->sandboxTemporaryDirectory->isValid()) &&
+            request.sandbox->requireEnforcement) {
+            const QString id = entry->record.processId;
+            entries_.insert(id, entry);
+            order_.append(id);
+            finish(entry, ProcessState::Failed,
+                   QStringLiteral("Sandbox unavailable: %1.")
+                       .arg(entry->record.sandbox.failureCategory));
+            return id;
+        }
+        if (launch.permitted && entry->sandboxTemporaryDirectory->isValid()) {
+            program = launch.program;
+            arguments = launch.arguments;
+        }
+        environment = launch.environment;
+    }
+    entry->process->setProcessEnvironment(environment);
+#if defined(Q_OS_UNIX)
+    if (request.sandbox && entry->record.sandbox.enforcement == SandboxEnforcement::Enforced)
+        entry->process->setChildProcessModifier([] { setsid(); });
+#endif
     const QString id = entry->record.processId;
     entries_.insert(id, entry);
     order_.append(id);
@@ -115,13 +195,19 @@ QString ProcessExecutor::start(const ProcessRequest& request, StateCallback stat
         });
     connect(entry->timeout, &QTimer::timeout, this, [this, entry] { stop(entry, false, true); });
     connect(entry->grace, &QTimer::timeout, this, [entry] {
-        if (!entry->terminal && entry->process->state() != QProcess::NotRunning)
+        if (!entry->terminal && entry->process->state() != QProcess::NotRunning) {
+#if defined(Q_OS_UNIX)
+            if (entry->record.sandbox.enforcement == SandboxEnforcement::Enforced &&
+                entry->record.systemPid > 0)
+                ::kill(-static_cast<pid_t>(entry->record.systemPid), SIGKILL);
+#endif
             entry->process->kill();
+        }
     });
     entry->record.state = ProcessState::Starting;
     if (entry->state)
         entry->state(entry->record);
-    entry->process->start(request.program, request.arguments);
+    entry->process->start(program, arguments);
     if (!entry->terminal && request.timeoutMs > 0)
         entry->timeout->start(request.timeoutMs);
     return id;
@@ -151,8 +237,19 @@ void ProcessExecutor::stop(Entry* entry, bool immediate, bool timeout) {
     if (entry->state)
         entry->state(entry->record);
     if (immediate)
+    {
+#if defined(Q_OS_UNIX)
+        if (entry->record.sandbox.enforcement == SandboxEnforcement::Enforced &&
+            entry->record.systemPid > 0)
+            ::kill(-static_cast<pid_t>(entry->record.systemPid), SIGKILL);
+#endif
         entry->process->kill();
-    else {
+    } else {
+#if defined(Q_OS_UNIX)
+        if (entry->record.sandbox.enforcement == SandboxEnforcement::Enforced &&
+            entry->record.systemPid > 0)
+            ::kill(-static_cast<pid_t>(entry->record.systemPid), SIGTERM);
+#endif
         entry->process->terminate();
         entry->grace->start(1000);
     }
@@ -187,6 +284,7 @@ void ProcessExecutor::finish(Entry* entry, ProcessState state, const QString& er
     entry->grace->stop();
     entry->record.state = state;
     entry->record.error = entry->record.timedOut ? QStringLiteral("Process timed out.") : error;
+    entry->sandboxTemporaryDirectory.reset();
     entry->process->deleteLater();
     entry->process = nullptr;
     entry->timeout->deleteLater();
@@ -227,6 +325,11 @@ void ProcessExecutor::shutdown() {
             entry->cancelling = true;
             entry->timeout->stop();
             entry->grace->stop();
+#if defined(Q_OS_UNIX)
+            if (entry->record.sandbox.enforcement == SandboxEnforcement::Enforced &&
+                entry->record.systemPid > 0)
+                ::kill(-static_cast<pid_t>(entry->record.systemPid), SIGKILL);
+#endif
             entry->process->kill();
             // QProcess destruction reaps an active child if the event loop is stopping.
             delete entry->process;

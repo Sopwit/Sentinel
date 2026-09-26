@@ -10,7 +10,9 @@
 #include "sentinel/core/security/AuthorizationResolver.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/ResourceAuthorizationResolver.h"
+#include "sentinel/core/security/PathGuard.h"
 #include <QDir>
+#include <QSet>
 #include <QTimer>
 #include <algorithm>
 
@@ -49,6 +51,16 @@ bool sameResources(const ResourceAuthorizationSnapshot& captured,
             return false;
     }
     return true;
+}
+
+bool usesLocalProcess(const QString& id) {
+    static const QSet<QString> ids{
+        QStringLiteral("run-command"), QStringLiteral("process-list"),
+        QStringLiteral("app-quit"), QStringLiteral("app-launch"),
+        QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
+        QStringLiteral("browser-pdf"), QStringLiteral("voice-transcribe"),
+        QStringLiteral("voice-speak")};
+    return ids.contains(id);
 }
 
 QString permissionPostureForDomain(const QString& domainId, const QString& defaultPermissionState,
@@ -490,6 +502,57 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 completion({ToolExecutionStatus::Blocked,
                             QStringLiteral("Tool gateway blocked execution by sandbox policy.")});
                 return {};
+            }
+            if (usesLocalProcess(registration->descriptor.id)) {
+                if (request.sandbox.status != SandboxStatus::Allowed ||
+                    !invocation.resourceSnapshot || !invocation.resourceSnapshot->authorized ||
+                    invocation.resourceSnapshot->normalizedArguments != invocation.arguments) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Process sandbox requires authorized resources and an allowed policy.")});
+                    return {};
+                }
+                const auto expected = ResourceAuthorizationResolver::resolve(
+                    registration->descriptor, invocation,
+                    invocation.resourceSnapshot->workingDirectory, resourceGate_);
+                if (!expected.ok() ||
+                    !sameResources(*invocation.resourceSnapshot, expected.snapshot) ||
+                    !ResourceAuthorizationResolver::authorize(
+                        *invocation.resourceSnapshot, resourceGate_, permissionService_,
+                        sessionId).ok()) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Process resource authorization changed.")});
+                    return {};
+                }
+                SandboxExecutionPlan sandboxPlan;
+                sandboxPlan.workingDirectory = invocation.resourceSnapshot->workingDirectory;
+                sandboxPlan.readablePaths.append(sandboxPlan.workingDirectory);
+                sandboxPlan.requireEnforcement = request.sandbox.processConfinementRequired;
+                sandboxPlan.restrictedEnvironment = request.sandbox.processEnvironmentRestricted;
+                sandboxPlan.forbidDetachedChildren = request.sandbox.processTreeRequired;
+                sandboxPlan.networkAllowed = request.sandbox.processNetworkAllowed;
+                if (sandboxPlan.networkAllowed && !std::any_of(
+                        invocation.resourceSnapshot->requests.cbegin(),
+                        invocation.resourceSnapshot->requests.cend(),
+                        [](const AuthorizationRequest& item) {
+                            return item.domain == SecurityDomain::Network;
+                        })) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Process network access lacks authorization.")});
+                    return {};
+                }
+                for (const auto& file : invocation.resourceSnapshot->files) {
+                    if (file.access == AccessMode::Read)
+                        sandboxPlan.readablePaths.append(file.path.canonicalPath);
+                    else
+                        sandboxPlan.writablePaths.append(file.path.canonicalPath);
+                }
+                if (PathGuard::canonicalPath(sandboxPlan.workingDirectory) !=
+                    sandboxPlan.workingDirectory) {
+                    completion({ToolExecutionStatus::Blocked,
+                                QStringLiteral("Authorized process working directory changed.")});
+                    return {};
+                }
+                resolved.plan.invocations.first().processSandbox = std::move(sandboxPlan);
             }
             const auto handler = registration->handler;
             resolved.knownToolIds = {registration->descriptor.id};

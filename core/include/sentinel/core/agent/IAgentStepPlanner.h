@@ -26,6 +26,7 @@ struct AgentStepRecord {
     bool succeeded = false;
     StructuredObservationPtr structuredObservation;
     QString batchId;
+    SandboxExecutionResult sandbox;
 };
 
 struct AgentToolAction {

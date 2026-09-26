@@ -625,6 +625,7 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
             record.observation =
                 truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
             record.structuredObservation = result.structuredObservation;
+            record.sandbox = result.sandbox;
             asyncState_.steps.append(record);
             if (descriptor)
                 recordEvidence(asyncState_, *descriptor, plan, result.status, result.summary,
@@ -695,6 +696,7 @@ void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString&
                 record.statusText = toolExecutionStatusName(result.status);
                 record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
                 record.structuredObservation = result.structuredObservation;
+                record.sandbox = result.sandbox;
                 asyncState_.steps.append(record);
                 if (one.invocations.first().descriptorSnapshot)
                     recordEvidence(asyncState_, *one.invocations.first().descriptorSnapshot,
@@ -973,6 +975,7 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
     record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
 
     record.structuredObservation = result.structuredObservation;
+    record.sandbox = result.sandbox;
     state.steps.append(record);
     if (descriptor)
         recordEvidence(state, *descriptor, plan, result.status, result.summary, stepIndex, result.structuredObservation, result.mutations);
