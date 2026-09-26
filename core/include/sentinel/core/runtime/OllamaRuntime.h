@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/model/ModelRouting.h"
 
 #include <QElapsedTimer>
 #include <QList>
@@ -90,6 +91,7 @@ struct OllamaModelSummary {
     QString name;
     QString modifiedAt;
     qint64 sizeBytes = 0;
+    ModelCapabilities capabilities;
 };
 
 struct OllamaModelDiscoveryResult {

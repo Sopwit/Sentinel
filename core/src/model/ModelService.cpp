@@ -902,9 +902,10 @@ void ModelService::clearCapabilityOverrides(const QString& providerId, const QSt
 ModelCapabilities ModelService::capabilities(const QString& providerId,
                                               const QString& modelId) const {
     const auto provider = normalizedProviderId(providerId);
+    const auto model = modelId.trimmed();
     auto result = providerCapabilities_.value(provider);
     if (provider == QLatin1String("cloud-api")) {
-        const auto host = providerConfig(ModelBinding{provider, modelId.trimmed()})
+        const auto host = providerConfig(ModelBinding{provider, model})
                               .endpoint.host().toLower();
         if (host == QLatin1String("api.anthropic.com") ||
             host == QLatin1String("generativelanguage.googleapis.com")) {
@@ -913,22 +914,34 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
         }
     }
     if (router_) {
-        const auto route = router_->resolveSelection(ModelBinding{provider, modelId.trimmed()});
+        const auto route = router_->resolveSelection(ModelBinding{provider, model});
         if (route.status == ModelRoutingStatus::Routed) {
             if (route.provider.id == provider)
                 result = mergedCapabilities(result, route.provider.modelCapabilities);
-            if (route.model.providerId == provider && route.model.id == modelId.trimmed()) {
+            if (route.model.providerId == provider && route.model.id == model) {
                 result = mergedCapabilities(result, route.model.capabilities);
                 if (route.model.contextWindowTokens > 0 && !result.contextWindow)
                     result.contextWindow = route.model.contextWindowTokens;
             }
         }
     }
+    {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        const auto& models = provider == QLatin1String("ollama")
+                                 ? providerHealthRegistry_->ollamaModels
+                                 : providerHealthRegistry_->catalogs.value(provider).models;
+        for (const auto& discovered : models) {
+            if (discovered.name == model) {
+                result = mergedCapabilities(result, discovered.capabilities);
+                break;
+            }
+        }
+    }
+    result = mergedCapabilities(result, modelCapabilities_.value(provider).value(model));
     if (settings_)
         result = mergedCapabilities(result,
-                                    settings_->modelCapabilitiesOverride(provider, modelId.trimmed()));
-    return mergedCapabilities(result,
-                              modelCapabilities_.value(provider).value(modelId.trimmed()));
+                                    settings_->modelCapabilitiesOverride(provider, model));
+    return result;
 }
 
 bool ModelService::isKnownProvider(const QString& providerId) const {
