@@ -39,6 +39,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLocale>
 #include <QPointer>
 #include <QProcess>
 #include <QRegularExpression>
@@ -9100,7 +9101,8 @@ QVariantList ApplicationController::persistentPermissionGrants() const {
         item.insert(QStringLiteral("domain"), static_cast<int>(grant.domain));
         item.insert(QStringLiteral("access"), static_cast<int>(grant.access));
         item.insert(QStringLiteral("scope"), grant.scope);
-        item.insert(QStringLiteral("createdAt"), grant.createdAt.toLocalTime().toString(Qt::DefaultLocaleShortDate));
+        item.insert(QStringLiteral("createdAt"),
+                    QLocale().toString(grant.createdAt.toLocalTime(), QLocale::ShortFormat));
         result.append(item);
     }
     return result;
