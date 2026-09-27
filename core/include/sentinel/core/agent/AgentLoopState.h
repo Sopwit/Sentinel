@@ -23,6 +23,35 @@ enum class AgentLoopPhase {
     Stuck,
 };
 
+enum class AgentTerminalReason {
+    None,
+    Completed,
+    Cancelled,
+    ApprovalDenied,
+    ProviderFailure,
+    ToolFailure,
+    CapabilityUnavailable,
+    SecurityDenied,
+    IterationLimit,
+    UnableToComplete,
+};
+
+inline QString agentTerminalReasonName(AgentTerminalReason reason) {
+    switch (reason) {
+    case AgentTerminalReason::None: return QStringLiteral("None");
+    case AgentTerminalReason::Completed: return QStringLiteral("Completed");
+    case AgentTerminalReason::Cancelled: return QStringLiteral("Cancelled");
+    case AgentTerminalReason::ApprovalDenied: return QStringLiteral("ApprovalDenied");
+    case AgentTerminalReason::ProviderFailure: return QStringLiteral("ProviderFailure");
+    case AgentTerminalReason::ToolFailure: return QStringLiteral("ToolFailure");
+    case AgentTerminalReason::CapabilityUnavailable: return QStringLiteral("CapabilityUnavailable");
+    case AgentTerminalReason::SecurityDenied: return QStringLiteral("SecurityDenied");
+    case AgentTerminalReason::IterationLimit: return QStringLiteral("IterationLimit");
+    case AgentTerminalReason::UnableToComplete: return QStringLiteral("UnableToComplete");
+    }
+    return QStringLiteral("None");
+}
+
 inline QString agentLoopPhaseName(AgentLoopPhase phase) {
     switch (phase) {
     case AgentLoopPhase::Idle:
@@ -50,6 +79,7 @@ struct AgentLoopState {
     QString sessionId;
     QString goal;
     AgentLoopPhase phase = AgentLoopPhase::Idle;
+    AgentTerminalReason terminalReason = AgentTerminalReason::None;
     QList<AgentStepRecord> steps;
     ObservationIntent observationIntent;
     QList<EvidenceRecord> evidence;

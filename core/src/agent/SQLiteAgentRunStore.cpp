@@ -214,6 +214,9 @@ bool SQLiteAgentRunStore::initialize() {
         !ensureColumn(connection.db, QStringLiteral("agent_runs"),
                       QStringLiteral("provider_request_lifecycle"),
                       QStringLiteral("provider_request_lifecycle TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("terminal_reason"),
+                      QStringLiteral("terminal_reason TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
                       QStringLiteral("mutation_summary"),
                       QStringLiteral("mutation_summary TEXT"), lastError_) ||
@@ -481,6 +484,9 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                      {event.turnId});
         }
         if (const auto* run = std::get_if<AgentRunEvent>(&event.payload)) {
+            if (run->terminalReason != AgentTerminalReason::None)
+                exec(QStringLiteral("UPDATE agent_runs SET terminal_reason=? WHERE run_id=?"),
+                     {agentTerminalReasonName(run->terminalReason), event.turnId});
             if (run->providerFailure) {
                 const auto& failure = *run->providerFailure;
                 exec(QStringLiteral("UPDATE agent_runs SET provider_error_category=?,"

@@ -79,6 +79,7 @@ struct AgentToolOutputEvent {
 
 struct AgentRunEvent {
     AgentLoopPhase phase = AgentLoopPhase::Idle;
+    AgentTerminalReason terminalReason = AgentTerminalReason::None;
     QString finalAnswer;
     QString abortReason;
     std::optional<ProviderFailureMetadata> providerFailure;
