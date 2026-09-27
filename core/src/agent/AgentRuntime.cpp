@@ -261,6 +261,16 @@ void AgentRuntime::beginTurn(const QString& sessionId, bool child) {
 void AgentRuntime::finishTurn(const QString& sessionId, const AgentLoopState& state) {
     AgentRunEvent run;
     run.phase = state.phase;
+    run.terminalReason = state.terminalReason;
+    if (run.terminalReason == AgentTerminalReason::None) {
+        if (state.phase == AgentLoopPhase::Completed)
+            run.terminalReason = AgentTerminalReason::Completed;
+        else if (state.phase == AgentLoopPhase::Cancelled)
+            run.terminalReason = AgentTerminalReason::Cancelled;
+        else if (state.phase == AgentLoopPhase::Failed || state.phase == AgentLoopPhase::Stuck)
+            run.terminalReason = state.providerFailure ? AgentTerminalReason::ProviderFailure
+                                                       : AgentTerminalReason::UnableToComplete;
+    }
     run.finalAnswer = state.finalAnswer;
     run.abortReason = state.abortReason;
     run.providerFailure = state.providerFailure;
@@ -869,8 +879,9 @@ void AgentRuntime::commitResult(const QString& sessionId, AgentLoopState& result
     {
         std::unique_lock lock(mutex_);
         cancellationPublished_.wait(lock, [this] { return !cancellationEventPending_; });
-        if (cancelRequested_) {
+        if (cancelRequested_ && result.phase != AgentLoopPhase::Completed) {
             result.phase = AgentLoopPhase::Cancelled;
+            result.terminalReason = AgentTerminalReason::Cancelled;
             result.abortReason = QStringLiteral("Agent run cancelled by user.");
         }
         sessions_[sessionId] = result;
@@ -1042,8 +1053,9 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
     {
         std::unique_lock lock(mutex_);
         cancellationPublished_.wait(lock, [this] { return !cancellationEventPending_; });
-        if (cancelRequested_) {
+        if (cancelRequested_ && result.phase != AgentLoopPhase::Completed) {
             result.phase = AgentLoopPhase::Cancelled;
+            result.terminalReason = AgentTerminalReason::Cancelled;
             result.abortReason = QStringLiteral("Agent run cancelled by user.");
         }
         sessions_[sessionId] = result;

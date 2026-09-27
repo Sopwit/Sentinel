@@ -53,17 +53,34 @@ void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
 namespace {
 
 QString decisionActionKey(const AgentStepDecision& decision) {
-    QStringList argumentParts;
-    for (const auto& argument : decision.arguments) {
-        argumentParts.append(QStringLiteral("%1=%2").arg(argument.id, argument.value));
-    }
-    QString key = decision.toolId + QLatin1Char('|') + argumentParts.join(QLatin1Char(';'));
+    auto argumentsKey = [](const QList<ToolInvocationArgument>& arguments) {
+        QStringList parts;
+        for (const auto& argument : arguments)
+            parts.append(QStringLiteral("%1=%2").arg(argument.id, argument.value));
+        parts.sort();
+        return parts.join(QLatin1Char(';'));
+    };
+    QString key = decision.toolId + QLatin1Char('|') + argumentsKey(decision.arguments);
     for (const auto& call : decision.toolBatch) {
-        key += QLatin1Char('|') + call.toolId;
-        for (const auto& argument : call.arguments)
-            key += QStringLiteral(";%1=%2").arg(argument.id, argument.value);
+        key += QLatin1Char('|') + call.toolId + QLatin1Char(';') + argumentsKey(call.arguments);
     }
     return key;
+}
+
+bool repeatsUnchangedStep(const AgentLoopState& state, const ToolInvocationPlan& plan) {
+    if (plan.invocations.size() != 1 || state.steps.isEmpty())
+        return false;
+    const auto& previous = state.steps.last();
+    const auto& call = plan.invocations.first();
+    if (previous.toolId != call.toolId || previous.arguments.size() != call.arguments.size())
+        return false;
+    auto ordered = [](QList<ToolInvocationArgument> arguments) {
+        std::sort(arguments.begin(), arguments.end(), [](const auto& a, const auto& b) {
+            return a.id < b.id;
+        });
+        return arguments;
+    };
+    return ordered(previous.arguments) == ordered(call.arguments);
 }
 
 void fillRecordFromPlan(AgentStepRecord& record, const ToolInvocationPlan& plan) {
@@ -358,7 +375,10 @@ void AgentLoop::resumeAsync(AgentLoopState state, bool approved, QObject* contex
     } else {
         appendBlockedStep(asyncState_, plan, thought, QStringLiteral("Denied"),
                           QStringLiteral("User denied execution in chat."));
-        scheduleAsyncAdvance();
+        asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.terminalReason = AgentTerminalReason::ApprovalDenied;
+        asyncState_.abortReason = QStringLiteral("User denied the required action.");
+        completeAsync();
     }
 }
 
@@ -407,6 +427,7 @@ void AgentLoop::advanceAsync() {
     }
     if (asyncState_.steps.size() >= config_.maxIterations) {
         asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.terminalReason = AgentTerminalReason::IterationLimit;
         asyncState_.abortReason =
             QStringLiteral("Iteration limit reached (%1 steps).").arg(config_.maxIterations);
         completeAsync();
@@ -447,6 +468,8 @@ void AgentLoop::advanceAsync() {
     if (decision.kind == AgentStepDecision::Kind::GiveUp) {
         asyncState_.providerFailure = decision.providerFailure;
         asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.terminalReason = decision.providerFailure
+            ? AgentTerminalReason::ProviderFailure : AgentTerminalReason::UnableToComplete;
         asyncState_.abortReason =
             decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
         completeAsync();
@@ -458,6 +481,15 @@ void AgentLoop::advanceAsync() {
         appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Unknown Tool"),
                           QStringLiteral("Unknown tool requested: %1").arg(decision.toolId));
         scheduleAsyncAdvance();
+        return;
+    }
+    if (repeatsUnchangedStep(asyncState_, plan)) {
+        asyncState_.phase = AgentLoopPhase::Stuck;
+        asyncState_.terminalReason = asyncState_.steps.last().succeeded
+            ? AgentTerminalReason::UnableToComplete : AgentTerminalReason::ToolFailure;
+        asyncState_.abortReason = QStringLiteral(
+            "Agent repeated the same tool call without a changed argument or intervening observation.");
+        completeAsync();
         return;
     }
     doomDetector_.recordAction(asyncState_.sessionId, decisionActionKey(decision));
@@ -540,7 +572,10 @@ void AgentLoop::advanceAsync() {
     if (approval.status == ApprovalStatus::Denied) {
         appendBlockedStep(asyncState_, plan, decision.thought, QStringLiteral("Denied"),
                           QStringLiteral("Denied by approval policy: %1").arg(approval.summary));
-        scheduleAsyncAdvance();
+        asyncState_.phase = AgentLoopPhase::Failed;
+        asyncState_.terminalReason = AgentTerminalReason::SecurityDenied;
+        asyncState_.abortReason = QStringLiteral("Required action denied by authorization policy.");
+        completeAsync();
         return;
     }
     executeStepAsync(plan, decision.thought, approval);
@@ -627,6 +662,10 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
             record.structuredObservation = result.structuredObservation;
             record.sandbox = result.sandbox;
             asyncState_.steps.append(record);
+            if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
+                planner_.setPlannerFeedback(QStringLiteral(
+                    "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+                    "the same call unchanged.").arg(record.toolId, record.statusText, record.observation));
             if (descriptor)
                 recordEvidence(asyncState_, *descriptor, plan, result.status, result.summary,
                                index, result.structuredObservation, result.mutations);
@@ -698,6 +737,11 @@ void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString&
                 record.structuredObservation = result.structuredObservation;
                 record.sandbox = result.sandbox;
                 asyncState_.steps.append(record);
+                if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
+                    planner_.setPlannerFeedback(QStringLiteral(
+                        "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+                        "the same call unchanged.").arg(record.toolId, record.statusText,
+                                                         record.observation));
                 if (one.invocations.first().descriptorSnapshot)
                     recordEvidence(asyncState_, *one.invocations.first().descriptorSnapshot,
                                    one, result.status, result.summary, record.index,
@@ -746,7 +790,10 @@ AgentLoopState AgentLoop::resume(AgentLoopState state, bool approved) {
     if (!approved) {
         appendBlockedStep(state, pendingPlan, thought, QStringLiteral("Denied"),
                           QStringLiteral("User denied execution in chat."));
-        return advance(std::move(state));
+        state.phase = AgentLoopPhase::Failed;
+        state.terminalReason = AgentTerminalReason::ApprovalDenied;
+        state.abortReason = QStringLiteral("User denied the required action.");
+        return state;
     }
 
     grantExternalPaths(pendingPlan, state.sessionId);
@@ -773,6 +820,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
 
         if (static_cast<int>(state.steps.size()) >= config_.maxIterations) {
             state.phase = AgentLoopPhase::Failed;
+            state.terminalReason = AgentTerminalReason::IterationLimit;
             state.abortReason =
                 QStringLiteral("Iteration limit reached (%1 steps).").arg(config_.maxIterations);
             return state;
@@ -811,6 +859,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         if (decision.kind == AgentStepDecision::Kind::GiveUp) {
             state.providerFailure = decision.providerFailure;
             state.phase = AgentLoopPhase::Failed;
+            state.terminalReason = decision.providerFailure
+                ? AgentTerminalReason::ProviderFailure : AgentTerminalReason::UnableToComplete;
             state.abortReason =
                 decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
             return state;
@@ -828,6 +878,14 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         auto plan = planFromDecision(decision);
+        if (repeatsUnchangedStep(state, plan)) {
+            state.phase = AgentLoopPhase::Stuck;
+            state.terminalReason = state.steps.last().succeeded
+                ? AgentTerminalReason::UnableToComplete : AgentTerminalReason::ToolFailure;
+            state.abortReason = QStringLiteral(
+                "Agent repeated the same tool call without a changed argument or intervening observation.");
+            return state;
+        }
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
         if (doomDetector_.isStuck(state.sessionId)) {
             state.phase = AgentLoopPhase::Stuck;
@@ -916,7 +974,10 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             appendBlockedStep(
                 state, plan, decision.thought, QStringLiteral("Denied"),
                 QStringLiteral("Denied by approval policy: %1").arg(approval.summary));
-            continue;
+            state.phase = AgentLoopPhase::Failed;
+            state.terminalReason = AgentTerminalReason::SecurityDenied;
+            state.abortReason = QStringLiteral("Required action denied by authorization policy.");
+            return state;
         }
 
         executeStep(state, plan, decision.thought, approval);
@@ -977,6 +1038,10 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
     record.structuredObservation = result.structuredObservation;
     record.sandbox = result.sandbox;
     state.steps.append(record);
+    if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
+        planner_.setPlannerFeedback(QStringLiteral(
+            "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+            "the same call unchanged.").arg(record.toolId, record.statusText, record.observation));
     if (descriptor)
         recordEvidence(state, *descriptor, plan, result.status, result.summary, stepIndex, result.structuredObservation, result.mutations);
     if (toolCallback_) {
@@ -1102,6 +1167,7 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
         state.finalClaims = decision.claims;
         state.finalAnswer = gate.answerOverride.isEmpty() ? decision.answer : gate.answerOverride;
         state.phase = AgentLoopPhase::Completed;
+        state.terminalReason = AgentTerminalReason::Completed;
         return true;
     }
     ++state.rejectedFinalAnswers;
