@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/chat/ChatContentRepresentation.h"
 
 #include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/security/SQLitePermissionGrantStore.h"
@@ -17,6 +18,8 @@
 #include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/memory/StaticMemoryCatalog.h"
+#include "sentinel/core/model/ModelLibrary.h"
+#include "sentinel/core/model/ModelOperationService.h"
 #include "sentinel/core/model/StaticModelRouter.h"
 #include "sentinel/core/model/StaticProviderCatalog.h"
 #include "sentinel/core/runtime/AlarmStore.h"
@@ -55,32 +58,6 @@ namespace {
 
 int toInt(qsizetype value) {
     return static_cast<int>(value);
-}
-
-bool requiresLiveWebSearch(const QString& prompt) {
-    const auto normalized = prompt.toLower().simplified();
-    static const QStringList livePhrases{
-        QStringLiteral("hava durumu"),  QStringLiteral("hava nasıl"), QStringLiteral("hava nasil"),
-        QStringLiteral("weather"),      QStringLiteral("forecast"),   QStringLiteral("temperature"),
-        QStringLiteral("en son"),       QStringLiteral("güncel"),     QStringLiteral("guncel"),
-        QStringLiteral("bugün"),        QStringLiteral("bugun"),      QStringLiteral("son dakika"),
-        QStringLiteral("latest"),       QStringLiteral("current"),    QStringLiteral("today"),
-        QStringLiteral("breaking news")};
-    for (const auto& phrase : livePhrases) {
-        if (normalized.contains(phrase)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool isWeatherPrompt(const QString& prompt) {
-    const auto normalized = prompt.toLower().simplified();
-    return normalized.contains(QStringLiteral("hava durumu")) ||
-           normalized.contains(QStringLiteral("hava nasıl")) ||
-           normalized.contains(QStringLiteral("hava nasil")) ||
-           normalized.contains(QStringLiteral("weather")) ||
-           normalized.contains(QStringLiteral("forecast"));
 }
 
 AgentActivityStatus planActivityStatus(ToolInvocationPlanStatus status) {
@@ -882,6 +859,19 @@ ApplicationController::ApplicationController(
     modelService_->setLmStudioEndpoint(lmStudioEndpoint());
     modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
     modelService_->setLocalInferenceTimeoutMs(localInferenceTimeoutMs_);
+    modelLibrary_ = std::make_unique<ModelLibraryService>(*modelService_);
+    modelOperations_ = std::make_unique<ModelOperationService>(*modelService_, *modelLibrary_);
+    modelOperations_->setOllamaEndpoint(ollamaEndpoint());
+    modelOperations_->setLmStudioEndpoint(lmStudioEndpoint());
+    connect(modelOperations_.get(), &ModelOperationService::catalogChanged, this,
+            [this](const QString& providerId) {
+                emit modelLibraryChanged();
+                if (providerId == QLatin1String("hugging-face")) return;
+                emit chatMessagesChanged();
+                emit ollamaStatusChanged();
+                emit localModelSelectionChanged();
+                emit runtimeProviderRegistryChanged();
+            });
     if (agentRuntime_) {
         agentRunStore_ = std::make_unique<SQLiteAgentRunStore>(
             QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
@@ -964,6 +954,43 @@ ApplicationController::ApplicationController(
         }
     }
     initializeActiveConversation();
+    connect(modelService_.get(), &ModelService::selectedModelChanged, this,
+            [this]() {
+                emit chatMessagesChanged();
+                emit localChatInferenceRoutingChanged();
+            });
+    connect(modelService_.get(), &ModelService::modelCapabilitiesChanged, this,
+            [this]() { emit chatMessagesChanged(); });
+    connect(modelService_.get(), &ModelService::providerRegistryChanged, this,
+            [this]() { emit chatMessagesChanged(); });
+    if (conversationStore_ && conversationStore_->status() == ConversationStoreStatus::Ready) {
+        chatMode_ = std::make_unique<ChatModeService>(*modelService_, *chatSession_,
+                                                       *conversationStore_, this);
+        connect(chatMode_.get(), &ChatModeService::messagesChanged, this, [this]() {
+            refreshConversationHistorySummary();
+            emit chatMessagesChanged();
+        });
+        connect(chatMode_.get(), &ChatModeService::requestStateChanged, this, [this]() {
+            if (chatMode_->busy()) {
+                const auto active = chatMode_->activeMessage();
+                setChatSendLifecycle(chatMessageStatusName(active.status),
+                                     active.content.isEmpty() ? QStringLiteral("Generating response.")
+                                                              : active.content);
+            } else {
+                const auto& history = chatSession_->messages();
+                if (!history.isEmpty() && history.last().role == ChatRole::Assistant) {
+                    const auto& last = history.last();
+                    setChatSendLifecycle(chatMessageStatusName(last.status),
+                                         last.status == ChatMessageStatus::Completed
+                                             ? QStringLiteral("Response completed.")
+                                             : chatProviderErrorCategoryName(last.errorCategory));
+                    lastAgentResponse_ = last.content;
+                    emit agentResponseChanged();
+                }
+            }
+            emit chatMessagesChanged();
+        });
+    }
     refreshConversationHistorySummary();
     resetConversationSearchSummary();
     refreshLatestTaskPlan();
@@ -2037,6 +2064,7 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
         std::make_unique<OllamaLocalInferenceStreamClient>(config), this,
         localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
     modelService_->setOllamaEndpoint(ollamaEndpoint());
+    if (modelOperations_) modelOperations_->setOllamaEndpoint(ollamaEndpoint());
     refreshModelDiscovery();
     emit ollamaStatusChanged();
 }
@@ -2051,6 +2079,7 @@ void ApplicationController::setLmStudioEndpoint(const QString& endpoint) {
         return;
     lmStudioEndpoint_ = endpoint;
     modelService_->setLmStudioEndpoint(lmStudioEndpoint());
+    if (modelOperations_) modelOperations_->setLmStudioEndpoint(lmStudioEndpoint());
     refreshModelDiscovery();
     emit ollamaStatusChanged();
 }
@@ -3775,87 +3804,18 @@ QString ApplicationController::localChatInferenceSummary() const {
 }
 
 bool ApplicationController::localChatSendAvailable() const {
-    if (!isLocalChatProvider() || !localChatInferenceEnabled_ || localInferenceBusy_ ||
-        activeConversationArchived() || !localInferenceEndpointAllowed()) {
-        return false;
-    }
-
-    const auto selected = selectedLocalModel().trimmed();
-    if (selected.isEmpty()) {
-        return false;
-    }
-
-    // Cloud and LM Studio providers do not rely on Ollama model discovery.
-    // If the endpoint is allowed and a model is set, they are ready to send.
-    if (isLMStudioProvider()) {
-        return true;
-    }
-
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return false;
-    }
-
-    const auto models = currentOllamaModels();
-    return !models.isEmpty() && discoveredModelNamesContain(selected, models);
+    const auto selected = modelService_->selectedModel();
+    return chatMode_ && !chatMode_->busy() && !localInferenceBusy_ &&
+           !activeConversationArchived() && selected.isValid();
 }
 
 QString ApplicationController::localChatSendAvailabilitySummary() const {
-    if (activeConversationArchived()) {
-        return activeConversationStateSummary();
-    }
-    if (!isLocalChatProvider()) {
-        return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
-                              "Ollama or LM Studio to send.");
-    }
-    // For cloud and LM Studio we read the display name from config; Ollama uses its own label.
-    const auto providerLabel = isLMStudioProvider()
-                                   ? currentCloudOrLMStudioConfig().providerDisplayName()
-                                   : QStringLiteral("Ollama");
-    if (!localChatInferenceEnabled_) {
-        return isLMStudioProvider()
-                   ? QString::fromUtf8("Enable chat inference in Settings to send with %1.")
-                         .arg(providerLabel)
-                   : QStringLiteral("Enable Local chat inference in Settings to send with Ollama.");
-    }
-    if (localInferenceBusy_) {
-        return QStringLiteral("Sentinel is responding. Wait for the current request to finish.");
-    }
-    if (!localInferenceEndpointAllowed()) {
-        return isLMStudioProvider()
-                   ? QString::fromUtf8("%1 API key is missing or endpoint is not allowed.")
-                         .arg(providerLabel)
-                   : QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
-    }
-
-    const auto selected = selectedLocalModel().trimmed();
-    if (selected.isEmpty()) {
-        return isLMStudioProvider()
-                   ? QString::fromUtf8("Select a model for %1 in Settings before sending.")
-                         .arg(providerLabel)
-                   : QStringLiteral("Select an installed Ollama model in Settings before sending.");
-    }
-
-    // Cloud and LM Studio providers do not use Ollama model discovery.
-    if (isLMStudioProvider()) {
-        return QString::fromUtf8("Ready to send with %1.").arg(providerLabel);
-    }
-
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
-    }
-    const auto models = currentOllamaModels();
-    if (models.isEmpty()) {
-        return QStringLiteral("Ollama is reachable, but no installed model list is available.");
-    }
-    if (!discoveredModelNamesContain(selected, models)) {
-        return QString::fromUtf8("Selected model %1 is not installed in Ollama. Choose an "
-                                 "available model in Settings.")
-            .arg(selected);
-    }
-
-    return QString::fromUtf8("Ready to send with Local %1.").arg(providerLabel);
+    if (activeConversationArchived()) return activeConversationStateSummary();
+    if (chatMode_ && chatMode_->busy()) return QStringLiteral("A chat response is active.");
+    if (localInferenceBusy_) return QStringLiteral("Another local request is active.");
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid()) return QStringLiteral("Select a provider and model before sending.");
+    return QStringLiteral("Ready to send.");
 }
 
 QString ApplicationController::chatSendLifecycleState() const {
@@ -5388,6 +5348,8 @@ ApplicationController::conversationMessageRecordFromChatMessage(const ChatMessag
     return ConversationMessageRecord{
         activeConversationId_, message.id,        message.role,
         message.content,       message.timestamp, message.status,
+        message.providerUsed, message.modelUsed, message.replyToMessageId,
+        message.replacesMessageId, message.partial, message.errorCategory,
     };
 }
 
@@ -5395,6 +5357,9 @@ ChatMessage ApplicationController::chatMessageFromConversationMessageRecord(
     const ConversationMessageRecord& message) const {
     return ChatMessage{
         message.messageId, message.role, message.content, message.timestampUtc, message.status,
+        message.providerId, message.modelId, {}, -1, -1, 0.0,
+        message.replyToMessageId, message.replacesMessageId, message.partial,
+        message.errorCategory,
     };
 }
 
@@ -5428,34 +5393,14 @@ void ApplicationController::initializeActiveConversation() {
         return;
     }
 
-    // Purge/delete any empty conversations from the store to prevent database clutter
     const auto records = conversationStore_->listConversations();
+    const ConversationRecord* latest = nullptr;
     for (const auto& record : records) {
-        if (!record.deleted) {
-            const auto msgs = conversationStore_->loadMessages(record.id);
-            if (msgs.isEmpty()) {
-                conversationStore_->deleteConversation(record.id);
-            }
-        }
+        if (!record.archived && !record.deleted &&
+            (!latest || record.updatedAtUtc > latest->updatedAtUtc)) latest = &record;
     }
-
-    // Check if there is an existing non-archived, non-deleted conversation that has messages
-    const auto updatedRecords = conversationStore_->listConversations();
-    QString latestId;
-    for (const auto& record : updatedRecords) {
-        if (!record.archived && !record.deleted) {
-            const auto msgs = conversationStore_->loadMessages(record.id);
-            if (!msgs.isEmpty()) {
-                latestId = record.id;
-                break;
-            }
-        }
-    }
-
-    bool isTestEnv = !QCoreApplication::instance() ||
-                     QCoreApplication::applicationName() != QStringLiteral("Sentinel");
-    if (isTestEnv && !latestId.isEmpty()) {
-        activeConversationId_ = latestId;
+    if (latest) {
+        activeConversationId_ = latest->id;
         loadActiveConversationTranscript();
         return;
     }
@@ -5509,7 +5454,17 @@ void ApplicationController::loadActiveConversationTranscript() {
     QList<ChatMessage> messages;
     messages.reserve(storedMessages.size());
     for (const auto& message : storedMessages) {
-        messages.append(chatMessageFromConversationMessageRecord(message));
+        auto restored = chatMessageFromConversationMessageRecord(message);
+        if (restored.role == ChatRole::Assistant &&
+            (restored.status == ChatMessageStatus::Queued ||
+             restored.status == ChatMessageStatus::Sending ||
+             restored.status == ChatMessageStatus::Streaming)) {
+            restored.status = ChatMessageStatus::Interrupted;
+            restored.partial = !restored.content.isEmpty();
+            conversationStore_->appendMessage(
+                conversationMessageRecordFromChatMessage(restored));
+        }
+        messages.append(restored);
     }
     chatSession_->loadMessages(messages);
     if (chatSession_->messages().isEmpty()) {
@@ -6030,7 +5985,15 @@ QStringList ApplicationController::chatMessages() const {
         if (message.role == ChatRole::User) {
             result.append(QStringLiteral("You: %1").arg(message.content));
         } else {
-            result.append(QStringLiteral("Sentinel: %1").arg(message.content));
+            const auto display = message.content.isEmpty() &&
+                (message.status == ChatMessageStatus::Failed ||
+                 message.status == ChatMessageStatus::Interrupted ||
+                 message.status == ChatMessageStatus::Cancelled)
+                ? message.status == ChatMessageStatus::Interrupted
+                    ? QStringLiteral("Generation interrupted.")
+                    : chatProviderErrorCategoryName(message.errorCategory)
+                : message.content;
+            result.append(QStringLiteral("Sentinel: %1").arg(display));
         }
     }
     return result;
@@ -7619,6 +7582,8 @@ bool ApplicationController::requestConversationExport(const QString& format) {
 }
 
 bool ApplicationController::requestPermanentDeleteConversation(const QString& conversationId) {
+    if (chatMode_ && chatMode_->busy() && conversationId.trimmed() == activeConversationId_)
+        return false;
     latestConversationDeleteResult_ = ConversationDeleteResult{};
     latestConversationDeleteResult_.conversationId = conversationId.trimmed();
 
@@ -7684,6 +7649,7 @@ bool ApplicationController::requestPermanentDeleteConversation(const QString& co
 }
 
 QString ApplicationController::createConversation(const QString& title) {
+    if (chatMode_ && chatMode_->busy()) return {};
     if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
         return {};
     }
@@ -7712,6 +7678,7 @@ QString ApplicationController::createConversation(const QString& title) {
 }
 
 bool ApplicationController::switchConversation(const QString& conversationId) {
+    if (chatMode_ && chatMode_->busy()) return false;
     const auto trimmedId = conversationId.trimmed();
     if (trimmedId.isEmpty() || !conversationStore_ ||
         conversationStore_->status() != ConversationStoreStatus::Ready) {
@@ -7871,6 +7838,8 @@ QString ApplicationController::duplicateConversation(const QString& conversation
 }
 
 bool ApplicationController::archiveConversation(const QString& conversationId) {
+    if (chatMode_ && chatMode_->busy() && conversationId.trimmed() == activeConversationId_)
+        return false;
     if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
         return false;
     }
@@ -8052,269 +8021,203 @@ bool ApplicationController::requestConversationSummaryGeneration() {
 }
 
 bool ApplicationController::sendMessage(const QString& message) {
-    const auto trimmed = message.trimmed();
-    if (trimmed.isEmpty()) {
+    if (!chatMode_ || activeConversationArchived() || localInferenceBusy_ ||
+        message.trimmed().isEmpty()) {
         setChatSendLifecycle(QStringLiteral("refused"),
-                             QStringLiteral("Enter a prompt before sending."));
-        if (lastAgentResponse_ != QStringLiteral("Enter a prompt before sending.")) {
-            lastAgentResponse_ = QStringLiteral("Enter a prompt before sending.");
-            emit agentResponseChanged();
-        }
+                             QStringLiteral("Chat is not ready for this message."));
         return false;
     }
-
-    setChatSendLifecycle(QStringLiteral("validating"),
-                         QStringLiteral("Checking local chat send readiness."));
-
-    if (activeConversationArchived()) {
-        setChatSendLifecycle(QStringLiteral("refused"), activeConversationStateSummary());
-        if (lastAgentResponse_ != activeConversationStateSummary()) {
-            lastAgentResponse_ = activeConversationStateSummary();
-            emit agentResponseChanged();
-        }
-        return false;
-    }
-
-    if (localInferenceBusy_) {
-        LocalInferenceRequest request;
-        request.prompt = trimmed;
-        request.options.model = effectiveLocalModel({});
-        request.options.timeoutMs = localInferenceTimeoutMs_;
-        request.options.temperature = localInferenceTemperature_;
-        request.options.topP = localInferenceTopP_;
-        request.options.maxTokens = localInferenceMaxTokens_;
-        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
-            request, LocalInferenceError::BusyRequest,
-            QStringLiteral("Local inference request rejected: another request is already "
-                           "running."));
-        latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
-        latestLocalInferenceStreamResult_.accumulatedText.clear();
+    if (chatMode_->busy()) {
         setChatSendLifecycle(QStringLiteral("refused"),
-                             QStringLiteral("A request is already active. Wait for it to finish."));
-        emit localInferenceChanged();
-        emit localChatInferenceRoutingChanged();
-        if (lastAgentResponse_ != latestLocalInferenceResponse_.summary) {
-            lastAgentResponse_ = latestLocalInferenceResponse_.summary;
-            emit agentResponseChanged();
-        }
+                             QStringLiteral("A chat response is already active."));
         return false;
     }
+    const auto accepted = chatMode_->send(activeConversationId_, message);
+    if (!accepted)
+        setChatSendLifecycle(QStringLiteral("refused"),
+                             QStringLiteral("The message could not be persisted or sent."));
+    return accepted;
+}
 
-    if (localChatInferenceEnabled_ && hasActiveLocalInferenceRuntime() &&
-        !localChatSendAvailable()) {
-        const auto localChatEffectiveModel = effectiveLocalModel({});
-        const auto localChatHealth = currentOllamaHealthCheck();
-        LocalInferenceRequest request;
-        request.prompt = trimmed;
-        request.options.model = localChatEffectiveModel;
-        const auto reason = localChatSendAvailabilitySummary();
-        auto error = LocalInferenceError::RequestFailed;
-        auto status = LocalInferenceStatus::Blocked;
-        if (!isLocalChatProvider() || !localChatInferenceEnabled_) {
-            error = LocalInferenceError::PermissionDenied;
-        } else if (localInferenceBusy_) {
-            error = LocalInferenceError::BusyRequest;
-            status = LocalInferenceStatus::Busy;
-        } else if (!localInferenceEndpointAllowed()) {
-            error = LocalInferenceError::EndpointBlocked;
-        } else if (selectedLocalModel().trimmed().isEmpty() || localChatEffectiveModel.isEmpty()) {
-            error = LocalInferenceError::MissingModel;
-            status = LocalInferenceStatus::InvalidRequest;
-        } else if (!isLMStudioProvider() &&
-                   localChatHealth.healthStatus != OllamaHealthStatus::Healthy) {
-            error = LocalInferenceError::OllamaNotRunning;
-            status = LocalInferenceStatus::Error;
-            request.options.timeoutMs = localChatHealth.timeoutMs;
-        } else {
-            error = LocalInferenceError::ModelUnavailable;
-            status = LocalInferenceStatus::ModelUnavailable;
+bool ApplicationController::stopChatGeneration() {
+    return chatMode_ && chatMode_->stop();
+}
+
+bool ApplicationController::chatGenerationActive() const {
+    return chatMode_ && chatMode_->busy();
+}
+
+QString ApplicationController::activeChatProviderId() const {
+    return chatMode_ && chatMode_->busy() ? chatMode_->activeMessage().providerUsed
+                                          : modelService_->selectedModel().providerId;
+}
+
+QString ApplicationController::activeChatModelId() const {
+    return chatMode_ && chatMode_->busy() ? chatMode_->activeMessage().modelUsed
+                                          : modelService_->selectedModel().modelId;
+}
+
+QString ApplicationController::chatErrorCategory() const {
+    if (chatMode_ && chatMode_->lastError() != ChatProviderErrorCategory::None)
+        return chatProviderErrorCategoryName(chatMode_->lastError());
+    for (auto it = chatSession_->messages().crbegin(); it != chatSession_->messages().crend(); ++it)
+        if (it->role == ChatRole::Assistant)
+            return chatProviderErrorCategoryName(it->errorCategory);
+    return QStringLiteral("None");
+}
+
+QString ApplicationController::chatCatalogState() const {
+    const auto selected = modelService_->selectedModel();
+    return providerCatalogStateName(modelService_->providerStatus(selected.providerId,
+                                                                   selected.modelId).catalog);
+}
+
+QString ApplicationController::chatProviderKind() const {
+    const auto selected = modelService_->selectedModel();
+    if (!selected.isValid()) return QStringLiteral("Unknown");
+    return modelService_->currentModelMetadata(selected.providerId, selected.modelId)
+                       .providerKind == ProviderKind::Local
+        ? QStringLiteral("Local") : QStringLiteral("Cloud");
+}
+
+bool ApplicationController::chatAttachmentInputAvailable() const {
+    return false;
+}
+
+QVariantMap ApplicationController::chatInputCapabilities() const {
+    const auto selected = modelService_->selectedModel();
+    const auto capabilities = modelService_->capabilities(selected.providerId, selected.modelId);
+    return {
+        {QStringLiteral("text"), true},
+        {QStringLiteral("imageModelSupport"),
+         capabilities.visionInput == CapabilitySupport::Supported},
+        {QStringLiteral("audioModelSupport"),
+         capabilities.audioInput == CapabilitySupport::Supported},
+        {QStringLiteral("structuredModelSupport"),
+         capabilities.structuredOutput == CapabilitySupport::Supported},
+        {QStringLiteral("imageAccepted"), false},
+        {QStringLiteral("audioAccepted"), false},
+        {QStringLiteral("attachmentAccepted"), false},
+        {QStringLiteral("structuredInputAccepted"), false},
+        {QStringLiteral("reason"), QStringLiteral("Chat attachment transport is not implemented.")},
+    };
+}
+
+bool ApplicationController::regenerateChatResponse(int userMessageId) {
+    if (!chatMode_ || chatMode_->busy() || activeConversationArchived()) return false;
+    int latestUserId = 0;
+    QString requestedText;
+    for (const auto& message : chatSession_->messages())
+        if (message.role == ChatRole::User) {
+            latestUserId = message.id;
+            if (message.id == userMessageId) requestedText = message.content;
         }
-        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(request, error, reason);
-        latestLocalInferenceResponse_.status = status;
-        latestLocalInferenceResponse_.timeoutMs = request.options.timeoutMs;
-        latestLocalInferenceStreamResult_.accumulatedText.clear();
-        const auto providerLabel =
-            isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
-        setConversationRuntimeRequest(QStringLiteral("local-inference-blocked"),
-                                      request.options.model,
-                                      QStringLiteral("Local ") + providerLabel, false);
-        setConversationRuntimeResult(false, reason);
-        setChatSendLifecycle(QStringLiteral("refused"), reason);
-        emit localInferenceChanged();
-        emit localChatInferenceRoutingChanged();
-        if (lastAgentResponse_ != reason) {
-            lastAgentResponse_ = reason;
-            emit agentResponseChanged();
+    if (requestedText.isEmpty()) return false;
+    if (userMessageId != latestUserId)
+        return !editAndResendChatMessage(userMessageId, requestedText).isEmpty();
+    return chatMode_->regenerate(activeConversationId_, userMessageId);
+}
+
+bool ApplicationController::retryChatResponse(int assistantMessageId) {
+    if (!chatMode_ || chatMode_->busy() || activeConversationArchived()) return false;
+    int targetUserId = 0;
+    int latestUserId = 0;
+    QString targetText;
+    for (const auto& message : chatSession_->messages()) {
+        if (message.role == ChatRole::User) {
+            latestUserId = message.id;
         }
-        return false;
+        if (message.id == assistantMessageId && message.role == ChatRole::Assistant &&
+            (message.status == ChatMessageStatus::Failed ||
+             message.status == ChatMessageStatus::Interrupted ||
+             message.status == ChatMessageStatus::Error))
+            targetUserId = message.replyToMessageId;
     }
-
-    resetCompletedConversationState();
-    transitionConversationState(ConversationState::Listening,
-                                QStringLiteral("chat input metadata received"));
-    transitionConversationState(ConversationState::Planning,
-                                QStringLiteral("chat request metadata prepared"));
-    transitionConversationState(ConversationState::Routing,
-                                QStringLiteral("chat route metadata selected"));
-
-    const auto userMessage = chatSession_->appendUserMessage(trimmed);
-    persistActiveConversationMessage(userMessage);
-    latestConversationSummaryGenerationResult_ = {};
-    setChatSendLifecycle(QStringLiteral("sending"),
-                         QStringLiteral("Prompt accepted and added to the local transcript."));
-    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-        chatHistoryStore_->appendMessage(userMessage);
-        conversationHistorySummary_.lastSavedStatus =
-            chatHistoryStore_->lastError().isEmpty() ? QStringLiteral("Saved latest user message.")
-                                                     : QStringLiteral("User message save failed.");
-    } else {
-        conversationHistorySummary_.lastSavedStatus =
-            QStringLiteral("Runtime-only transcript; persistence unavailable.");
+    if (targetUserId == 0) return false;
+    if (targetUserId != latestUserId) {
+        for (const auto& message : chatSession_->messages())
+            if (message.id == targetUserId) targetText = message.content;
+        return !editAndResendChatMessage(targetUserId, targetText).isEmpty();
     }
+    return chatMode_->retry(activeConversationId_, assistantMessageId);
+}
 
-    QString effectivePrompt = trimmed;
-    if (requiresLiveWebSearch(trimmed)) {
-        const auto* executor = dynamic_cast<const RealToolExecutor*>(toolExecutor_.get());
-        const auto searchQuery = isWeatherPrompt(trimmed)
-                                     ? QStringLiteral("%1 current weather today").arg(trimmed)
-                                     : trimmed;
-        const auto liveSearch = executor ? executor->searchWeb(searchQuery) : WebSearchResponse{};
-        if (!liveSearch.success || liveSearch.results.isEmpty()) {
-            const auto reason =
-                liveSearch.errorString.trimmed().isEmpty()
-                    ? QStringLiteral("No current web results were available.")
-                    : QStringLiteral("Live web search failed: %1").arg(liveSearch.errorString);
-            const auto assistantMessage = chatSession_->appendAssistantMessage(
-                QStringLiteral("Güncel bilgi veremiyorum: %1 Eski veya doğrulanmamış bilgi "
-                               "kullanmayacağım.")
-                    .arg(reason),
-                ChatMessageStatus::Error);
-            persistActiveConversationMessage(assistantMessage);
-            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-                chatHistoryStore_->appendMessage(assistantMessage);
-            }
-            setChatSendLifecycle(QStringLiteral("failed"), reason);
-            lastAgentResponse_ = assistantMessage.content;
-            refreshConversationHistorySummary();
-            emit chatMessagesChanged();
-            emit agentResponseChanged();
-            return true;
+QString ApplicationController::editAndResendChatMessage(int userMessageId, const QString& text) {
+    if (!chatMode_ || chatMode_->busy() || text.trimmed().isEmpty() || text.size() > 12000 ||
+        !conversationStore_ || activeConversationArchived()) return {};
+    const auto source = activeConversationId_;
+    const auto original = conversationStore_->loadMessages(source);
+    auto target = std::find_if(original.cbegin(), original.cend(), [&](const auto& message) {
+        return message.messageId == userMessageId && message.role == ChatRole::User;
+    });
+    if (target == original.cend()) return {};
+    const auto branch = conversationStore_->createConversation(
+        QStringLiteral("Branch: %1").arg(text.simplified().left(56)));
+    if (branch.id.isEmpty()) return {};
+    for (auto item : original) {
+        if (item.messageId > userMessageId) break;
+        item.conversationId = branch.id;
+        if (item.messageId == userMessageId) {
+            item.content = text.trimmed();
+            item.status = ChatMessageStatus::Completed;
         }
-
-        QStringList resultLines;
-        for (const auto& result : liveSearch.results) {
-            resultLines.append(
-                QStringLiteral("- %1 | %2 | %3").arg(result.title, result.url, result.snippet));
+        if (!conversationStore_->appendMessage(item)) {
+            conversationStore_->deleteConversation(branch.id);
+            return {};
         }
-        effectivePrompt =
-            QStringLiteral("Answer the user's request using only the following live web search "
-                           "results. Do not invent current facts, and state when the results "
-                           "are insufficient.\n\nUser request: %1\n\nLive web results:\n%2")
-                .arg(trimmed, resultLines.join(QStringLiteral("\n")));
     }
+    if (!switchConversation(branch.id)) {
+        conversationStore_->deleteConversation(branch.id);
+        return {};
+    }
+    if (!chatMode_->sendExisting(branch.id, userMessageId)) {
+        switchConversation(source);
+        conversationStore_->deleteConversation(branch.id);
+        return {};
+    }
+    return branch.id;
+}
 
-    if (localChatInferenceEnabled_ && hasActiveLocalInferenceRuntime()) {
-        transitionConversationState(ConversationState::ReadyToRespond,
-                                    QStringLiteral("local chat inference metadata ready"));
-        transitionConversationState(ConversationState::Responding,
-                                    QStringLiteral("local chat inference metadata active"));
+QVariantList ApplicationController::chatMessageRecords() const {
+    QVariantList records;
+    for (const auto& message : chatSession_->messages()) {
+        QVariantMap item;
+        item.insert(QStringLiteral("id"), message.id);
+        item.insert(QStringLiteral("role"), chatRoleName(message.role));
+        item.insert(QStringLiteral("status"), chatMessageStatusName(message.status));
+        item.insert(QStringLiteral("content"), message.content);
+        item.insert(QStringLiteral("contentFormat"), QStringLiteral("markdown"));
+        item.insert(QStringLiteral("contentParts"), chatContentPartsVariant(message.content));
+        item.insert(QStringLiteral("partial"), message.partial);
+        item.insert(QStringLiteral("providerId"), message.providerUsed);
+        item.insert(QStringLiteral("modelId"), message.modelUsed);
+        item.insert(QStringLiteral("errorCategory"),
+                    chatProviderErrorCategoryName(message.errorCategory));
+        item.insert(QStringLiteral("replyToMessageId"), message.replyToMessageId);
+        item.insert(QStringLiteral("replacesMessageId"), message.replacesMessageId);
+        item.insert(QStringLiteral("canRetry"), message.role == ChatRole::Assistant &&
+            (message.status == ChatMessageStatus::Failed ||
+             message.status == ChatMessageStatus::Interrupted ||
+             message.status == ChatMessageStatus::Error));
+        records.append(item);
+    }
+    return records;
+}
 
-        refreshConversationHistorySummary();
-        emit chatMessagesChanged();
-        emit contextAssemblyChanged();
-        activeLocalInferenceIsChatRequest_ = true;
-        const auto selected = modelService_->selectedModel();
-        const auto canStream = modelService_->capabilities(selected.providerId, selected.modelId)
-                                   .streaming == CapabilitySupport::Supported;
-        const auto startedLocalInference = canStream && localInferenceStreamingAvailable()
-                                               ? runLocalInferenceStream(effectivePrompt, {})
-                                               : runLocalInference(effectivePrompt, {});
-        if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {
-            return true;
-        }
-
-        finalizeLocalChatInference(false);
-        return true;
+QVariantList ApplicationController::searchChats(const QString& query) const {
+    QVariantList results;
+    if (!conversationStore_) return results;
+    for (const auto& record : conversationStore_->searchConversations(query, 50)) {
+        QVariantMap item;
+        item.insert(QStringLiteral("id"), record.id);
+        item.insert(QStringLiteral("title"), record.title);
+        item.insert(QStringLiteral("updatedAt"), record.updatedAtUtc);
+        item.insert(QStringLiteral("messageCount"), record.messageCount);
+        item.insert(QStringLiteral("archived"), record.archived);
+        item.insert(QStringLiteral("pinned"), record.pinned);
+        results.append(item);
     }
-
-    auto resolvedChat = modelService_->resolve(modelService_->selectedModel());
-    if (!resolvedChat.ok() || resolvedChat.provider->status() != ChatProviderStatus::Ready) {
-        transitionConversationState(ConversationState::Error,
-                                    QStringLiteral("provider metadata unavailable"));
-        const auto errorMessage = chatSession_->appendAssistantMessage(
-            resolvedChat.ok()
-                ? QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus())
-                : modelBindingFailureSummary(resolvedChat),
-            ChatMessageStatus::Error);
-        persistActiveConversationMessage(errorMessage);
-        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-            chatHistoryStore_->appendMessage(errorMessage);
-            conversationHistorySummary_.lastSavedStatus =
-                chatHistoryStore_->lastError().isEmpty()
-                    ? QStringLiteral("Saved latest assistant message.")
-                    : QStringLiteral("Assistant message save failed.");
-        } else {
-            conversationHistorySummary_.lastSavedStatus =
-                QStringLiteral("Runtime-only transcript; persistence unavailable.");
-        }
-        setConversationRuntimeRequest(QStringLiteral("provider-chat-request"),
-                                      QStringLiteral("None"),
-                                      QStringLiteral("Provider: %1").arg(providerName()), false);
-        setConversationRuntimeResult(false, errorMessage.content);
-        setChatSendLifecycle(QStringLiteral("failed"), errorMessage.content);
-        refreshConversationHistorySummary();
-        emit chatMessagesChanged();
-        emit contextAssemblyChanged();
-        if (lastAgentResponse_ != errorMessage.content) {
-            lastAgentResponse_ = errorMessage.content;
-            emit agentResponseChanged();
-        }
-        return true;
-    }
-
-    transitionConversationState(ConversationState::ReadyToRespond,
-                                QStringLiteral("chat response metadata ready"));
-    transitionConversationState(ConversationState::Responding,
-                                QStringLiteral("chat response metadata active"));
-    const auto reply = resolvedChat.provider->sendMessage(effectivePrompt);
-    if (!reply.success) {
-        transitionConversationState(ConversationState::Error,
-                                    QStringLiteral("chat provider returned error metadata"));
-    } else {
-        transitionConversationState(ConversationState::Completed,
-                                    QStringLiteral("chat response metadata completed"));
-    }
-    const auto assistantMessage = chatSession_->appendAssistantMessage(
-        reply.success ? reply.message
-                      : QStringLiteral("Provider error [%1]: %2")
-                            .arg(chatProviderErrorCategoryName(reply.category),
-                                 reply.errorMessage),
-        reply.success ? ChatMessageStatus::Received : ChatMessageStatus::Error);
-    persistActiveConversationMessage(assistantMessage);
-    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-        chatHistoryStore_->appendMessage(assistantMessage);
-        conversationHistorySummary_.lastSavedStatus =
-            chatHistoryStore_->lastError().isEmpty()
-                ? QStringLiteral("Saved latest assistant message.")
-                : QStringLiteral("Assistant message save failed.");
-    } else {
-        conversationHistorySummary_.lastSavedStatus =
-            QStringLiteral("Runtime-only transcript; persistence unavailable.");
-    }
-    setConversationRuntimeRequest(
-        QStringLiteral("provider-chat-request"), resolvedChat.binding.modelId,
-        QStringLiteral("Provider: %1").arg(resolvedChat.provider->name()), false);
-    setConversationRuntimeResult(reply.success, assistantMessage.content);
-    setChatSendLifecycle(reply.success ? QStringLiteral("completed") : QStringLiteral("failed"),
-                         assistantMessage.content);
-    refreshConversationHistorySummary();
-    emit chatMessagesChanged();
-    emit contextAssemblyChanged();
-    if (lastAgentResponse_ != assistantMessage.content) {
-        lastAgentResponse_ = assistantMessage.content;
-        emit agentResponseChanged();
-    }
-    return true;
+    return results;
 }
 
 bool ApplicationController::runLocalInference(const QString& prompt, const QString& model) {
@@ -9858,34 +9761,42 @@ CredentialStore ApplicationController::currentCredentialStore() const {
 }
 
 ModelRegistry ApplicationController::currentModelRegistry() const {
-    // Resolve the label for the active local runtime so discovered models carry
-    // the right provider attribution instead of always showing "Ollama".
-    struct ProviderMeta {
-        QString id;
-        QString label;
-    };
-    const ProviderMeta activeMeta = [&]() -> ProviderMeta {
-        if (selectedRuntimeProvider() == QStringLiteral("lm-studio"))
-            return {QStringLiteral("lm-studio"), QStringLiteral("LM Studio")};
-        if (selectedRuntimeProvider() == QStringLiteral("llama-cpp-server"))
-            return {QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server")};
-        if (selectedRuntimeProvider() == QStringLiteral("openai-compatible-local"))
-            return {QStringLiteral("openai-compatible-local"),
-                    QStringLiteral("OpenAI-compatible Local")};
-        if (selectedRuntimeProvider() == QStringLiteral("cloud-api") ||
-            selectedRuntimeProvider() == QStringLiteral("openai") ||
-            selectedRuntimeProvider() == QStringLiteral("claude") ||
-            selectedRuntimeProvider() == QStringLiteral("gemini") ||
-            selectedRuntimeProvider() == QStringLiteral("deepseek") ||
-            selectedRuntimeProvider() == QStringLiteral("groq") ||
-            selectedRuntimeProvider() == QStringLiteral("mistral"))
-            return {QStringLiteral("cloud-api"), QStringLiteral("Cloud")};
-        return {QStringLiteral("ollama"), QStringLiteral("Ollama")};
-    }();
-
-    auto models = modelSummariesFromOllama(currentOllamaModels(), activeMeta.id, activeMeta.label);
-    const auto selectedModel = isLocalChatProvider() ? selectedLocalModel() : QString();
-    return ModelRegistry{models, selectedRuntimeProvider(), selectedModel};
+    if (!ollamaCacheInitialized_) initializeOllamaCache();
+    QList<ModelSummary> models;
+    for (const auto& entry : modelLibrary_->entries()) {
+        if (entry.provider.id.isEmpty()) continue;
+        ModelSummary model;
+        model.id = entry.id;
+        model.providerId = entry.provider.id;
+        model.rawName = entry.nativeModelId;
+        model.displayName = entry.displayName;
+        model.family = entry.family.isEmpty() ? QStringLiteral("Unknown") : entry.family;
+        model.format = entry.format.isEmpty() ? QStringLiteral("Unknown") : entry.format;
+        model.capabilities = {ModelCapability::Chat};
+        if (entry.capabilities.streaming == CapabilitySupport::Supported)
+            model.capabilities.append(ModelCapability::Streaming);
+        if (entry.capabilities.nativeToolCalling == CapabilitySupport::Supported)
+            model.capabilities.append(ModelCapability::Tools);
+        if (entry.capabilities.visionInput == CapabilitySupport::Supported)
+            model.capabilities.append(ModelCapability::Vision);
+        if (entry.capabilities.audioInput == CapabilitySupport::Supported ||
+            entry.capabilities.audioOutput == CapabilitySupport::Supported)
+            model.capabilities.append(ModelCapability::Audio);
+        model.readiness = entry.availability == ModelLibraryAvailability::Available
+            ? ModelReadiness::Available : ModelReadiness::Unknown;
+        model.status = entry.availability == ModelLibraryAvailability::Available
+            ? ModelStatus::Available : ModelStatus::Unknown;
+        model.source = entry.local ? ModelSource::Local : ModelSource::Cloud;
+        model.approximateDiskSizeBytes = entry.diskBytes.value_or(0);
+        model.contextLength = entry.capabilities.contextWindow.value_or(0);
+        model.runtimeBadge = {entry.provider.displayName,
+                              entry.local ? QStringLiteral("Local") : QStringLiteral("Cloud"),
+                              modelReadinessName(model.readiness)};
+        model.summary = entry.catalogDetail;
+        models.append(model);
+    }
+    const auto selected = modelService_->selectedModel();
+    return ModelRegistry{models, selected.providerId, selected.modelId};
 }
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
@@ -10118,6 +10029,8 @@ void ApplicationController::pollOllama() {
                     emit runtimeProviderRegistryChanged();
                     emit localChatInferenceRoutingChanged();
                 }
+                if (provider == QLatin1String("lm-studio") && modelOperations_)
+                    modelOperations_->refresh(provider);
 
                 // A credential or provider change arrived while this thread was
                 // running. Start a fresh poll now that the thread is gone.
@@ -10232,6 +10145,7 @@ bool ApplicationController::clearMemory() {
 }
 
 bool ApplicationController::clearChat() {
+    if (chatMode_ && chatMode_->busy()) return false;
     const auto persistentAvailable = chatHistoryStore_ && chatHistoryStore_->isAvailable();
     auto persistentHealthy = persistentAvailable;
     latestConversationClearResult_.persistentStoreAvailable = persistentAvailable;

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/desktop/ChatMessageListModel.h"
+#include "sentinel/core/chat/ChatContentRepresentation.h"
 
 namespace sentinel::desktop {
 
@@ -29,6 +30,14 @@ QVariant ChatMessageListModel::data(const QModelIndex& index, int role) const {
         return message.timestamp.toString(Qt::ISODate);
     case StatusRole:
         return core::chatMessageStatusName(message.status);
+    case PartialRole: return message.partial;
+    case ProviderRole: return message.providerUsed;
+    case ModelRole: return message.modelUsed;
+    case ErrorCategoryRole:
+        return core::chatProviderErrorCategoryName(message.errorCategory);
+    case ReplyToRole: return message.replyToMessageId;
+    case ReplacesRole: return message.replacesMessageId;
+    case ContentPartsRole: return core::chatContentPartsVariant(message.content);
     default:
         return {};
     }
@@ -38,6 +47,10 @@ QHash<int, QByteArray> ChatMessageListModel::roleNames() const {
     return {
         {IdRole, "messageId"},        {RoleRole, "messageRole"},     {ContentRole, "content"},
         {TimestampRole, "timestamp"}, {StatusRole, "messageStatus"},
+        {PartialRole, "partial"}, {ProviderRole, "providerId"},
+        {ModelRole, "modelId"}, {ErrorCategoryRole, "errorCategory"},
+        {ReplyToRole, "replyToMessageId"}, {ReplacesRole, "replacesMessageId"},
+        {ContentPartsRole, "contentParts"},
     };
 }
 
@@ -65,7 +78,8 @@ void ChatMessageListModel::setMessages(const QList<core::ChatMessage>& messages)
                 const auto& oldMsg = messages_.at(i);
                 const auto& newMsg = messages.at(i);
                 if (oldMsg.content != newMsg.content || oldMsg.status != newMsg.status ||
-                    oldMsg.timestamp != newMsg.timestamp) {
+                    oldMsg.timestamp != newMsg.timestamp || oldMsg.partial != newMsg.partial ||
+                    oldMsg.errorCategory != newMsg.errorCategory) {
                     messages_[i] = newMsg;
                     emit dataChanged(index(i), index(i));
                 }
@@ -91,7 +105,8 @@ void ChatMessageListModel::setMessages(const QList<core::ChatMessage>& messages)
                 return;
             }
             if (oldMsg.content != newMsg.content || oldMsg.status != newMsg.status ||
-                oldMsg.timestamp != newMsg.timestamp) {
+                oldMsg.timestamp != newMsg.timestamp || oldMsg.partial != newMsg.partial ||
+                oldMsg.errorCategory != newMsg.errorCategory) {
                 messages_[i] = newMsg;
                 emit dataChanged(index(i), index(i));
             }

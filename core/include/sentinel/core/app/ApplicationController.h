@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include "sentinel/core/chat/ChatModeService.h"
 
 #include "sentinel/core/agent/AgentActivityLog.h"
 #include "sentinel/core/agent/AgentLoopState.h"
@@ -70,6 +71,8 @@ namespace sentinel::core {
 class AlarmStore;
 class AppSettings;
 class ControlledTaskService;
+class ModelLibraryService;
+class ModelOperationService;
 
 class ApplicationController final : public QObject {
     Q_OBJECT
@@ -531,6 +534,16 @@ class ApplicationController final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString chatSendLifecycleSummary READ chatSendLifecycleSummary NOTIFY
                    localChatInferenceRoutingChanged)
+    Q_PROPERTY(bool chatGenerationActive READ chatGenerationActive NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString activeChatProviderId READ activeChatProviderId NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString activeChatModelId READ activeChatModelId NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatErrorCategory READ chatErrorCategory NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatCatalogState READ chatCatalogState NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatProviderKind READ chatProviderKind NOTIFY chatMessagesChanged)
+    Q_PROPERTY(bool chatAttachmentInputAvailable READ chatAttachmentInputAvailable NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QVariantMap chatInputCapabilities READ chatInputCapabilities NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -849,6 +862,7 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QVariantList chatMessageRecords READ chatMessageRecords NOTIFY chatMessagesChanged)
     Q_PROPERTY(
         QString conversationStoreStatus READ conversationStoreStatus NOTIFY chatMessagesChanged)
     Q_PROPERTY(int conversationStoreConversationCount READ conversationStoreConversationCount NOTIFY
@@ -1105,6 +1119,9 @@ public:
         std::unique_ptr<IAgentStepPlanner> agentStepPlanner = nullptr,
         std::unique_ptr<ModelService> modelService = nullptr, QObject* parent = nullptr);
     ~ApplicationController() override;
+
+    ModelLibraryService* modelLibrary() const { return modelLibrary_.get(); }
+    ModelOperationService* modelOperations() const { return modelOperations_.get(); }
 
     QString providerName() const;
     QString providerStatus() const;
@@ -1461,6 +1478,14 @@ public:
     QString localChatSendAvailabilitySummary() const;
     QString chatSendLifecycleState() const;
     QString chatSendLifecycleSummary() const;
+    bool chatGenerationActive() const;
+    QString activeChatProviderId() const;
+    QString activeChatModelId() const;
+    QString chatErrorCategory() const;
+    QString chatCatalogState() const;
+    QString chatProviderKind() const;
+    bool chatAttachmentInputAvailable() const;
+    QVariantMap chatInputCapabilities() const;
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     PromptContextInjectionResult latestPromptContextInjectionResult() const;
@@ -1867,11 +1892,17 @@ public:
     void setConversationExportDirectory(const QString& directoryPath);
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool stopChatGeneration();
+    Q_INVOKABLE bool regenerateChatResponse(int userMessageId);
+    Q_INVOKABLE bool retryChatResponse(int assistantMessageId);
+    Q_INVOKABLE QString editAndResendChatMessage(int userMessageId, const QString& text);
+    QVariantList chatMessageRecords() const;
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool requestConversationSummaryGeneration();
     Q_INVOKABLE bool cancelLocalInference();
     Q_INVOKABLE bool generatePiperTtsFile(const QString& text);
     Q_INVOKABLE bool searchConversation(const QString& query);
+    Q_INVOKABLE QVariantList searchChats(const QString& query) const;
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool requestConversationExport(const QString& format);
@@ -1909,6 +1940,7 @@ public:
     Q_INVOKABLE void refreshOllamaStatus();
 
 signals:
+    void modelLibraryChanged();
     void ollamaStatusChanged();
     void chatMessagesChanged();
     void memoryEntriesChanged();
@@ -2059,6 +2091,8 @@ private:
     WhisperTranscriptionReadiness currentWhisperTranscriptionReadiness() const;
 
     std::unique_ptr<ModelService> modelService_;
+    std::unique_ptr<ModelLibraryService> modelLibrary_;
+    std::unique_ptr<ModelOperationService> modelOperations_;
     std::unique_ptr<IAgentRunStore> agentRunStore_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
     std::unique_ptr<ControlledTaskService> controlledTaskService_;
@@ -2162,6 +2196,7 @@ private:
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
     std::unique_ptr<IConversationStore> conversationStore_;
+    std::unique_ptr<ChatModeService> chatMode_;
     QString memoryMaintenanceStatus_ = QStringLiteral("Ready");
     QString chatMaintenanceStatus_ = QStringLiteral("Ready");
     QString lastAgentResponse_ = QStringLiteral("No agent request yet.");

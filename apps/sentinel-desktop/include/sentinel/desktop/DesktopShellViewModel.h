@@ -577,6 +577,14 @@ class DesktopShellViewModel final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString chatSendLifecycleSummary READ chatSendLifecycleSummary NOTIFY
                    localChatInferenceRoutingChanged)
+    Q_PROPERTY(bool chatGenerationActive READ chatGenerationActive NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString activeChatProviderId READ activeChatProviderId NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString activeChatModelId READ activeChatModelId NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatErrorCategory READ chatErrorCategory NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatCatalogState READ chatCatalogState NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString chatProviderKind READ chatProviderKind NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QVariantMap chatInputCapabilities READ chatInputCapabilities NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -1874,6 +1882,13 @@ public:
     QString localChatSendAvailabilitySummary() const;
     QString chatSendLifecycleState() const;
     QString chatSendLifecycleSummary() const;
+    bool chatGenerationActive() const;
+    QString activeChatProviderId() const;
+    QString activeChatModelId() const;
+    QString chatErrorCategory() const;
+    QString chatCatalogState() const;
+    QString chatProviderKind() const;
+    QVariantMap chatInputCapabilities() const;
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     QString promptContextInjectionStatus() const;
@@ -2433,6 +2448,11 @@ public:
     QStringList controlledTaskSafetyGuarantees() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool regenerateChatResponse(int userMessageId);
+    Q_INVOKABLE bool regenerateLatestChatResponse();
+    Q_INVOKABLE bool retryChatResponse(int assistantMessageId);
+    Q_INVOKABLE QString editAndResendChatMessage(int userMessageId, const QString& text);
+    Q_INVOKABLE QVariantList searchChats(const QString& query) const;
     Q_INVOKABLE bool cancelLocalInference();
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool requestConversationSummaryGeneration();

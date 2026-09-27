@@ -21,9 +21,11 @@ ShellPanel {
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
     readonly property string sendState: viewModel.chatSendLifecycleState
-    readonly property bool sendBusy: sendState === "validating" || sendState === "sending"
+    readonly property bool sendBusy: sendState === "queued" || sendState === "validating" || sendState === "sending"
                                      || sendState === "streaming"
     readonly property bool streamingActive: sendState === "streaming"
+    property int editTargetMessageId: 0
+    property string editConversationId: ""
                                             || viewModel.localInferenceRuntimeState === "Streaming"
     readonly property string uiSelfCheck: "chat-scroll-safe-area composer-visible no-bridge-duplication"
     readonly property string disabledReason: viewModel.activeConversationArchived
@@ -202,11 +204,18 @@ ShellPanel {
         var prompt = promptInput.text.trim()
         if (prompt.length === 0 || !homeChat.canSend || homeChat.sendBusy)
             return
-        var accepted = homeChat.viewModel.sendMessage(promptInput.text)
-        var lifecycle = homeChat.viewModel.chatSendLifecycleState
-        if (accepted || lifecycle === "sending" || lifecycle === "streaming"
-                || lifecycle === "completed" || lifecycle === "failed") {
+        var accepted = false
+        if (homeChat.editTargetMessageId > 0
+                && homeChat.editConversationId === homeChat.viewModel.activeConversationId) {
+            accepted = homeChat.viewModel.editAndResendChatMessage(
+                homeChat.editTargetMessageId, promptInput.text) !== ""
+        } else {
+            accepted = homeChat.viewModel.sendMessage(promptInput.text)
+        }
+        if (accepted) {
             promptInput.clear()
+            homeChat.editTargetMessageId = 0
+            homeChat.editConversationId = ""
             recentMessages.followNewMessages = true
             homeChat.scrollToLatest(true)
         }
@@ -1531,7 +1540,10 @@ ShellPanel {
             delegate: Rectangle {
                 id: recentMessage
                 required property int index
+                required property int messageId
                 required property string messageRole
+                required property string messageStatus
+                required property int replyToMessageId
                 required property string content
                 readonly property bool displayable: messageRole !== "system"
 
@@ -1681,13 +1693,28 @@ ShellPanel {
                                     enabled: recentMessage.messageRole === "user"
                                     onTriggered: {
                                         promptInput.text = recentMessage.content
+                                        homeChat.editTargetMessageId = recentMessage.messageId
+                                        homeChat.editConversationId = homeChat.viewModel.activeConversationId
                                         promptInput.forceActiveFocus()
                                     }
                                 }
                                 MenuItem {
                                     text: qsTr("Regenerate")
-                                    enabled: recentMessage.messageRole !== "user" && homeChat.canSend && !homeChat.sendBusy
-                                    onTriggered: homeChat.viewModel.sendMessage(qsTr("Regenerate the previous response."))
+                                    enabled: recentMessage.messageRole !== "user"
+                                             && recentMessage.replyToMessageId > 0
+                                             && homeChat.canSend && !homeChat.sendBusy
+                                    onTriggered: homeChat.viewModel.regenerateChatResponse(
+                                        recentMessage.replyToMessageId)
+                                }
+                                MenuItem {
+                                    text: qsTr("Retry")
+                                    enabled: recentMessage.messageRole !== "user"
+                                             && (recentMessage.messageStatus === "failed"
+                                                 || recentMessage.messageStatus === "interrupted"
+                                                 || recentMessage.messageStatus === "error")
+                                             && !homeChat.sendBusy
+                                    onTriggered: homeChat.viewModel.retryChatResponse(
+                                        recentMessage.messageId)
                                 }
 
                                 MenuItem {
