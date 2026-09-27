@@ -21,6 +21,13 @@ public:
         ContentRole,
         TimestampRole,
         StatusRole,
+        PartialRole,
+        ProviderRole,
+        ModelRole,
+        ErrorCategoryRole,
+        ReplyToRole,
+        ReplacesRole,
+        ContentPartsRole,
     };
 
     explicit ChatMessageListModel(QObject* parent = nullptr);

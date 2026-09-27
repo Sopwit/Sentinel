@@ -2523,6 +2523,34 @@ QString DesktopShellViewModel::chatSendLifecycleSummary() const {
     return controller_.chatSendLifecycleSummary();
 }
 
+bool DesktopShellViewModel::chatGenerationActive() const {
+    return controller_.chatGenerationActive();
+}
+
+QString DesktopShellViewModel::activeChatProviderId() const {
+    return controller_.activeChatProviderId();
+}
+
+QString DesktopShellViewModel::activeChatModelId() const {
+    return controller_.activeChatModelId();
+}
+
+QString DesktopShellViewModel::chatErrorCategory() const {
+    return controller_.chatErrorCategory();
+}
+
+QString DesktopShellViewModel::chatCatalogState() const {
+    return controller_.chatCatalogState();
+}
+
+QString DesktopShellViewModel::chatProviderKind() const {
+    return controller_.chatProviderKind();
+}
+
+QVariantMap DesktopShellViewModel::chatInputCapabilities() const {
+    return controller_.chatInputCapabilities();
+}
+
 bool DesktopShellViewModel::promptContextInjectionEnabled() const {
     return controller_.promptContextInjectionEnabled();
 }
@@ -5638,8 +5666,33 @@ bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
 }
 
+bool DesktopShellViewModel::regenerateChatResponse(int userMessageId) {
+    return controller_.regenerateChatResponse(userMessageId);
+}
+
+bool DesktopShellViewModel::regenerateLatestChatResponse() {
+    int latestUserId = 0;
+    for (const auto& message : controller_.chatHistory())
+        if (message.role == core::ChatRole::User) latestUserId = message.id;
+    return latestUserId > 0 && controller_.regenerateChatResponse(latestUserId);
+}
+
+bool DesktopShellViewModel::retryChatResponse(int assistantMessageId) {
+    return controller_.retryChatResponse(assistantMessageId);
+}
+
+QString DesktopShellViewModel::editAndResendChatMessage(int userMessageId,
+                                                        const QString& text) {
+    return controller_.editAndResendChatMessage(userMessageId, text);
+}
+
+QVariantList DesktopShellViewModel::searchChats(const QString& query) const {
+    return controller_.searchChats(query);
+}
+
 bool DesktopShellViewModel::cancelLocalInference() {
-    return controller_.cancelLocalInference();
+    return controller_.chatGenerationActive() ? controller_.stopChatGeneration()
+                                              : controller_.cancelLocalInference();
 }
 
 bool DesktopShellViewModel::runLocalInference(const QString& prompt, const QString& model) {
