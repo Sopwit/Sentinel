@@ -51,6 +51,7 @@ struct ConversationRecord {
     bool archived = false;
     bool pinned = false;
     bool deleted = false;
+    bool userRenamed = false;
     int messageCount = 0;
     QString summary = QStringLiteral("Conversation metadata is not available.");
 };
@@ -72,6 +73,12 @@ struct ConversationMessageRecord {
     QString content;
     QDateTime timestampUtc;
     ChatMessageStatus status = ChatMessageStatus::Received;
+    QString providerId;
+    QString modelId;
+    int replyToMessageId = 0;
+    int replacesMessageId = 0;
+    bool partial = false;
+    ChatProviderErrorCategory errorCategory = ChatProviderErrorCategory::None;
 };
 
 struct ConversationSummaryMetadataRecord {
@@ -93,9 +100,20 @@ public:
 
     virtual ConversationRecord createConversation(const QString& title) = 0;
     virtual QList<ConversationRecord> listConversations() const = 0;
+    virtual QList<ConversationRecord> searchConversations(const QString& query,
+                                                           int limit = 50) const {
+        Q_UNUSED(query)
+        Q_UNUSED(limit)
+        return {};
+    }
     virtual bool appendMessage(const ConversationMessageRecord& message) = 0;
     virtual QList<ConversationMessageRecord> loadMessages(const QString& conversationId) const = 0;
     virtual bool renameConversation(const QString& conversationId, const QString& title) = 0;
+    virtual bool autoTitleConversation(const QString& conversationId, const QString& title) {
+        Q_UNUSED(conversationId)
+        Q_UNUSED(title)
+        return false;
+    }
     virtual bool archiveConversation(const QString& conversationId) = 0;
     virtual bool unarchiveConversation(const QString& conversationId) = 0;
     virtual bool pinConversation(const QString& conversationId) = 0;
