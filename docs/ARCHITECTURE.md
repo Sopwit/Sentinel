@@ -59,6 +59,26 @@
   routing, endpoint, and credential behind `IModelRouter` policy and returns
   provider-neutral `ModelBindingResolution` failures, so callers never construct providers
   themselves.
+- **Model Library (`ModelLibraryService`):** Normalizes provider catalogs, native LM Studio
+  metadata, and registered local GGUF files. It reads resolved capabilities from `ModelService`;
+  local file registration stores artifact identity and path without assigning capabilities.
+- **Model Operations (`ModelOperationService`):** Owns queued operation state and events for
+  Ollama HTTP pull/delete, scoped Ollama and LM Studio catalog refresh, local GGUF registration,
+  and external-manager opening. Local registrations and bounded source metadata persist;
+  operation history remains in memory. Failed discovery retains the last installed-model snapshot.
+- **Hugging Face Source (`HuggingFaceModelSource`):** A source adapter for bounded Hub search,
+  repository and artifact metadata, and stale offline cache. GGUF downloads use the operation
+  service and a managed storage root; commit-pinned source identity follows downloaded files
+  into local registrations. Hub tags never become inference capabilities or `ModelBinding`s.
+- **Managed model storage (`ModelStorageManager`):** Records the active and historical storage
+  roots without moving files. Artifact removal requires a matching Sentinel source sidecar and
+  content-addressed directory; unknown files and user directories are never swept. Download
+  operations check free space and use atomic temporary files. Hub credentials are supplied only
+  at request time and are not forwarded to cross-host download redirects.
+- **Hardware and fit:** `HardwareCapabilityService` obtains platform facts through an adapter;
+  Model Library fit and runtime status are informational only. Unknown GPU memory, runtime
+  loading, and model memory requirements remain unknown rather than influencing `ModelService`
+  binding or inventing a performance score.
 
 ### B. Workspace Isolation & Storage Separation
 - **Strict Scope Isolation:** Memory scopes, conversational history, and document embeddings are strictly separated by `workspace_id` (`Personal`, `Engineering`, `Student`, `Custom`).

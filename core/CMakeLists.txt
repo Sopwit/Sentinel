@@ -119,6 +119,11 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/IModelRouter.h
     include/sentinel/core/model/IProviderCatalog.h
     include/sentinel/core/model/ModelManagement.h
+    include/sentinel/core/model/ModelLibrary.h
+    include/sentinel/core/model/HuggingFaceModelSource.h
+    include/sentinel/core/model/ModelStorageManager.h
+    include/sentinel/core/model/HardwareCapabilityService.h
+    include/sentinel/core/model/ModelOperationService.h
     include/sentinel/core/model/ModelRegistry.h
     include/sentinel/core/model/ModelRouting.h
     include/sentinel/core/model/ModelService.h
@@ -382,6 +387,11 @@ add_library(sentinel_core STATIC
     src/memory/StaticMemoryCatalog.cpp
     src/platform/DefaultPlatformService.cpp
     src/model/ModelManagement.cpp
+    src/model/ModelLibrary.cpp
+    src/model/HuggingFaceModelSource.cpp
+    src/model/ModelStorageManager.cpp
+    src/model/HardwareCapabilityService.cpp
+    src/model/ModelOperationService.cpp
     src/model/ModelRegistry.cpp
     src/model/ModelService.cpp
     src/model/StaticModelRouter.cpp

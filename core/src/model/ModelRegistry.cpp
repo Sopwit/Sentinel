@@ -95,59 +95,6 @@ bool hasCapability(const ModelSummary& model, ModelCapability capability) {
     return model.capabilities.contains(capability);
 }
 
-ModelSummary catalogPlaceholder(const QString& providerId, const QString& providerLabel,
-                                const QString& modelName, const QString& family,
-                                const QString& sizeClass, QStringList capabilityLabels,
-                                const QString& ramClass, int contextLength,
-                                const QString& summary) {
-    QList<ModelCapability> capabilities;
-    for (const auto& label : capabilityLabels) {
-        const auto normalized = label.trimmed().toLower();
-        if (normalized == QStringLiteral("chat")) {
-            capabilities.append(ModelCapability::Chat);
-        } else if (normalized == QStringLiteral("code")) {
-            capabilities.append(ModelCapability::Code);
-        } else if (normalized == QStringLiteral("reasoning")) {
-            capabilities.append(ModelCapability::Reasoning);
-        } else if (normalized == QStringLiteral("vision")) {
-            capabilities.append(ModelCapability::Vision);
-        } else if (normalized == QStringLiteral("audio")) {
-            capabilities.append(ModelCapability::Audio);
-        } else if (normalized == QStringLiteral("embeddings")) {
-            capabilities.append(ModelCapability::Embeddings);
-        }
-    }
-    if (capabilities.isEmpty()) {
-        capabilities.append(ModelCapability::Unknown);
-    }
-
-    return ModelSummary{
-        QStringLiteral("%1/%2").arg(providerId, modelName),
-        providerId,
-        modelName,
-        modelName,
-        family,
-        QStringLiteral("Catalog metadata"),
-        sizeClass,
-        capabilities,
-        ModelReadiness::Disabled,
-        ModelStatus::Placeholder,
-        ModelSource::Placeholder,
-        0,
-        QStringLiteral("Unknown"),
-        ramClass,
-        contextLength,
-        ModelRestriction{true, true, true,
-                         QStringLiteral("%1 catalog entry is metadata-only; downloads, updates, "
-                                        "deletes, and execution are disabled.")
-                             .arg(providerLabel)},
-        ModelSafetyReport{},
-        ModelRuntimeBadge{providerLabel, QStringLiteral("Metadata Only"),
-                          modelReadinessName(ModelReadiness::Disabled)},
-        summary,
-    };
-}
-
 } // namespace
 
 QString modelCapabilityName(ModelCapability capability) {
@@ -425,56 +372,6 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
     return summaries;
 }
 
-QList<ModelSummary> localAiCatalogPlaceholders() {
-    return {
-        catalogPlaceholder(
-            QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
-            QStringLiteral("local-open-model"), QStringLiteral("Open Local Model"),
-            QStringLiteral("Unknown"),
-            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("reasoning")},
-            QStringLiteral("Model dependent"), 0,
-            QStringLiteral("LM Studio local server catalog is represented for "
-                           "readiness only. Sentinel does not probe or call it.")),
-        catalogPlaceholder(QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server"),
-                           QStringLiteral("gguf-local-model"), QStringLiteral("GGUF"),
-                           QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("code")},
-                           QStringLiteral("Quantization dependent"), 0,
-                           QStringLiteral("llama.cpp server metadata is future-scoped and "
-                                          "loopback-only when explicitly checked later.")),
-        catalogPlaceholder(QStringLiteral("openai-compatible-local"),
-                           QStringLiteral("OpenAI-compatible local endpoint"),
-                           QStringLiteral("local-endpoint-model"),
-                           QStringLiteral("OpenAI-compatible"), QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("reasoning")},
-                           QStringLiteral("Endpoint dependent"), 0,
-                           QStringLiteral("OpenAI-compatible local endpoint metadata is "
-                                          "disabled until explicit local configuration exists.")),
-        catalogPlaceholder(
-            QStringLiteral("huggingface-catalog"),
-            QStringLiteral("Hugging Face catalog placeholder"), QStringLiteral("hf-metadata-entry"),
-            QStringLiteral("Catalog"), QStringLiteral("Unknown"),
-            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("embeddings")},
-            QStringLiteral("Unknown"), 0,
-            QStringLiteral("Hugging Face appears as a catalog placeholder only; "
-                           "no catalog fetch or cloud call is performed.")),
-        catalogPlaceholder(
-            QStringLiteral("mlx-catalog"), QStringLiteral("MLX local/community catalog"),
-            QStringLiteral("mlx-metadata-entry"), QStringLiteral("MLX"), QStringLiteral("Unknown"),
-            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("reasoning")},
-            QStringLiteral("Apple Silicon dependent"), 0,
-            QStringLiteral("MLX models catalog optimized for Apple Silicon; "
-                           "Sentinel does not build or run them directly.")),
-        catalogPlaceholder(
-            QStringLiteral("custom-catalog"), QStringLiteral("Future custom catalogs"),
-            QStringLiteral("custom-metadata-entry"), QStringLiteral("Custom"),
-            QStringLiteral("Unknown"), {QStringLiteral("chat"), QStringLiteral("embeddings")},
-            QStringLiteral("Unknown"), 0,
-            QStringLiteral("Custom catalogs are represented as future metadata "
-                           "without import, scan, or fetch behavior.")),
-    };
-}
-
 ModelSummary disabledProviderModelPlaceholder(const QString& providerId,
                                               const QString& providerLabel) {
     const auto normalizedProvider = providerId.trimmed().isEmpty()
@@ -575,9 +472,7 @@ QStringList ModelRegistry::installedModelLibrarySummaries() const {
         }
     }
     return summaries.isEmpty()
-               ? QStringList{QStringLiteral("No installed model metadata is available. Safe "
-                                            "local Ollama discovery may populate this after an "
-                                            "explicit foreground readiness check.")}
+               ? QStringList{QStringLiteral("No installed model metadata is available.")}
                : summaries;
 }
 

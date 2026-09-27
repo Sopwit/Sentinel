@@ -193,7 +193,6 @@ modelSummariesFromOllama(const QList<OllamaModelSummary>& models,
                          const QString& providerLabel = QStringLiteral("Ollama"));
 ModelSummary disabledProviderModelPlaceholder(const QString& providerId,
                                               const QString& providerLabel);
-QList<ModelSummary> localAiCatalogPlaceholders();
 QStringList deterministicModelAdvisorRecommendations(const ModelAdvisorInput& input,
                                                      const ModelRegistry& registry);
 QStringList deterministicModelAdvisorAvoidList(const ModelAdvisorInput& input);
