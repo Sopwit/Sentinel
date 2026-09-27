@@ -83,6 +83,28 @@ void AgentExecutionScheduler::pump() {
     if (dispatching_ || completed_) return;
     const auto keepAlive = shared_from_this();
     dispatching_ = true;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (int i = 0; i < calls_.size(); ++i) {
+            if (started_.at(i)) continue;
+            for (const int dependency : invocation(calls_.at(i)).dependsOn) {
+                const bool invalid = dependency < 0 || dependency >= i;
+                const bool failed = !invalid && finished_.at(dependency) &&
+                    results_.at(dependency).status != ToolExecutionStatus::Succeeded &&
+                    results_.at(dependency).status != ToolExecutionStatus::PlaceholderSucceeded;
+                if (!invalid && !failed) continue;
+                started_[i] = true;
+                finished_[i] = true;
+                results_[i].status = ToolExecutionStatus::Blocked;
+                results_[i].summary = invalid
+                    ? QStringLiteral("Invalid tool dependency.")
+                    : QStringLiteral("Required tool dependency did not succeed.");
+                changed = true;
+                break;
+            }
+        }
+    }
     while (!cancelled_ && active_ < limit_) {
         int next = -1;
         for (int i = 0; i < calls_.size(); ++i)
