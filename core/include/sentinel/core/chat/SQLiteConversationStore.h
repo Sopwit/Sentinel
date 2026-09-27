@@ -22,9 +22,12 @@ public:
 
     ConversationRecord createConversation(const QString& title) override;
     QList<ConversationRecord> listConversations() const override;
+    QList<ConversationRecord> searchConversations(const QString& query,
+                                                  int limit = 50) const override;
     bool appendMessage(const ConversationMessageRecord& message) override;
     QList<ConversationMessageRecord> loadMessages(const QString& conversationId) const override;
     bool renameConversation(const QString& conversationId, const QString& title) override;
+    bool autoTitleConversation(const QString& conversationId, const QString& title) override;
     bool archiveConversation(const QString& conversationId) override;
     bool unarchiveConversation(const QString& conversationId) override;
     bool pinConversation(const QString& conversationId) override;
@@ -49,7 +52,7 @@ private:
     void initializeSchema();
     void setLastError(ConversationStoreErrorCode code, const QString& summary) const;
 
-    static constexpr int currentSchemaVersion = 3;
+    static constexpr int currentSchemaVersion = 5;
 
     QString databasePath_;
     QString connectionName_;

@@ -35,7 +35,31 @@ ChatMessageStatus statusFromName(const QString& status) {
     if (status == QStringLiteral("error")) {
         return ChatMessageStatus::Error;
     }
+    if (status == QStringLiteral("queued")) return ChatMessageStatus::Queued;
+    if (status == QStringLiteral("sending")) return ChatMessageStatus::Sending;
+    if (status == QStringLiteral("streaming")) return ChatMessageStatus::Streaming;
+    if (status == QStringLiteral("completed")) return ChatMessageStatus::Completed;
+    if (status == QStringLiteral("failed")) return ChatMessageStatus::Failed;
+    if (status == QStringLiteral("cancelled")) return ChatMessageStatus::Cancelled;
+    if (status == QStringLiteral("interrupted")) return ChatMessageStatus::Interrupted;
     return ChatMessageStatus::Received;
+}
+
+ChatProviderErrorCategory categoryFromName(const QString& name) {
+    for (const auto category : {ChatProviderErrorCategory::None,
+             ChatProviderErrorCategory::AuthenticationRequired,
+             ChatProviderErrorCategory::ModelNotFound,
+             ChatProviderErrorCategory::ProviderUnavailable,
+             ChatProviderErrorCategory::ConnectionFailed,
+             ChatProviderErrorCategory::Timeout,
+             ChatProviderErrorCategory::RateLimited,
+             ChatProviderErrorCategory::RequestRejected,
+             ChatProviderErrorCategory::CapabilityUnsupported,
+             ChatProviderErrorCategory::MalformedResponse,
+             ChatProviderErrorCategory::Cancelled,
+             ChatProviderErrorCategory::ProviderFailure})
+        if (chatProviderErrorCategoryName(category) == name) return category;
+    return ChatProviderErrorCategory::None;
 }
 
 QString boolText(bool value) {
@@ -125,12 +149,12 @@ QList<ConversationRecord> SQLiteConversationStore::listConversations() const {
 
     QSqlQuery query(database_);
     if (!query.exec(QStringLiteral("SELECT c.id, c.title, c.created_at, c.updated_at, "
-                                   "c.archived, c.pinned, c.deleted, COUNT(m.message_id) "
+                                   "c.archived, c.pinned, c.deleted, c.user_renamed, COUNT(m.message_id) "
                                    "FROM conversations c "
                                    "LEFT JOIN conversation_messages m ON m.conversation_id = c.id "
                                    "WHERE c.deleted = 0 "
                                    "GROUP BY c.id "
-                                   "ORDER BY c.rowid ASC"))) {
+                                   "ORDER BY c.pinned DESC, c.updated_at DESC, c.id ASC"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return records;
     }
@@ -144,11 +168,52 @@ QList<ConversationRecord> SQLiteConversationStore::listConversations() const {
         record.archived = query.value(4).toBool();
         record.pinned = query.value(5).toBool();
         record.deleted = query.value(6).toBool();
-        record.messageCount = query.value(7).toInt();
+        record.userRenamed = query.value(7).toBool();
+        record.messageCount = query.value(8).toInt();
         record.summary = conversationRecordSummary(record);
         records.append(record);
     }
 
+    setLastError(ConversationStoreErrorCode::None, {});
+    return records;
+}
+
+QList<ConversationRecord> SQLiteConversationStore::searchConversations(
+    const QString& queryText, int limit) const {
+    QList<ConversationRecord> records;
+    const auto needle = queryText.trimmed().left(128);
+    if (!database_.isOpen() || needle.isEmpty()) return records;
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral(
+        "SELECT c.id, c.title, c.created_at, c.updated_at, c.archived, c.pinned, "
+        "c.deleted, c.user_renamed, "
+        "(SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = c.id) "
+        "FROM conversations c WHERE c.deleted = 0 AND "
+        "(instr(lower(c.title), lower(?)) > 0 OR EXISTS "
+        "(SELECT 1 FROM conversation_messages m WHERE m.conversation_id = c.id "
+        "AND instr(lower(m.content), lower(?)) > 0)) "
+        "ORDER BY c.pinned DESC, c.updated_at DESC, c.id ASC LIMIT ?"));
+    query.addBindValue(needle);
+    query.addBindValue(needle);
+    query.addBindValue(qBound(1, limit, 50));
+    if (!query.exec()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return records;
+    }
+    while (query.next()) {
+        ConversationRecord record;
+        record.id = query.value(0).toString();
+        record.title = query.value(1).toString();
+        record.createdAtUtc = QDateTime::fromString(query.value(2).toString(), Qt::ISODateWithMs);
+        record.updatedAtUtc = QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs);
+        record.archived = query.value(4).toBool();
+        record.pinned = query.value(5).toBool();
+        record.deleted = query.value(6).toBool();
+        record.userRenamed = query.value(7).toBool();
+        record.messageCount = query.value(8).toInt();
+        record.summary = conversationRecordSummary(record);
+        records.append(record);
+    }
     setLastError(ConversationStoreErrorCode::None, {});
     return records;
 }
@@ -170,22 +235,40 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
         return false;
     }
 
+    if (!database_.transaction()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, database_.lastError().text());
+        return false;
+    }
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("INSERT INTO conversation_messages("
-                                 "conversation_id, message_id, role, content, timestamp, status) "
-                                 "VALUES(?, ?, ?, ?, ?, ?) "
+                                 "conversation_id, message_id, role, content, timestamp, status, "
+                                 "provider_id, model_id, reply_to_id, replaces_id, partial, error_category) "
+                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                                  "ON CONFLICT(conversation_id, message_id) DO UPDATE SET "
                                  "role = excluded.role,"
                                  "content = excluded.content,"
                                  "timestamp = excluded.timestamp,"
-                                 "status = excluded.status"));
+                                 "status = excluded.status,"
+                                 "provider_id = excluded.provider_id,"
+                                 "model_id = excluded.model_id,"
+                                 "reply_to_id = excluded.reply_to_id,"
+                                 "replaces_id = excluded.replaces_id,"
+                                 "partial = excluded.partial,"
+                                 "error_category = excluded.error_category"));
     query.addBindValue(message.conversationId);
     query.addBindValue(message.messageId);
     query.addBindValue(chatRoleName(message.role));
     query.addBindValue(message.content);
     query.addBindValue(message.timestampUtc.toUTC().toString(Qt::ISODateWithMs));
     query.addBindValue(chatMessageStatusName(message.status));
+    query.addBindValue(message.providerId);
+    query.addBindValue(message.modelId);
+    query.addBindValue(message.replyToMessageId);
+    query.addBindValue(message.replacesMessageId);
+    query.addBindValue(message.partial ? 1 : 0);
+    query.addBindValue(chatProviderErrorCategoryName(message.errorCategory));
     if (!query.exec()) {
+        database_.rollback();
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return false;
     }
@@ -195,10 +278,16 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
     update.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
     update.addBindValue(message.conversationId);
     if (!update.exec()) {
+        database_.rollback();
         setLastError(ConversationStoreErrorCode::StorageFailure, update.lastError().text());
         return false;
     }
 
+    if (!database_.commit()) {
+        database_.rollback();
+        setLastError(ConversationStoreErrorCode::StorageFailure, database_.lastError().text());
+        return false;
+    }
     setLastError(ConversationStoreErrorCode::None, {});
     return true;
 }
@@ -219,7 +308,8 @@ SQLiteConversationStore::loadMessages(const QString& conversationId) const {
 
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("SELECT conversation_id, message_id, role, content, timestamp, "
-                                 "status FROM conversation_messages "
+                                 "status, provider_id, model_id, reply_to_id, replaces_id, "
+                                 "partial, error_category FROM conversation_messages "
                                  "WHERE conversation_id = ? "
                                  "ORDER BY message_id ASC"));
     query.addBindValue(conversationId);
@@ -236,6 +326,9 @@ SQLiteConversationStore::loadMessages(const QString& conversationId) const {
             query.value(3).toString(),
             QDateTime::fromString(query.value(4).toString(), Qt::ISODateWithMs),
             statusFromName(query.value(5).toString()),
+            query.value(6).toString(), query.value(7).toString(),
+            query.value(8).toInt(), query.value(9).toInt(),
+            query.value(10).toBool(), categoryFromName(query.value(11).toString()),
         });
     }
 
@@ -257,7 +350,8 @@ bool SQLiteConversationStore::renameConversation(const QString& conversationId,
     }
 
     QSqlQuery query(database_);
-    query.prepare(QStringLiteral("UPDATE conversations SET title = ?, updated_at = ? "
+    query.prepare(QStringLiteral("UPDATE conversations SET title = ?, updated_at = ?, "
+                                 "user_renamed = 1 "
                                  "WHERE id = ? AND deleted = 0"));
     query.addBindValue(normalizedTitle(title));
     query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
@@ -269,6 +363,19 @@ bool SQLiteConversationStore::renameConversation(const QString& conversationId,
 
     setLastError(ConversationStoreErrorCode::None, {});
     return true;
+}
+
+bool SQLiteConversationStore::autoTitleConversation(const QString& conversationId,
+                                                     const QString& title) {
+    if (!database_.isOpen() || title.trimmed().isEmpty()) return false;
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("UPDATE conversations SET title = ?, updated_at = ? "
+                                 "WHERE id = ? AND deleted = 0 AND user_renamed = 0 "
+                                 "AND title IN ('Current Transcript', 'Untitled Conversation')"));
+    query.addBindValue(normalizedTitle(title));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+    query.addBindValue(conversationId);
+    return query.exec() && query.numRowsAffected() == 1;
 }
 
 bool SQLiteConversationStore::archiveConversation(const QString& conversationId) {
@@ -511,7 +618,8 @@ void SQLiteConversationStore::initializeSchema() {
                                    "updated_at TEXT NOT NULL,"
                                    "archived INTEGER NOT NULL DEFAULT 0,"
                                    "pinned INTEGER NOT NULL DEFAULT 0,"
-                                   "deleted INTEGER NOT NULL DEFAULT 0)"))) {
+                                   "deleted INTEGER NOT NULL DEFAULT 0,"
+                                   "user_renamed INTEGER NOT NULL DEFAULT 0)"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;
     }
@@ -519,6 +627,13 @@ void SQLiteConversationStore::initializeSchema() {
     if (!tableHasColumn(database_, QStringLiteral("conversations"), QStringLiteral("pinned")) &&
         !query.exec(QStringLiteral(
             "ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0"))) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return;
+    }
+    if (!tableHasColumn(database_, QStringLiteral("conversations"),
+                        QStringLiteral("user_renamed")) &&
+        !query.exec(QStringLiteral("ALTER TABLE conversations ADD COLUMN user_renamed "
+                                   "INTEGER NOT NULL DEFAULT 0"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;
     }
@@ -530,10 +645,33 @@ void SQLiteConversationStore::initializeSchema() {
                                    "content TEXT NOT NULL,"
                                    "timestamp TEXT NOT NULL,"
                                    "status TEXT NOT NULL,"
+                                   "provider_id TEXT NOT NULL DEFAULT '',"
+                                   "model_id TEXT NOT NULL DEFAULT '',"
+                                   "reply_to_id INTEGER NOT NULL DEFAULT 0,"
+                                   "replaces_id INTEGER NOT NULL DEFAULT 0,"
+                                   "partial INTEGER NOT NULL DEFAULT 0,"
+                                   "error_category TEXT NOT NULL DEFAULT 'None',"
                                    "PRIMARY KEY(conversation_id, message_id),"
                                    "FOREIGN KEY(conversation_id) REFERENCES conversations(id))"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;
+    }
+
+    const QList<QPair<QString, QString>> messageColumns{
+        {QStringLiteral("provider_id"), QStringLiteral("TEXT NOT NULL DEFAULT ''")},
+        {QStringLiteral("model_id"), QStringLiteral("TEXT NOT NULL DEFAULT ''")},
+        {QStringLiteral("reply_to_id"), QStringLiteral("INTEGER NOT NULL DEFAULT 0")},
+        {QStringLiteral("replaces_id"), QStringLiteral("INTEGER NOT NULL DEFAULT 0")},
+        {QStringLiteral("partial"), QStringLiteral("INTEGER NOT NULL DEFAULT 0")},
+        {QStringLiteral("error_category"), QStringLiteral("TEXT NOT NULL DEFAULT 'None'")},
+    };
+    for (const auto& column : messageColumns) {
+        if (!tableHasColumn(database_, QStringLiteral("conversation_messages"), column.first) &&
+            !query.exec(QStringLiteral("ALTER TABLE conversation_messages ADD COLUMN %1 %2")
+                            .arg(column.first, column.second))) {
+            setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+            return;
+        }
     }
 
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_summary_metadata("

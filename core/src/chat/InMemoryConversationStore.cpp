@@ -38,7 +38,33 @@ QList<ConversationRecord> InMemoryConversationStore::listConversations() const {
         }
         records.append(*it);
     }
+    std::sort(records.begin(), records.end(), [](const auto& a, const auto& b) {
+        if (a.pinned != b.pinned) return a.pinned;
+        if (a.updatedAtUtc != b.updatedAtUtc) return a.updatedAtUtc > b.updatedAtUtc;
+        return a.id < b.id;
+    });
     return records;
+}
+
+QList<ConversationRecord> InMemoryConversationStore::searchConversations(
+    const QString& query, int limit) const {
+    const auto needle = query.trimmed().left(128);
+    if (needle.isEmpty()) return {};
+    QList<ConversationRecord> matches;
+    for (const auto& record : listConversations()) {
+        bool found = record.title.contains(needle, Qt::CaseInsensitive);
+        if (!found) {
+            for (const auto& message : messagesByConversation_.value(record.id)) {
+                if (message.content.contains(needle, Qt::CaseInsensitive)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (found) matches.append(record);
+        if (matches.size() >= qBound(1, limit, 50)) break;
+    }
+    return matches;
 }
 
 bool InMemoryConversationStore::appendMessage(const ConversationMessageRecord& message) {
@@ -61,7 +87,10 @@ bool InMemoryConversationStore::appendMessage(const ConversationMessageRecord& m
     }
 
     auto conversationMessages = messagesByConversation_.value(conversation->id);
-    conversationMessages.append(message);
+    auto existing = std::find_if(conversationMessages.begin(), conversationMessages.end(),
+        [&](const auto& current) { return current.messageId == message.messageId; });
+    if (existing != conversationMessages.end()) *existing = message;
+    else conversationMessages.append(message);
     std::sort(conversationMessages.begin(), conversationMessages.end(),
               [](const ConversationMessageRecord& lhs, const ConversationMessageRecord& rhs) {
                   return lhs.messageId < rhs.messageId;
@@ -113,6 +142,7 @@ bool InMemoryConversationStore::renameConversation(const QString& conversationId
     }
 
     conversation->title = normalizedTitle(title);
+    conversation->userRenamed = true;
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
     conversation->summary = QStringLiteral("%1 (%2 %3)")
                                 .arg(conversation->title)
@@ -120,6 +150,18 @@ bool InMemoryConversationStore::renameConversation(const QString& conversationId
                                 .arg(conversation->messageCount == 1 ? QStringLiteral("message")
                                                                      : QStringLiteral("messages"));
     setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+bool InMemoryConversationStore::autoTitleConversation(const QString& conversationId,
+                                                       const QString& title) {
+    auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted || conversation->userRenamed ||
+        (conversation->title != QLatin1String("Current Transcript") &&
+         conversation->title != QLatin1String("Untitled Conversation"))) return false;
+    conversation->title = normalizedTitle(title);
+    conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
+    conversation->summary = conversationRecordSummary(*conversation);
     return true;
 }
 

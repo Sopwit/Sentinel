@@ -24,6 +24,15 @@ ChatMessage ChatSession::appendAssistantMessage(const QString& content, ChatMess
     return append(ChatRole::Assistant, content, status);
 }
 
+bool ChatSession::updateMessage(const ChatMessage& message) {
+    for (auto& current : messages_) {
+        if (current.id != message.id) continue;
+        current = message;
+        return true;
+    }
+    return false;
+}
+
 void ChatSession::loadMessages(QList<ChatMessage> messages) {
     int maxId = 0;
     for (const auto& message : messages) {
