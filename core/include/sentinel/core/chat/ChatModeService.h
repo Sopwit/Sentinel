@@ -1,0 +1,71 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include "sentinel/core/chat/ChatSession.h"
+#include "sentinel/core/chat/IConversationStore.h"
+#include "sentinel/core/model/ModelService.h"
+
+#include <QObject>
+#include <QThread>
+#include <atomic>
+#include <memory>
+
+namespace sentinel::core {
+
+enum class ChatAttachmentState { Selected, Processing, Ready, Rejected };
+
+struct ChatAttachment {
+    QString id;
+    QString fileName;
+    QString mimeType;
+    qint64 sizeBytes = 0;
+    QString localReference;
+    ChatAttachmentState state = ChatAttachmentState::Selected;
+    QString compatibilityReason;
+};
+
+class ChatModeService final : public QObject {
+    Q_OBJECT
+public:
+    ChatModeService(ModelService& models, ChatSession& session,
+                    IConversationStore& store, QObject* parent = nullptr);
+    ~ChatModeService() override;
+    bool send(const QString& conversationId, const QString& text,
+              const QList<ChatAttachment>& attachments = {});
+    bool regenerate(const QString& conversationId, int userMessageId);
+    bool retry(const QString& conversationId, int assistantMessageId);
+    bool sendExisting(const QString& conversationId, int userMessageId,
+                      int replacesMessageId = 0);
+    bool stop();
+    bool busy() const;
+    ChatMessage activeMessage() const;
+    ChatProviderErrorCategory lastError() const;
+
+signals:
+    void messagesChanged();
+    void requestStateChanged();
+
+private:
+    bool runTurn(const QString& conversationId, int userMessageId, int replacesMessageId);
+    void acceptDelta(const QString& conversationId, int messageId, const QString& delta);
+    void acceptResult(const QString& conversationId, int messageId,
+                      const ChatProviderReply& reply);
+    bool persist(const QString& conversationId, const ChatMessage& message);
+    QString contextFor(const QString& conversationId, int userMessageId) const;
+    static ChatProviderErrorCategory bindingError(ModelBindingError error);
+
+    ModelService& models_;
+    ChatSession& session_;
+    IConversationStore& store_;
+    QThread* worker_ = nullptr;
+    std::shared_ptr<std::atomic_bool> cancellation_;
+    QString activeConversationId_;
+    int activeMessageId_ = 0;
+    qint64 lastPersistMs_ = 0;
+    ChatProviderErrorCategory lastError_ = ChatProviderErrorCategory::None;
+};
+
+} // namespace sentinel::core

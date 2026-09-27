@@ -79,6 +79,14 @@
   Model Library fit and runtime status are informational only. Unknown GPU memory, runtime
   loading, and model memory requirements remain unknown rather than influencing `ModelService`
   binding or inventing a performance score.
+- **Chat Mode (`ChatModeService`):** Resolves one selected `ModelService` binding per turn,
+  runs the provider request off the UI thread, and persists queued, streaming, terminal,
+  and interrupted message states through the conversation store. Stop uses the provider
+  cancellation token; regeneration versions an assistant reply and edit/resend creates a
+  conversation branch. Chat sends bounded recent context plus a valid earlier summary,
+  without invoking AgentRuntime or tools. Raw Markdown remains copyable and a separate
+  presentation representation exposes text, code blocks, and safe web links. Attachment
+  metadata has a typed seam but is rejected until provider transports support it.
 
 ### B. Workspace Isolation & Storage Separation
 - **Strict Scope Isolation:** Memory scopes, conversational history, and document embeddings are strictly separated by `workspace_id` (`Personal`, `Engineering`, `Student`, `Custom`).
