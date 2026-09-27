@@ -123,6 +123,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/HuggingFaceModelSource.h
     include/sentinel/core/model/ModelStorageManager.h
     include/sentinel/core/model/HardwareCapabilityService.h
+    include/sentinel/core/chat/ChatModeService.h
+    include/sentinel/core/chat/ChatContentRepresentation.h
     include/sentinel/core/model/ModelOperationService.h
     include/sentinel/core/model/ModelRegistry.h
     include/sentinel/core/model/ModelRouting.h
@@ -391,6 +393,8 @@ add_library(sentinel_core STATIC
     src/model/HuggingFaceModelSource.cpp
     src/model/ModelStorageManager.cpp
     src/model/HardwareCapabilityService.cpp
+    src/chat/ChatModeService.cpp
+    src/chat/ChatContentRepresentation.cpp
     src/model/ModelOperationService.cpp
     src/model/ModelRegistry.cpp
     src/model/ModelService.cpp
