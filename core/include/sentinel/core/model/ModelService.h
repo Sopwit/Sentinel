@@ -162,10 +162,12 @@ public:
     QList<OllamaModelSummary> providerDiscoveredModels(const QString& providerId) const;
     void acceptProviderDiscovery(const QString& providerId,
                                  const QList<OllamaModelSummary>& models,
-                                 const ProviderDiscoveryOutcome& outcome, quint64 sequence);
+                                 const ProviderDiscoveryOutcome& outcome, quint64 sequence,
+                                 bool nativeCatalog = false);
     void acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result, quint64 sequence);
     OllamaModelDiscoveryResult ollamaDiscovery() const;
     QList<OllamaModelSummary> discoveredOllamaModels() const;
+    void applyOllamaModelMutation(const QString& modelId, bool installed);
     quint64 beginProviderHealthObservation() const;
     void reportProviderDiscovery(const QString& providerId, quint64 sequence,
                                  bool completed, ChatProviderErrorCategory category);

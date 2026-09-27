@@ -42,6 +42,7 @@ struct ProviderHealthRegistry {
         ProviderDiscoveryOutcome outcome;
         quint64 sequence = 0;
         bool observed = false;
+        bool nativeCatalog = false;
     };
     QHash<QString, Catalog> catalogs;
 };
@@ -1171,7 +1172,7 @@ ProviderCompletenessStatus ModelService::providerStatus(const QString& providerI
         status.errorCategory = discovery.errorCategory;
         status.safeDetail = discovery.safeDetail;
         if (discovery.succeeded()) {
-            for (const auto& model : discovery.models) status.modelIds.append(model.name);
+            for (const auto& model : discoveredOllamaModels()) status.modelIds.append(model.name);
             status.catalog = status.modelIds.isEmpty() ? ProviderCatalogState::Empty
                                                         : ProviderCatalogState::Available;
         } else if (discovery.lifecycle == ChatRequestLifecycle::Pending ||
@@ -1256,14 +1257,21 @@ QList<OllamaModelSummary> ModelService::providerDiscoveredModels(const QString& 
 void ModelService::acceptProviderDiscovery(const QString& providerId,
                                            const QList<OllamaModelSummary>& models,
                                            const ProviderDiscoveryOutcome& outcome,
-                                           quint64 sequence) {
+                                           quint64 sequence, bool nativeCatalog) {
     std::lock_guard lock(providerHealthRegistry_->mutex);
     auto& catalog = providerHealthRegistry_->catalogs[normalizedProviderId(providerId)];
     if (sequence < catalog.sequence) return;
+    if (catalog.nativeCatalog && !nativeCatalog) {
+        catalog.sequence = sequence;
+        return;
+    }
     catalog.sequence = sequence;
     catalog.observed = true;
     catalog.outcome = outcome;
-    if (outcome.completed) catalog.models = models;
+    if (outcome.completed && (!catalog.nativeCatalog || nativeCatalog)) {
+        catalog.models = models;
+        catalog.nativeCatalog = nativeCatalog;
+    }
 }
 
 void ModelService::acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result,
@@ -1287,6 +1295,25 @@ OllamaModelDiscoveryResult ModelService::ollamaDiscovery() const {
 QList<OllamaModelSummary> ModelService::discoveredOllamaModels() const {
     std::lock_guard lock(providerHealthRegistry_->mutex);
     return providerHealthRegistry_->ollamaModels;
+}
+
+void ModelService::applyOllamaModelMutation(const QString& modelId, bool installed) {
+    const auto name = modelId.trimmed();
+    if (name.isEmpty()) return;
+    std::lock_guard lock(providerHealthRegistry_->mutex);
+    auto& models = providerHealthRegistry_->ollamaModels;
+    models.removeIf([&](const auto& model) { return model.name == name; });
+    if (providerHealthRegistry_->ollamaDiscovery.succeeded()) {
+        providerHealthRegistry_->ollamaDiscovery.models.removeIf(
+            [&](const auto& model) { return model.name == name; });
+    }
+    if (installed) {
+        OllamaModelSummary model;
+        model.name = name;
+        models.append(model);
+        if (providerHealthRegistry_->ollamaDiscovery.succeeded())
+            providerHealthRegistry_->ollamaDiscovery.models.append(model);
+    }
 }
 
 quint64 ModelService::beginProviderHealthObservation() const {
