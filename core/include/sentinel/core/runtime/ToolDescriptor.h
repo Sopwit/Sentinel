@@ -62,6 +62,16 @@ enum class ToolExecutionMode {
 
 enum class ToolSource { BuiltIn, MCP, Plugin, Internal };
 enum class ToolScope { Local, Cloud, LocalAndCloud };
+enum class ToolMaturity { ProductionReady, Partial, Experimental, Deprecated, Internal };
+enum class ToolPlatformSupport { Supported, PartiallySupported, Unsupported };
+enum class ToolCancellationSupport { Cancellable, SafeBoundary, Atomic };
+enum class ToolErrorSemantics { Typed, General };
+
+struct ToolPlatformMatrix {
+    ToolPlatformSupport macOS = ToolPlatformSupport::PartiallySupported;
+    ToolPlatformSupport linux = ToolPlatformSupport::PartiallySupported;
+    ToolPlatformSupport windows = ToolPlatformSupport::PartiallySupported;
+};
 
 struct ToolParameterDescriptor {
     QString id;
@@ -92,6 +102,11 @@ struct ToolDescriptor {
     StructuredObservationKind structuredObservationKind = StructuredObservationKind::None;
     bool filesystemFailureSemanticContract = false;
     bool parallelSafe = false;
+    ToolMaturity maturity = ToolMaturity::Experimental;
+    QString maturityReason;
+    ToolPlatformMatrix platforms;
+    ToolCancellationSupport cancellationSupport = ToolCancellationSupport::Atomic;
+    ToolErrorSemantics errorSemantics = ToolErrorSemantics::General;
 };
 
 } // namespace sentinel::core

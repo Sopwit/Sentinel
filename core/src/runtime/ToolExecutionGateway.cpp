@@ -64,6 +64,16 @@ bool usesLocalProcess(const QString& id) {
     return ids.contains(id);
 }
 
+bool unsupportedHere(const ToolDescriptor& descriptor) {
+#if defined(Q_OS_MACOS)
+    return descriptor.platforms.macOS == ToolPlatformSupport::Unsupported;
+#elif defined(Q_OS_WIN)
+    return descriptor.platforms.windows == ToolPlatformSupport::Unsupported;
+#else
+    return descriptor.platforms.linux == ToolPlatformSupport::Unsupported;
+#endif
+}
+
 QString permissionPostureForDomain(const QString& domainId, const QString& defaultPermissionState,
                                    const PermissionPolicyService& permissionPolicy) {
     for (const auto& summary : permissionPolicy.permissionSummaries(defaultPermissionState)) {
@@ -81,6 +91,58 @@ QString toolSummaryLine(const ToolGatewaySummary& summary) {
 }
 
 } // namespace
+
+QList<ToolCompleteness> ToolExecutionGateway::toolCompleteness() const {
+    if (!registry_)
+        return {};
+    QList<ToolCompleteness> result;
+    for (const auto& descriptor : registry_->listTools()) {
+        const auto registration = registry_->findRegistration(descriptor.id);
+        ToolCompleteness item;
+        item.toolId = descriptor.id;
+        item.source = descriptor.source;
+        item.maturity = descriptor.maturity;
+        item.maturityReason = descriptor.maturityReason;
+        item.handlerAvailable = registration && registration->handler != nullptr;
+        item.modelVisible = descriptor.enabled && descriptor.exposedToModel &&
+                            item.handlerAvailable;
+        if (descriptor.inputSchema.isEmpty())
+            item.schemaQuality = ToolSchemaQuality::Missing;
+        else if (!ToolArgumentValidator::validateSchema(descriptor.inputSchema).isEmpty())
+            item.schemaQuality = ToolSchemaQuality::Invalid;
+        else if (descriptor.inputSchema.value(QStringLiteral("additionalProperties")) == false)
+            item.schemaQuality = ToolSchemaQuality::Strict;
+        else
+            item.schemaQuality = ToolSchemaQuality::Permissive;
+        item.argumentsValidated = item.handlerAvailable &&
+            item.schemaQuality != ToolSchemaQuality::Invalid &&
+            item.schemaQuality != ToolSchemaQuality::Missing;
+        item.authorizationRequirements = descriptor.authorizationRequirements;
+        for (const auto& requirement : descriptor.authorizationRequirements) {
+            item.mutating |= requirement.access == AccessMode::Write ||
+                             requirement.access == AccessMode::Delete ||
+                             requirement.access == AccessMode::Execute ||
+                             requirement.access == AccessMode::Control;
+            item.resourceAuthorization |= requirement.domain == SecurityDomain::FileSystem &&
+                requirement.resourceKind == AuthorizationResourceKind::FileSystemPath;
+        }
+        if (descriptor.id == QLatin1String("apply-patch"))
+            item.resourceAuthorization = true;
+        item.sandboxRequired = descriptor.source == ToolSource::BuiltIn &&
+                               usesLocalProcess(descriptor.id);
+        item.cancellation = descriptor.cancellationSupport;
+        item.structuredObservation =
+            descriptor.structuredObservationKind != StructuredObservationKind::None;
+        item.evidenceProduced = !descriptor.evidenceProduced.isEmpty();
+        item.platforms = descriptor.platforms;
+        item.errorSemantics = descriptor.errorSemantics;
+        result.append(std::move(item));
+    }
+    std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
+        return a.toolId < b.toolId;
+    });
+    return result;
+}
 
 QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
     const auto descriptors =
@@ -197,6 +259,12 @@ ToolExecutionResult ToolExecutionGateway::validatePlan(ToolInvocationPlan& plan)
         if (!registration || !registration->handler || !registration->descriptor.enabled)
             return {ToolExecutionStatus::UnknownTool,
                     QStringLiteral("Tool unavailable: %1").arg(invocation.toolId)};
+        if (unsupportedHere(registration->descriptor)) {
+            ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
+                QStringLiteral("Tool is unsupported on this platform: %1").arg(invocation.toolId)};
+            unsupported.failureCategory = ToolFailureCategory::Unsupported;
+            return unsupported;
+        }
         if (invocation.descriptorSnapshot &&
             !sameAuthorizationSnapshot(*invocation.descriptorSnapshot, registration->descriptor))
             return {ToolExecutionStatus::InvalidToolContract,
@@ -409,6 +477,14 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
             completion({ToolExecutionStatus::UnknownTool,
                         QStringLiteral("Execution boundary rejected unknown tool metadata: %1")
                             .arg(request.plan.invocations.first().toolId)});
+            return {};
+        }
+        if (unsupportedHere(registration->descriptor)) {
+            ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
+                QStringLiteral("Tool is unsupported on this platform: %1")
+                    .arg(registration->descriptor.id)};
+            unsupported.failureCategory = ToolFailureCategory::Unsupported;
+            completion(std::move(unsupported));
             return {};
         }
         {

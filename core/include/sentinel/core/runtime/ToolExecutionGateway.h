@@ -76,6 +76,28 @@ struct ToolGatewayRegistrySummary {
     QStringList developerDiagnostics;
 };
 
+enum class ToolSchemaQuality { Strict, Permissive, Missing, Invalid };
+
+struct ToolCompleteness {
+    QString toolId;
+    ToolSource source = ToolSource::BuiltIn;
+    ToolMaturity maturity = ToolMaturity::Experimental;
+    QString maturityReason;
+    bool modelVisible = false;
+    ToolSchemaQuality schemaQuality = ToolSchemaQuality::Missing;
+    bool handlerAvailable = false;
+    bool argumentsValidated = false;
+    bool mutating = false;
+    QList<ToolAuthorizationRequirement> authorizationRequirements;
+    bool resourceAuthorization = false;
+    bool sandboxRequired = false;
+    ToolCancellationSupport cancellation = ToolCancellationSupport::Atomic;
+    bool structuredObservation = false;
+    bool evidenceProduced = false;
+    ToolPlatformMatrix platforms;
+    ToolErrorSemantics errorSemantics = ToolErrorSemantics::General;
+};
+
 class ToolExecutionGateway final {
 public:
     explicit ToolExecutionGateway(const IToolRegistry* registry = nullptr) : registry_(registry) {}
@@ -92,6 +114,7 @@ public:
         defaultPermissionState_ = std::move(defaultState);
     }
     QList<ToolGatewayMetadata> toolMetadata() const;
+    QList<ToolCompleteness> toolCompleteness() const;
     QList<ToolGatewaySummary> toolSummaries(const QString& defaultPermissionState,
                                             const PermissionPolicyService& permissionPolicy) const;
     ToolGatewayRegistrySummary
