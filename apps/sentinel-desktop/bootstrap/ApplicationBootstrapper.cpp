@@ -13,6 +13,8 @@
 #include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
+#include "sentinel/core/app/RecoveryService.h"
+#include "sentinel/core/app/SettingsService.h"
 #include "sentinel/core/platform/WinProtocolHandler.h"
 #include "sentinel/core/platform/WinTaskbarIntegration.h"
 #include "sentinel/core/runtime/LocalInference.h"
@@ -144,11 +146,19 @@ void ApplicationBootstrapper::initializePlatformIntegrations() {
 
 bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     app.setQuitOnLastWindowClosed(false);
-
     m_settings = std::make_unique<sentinel::core::AppSettings>(
         std::make_unique<sentinel::core::DpapiEncryptedSettingsStore>(
             std::make_unique<sentinel::core::JsonSettingsStore>(
                 m_pathProvider.settingsFilePath())));
+    const auto settingsError = m_settings->storageErrorCode();
+    if (settingsError == QLatin1String("CorruptState") ||
+        settingsError == QLatin1String("UnsupportedSettingsVersion") ||
+        settingsError == QLatin1String("StoreUnavailable"))
+        sentinel::core::RecoveryService::recordCondition(QStringLiteral("settings"),
+            QStringLiteral("settings"), settingsError, QStringLiteral("repair-settings"));
+    else if (settingsError.isEmpty())
+        sentinel::core::RecoveryService::clearCondition(QStringLiteral("settings"),
+            QStringLiteral("settings"));
 
     installStartupTranslator(app, *m_settings, m_translator);
 
@@ -181,6 +191,12 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     // Clean dependency injection using ApplicationControllerBuilder
     sentinel::core::ApplicationControllerBuilder builder;
     m_controller = builder.withStandardDefaults(m_pathProvider, *m_settings).build();
+    sentinel::core::SettingsService(*m_settings, m_controller->modelService(),
+        m_controller->extensionService(), m_controller->audioSession(),
+        m_controller->permissionService(), m_controller->conversationStore(),
+        m_controller->memoryStore(), m_controller->mutableAgentRunStore(),
+        m_controller->chatHistoryStore(), m_controller->modelOperations())
+        .runRetentionMaintenance();
     m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(
         m_controller->agentRunStore());
     m_inspectorViewModel = std::make_unique<AgentInspectorViewModel>(*m_inspectorService);

@@ -188,11 +188,6 @@ bool ModelStorageManager::revealArtifact(const QString& path) const {
     return ownedArtifact(path) && QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absolutePath()));
 }
 
-bool ModelStorageManager::clearCache(const QString& cachePath) const {
-    const auto cacheRoot = QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).canonicalPath();
-    return inside(cacheRoot, QFileInfo(cachePath).canonicalFilePath()) && QFile::remove(cachePath);
-}
-
 bool ModelStorageManager::removeOwnedPartial(const QString& path) const {
     Q_UNUSED(path);
     // QSaveFile owns its temporary file; no persistent partial is created by this service.

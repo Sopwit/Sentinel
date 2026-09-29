@@ -18,22 +18,23 @@ class FileLogger final {
 public:
     static FileLogger& instance();
 
-    void initialize(const QString& logDir, int retentionDays = 30);
+    void initialize(const QString& logDir, int retentionDays = 0);
     void handleMessage(QtMsgType type, const QMessageLogContext& ctx, const QString& msg);
     QString currentLogFilePath() const;
+    int applyRetention(int days);
 
 private:
     Q_DISABLE_COPY(FileLogger)
     FileLogger() = default;
     ~FileLogger();
     void rotateLog();
-    void cleanOldLogs();
+    int cleanOldLogs();
 
     QDir logDir_;
     QFile logFile_;
     QTextStream logStream_;
     QDate currentLogDate_;
-    int retentionDays_ = 30;
+    int retentionDays_ = 0;
     mutable QMutex mutex_;
     bool initialized_ = false;
 };

@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/model/ModelOperationService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/app/RecoveryService.h"
 
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
@@ -19,6 +21,8 @@
 #include <QNetworkRequest>
 #include <QStorageInfo>
 #include <QTimer>
+#include <QStandardPaths>
+#include <QRegularExpression>
 #include <QUuid>
 
 #include <algorithm>
@@ -28,7 +32,7 @@ namespace {
 
 bool terminal(ModelOperationState state) {
     return state == ModelOperationState::Succeeded || state == ModelOperationState::Failed ||
-           state == ModelOperationState::Cancelled;
+           state == ModelOperationState::Cancelled || state == ModelOperationState::Interrupted;
 }
 
 ModelOperationError networkError(QNetworkReply* reply) {
@@ -68,6 +72,8 @@ QString safeErrorText(ModelOperationError error) {
         return QStringLiteral("Access to this artifact was denied.");
     case ModelOperationError::GatedModel:
         return QStringLiteral("Access to this gated model has not been granted.");
+    case ModelOperationError::Offline:
+        return QStringLiteral("Model source blocked by network policy.");
     }
     return QStringLiteral("Operation failed.");
 }
@@ -97,12 +103,208 @@ ModelOperationService::ModelOperationService(ModelService& models, ModelLibraryS
     library_.setStorageManager(&storageManager_);
     huggingFaceSource_.setStorageRoot(storageManager_.activeRoot());
     huggingFaceSource_.setKnownStorageRoots(storageManager_.knownRoots());
+    loadRecoveryJournal();
     connect(&huggingFaceSource_, &HuggingFaceModelSource::catalogChanged, this,
             [this]() { emit catalogChanged(QStringLiteral("hugging-face")); });
     timeout_->setSingleShot(true);
     connect(timeout_, &QTimer::timeout, this, [this]() {
         if (activeReply_) activeReply_->abort();
     });
+}
+
+void ModelOperationService::loadRecoveryJournal() {
+    const auto path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+        .filePath(QStringLiteral("model-operations.json"));
+    QFile file(path);
+    if (!file.exists()) return;
+    if (!file.open(QIODevice::ReadOnly) || file.size() > 65536) {
+        RecoveryService::recordCondition(QStringLiteral("model-operations"),
+            QStringLiteral("model-downloads"), QStringLiteral("JournalUnreadable"),
+            QStringLiteral("inspect-model-operations"));
+        return;
+    }
+    const auto document = QJsonDocument::fromJson(file.readAll());
+    if (!document.isObject() || document.object().value(QStringLiteral("version")).toInt(-1) != 1 ||
+        !document.object().value(QStringLiteral("operations")).isArray() ||
+        document.object().value(QStringLiteral("operations")).toArray().size() > 100) {
+        RecoveryService::recordCondition(QStringLiteral("model-operations"),
+            QStringLiteral("model-downloads"), QStringLiteral("UnsupportedJournal"),
+            QStringLiteral("inspect-model-operations"));
+        return;
+    }
+    for (const auto& value : document.object().value(QStringLiteral("operations")).toArray()) {
+        const auto item = value.toObject();
+        ModelOperationRecord record;
+        record.id = item.value(QStringLiteral("id")).toString();
+        record.kind = item.value(QStringLiteral("register")).toBool()
+            ? ModelOperationKind::DownloadAndRegister : ModelOperationKind::Download;
+        record.sourceId = QStringLiteral("hugging-face");
+        record.repositoryId = item.value(QStringLiteral("repositoryId")).toString();
+        record.artifactFilename = item.value(QStringLiteral("filename")).toString();
+        record.revision = item.value(QStringLiteral("revision")).toString();
+        record.managedStorageRoot = item.value(QStringLiteral("storageRoot")).toString();
+        record.startedAt = QDateTime::fromString(item.value(QStringLiteral("startedAt")).toString(),
+                                                 Qt::ISODateWithMs);
+        record.endedAt = QDateTime::fromString(item.value(QStringLiteral("endedAt")).toString(),
+                                               Qt::ISODateWithMs);
+        record.progress = item.value(QStringLiteral("progress")).isDouble()
+            ? std::optional<double>(item.value(QStringLiteral("progress")).toDouble()) : std::nullopt;
+        record.bytesTransferred = item.value(QStringLiteral("bytesTransferred")).isDouble()
+            ? std::optional<qint64>(qint64(item.value(QStringLiteral("bytesTransferred")).toDouble()))
+            : std::nullopt;
+        record.state = static_cast<ModelOperationState>(item.value(QStringLiteral("state")).toInt());
+        record.managedDownloadStarted = item.value(QStringLiteral("managedDownloadStarted")).toBool();
+        ModelLibraryEntry entry;
+        entry.source.id = record.sourceId;
+        entry.repositoryId = record.repositoryId;
+        entry.artifactFilename = record.artifactFilename;
+        entry.revision = record.revision;
+        static const QRegularExpression operationId(QStringLiteral("^[A-Za-z0-9._-]{1,80}$"));
+        if (!operationId.match(record.id).hasMatch() ||
+            huggingFaceSource_.destinationPath(entry).isEmpty()) continue;
+        const bool knownRoot = !huggingFaceSource_.destinationPathAtRoot(entry,
+            record.managedStorageRoot.isEmpty() ? storageManager_.activeRoot()
+                                                : record.managedStorageRoot).isEmpty();
+        if (!terminal(record.state)) {
+            record.state = ModelOperationState::Interrupted;
+            record.statusText = QStringLiteral("Interrupted at previous shutdown; no automatic retry.");
+            record.endedAt = QDateTime::currentDateTimeUtc();
+            if (record.managedDownloadStarted && knownRoot) cleanupInterruptedDownload(record);
+            RecoveryService::recordCondition(QStringLiteral("model-operations"), record.id,
+                knownRoot ? QStringLiteral("DownloadInterrupted")
+                          : QStringLiteral("StorageRootUnavailable"),
+                QStringLiteral("inspect-model-operations"),
+                knownRoot ? QStringLiteral("Recoverable") : QStringLiteral("RecoveryRequired"));
+        }
+        records_.insert(record.id, record);
+    }
+    saveRecoveryJournal();
+}
+
+bool ModelOperationService::saveRecoveryJournal() {
+    QJsonArray entries;
+    auto ordered = records_.values();
+    std::sort(ordered.begin(), ordered.end(), [](const auto& a, const auto& b) {
+        const auto priority = [](ModelOperationState state) {
+            return !terminal(state) ? 0 : state == ModelOperationState::Interrupted ? 1 : 2;
+        };
+        if (priority(a.state) != priority(b.state))
+            return priority(a.state) < priority(b.state);
+        return a.startedAt > b.startedAt;
+    });
+    for (const auto& record : ordered) {
+        if (record.kind != ModelOperationKind::Download &&
+            record.kind != ModelOperationKind::DownloadAndRegister) continue;
+        ModelLibraryEntry entry;
+        entry.source.id = QStringLiteral("hugging-face");
+        entry.repositoryId = record.repositoryId;
+        entry.artifactFilename = record.artifactFilename;
+        entry.revision = record.revision;
+        if (record.id.size() > 80 || huggingFaceSource_.destinationPath(entry).isEmpty()) continue;
+        if (entries.size() >= 100) break;
+        entries.append(QJsonObject{{QStringLiteral("id"), record.id},
+            {QStringLiteral("register"), record.kind == ModelOperationKind::DownloadAndRegister},
+            {QStringLiteral("repositoryId"), record.repositoryId},
+            {QStringLiteral("filename"), record.artifactFilename},
+            {QStringLiteral("revision"), record.revision},
+            {QStringLiteral("storageRoot"), record.managedStorageRoot},
+            {QStringLiteral("state"), static_cast<int>(record.state)},
+            {QStringLiteral("managedDownloadStarted"), record.managedDownloadStarted},
+            {QStringLiteral("startedAt"), record.startedAt.toUTC().toString(Qt::ISODateWithMs)},
+            {QStringLiteral("endedAt"), record.endedAt.toUTC().toString(Qt::ISODateWithMs)},
+            {QStringLiteral("progress"), record.progress ? QJsonValue(*record.progress) : QJsonValue()},
+            {QStringLiteral("bytesTransferred"), record.bytesTransferred
+                ? QJsonValue(double(*record.bytesTransferred)) : QJsonValue()}});
+    }
+    const auto path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+        .filePath(QStringLiteral("model-operations.json"));
+    if (!QDir().mkpath(QFileInfo(path).absolutePath())) return false;
+    const auto bytes = QJsonDocument(QJsonObject{{QStringLiteral("version"), 1},
+        {QStringLiteral("operations"), entries}}).toJson(QJsonDocument::Compact);
+    if (bytes.size() > 65536) return false;
+    QSaveFile journal(path);
+    return journal.open(QIODevice::WriteOnly) &&
+           journal.write(bytes) == bytes.size() && journal.commit();
+}
+
+int ModelOperationService::cleanupInterruptedDownload(const ModelOperationRecord& record) {
+    if (!record.managedDownloadStarted) return 0;
+    ModelLibraryEntry entry;
+    entry.source.id = QStringLiteral("hugging-face");
+    entry.repositoryId = record.repositoryId;
+    entry.artifactFilename = record.artifactFilename;
+    entry.revision = record.revision;
+    const auto root = record.managedStorageRoot.isEmpty() ? storageManager_.activeRoot()
+                                                           : record.managedStorageRoot;
+    const auto target = huggingFaceSource_.destinationPathAtRoot(entry, root);
+    if (target.isEmpty()) return 0;
+    const QDir directory(QFileInfo(target).absolutePath());
+    if (!directory.exists() || directory.canonicalPath().isEmpty() ||
+        !directory.canonicalPath().startsWith(QDir(root).canonicalPath() +
+                                              QDir::separator())) return 0;
+    int removed = 0;
+    const auto prefix = QStringLiteral(".") + QFileInfo(target).fileName() + QLatin1Char('.');
+    for (const auto& file : directory.entryInfoList(QDir::Files | QDir::NoSymLinks)) {
+        if (file.fileName().startsWith(prefix) &&
+            file.fileName().size() == prefix.size() + 6 && !file.isSymLink() &&
+            QFile::remove(file.absoluteFilePath())) ++removed;
+    }
+    const QFileInfo finalFile(target);
+    if (finalFile.exists() && !finalFile.isSymLink() &&
+        !QFileInfo::exists(target + QStringLiteral(".source.json")) && QFile::remove(target)) ++removed;
+    return removed;
+}
+
+bool ModelOperationService::resolveInterrupted(const QString& operationId) {
+    const auto record = records_.value(operationId);
+    if (record.id.isEmpty() || record.state != ModelOperationState::Interrupted) return false;
+    if (record.managedDownloadStarted) cleanupInterruptedDownload(record);
+    ModelLibraryEntry entry;
+    entry.source.id = QStringLiteral("hugging-face");
+    entry.repositoryId = record.repositoryId;
+    entry.artifactFilename = record.artifactFilename;
+    entry.revision = record.revision;
+    const auto target = huggingFaceSource_.destinationPathAtRoot(entry,
+        record.managedStorageRoot.isEmpty() ? storageManager_.activeRoot()
+                                            : record.managedStorageRoot);
+    if (target.isEmpty()) return false;
+    if (record.managedDownloadStarted) {
+        const QDir directory(QFileInfo(target).absolutePath());
+        const auto prefix = QStringLiteral(".") + QFileInfo(target).fileName() + QLatin1Char('.');
+        for (const auto& file : directory.entryInfoList(QDir::Files | QDir::NoSymLinks))
+            if (file.fileName().startsWith(prefix) && file.fileName().size() == prefix.size() + 6)
+                return false;
+        if (QFileInfo::exists(target) && !QFileInfo::exists(target + QStringLiteral(".source.json")))
+            return false;
+    }
+    if (!RecoveryService::clearCondition(QStringLiteral("model-operations"), operationId))
+        return false;
+    records_.remove(operationId);
+    if (saveRecoveryJournal()) return true;
+    records_.insert(operationId, record);
+    RecoveryService::recordCondition(QStringLiteral("model-operations"),
+        QStringLiteral("model-downloads"), QStringLiteral("JournalWriteFailed"),
+        QStringLiteral("inspect-model-operations"));
+    return false;
+}
+
+int ModelOperationService::pruneOperationHistory(int olderThanDays) {
+    if (olderThanDays < 1 || olderThanDays > 3650) return -1;
+    const auto cutoff = QDateTime::currentDateTimeUtc().addDays(-olderThanDays);
+    QStringList ids;
+    for (const auto& record : records_) {
+        if (!terminal(record.state) || record.state == ModelOperationState::Interrupted ||
+            !record.endedAt.isValid() || record.endedAt >= cutoff) continue;
+        ids.append(record.id);
+    }
+    if (ids.isEmpty()) return 0;
+    const auto before = records_;
+    for (const auto& id : ids) records_.remove(id);
+    if (!saveRecoveryJournal()) {
+        records_ = before;
+        return -1;
+    }
+    return ids.size();
 }
 
 bool ModelOperationService::setHuggingFaceStorageRoot(const QString& path) {
@@ -256,7 +458,19 @@ QString ModelOperationService::enqueue(ModelOperationRecord record) {
 }
 
 void ModelOperationService::update(const ModelOperationRecord& record) {
+    const auto previous = records_.value(record.id);
     records_.insert(record.id, record);
+    if (record.kind == ModelOperationKind::Download ||
+        record.kind == ModelOperationKind::DownloadAndRegister) {
+        const int oldBucket = previous.progress ? int(*previous.progress * 20) : -1;
+        const int newBucket = record.progress ? int(*record.progress * 20) : -1;
+        if ((previous.id.isEmpty() || previous.state != record.state || oldBucket != newBucket ||
+             previous.managedDownloadStarted != record.managedDownloadStarted) &&
+            !saveRecoveryJournal())
+            RecoveryService::recordCondition(QStringLiteral("model-operations"),
+                QStringLiteral("model-downloads"), QStringLiteral("JournalWriteFailed"),
+                QStringLiteral("inspect-model-operations"));
+    }
     emit operationChanged(record);
 }
 
@@ -270,6 +484,54 @@ QList<ModelOperationRecord> ModelOperationService::operations() const {
         return a.startedAt < b.startedAt;
     });
     return result;
+}
+
+QJsonObject ModelOperationService::clearOwnedCache(int olderThanDays) {
+    QJsonArray failures;
+    int removed = 0;
+    const auto cache = QFileInfo(huggingFaceSource_.cachePath());
+    if (cache.exists()) {
+        if (huggingFaceSource_.clearMetadataCache(olderThanDays)) {
+            if (!QFileInfo::exists(cache.absoluteFilePath())) ++removed;
+        } else failures.append(QStringLiteral("hugging-face-metadata"));
+    }
+    const auto snapshot = storageManager_.snapshot();
+    for (const auto& path : snapshot.orphanedFiles) {
+        if (storageManager_.removeOrphanedSidecar(path)) ++removed;
+        else failures.append(QStringLiteral("orphaned-model-sidecar"));
+    }
+    for (const auto& record : records_) {
+        if (record.state == ModelOperationState::Interrupted) {
+            removed += cleanupInterruptedDownload(record);
+            if (!record.managedDownloadStarted) continue;
+            ModelLibraryEntry entry;
+            entry.source.id = QStringLiteral("hugging-face");
+            entry.repositoryId = record.repositoryId;
+            entry.artifactFilename = record.artifactFilename;
+            entry.revision = record.revision;
+            const auto target = huggingFaceSource_.destinationPathAtRoot(entry,
+                record.managedStorageRoot.isEmpty() ? storageManager_.activeRoot()
+                                                    : record.managedStorageRoot);
+            if (target.isEmpty() ||
+                (QFileInfo::exists(target) &&
+                 !QFileInfo::exists(target + QStringLiteral(".source.json"))))
+                failures.append(QStringLiteral("interrupted-model-download"));
+            if (!target.isEmpty()) {
+                const QDir directory(QFileInfo(target).absolutePath());
+                const auto prefix = QStringLiteral(".") + QFileInfo(target).fileName() + QLatin1Char('.');
+                for (const auto& file : directory.entryInfoList(QDir::Files | QDir::NoSymLinks))
+                    if (file.fileName().startsWith(prefix) &&
+                        file.fileName().size() == prefix.size() + 6) {
+                        failures.append(QStringLiteral("interrupted-model-temporary-file"));
+                        break;
+                    }
+            }
+        }
+    }
+    return {{QStringLiteral("sourcesAttempted"), 3},
+            {QStringLiteral("itemsCleared"), removed},
+            {QStringLiteral("failedSources"), failures},
+            {QStringLiteral("partialFailure"), !failures.isEmpty()}};
 }
 
 bool ModelOperationService::cancel(const QString& operationId) {
@@ -425,22 +687,29 @@ void ModelOperationService::beginDownload(const ModelOperationRecord& record) {
                safeErrorText(ModelOperationError::DiskOrStorageFailure));
         return;
     }
+    auto initial = records_.value(record.id);
+    initial.managedDownloadStarted = true;
+    initial.managedStorageRoot = storageManager_.activeRoot();
+    initial.bytesTotal = record.expectedBytes;
+    initial.statusText = QStringLiteral("Connecting to Hugging Face.");
+    update(initial);
     downloadHash_ = std::make_unique<QCryptographicHash>(QCryptographicHash::Sha256);
     downloadPrefix_.clear();
     downloadedBytes_ = 0;
     downloadStorageFailed_ = false;
     downloadRedirects_ = 0;
     cancelRequested_ = pullSucceeded_ = false;
-    auto initial = records_.value(record.id);
-    initial.bytesTotal = record.expectedBytes;
-    initial.statusText = QStringLiteral("Connecting to Hugging Face.");
-    update(initial);
     issueDownloadRequest(url, record.id, destination, artifact);
 }
 
 void ModelOperationService::issueDownloadRequest(const QUrl& url, const QString& id,
                                                  const QString& destination,
                                                  const ModelLibraryEntry& artifact) {
+    if (NetworkPolicyService::instance().check(url) != NetworkDecision::Allowed) {
+        finish(ModelOperationState::Failed, ModelOperationError::Offline,
+               safeErrorText(ModelOperationError::Offline));
+        return;
+    }
     QNetworkRequest request(url);
     request.setTransferTimeout(30000);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -537,7 +806,10 @@ void ModelOperationService::issueDownloadRequest(const QUrl& url, const QString&
             {QStringLiteral("etag"), artifact.artifactEtag}}).toJson(QJsonDocument::Compact);
         if (!sidecar.open(QIODevice::WriteOnly) ||
             sidecar.write(sidecarPayload) != sidecarPayload.size() || !sidecar.commit()) {
-            QFile::remove(destination);
+            if (!QFile::remove(destination))
+                RecoveryService::recordCondition(QStringLiteral("model-operations"), id,
+                    QStringLiteral("IncompleteArtifactCleanupFailed"),
+                    QStringLiteral("inspect-model-operations"));
             finish(ModelOperationState::Failed, ModelOperationError::DiskOrStorageFailure,
                    safeErrorText(ModelOperationError::DiskOrStorageFailure));
             return;
@@ -546,8 +818,12 @@ void ModelOperationService::issueDownloadRequest(const QUrl& url, const QString&
         if (record.kind == ModelOperationKind::DownloadAndRegister) {
             bool storageFailure = false;
             if (!library_.registerLocalGguf(destination, {}, &storageFailure, &artifact)) {
-                QFile::remove(destination);
-                QFile::remove(destination + QStringLiteral(".source.json"));
+                const bool artifactRemoved = QFile::remove(destination);
+                const bool sidecarRemoved = QFile::remove(destination + QStringLiteral(".source.json"));
+                if (!artifactRemoved || !sidecarRemoved)
+                    RecoveryService::recordCondition(QStringLiteral("model-operations"), id,
+                        QStringLiteral("IncompleteRegistrationCleanupFailed"),
+                        QStringLiteral("inspect-model-operations"));
                 const auto error = storageFailure ? ModelOperationError::DiskOrStorageFailure
                                                   : ModelOperationError::OperationRejected;
                 finish(ModelOperationState::Failed, error, safeErrorText(error));

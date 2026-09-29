@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QDirIterator>
 #include <QFileInfo>
+#include <QRegularExpression>
 
 #if defined(Q_OS_MACOS) || defined(__APPLE__)
 #include <os/log.h>
@@ -70,18 +71,32 @@ void FileLogger::rotateLog() {
     logStream_.setDevice(&logFile_);
 }
 
-void FileLogger::cleanOldLogs() {
+int FileLogger::cleanOldLogs() {
+    if (retentionDays_ <= 0) return 0;
     const QDate cutoff = QDate::currentDate().addDays(-retentionDays_);
-
+    int removed = 0;
+    bool failed = false;
     QDirIterator it(logDir_.absolutePath(), QStringList{QStringLiteral("sentinel-*.log")},
                     QDir::Files);
     while (it.hasNext()) {
         it.next();
         const QFileInfo info = it.fileInfo();
-        if (info.birthTime().date() < cutoff) {
-            QFile::remove(info.absoluteFilePath());
+        static const QRegularExpression name(QStringLiteral("^sentinel-\\d{4}-\\d{2}-\\d{2}\\.log$"));
+        if (!name.match(info.fileName()).hasMatch()) continue;
+        if (!info.isSymLink() && info.absoluteFilePath() != logFile_.fileName() &&
+            info.lastModified().date() < cutoff) {
+            if (QFile::remove(info.absoluteFilePath())) ++removed;
+            else failed = true;
         }
     }
+    return failed ? -1 : removed;
+}
+
+int FileLogger::applyRetention(int days) {
+    QMutexLocker lock(&mutex_);
+    if (!initialized_ || days < 0 || days > 3650) return -1;
+    retentionDays_ = days;
+    return cleanOldLogs();
 }
 
 static const char* levelPrefix(QtMsgType type) {

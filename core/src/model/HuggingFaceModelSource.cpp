@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/model/HuggingFaceModelSource.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -100,6 +101,31 @@ QString HuggingFaceModelSource::cachedQuery() const { return cachedQuery_; }
 QDateTime HuggingFaceModelSource::fetchedAt() const { return fetchedAt_; }
 QString HuggingFaceModelSource::cachePath() const { return cachePath_; }
 
+bool HuggingFaceModelSource::clearMetadataCache(int olderThanDays) {
+    if (activeReply_) return false;
+    const QFileInfo file(cachePath_);
+    if (!file.exists()) {
+        cachedModels_ = {};
+        cachedQuery_.clear();
+        fetchedAt_ = {};
+        state_ = HuggingFaceCatalogState::Unavailable;
+        emit catalogChanged();
+        return true;
+    }
+    const auto root = QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).canonicalPath();
+    if (root.isEmpty() || file.isSymLink() ||
+        !file.canonicalFilePath().startsWith(root + QDir::separator())) return false;
+    if (olderThanDays > 0 && file.lastModified().toUTC() >=
+            QDateTime::currentDateTimeUtc().addDays(-olderThanDays)) return true;
+    if (!QFile::remove(cachePath_)) return false;
+    cachedModels_ = {};
+    cachedQuery_.clear();
+    fetchedAt_ = {};
+    state_ = HuggingFaceCatalogState::Unavailable;
+    emit catalogChanged();
+    return true;
+}
+
 void HuggingFaceModelSource::setTokenProvider(std::function<QString()> provider) {
     tokenProvider_ = std::move(provider);
 }
@@ -126,12 +152,18 @@ void HuggingFaceModelSource::setKnownStorageRoots(const QStringList& roots) {
 QString HuggingFaceModelSource::storageRoot() const { return storageRoot_; }
 
 QString HuggingFaceModelSource::destinationPath(const ModelLibraryEntry& entry) const {
+    return destinationPathAtRoot(entry, storageRoot_);
+}
+
+QString HuggingFaceModelSource::destinationPathAtRoot(const ModelLibraryEntry& entry,
+                                                      const QString& root) const {
     if (entry.source.id != sourceId() || !validRepoId(entry.repositoryId) ||
-        !validFilename(entry.artifactFilename) || !pinnedRevision(entry.revision)) return {};
+        !validFilename(entry.artifactFilename) || !pinnedRevision(entry.revision) ||
+        !knownStorageRoots_.contains(root)) return {};
     const auto digest = QCryptographicHash::hash(
         artifactIdentity(entry.repositoryId, entry.revision, entry.artifactFilename).toUtf8(),
         QCryptographicHash::Sha256).toHex();
-    return QDir(storageRoot_).filePath(QString::fromLatin1(digest) + QLatin1Char('/') +
+    return QDir(root).filePath(QString::fromLatin1(digest) + QLatin1Char('/') +
                                        QFileInfo(entry.artifactFilename).fileName());
 }
 
@@ -270,6 +302,8 @@ HuggingFaceModelSource::entriesFor(const HuggingFaceRepository& repository) cons
             entry.catalog = ModelLibraryCatalogState::Empty; break;
         case HuggingFaceCatalogState::Unavailable:
             entry.catalog = ModelLibraryCatalogState::Unavailable; break;
+        case HuggingFaceCatalogState::Offline:
+            entry.catalog = ModelLibraryCatalogState::Unavailable; break;
         case HuggingFaceCatalogState::Stale:
             entry.catalog = ModelLibraryCatalogState::StaleCached; break;
         }
@@ -378,6 +412,14 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
     if (activeReply_) activeReply_->abort();
     responseBuffer_.clear();
     responseTooLarge_ = false;
+    const auto decision = NetworkPolicyService::instance().check(url);
+    if (decision != NetworkDecision::Allowed) {
+        state_ = HuggingFaceCatalogState::Offline;
+        detail_ = NetworkPolicyService::code(decision);
+        emit catalogChanged();
+        emit requestFinished(false);
+        return;
+    }
     QNetworkRequest request(url);
     request.setTransferTimeout(12000);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
