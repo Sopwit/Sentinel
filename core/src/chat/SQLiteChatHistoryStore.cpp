@@ -36,6 +36,9 @@ ChatMessageStatus statusFromName(const QString& status) {
     if (status == QStringLiteral("error")) {
         return ChatMessageStatus::Error;
     }
+    if (status == QStringLiteral("interrupted")) return ChatMessageStatus::Interrupted;
+    if (status == QStringLiteral("sending")) return ChatMessageStatus::Sending;
+    if (status == QStringLiteral("streaming")) return ChatMessageStatus::Streaming;
     return ChatMessageStatus::Received;
 }
 
@@ -267,6 +270,59 @@ void SQLiteChatHistoryStore::clear() {
     }
 }
 
+int SQLiteChatHistoryStore::pruneCompletedBefore(const QDateTime& cutoffUtc, int limit) {
+    if (!database_.isOpen() || !cutoffUtc.isValid() || limit < 1 || limit > 500 ||
+        !database_.transaction()) {
+        setLastError(QStringLiteral("Chat retention unavailable."));
+        return -1;
+    }
+    QSqlQuery active(database_);
+    if (!active.exec(QStringLiteral("SELECT 1 FROM chat_messages WHERE status IN "
+                                    "('sending','streaming','queued') LIMIT 1"))) {
+        database_.rollback();
+        setLastError(active.lastError().text());
+        return -1;
+    }
+    if (active.next()) {
+        active.finish();
+        if (database_.commit()) return 0;
+        setLastError(database_.lastError().text());
+        return -1;
+    }
+    active.finish();
+    QSqlQuery select(database_);
+    select.prepare(QStringLiteral("SELECT id FROM chat_messages WHERE timestamp<? "
+                                  "AND status NOT IN ('sending','streaming','queued') "
+                                  "ORDER BY timestamp LIMIT ?"));
+    select.addBindValue(cutoffUtc.toUTC().toString(Qt::ISODateWithMs));
+    select.addBindValue(limit);
+    if (!select.exec()) {
+        database_.rollback();
+        setLastError(select.lastError().text());
+        return -1;
+    }
+    QList<int> ids;
+    while (select.next()) ids.append(select.value(0).toInt());
+    select.finish();
+    QSqlQuery remove(database_);
+    remove.prepare(QStringLiteral("DELETE FROM chat_messages WHERE id=?"));
+    for (const auto id : ids) {
+        remove.bindValue(0, id);
+        if (!remove.exec()) {
+            database_.rollback();
+            setLastError(remove.lastError().text());
+            return -1;
+        }
+    }
+    if (!database_.commit()) {
+        database_.rollback();
+        setLastError(database_.lastError().text());
+        return -1;
+    }
+    setLastError({});
+    return ids.size();
+}
+
 bool SQLiteChatHistoryStore::isAvailable() const {
     return database_.isOpen();
 }
@@ -316,6 +372,31 @@ void SQLiteChatHistoryStore::initializeSchema() {
     if (!database_.isOpen()) {
         setLastError(QStringLiteral("SQLite chat history database is not open."));
         return;
+    }
+
+    QSqlQuery versionCheck(database_);
+    if (!versionCheck.exec(QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' "
+                                          "AND name='chat_history_schema_metadata'"))) {
+        setLastError(versionCheck.lastError().text());
+        database_.close();
+        return;
+    }
+    const bool hasMetadata = versionCheck.next();
+    versionCheck.finish();
+    if (hasMetadata) {
+        if (!versionCheck.exec(QStringLiteral("SELECT value FROM chat_history_schema_metadata "
+                                               "WHERE key='schema_version'"))) {
+            setLastError(versionCheck.lastError().text());
+            database_.close();
+            return;
+        }
+        if (versionCheck.next() && versionCheck.value(0).toInt() > currentSchemaVersion) {
+            setLastError(QStringLiteral("Unsupported chat history schema version."));
+            versionCheck.finish();
+            database_.close();
+            return;
+        }
+        versionCheck.finish();
     }
 
     QSqlQuery query(database_);
@@ -434,6 +515,11 @@ void SQLiteChatHistoryStore::initializeSchema() {
         return;
     }
 
+    if (!query.exec(QStringLiteral("UPDATE chat_messages SET status='interrupted' "
+                                   "WHERE status IN ('sending','streaming')"))) {
+        setLastError(query.lastError().text());
+        return;
+    }
     setLastError({});
 }
 

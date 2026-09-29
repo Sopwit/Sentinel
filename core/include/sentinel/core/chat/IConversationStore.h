@@ -36,6 +36,7 @@ enum class ConversationStoreErrorCode {
     InvalidTitle,
     StorageFailure,
     UnsupportedOperation,
+    UnsupportedSchema,
 };
 
 struct ConversationStoreError {
@@ -119,6 +120,17 @@ public:
     virtual bool pinConversation(const QString& conversationId) = 0;
     virtual bool unpinConversation(const QString& conversationId) = 0;
     virtual bool deleteConversation(const QString& conversationId) = 0;
+    // Import rollback only: permanently remove a conversation created by this import.
+    virtual bool discardImportedConversation(const QString& conversationId) {
+        Q_UNUSED(conversationId)
+        return false;
+    }
+    virtual bool clearHistory() { return false; }
+    virtual int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 100) {
+        Q_UNUSED(cutoffUtc)
+        Q_UNUSED(limit)
+        return -1;
+    }
     virtual bool saveSummaryMetadata(const ConversationSummaryMetadataRecord& metadata) {
         Q_UNUSED(metadata);
         return false;

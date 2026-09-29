@@ -250,6 +250,31 @@ void SQLiteMemoryStore::initializeSchema() {
         return;
     }
 
+    QSqlQuery versionCheck(database_);
+    if (!versionCheck.exec(QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' "
+                                          "AND name='memory_schema_metadata'"))) {
+        setLastError(versionCheck.lastError().text());
+        database_.close();
+        return;
+    }
+    const bool hasMetadata = versionCheck.next();
+    versionCheck.finish();
+    if (hasMetadata) {
+        if (!versionCheck.exec(QStringLiteral("SELECT value FROM memory_schema_metadata "
+                                               "WHERE key='schema_version'"))) {
+            setLastError(versionCheck.lastError().text());
+            database_.close();
+            return;
+        }
+        if (versionCheck.next() && versionCheck.value(0).toInt() > currentSchemaVersion) {
+            setLastError(QStringLiteral("Unsupported memory schema version."));
+            versionCheck.finish();
+            database_.close();
+            return;
+        }
+        versionCheck.finish();
+    }
+
     QSqlQuery query(database_);
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS memory_entries("
                                    "id INTEGER PRIMARY KEY,"

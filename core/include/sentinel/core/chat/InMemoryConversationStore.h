@@ -26,6 +26,9 @@ public:
     bool pinConversation(const QString& conversationId) override;
     bool unpinConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
+    bool discardImportedConversation(const QString& conversationId) override;
+    bool clearHistory() override;
+    int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 100) override;
     bool saveSummaryMetadata(const ConversationSummaryMetadataRecord& metadata) override;
     ConversationSummaryMetadataRecord
     loadSummaryMetadata(const QString& conversationId) const override;
