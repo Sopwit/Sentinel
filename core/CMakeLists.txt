@@ -89,8 +89,6 @@ add_library(sentinel_core STATIC
     include/sentinel/core/session/StashService.h
     include/sentinel/core/session/IMdnsService.h
     include/sentinel/core/session/MdnsServiceImpl.h
-    include/sentinel/core/session/IWorkspaceManagerService.h
-    include/sentinel/core/session/WorkspaceManagerService.h
     include/sentinel/core/interfaces/IChatProvider.h
     include/sentinel/core/interfaces/IMemoryStore.h
     include/sentinel/core/interfaces/ISettingsStore.h
@@ -371,7 +369,6 @@ add_library(sentinel_core STATIC
     src/session/AutoUpdateService.cpp
     src/session/StashService.cpp
     src/session/MdnsServiceImpl.cpp
-    src/session/WorkspaceManagerService.cpp
     src/memory/InMemoryMemoryCandidateStore.cpp
     src/memory/InMemorySettingsStore.cpp
     src/mcp/McpService.cpp

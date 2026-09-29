@@ -4,6 +4,7 @@
 
 #include "sentinel/core/app/ControlledTaskService.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/WorkspaceService.h"
 
 #include <QMetaObject>
 #include <QPointer>
@@ -80,12 +81,20 @@ void ControlledTaskService::upsert(ControlledAgentTask task) {
 
 QString ControlledTaskService::createTask(const QString& goal, const QString& workspaceId,
                                           const QStringList& resources) {
-    const auto selection = modelService_.selectedModel();
-    auto created = domain_.createPlan(goal, workspaceId, selection.providerId, selection.modelId,
+    const WorkspaceService workspaces;
+    const auto id = workspaces.normalizedWorkspaceId(workspaceId, settings_.workspaceCatalogJson());
+    const auto selected = modelService_.selectedModel();
+    const auto profile = workspaces.resolveProfile(settings_.workspaceProfilesJson(), id,
+        {{QStringLiteral("providerId"), selected.providerId},
+         {QStringLiteral("modelId"), selected.modelId}});
+    const ModelSelection selection{
+        profile.configured.value(QStringLiteral("providerId")).toString(),
+        profile.configured.value(QStringLiteral("modelId")).toString()};
+    auto created = domain_.createPlan(goal, id, selection.providerId, selection.modelId,
                                       resources, tasks_);
-    const auto id = created.id;
+    const auto taskId = created.id;
     upsert(std::move(created));
-    return id;
+    return taskId;
 }
 
 bool ControlledTaskService::editPlan(const QString& taskId, const QStringList& steps) {
@@ -136,8 +145,33 @@ bool ControlledTaskService::startTask(const QString& taskId) {
         upsert(std::move(prepared));
         return false;
     }
-    const auto resolved =
-        modelService_.resolve(prepared.provider.trimmed(), prepared.model.trimmed());
+    const WorkspaceService workspaces;
+    if (workspaces.normalizedWorkspaceId(prepared.workspaceId, settings_.workspaceCatalogJson()) !=
+        prepared.workspaceId) {
+        prepared = domain_.applyRuntimeState(prepared, QStringLiteral("Failed"),
+            QStringLiteral("Captured workspace is unavailable."), {}, {});
+        upsert(std::move(prepared));
+        return false;
+    }
+    const auto workspace = workspaces.selectedWorkspace(prepared.workspaceId,
+                                                        settings_.workspaceCatalogJson());
+    const auto selected = modelService_.selectedModel();
+    const auto profile = workspaces.resolveProfile(settings_.workspaceProfilesJson(),
+        prepared.workspaceId, {{QStringLiteral("providerId"), selected.providerId},
+                               {QStringLiteral("modelId"), selected.modelId}});
+    prepared.provider = profile.configured.value(QStringLiteral("providerId")).toString();
+    prepared.model = profile.configured.value(QStringLiteral("modelId")).toString();
+    const bool localOnly = profile.configured.value(QStringLiteral("privacy")).toString() ==
+                           QLatin1String("local-only");
+    if (localOnly && modelService_.currentModelMetadata(prepared.provider, prepared.model)
+                         .providerKind == ProviderKind::Cloud) {
+        prepared = domain_.applyRuntimeState(prepared, QStringLiteral("Failed"),
+            QStringLiteral("Local Only blocks the captured cloud provider."), {}, {});
+        upsert(std::move(prepared));
+        return false;
+    }
+    const auto resolved = modelService_.resolve(prepared.provider.trimmed(),
+                                                prepared.model.trimmed());
     if (!resolved.ok() || !bindModel_(resolved)) {
         prepared = domain_.applyRuntimeState(
             prepared, QStringLiteral("Failed"),
@@ -158,8 +192,31 @@ bool ControlledTaskService::startTask(const QString& taskId) {
     }
     AgentSessionOptions options;
     options.runType = QStringLiteral("controlled-task");
-    for (const auto& descriptor : runtime_.availableTools())
+    options.workspaceContext.id = prepared.workspaceId;
+    options.workspaceContext.rootPath = workspace.rootPath;
+    const auto context = profile.configured.value(QStringLiteral("context")).toObject();
+    for (const auto& value : context.value(QStringLiteral("include")).toArray())
+        if (value.isString()) options.workspaceContext.includeHints.append(value.toString());
+    for (const auto& value : context.value(QStringLiteral("exclude")).toArray())
+        if (value.isString()) options.workspaceContext.excludeHints.append(value.toString());
+    options.workspaceContext.retrievalPreference =
+        context.value(QStringLiteral("retrieval")).toString();
+    options.workspaceContext.memoryScope =
+        context.value(QStringLiteral("memoryScope")).toString();
+    options.workspaceName = workspace.name;
+    options.presetId = profile.presetId;
+    options.profileVersion = QStringLiteral("1");
+    const auto toolPreferences = profile.configured.value(QStringLiteral("tools")).toObject();
+    const auto extensionPreferences =
+        profile.configured.value(QStringLiteral("extensions")).toObject();
+    options.restrictAvailableTools = !toolPreferences.isEmpty() || !extensionPreferences.isEmpty();
+    for (const auto& descriptor : runtime_.availableTools()) {
+        if (toolPreferences.value(descriptor.id).isBool() &&
+            !toolPreferences.value(descriptor.id).toBool()) continue;
+        if (extensionPreferences.value(descriptor.providerId).isBool() &&
+            !extensionPreferences.value(descriptor.providerId).toBool()) continue;
         options.availableToolIds.append(descriptor.id);
+    }
     runtime_.configureSession(sessionId, std::move(options));
     sessionByTask_.insert(taskId, sessionId);
     taskBySession_.insert(sessionId, taskId);

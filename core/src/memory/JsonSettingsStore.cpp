@@ -8,6 +8,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QJsonParseError>
+#include <QSaveFile>
 
 namespace sentinel::core {
 
@@ -21,51 +23,83 @@ QString JsonSettingsStore::value(const QString& key, const QString& defaultValue
 }
 
 void JsonSettingsStore::setValue(QString key, QString value) {
+    if (!errorCode_.isEmpty()) return;
+    const auto previous = values_;
     values_.insert(key, value);
-    save();
+    if (!save()) values_ = previous;
 }
 
 void JsonSettingsStore::remove(const QString& key) {
-    if (values_.remove(key) > 0)
-        save();
+    if (!errorCode_.isEmpty() || !values_.contains(key))
+        return;
+    const auto previous = values_;
+    values_.remove(key);
+    if (!save()) values_ = previous;
 }
 
 QString JsonSettingsStore::filePath() const {
     return filePath_;
 }
 
+QString JsonSettingsStore::errorCode() const { return errorCode_; }
+
 void JsonSettingsStore::load() {
     QFile file(filePath_);
-    if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
+    if (!file.exists()) return;
+    if (!file.open(QIODevice::ReadOnly)) {
+        errorCode_ = QStringLiteral("CorruptState");
         return;
     }
-
-    const auto document = QJsonDocument::fromJson(file.readAll());
-    if (document.isObject()) {
-        values_ = document.object();
+    if (file.size() > 16 * 1024 * 1024) {
+        errorCode_ = QStringLiteral("CorruptState");
+        return;
     }
+    QJsonParseError parseError;
+    const auto document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    if (!document.isObject() || parseError.error != QJsonParseError::NoError) {
+        errorCode_ = QStringLiteral("CorruptState");
+        return;
+    }
+    const auto root = document.object();
+    const auto version = root.value(QStringLiteral("sentinelSettingsSchemaVersion"));
+    if (!version.isUndefined() && (!version.isDouble() || version.toInt() > 1 ||
+                                    version.toInt() < 1)) {
+        errorCode_ = QStringLiteral("UnsupportedSettingsVersion");
+        return;
+    }
+    values_ = root;
 }
 
-void JsonSettingsStore::save() const {
+bool JsonSettingsStore::save() const {
     const QFileInfo fileInfo(filePath_);
     const QDir parentDir = fileInfo.dir();
     const bool createdParent = !parentDir.exists();
     if (createdParent) {
-        QDir().mkpath(parentDir.absolutePath());
+        if (!QDir().mkpath(parentDir.absolutePath())) {
+            errorCode_ = QStringLiteral("StoreUnavailable");
+            return false;
+        }
         QFile::setPermissions(parentDir.absolutePath(),
                               QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                   QFileDevice::ExeOwner);
     }
 
-    QFile file(filePath_);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        return;
+    QSaveFile file(filePath_);
+    if (!file.open(QIODevice::WriteOnly)) {
+        errorCode_ = QStringLiteral("StoreUnavailable");
+        return false;
     }
 
-    file.write(QJsonDocument(values_).toJson(QJsonDocument::Indented));
-    file.close();
+    auto output = values_;
+    output.insert(QStringLiteral("sentinelSettingsSchemaVersion"), 1);
+    if (file.write(QJsonDocument(output).toJson(QJsonDocument::Indented)) < 0 ||
+        !file.commit()) {
+        errorCode_ = QStringLiteral("StoreUnavailable");
+        return false;
+    }
 
     QFile::setPermissions(filePath_, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    return true;
 }
 
 } // namespace sentinel::core

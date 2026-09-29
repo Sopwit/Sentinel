@@ -18,6 +18,7 @@ public:
     virtual QString value(const QString& key, const QString& defaultValue = QString()) const = 0;
     virtual void setValue(QString key, QString value) = 0;
     virtual void remove(const QString& key) = 0;
+    virtual QString errorCode() const { return {}; }
 };
 
 } // namespace sentinel::core

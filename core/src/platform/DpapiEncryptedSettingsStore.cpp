@@ -68,6 +68,10 @@ void DpapiEncryptedSettingsStore::remove(const QString& key) {
     inner_->remove(key);
 }
 
+QString DpapiEncryptedSettingsStore::errorCode() const {
+    return inner_ ? inner_->errorCode() : QStringLiteral("StoreUnavailable");
+}
+
 #if defined(Q_OS_WIN)
 
 QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {

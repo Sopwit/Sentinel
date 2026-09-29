@@ -18,6 +18,7 @@ public:
     QString value(const QString& key, const QString& defaultValue = QString()) const override;
     void setValue(QString key, QString value) override;
     void remove(const QString& key) override;
+    QString errorCode() const override;
 
 private:
     static bool isSecretKey(const QString& key);

@@ -6,9 +6,12 @@
 
 #include "sentinel/core/model/ModelRegistry.h"
 #include "sentinel/core/model/ModelRouting.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/app/WorkspaceService.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QDir>
+#include <QCryptographicHash>
 #include <QDirIterator>
 #include <QFile>
 #include <QJsonDocument>
@@ -186,7 +189,95 @@ QString normalizedExportFormat(const QString& format) {
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
-    : QObject(parent), store_(std::move(store)) {}
+    : QObject(parent), store_(std::move(store)) {
+    applyNetworkPolicy();
+}
+
+void AppSettings::applyNetworkPolicy() const {
+    const auto requested = networkMode();
+    if (requested == QLatin1String("Offline")) {
+        NetworkPolicyService::instance().setMode(NetworkMode::Offline);
+        return;
+    }
+    const auto profile = WorkspaceService{}.resolveProfile(workspaceProfilesJson(),
+                                                            selectedWorkspaceId());
+    const bool workspaceLocal = profile.configured.value(QStringLiteral("privacy")).toString() ==
+                                QLatin1String("local-only");
+    NetworkPolicyService::instance().setMode(
+        requested == QLatin1String("LocalOnly") || workspaceLocal
+            ? NetworkMode::LocalOnly : NetworkMode::Online);
+}
+
+QString AppSettings::credential(const QString& id, const QString& legacyKey) const {
+    const CredentialKey key{id, QStringLiteral("apiKey")};
+    const auto stored = credentialStore_.readCredential(key);
+    if (stored.secret.has_value()) {
+        // A previous migration may have stored the secret before removal was interrupted.
+        if (store_ && !store_->value(legacyKey).isEmpty()) store_->remove(legacyKey);
+        return *stored.secret;
+    }
+    if (!store_) return {};
+    const QString legacy = store_->value(legacyKey);
+    if (legacy.isEmpty()) return {};
+    const auto written = credentialStore_.storeCredential(key, legacy);
+    if (!written.succeeded) return legacy; // Retain access and the original on migration failure.
+    const auto confirmed = credentialStore_.readCredential(key);
+    if (!confirmed.secret.has_value() || *confirmed.secret != legacy) return legacy;
+    store_->remove(legacyKey);
+    return legacy;
+}
+
+bool AppSettings::setCredential(const QString& id, const QString& legacyKey,
+                                const QString& value) {
+    const CredentialKey key{id, QStringLiteral("apiKey")};
+    const QString normalized = value;
+    if (normalized == credential(id, legacyKey)) return true;
+    if (normalized.isEmpty()) {
+        if (credentialStore_.summary().status != CredentialStoreStatus::Ready) return false;
+        const auto removed = credentialStore_.deleteCredential(key);
+        if (!removed.succeeded && credentialStore_.containsCredential(key).succeeded) return false;
+        if (store_) store_->remove(legacyKey);
+        return true;
+    }
+    const auto written = credentialStore_.storeCredential(key, normalized);
+    if (!written.succeeded) return false;
+    const auto confirmed = credentialStore_.readCredential(key);
+    if (!confirmed.secret.has_value() || *confirmed.secret != normalized) return false;
+    if (store_) store_->remove(legacyKey);
+    return true;
+}
+
+QString AppSettings::credentialState(const QString& logicalId) const {
+    const QHash<QString, QString> legacy{
+        {QStringLiteral("openai"), QString::fromLatin1(openAiApiKeyKey)},
+        {QStringLiteral("claude"), QString::fromLatin1(claudeApiKeyKey)},
+        {QStringLiteral("gemini"), QString::fromLatin1(geminiApiKeyKey)},
+        {QStringLiteral("deepseek"), QString::fromLatin1(deepseekApiKeyKey)},
+        {QStringLiteral("groq"), QString::fromLatin1(groqApiKeyKey)},
+        {QStringLiteral("mistral"), QString::fromLatin1(mistralApiKeyKey)},
+        {QStringLiteral("web-search"), QString::fromLatin1(webSearchApiKeyKey)},
+        {QStringLiteral("proxy-user"), QString::fromLatin1(proxyUserKey)},
+        {QStringLiteral("proxy-password"), QString::fromLatin1(proxyPasswordKey)}};
+    if (!legacy.contains(logicalId)) return QStringLiteral("Unavailable");
+    if (credentialStore_.containsCredential(CredentialKey{logicalId, QStringLiteral("apiKey")})
+            .succeeded) return QStringLiteral("Configured");
+    if (store_ && !store_->value(legacy.value(logicalId)).isEmpty())
+        return QStringLiteral("MigrationRequired");
+    return credentialStore_.summary().status == CredentialStoreStatus::Ready
+        ? QStringLiteral("NotConfigured") : QStringLiteral("SecureStoreUnavailable");
+}
+
+QString AppSettings::storageErrorCode() const {
+    return store_ ? store_->errorCode() : QStringLiteral("StoreUnavailable");
+}
+
+QString AppSettings::retentionPolicyJson() const {
+    return store_ ? store_->value(QStringLiteral("privacy.retentionPolicy.v1")) : QString{};
+}
+
+void AppSettings::setRetentionPolicyJson(const QString& json) {
+    if (store_) store_->setValue(QStringLiteral("privacy.retentionPolicy.v1"), json);
+}
 
 QString AppSettings::themeName() const {
     const auto fallback = QString::fromLatin1(defaultThemeName);
@@ -244,8 +335,14 @@ void AppSettings::setAppLanguage(const QString& language) {
 }
 
 QStringList AppSettings::availableLanguages() const {
-    return {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"), QStringLiteral("es"),
-            QStringLiteral("fr"), QStringLiteral("zh"), QStringLiteral("ja"), QStringLiteral("ar")};
+    QStringList result{QStringLiteral("en"), QStringLiteral("tr")};
+    const auto files = QDir(QStringLiteral(":/i18n"))
+                           .entryList({QStringLiteral("sentinel_*.qm")}, QDir::Files);
+    for (const auto& file : files) {
+        const auto code = file.mid(9, file.size() - 12);
+        if (!code.isEmpty() && !result.contains(code)) result.append(code);
+    }
+    return result;
 }
 
 QString AppSettings::languageDisplayName(const QString& language) const {
@@ -379,29 +476,76 @@ void AppSettings::setWebSearchProvider(const QString& provider) {
 }
 
 QString AppSettings::webSearchApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(webSearchApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("web-search"), QString::fromLatin1(webSearchApiKeyKey));
 }
 
 void AppSettings::setWebSearchApiKey(const QString& key) {
-    const auto normalized = key.trimmed();
-    if (normalized == webSearchApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(webSearchApiKeyKey), normalized);
-    emit webSearchSettingsChanged();
+    if (setCredential(QStringLiteral("web-search"), QString::fromLatin1(webSearchApiKeyKey), key))
+        emit webSearchSettingsChanged();
 }
 
 QString AppSettings::mcpServersJson() const {
-    return store_ ? store_->value(QString::fromLatin1(mcpServersJsonKey), QString()) : QString();
+    if (!store_) return {};
+    const auto raw = store_->value(QString::fromLatin1(mcpServersJsonKey));
+    if (raw.isEmpty()) return {};
+    bool complete = false;
+    const auto safe = secureMcpServersJson(raw, &complete);
+    if (complete && safe != raw) store_->setValue(QString::fromLatin1(mcpServersJsonKey), safe);
+    return safe;
 }
 
 void AppSettings::setMcpServersJson(const QString& json) {
-    // Accept the raw text; validity is checked where the servers are parsed.
-    if (json == mcpServersJson() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(mcpServersJsonKey), json);
+    if (!store_) return;
+    bool complete = false;
+    const auto safe = secureMcpServersJson(json, &complete);
+    if (!complete || safe == mcpServersJson()) return;
+    store_->setValue(QString::fromLatin1(mcpServersJsonKey), safe);
     emit mcpServersChanged();
+}
+
+QString AppSettings::secureMcpServersJson(const QString& json, bool* complete) const {
+    *complete = false;
+    const auto document = QJsonDocument::fromJson(json.toUtf8());
+    if (!document.isObject()) return QStringLiteral("{}");
+    auto root = document.object();
+    const bool wrapped = root.value(QStringLiteral("mcpServers")).isObject();
+    auto servers = wrapped ? root.value(QStringLiteral("mcpServers")).toObject() : root;
+    bool allStored = true;
+    for (auto it = servers.begin(); it != servers.end(); ++it) {
+        auto server = it.value().toObject();
+        if (server.isEmpty()) continue;
+        auto headers = server.value(QStringLiteral("headers")).toObject();
+        for (auto header = headers.begin(); header != headers.end(); ++header) {
+            if (!header.value().isString()) continue;
+            const QByteArray identity = (it.key() + QLatin1Char(':') + header.key()).toUtf8();
+            const auto id = QStringLiteral("mcp-") + QString::fromLatin1(
+                QCryptographicHash::hash(identity, QCryptographicHash::Sha256).toHex());
+            const auto reference = QStringLiteral("secret://") + id;
+            const auto value = header.value().toString();
+            if (value == reference || value.isEmpty()) continue;
+            if (value.startsWith(QLatin1String("secret://"))) {
+                allStored = false;
+                header.value() = QString();
+                continue;
+            }
+            const CredentialKey key{id, QStringLiteral("header")};
+            const auto write = credentialStore_.storeCredential(key, value);
+            const auto read = write.succeeded ? credentialStore_.readCredential(key)
+                                              : CredentialReadResult{};
+            if (!read.secret.has_value() || *read.secret != value) {
+                allStored = false;
+                header.value() = QString(); // Never return legacy secret in a settings snapshot.
+            } else {
+                header.value() = reference;
+            }
+        }
+        server.insert(QStringLiteral("headers"), headers);
+        it.value() = server;
+    }
+    if (wrapped) root.insert(QStringLiteral("mcpServers"), servers);
+    else root = servers;
+    *complete = allStored;
+    return QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
 int AppSettings::webSearchMaxResults() const {
@@ -1285,6 +1429,7 @@ void AppSettings::setSelectedWorkspaceId(const QString& workspaceId) {
     }
 
     store_->setValue(QString::fromLatin1(selectedWorkspaceIdKey), selected);
+    applyNetworkPolicy();
     emit selectedWorkspaceIdChanged();
 }
 
@@ -1315,6 +1460,24 @@ void AppSettings::setWorkspaceCatalogJson(const QString& catalogJson) {
     }
 
     store_->setValue(QString::fromLatin1(workspaceCatalogJsonKey), catalogJson);
+    emit workspaceSettingsChanged();
+}
+
+QString AppSettings::workspaceProfilesJson() const {
+    return store_ ? store_->value(QString::fromLatin1(workspaceProfilesJsonKey), {}) : QString();
+}
+
+void AppSettings::setWorkspaceProfilesJson(const QString& profilesJson) {
+    if (profilesJson == workspaceProfilesJson() || !store_) return;
+    if (!profilesJson.isEmpty()) {
+        const auto document = QJsonDocument::fromJson(profilesJson.toUtf8());
+        if (!document.isObject() ||
+            document.object().value(QStringLiteral("version")).toInt(-1) != 1 ||
+            !document.object().value(QStringLiteral("workspaces")).isObject() ||
+            !document.object().value(QStringLiteral("presets")).isObject()) return;
+    }
+    store_->setValue(QString::fromLatin1(workspaceProfilesJsonKey), profilesJson);
+    applyNetworkPolicy();
     emit workspaceSettingsChanged();
 }
 
@@ -1548,6 +1711,16 @@ void AppSettings::setOnboardingComplete(bool complete) {
     store_->setValue(QString::fromLatin1(onboardingCompleteKey),
                      complete ? QStringLiteral("true") : QStringLiteral("false"));
     emit onboardingCompleteChanged();
+}
+
+QString AppSettings::onboardingFlowJson() const {
+    return store_ ? store_->value(QString::fromLatin1(onboardingFlowJsonKey), {}) : QString();
+}
+
+void AppSettings::setOnboardingFlowJson(const QString& state) {
+    if (!store_ || state == onboardingFlowJson()) return;
+    store_->setValue(QString::fromLatin1(onboardingFlowJsonKey), state);
+    emit onboardingUseCaseChanged();
 }
 
 QString AppSettings::onboardingUseCase() const {
@@ -1784,81 +1957,57 @@ void AppSettings::setControlledAgentPermissionsJson(const QString& json) {
 }
 
 QString AppSettings::openAiApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(openAiApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("openai"), QString::fromLatin1(openAiApiKeyKey));
 }
 
 void AppSettings::setOpenAiApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == openAiApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(openAiApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("openai"), QString::fromLatin1(openAiApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 QString AppSettings::claudeApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(claudeApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("claude"), QString::fromLatin1(claudeApiKeyKey));
 }
 
 void AppSettings::setClaudeApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == claudeApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(claudeApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("claude"), QString::fromLatin1(claudeApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 QString AppSettings::geminiApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(geminiApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("gemini"), QString::fromLatin1(geminiApiKeyKey));
 }
 
 void AppSettings::setGeminiApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == geminiApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(geminiApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("gemini"), QString::fromLatin1(geminiApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 QString AppSettings::deepseekApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(deepseekApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("deepseek"), QString::fromLatin1(deepseekApiKeyKey));
 }
 
 void AppSettings::setDeepseekApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == deepseekApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(deepseekApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("deepseek"), QString::fromLatin1(deepseekApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 QString AppSettings::groqApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(groqApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("groq"), QString::fromLatin1(groqApiKeyKey));
 }
 
 void AppSettings::setGroqApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == groqApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(groqApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("groq"), QString::fromLatin1(groqApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 QString AppSettings::mistralApiKey() const {
-    return store_ ? store_->value(QString::fromLatin1(mistralApiKeyKey), QString()) : QString();
+    return credential(QStringLiteral("mistral"), QString::fromLatin1(mistralApiKeyKey));
 }
 
 void AppSettings::setMistralApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (trimmed == mistralApiKey() || !store_) {
-        return;
-    }
-    store_->setValue(QString::fromLatin1(mistralApiKeyKey), trimmed);
-    emit cloudApiKeysChanged();
+    if (setCredential(QStringLiteral("mistral"), QString::fromLatin1(mistralApiKeyKey), key))
+        emit cloudApiKeysChanged();
 }
 
 // ── Proxy ─────────────────────────────────────────────────────────────────
@@ -1878,23 +2027,28 @@ void AppSettings::setProxyEnabled(bool enabled) {
 }
 
 QString AppSettings::proxyType() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyTypeKey), QStringLiteral("http"))
-                  : QStringLiteral("http");
+    const auto value = store_ ? store_->value(QString::fromLatin1(proxyTypeKey)) : QString();
+    return value == QLatin1String("socks5") ? value : QStringLiteral("http");
 }
 
 void AppSettings::setProxyType(const QString& type) {
-    if (!store_)
+    if (!store_ || (type != QLatin1String("http") && type != QLatin1String("socks5")))
         return;
     store_->setValue(QString::fromLatin1(proxyTypeKey), type);
     emit proxySettingsChanged();
 }
 
 QString AppSettings::proxyHost() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyHostKey)) : QString();
+    const auto host = store_ ? store_->value(QString::fromLatin1(proxyHostKey)) : QString();
+    return host.contains(QLatin1String("://")) || host.contains(QLatin1Char('@')) ||
+           host.contains(QLatin1Char('/')) || host.contains(QLatin1Char('?')) ||
+           host.contains(QLatin1Char('#')) ? QString{} : host;
 }
 
 void AppSettings::setProxyHost(const QString& host) {
-    if (!store_)
+    if (!store_ || host.size() > 255 || host.contains(QLatin1String("://")) ||
+        host.contains(QLatin1Char('@')) || host.contains(QLatin1Char('/')) ||
+        host.contains(QLatin1Char('?')) || host.contains(QLatin1Char('#')))
         return;
     store_->setValue(QString::fromLatin1(proxyHostKey), host);
     emit proxySettingsChanged();
@@ -1917,25 +2071,35 @@ void AppSettings::setProxyPort(quint16 port) {
 }
 
 QString AppSettings::proxyUser() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyUserKey)) : QString();
+    return credential(QStringLiteral("proxy-user"), QString::fromLatin1(proxyUserKey));
 }
 
 void AppSettings::setProxyUser(const QString& user) {
-    if (!store_)
-        return;
-    store_->setValue(QString::fromLatin1(proxyUserKey), user);
-    emit proxySettingsChanged();
+    if (setCredential(QStringLiteral("proxy-user"), QString::fromLatin1(proxyUserKey), user))
+        emit proxySettingsChanged();
 }
 
 QString AppSettings::proxyPassword() const {
-    return store_ ? store_->value(QString::fromLatin1(proxyPasswordKey)) : QString();
+    return credential(QStringLiteral("proxy-password"), QString::fromLatin1(proxyPasswordKey));
 }
 
 void AppSettings::setProxyPassword(const QString& password) {
-    if (!store_)
-        return;
-    store_->setValue(QString::fromLatin1(proxyPasswordKey), password);
-    emit proxySettingsChanged();
+    if (setCredential(QStringLiteral("proxy-password"), QString::fromLatin1(proxyPasswordKey), password))
+        emit proxySettingsChanged();
+}
+
+QString AppSettings::networkMode() const {
+    const auto value = store_ ? store_->value(QString::fromLatin1(networkModeKey)) : QString();
+    return value == QLatin1String("Offline") || value == QLatin1String("LocalOnly")
+        ? value : QStringLiteral("Online");
+}
+
+void AppSettings::setNetworkMode(const QString& mode) {
+    if (!store_ || (mode != QLatin1String("Online") && mode != QLatin1String("Offline") &&
+                    mode != QLatin1String("LocalOnly"))) return;
+    if (mode != networkMode()) store_->setValue(QString::fromLatin1(networkModeKey), mode);
+    applyNetworkPolicy();
+    emit networkModeChanged();
 }
 
 bool AppSettings::soundEffectsEnabled() const {

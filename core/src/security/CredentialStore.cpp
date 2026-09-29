@@ -5,7 +5,12 @@
 #include "sentinel/core/security/CredentialStore.h"
 
 #include <QProcess>
+#include <QStandardPaths>
 #include <QtGlobal>
+
+#if defined(Q_OS_MACOS)
+#include <Security/Security.h>
+#endif
 
 #if defined(Q_OS_WIN)
 // clang-format off
@@ -411,15 +416,32 @@ public:
         if (!key.isValid()) {
             return invalidKeyResult(CredentialBackendOperation::Store, backend(), key);
         }
-        QProcess process;
-        QStringList arguments;
-        arguments << "add-generic-password" << "-a" << "Sentinel" << "-s" << key.storageKey()
-                  << "-w" << secret << "-U";
-        process.start("security", arguments);
-        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+#if defined(Q_OS_MACOS)
+        const QByteArray account("Sentinel");
+        const QByteArray service = key.storageKey().toUtf8();
+        const QByteArray data = secret.toUtf8();
+        SecKeychainItemRef item = nullptr;
+        OSStatus status = SecKeychainFindGenericPassword(
+            nullptr, static_cast<UInt32>(service.size()), service.constData(),
+            static_cast<UInt32>(account.size()), account.constData(), nullptr, nullptr, &item);
+        if (status == errSecSuccess && item) {
+            status = SecKeychainItemModifyAttributesAndData(
+                item, nullptr, static_cast<UInt32>(data.size()), data.constData());
+            CFRelease(item);
+        } else if (status == errSecItemNotFound) {
+            status = SecKeychainAddGenericPassword(
+                nullptr, static_cast<UInt32>(service.size()), service.constData(),
+                static_cast<UInt32>(account.size()), account.constData(),
+                static_cast<UInt32>(data.size()), data.constData(), nullptr);
+        }
+        if (status != errSecSuccess) {
             return refusedBackendResult(CredentialBackendOperation::Store, backend(), key,
                                         "macOS Keychain store failed");
         }
+#else
+        return refusedBackendResult(CredentialBackendOperation::Store, backend(), key,
+                                    "macOS Keychain unavailable on this platform");
+#endif
         return CredentialBackendResult{CredentialBackendOperation::Store,
                                        backend(),
                                        true,
@@ -434,22 +456,30 @@ public:
             return {invalidKeyResult(CredentialBackendOperation::Read, backend(), key),
                     std::nullopt};
         }
-        QProcess process;
-        QStringList arguments;
-        arguments << "find-generic-password" << "-a" << "Sentinel" << "-s" << key.storageKey()
-                  << "-w";
-        process.start("security", arguments);
-        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+#if defined(Q_OS_MACOS)
+        const QByteArray account("Sentinel");
+        const QByteArray service = key.storageKey().toUtf8();
+        UInt32 length = 0;
+        void* bytes = nullptr;
+        const OSStatus status = SecKeychainFindGenericPassword(
+            nullptr, static_cast<UInt32>(service.size()), service.constData(),
+            static_cast<UInt32>(account.size()), account.constData(), &length, &bytes, nullptr);
+        if (status != errSecSuccess) {
             return {refusedBackendResult(CredentialBackendOperation::Read, backend(), key,
                                          "macOS Keychain read failed or credential not found"),
                     std::nullopt};
         }
-        QString secret = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+        const QString secret = QString::fromUtf8(static_cast<const char*>(bytes), length);
+        SecKeychainItemFreeContent(nullptr, bytes);
         return {CredentialBackendResult{CredentialBackendOperation::Read, backend(), true, false,
                                         true, key.normalizedProviderId(),
                                         key.normalizedCredentialName(),
                                         "Read from macOS Keychain successfully"},
                 secret};
+#else
+        return {refusedBackendResult(CredentialBackendOperation::Read, backend(), key,
+                                    "macOS Keychain unavailable on this platform"), std::nullopt};
+#endif
     }
     CredentialBackendResult deleteCredential(const CredentialKey& key) override {
         if (!key.isValid()) {
@@ -498,6 +528,12 @@ public:
         return CredentialStoreBackend::LinuxSecretService;
     }
     CredentialStoreSummary summary() const override {
+        if (QStandardPaths::findExecutable(QStringLiteral("secret-tool")).isEmpty())
+            return summaryForBackend(
+                CredentialStoreBackend::LinuxSecretService, CredentialStoreStatus::Unavailable,
+                CredentialStoreReadiness::DisabledFallback, false,
+                QStringLiteral("Linux Secret Service helper unavailable."),
+                QStringLiteral("Linux Secret Service / Unavailable"));
         return summaryForBackend(
             CredentialStoreBackend::LinuxSecretService, CredentialStoreStatus::Ready,
             CredentialStoreReadiness::Ready, true,
@@ -548,7 +584,11 @@ public:
                                          "Linux Secret Service read failed"),
                     std::nullopt};
         }
-        QString secret = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+        QByteArray output = process.readAllStandardOutput();
+        // secret-tool writes one line terminator after the stored value. Keep all
+        // whitespace that is part of the credential itself.
+        if (output.endsWith('\n')) output.chop(1);
+        QString secret = QString::fromUtf8(output);
         return {CredentialBackendResult{CredentialBackendOperation::Read, backend(), true, false,
                                         true, key.normalizedProviderId(),
                                         key.normalizedCredentialName(),
