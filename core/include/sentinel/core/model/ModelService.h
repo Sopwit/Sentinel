@@ -186,6 +186,7 @@ public:
 signals:
     void selectedModelChanged();
     void providerRegistryChanged();
+    void providerHealthChanged();
     void modelCapabilitiesChanged();
 
 private:

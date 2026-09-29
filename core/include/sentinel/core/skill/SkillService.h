@@ -23,6 +23,13 @@ public:
 
     bool addSkill(const Skill& skill) override;
     bool removeSkill(const QString& name) override;
+    bool setEnabled(const QString& name, bool enabled);
+    bool refreshSkill(const QString& name);
+    void setAvailableRequirements(const QStringList& tools, const QStringList& providers,
+                                  const QStringList& capabilities);
+    void setAvailableTools(const QStringList& tools);
+    void setActiveWorkspaceId(const QString& workspaceId);
+    void setWorkspacePreferences(const QJsonObject& preferences);
     QList<Skill> skills() const override;
     std::optional<Skill> findSkill(const QString& name) const override;
 
@@ -43,9 +50,22 @@ private:
 
     // URL-based discovery
     void fetchIndexJson(const QString& indexUrl);
-    void downloadSkillFile(const QString& url, const QString& name);
+    void downloadSkillFile(const QString& url, const QString& name, const QString& indexUrl,
+                           const QJsonObject& metadata);
 
     QMap<QString, Skill> m_skills;
+    QMap<QString, bool> m_enabledPreferences;
+    QString m_preferencePath;
+    QString preferenceKey(const Skill& skill) const;
+    void loadPreferences();
+    bool savePreferences() const;
+    void applyPreference(Skill& skill) const;
+    QStringList m_availableTools;
+    QStringList m_availableProviders;
+    QStringList m_availableCapabilities;
+    QString m_activeWorkspaceId;
+    QJsonObject m_workspacePreferences;
+    void updateRequirements(Skill& skill) const;
     QNetworkAccessManager m_networkManager;
 };
 

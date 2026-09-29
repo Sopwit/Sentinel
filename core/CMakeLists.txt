@@ -212,6 +212,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/skill/ISkillService.h
     include/sentinel/core/skill/Skill.h
     include/sentinel/core/skill/SkillService.h
+    include/sentinel/core/extension/ExtensionService.h
     include/sentinel/core/snapshot/ISnapshotService.h
     include/sentinel/core/snapshot/SnapshotService.h
     include/sentinel/core/voice/PiperTts.h
@@ -518,6 +519,7 @@ add_library(sentinel_core STATIC
     src/security/StaticApprovalPolicy.cpp
     src/security/StaticSandboxPolicy.cpp
     src/skill/SkillService.cpp
+    src/extension/ExtensionService.cpp
     src/snapshot/SnapshotService.cpp
     include/sentinel/core/voice/SpeechAssetCatalogAdapter.h
     src/voice/SpeechAssetCatalogAdapter.cpp
