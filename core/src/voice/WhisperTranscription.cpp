@@ -6,7 +6,6 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <QProcess>
 
 #include <memory>
 
@@ -99,48 +98,6 @@ WhisperTranscriptionResult refusedResult(WhisperTranscriptionStatus status, cons
     return result;
 }
 
-WhisperTranscriptionResult completedTranscriptionResult(WhisperTranscriptionStatus status,
-                                                        const QString& reason,
-                                                        const WhisperTranscriptionRequest& request,
-                                                        const WhisperTranscriptionConfig& config,
-                                                        const QStringList& traces, bool success,
-                                                        const QString& transcript) {
-    auto safety = whisperTranscriptionSafetyReport(config.policy);
-    safety.executionAttempted = true;
-    WhisperTranscriptionResult result;
-    result.status = status;
-    result.success = success;
-    result.transcript = transcript;
-    result.transcriptSummary = success ? QStringLiteral("Local transcript produced.")
-                                       : QStringLiteral("No transcript produced.");
-    result.audioPathSummary = safeAudioPathSummary(request.audioPath);
-    result.timeoutMs = request.timeoutMs > 0 ? request.timeoutMs : config.budget.timeoutMs;
-    result.executionAttempted = true;
-    result.session = WhisperTranscriptionSession{
-        QStringLiteral("whisper-transcription-session-1"),
-        status,
-        true,
-        true,
-        success ? QStringLiteral("Whisper transcription session completed a controlled local "
-                                 "subprocess without microphone access.")
-                : QStringLiteral("Whisper transcription session attempted a controlled local "
-                                 "subprocess and did not complete successfully."),
-    };
-    result.fallback = WhisperTranscriptionFallback{
-        status,
-        reason,
-        QStringLiteral("Whisper transcription %1: %2; no transcript was produced or sent.")
-            .arg(whisperTranscriptionStatusName(status), reason),
-    };
-    result.safetyReport = safety;
-    result.summary = QStringLiteral("Whisper transcription %1: %2. A controlled local subprocess "
-                                    "was attempted; no microphone, playback, streaming, prompt "
-                                    "injection, or chat send occurred.")
-                         .arg(whisperTranscriptionStatusName(status), reason);
-    result.traces = traces;
-    return result;
-}
-
 } // namespace
 
 QString whisperTranscriptionStatusName(WhisperTranscriptionStatus status) {
@@ -169,6 +126,8 @@ QString whisperTranscriptionStatusName(WhisperTranscriptionStatus status) {
         return QStringLiteral("Failed");
     case WhisperTranscriptionStatus::Timeout:
         return QStringLiteral("Timeout");
+    case WhisperTranscriptionStatus::Cancelled:
+        return QStringLiteral("Cancelled");
     }
     return QStringLiteral("Disabled");
 }
@@ -286,6 +245,7 @@ WhisperTranscriptionConfig configuredWhisperTranscriptionConfig(const QString& b
     auto config = defaultDisabledWhisperTranscriptionConfig();
     config.policy.enabled = configuredPath(binaryPath) || configuredPath(modelPath);
     config.policy.processExecutionAllowed = processExecutionAllowed;
+    config.budget.timeoutMs = processExecutionAllowed ? 120000 : 5000;
     config.binary.status = existingExecutableFile(binaryPath) ? VoiceBinaryStatus::PresentMetadata
                                                               : VoiceBinaryStatus::Missing;
     config.binary.expectedPath =
@@ -392,94 +352,19 @@ NullWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& re
 }
 
 WhisperTranscriptionStatus LocalWhisperTranscriptionClient::status() const {
-    return WhisperTranscriptionStatus::ReadyMetadata;
+    return WhisperTranscriptionStatus::Refused;
 }
 
 QString LocalWhisperTranscriptionClient::statusSummary() const {
-    return QStringLiteral("Local Whisper transcription client executes a controlled local "
-                          "subprocess only when readiness and the process-execution safety gate "
-                          "pass.");
+    return QStringLiteral("Legacy Whisper client is retired; execution uses the shared STT runtime.");
 }
 
 WhisperTranscriptionResult
 LocalWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& request,
                                             const WhisperTranscriptionConfig& config) {
-    const auto readiness = whisperTranscriptionReadiness(config, request);
-    QStringList traces = {
-        QStringLiteral("Request metadata accepted for validation."),
-        QStringLiteral("Readiness: %1").arg(whisperTranscriptionReadinessSummary(readiness)),
-    };
-
-    if (request.timeoutMs <= 0) {
-        traces.append(QStringLiteral("Timeout metadata fallback selected before execution."));
-        return refusedResult(WhisperTranscriptionStatus::Timeout,
-                             QStringLiteral("timeout budget invalid"), request, config, traces);
-    }
-    if (readiness.status != WhisperTranscriptionStatus::ReadyMetadata) {
-        return refusedResult(readiness.status, whisperTranscriptionStatusName(readiness.status),
-                             request, config, traces);
-    }
-    if (request.allowMicrophoneCapture || request.allowAudioPlayback ||
-        request.allowPromptInjection || request.allowAutomaticChatSend || !request.localOnly) {
-        traces.append(QStringLiteral("Safety policy refused runtime privileges."));
-        return refusedResult(WhisperTranscriptionStatus::SafetyBlocked,
-                             QStringLiteral("unsafe runtime privileges requested"), request, config,
-                             traces);
-    }
-    if (!request.allowProcessExecution || !config.policy.processExecutionAllowed) {
-        traces.append(QStringLiteral("Process execution is not enabled for this transcription."));
-        return refusedResult(WhisperTranscriptionStatus::Refused,
-                             QStringLiteral("Whisper execution phase not enabled"), request, config,
-                             traces);
-    }
-
-    QProcess process;
-    QStringList arguments = {QStringLiteral("-m"), config.model.expectedPath, QStringLiteral("-f"),
-                             request.audioPath};
-    if (!request.languageHint.trimmed().isEmpty()) {
-        arguments << QStringLiteral("-l") << request.languageHint.trimmed();
-    }
-    arguments << QStringLiteral("-nt");
-
-    traces.append(QStringLiteral("Local Whisper client started a controlled subprocess."));
-    process.start(config.binary.expectedPath, arguments);
-    if (!process.waitForStarted(request.timeoutMs)) {
-        const auto errorText = process.errorString();
-        traces.append(QStringLiteral("Whisper subprocess failed to start: %1").arg(errorText));
-        return completedTranscriptionResult(WhisperTranscriptionStatus::Failed,
-                                            QStringLiteral("Whisper subprocess failed to start"),
-                                            request, config, traces, false, {});
-    }
-    if (!process.waitForFinished(request.timeoutMs)) {
-        process.kill();
-        process.waitForFinished(1000);
-        traces.append(QStringLiteral("Whisper subprocess timed out and was terminated."));
-        return completedTranscriptionResult(WhisperTranscriptionStatus::Timeout,
-                                            QStringLiteral("Whisper subprocess timed out"), request,
-                                            config, traces, false, {});
-    }
-
-    const auto exitCode = process.exitCode();
-    const auto transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
-    if (exitCode != 0) {
-        traces.append(QStringLiteral("Whisper subprocess exited with code %1.").arg(exitCode));
-        return completedTranscriptionResult(WhisperTranscriptionStatus::Failed,
-                                            QStringLiteral("Whisper subprocess exited with code "
-                                                           "%1")
-                                                .arg(exitCode),
-                                            request, config, traces, false, {});
-    }
-    if (transcript.isEmpty()) {
-        traces.append(QStringLiteral("Whisper subprocess produced an empty transcript."));
-        return completedTranscriptionResult(WhisperTranscriptionStatus::Failed,
-                                            QStringLiteral("Whisper produced no transcript"),
-                                            request, config, traces, false, {});
-    }
-
-    traces.append(QStringLiteral("Whisper subprocess completed successfully with code 0."));
-    return completedTranscriptionResult(WhisperTranscriptionStatus::Succeeded,
-                                        QStringLiteral("local transcription completed"), request,
-                                        config, traces, true, transcript);
+    return refusedResult(WhisperTranscriptionStatus::Refused,
+                         QStringLiteral("Legacy direct Whisper execution was retired; use the authorized shared STT runtime"),
+                         request, config, {});
 }
 
 WhisperSpeechToTextProvider::WhisperSpeechToTextProvider()
@@ -559,6 +444,8 @@ QString WhisperSpeechToTextProvider::whisperStatusSummary() const {
         return QStringLiteral("Whisper STT transcription failed.");
     case WhisperTranscriptionStatus::Timeout:
         return QStringLiteral("Whisper STT transcription timed out.");
+    case WhisperTranscriptionStatus::Cancelled:
+        return QStringLiteral("Whisper STT transcription cancelled.");
     case WhisperTranscriptionStatus::MissingAudio:
         return QStringLiteral("Whisper STT refused readiness: audio input is missing.");
     case WhisperTranscriptionStatus::UnsafePath:

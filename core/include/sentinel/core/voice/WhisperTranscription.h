@@ -10,6 +10,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <atomic>
 #include <memory>
 
 namespace sentinel::core {
@@ -27,6 +28,7 @@ enum class WhisperTranscriptionStatus : std::uint8_t {
     Succeeded,
     Failed,
     Timeout,
+    Cancelled,
 };
 
 QString whisperTranscriptionStatusName(WhisperTranscriptionStatus status);
@@ -65,6 +67,7 @@ struct WhisperTranscriptionRequest {
     bool allowPromptInjection = false;
     bool allowAutomaticChatSend = false;
     int timeoutMs = 5000;
+    std::shared_ptr<std::atomic_bool> cancellation;
 };
 
 struct WhisperTranscriptionSession {

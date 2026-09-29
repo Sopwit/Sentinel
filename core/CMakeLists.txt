@@ -520,6 +520,10 @@ add_library(sentinel_core STATIC
     src/security/StaticSandboxPolicy.cpp
     src/skill/SkillService.cpp
     src/snapshot/SnapshotService.cpp
+    include/sentinel/core/voice/SpeechAssetCatalogAdapter.h
+    src/voice/SpeechAssetCatalogAdapter.cpp
+    include/sentinel/core/voice/UnifiedAudioService.h
+    src/voice/UnifiedAudioService.cpp
     src/voice/PiperTts.cpp
     src/voice/Voice.cpp
     src/voice/WhisperTranscription.cpp
