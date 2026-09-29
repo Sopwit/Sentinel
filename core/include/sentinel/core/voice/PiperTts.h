@@ -11,6 +11,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <atomic>
 #include <memory>
 
 namespace sentinel::core {
@@ -28,6 +29,7 @@ enum class PiperTtsStatus : std::uint8_t {
     Succeeded,
     Failed,
     Timeout,
+    Cancelled,
 };
 
 QString piperTtsStatusName(PiperTtsStatus status);
@@ -225,6 +227,7 @@ struct PiperTtsRequest {
     bool localOnly = true;
     bool allowAudioPlayback = false;
     int timeoutMs = 5000;
+    std::shared_ptr<std::atomic_bool> cancellation;
 };
 
 struct PiperTtsResult {
