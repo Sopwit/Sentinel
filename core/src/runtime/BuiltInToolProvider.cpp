@@ -70,20 +70,37 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                                            QStringLiteral("cancelled")}}}},
                           {QStringLiteral("priority"),
                            QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                                       {QStringLiteral("enum"),
+                                        QJsonArray{QStringLiteral("low"),
+                                                   QStringLiteral("medium"),
+                                                   QStringLiteral("high")}},
                                        {QStringLiteral("default"), QStringLiteral("medium")}}}}},
                      {QStringLiteral("required"),
                       QJsonArray{QStringLiteral("content"), QStringLiteral("status")}},
                      {QStringLiteral("additionalProperties"), false}}}};
+        } else if (tool.id == QLatin1String("spawn-agent") &&
+                   parameter.id == QLatin1String("purpose")) {
+            field.insert(QStringLiteral("enum"),
+                         QJsonArray{QStringLiteral("independent_research"),
+                                    QStringLiteral("parallel_verification"),
+                                    QStringLiteral("specialist_review")});
         } else if (tool.id == QLatin1String("spawn-agent") &&
                    parameter.id == QLatin1String("allowedTools")) {
             field = QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                 {QStringLiteral("items"),
                                  QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}},
                                 {QStringLiteral("maxItems"), 12}};
+        } else if (tool.id == QLatin1String("web-fetch") &&
+                   parameter.id == QLatin1String("format")) {
+            field.insert(QStringLiteral("enum"),
+                         QJsonArray{QStringLiteral("markdown"),
+                                    QStringLiteral("text"), QStringLiteral("html")});
+            field.insert(QStringLiteral("default"), QStringLiteral("markdown"));
         } else if (tool.id == QLatin1String("run-command") &&
                    parameter.id == QLatin1String("sandbox")) {
             field.insert(QStringLiteral("enum"),
                          QJsonArray{QStringLiteral(""), QStringLiteral("docker")});
+            field.insert(QStringLiteral("default"), QStringLiteral(""));
         }
         properties.insert(parameter.id, field);
     }
@@ -505,35 +522,23 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                     QStringLiteral("Max matches to return (default 10, max 50)."), false},
             }},
         ToolDescriptor{
-            QStringLiteral("ask-question"),
-            QStringLiteral("Ask Question"),
-            QStringLiteral("Asks the user a single clarifying question when the goal is "
-                           "ambiguous. Provide 2-5 short options, one per line, when the "
-                           "answer is a choice. After calling this, end the run with the "
-                           "question as your final answer and wait for the user's reply."),
-            ToolRiskLevel::Low,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("question"),
-                                        QStringLiteral("The question to ask."), true},
-                ToolParameterDescriptor{QStringLiteral("options"),
-                                        QStringLiteral("Optional answer choices, one per line."),
-                                        false},
-            }},
-        ToolDescriptor{
             QStringLiteral("spawn-agent"),
             QStringLiteral("Spawn Agent"),
             QStringLiteral("Delegates a self-contained subtask to a bounded read-only "
-                           "subagent and returns its final answer. Use for parallelizable "
-                           "research or verification subtasks (e.g. 'check whether X is "
-                           "documented anywhere in the workspace'). Subagents cannot spawn "
-                           "further subagents or edit files."),
+                           "subagent and returns its final answer. Delegate only independent "
+                           "research, parallel verification, or a bounded specialist review. "
+                           "Do not delegate a single-step or one-tool task, a trivial answer, "
+                           "or a retry of failed work. Subagents cannot spawn further "
+                           "subagents or edit files."),
             ToolRiskLevel::Medium,
             ToolExecutionMode::Local,
             {
                 ToolParameterDescriptor{
                     QStringLiteral("task"),
                     QStringLiteral("The complete, self-contained task description."), true},
+                ToolParameterDescriptor{
+                    QStringLiteral("purpose"),
+                    QStringLiteral("independent_research, parallel_verification, or specialist_review."), true},
                 ToolParameterDescriptor{QStringLiteral("role"),
                                         QStringLiteral("Optional short role label."), false},
                 ToolParameterDescriptor{QStringLiteral("allowedTools"),
@@ -555,9 +560,6 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             {
                 ToolParameterDescriptor{QStringLiteral("url"), QStringLiteral("The page URL."),
                                         true},
-                ToolParameterDescriptor{QStringLiteral("path"),
-                                        QStringLiteral("Output PNG path (default: temp file)."),
-                                        false},
             }},
         ToolDescriptor{
             QStringLiteral("browser-pdf"),
@@ -570,9 +572,6 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             {
                 ToolParameterDescriptor{QStringLiteral("url"), QStringLiteral("The page URL."),
                                         true},
-                ToolParameterDescriptor{QStringLiteral("path"),
-                                        QStringLiteral("Output PDF path (default: temp file)."),
-                                        false},
             }},
         ToolDescriptor{
             QStringLiteral("web-fetch"),
@@ -599,21 +598,9 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                 ToolParameterDescriptor{QStringLiteral("query"),
                                         QStringLiteral("The search query."), true},
             }},
-        ToolDescriptor{
-            QStringLiteral("open-workspace"),
-            QStringLiteral("Open Workspace"),
-            QStringLiteral("Sets the active workspace directory. File tools (read/write/edit/"
-                           "grep/glob) are scoped to this directory. Call this before file "
-                           "tools when the goal refers to a specific folder."),
-            ToolRiskLevel::Medium,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("path"),
-                                        QStringLiteral("The workspace path."), true},
-            }},
         ToolDescriptor{QStringLiteral("voice-transcribe"),
                        QStringLiteral("Voice Transcribe"),
-                       QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
+                       QStringLiteral("Transcribes an existing local audio file with Whisper."),
                        ToolRiskLevel::High,
                        ToolExecutionMode::Local,
                        {
@@ -622,31 +609,14 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                        }},
         ToolDescriptor{QStringLiteral("voice-speak"),
                        QStringLiteral("Voice Speak"),
-                       QStringLiteral("TTS text-to-speech audio synthesis and playback."),
+                       QStringLiteral("Synthesizes speech audio from text with Piper."),
                        ToolRiskLevel::High,
                        ToolExecutionMode::Local,
                        {
                            ToolParameterDescriptor{QStringLiteral("text"),
                                                    QStringLiteral("The text to speak."), true},
                        }},
-        ToolDescriptor{QStringLiteral("summarize-current-conversation"),
-                       QStringLiteral("Summarize Current Conversation"),
-                       QStringLiteral("Conversation summary generation and prompt injection."),
-                       ToolRiskLevel::Low,
-                       ToolExecutionMode::Local,
-                       {}},
-        ToolDescriptor{QStringLiteral("provider-test-call"),
-                       QStringLiteral("Provider Test Call"),
-                       QStringLiteral("Connectivity check passed."),
-                       ToolRiskLevel::Low,
-                       ToolExecutionMode::Local,
-                       {}},
-        ToolDescriptor{QStringLiteral("export-conversation"),
-                       QStringLiteral("Export Conversation"),
-                       QStringLiteral("Explicit transcript export to local disk file."),
-                       ToolRiskLevel::Medium,
-                       ToolExecutionMode::Local,
-                       {}}};
+        };
     const QSet<QString> filesystem{
         QStringLiteral("list-directory"), QStringLiteral("read-file"),
         QStringLiteral("write-file"),     QStringLiteral("edit-file"),
@@ -658,7 +628,76 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
     const QSet<QString> system{QStringLiteral("run-command"),  QStringLiteral("app-launch"),
                                QStringLiteral("app-quit"),     QStringLiteral("system-info"),
                                QStringLiteral("process-list"), QStringLiteral("current-time")};
+    const QSet<QString> portableReady{
+        QStringLiteral("list-directory"), QStringLiteral("read-file"),
+        QStringLiteral("write-file"), QStringLiteral("edit-file"),
+        QStringLiteral("delete-file"), QStringLiteral("move-file"),
+        QStringLiteral("grep"), QStringLiteral("glob"),
+        QStringLiteral("list-code-definitions"), QStringLiteral("current-time"),
+        QStringLiteral("apply-patch"), QStringLiteral("system-info")};
+    const QHash<QString, QString> experimentalReasons{
+        {QStringLiteral("run-command"), QStringLiteral("Sandbox backend availability and command effects are platform-dependent.")},
+        {QStringLiteral("app-launch"), QStringLiteral("Detached desktop launch cannot be sandboxed on Linux; launch acknowledgement does not prove the app opened.")},
+        {QStringLiteral("app-quit"), QStringLiteral("Process-name matching and graceful quit semantics differ by platform.")},
+        {QStringLiteral("open-url"), QStringLiteral("Desktop opener acknowledgement does not prove browser navigation.")},
+        {QStringLiteral("system-notify"), QStringLiteral("Desktop notification delivery is not observable across platforms.")},
+        {QStringLiteral("clipboard-read"), QStringLiteral("GUI clipboard availability and observation completeness are not represented structurally.")},
+        {QStringLiteral("clipboard-write"), QStringLiteral("GUI clipboard availability and write confirmation are not represented structurally.")},
+        {QStringLiteral("process-list"), QStringLiteral("Platform process listings are truncated and lack structured completeness metadata.")},
+        {QStringLiteral("set-alarm"), QStringLiteral("Alarm scheduling acknowledgement has no structured persistence/delivery receipt.")},
+        {QStringLiteral("list-alarms"), QStringLiteral("Alarm listing has no bounded structured completeness observation.")},
+        {QStringLiteral("cancel-alarm"), QStringLiteral("Alarm removal has no structured persistence confirmation.")},
+        {QStringLiteral("todo-write"), QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
+        {QStringLiteral("todo-read"), QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
+        {QStringLiteral("memory-search"), QStringLiteral("Search has no structured completeness contract; absence is not authoritative.")},
+        {QStringLiteral("history-search"), QStringLiteral("Search has no structured completeness contract; absence is not authoritative.")},
+        {QStringLiteral("spawn-agent"), QStringLiteral("Child completion and cancellation depend on parent runtime wiring.")},
+        {QStringLiteral("browser-screenshot"), QStringLiteral("Requires externally installed Playwright/Chromium; output is a private artifact.")},
+        {QStringLiteral("browser-pdf"), QStringLiteral("Requires externally installed Playwright/Chromium; output is a private artifact.")},
+        {QStringLiteral("web-fetch"), QStringLiteral("Synchronous network client cannot cancel an in-flight request.")},
+        {QStringLiteral("web-search"), QStringLiteral("Synchronous network client cannot cancel an in-flight request or prove search completeness.")},
+        {QStringLiteral("voice-transcribe"), QStringLiteral("Requires configured Whisper binary and audio input support.")},
+        {QStringLiteral("voice-speak"), QStringLiteral("Requires Piper binary and model; synthesis does not imply playback.")}};
+    const QSet<QString> cancellable{
+        QStringLiteral("list-directory"), QStringLiteral("glob"),
+        QStringLiteral("grep"), QStringLiteral("list-code-definitions"),
+        QStringLiteral("run-command"), QStringLiteral("process-list"),
+        QStringLiteral("browser-screenshot"), QStringLiteral("browser-pdf"),
+        QStringLiteral("voice-transcribe"), QStringLiteral("voice-speak"),
+        QStringLiteral("spawn-agent")};
     for (auto& tool : tools) {
+        tool.maturity = portableReady.contains(tool.id)
+            ? ToolMaturity::ProductionReady : ToolMaturity::Experimental;
+        tool.maturityReason = experimentalReasons.value(tool.id);
+        if (portableReady.contains(tool.id))
+            tool.platforms = {ToolPlatformSupport::Supported,
+                              ToolPlatformSupport::Supported,
+                              ToolPlatformSupport::Supported};
+        if (tool.id == QLatin1String("app-launch"))
+            tool.platforms.linux = ToolPlatformSupport::Unsupported;
+        if (tool.id == QLatin1String("app-quit"))
+            tool.platforms.linux = ToolPlatformSupport::PartiallySupported;
+        tool.cancellationSupport = cancellable.contains(tool.id)
+            ? ToolCancellationSupport::Cancellable
+            : tool.id == QLatin1String("apply-patch")
+                ? ToolCancellationSupport::SafeBoundary
+                : ToolCancellationSupport::Atomic;
+        if (filesystem.contains(tool.id))
+            tool.errorSemantics = ToolErrorSemantics::Typed;
+        if (tool.id == QLatin1String("run-command") ||
+            tool.id == QLatin1String("web-fetch") || tool.id == QLatin1String("web-search") ||
+            tool.id == QLatin1String("voice-transcribe") || tool.id == QLatin1String("voice-speak"))
+            tool.errorSemantics = ToolErrorSemantics::Typed;
+        if (tool.id == QLatin1String("local-plan-summary")) {
+            tool.exposedToModel = false;
+            tool.enabled = false;
+            tool.maturity = ToolMaturity::Internal;
+            tool.maturityReason = QStringLiteral("Internal planning metadata; never model-visible.");
+        }
+        if (tool.id == QLatin1String("todo-write") || tool.id == QLatin1String("todo-read")) {
+            tool.enabled = false;
+            tool.exposedToModel = false;
+        }
         static const QSet<QString> parallelBuiltIns{
             QStringLiteral("list-directory"), QStringLiteral("read-file"),
             QStringLiteral("grep"), QStringLiteral("glob"),
@@ -679,6 +718,11 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             tool.structuredObservationKind = StructuredObservationKind::TextSearch;
         else if (tool.id == QLatin1String("list-code-definitions"))
             tool.structuredObservationKind = StructuredObservationKind::CodeDefinitions;
+        else if (tool.id == QLatin1String("system-info"))
+            tool.structuredObservationKind = StructuredObservationKind::Generic;
+        else if (tool.id == QLatin1String("web-fetch") ||
+                 tool.id == QLatin1String("web-search"))
+            tool.structuredObservationKind = StructuredObservationKind::Generic;
         tool.source = ToolSource::BuiltIn;
         tool.providerId = QStringLiteral("builtin");
         if (filesystem.contains(tool.id)) {
@@ -743,12 +787,11 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             add(D::Clipboard, A::Write);
         } else if (tool.id == QLatin1String("memory-search")) {
             add(D::Memory, A::Read);
-        } else if (tool.id == QLatin1String("history-search") ||
-                   tool.id == QLatin1String("summarize-current-conversation") ||
-                   tool.id == QLatin1String("export-conversation")) {
+        } else if (tool.id == QLatin1String("history-search")) {
             add(D::Conversation, A::Read);
         } else if (tool.id == QLatin1String("voice-transcribe")) {
             add(D::Audio, A::Read);
+            add(D::FileSystem, A::Read, R::FileSystemPath, QStringLiteral("path"));
         } else if (tool.id == QLatin1String("voice-speak")) {
             add(D::Audio, A::Invoke);
         } else if (tool.id == QLatin1String("app-launch")) {
@@ -772,12 +815,6 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             add(D::Conversation, A::Write);
         } else if (tool.id == QLatin1String("todo-read")) {
             add(D::Conversation, A::Read);
-        } else if (tool.id == QLatin1String("ask-question")) {
-            add(D::Agent, A::Invoke);
-        } else if (tool.id == QLatin1String("open-workspace")) {
-            add(D::FileSystem, A::Read, R::FileSystemPath, QStringLiteral("path"));
-        } else if (tool.id == QLatin1String("provider-test-call")) {
-            add(D::ExternalService, A::Invoke);
         } else if (tool.id == QLatin1String("local-plan-summary")) {
             add(D::Agent, A::Invoke);
         }
@@ -820,19 +857,14 @@ const QHash<QString, BuiltInOperation> kMethods = {
     {QStringLiteral("todo-read"), {&RealToolExecutor::executeTodoRead, false}},
     {QStringLiteral("memory-search"), {&RealToolExecutor::executeMemorySearch, false}},
     {QStringLiteral("history-search"), {&RealToolExecutor::executeHistorySearch, false}},
-    {QStringLiteral("ask-question"), {&RealToolExecutor::executeAskQuestion, false}},
     {QStringLiteral("spawn-agent"), {&RealToolExecutor::executeSpawnAgent, false}},
     {QStringLiteral("browser-screenshot"), {&RealToolExecutor::executeBrowserScreenshot, true}},
     {QStringLiteral("browser-pdf"), {&RealToolExecutor::executeBrowserPdf, true}},
     {QStringLiteral("web-fetch"), {&RealToolExecutor::executeWebFetch, false}},
     {QStringLiteral("web-search"), {&RealToolExecutor::executeWebSearch, false}},
-    {QStringLiteral("open-workspace"), {&RealToolExecutor::executeOpenWorkspace, false}},
     {QStringLiteral("voice-transcribe"), {&RealToolExecutor::executeVoiceTranscribe, true}},
     {QStringLiteral("voice-speak"), {&RealToolExecutor::executeVoiceSpeak, true}},
-    {QStringLiteral("summarize-current-conversation"),
-     {&RealToolExecutor::executeSummarizeCurrentConversation, false}},
-    {QStringLiteral("provider-test-call"), {&RealToolExecutor::executeProviderTestCall, false}},
-    {QStringLiteral("export-conversation"), {&RealToolExecutor::executeExportConversation, false}}};
+    };
 class BuiltInHandler final : public IToolHandler,
                              public std::enable_shared_from_this<BuiltInHandler> {
 public:
@@ -881,7 +913,7 @@ public:
             auto token = std::make_shared<std::atomic_bool>(false);
             invocation.toolCancellation = token;
             auto self = shared_from_this();
-            QTimer::singleShot(0, [self, invocation = std::move(invocation),
+            QTimer::singleShot(0, [self, invocation = std::move(invocation), cancellable,
                                    completion = std::move(completion), token]() mutable {
                 if (token->load() || (invocation.cancellation && invocation.cancellation->load())) {
                     completion({ToolExecutionStatus::Cancelled,
@@ -890,7 +922,8 @@ public:
                 }
                 QString cwd = QDir::currentPath();
                 auto result = (self->executor_.*self->method_)(invocation, cwd);
-                if ((token->load() || (invocation.cancellation && invocation.cancellation->load())) &&
+                if (cancellable && invocation.toolId != QLatin1String("apply-patch") &&
+                    (token->load() || (invocation.cancellation && invocation.cancellation->load())) &&
                     result.status == ToolExecutionStatus::Succeeded) {
                     result.status = ToolExecutionStatus::Cancelled;
                     if (result.structuredObservation) {

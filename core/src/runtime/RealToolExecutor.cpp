@@ -45,6 +45,14 @@
 
 namespace sentinel::core {
 
+namespace {
+template <typename T>
+ToolExecutionResult fileToolFailure(const QString& tool, const FileSystemResult<T>& result);
+FileSystemResult<AuthorizedPath> authorizedFilePath(
+    const IFileSystemService& service, const PlannedToolInvocation& invocation,
+    const QString& argument, AccessMode access, const QString& cwd);
+}
+
 RealToolExecutor::RealToolExecutor() = default;
 
 RealToolExecutor::RealToolExecutor(std::shared_ptr<AlarmStore> alarmStore)
@@ -72,13 +80,13 @@ void RealToolExecutor::setMcpService(std::shared_ptr<IMcpService> service) {
 
 void RealToolExecutor::setSubagentRunner(std::function<QString(const QString& task)> runner) {
     subagentRunner_ = [runner = std::move(runner)](const SubagentAssignment& assignment,
-                                                   const QString&) {
-        return runner(assignment.goal);
+                                                   const QString&) -> ToolExecutionResult {
+        return {ToolExecutionStatus::Succeeded, runner(assignment.goal)};
     };
 }
 
 void RealToolExecutor::setSubagentRunnerWithContext(
-    std::function<QString(const SubagentAssignment&, const QString&)> runner) {
+    std::function<ToolExecutionResult(const SubagentAssignment&, const QString&)> runner) {
     subagentRunner_ = std::move(runner);
 }
 
@@ -167,7 +175,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             if (current->cancelled) {
                 current->finished = true;
                 current->completion(
-                    {ToolExecutionStatus::Blocked, QStringLiteral("Tool execution cancelled.")});
+                    {ToolExecutionStatus::Cancelled, QStringLiteral("Tool execution cancelled.")});
                 current->next = {};
                 return;
             }
@@ -190,7 +198,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                     state->currentCancel = {};
                     if (state->cancelled) {
                         state->finished = true;
-                        state->completion({ToolExecutionStatus::Blocked,
+                        state->completion({ToolExecutionStatus::Cancelled,
                                            QStringLiteral("Tool execution cancelled.")});
                         state->next = {};
                         return;
@@ -221,7 +229,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             } else {
                 batch->finished = true;
                 batch->completion(
-                    {ToolExecutionStatus::Blocked, QStringLiteral("Tool execution cancelled.")});
+                    {ToolExecutionStatus::Cancelled, QStringLiteral("Tool execution cancelled.")});
                 batch->next = {};
             }
         };
@@ -246,6 +254,99 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         return QString{};
     };
     const QString toolId = invocation.toolId;
+    if (toolId == QLatin1String("voice-transcribe") ||
+        toolId == QLatin1String("voice-speak")) {
+        const auto stt = sttRuntime_;
+        const auto tts = ttsRuntime_;
+        const auto cwd = invocation.processSandbox
+            ? invocation.processSandbox->workingDirectory : QDir::currentPath();
+        std::optional<AuthorizedPath> audioPath;
+        if (toolId == QLatin1String("voice-transcribe")) {
+            const auto authorized = authorizedFilePath(fileSystemService_, invocation,
+                QStringLiteral("path"), AccessMode::Read, cwd);
+            if (!authorized.ok()) {
+                completion(fileToolFailure(toolId, authorized));
+                return {};
+            }
+            audioPath = *authorized.value;
+        }
+        const auto speechText = argument(QStringLiteral("text"));
+        if (toolId == QLatin1String("voice-speak") && speechText.trimmed().isEmpty()) {
+            completion({ToolExecutionStatus::InvalidArguments,
+                        QStringLiteral("voice-speak: Text is empty.")});
+            return {};
+        }
+        auto cancelled = std::make_shared<std::atomic_bool>(false);
+        QPointer<QObject> context(request.callbackContext);
+        auto* worker = QThread::create([this, toolId, stt, tts, audioPath, cwd,
+                                        speechText, cancelled, context, completion] {
+            ToolExecutionResult result;
+            AudioFailure failure = AudioFailure::None;
+            QString detail;
+            if (toolId == QLatin1String("voice-transcribe")) {
+                if (!stt) failure = AudioFailure::RuntimeUnavailable;
+                else {
+                    const auto verified = fileSystemService_.revalidateAuthorized(*audioPath, cwd);
+                    const auto currentGrant = fileSystemService_.resolve(
+                        audioPath->canonicalPath, cwd, FileSystemAccess::Read);
+                    if (!verified.ok() || !currentGrant.ok() ||
+                        currentGrant.value->canonicalPath != audioPath->canonicalPath ||
+                        currentGrant.value->deviceId != audioPath->deviceId ||
+                        currentGrant.value->fileId != audioPath->fileId)
+                        failure = AudioFailure::PermissionDenied;
+                    else {
+                        const auto file = fileSystemService_.stat(*verified.value);
+                        if (!file.ok() || !file.value->regularFile)
+                            failure = AudioFailure::UnsupportedFormat;
+                        else {
+                            const auto transcript = stt->transcribeFile(
+                                verified.value->canonicalPath, {}, cancelled);
+                            failure = transcript.failure;
+                            detail = transcript.detail;
+                            if (failure == AudioFailure::None)
+                                result.summary = QStringLiteral("voice-transcribe: OK\n%1")
+                                    .arg(transcript.finalText);
+                        }
+                    }
+                }
+            } else if (!tts) failure = AudioFailure::RuntimeUnavailable;
+            else {
+                const auto audio = tts->synthesize(
+                    SpeechSynthesisRequest{speechText, {}, {}, 1.0}, cancelled);
+                failure = audio.failure;
+                detail = audio.detail;
+                if (cancelled->load() && !audio.filePath.isEmpty()) QFile::remove(audio.filePath);
+                if (failure == AudioFailure::None && !cancelled->load())
+                    result.summary = QStringLiteral("voice-speak: audio generated at %1")
+                        .arg(audio.filePath);
+            }
+            if (cancelled->load()) failure = AudioFailure::Cancelled;
+            result.status = failure == AudioFailure::None ? ToolExecutionStatus::Succeeded
+                : failure == AudioFailure::Cancelled ? ToolExecutionStatus::Cancelled
+                                                    : ToolExecutionStatus::Failed;
+            if (failure != AudioFailure::None) {
+                result.summary = QStringLiteral("%1: %2. %3")
+                    .arg(toolId, audioFailureName(failure), detail.left(300));
+                result.failureCategory = failure == AudioFailure::Timeout
+                    ? ToolFailureCategory::Timeout
+                    : failure == AudioFailure::Cancelled ? ToolFailureCategory::Cancelled
+                    : failure == AudioFailure::RuntimeUnavailable ||
+                      failure == AudioFailure::ModelUnavailable
+                        ? ToolFailureCategory::RuntimeUnavailable
+                        : failure == AudioFailure::PermissionDenied
+                            ? ToolFailureCategory::PermissionDenied
+                            : ToolFailureCategory::InternalFailure;
+            }
+            if (context)
+                QMetaObject::invokeMethod(context, [completion, result = std::move(result)]() mutable {
+                    completion(std::move(result));
+                }, Qt::QueuedConnection);
+            else completion(std::move(result));
+        });
+        QObject::connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+        worker->start();
+        return [cancelled] { cancelled->store(true); };
+    }
     if (toolId == QLatin1String("spawn-agent")) {
         auto cancelled = std::make_shared<std::atomic_bool>(false);
         QPointer<QObject> context(request.callbackContext);
@@ -278,8 +379,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         static const QSet<QString> processTools{
             QStringLiteral("process-list"),  QStringLiteral("app-quit"),
             QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
-            QStringLiteral("browser-pdf"),   QStringLiteral("voice-transcribe"),
-            QStringLiteral("voice-speak"),   QStringLiteral("app-launch"),
+            QStringLiteral("browser-pdf"),   QStringLiteral("app-launch"),
             QStringLiteral("open-url")};
         if (!processTools.contains(toolId))
             return IToolExecutor::executeAsync(request, sessionId, toolCallId, std::move(output),
@@ -325,7 +425,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         } else if (toolId == QLatin1String("app-quit")) {
             const QString app = argument(QStringLiteral("app")).trimmed();
             if (app.isEmpty()) {
-                completion({ToolExecutionStatus::Succeeded,
+                completion({ToolExecutionStatus::InvalidArguments,
                             QStringLiteral("app-quit: No app argument provided.")});
                 return {};
             }
@@ -414,7 +514,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             const QString title = argument(QStringLiteral("title")).trimmed();
             const QString message = argument(QStringLiteral("message")).trimmed();
             if (message.isEmpty()) {
-                completion({ToolExecutionStatus::Succeeded,
+                completion({ToolExecutionStatus::InvalidArguments,
                             QStringLiteral("system-notify: No message argument provided.")});
                 return {};
             }
@@ -509,55 +609,6 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                              err.isEmpty() ? QStringLiteral("no output file was produced") : err);
                 return QStringLiteral("browser-%1: saved '%2'.").arg(mode, path);
             };
-        } else if (toolId == QLatin1String("voice-transcribe")) {
-            const QString path = argument(QStringLiteral("path"));
-            if (path.isEmpty()) {
-                completion({ToolExecutionStatus::Succeeded,
-                            QStringLiteral("voice-transcribe: No audio path provided.")});
-                return {};
-            }
-#if defined(Q_OS_WIN)
-            process.program = QStringLiteral("whisper.exe");
-#else
-            process.program = QStringLiteral("whisper");
-#endif
-            process.arguments = {path};
-            format = [path](const ProcessRecord& record, const QString& out, const QString&) {
-                return record.timedOut
-                           ? QStringLiteral("voice-transcribe: Whisper timed out for '%1'")
-                                 .arg(path)
-                           : QStringLiteral("voice-transcribe: OK\n%1").arg(out);
-            };
-        } else if (toolId == QLatin1String("voice-speak")) {
-            const QString content = argument(QStringLiteral("text"));
-            if (content.isEmpty()) {
-                completion({ToolExecutionStatus::Succeeded,
-                            QStringLiteral("voice-speak: No text argument provided.")});
-                return {};
-            }
-#if defined(Q_OS_WIN)
-            process.program = QStringLiteral("piper.exe");
-#else
-            process.program = QStringLiteral("piper");
-#endif
-            outputDirectory = std::make_shared<QTemporaryDir>();
-            if (!outputDirectory->isValid()) {
-                completion({ToolExecutionStatus::Failed,
-                            QStringLiteral("voice-speak: private output directory is unavailable.")});
-                return {};
-            }
-            process.sandbox->temporaryDirectory = outputDirectory->path();
-            const QString path = QDir(outputDirectory->path()).filePath(QStringLiteral("speech.wav"));
-            process.arguments = {QStringLiteral("--model"),
-                                 QStringLiteral("en_US-lessac-medium.onnx"),
-                                 QStringLiteral("--output_file"), path};
-            process.timeoutMs = 10000;
-            input = content.toUtf8();
-            format = [path](const ProcessRecord& record, const QString&, const QString&) {
-                return record.timedOut
-                           ? QStringLiteral("voice-speak: Piper TTS timed out.")
-                           : QStringLiteral("voice-speak: TTS synthesis OK → %1").arg(path);
-            };
         }
         struct Active {
             std::shared_ptr<ProcessExecutor> executor;
@@ -591,6 +642,20 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                         ? ToolExecutionStatus::Succeeded : ToolExecutionStatus::Failed,
                     current->format(record, QString::fromUtf8(current->out).trimmed(),
                                     QString::fromUtf8(current->err).trimmed())};
+                if (record.timedOut)
+                    result.failureCategory = ToolFailureCategory::Timeout;
+                else if (record.state == ProcessState::Cancelled)
+                    result.failureCategory = ToolFailureCategory::Cancelled;
+                else if (record.state == ProcessState::Failed && record.systemPid == 0)
+                    result.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+                else if (result.status == ToolExecutionStatus::Failed)
+                    result.failureCategory = ToolFailureCategory::InternalFailure;
+                if (result.status == ToolExecutionStatus::Succeeded && current->outputDirectory &&
+                    QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty()) {
+                    result.status = ToolExecutionStatus::Failed;
+                    result.failureCategory = ToolFailureCategory::InternalFailure;
+                    result.summary = QStringLiteral("Expected output artifact was not produced.");
+                }
                 result.sandbox = record.sandbox;
                 if (record.exitCode != 0 &&
                     (current->err.startsWith("bwrap:") ||
@@ -618,6 +683,11 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             active->executor->write(active->id, input);
             active->executor->closeWriteChannel(active->id);
         }
+        if (toolId == QLatin1String("app-quit") ||
+            toolId == QLatin1String("app-launch") ||
+            toolId == QLatin1String("open-url") ||
+            toolId == QLatin1String("system-notify"))
+            return [active] {};
         return [active] {
             if (active->executor && !active->id.isEmpty())
                 active->executor->terminate(active->id);
@@ -789,6 +859,16 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 result.sandbox.enforcement = SandboxEnforcement::Failed;
                 result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
             }
+            result.failureCategory = result.status == ToolExecutionStatus::Cancelled
+                ? ToolFailureCategory::Cancelled
+                : record.timedOut ? ToolFailureCategory::Timeout
+                : result.sandbox.enforcement == SandboxEnforcement::Failed
+                    ? ToolFailureCategory::SecurityDenied
+                : record.state == ProcessState::Failed
+                    ? ToolFailureCategory::RuntimeUnavailable
+                : result.status == ToolExecutionStatus::Failed
+                    ? ToolFailureCategory::InternalFailure
+                    : ToolFailureCategory::None;
             current->completion(std::move(result));
         },
         [weak](const QString& id, ProcessStream stream, const QByteArray& bytes) {
@@ -878,58 +958,6 @@ bool isSensitiveToolPath(const QString& canonicalPath) {
         }
     }
     return false;
-}
-
-bool isFilesystemRootPath(const QString& canonicalPath) {
-    const QString clean = QDir::cleanPath(canonicalPath);
-#ifdef Q_OS_WIN
-    if (clean.size() == 2 && clean.endsWith(QLatin1Char(':'))) {
-        return true;
-    }
-    if (clean.size() == 3 && clean.at(1) == QLatin1Char(':') &&
-        (clean.at(2) == QLatin1Char('/') || clean.at(2) == QLatin1Char('\\'))) {
-        return true;
-    }
-#endif
-    return clean == QStringLiteral("/") || clean.isEmpty();
-}
-
-bool isForbiddenWorkspacePath(const QString& canonicalPath) {
-    if (isFilesystemRootPath(canonicalPath)) {
-        return true;
-    }
-
-    const QString clean = QDir::cleanPath(canonicalPath);
-    static const QStringList systemRoots{
-        QStringLiteral("/etc"),
-        QStringLiteral("/usr"),
-        QStringLiteral("/bin"),
-        QStringLiteral("/sbin"),
-        QStringLiteral("/lib"),
-        QStringLiteral("/lib64"),
-        QStringLiteral("/var"),
-        QStringLiteral("/boot"),
-        QStringLiteral("/root"),
-        QStringLiteral("/System"),
-        QStringLiteral("/Library/Keychains"),
-        QStringLiteral("/Applications"),
-        QStringLiteral("C:\\Windows"),
-        QStringLiteral("C:\\Program Files"),
-        QStringLiteral("C:\\Program Files (x86)"),
-    };
-    for (const auto& systemRoot : systemRoots) {
-        const QString root = QDir::cleanPath(systemRoot);
-        if (clean == root || clean.startsWith(root + QLatin1Char('/'))) {
-            return true;
-        }
-    }
-
-    const QString home = QDir::cleanPath(QDir::homePath());
-    if (home != clean && home != QStringLiteral("/") && home.startsWith(clean + QLatin1Char('/'))) {
-        return true;
-    }
-
-    return isSensitiveToolPath(clean);
 }
 
 QString runSynchronousProcess(const QString& program, const QStringList& args,
@@ -1315,7 +1343,18 @@ template <typename T> ToolExecutionResult fileToolFailure(const QString& tool, c
             detail = QStringLiteral("Already exists: %1").arg(result.resource);
         else detail = QStringLiteral("Filesystem operation failed: %1").arg(result.resource);
     }
-    return {status, QStringLiteral("%1: %2").arg(tool, detail), observation};
+    ToolExecutionResult failure{status, QStringLiteral("%1: %2").arg(tool, detail), observation};
+    failure.failureCategory = result.failure == FileSystemFailure::NotFound
+        ? ToolFailureCategory::NotFound
+        : result.failure == FileSystemFailure::PermissionDenied
+            ? ToolFailureCategory::PermissionDenied
+        : securityFailure ? ToolFailureCategory::SecurityDenied
+        : result.failure == FileSystemFailure::InvalidPath
+            ? ToolFailureCategory::InvalidArguments
+        : result.failure == FileSystemFailure::Unavailable
+            ? ToolFailureCategory::RuntimeUnavailable
+        : ToolFailureCategory::InternalFailure;
+    return failure;
 }
 FileSystemResult<AuthorizedPath> authorizedFilePath(
     const IFileSystemService& service, const PlannedToolInvocation& invocation,
@@ -1693,16 +1732,21 @@ ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocat
     do {
         const QString task = getArgument(invocation, QStringLiteral("task")).trimmed();
         if (task.isEmpty()) {
-            logs.append(QStringLiteral("spawn-agent: No task argument provided."));
-            continue;
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("spawn-agent: No task argument provided.")};
         }
         if (!subagentRunner_) {
-            logs.append(
-                QStringLiteral("spawn-agent: No subagent runner is configured in this session."));
-            continue;
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("spawn-agent: No subagent runner is configured in this session.")};
         }
         SubagentAssignment assignment;
         assignment.goal = task;
+        assignment.purpose = getArgument(invocation, QStringLiteral("purpose")).trimmed();
+        if (assignment.purpose != QLatin1String("independent_research") &&
+            assignment.purpose != QLatin1String("parallel_verification") &&
+            assignment.purpose != QLatin1String("specialist_review"))
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("spawn-agent: invalid delegation purpose.")};
         assignment.role = getArgument(invocation, QStringLiteral("role")).trimmed().left(40);
         assignment.workspace = getArgument(invocation, QStringLiteral("workspace")).trimmed();
         assignment.modelId = getArgument(invocation, QStringLiteral("modelId")).trimmed();
@@ -1721,9 +1765,14 @@ ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocat
             }
             assignment.allowedToolIds.removeDuplicates();
         }
-        const QString answer = subagentRunner_(assignment, invocation.runtimeToolCallId);
+        if (assignment.allowedToolIds.isEmpty() && assignment.workspace.isEmpty())
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("spawn-agent: specify a bounded tool or workspace scope.")};
+        auto result = subagentRunner_(assignment, invocation.runtimeToolCallId);
+        if (result.status != ToolExecutionStatus::Succeeded)
+            return result;
         logs.append(QStringLiteral("spawn-agent: subagent finished the task '%1'.\n\n%2")
-                        .arg(task.left(200), answer));
+                        .arg(task.left(200), result.summary));
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
@@ -1854,9 +1903,10 @@ ToolExecutionResult RealToolExecutor::executeClipboardRead(const PlannedToolInvo
     do {
         QClipboard* clipboard = activeClipboard();
         if (!clipboard) {
-            logs.append(
-                QStringLiteral("clipboard-read: Clipboard is unavailable without a GUI session."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("clipboard-read: Clipboard is unavailable without a GUI session.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const QString text = clipboard->text();
         if (text.isEmpty()) {
@@ -1888,9 +1938,10 @@ RealToolExecutor::executeClipboardWrite(const PlannedToolInvocation& invocation,
         }
         QClipboard* clipboard = activeClipboard();
         if (!clipboard) {
-            logs.append(
-                QStringLiteral("clipboard-write: Clipboard is unavailable without a GUI session."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("clipboard-write: Clipboard is unavailable without a GUI session.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         clipboard->setText(text);
         logs.append(QStringLiteral("clipboard-write: Copied %1 character(s) to the clipboard.")
@@ -1902,12 +1953,16 @@ RealToolExecutor::executeClipboardWrite(const PlannedToolInvocation& invocation,
 
 ToolExecutionResult RealToolExecutor::executeSystemInfo(const PlannedToolInvocation& invocation,
                                                         QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        logs.append(QStringLiteral("system-info:\n%1").arg(systemInfoReport()));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+    const QString fullReport = systemInfoReport();
+    const bool truncated = fullReport.size() > 4096;
+    const QString report = fullReport.left(4096);
+    const QJsonObject data{{QStringLiteral("report"), report},
+                           {QStringLiteral("complete"), !truncated},
+                           {QStringLiteral("truncated"), truncated},
+                           {QStringLiteral("partialEvidence"), truncated}};
+    return {ToolExecutionStatus::Succeeded, QStringLiteral("system-info:\n%1").arg(report),
+            std::make_shared<StructuredObservation>(StructuredObservation{
+                StructuredObservationKind::Generic, data})};
 }
 
 ToolExecutionResult RealToolExecutor::executeProcessList(const PlannedToolInvocation& invocation,
@@ -1939,18 +1994,21 @@ ToolExecutionResult RealToolExecutor::executeSetAlarm(const PlannedToolInvocatio
     QStringList logs;
     do {
         if (!alarmStore_) {
-            logs.append(QStringLiteral("set-alarm: No alarm store is configured."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("set-alarm: No alarm store is configured.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const QString rawTime = getArgument(invocation, QStringLiteral("time"));
         const QString label = getArgument(invocation, QStringLiteral("label")).trimmed();
         const auto triggerAt = parseAlarmTime(rawTime);
         if (!triggerAt.isValid()) {
-            logs.append(
+            ToolExecutionResult failure{ToolExecutionStatus::InvalidArguments,
                 QStringLiteral("set-alarm: Could not parse time '%1'. Use HH:mm, HH:mm:ss, or an "
                                "ISO datetime (yyyy-MM-ddTHH:mm).")
-                    .arg(rawTime));
-            continue;
+                    .arg(rawTime)};
+            failure.failureCategory = ToolFailureCategory::InvalidArguments;
+            return failure;
         }
         const auto entry =
             alarmStore_->schedule(triggerAt, label.isEmpty() ? QStringLiteral("Alarm") : label);
@@ -1967,8 +2025,10 @@ ToolExecutionResult RealToolExecutor::executeListAlarms(const PlannedToolInvocat
     QStringList logs;
     do {
         if (!alarmStore_) {
-            logs.append(QStringLiteral("list-alarms: No alarm store is configured."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("list-alarms: No alarm store is configured.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const auto alarms = alarmStore_->active();
         if (alarms.isEmpty()) {
@@ -1994,17 +2054,25 @@ ToolExecutionResult RealToolExecutor::executeCancelAlarm(const PlannedToolInvoca
     QStringList logs;
     do {
         if (!alarmStore_) {
-            logs.append(QStringLiteral("cancel-alarm: No alarm store is configured."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("cancel-alarm: No alarm store is configured.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const QString id = getArgument(invocation, QStringLiteral("id")).trimmed();
         if (id.isEmpty()) {
-            logs.append(QStringLiteral("cancel-alarm: No id argument provided."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("cancel-alarm: No id argument provided.")};
+            failure.failureCategory = ToolFailureCategory::InvalidArguments;
+            return failure;
         }
-        logs.append(alarmStore_->remove(id)
-                        ? QStringLiteral("cancel-alarm: Alarm %1 cancelled.").arg(id)
-                        : QStringLiteral("cancel-alarm: No active alarm with id %1.").arg(id));
+        if (!alarmStore_->remove(id)) {
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("cancel-alarm: No active alarm with id %1.").arg(id)};
+            failure.failureCategory = ToolFailureCategory::NotFound;
+            return failure;
+        }
+        logs.append(QStringLiteral("cancel-alarm: Alarm %1 cancelled.").arg(id));
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
@@ -2083,22 +2151,24 @@ ToolExecutionResult RealToolExecutor::executeMemorySearch(const PlannedToolInvoc
     do {
         const QString query = getArgument(invocation, QStringLiteral("query")).trimmed();
         if (query.isEmpty()) {
-            logs.append(QStringLiteral("memory-search: No query argument provided."));
-            continue;
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("memory-search: No query argument provided.")};
         }
         if (!memoryStore_ || !memoryStore_->isAvailable()) {
-            logs.append(
-                QStringLiteral("memory-search: No memory entries are available for this session."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("memory-search: Memory store is unavailable.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const int limit = qBound(1, getIntArgument(invocation, QStringLiteral("limit"), 10), 50);
-        const auto entries = memoryStore_->searchRelevant(query, limit);
+        const auto entries = memoryStore_->searchRelevantRecords(query, limit);
         QStringList matches;
         for (const auto& entry : entries) {
-            QString value = entry.second.simplified();
+            QString value = entry.value.simplified();
             if (value.size() > 400)
                 value = value.left(400) + QStringLiteral("...");
-            matches.append(QStringLiteral("%1: %2").arg(entry.first, value));
+            matches.append(QStringLiteral("memory:%1 %2: %3")
+                               .arg(entry.id).arg(entry.key.left(120), value));
         }
 
         if (matches.isEmpty()) {
@@ -2118,20 +2188,22 @@ ToolExecutionResult RealToolExecutor::executeHistorySearch(const PlannedToolInvo
     do {
         const QString query = getArgument(invocation, QStringLiteral("query")).trimmed();
         if (query.isEmpty()) {
-            logs.append(QStringLiteral("history-search: No query argument provided."));
-            continue;
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("history-search: No query argument provided.")};
         }
         if (!chatHistoryStore_ || !chatHistoryStore_->isAvailable()) {
-            logs.append(
-                QStringLiteral("history-search: No chat history is available for this session."));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("history-search: Chat history store is unavailable.")};
+            failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return failure;
         }
         const int limit = qBound(1, getIntArgument(invocation, QStringLiteral("limit"), 10), 50);
         const auto messages = chatHistoryStore_->searchMessages(query, limit);
         QStringList matches;
         for (const auto& message : messages) {
-            QString preview = QStringLiteral("[%1] %2")
-                                  .arg(chatRoleName(message.role), message.content.simplified());
+            QString preview = QStringLiteral("history:%1 [%2] %3")
+                                  .arg(message.id).arg(chatRoleName(message.role),
+                                                       message.content.simplified());
             if (preview.size() > 400)
                 preview = preview.left(400) + QStringLiteral("...");
             matches.append(preview);
@@ -2149,52 +2221,14 @@ ToolExecutionResult RealToolExecutor::executeHistorySearch(const PlannedToolInvo
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
 }
 
-ToolExecutionResult RealToolExecutor::executeAskQuestion(const PlannedToolInvocation& invocation,
-                                                         QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString question = getArgument(invocation, QStringLiteral("question")).trimmed();
-        if (question.isEmpty()) {
-            logs.append(QStringLiteral("ask-question: No question argument provided."));
-            continue;
-        }
-        const QString optionsRaw = getArgument(invocation, QStringLiteral("options"));
-        QStringList options;
-        for (const auto& option : optionsRaw.split(QLatin1Char('\n'))) {
-            const QString trimmed = option.trimmed();
-            if (!trimmed.isEmpty()) {
-                options.append(trimmed);
-            }
-        }
-
-        QString formatted = question;
-        if (!options.isEmpty()) {
-            QStringList numbered;
-            for (int i = 0; i < options.size(); ++i) {
-                numbered.append(
-                    QStringLiteral("%1. %2").arg(QString::number(i + 1), options.at(i)));
-            }
-            formatted += QStringLiteral("\n") + numbered.join(QLatin1Char('\n'));
-        }
-        logs.append(
-            QStringLiteral("ask-question: Question registered for the user:\n%1\n"
-                           "End this run now with the question above as your final answer "
-                           "(asked in the user's language). Wait for the user's reply before "
-                           "taking further steps.")
-                .arg(formatted));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
 ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocation& invocation,
                                                       QString& currentWorkingDirectory) const {
     QStringList logs;
     do {
         const QString url = getArgument(invocation, QStringLiteral("url")).trimmed();
         if (url.isEmpty()) {
-            logs.append(QStringLiteral("web-fetch: No url argument provided."));
-            continue;
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("web-fetch: No url argument provided.")};
         }
         const QString format =
             getArgument(invocation, QStringLiteral("format")).trimmed().toLower();
@@ -2206,19 +2240,30 @@ ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocatio
 
         const auto response = webFetchTool_.fetch(url, fetchFormat);
         if (!response.success) {
-            logs.append(QStringLiteral("web-fetch: Request failed: %1")
-                            .arg(response.errorString.isEmpty()
-                                     ? QStringLiteral("HTTP %1").arg(response.statusCode)
-                                     : response.errorString));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("web-fetch: Request failed: %1")
+                    .arg(response.errorString.isEmpty()
+                             ? QStringLiteral("HTTP %1").arg(response.statusCode)
+                             : response.errorString.left(400))};
+            failure.failureCategory = ToolFailureCategory::NetworkFailure;
+            return failure;
         }
         QString content = response.content;
+        const bool truncated = content.size() > kWebFetchPreviewChars;
         if (content.size() > kWebFetchPreviewChars) {
             content = content.left(kWebFetchPreviewChars) +
                       QStringLiteral("\n\n... [content truncated at %1 characters] ...")
                           .arg(QString::number(kWebFetchPreviewChars));
         }
         logs.append(QStringLiteral("web-fetch: %1\n\n%2").arg(url, content));
+        const QJsonObject data{{QStringLiteral("url"), url},
+                               {QStringLiteral("statusCode"), response.statusCode},
+                               {QStringLiteral("contentLength"), response.contentLength},
+                               {QStringLiteral("truncated"), truncated},
+                               {QStringLiteral("partialEvidence"), truncated}};
+        return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n")),
+                std::make_shared<StructuredObservation>(StructuredObservation{
+                    StructuredObservationKind::Generic, data})};
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
@@ -2227,61 +2272,44 @@ ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocatio
 ToolExecutionResult
 RealToolExecutor::executeVoiceTranscribe(const PlannedToolInvocation& invocation,
                                          QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString path = getArgument(invocation, QStringLiteral("path"));
-        if (path.isEmpty()) {
-            logs.append(QStringLiteral("voice-transcribe: No audio path provided."));
-            continue;
-        }
-        QProcess process;
-#if defined(Q_OS_WIN)
-        const QString whisperBinary = QStringLiteral("whisper.exe");
-#else
-        const QString whisperBinary = QStringLiteral("whisper");
-#endif
-        process.start(whisperBinary, {path});
-        if (!process.waitForFinished(15000)) {
-            logs.append(QStringLiteral("voice-transcribe: Whisper timed out for '%1'").arg(path));
-            continue;
-        }
-        const QString transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
-        logs.append(QStringLiteral("voice-transcribe: OK\n%1").arg(transcript));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+    const auto authorized = authorizedFilePath(fileSystemService_, invocation,
+        QStringLiteral("path"), AccessMode::Read, currentWorkingDirectory);
+    if (!authorized.ok()) return fileToolFailure(QStringLiteral("voice-transcribe"), authorized);
+    const auto currentGrant = fileSystemService_.resolve(authorized.value->canonicalPath,
+        currentWorkingDirectory, FileSystemAccess::Read);
+    if (!currentGrant.ok() || currentGrant.value->canonicalPath != authorized.value->canonicalPath ||
+        currentGrant.value->deviceId != authorized.value->deviceId ||
+        currentGrant.value->fileId != authorized.value->fileId)
+        return {ToolExecutionStatus::Blocked, QStringLiteral("voice-transcribe: PermissionDenied")};
+    if (!sttRuntime_)
+        return {ToolExecutionStatus::Failed, QStringLiteral("voice-transcribe: RuntimeUnavailable")};
+    const auto file = fileSystemService_.stat(*authorized.value);
+    if (!file.ok() || !file.value->regularFile)
+        return {ToolExecutionStatus::Failed, QStringLiteral("voice-transcribe: UnsupportedFormat")};
+    const auto transcript = sttRuntime_->transcribeFile(authorized.value->canonicalPath, {}, {});
+    return transcript.failure == AudioFailure::None
+        ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
+                              QStringLiteral("voice-transcribe: OK\n%1").arg(transcript.finalText)}
+        : ToolExecutionResult{ToolExecutionStatus::Failed,
+                              QStringLiteral("voice-transcribe: %1. %2")
+                                  .arg(audioFailureName(transcript.failure), transcript.detail.left(300))};
 }
 
 ToolExecutionResult RealToolExecutor::executeVoiceSpeak(const PlannedToolInvocation& invocation,
                                                         QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString text = getArgument(invocation, QStringLiteral("text"));
-        if (text.isEmpty()) {
-            logs.append(QStringLiteral("voice-speak: No text argument provided."));
-            continue;
-        }
-        QProcess process;
-#if defined(Q_OS_WIN)
-        const QString piperBinary = QStringLiteral("piper.exe");
-#else
-        const QString piperBinary = QStringLiteral("piper");
-#endif
-        const QString ttsOutput =
-            QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_tts.wav"));
-        process.start(piperBinary,
-                      {QStringLiteral("--model"), QStringLiteral("en_US-lessac-medium.onnx"),
-                       QStringLiteral("--output_file"), ttsOutput});
-        process.write(text.toUtf8());
-        process.closeWriteChannel();
-        if (!process.waitForFinished(10000)) {
-            logs.append(QStringLiteral("voice-speak: Piper TTS timed out."));
-            continue;
-        }
-        logs.append(QStringLiteral("voice-speak: TTS synthesis OK → %1").arg(ttsOutput));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+    Q_UNUSED(currentWorkingDirectory);
+    const auto text = getArgument(invocation, QStringLiteral("text"));
+    if (text.trimmed().isEmpty())
+        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("voice-speak: Text is empty.")};
+    if (!ttsRuntime_)
+        return {ToolExecutionStatus::Failed, QStringLiteral("voice-speak: RuntimeUnavailable")};
+    const auto audio = ttsRuntime_->synthesize(SpeechSynthesisRequest{text, {}, {}, 1.0}, {});
+    return audio.failure == AudioFailure::None
+        ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
+                              QStringLiteral("voice-speak: audio generated at %1").arg(audio.filePath)}
+        : ToolExecutionResult{ToolExecutionStatus::Failed,
+                              QStringLiteral("voice-speak: %1. %2")
+                                  .arg(audioFailureName(audio.failure), audio.detail.left(300))};
 }
 
 ToolExecutionResult RealToolExecutor::executeWebSearch(const PlannedToolInvocation& invocation,
@@ -2290,105 +2318,36 @@ ToolExecutionResult RealToolExecutor::executeWebSearch(const PlannedToolInvocati
     do {
         const auto query = getArgument(invocation, QStringLiteral("query"));
         if (query.trimmed().isEmpty()) {
-            logs.append(QStringLiteral("web-search: No query argument provided."));
-            continue;
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("web-search: No query argument provided.")};
         }
 
         const auto response = webSearchTool_.search(query.trimmed());
         if (!response.success) {
-            logs.append(QStringLiteral("web-search: Request failed: %1").arg(response.errorString));
-            continue;
+            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                QStringLiteral("web-search: Request failed: %1").arg(response.errorString.left(400))};
+            failure.failureCategory = ToolFailureCategory::NetworkFailure;
+            return failure;
         }
-        for (int i = 0; i < response.results.size(); ++i) {
+        for (int i = 0; i < response.results.size() && i < 20; ++i) {
             const auto& result = response.results.at(i);
             logs.append(QStringLiteral("%1. %2\n%3\n%4")
                             .arg(i + 1)
-                            .arg(result.title)
-                            .arg(result.url)
-                            .arg(result.snippet));
+                            .arg(result.title.left(200))
+                            .arg(result.url.left(500))
+                            .arg(result.snippet.left(600)));
         }
         if (response.results.isEmpty()) {
             logs.append(QStringLiteral("web-search: No results found for '%1'.").arg(query));
         }
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult RealToolExecutor::executeOpenWorkspace(const PlannedToolInvocation& invocation,
-                                                           QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString path = getArgument(invocation, QStringLiteral("path")).trimmed();
-        if (path.isEmpty()) {
-            return {
-                ToolExecutionStatus::Blocked,
-                QStringLiteral("open-workspace: path argument is required."),
-            };
-        }
-        const auto authorized = authorizedFilePath(fileSystemService_, invocation,
-                                                   QStringLiteral("path"), AccessMode::Read,
-                                                   currentWorkingDirectory);
-        if (!authorized.ok())
-            return fileToolFailure(QStringLiteral("open-workspace"), authorized);
-        const QString workspacePath = authorized.value->canonicalPath;
-        if (workspacePath.isEmpty() || !QDir(workspacePath).exists()) {
-            return {
-                ToolExecutionStatus::Blocked,
-                QStringLiteral("open-workspace: requested workspace does not exist."),
-            };
-        }
-        if (isForbiddenWorkspacePath(workspacePath)) {
-            return {
-                ToolExecutionStatus::Blocked,
-                QStringLiteral(
-                    "open-workspace: requested workspace is a system or sensitive path."),
-            };
-        }
-        currentWorkingDirectory = workspacePath;
-        logs.append(QStringLiteral("open-workspace: Workspace context set → '%1'")
-                        .arg(currentWorkingDirectory));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult
-RealToolExecutor::executeSummarizeCurrentConversation(const PlannedToolInvocation& invocation,
-                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        logs.append(QStringLiteral("summarize-current-conversation: Summary compiled."));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult
-RealToolExecutor::executeProviderTestCall(const PlannedToolInvocation& invocation,
-                                          QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        return {
-            ToolExecutionStatus::Blocked,
-            QStringLiteral(
-                "provider-test-call is unavailable: no provider test executor is configured."),
-        };
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
-}
-
-ToolExecutionResult
-RealToolExecutor::executeExportConversation(const PlannedToolInvocation& invocation,
-                                            QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        return {
-            ToolExecutionStatus::Blocked,
-            QStringLiteral(
-                "export-conversation is unavailable: use the conversation export service."),
-        };
+        const QJsonObject data{{QStringLiteral("query"), query.trimmed()},
+                               {QStringLiteral("resultCount"), response.results.size()},
+                               {QStringLiteral("complete"), false},
+                               {QStringLiteral("truncated"), response.results.size() > 20},
+                               {QStringLiteral("partialEvidence"), response.results.isEmpty()}};
+        return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n")),
+                std::make_shared<StructuredObservation>(StructuredObservation{
+                    StructuredObservationKind::Generic, data})};
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};

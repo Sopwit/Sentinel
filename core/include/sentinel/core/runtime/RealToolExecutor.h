@@ -11,6 +11,7 @@
 #include "sentinel/core/runtime/IFileSystemService.h"
 #include "sentinel/core/runtime/tools/WebFetchTool.h"
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
+#include "sentinel/core/voice/UnifiedAudioService.h"
 
 #include <QJsonArray>
 #include <QStringList>
@@ -33,6 +34,18 @@ public:
     }
     void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
     void setAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
+    void setSpeechRuntimes(std::shared_ptr<ISpeechToTextRuntime> stt,
+                           std::shared_ptr<ITextToSpeechRuntime> tts) {
+        sttRuntime_ = std::move(stt);
+        ttsRuntime_ = std::move(tts);
+    }
+    void setSttRuntime(std::shared_ptr<ISpeechToTextRuntime> runtime) { sttRuntime_ = std::move(runtime); }
+    void setTtsRuntime(std::shared_ptr<ITextToSpeechRuntime> runtime) { ttsRuntime_ = std::move(runtime); }
+    const IFileSystemService* fileSystemService() const { return &fileSystemService_; }
+    std::optional<AuthorizedPath> authorizeAudioRead(const QString& path, const QString& cwd) const {
+        auto result = fileSystemService_.resolve(path, cwd, FileSystemAccess::Read);
+        return result.ok() ? result.value : std::nullopt;
+    }
     void setSearchStores(const IMemoryStore* memory, const IChatHistoryStore* history) {
         memoryStore_ = memory;
         chatHistoryStore_ = history;
@@ -46,18 +59,19 @@ public:
         return mcpService_;
     }
     // Injects the subagent runner used by the spawn-agent tool. The runner
-    // executes a bounded, read-only agent loop for the given task and returns
-    // its final answer (or an error description).
+    // executes a bounded, read-only agent loop for the given task.
     void setSubagentRunner(std::function<QString(const QString& task)> runner);
     struct SubagentAssignment {
         QString goal;
+        QString purpose;
         QString role;
         QStringList allowedToolIds;
         QString workspace;
         QString modelId;
     };
     void setSubagentRunnerWithContext(
-        std::function<QString(const SubagentAssignment&, const QString& parentToolCallId)> runner);
+        std::function<ToolExecutionResult(const SubagentAssignment&,
+                                          const QString& parentToolCallId)> runner);
     WebSearchResponse searchWeb(const QString& query) const;
     ToolExecutionResult execute(const ToolExecutionRequest& request) const override;
     Cancel executeAsync(const ToolExecutionRequest& request, const QString& sessionId,
@@ -129,8 +143,6 @@ public:
                                             QString& currentWorkingDirectory) const;
     ToolExecutionResult executeHistorySearch(const PlannedToolInvocation& invocation,
                                              QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeAskQuestion(const PlannedToolInvocation& invocation,
-                                           QString& currentWorkingDirectory) const;
     ToolExecutionResult executeWebFetch(const PlannedToolInvocation& invocation,
                                         QString& currentWorkingDirectory) const;
     ToolExecutionResult executeVoiceTranscribe(const PlannedToolInvocation& invocation,
@@ -139,14 +151,6 @@ public:
                                           QString& currentWorkingDirectory) const;
     ToolExecutionResult executeWebSearch(const PlannedToolInvocation& invocation,
                                          QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeOpenWorkspace(const PlannedToolInvocation& invocation,
-                                             QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeSummarizeCurrentConversation(const PlannedToolInvocation& invocation,
-                                                            QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeProviderTestCall(const PlannedToolInvocation& invocation,
-                                                QString& currentWorkingDirectory) const;
-    ToolExecutionResult executeExportConversation(const PlannedToolInvocation& invocation,
-                                                  QString& currentWorkingDirectory) const;
 
 private:
     QString resolveToolPath(const QString& workingDirectory, const QString& rawPath,
@@ -159,7 +163,10 @@ private:
     const IMemoryStore* memoryStore_ = nullptr;
     const IChatHistoryStore* chatHistoryStore_ = nullptr;
     std::shared_ptr<IMcpService> mcpService_;
-    std::function<QString(const SubagentAssignment&, const QString& parentToolCallId)> subagentRunner_;
+    std::shared_ptr<ISpeechToTextRuntime> sttRuntime_;
+    std::shared_ptr<ITextToSpeechRuntime> ttsRuntime_;
+    std::function<ToolExecutionResult(const SubagentAssignment&,
+                                      const QString& parentToolCallId)> subagentRunner_;
     mutable QJsonArray todos_;
 };
 
