@@ -6,6 +6,7 @@
 
 #include "sentinel/core/interfaces/ISettingsStore.h"
 #include "sentinel/core/model/ModelRouting.h"
+#include "sentinel/core/security/CredentialStore.h"
 
 #include <QObject>
 #include <QString>
@@ -276,6 +277,8 @@ public:
     void setDefaultWorkspaceId(const QString& workspaceId);
     QString workspaceCatalogJson() const;
     void setWorkspaceCatalogJson(const QString& catalogJson);
+    QString workspaceProfilesJson() const;
+    void setWorkspaceProfilesJson(const QString& profilesJson);
     bool localKnowledgeBaseEnabled() const;
     void setLocalKnowledgeBaseEnabled(bool enabled);
     bool retrievalExplainabilityEnabled() const;
@@ -304,6 +307,8 @@ public:
     void setNotificationPolicy(const QString& policy);
     bool onboardingComplete() const;
     void setOnboardingComplete(bool complete);
+    QString onboardingFlowJson() const;
+    void setOnboardingFlowJson(const QString& state);
     QString onboardingUseCase() const;
     void setOnboardingUseCase(const QString& useCase);
     QString onboardingAiProvider() const;
@@ -365,11 +370,18 @@ public:
     void setProxyUser(const QString& user);
     QString proxyPassword() const;
     void setProxyPassword(const QString& password);
+    QString networkMode() const;
+    void setNetworkMode(const QString& mode);
+    QString credentialState(const QString& logicalId) const;
+    QString storageErrorCode() const;
+    QString retentionPolicyJson() const;
+    void setRetentionPolicyJson(const QString& json);
 
 signals:
     void soundEffectsEnabledChanged();
     void cloudApiKeysChanged();
     void proxySettingsChanged();
+    void networkModeChanged();
     void themeNameChanged();
     void configurationProfileChanged();
     void appLanguageChanged();
@@ -467,6 +479,7 @@ private:
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
     static constexpr auto defaultWorkspaceIdKey = "defaultWorkspaceId";
     static constexpr auto workspaceCatalogJsonKey = "workspaceCatalogJson";
+    static constexpr auto workspaceProfilesJsonKey = "workspaceProfilesJson";
     static constexpr auto localKnowledgeBaseEnabledKey = "localKnowledgeBaseEnabled";
     static constexpr auto retrievalExplainabilityEnabledKey = "retrievalExplainabilityEnabled";
     static constexpr auto attachmentBehaviorKey = "attachmentBehavior";
@@ -481,6 +494,7 @@ private:
     static constexpr auto updateCheckUrlKey = "updateCheckUrl";
     static constexpr auto notificationPolicyKey = "notificationPolicy";
     static constexpr auto onboardingCompleteKey = "onboardingComplete";
+    static constexpr auto onboardingFlowJsonKey = "onboardingFlowJson";
     static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
     static constexpr auto onboardingAiProviderKey = "onboardingAiProvider";
     static constexpr auto selectedSystemModeKey = "selectedSystemMode";
@@ -509,6 +523,7 @@ private:
     static constexpr auto proxyPortKey = "proxyPort";
     static constexpr auto proxyUserKey = "proxyUser";
     static constexpr auto proxyPasswordKey = "proxyPassword";
+    static constexpr auto networkModeKey = "networkMode";
     static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
@@ -535,7 +550,13 @@ private:
     static constexpr double defaultLocalInferenceTopP = 0.9;
     static constexpr int defaultLocalInferenceMaxTokens = 2048;
 
+    QString credential(const QString& id, const QString& legacyKey) const;
+    bool setCredential(const QString& id, const QString& legacyKey, const QString& value);
+    QString secureMcpServersJson(const QString& json, bool* complete) const;
+    void applyNetworkPolicy() const;
+
     std::unique_ptr<ISettingsStore> store_;
+    mutable CredentialStore credentialStore_;
 };
 
 } // namespace sentinel::core

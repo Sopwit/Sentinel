@@ -34,11 +34,15 @@ public:
                     IConversationStore& store, QObject* parent = nullptr);
     ~ChatModeService() override;
     bool send(const QString& conversationId, const QString& text,
-              const QList<ChatAttachment>& attachments = {});
-    bool regenerate(const QString& conversationId, int userMessageId);
-    bool retry(const QString& conversationId, int assistantMessageId);
+              const QList<ChatAttachment>& attachments = {},
+              const ModelSelection& selection = {}, bool requireLocal = false);
+    bool regenerate(const QString& conversationId, int userMessageId,
+                    const ModelSelection& selection = {}, bool requireLocal = false);
+    bool retry(const QString& conversationId, int assistantMessageId,
+               const ModelSelection& selection = {}, bool requireLocal = false);
     bool sendExisting(const QString& conversationId, int userMessageId,
-                      int replacesMessageId = 0);
+                      int replacesMessageId = 0, const ModelSelection& selection = {},
+                      bool requireLocal = false);
     bool stop();
     bool busy() const;
     ChatMessage activeMessage() const;
@@ -49,7 +53,8 @@ signals:
     void requestStateChanged();
 
 private:
-    bool runTurn(const QString& conversationId, int userMessageId, int replacesMessageId);
+    bool runTurn(const QString& conversationId, int userMessageId, int replacesMessageId,
+                 const ModelSelection& selection = {}, bool requireLocal = false);
     void acceptDelta(const QString& conversationId, int messageId, const QString& delta);
     void acceptResult(const QString& conversationId, int messageId,
                       const ChatProviderReply& reply);

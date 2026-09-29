@@ -50,7 +50,8 @@ ChatProviderErrorCategory ChatModeService::bindingError(ModelBindingError error)
 }
 
 bool ChatModeService::send(const QString& conversationId, const QString& text,
-                           const QList<ChatAttachment>& attachments) {
+                           const QList<ChatAttachment>& attachments,
+                           const ModelSelection& selection, bool requireLocal) {
     if (busy() || conversationId.isEmpty() || text.trimmed().isEmpty()) return false;
     if (text.size() > 12000) {
         lastError_ = ChatProviderErrorCategory::RequestRejected;
@@ -72,30 +73,34 @@ bool ChatModeService::send(const QString& conversationId, const QString& text,
     }
     store_.autoTitleConversation(conversationId, text.simplified().left(64));
     emit messagesChanged();
-    return runTurn(conversationId, user.id, 0);
+    return runTurn(conversationId, user.id, 0, selection, requireLocal);
 }
 
 bool ChatModeService::sendExisting(const QString& conversationId, int userMessageId,
-                                   int replacesMessageId) {
+                                   int replacesMessageId, const ModelSelection& selection,
+                                   bool requireLocal) {
     if (busy() || conversationId.isEmpty()) return false;
-    return runTurn(conversationId, userMessageId, replacesMessageId);
+    return runTurn(conversationId, userMessageId, replacesMessageId, selection, requireLocal);
 }
 
-bool ChatModeService::regenerate(const QString& conversationId, int userMessageId) {
+bool ChatModeService::regenerate(const QString& conversationId, int userMessageId,
+                                 const ModelSelection& selection, bool requireLocal) {
     int previous = 0;
     for (const auto& message : session_.messages())
         if (message.role == ChatRole::Assistant && message.replyToMessageId == userMessageId)
             previous = message.id;
-    return sendExisting(conversationId, userMessageId, previous);
+    return sendExisting(conversationId, userMessageId, previous, selection, requireLocal);
 }
 
-bool ChatModeService::retry(const QString& conversationId, int assistantMessageId) {
+bool ChatModeService::retry(const QString& conversationId, int assistantMessageId,
+                            const ModelSelection& selection, bool requireLocal) {
     for (const auto& message : session_.messages()) {
         if (message.id != assistantMessageId || message.role != ChatRole::Assistant ||
             (message.status != ChatMessageStatus::Failed &&
              message.status != ChatMessageStatus::Interrupted &&
              message.status != ChatMessageStatus::Error)) continue;
-        return sendExisting(conversationId, message.replyToMessageId, message.id);
+        return sendExisting(conversationId, message.replyToMessageId, message.id,
+                            selection, requireLocal);
     }
     return false;
 }
@@ -142,13 +147,17 @@ QString ChatModeService::contextFor(const QString& conversationId, int userMessa
 }
 
 bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
-                              int replacesMessageId) {
+                              int replacesMessageId, const ModelSelection& preferredSelection,
+                              bool requireLocal) {
     ChatMessage user;
     for (const auto& message : session_.messages())
         if (message.id == userMessageId && message.role == ChatRole::User) user = message;
     if (user.id == 0) return false;
-    const auto selection = models_.selectedModel();
-    auto resolved = models_.resolve(selection);
+    const auto selection = preferredSelection.isValid() ? preferredSelection : models_.selectedModel();
+    const bool blockedByLocalPolicy = requireLocal &&
+        models_.currentModelMetadata(selection.providerId, selection.modelId).providerKind ==
+            ProviderKind::Cloud;
+    auto resolved = blockedByLocalPolicy ? ModelBindingResolution{} : models_.resolve(selection);
     auto assistant = session_.appendAssistantMessage({}, ChatMessageStatus::Queued);
     assistant.replyToMessageId = user.id;
     assistant.replacesMessageId = replacesMessageId;
@@ -167,9 +176,13 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
     lastError_ = ChatProviderErrorCategory::None;
     emit messagesChanged();
     emit requestStateChanged();
-    if (!resolved.ok() || resolved.provider->status() != ChatProviderStatus::Ready) {
+    if (blockedByLocalPolicy || !resolved.ok() ||
+        resolved.provider->status() != ChatProviderStatus::Ready) {
         assistant.status = ChatMessageStatus::Failed;
-        assistant.errorCategory = resolved.ok()
+        if (blockedByLocalPolicy)
+            assistant.content = QStringLiteral("Local Only requires a local provider and model. The configured selection is cloud-based.");
+        assistant.errorCategory = blockedByLocalPolicy
+            ? ChatProviderErrorCategory::RequestRejected : resolved.ok()
             ? ChatProviderErrorCategory::ProviderUnavailable : bindingError(resolved.error);
         lastError_ = assistant.errorCategory;
         session_.updateMessage(assistant);
