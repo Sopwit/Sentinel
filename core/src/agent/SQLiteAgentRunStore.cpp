@@ -74,7 +74,7 @@ bool apply(QSqlDatabase& db, const QString& sql, const QVariantList& values, QSt
 }
 
 StoredAgentRun readRun(const QSqlQuery& query) {
-    return {query.value(0).toString(), query.value(1).toString(), query.value(2).toString(),
+    StoredAgentRun run{query.value(0).toString(), query.value(1).toString(), query.value(2).toString(),
             query.value(3).toString(), query.value(4).toString(), query.value(5).toString(),
             query.value(6).toString(), query.value(7).toString(), query.value(8).toString(),
             query.value(9).toString(), query.value(10).toString(), parsedTime(query.value(11)),
@@ -82,7 +82,13 @@ StoredAgentRun readRun(const QSqlQuery& query) {
             query.value(15).toInt(), query.value(16).toInt(), query.value(17).toBool(),
             query.value(18).toInt(), query.value(19).toString(), query.value(20).toString(),
             query.value(21).toString(), query.value(22).toInt(), query.value(23).toInt(),
-            query.value(24).toBool(), query.value(25).toString()};
+            query.value(24).toBool(), query.value(25).toString(), query.value(26).toString(),
+            query.value(27).toString(), query.value(28).toInt()};
+    run.workspaceId = query.value(29).toString();
+    run.workspaceName = query.value(30).toString();
+    run.presetId = query.value(31).toString();
+    run.profileVersion = query.value(32).toString();
+    return run;
 }
 
 const QString runColumns = QStringLiteral(
@@ -91,7 +97,8 @@ const QString runColumns = QStringLiteral(
     "context_items,context_omitted,context_compacted,"
     "(SELECT COUNT(*) FROM agent_steps s WHERE s.run_id=agent_runs.run_id),"
     "capability_snapshot,role,provider_error_category,provider_http_status,"
-    "provider_attempts,provider_retry_occurred,provider_request_lifecycle");
+    "provider_attempts,provider_retry_occurred,provider_request_lifecycle,terminal_reason,"
+    "delegation_purpose,provider_recovery_attempts,workspace_id,workspace_name,preset_id,profile_version");
 
 QString lifecycleName(ChatRequestLifecycle lifecycle) {
     switch (lifecycle) {
@@ -144,6 +151,26 @@ bool SQLiteAgentRunStore::initialize() {
         return false;
     }
     applySqlitePerformancePragmas(connection.db);
+    QSqlQuery versionCheck(connection.db);
+    if (!versionCheck.exec(QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' "
+                                          "AND name='agent_run_schema_metadata'"))) {
+        lastError_ = versionCheck.lastError().text();
+        return false;
+    }
+    const bool hasMetadata = versionCheck.next();
+    versionCheck.finish();
+    if (hasMetadata) {
+        if (!versionCheck.exec(QStringLiteral("SELECT value FROM agent_run_schema_metadata "
+                                               "WHERE key='schema_version'"))) {
+            lastError_ = versionCheck.lastError().text();
+            return false;
+        }
+        if (versionCheck.next() && versionCheck.value(0).toInt() > 7) {
+            lastError_ = QStringLiteral("Unsupported Agent run schema version.");
+            return false;
+        }
+        versionCheck.finish();
+    }
     const QStringList schema{
         QStringLiteral("CREATE TABLE IF NOT EXISTS agent_run_schema_metadata("
                        "key TEXT PRIMARY KEY,value INTEGER NOT NULL)"),
@@ -217,6 +244,20 @@ bool SQLiteAgentRunStore::initialize() {
         !ensureColumn(connection.db, QStringLiteral("agent_runs"),
                       QStringLiteral("terminal_reason"),
                       QStringLiteral("terminal_reason TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("delegation_purpose"),
+                      QStringLiteral("delegation_purpose TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("provider_recovery_attempts"),
+                      QStringLiteral("provider_recovery_attempts INTEGER"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("workspace_id"), QStringLiteral("workspace_id TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("workspace_name"), QStringLiteral("workspace_name TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("preset_id"), QStringLiteral("preset_id TEXT"), lastError_) ||
+        !ensureColumn(connection.db, QStringLiteral("agent_runs"),
+                      QStringLiteral("profile_version"), QStringLiteral("profile_version TEXT"), lastError_) ||
         !ensureColumn(connection.db, QStringLiteral("agent_tool_calls"),
                       QStringLiteral("mutation_summary"),
                       QStringLiteral("mutation_summary TEXT"), lastError_) ||
@@ -234,7 +275,7 @@ bool SQLiteAgentRunStore::initialize() {
                       QStringLiteral("scope"), QStringLiteral("scope TEXT"), lastError_))
         return false;
     if (!query.exec(QStringLiteral("INSERT INTO agent_run_schema_metadata(key,value) "
-                                   "VALUES('schema_version',4) ON CONFLICT(key) "
+                                   "VALUES('schema_version',7) ON CONFLICT(key) "
                                    "DO UPDATE SET value=excluded.value"))) {
         lastError_ = query.lastError().text();
         return false;
@@ -262,6 +303,52 @@ bool SQLiteAgentRunStore::initialize() {
     }
     lastError_.clear();
     return true;
+}
+
+bool SQLiteAgentRunStore::clearHistory() {
+    std::lock_guard lock(mutex_);
+    if (!ready_) return false;
+    Connection connection(databasePath_);
+    if (!connection.db.isOpen() || !connection.db.transaction()) {
+        lastError_ = QStringLiteral("Agent history store unavailable.");
+        return false;
+    }
+    QSqlQuery query(connection.db);
+    if (!query.exec(QStringLiteral("DELETE FROM agent_runs")) || !connection.db.commit()) {
+        lastError_ = query.lastError().isValid() ? query.lastError().text()
+                                                : connection.db.lastError().text();
+        connection.db.rollback();
+        return false;
+    }
+    lastError_.clear();
+    return true;
+}
+
+int SQLiteAgentRunStore::pruneCompletedBefore(const QDateTime& cutoffUtc, int limit) {
+    std::lock_guard lock(mutex_);
+    if (!ready_ || !cutoffUtc.isValid() || limit < 1 || limit > 100) return -1;
+    Connection connection(databasePath_);
+    if (!connection.db.isOpen() || !connection.db.transaction()) return -1;
+    QSqlQuery select(connection.db);
+    select.prepare(QStringLiteral("SELECT run_id FROM agent_runs WHERE finished_at IS NOT NULL "
+        "AND finished_at<? AND state NOT IN ('Running','Queued') "
+        "AND NOT EXISTS (SELECT 1 FROM agent_runs child WHERE child.parent_run_id=agent_runs.run_id "
+        "AND child.finished_at IS NULL) ORDER BY finished_at LIMIT ?"));
+    select.addBindValue(timeText(cutoffUtc));
+    select.addBindValue(limit);
+    if (!select.exec()) { connection.db.rollback(); lastError_ = select.lastError().text(); return -1; }
+    QStringList ids;
+    while (select.next()) ids.append(select.value(0).toString());
+    select.finish();
+    QSqlQuery remove(connection.db);
+    remove.prepare(QStringLiteral("DELETE FROM agent_runs WHERE run_id=?"));
+    for (const auto& id : ids) {
+        remove.bindValue(0, id);
+        if (!remove.exec()) { connection.db.rollback(); lastError_ = remove.lastError().text(); return -1; }
+    }
+    if (!connection.db.commit()) { connection.db.rollback(); lastError_ = connection.db.lastError().text(); return -1; }
+    lastError_.clear();
+    return ids.size();
 }
 
 bool SQLiteAgentRunStore::record(const AgentEvent& event) {
@@ -309,14 +396,19 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
     if (event.type == AgentEventType::RunStarted) {
         const auto* start = std::get_if<AgentRunStartedEvent>(&event.payload);
         exec(QStringLiteral("INSERT OR IGNORE INTO agent_runs(run_id,session_id,parent_run_id,"
-                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary,capability_snapshot,role) "
-                            "VALUES(?,?,?,?,?,?,'Running',?,?,?,?,?)"),
+                            "parent_tool_call_id,run_type,started_at,state,provider_id,model_id,goal_summary,capability_snapshot,role,delegation_purpose,workspace_id,workspace_name,preset_id,profile_version) "
+                            "VALUES(?,?,?,?,?,?,'Running',?,?,?,?,?,?,?,?,?,?)"),
              {event.turnId, event.sessionId, start ? start->parentRunId : QString{},
               start ? start->parentToolCallId : QString{},
               start ? start->runType : QStringLiteral("interactive"), at,
               event.providerId, event.modelId,
               bounded(start ? start->goalSummary : QString{}, 180),
-              event.capabilitySnapshot.left(160), start ? start->role.left(40) : QString{}});
+              event.capabilitySnapshot.left(160), start ? start->role.left(40) : QString{},
+              start ? start->delegationPurpose.left(40) : QString{},
+              start ? start->workspaceId.left(120) : QString{},
+              start ? start->workspaceName.left(160) : QString{},
+              start ? start->presetId.left(120) : QString{},
+              start ? start->profileVersion.left(32) : QString{}});
         exec(QStringLiteral("DELETE FROM agent_runs WHERE run_id IN ("
                             "SELECT run_id FROM agent_runs ORDER BY started_at DESC,run_id DESC "
                             "LIMIT -1 OFFSET 500)"), {});
@@ -357,9 +449,11 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
                                     "sandbox_summary=? "
                                     "WHERE tool_call_id=?"),
                      {step.succeeded ? QStringLiteral("Succeeded") : QStringLiteral("Failed"), at,
-                      step.structuredObservation
-                          ? QString::number(static_cast<int>(step.structuredObservation->fileSystemFailure))
-                          : QString{},
+                      step.failureCategory != ToolFailureCategory::None
+                          ? toolFailureCategoryName(step.failureCategory)
+                          : step.structuredObservation
+                              ? QString::number(static_cast<int>(step.structuredObservation->fileSystemFailure))
+                              : QString{},
                       step.structuredObservation
                           ? QStringLiteral("structured kind=%1").arg(
                                 static_cast<int>(step.structuredObservation->kind))
@@ -487,6 +581,8 @@ bool SQLiteAgentRunStore::record(const AgentEvent& event) {
             if (run->terminalReason != AgentTerminalReason::None)
                 exec(QStringLiteral("UPDATE agent_runs SET terminal_reason=? WHERE run_id=?"),
                      {agentTerminalReasonName(run->terminalReason), event.turnId});
+            exec(QStringLiteral("UPDATE agent_runs SET provider_recovery_attempts=? WHERE run_id=?"),
+                 {qBound(0, run->providerRecoveryAttempts, 32), event.turnId});
             if (run->providerFailure) {
                 const auto& failure = *run->providerFailure;
                 exec(QStringLiteral("UPDATE agent_runs SET provider_error_category=?,"

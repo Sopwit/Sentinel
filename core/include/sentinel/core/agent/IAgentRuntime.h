@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentEvent.h"
+#include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/agent/AgentLoopState.h"
 #include "sentinel/core/agent/AgentPipelineResult.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
@@ -57,10 +58,15 @@ struct AgentResponse {
 };
 
 struct AgentSessionOptions {
+    AgentContextInput::WorkspaceContext workspaceContext;
+    QString workspaceName;
+    QString presetId;
+    QString profileVersion;
     bool autonomousMode = false;
     int maxParallelTools = 3;
     QString runType = QStringLiteral("interactive");
     QStringList availableToolIds;
+    bool restrictAvailableTools = false;
     std::function<void(const AgentStepRecord&)> onStep;
     std::function<void(const QString&)> onStatus;
     std::function<void(const AgentLoopState&)> onFinished;
@@ -76,6 +82,12 @@ enum class AgentRuntimeErrorCode {
     ExecutionFailed,
     Cancelled,
     Stuck,
+    ApprovalDenied,
+    ProviderFailure,
+    ToolFailure,
+    CapabilityUnavailable,
+    SecurityDenied,
+    IterationLimit,
 };
 
 struct AgentRuntimeError {

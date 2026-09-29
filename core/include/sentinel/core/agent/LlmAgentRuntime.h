@@ -37,6 +37,7 @@ public:
                                const QList<AgentStepRecord>& history) const override;
 
     bool lastDecisionUsedLlm() const;
+    int lastProviderRecoveryAttempts() const override { return lastProviderRecoveryAttempts_; }
     bool hasModelProvider() const {
         return provider_ != nullptr;
     }
@@ -56,7 +57,10 @@ public:
     void setToolRegistry(const IToolRegistry* registry) {
         registry_ = registry;
     }
-    void setAllowedToolIds(const QStringList& ids) { allowedToolIds_ = ids; }
+    void setAllowedToolIds(const QStringList& ids) {
+        allowedToolIds_ = ids;
+        allowedToolFilterSet_ = true;
+    }
     std::unique_ptr<LlmAgentRuntime> forkForSubagent(const QStringList& allowedTools) const;
 
 private:
@@ -68,6 +72,7 @@ private:
     QList<ToolDescriptor> tools_;
     const IToolRegistry* registry_ = nullptr;
     QStringList allowedToolIds_;
+    bool allowedToolFilterSet_ = false;
     IChatProvider* provider_ = nullptr;
     std::shared_ptr<IChatProvider> boundProvider_;
     ProviderFactory providerFactory_;
@@ -82,6 +87,7 @@ private:
     mutable QList<ChatRequestOptions::ToolResult> nativeResults_;
     mutable int awaitingNativeResults_ = 0;
     mutable bool lastDecisionUsedLlm_ = false;
+    mutable int lastProviderRecoveryAttempts_ = 0;
     mutable std::function<void(const QString&)> streamObserver_;
     mutable std::shared_ptr<std::atomic_bool> streamCancellationToken_;
 };

@@ -21,10 +21,41 @@
 #include <QUuid>
 #include <QDir>
 #include <QDebug>
+#include <QStandardPaths>
 
 namespace sentinel::core {
 
 namespace {
+AgentTerminalReason terminalReasonFor(const AgentLoopState& state) {
+    if (state.terminalReason != AgentTerminalReason::None)
+        return state.terminalReason;
+    if (state.phase == AgentLoopPhase::Completed) return AgentTerminalReason::Completed;
+    if (state.phase == AgentLoopPhase::Cancelled) return AgentTerminalReason::Cancelled;
+    if (state.phase == AgentLoopPhase::Failed || state.phase == AgentLoopPhase::Stuck)
+        return state.providerFailure ? AgentTerminalReason::ProviderFailure
+                                     : AgentTerminalReason::UnableToComplete;
+    return AgentTerminalReason::None;
+}
+
+AgentRuntimeErrorCode errorCodeFor(const AgentLoopState& state) {
+    switch (state.terminalReason) {
+    case AgentTerminalReason::ApprovalDenied: return AgentRuntimeErrorCode::ApprovalDenied;
+    case AgentTerminalReason::ProviderFailure: return AgentRuntimeErrorCode::ProviderFailure;
+    case AgentTerminalReason::ToolFailure: return AgentRuntimeErrorCode::ToolFailure;
+    case AgentTerminalReason::CapabilityUnavailable: return AgentRuntimeErrorCode::CapabilityUnavailable;
+    case AgentTerminalReason::SecurityDenied: return AgentRuntimeErrorCode::SecurityDenied;
+    case AgentTerminalReason::IterationLimit: return AgentRuntimeErrorCode::IterationLimit;
+    case AgentTerminalReason::Cancelled: return AgentRuntimeErrorCode::Cancelled;
+    case AgentTerminalReason::UnableToComplete: return AgentRuntimeErrorCode::ExecutionFailed;
+    case AgentTerminalReason::Completed:
+    case AgentTerminalReason::None: break;
+    }
+    if (state.phase == AgentLoopPhase::Cancelled) return AgentRuntimeErrorCode::Cancelled;
+    if (state.phase == AgentLoopPhase::Stuck) return AgentRuntimeErrorCode::Stuck;
+    if (state.phase == AgentLoopPhase::Failed) return AgentRuntimeErrorCode::ExecutionFailed;
+    return AgentRuntimeErrorCode::None;
+}
+
 class ExecutorCompatibilityHandler final : public IToolHandler {
 public:
     explicit ExecutorCompatibilityHandler(IToolExecutor& executor) : executor_(executor) {}
@@ -46,7 +77,9 @@ AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPl
                            const IChatHistoryStore* chatHistoryStore,
                            IAgentRunStore* runStore,
                            std::shared_ptr<IPermissionGrantStore> permissionGrantStore)
-    : metadata_(std::move(metadata)), permissionService_(std::move(permissionGrantStore)),
+    : metadata_(std::move(metadata)),
+      extensionService_(nullptr, &pluginManager_, &skillService_, &toolRegistry_),
+      permissionService_(std::move(permissionGrantStore)),
       planner_(planner), executor_(executor),
       approval_(approval), sandbox_(sandbox), memoryStore_(memoryStore),
       chatHistoryStore_(chatHistoryStore), runStore_(runStore) {
@@ -80,13 +113,19 @@ AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPl
     if (dynamic_cast<RealToolExecutor*>(&executor_)) {
         pluginManager_.discoverPlugins({});
         pluginManager_.startAll();
+        skillService_.discoverSkills(
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
+            QStringLiteral("/skills"));
+        extensionService_.refreshSkillRequirements();
     }
 }
 
 void AgentRuntime::setMcpService(std::shared_ptr<IMcpService> service) {
     mcpToolProvider_.reset();
+    extensionService_.setMcpService(dynamic_cast<McpService*>(service.get()));
     if (service)
         mcpToolProvider_ = std::make_unique<McpToolProvider>(std::move(service), toolRegistry_);
+    extensionService_.refreshSkillRequirements();
 }
 
 AgentRuntime::~AgentRuntime() {
@@ -110,6 +149,9 @@ QList<AgentCapabilityDescriptor> AgentRuntime::capabilities() const {
 }
 QList<ToolDescriptor> AgentRuntime::availableTools() const {
     return toolRegistry_.enabledTools();
+}
+QList<ToolCompleteness> AgentRuntime::toolCompleteness() const {
+    return ToolExecutionGateway(&toolRegistry_).toolCompleteness();
 }
 ToolInvocationPlan AgentRuntime::plan(const AgentRequest& request) const {
     return metadata_->plan(request);
@@ -261,16 +303,8 @@ void AgentRuntime::beginTurn(const QString& sessionId, bool child) {
 void AgentRuntime::finishTurn(const QString& sessionId, const AgentLoopState& state) {
     AgentRunEvent run;
     run.phase = state.phase;
-    run.terminalReason = state.terminalReason;
-    if (run.terminalReason == AgentTerminalReason::None) {
-        if (state.phase == AgentLoopPhase::Completed)
-            run.terminalReason = AgentTerminalReason::Completed;
-        else if (state.phase == AgentLoopPhase::Cancelled)
-            run.terminalReason = AgentTerminalReason::Cancelled;
-        else if (state.phase == AgentLoopPhase::Failed || state.phase == AgentLoopPhase::Stuck)
-            run.terminalReason = state.providerFailure ? AgentTerminalReason::ProviderFailure
-                                                       : AgentTerminalReason::UnableToComplete;
-    }
+    run.terminalReason = terminalReasonFor(state);
+    run.providerRecoveryAttempts = state.providerRecoveryAttempts;
     run.finalAnswer = state.finalAnswer;
     run.abortReason = state.abortReason;
     run.providerFailure = state.providerFailure;
@@ -480,6 +514,7 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
                           const QString& goal) {
     std::lock_guard workerLock(workerMutex_);
     QString runType;
+    AgentSessionOptions runOptions;
     {
         std::lock_guard lock(mutex_);
         if (shuttingDown_ || !planner_ || !activeSessionId_.isEmpty() ||
@@ -503,12 +538,15 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
         }
         activeSessionId_ = sessionId;
         runType = options_.value(sessionId).runType;
+        runOptions = options_.value(sessionId);
         sessions_[sessionId].phase = AgentLoopPhase::Running;
         cancelRequested_ = false;
         if (!isResume) {
             modelCancellationToken_ = std::make_shared<std::atomic_bool>(false);
             executionBudget_ = std::make_shared<AgentExecutionScheduler::Budget>(4);
             subagentsThisRun_.store(0);
+            delegatedEvidenceRevision_.clear();
+            activeGoal_ = goal;
         }
     }
     if (worker_) {
@@ -527,7 +565,9 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
                 index, true);
     } else {
         publish(sessionId, AgentEventType::RunStarted,
-                AgentRunStartedEvent{goal, runType, {}, {}});
+                AgentRunStartedEvent{goal, runType, {}, {}, {}, {},
+                                     runOptions.workspaceContext.id, runOptions.workspaceName,
+                                     runOptions.presetId, runOptions.profileVersion});
     }
     publish(sessionId, AgentEventType::RuntimeStateChanged,
             AgentStateEvent{AgentLoopPhase::Running});
@@ -601,9 +641,9 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
 
     executor->setSubagentRunnerWithContext(
         [this, availableToolIds](const RealToolExecutor::SubagentAssignment& assignment,
-                                 const QString& invokingToolCallId) {
-        if (subagentsThisRun_.fetch_add(1) >= 3)
-            return QStringLiteral("Subagent limit reached for this run.");
+                                 const QString& invokingToolCallId) -> ToolExecutionResult {
+        if (cancelRequested_.load() || modelCancellationToken_->load())
+            return {ToolExecutionStatus::Cancelled, QStringLiteral("Subagent run was cancelled.")};
         QString parentSessionId;
         {
             std::lock_guard lock(mutex_);
@@ -647,16 +687,53 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             }
         }
         if (readOnlyToolIds.isEmpty())
-            return QStringLiteral("Subagent has no permitted read-only tools.");
+            return {ToolExecutionStatus::Blocked, QStringLiteral("Subagent has no permitted read-only tools.")};
+        if (readOnlyToolIds.size() == 1)
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("A one-tool task should be handled by the parent agent.")};
+        if (cancelRequested_.load() || modelCancellationToken_->load())
+            return {ToolExecutionStatus::Cancelled, QStringLiteral("Subagent run was cancelled.")};
         auto* parentPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
         if (!assignment.modelId.isEmpty() &&
             (!parentPlanner || parentPlanner->modelBinding().modelId != assignment.modelId))
-            return QStringLiteral("Subagent model differs from the active model binding.");
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("Subagent model differs from the active model binding.")};
         const QString root = PathGuard::canonicalPath(QDir::currentPath());
         const QString childScope = assignment.workspace.isEmpty()
             ? root : PathGuard::canonicalPath(QDir(root).absoluteFilePath(assignment.workspace));
         if (!PathGuard::contains(root, childScope))
-            return QStringLiteral("Subagent workspace is outside the parent workspace.");
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("Subagent workspace is outside the parent workspace.")};
+        QStringList sortedTools = readOnlyToolIds;
+        sortedTools.sort();
+        const QString normalizedGoal = assignment.goal.simplified().toCaseFolded();
+        const QString delegationKey = parentSessionId + QLatin1Char('|') +
+            assignment.purpose + QLatin1Char('|') + childScope + QLatin1Char('|') +
+            sortedTools.join(QLatin1Char(',')) + QLatin1Char('|') + normalizedGoal;
+        int evidenceRevision = 0;
+        {
+            std::lock_guard lock(eventMutex_);
+            for (const auto& event : history_.value(parentSessionId)) {
+                const auto* step = std::get_if<AgentStepEvent>(&event.payload);
+                if (step && step->step.succeeded &&
+                    step->step.toolId != QLatin1String("spawn-agent"))
+                    evidenceRevision = qMax(evidenceRevision, step->step.index);
+            }
+        }
+        {
+            std::lock_guard lock(mutex_);
+            if (normalizedGoal == activeGoal_.simplified().toCaseFolded())
+                return {ToolExecutionStatus::Blocked,
+                        QStringLiteral("The parent goal must not be delegated unchanged.")};
+            if (delegatedEvidenceRevision_.contains(delegationKey) &&
+                delegatedEvidenceRevision_.value(delegationKey) >= evidenceRevision)
+                return {ToolExecutionStatus::Blocked,
+                        QStringLiteral("Equivalent subagent work already ran without new evidence.")};
+            if (subagentsThisRun_.fetch_add(1) >= 3)
+                return {ToolExecutionStatus::Blocked,
+                        QStringLiteral("Subagent limit reached for this run.")};
+            delegatedEvidenceRevision_.insert(delegationKey, evidenceRevision);
+        }
         auto childPlanner = parentPlanner
             ? parentPlanner->forkForSubagent(readOnlyToolIds) : std::unique_ptr<LlmAgentRuntime>{};
         auto* subagentPlanner = childPlanner.get();
@@ -686,7 +763,7 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         beginTurn(subagentSessionId, true);
         publish(subagentSessionId, AgentEventType::RunStarted,
                 AgentRunStartedEvent{assignment.goal, QStringLiteral("subagent"), parentRunId,
-                                     parentToolCallId, assignment.role});
+                                     parentToolCallId, assignment.role, assignment.purpose});
         loop.setPlanningCallback([this, subagentSessionId](int index, bool started) {
             publish(subagentSessionId,
                     started ? AgentEventType::ModelRequestStarted
@@ -749,22 +826,25 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         finishTurn(subagentSessionId, state);
         permissionService_.clearSessionGrants(subagentSessionId);
         if (state.phase == AgentLoopPhase::Completed) {
-            return state.finalAnswer;
+            return {ToolExecutionStatus::Succeeded, state.finalAnswer};
         }
         if (state.phase == AgentLoopPhase::Cancelled) {
-            return QStringLiteral("Subagent run was cancelled.");
+            return {ToolExecutionStatus::Cancelled,
+                    QStringLiteral("Subagent run was cancelled.")};
         }
-        return QStringLiteral("Subagent could not finish: %1")
-            .arg(state.abortReason.isEmpty() ? QStringLiteral("unknown reason")
-                                             : state.abortReason);
+        return {ToolExecutionStatus::Failed,
+                QStringLiteral("Subagent could not finish: %1")
+                    .arg(state.abortReason.isEmpty() ? QStringLiteral("unknown reason")
+                                                     : state.abortReason)};
     });
 }
 
 void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                  const AgentSessionOptions& options, const QString& goal) {
+    loop.setWorkspaceContext(options.workspaceContext);
     if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_)) {
-        llm->setAllowedToolIds(options.availableToolIds.isEmpty() ? toolIds()
-                                                               : options.availableToolIds);
+        llm->setAllowedToolIds((options.restrictAvailableTools || !options.availableToolIds.isEmpty()) ? options.availableToolIds
+                                                               : toolIds());
         loop.setObservationIntentPolicy(
             std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
     }
@@ -884,14 +964,9 @@ void AgentRuntime::commitResult(const QString& sessionId, AgentLoopState& result
             result.terminalReason = AgentTerminalReason::Cancelled;
             result.abortReason = QStringLiteral("Agent run cancelled by user.");
         }
+        result.terminalReason = terminalReasonFor(result);
         sessions_[sessionId] = result;
-        AgentRuntimeErrorCode code = AgentRuntimeErrorCode::None;
-        if (result.phase == AgentLoopPhase::Failed)
-            code = AgentRuntimeErrorCode::ExecutionFailed;
-        else if (result.phase == AgentLoopPhase::Cancelled)
-            code = AgentRuntimeErrorCode::Cancelled;
-        else if (result.phase == AgentLoopPhase::Stuck)
-            code = AgentRuntimeErrorCode::Stuck;
+        const auto code = errorCodeFor(result);
         if (code != AgentRuntimeErrorCode::None)
             errors_[sessionId] = {code, result.abortReason, false};
         activeSessionId_.clear();
@@ -915,8 +990,8 @@ void AgentRuntime::advanceAsync(const QString& sessionId, bool isResume, bool ap
         permissionState = toolPermissionState_;
         errors_.remove(sessionId);
     }
-    const auto availableToolIds =
-        options.availableToolIds.isEmpty() ? toolIds() : options.availableToolIds;
+    const auto availableToolIds = (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
+                                      ? options.availableToolIds : toolIds();
     prepareExecution(availableToolIds);
     auto executionLock = std::make_shared<std::unique_lock<std::mutex>>(executionMutex_);
     AgentLoop::Config config;
@@ -1003,6 +1078,8 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
                 modelCancellationToken_ = std::make_shared<std::atomic_bool>(false);
                 executionBudget_ = std::make_shared<AgentExecutionScheduler::Budget>(4);
                 subagentsThisRun_.store(0);
+                delegatedEvidenceRevision_.clear();
+                activeGoal_ = goal;
             }
         }
         if (!cancelRequested_)
@@ -1022,13 +1099,15 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
                 index, true);
         } else
             publish(sessionId, AgentEventType::RunStarted,
-                    AgentRunStartedEvent{goal, options.runType, {}, {}});
+                    AgentRunStartedEvent{goal, options.runType, {}, {}, {}, {},
+                                         options.workspaceContext.id, options.workspaceName,
+                                         options.presetId, options.profileVersion});
         publish(sessionId, AgentEventType::RuntimeStateChanged,
                 AgentStateEvent{AgentLoopPhase::Running});
     }
 
-    const auto availableToolIds =
-        options.availableToolIds.isEmpty() ? toolIds() : options.availableToolIds;
+    const auto availableToolIds = (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
+                                      ? options.availableToolIds : toolIds();
     AgentLoop::Config config;
     config.autonomousMode = options.autonomousMode;
     config.maxParallelTools = qBound(1, options.maxParallelTools, 4);
@@ -1058,15 +1137,9 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
             result.terminalReason = AgentTerminalReason::Cancelled;
             result.abortReason = QStringLiteral("Agent run cancelled by user.");
         }
+        result.terminalReason = terminalReasonFor(result);
         sessions_[sessionId] = result;
-        AgentRuntimeErrorCode code = AgentRuntimeErrorCode::None;
-        if (result.phase == AgentLoopPhase::Failed) {
-            code = AgentRuntimeErrorCode::ExecutionFailed;
-        } else if (result.phase == AgentLoopPhase::Cancelled) {
-            code = AgentRuntimeErrorCode::Cancelled;
-        } else if (result.phase == AgentLoopPhase::Stuck) {
-            code = AgentRuntimeErrorCode::Stuck;
-        }
+        const auto code = errorCodeFor(result);
         if (code != AgentRuntimeErrorCode::None) {
             errors_[sessionId] = {code, result.abortReason, false};
         }

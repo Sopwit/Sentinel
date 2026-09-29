@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
+#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
 #include "sentinel/core/security/AuthorizationResolver.h"
@@ -121,6 +122,7 @@ LlmAgentRuntime::forkForSubagent(const QStringList& allowedTools) const {
     auto child = std::make_unique<LlmAgentRuntime>(tools_, childProvider.get());
     child->registry_ = registry_;
     child->allowedToolIds_ = allowedTools;
+    child->allowedToolFilterSet_ = true;
     child->boundProvider_ = std::move(childProvider);
     child->providerFactory_ = providerFactory_;
     child->providerSerialization_ = providerSerialization_;
@@ -163,7 +165,7 @@ QList<ToolDescriptor> LlmAgentRuntime::availableTools() const {
     QList<ToolDescriptor> visible;
     for (const auto& tool : enabled)
         if (tool.enabled && tool.exposedToModel &&
-            (allowedToolIds_.isEmpty() || allowedToolIds_.contains(tool.id)))
+            (!allowedToolFilterSet_ || allowedToolIds_.contains(tool.id)))
             visible.append(tool);
     return visible;
 }
@@ -181,6 +183,7 @@ void LlmAgentRuntime::setStreamObserver(std::function<void(const QString&)> onDe
 AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
     lastDecisionUsedLlm_ = false;
+    lastProviderRecoveryAttempts_ = 0;
     if (!provider_) {
         AgentStepDecision failure;
         failure.kind = AgentStepDecision::Kind::GiveUp;
@@ -226,22 +229,46 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             options.priorToolCalls = nativeCalls_;
             options.toolResults = nativeResults_;
         }
+        bool outputEmitted = false;
         const auto send = [&]() {
             return attempt == 0 && !options.structuredOutput &&
                            !options.nativeToolCalling &&
                            modelBinding_.capabilities.streaming ==
                                CapabilitySupport::Supported &&
                            streamObserver_
-                       ? provider_->sendMessageStreaming(request, streamObserver_,
+                       ? provider_->sendMessageStreaming(request, [&](const QString& delta) {
+                             outputEmitted = true;
+                             streamObserver_(delta);
+                         },
                                                          streamCancellationToken_)
                        : provider_->sendRequest(request, options);
         };
-        const auto reply = serializeProviderRequests_ && providerSerialization_
-                               ? [&] {
-                                     std::lock_guard lock(*providerSerialization_);
-                                     return send();
-                                 }()
-                               : send();
+        const auto sendBoundRequest = [&]() {
+            if (serializeProviderRequests_ && providerSerialization_) {
+                std::lock_guard lock(*providerSerialization_);
+                return send();
+            }
+            return send();
+        };
+        auto reply = sendBoundRequest();
+        int totalAttempts = qMax(1, reply.attempts);
+        const bool transient = (reply.category == ChatProviderErrorCategory::RateLimited &&
+                                reply.httpStatus == 429) ||
+            (reply.category == ChatProviderErrorCategory::ProviderUnavailable &&
+             (reply.httpStatus == 502 || reply.httpStatus == 503 || reply.httpStatus == 504));
+        if (!reply.success && transient && totalAttempts < 3 && !outputEmitted &&
+            (!streamCancellationToken_ || !streamCancellationToken_->load()) &&
+            ProviderRequestRuntime::backoff(
+                ProviderRequestRuntime::retryDelayMs(totalAttempts - 1, {},
+                    ProviderRequestMode::Generation), streamCancellationToken_)) {
+            auto recovered = sendBoundRequest();
+            ++lastProviderRecoveryAttempts_;
+            totalAttempts += qMax(1, recovered.attempts);
+            recovered.attempts = totalAttempts;
+            if (recovered.retrySummary.isEmpty())
+                recovered.retrySummary = QStringLiteral("Agent planner retried a transient provider failure");
+            reply = std::move(recovered);
+        }
         if (!reply.success) {
             AgentStepDecision failure;
             failure.kind = AgentStepDecision::Kind::GiveUp;

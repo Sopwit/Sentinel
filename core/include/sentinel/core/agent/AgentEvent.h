@@ -48,6 +48,11 @@ struct AgentRunStartedEvent {
     QString parentRunId;
     QString parentToolCallId;
     QString role;
+    QString delegationPurpose;
+    QString workspaceId;
+    QString workspaceName;
+    QString presetId;
+    QString profileVersion;
 };
 
 struct AgentContextEvent {
@@ -80,6 +85,7 @@ struct AgentToolOutputEvent {
 struct AgentRunEvent {
     AgentLoopPhase phase = AgentLoopPhase::Idle;
     AgentTerminalReason terminalReason = AgentTerminalReason::None;
+    int providerRecoveryAttempts = 0;
     QString finalAnswer;
     QString abortReason;
     std::optional<ProviderFailureMetadata> providerFailure;

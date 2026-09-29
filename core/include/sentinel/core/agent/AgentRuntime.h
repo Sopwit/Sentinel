@@ -7,6 +7,8 @@
 #include "sentinel/core/agent/AgentExecutionScheduler.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/plugin/PluginManager.h"
+#include "sentinel/core/skill/SkillService.h"
+#include "sentinel/core/extension/ExtensionService.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolHookService.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
@@ -83,12 +85,16 @@ public:
     const IToolRegistry& toolRegistry() const {
         return toolRegistry_;
     }
+    QList<ToolCompleteness> toolCompleteness() const;
     ToolHookService& toolHooks() {
         return toolHooks_;
     }
     plugin::PluginManager& pluginManager() {
         return pluginManager_;
     }
+    SkillService& skillService() { return skillService_; }
+    ExtensionService& extensionService() { return extensionService_; }
+    const PermissionService& permissionService() const { return permissionService_; }
     void setToolPermissionState(QString state) override;
     void setMcpService(std::shared_ptr<IMcpService> service);
 
@@ -119,6 +125,8 @@ private:
     InMemoryToolRegistry toolRegistry_;
     ToolHookService toolHooks_;
     plugin::PluginManager pluginManager_;
+    SkillService skillService_;
+    ExtensionService extensionService_;
     PermissionPolicyService toolPermissionPolicy_;
     PermissionService permissionService_;
     ExternalDirectoryGate externalDirectoryGate_;
@@ -133,6 +141,8 @@ private:
     IAgentRunStore* runStore_ = nullptr;
     std::atomic_bool persistenceWarningEmitted_{false};
     std::atomic_int subagentsThisRun_{0};
+    QHash<QString, int> delegatedEvidenceRevision_;
+    QString activeGoal_;
     std::shared_ptr<AgentExecutionScheduler::Budget> executionBudget_;
     mutable std::mutex mutex_;
     std::mutex workerMutex_;

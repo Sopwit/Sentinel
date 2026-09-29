@@ -86,6 +86,7 @@ struct AgentLoopState {
     FinalAnswerGrounding finalGrounding;
     QList<ClaimAssertion> finalClaims;
     int rejectedFinalAnswers = 0;
+    int providerRecoveryAttempts = 0;
     QString finalAnswer;
     QString abortReason;
     std::optional<ProviderFailureMetadata> providerFailure;

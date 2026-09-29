@@ -124,7 +124,15 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
             observationBudget -= cost(result.items.last());
     }
 
-    if (!input.workspace.isEmpty())
+    if (!input.workspaceContext.id.isEmpty()) {
+        const auto& workspace = input.workspaceContext;
+        const auto summary = QStringLiteral("id=%1 root=%2 include=%3 exclude=%4 retrieval=%5 memory=%6")
+            .arg(workspace.id, workspace.rootPath, workspace.includeHints.join(QLatin1Char(',')),
+                 workspace.excludeHints.join(QLatin1Char(',')), workspace.retrievalPreference,
+                 workspace.memoryScope);
+        add({AgentContextKind::Workspace, AgentContextPriority::Normal,
+             QStringLiteral("workspace-profile"), bounded(summary, 400), true}, 180);
+    } else if (!input.workspace.isEmpty())
         add({AgentContextKind::Workspace, AgentContextPriority::Normal,
              QStringLiteral("runtime-workspace"), input.workspace, false}, 120);
 
