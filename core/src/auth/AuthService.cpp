@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/auth/AuthService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonDocument>
@@ -75,6 +76,12 @@ bool AuthService::refreshToken(const QString& provider) {
 
     QNetworkAccessManager manager;
     QNetworkRequest request{QUrl(configIt->tokenUrl)};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
+    if (NetworkPolicyService::instance().check(request.url()) != NetworkDecision::Allowed) {
+        emit authenticationFailed(provider, QStringLiteral("Offline"));
+        return false;
+    }
     request.setHeader(QNetworkRequest::ContentTypeHeader,
                       QStringLiteral("application/x-www-form-urlencoded"));
     QNetworkReply* reply = manager.post(request, form.query(QUrl::FullyEncoded).toUtf8());

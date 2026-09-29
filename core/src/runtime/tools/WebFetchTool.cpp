@@ -4,6 +4,7 @@
 
 #include "sentinel/core/runtime/tools/WebFetchTool.h"
 #include "sentinel/core/runtime/tools/HtmlToMarkdown.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonDocument>
@@ -38,8 +39,15 @@ WebFetchResponse WebFetchTool::fetch(const QString& url, WebFetchFormat format) 
         response.errorString = "Invalid URL: " + url;
         return response;
     }
+    const auto decision = NetworkPolicyService::instance().check(validatedUrl);
+    if (decision != NetworkDecision::Allowed) {
+        response.errorString = NetworkPolicyService::code(decision);
+        return response;
+    }
 
     QNetworkRequest request{validatedUrl};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
     request.setRawHeader("Accept",
                          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
@@ -72,8 +80,17 @@ void WebFetchTool::fetchAsync(const QString& url, WebFetchFormat format,
             callback(response);
         return;
     }
+    const auto decision = NetworkPolicyService::instance().check(validatedUrl);
+    if (decision != NetworkDecision::Allowed) {
+        WebFetchResponse response;
+        response.errorString = NetworkPolicyService::code(decision);
+        if (callback) callback(response);
+        return;
+    }
 
     QNetworkRequest request(validatedUrl);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
     request.setRawHeader("Accept",
                          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");

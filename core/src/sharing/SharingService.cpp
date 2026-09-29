@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/sharing/SharingService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonDocument>
@@ -28,6 +29,12 @@ ShareRecord SharingService::createShare(const QString& sessionId) {
     ShareRecord record = createShareRecord(sessionId);
 
     QNetworkRequest request(QUrl(m_config.apiUrl + QStringLiteral("/shares")));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
+    if (NetworkPolicyService::instance().check(request.url()) != NetworkDecision::Allowed) {
+        emit shareError({}, QStringLiteral("Offline"));
+        return {};
+    }
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     if (!m_config.authToken.isEmpty()) {
         request.setRawHeader("Authorization",
@@ -88,6 +95,12 @@ bool SharingService::deleteShare(const QString& shareId) {
 
     if (m_config.enabled && !m_config.apiUrl.trimmed().isEmpty()) {
         QNetworkRequest request(QUrl(m_config.apiUrl + QStringLiteral("/shares/%1").arg(shareId)));
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                             QNetworkRequest::ManualRedirectPolicy);
+        if (NetworkPolicyService::instance().check(request.url()) != NetworkDecision::Allowed) {
+            emit shareError(shareId, QStringLiteral("Offline"));
+            return false;
+        }
         if (!m_config.authToken.isEmpty()) {
             request.setRawHeader("Authorization",
                                  QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());
@@ -145,6 +158,12 @@ bool SharingService::syncShare(const QString& shareId) {
         return false;
     }
     QNetworkRequest request(QUrl(m_config.apiUrl + QStringLiteral("/shares/%1").arg(shareId)));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
+    if (NetworkPolicyService::instance().check(request.url()) != NetworkDecision::Allowed) {
+        emit shareError(shareId, QStringLiteral("Offline"));
+        return false;
+    }
     if (!m_config.authToken.isEmpty()) {
         request.setRawHeader("Authorization",
                              QStringLiteral("Bearer %1").arg(m_config.authToken).toUtf8());

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDebug>
 #include <QEventLoop>
 #include <QJsonArray>
@@ -53,12 +54,19 @@ WebSearchResponse WebSearchTool::search(const QString& query, int numResults) {
         response.errorString = "Invalid search URL";
         return response;
     }
+    if (const auto decision = NetworkPolicyService::instance().check(url);
+        decision != NetworkDecision::Allowed) {
+        response.errorString = NetworkPolicyService::code(decision);
+        return response;
+    }
 
     QUrlQuery queryParams;
     queryParams.addQueryItem(QStringLiteral("query"), query);
     queryParams.addQueryItem(QStringLiteral("numResults"), QString::number(numResults));
     url.setQuery(queryParams);
     QNetworkRequest request{url};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
 
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
@@ -118,8 +126,17 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
             callback(response);
         return;
     }
+    if (const auto decision = NetworkPolicyService::instance().check(url);
+        decision != NetworkDecision::Allowed) {
+        WebSearchResponse response;
+        response.errorString = NetworkPolicyService::code(decision);
+        if (callback) callback(response);
+        return;
+    }
 
     QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
 
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
@@ -157,9 +174,16 @@ WebSearchResponse WebSearchTool::searchDuckDuckGo(const QString& query, int numR
     WebSearchResponse response;
 
     QUrl url(QStringLiteral("https://html.duckduckgo.com/html/"));
+    if (const auto decision = NetworkPolicyService::instance().check(url);
+        decision != NetworkDecision::Allowed) {
+        response.errorString = NetworkPolicyService::code(decision);
+        return response;
+    }
     QUrlQuery params;
     params.addQueryItem(QStringLiteral("q"), query);
     QNetworkRequest request{url};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setHeader(QNetworkRequest::ContentTypeHeader,
                       QStringLiteral("application/x-www-form-urlencoded"));
     // DuckDuckGo rejects clearly non-browser agents; use a conventional UA.

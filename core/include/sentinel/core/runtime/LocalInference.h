@@ -53,6 +53,7 @@ enum class LocalInferenceError : std::uint8_t {
     Timeout,
     InvalidResponse,
     StreamInterrupted,
+    Offline,
 };
 
 QString localInferenceErrorName(LocalInferenceError error);

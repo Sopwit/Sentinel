@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/session/SessionExportService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -73,6 +74,8 @@ bool SessionExportService::importFromUrl(const QString& url, QString& sessionId)
         (target.scheme() != QStringLiteral("http") && target.scheme() != QStringLiteral("https"))) {
         return false;
     }
+    if (NetworkPolicyService::instance().check(target) != NetworkDecision::Allowed)
+        return false;
 
     QNetworkAccessManager manager;
     QNetworkRequest request;

@@ -46,6 +46,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/app/OrchestrationDiagnostics.h
     include/sentinel/core/app/OrchestrationSnapshot.h
     include/sentinel/core/app/RecoveryService.h
+    include/sentinel/core/network/NetworkPolicyService.h
     include/sentinel/core/app/SkillProfileService.h
     include/sentinel/core/app/StaticTaskPlanner.h
     include/sentinel/core/app/TaskPlanning.h

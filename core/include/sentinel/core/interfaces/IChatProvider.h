@@ -51,6 +51,7 @@ enum class ChatProviderErrorCategory {
     MalformedResponse,
     Cancelled,
     ProviderFailure,
+    Offline,
 };
 
 inline QString chatProviderErrorCategoryName(ChatProviderErrorCategory category) {
@@ -70,6 +71,7 @@ inline QString chatProviderErrorCategoryName(ChatProviderErrorCategory category)
     case ChatProviderErrorCategory::MalformedResponse: return QStringLiteral("MalformedResponse");
     case ChatProviderErrorCategory::Cancelled: return QStringLiteral("Cancelled");
     case ChatProviderErrorCategory::ProviderFailure: return QStringLiteral("ProviderFailure");
+    case ChatProviderErrorCategory::Offline: return QStringLiteral("Offline");
     }
     return QStringLiteral("None");
 }
