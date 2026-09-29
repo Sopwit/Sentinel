@@ -22,6 +22,14 @@ struct McpToolDefinition {
     bool filesystemSemanticContract = false;
 };
 
+struct McpResource {
+    QString uri;
+    QString name;
+    QString description;
+    QString mimeType;
+    QString serverName;
+};
+
 struct McpServerConfig {
     QString name;
     QString type;          // "local" or "remote"
@@ -30,9 +38,39 @@ struct McpServerConfig {
     QString url;           // for remote: HTTP endpoint
     QJsonObject headers;   // for remote: custom headers
     bool enabled{true};
+    bool allowPartialConfinement{false}; // Windows restricted token/Job Object lacks filesystem confinement
 };
 
 enum class McpConnectionState { Disconnected, Connecting, Connected, Error };
+enum class McpFailureCategory {
+    None, ServerUnavailable, StartupFailure, ProtocolError, Timeout, Cancelled,
+    InvalidToolSchema, RemoteExecutionFailure, SecurityDenied, TransportFailure,
+    AuthenticationFailure, ConfigurationFailure, UnsupportedProtocolVersion,
+    InteractionRequired, InteractionRejected, UnsupportedLegacyTransport, Offline
+};
+
+inline QString mcpFailureCategoryName(McpFailureCategory category) {
+    switch (category) {
+    case McpFailureCategory::None: return QStringLiteral("None");
+    case McpFailureCategory::ServerUnavailable: return QStringLiteral("ServerUnavailable");
+    case McpFailureCategory::StartupFailure: return QStringLiteral("StartupFailure");
+    case McpFailureCategory::ProtocolError: return QStringLiteral("ProtocolError");
+    case McpFailureCategory::Timeout: return QStringLiteral("Timeout");
+    case McpFailureCategory::Cancelled: return QStringLiteral("Cancelled");
+    case McpFailureCategory::InvalidToolSchema: return QStringLiteral("InvalidToolSchema");
+    case McpFailureCategory::RemoteExecutionFailure: return QStringLiteral("RemoteExecutionFailure");
+    case McpFailureCategory::SecurityDenied: return QStringLiteral("SecurityDenied");
+    case McpFailureCategory::TransportFailure: return QStringLiteral("TransportFailure");
+    case McpFailureCategory::AuthenticationFailure: return QStringLiteral("AuthenticationFailure");
+    case McpFailureCategory::ConfigurationFailure: return QStringLiteral("ConfigurationFailure");
+    case McpFailureCategory::UnsupportedProtocolVersion: return QStringLiteral("UnsupportedProtocolVersion");
+    case McpFailureCategory::InteractionRequired: return QStringLiteral("InteractionRequired");
+    case McpFailureCategory::InteractionRejected: return QStringLiteral("InteractionRejected");
+    case McpFailureCategory::UnsupportedLegacyTransport: return QStringLiteral("UnsupportedLegacyTransport");
+    case McpFailureCategory::Offline: return QStringLiteral("Offline");
+    }
+    return QStringLiteral("ProtocolError");
+}
 
 class IMcpService {
 public:

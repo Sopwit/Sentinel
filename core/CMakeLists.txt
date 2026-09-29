@@ -101,7 +101,6 @@ add_library(sentinel_core STATIC
     include/sentinel/core/lsp/LspClient.h
     include/sentinel/core/lsp/LspService.h
     include/sentinel/core/mcp/IMcpService.h
-    include/sentinel/core/mcp/McpClient.h
     include/sentinel/core/mcp/McpService.h
     include/sentinel/core/mcp/McpToolCatalog.h
     include/sentinel/core/mcp/McpToolProvider.h
@@ -256,8 +255,6 @@ add_library(sentinel_core STATIC
     include/sentinel/core/provider/ProviderMessageNormalizer.h
     include/sentinel/core/provider/ProviderErrorClassifier.h
     include/sentinel/core/doomloop/DoomLoopDetector.h
-    include/sentinel/core/mcp/IMcpResourceService.h
-    include/sentinel/core/mcp/McpResourceService.h
     include/sentinel/core/wildcard/WildcardMatcher.h
     include/sentinel/core/schema/ToolJsonSchemaNormalizer.h
     include/sentinel/core/enterprise/IRemoteConfigService.h
@@ -376,7 +373,6 @@ add_library(sentinel_core STATIC
     src/session/WorkspaceManagerService.cpp
     src/memory/InMemoryMemoryCandidateStore.cpp
     src/memory/InMemorySettingsStore.cpp
-    src/mcp/McpClient.cpp
     src/mcp/McpService.cpp
     src/mcp/McpToolCatalog.cpp
     src/mcp/McpToolProvider.cpp
@@ -449,7 +445,6 @@ add_library(sentinel_core STATIC
     src/provider/ProviderMessageNormalizer.cpp
     src/provider/ProviderErrorClassifier.cpp
     src/doomloop/DoomLoopDetector.cpp
-    src/mcp/McpResourceService.cpp
     src/wildcard/WildcardMatcher.cpp
     src/schema/ToolJsonSchemaNormalizer.cpp
     src/enterprise/RemoteConfigService.cpp
