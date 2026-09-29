@@ -5,6 +5,7 @@
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -46,6 +47,13 @@ struct JsonReply {
 JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
                    const QMap<QByteArray, QByteArray>& headers = {},
                    const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+    const auto decision = NetworkPolicyService::instance().check(url);
+    if (decision != NetworkDecision::Allowed) {
+        JsonReply blocked;
+        blocked.category = ChatProviderErrorCategory::Offline;
+        blocked.error = NetworkPolicyService::code(decision);
+        return blocked;
+    }
     QNetworkAccessManager manager;
     QNetworkRequest request{url};
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
@@ -113,6 +121,8 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
 }
 
 ChatProviderErrorCategory requestCategory(const JsonReply& reply) {
+    if (reply.category == ChatProviderErrorCategory::Offline)
+        return ChatProviderErrorCategory::Offline;
     return ProviderRequestRuntime::classify(reply.httpStatus, reply.networkError,
                                             reply.timedOut, reply.cancelled);
 }
@@ -206,6 +216,8 @@ LocalInferenceTrace trace(int sequence, const QString& stage, const QString& sta
 }
 
 LocalInferenceError networkErrorCategory(const JsonReply& reply) {
+    if (reply.category == ChatProviderErrorCategory::Offline)
+        return LocalInferenceError::Offline;
     if (reply.timedOut || reply.networkError == QNetworkReply::TimeoutError) {
         return LocalInferenceError::Timeout;
     }
@@ -225,6 +237,8 @@ LocalInferenceError networkErrorCategory(const JsonReply& reply) {
 
 QString safeNetworkFailureSummary(const JsonReply& reply, const QString& operation, int timeoutMs) {
     const auto category = networkErrorCategory(reply);
+    if (category == LocalInferenceError::Offline)
+        return QStringLiteral("%1 blocked by network policy: %2.").arg(operation, reply.error);
     if (category == LocalInferenceError::Timeout) {
         return QStringLiteral("%1 timed out after %2 ms.").arg(operation).arg(timeoutMs);
     }
@@ -319,6 +333,8 @@ QString localInferenceErrorName(LocalInferenceError error) {
         return QStringLiteral("Invalid Response");
     case LocalInferenceError::StreamInterrupted:
         return QStringLiteral("Stream Interrupted");
+    case LocalInferenceError::Offline:
+        return QStringLiteral("Offline");
     }
 
     return QStringLiteral("None");
@@ -860,6 +876,17 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                              QStringLiteral("application/json"));
     networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                                 QNetworkRequest::ManualRedirectPolicy);
+
+    const auto networkDecision = NetworkPolicyService::instance().check(networkRequest.url());
+    if (networkDecision != NetworkDecision::Allowed) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::Offline);
+        result.error = LocalInferenceError::Offline;
+        result.summary = QStringLiteral("Provider request blocked by network policy: %1")
+                             .arg(NetworkPolicyService::code(networkDecision));
+        return result;
+    }
 
     QByteArray pending;
     int sequence = 0;

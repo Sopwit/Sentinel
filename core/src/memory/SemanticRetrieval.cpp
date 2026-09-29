@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/memory/SemanticRetrieval.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 
 #include <QCryptographicHash>
 #include <QEventLoop>
@@ -658,7 +659,15 @@ EmbeddingVector OllamaEmbeddingProvider::embedText(const QString& text) const {
     vector.modelSummary = QStringLiteral("Ollama embedding via %1 model %2").arg(endpoint_, model_);
 
     const QUrl url(endpoint_ + QStringLiteral("/api/embed"));
+    const auto decision = NetworkPolicyService::instance().check(url);
+    if (decision != NetworkDecision::Allowed) {
+        status_ = EmbeddingProviderStatus::Error;
+        statusDetail_ = NetworkPolicyService::code(decision);
+        return vector;
+    }
     QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setTransferTimeout(timeoutMs_);
 

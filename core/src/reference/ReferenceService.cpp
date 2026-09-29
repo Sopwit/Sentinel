@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/reference/ReferenceService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDebug>
 #include <QDir>
 #include <QEventLoop>
@@ -184,7 +185,11 @@ QString ReferenceService::readLocalContent(const QString& path) const {
 }
 
 QString ReferenceService::readUrlContent(const QString& url) const {
+    if (NetworkPolicyService::instance().check(QUrl(url)) != NetworkDecision::Allowed)
+        return {};
     QNetworkRequest request{QUrl(url)};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);

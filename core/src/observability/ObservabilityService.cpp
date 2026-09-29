@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/observability/ObservabilityService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -279,9 +280,13 @@ void ObservabilityService::exportToOtlp(const QList<SpanData>& spans,
         payload["resourceMetrics"] = metricArray;
 
     QJsonDocument doc(payload);
+    if (NetworkPolicyService::instance().check(QUrl(m_config.otlpEndpoint)) !=
+        NetworkDecision::Allowed) return;
     QNetworkAccessManager* manager = new QNetworkAccessManager(this);
     QNetworkRequest request;
     request.setUrl(QUrl(m_config.otlpEndpoint));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     QNetworkReply* reply = manager->post(request, doc.toJson(QJsonDocument::Compact));
     QObject::connect(reply, &QNetworkReply::finished, manager, [reply, manager]() {

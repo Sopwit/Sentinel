@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/session/AutoUpdateService.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -30,11 +31,14 @@ AutoUpdateService::~AutoUpdateService() = default;
 UpdateInfo AutoUpdateService::checkForUpdates() const {
     UpdateInfo info;
     info.currentVersion = currentVersion();
-    if (!m_manifestUrl.isValid())
+    if (!m_manifestUrl.isValid() || NetworkPolicyService::instance().check(m_manifestUrl) !=
+                                        NetworkDecision::Allowed)
         return info;
     QNetworkAccessManager manager;
     QNetworkRequest request;
     request.setUrl(m_manifestUrl);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
     QNetworkReply* reply = manager.get(request);
     QEventLoop loop;
     QTimer timer;
@@ -61,9 +65,13 @@ bool AutoUpdateService::downloadUpdate(const QString& version) {
     const UpdateInfo info = checkForUpdates();
     if (info.latestVersion != version || info.downloadUrl.isEmpty())
         return false;
+    if (NetworkPolicyService::instance().check(QUrl(info.downloadUrl)) !=
+        NetworkDecision::Allowed) return false;
     QNetworkAccessManager manager;
     QNetworkRequest downloadRequest;
     downloadRequest.setUrl(QUrl(info.downloadUrl));
+    downloadRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                                 QNetworkRequest::ManualRedirectPolicy);
     QNetworkReply* reply = manager.get(downloadRequest);
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);

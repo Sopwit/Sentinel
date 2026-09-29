@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/OllamaRuntime.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QEventLoop>
@@ -74,6 +75,13 @@ struct JsonReply {
 JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager,
                   const QMap<QByteArray, QByteArray>& headers = {},
                   const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+    const auto decision = NetworkPolicyService::instance().check(url);
+    if (decision != NetworkDecision::Allowed) {
+        JsonReply blocked;
+        blocked.category = ChatProviderErrorCategory::Offline;
+        blocked.error = NetworkPolicyService::code(decision);
+        return blocked;
+    }
     QNetworkAccessManager localManager;
     QNetworkAccessManager* activeManager = manager ? manager : &localManager;
     QNetworkRequest request{url};
@@ -82,7 +90,9 @@ JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* man
     // blocking HTTPS→HTTP downgrades. Local Ollama endpoints never redirect,
     // so this has no effect on them.
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                         QNetworkRequest::NoLessSafeRedirectPolicy);
+                         NetworkPolicyService::instance().mode() == NetworkMode::Online
+                             ? QNetworkRequest::NoLessSafeRedirectPolicy
+                             : QNetworkRequest::ManualRedirectPolicy);
     for (auto it = headers.constBegin(); it != headers.constEnd(); ++it) {
         request.setRawHeader(it.key(), it.value());
     }
@@ -147,7 +157,8 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
         auto reply = getJsonOnce(url, timeoutMs, manager, headers, cancellationToken);
         reply.requestId = requestId;
         reply.attempts = attempt + 1;
-        reply.category = ProviderRequestRuntime::classify(
+        if (reply.category != ChatProviderErrorCategory::Offline)
+            reply.category = ProviderRequestRuntime::classify(
             reply.httpStatus, reply.networkError, reply.timedOut,
             cancellationToken && cancellationToken->load());
         ProviderTransportResult transport;
