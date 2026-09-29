@@ -11,8 +11,6 @@
 
 namespace sentinel::core {
 
-class IToolRegistry;
-
 class McpToolCatalog {
 public:
     McpToolCatalog() = default;
@@ -20,9 +18,6 @@ public:
     // Convert MCP tools to Sentinel ToolDescriptors
     static ToolDescriptor mcpToolToDescriptor(const McpToolDefinition& mcpTool);
     static QList<ToolDescriptor> mcpToolsToDescriptors(const QList<McpToolDefinition>& mcpTools);
-
-    // Register MCP tools with a tool registry
-    static void registerMcpTools(const QList<McpToolDefinition>& mcpTools, IToolRegistry* registry);
 
     // Parse MCP tool call results
     static QJsonObject parseToolResult(const QJsonObject& result);

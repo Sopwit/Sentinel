@@ -104,32 +104,56 @@ public:
             IMcpService::Cancel cancel;
         };
         auto invocation = std::make_shared<Invocation>();
-        auto onResult = [invocation, contract = filesystemContract_, completion = std::move(completion)](QJsonObject response) {
+        auto finish = std::make_shared<IToolExecutor::Completion>(std::move(completion));
+        auto onResult = [invocation, contract = filesystemContract_, finish,
+                         service = service_, server = server_](QJsonObject response) {
             if (!invocation->active.exchange(false))
                 return;
             if (response.contains(QStringLiteral("error"))) {
-                const auto message = response.value(QStringLiteral("error"))
-                                         .toObject()
-                                         .value(QStringLiteral("message"))
-                                         .toString();
-                completion({ToolExecutionStatus::Blocked,
-                            message.isEmpty() ? QStringLiteral("MCP call failed") : message});
+                const auto error = response.value(QStringLiteral("error")).toObject();
+                const auto message = error.value(QStringLiteral("message")).toString();
+                const auto category = error.value(QStringLiteral("category")).toString();
+                ToolExecutionResult failure{ToolExecutionStatus::Failed,
+                    message.isEmpty() ? QStringLiteral("MCP call failed") : message.left(400)};
+                failure.failureCategory = category == QLatin1String("Timeout") ? ToolFailureCategory::Timeout
+                    : category == QLatin1String("Cancelled") ? ToolFailureCategory::Cancelled
+                    : category == QLatin1String("SecurityDenied") ? ToolFailureCategory::SecurityDenied
+                    : category == QLatin1String("TransportFailure") ? ToolFailureCategory::NetworkFailure
+                    : category == QLatin1String("ServerUnavailable") ? ToolFailureCategory::RuntimeUnavailable
+                    : category == QLatin1String("InvalidToolSchema") ? ToolFailureCategory::InvalidToolSchema
+                    : category == QLatin1String("ProtocolError") ? ToolFailureCategory::ProtocolError
+                    : category == QLatin1String("RemoteExecutionFailure") ? ToolFailureCategory::RemoteExecutionFailure
+                    : category == QLatin1String("StartupFailure") ? ToolFailureCategory::StartupFailure
+                    : category == QLatin1String("AuthenticationFailure") ? ToolFailureCategory::AuthenticationFailure
+                    : category == QLatin1String("ConfigurationFailure") ? ToolFailureCategory::ConfigurationFailure
+                    : category == QLatin1String("UnsupportedProtocolVersion") ? ToolFailureCategory::UnsupportedProtocolVersion
+                    : category == QLatin1String("InteractionRequired") ? ToolFailureCategory::InteractionRequired
+                    : category == QLatin1String("InteractionRejected") ? ToolFailureCategory::InteractionRejected
+                    : category == QLatin1String("UnsupportedLegacyTransport") ? ToolFailureCategory::UnsupportedLegacyTransport
+                    : service->connectionState(server) == McpConnectionState::Connected
+                        ? ToolFailureCategory::InternalFailure : ToolFailureCategory::RuntimeUnavailable;
+                (*finish)(std::move(failure));
                 return;
             }
             if (!response.value(QStringLiteral("result")).isObject()) {
-                completion(
-                    {ToolExecutionStatus::Blocked, QStringLiteral("Invalid MCP tool response")});
+                ToolExecutionResult failure{ToolExecutionStatus::InvalidToolContract,
+                    QStringLiteral("Invalid MCP tool response")};
+                failure.failureCategory = ToolFailureCategory::ProtocolError;
+                (*finish)(std::move(failure));
                 return;
             }
             const auto result = response.value(QStringLiteral("result")).toObject();
             const QJsonObject data = result.value(QStringLiteral("structuredContent")).toObject();
             const auto observation = declaredObservation(data, contract);
-            const auto summary = QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact));
+            const auto summary = QString::fromUtf8(
+                QJsonDocument(result).toJson(QJsonDocument::Compact)).left(8192);
             if (result.value(QStringLiteral("isError")).toBool()) {
-                completion({ToolExecutionStatus::Failed, summary, observation});
+                ToolExecutionResult failure{ToolExecutionStatus::Failed, summary, observation};
+                failure.failureCategory = ToolFailureCategory::RemoteExecutionFailure;
+                (*finish)(std::move(failure));
                 return;
             }
-            completion({ToolExecutionStatus::Succeeded, summary, observation,
+            (*finish)({ToolExecutionStatus::Succeeded, summary, observation,
                         declaredMutations(data, contract)});
         };
         if (auto* object = dynamic_cast<McpService*>(service_.get());
@@ -157,8 +181,10 @@ public:
                     invocation->cancel = std::move(cancel);
                 },
                 Qt::QueuedConnection);
-            return [invocation, service = service_, object] {
-                invocation->active = false;
+            return [invocation, finish, service = service_, object] {
+                if (invocation->active.exchange(false))
+                    (*finish)({ToolExecutionStatus::Cancelled,
+                               QStringLiteral("MCP call cancelled.")});
                 QMetaObject::invokeMethod(
                     object,
                     [invocation, service] {
@@ -170,8 +196,10 @@ public:
             };
         }
         auto cancel = service_->callToolAsync(server_, remoteTool_, arguments, std::move(onResult));
-        return [invocation, cancel = std::move(cancel)] {
-            invocation->active = false;
+        return [invocation, finish, cancel = std::move(cancel)] {
+            if (invocation->active.exchange(false))
+                (*finish)({ToolExecutionStatus::Cancelled,
+                           QStringLiteral("MCP call cancelled.")});
             if (cancel)
                 cancel();
         };
@@ -212,32 +240,42 @@ bool McpToolProvider::refresh(const QString& serverName) {
         return false;
     }
     const auto providerId = QStringLiteral("mcp:%1").arg(serverName);
+    auto invalid = [this, &serverName](const QString& detail) {
+        disconnectServer(serverName);
+        if (auto* service = dynamic_cast<McpService*>(service_.get()))
+            service->invalidateInventory(serverName, McpFailureCategory::InvalidToolSchema,
+                                         detail);
+        return false;
+    };
     QList<IToolRegistry::Registration> next;
     QSet<QString> ids;
     for (auto tool : service_->tools(serverName)) {
         tool.serverName = serverName;
         if (tool.name.isEmpty()) {
             qWarning() << "MCP tool has an empty name on" << serverName;
-            return false;
+            return invalid(QStringLiteral("MCP tool name is empty"));
         }
         auto descriptor = McpToolCatalog::mcpToolToDescriptor(tool);
         if (ids.contains(descriptor.id)) {
             qWarning() << "Duplicate MCP tool" << descriptor.id;
-            return false;
+            return invalid(QStringLiteral("Duplicate MCP tool ID"));
         }
         ids.insert(descriptor.id);
         const auto existing = registry_.findRegistration(descriptor.id);
         if (existing && (existing->descriptor.source != ToolSource::MCP ||
                          existing->descriptor.providerId != providerId)) {
             qWarning() << "MCP tool ID collision" << descriptor.id;
-            return false;
+            return invalid(QStringLiteral("MCP tool ID collision"));
         }
         next.append({std::move(descriptor),
                      std::make_shared<McpToolHandler>(service_, serverName, tool.name,
                                                       tool.filesystemSemanticContract)});
     }
-    if (!registry_.replaceProvider(ToolSource::MCP, providerId, std::move(next)))
-        return false;
+    if (!registry_.replaceProvider(ToolSource::MCP, providerId, std::move(next))) {
+        return invalid(QStringLiteral("MCP tool schema or descriptor is invalid"));
+    }
+    if (auto* service = dynamic_cast<McpService*>(service_.get()))
+        service->confirmToolInventory(serverName);
     registeredServers_.insert(serverName);
     return true;
 }

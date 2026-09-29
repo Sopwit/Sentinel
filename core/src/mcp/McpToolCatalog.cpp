@@ -44,11 +44,12 @@ ToolDescriptor McpToolCatalog::mcpToolToDescriptor(const McpToolDefinition& mcpT
     descriptor.inputSchema = mcpTool.inputSchema;
     descriptor.structuredObservationKind = StructuredObservationKind::Generic;
     descriptor.filesystemFailureSemanticContract = mcpTool.filesystemSemanticContract;
-    descriptor.evidenceProduced = mcpTool.filesystemSemanticContract
+    descriptor.evidenceProduced = mcpTool.filesystemSemanticContract &&
+                                  mcpTool.inputSchema.value(QStringLiteral("properties"))
+                                      .toObject().contains(QStringLiteral("path"))
         ? QList<ToolEvidenceDescriptor>{{ObservationDomain::FileSystem, EvidenceFreshness::Live,
                                          EvidenceScope::ExactResource, QStringLiteral("path")}}
-        : QList<ToolEvidenceDescriptor>{{ObservationDomain::ExternalService, EvidenceFreshness::Live,
-                                         EvidenceScope::Provider, {}}};
+        : QList<ToolEvidenceDescriptor>{};
 
     // Convert input schema to parameter descriptors
     QJsonObject schema = mcpTool.inputSchema;
@@ -73,14 +74,6 @@ McpToolCatalog::mcpToolsToDescriptors(const QList<McpToolDefinition>& mcpTools) 
         descriptors.append(mcpToolToDescriptor(mcpTool));
     }
     return descriptors;
-}
-
-void McpToolCatalog::registerMcpTools(const QList<McpToolDefinition>& mcpTools,
-                                      IToolRegistry* registry) {
-    Q_UNUSED(mcpTools)
-    Q_UNUSED(registry)
-    qWarning() << "McpToolCatalog: metadata-only registration is unsupported; use executable "
-                  "registrations";
 }
 
 QJsonObject McpToolCatalog::parseToolResult(const QJsonObject& result) {
