@@ -1329,21 +1329,27 @@ void ModelService::reportProviderDiscovery(const QString& providerId, quint64 se
 void ModelService::reportProviderRequest(const QString& providerId, quint64 sequence,
                                           bool completed, ChatProviderErrorCategory category,
                                           const QString& source) {
-    std::lock_guard lock(providerHealthRegistry_->mutex);
-    auto& entry = providerHealthRegistry_->entries[normalizedProviderId(providerId)];
-    if (sequence < entry.sequence) return;
-    entry.sequence = sequence;
-    entry.source = source;
-    if (completed) entry.health = ProviderHealth::Available;
-    else if (category == ChatProviderErrorCategory::RateLimited ||
-             category == ChatProviderErrorCategory::ConnectionFailed ||
-             category == ChatProviderErrorCategory::Timeout ||
-             category == ChatProviderErrorCategory::ProviderUnavailable)
-        entry.health = ProviderHealth::Degraded;
-    else if (category == ChatProviderErrorCategory::AuthenticationRequired ||
-             category == ChatProviderErrorCategory::RequestRejected ||
-             category == ChatProviderErrorCategory::MalformedResponse)
-        entry.health = ProviderHealth::Unavailable;
+    bool changed = false;
+    {
+        std::lock_guard lock(providerHealthRegistry_->mutex);
+        auto& entry = providerHealthRegistry_->entries[normalizedProviderId(providerId)];
+        if (sequence < entry.sequence) return;
+        const auto previous = entry.health;
+        entry.sequence = sequence;
+        entry.source = source;
+        if (completed) entry.health = ProviderHealth::Available;
+        else if (category == ChatProviderErrorCategory::RateLimited ||
+                 category == ChatProviderErrorCategory::ConnectionFailed ||
+                 category == ChatProviderErrorCategory::Timeout ||
+                 category == ChatProviderErrorCategory::ProviderUnavailable)
+            entry.health = ProviderHealth::Degraded;
+        else if (category == ChatProviderErrorCategory::AuthenticationRequired ||
+                 category == ChatProviderErrorCategory::RequestRejected ||
+                 category == ChatProviderErrorCategory::MalformedResponse)
+            entry.health = ProviderHealth::Unavailable;
+        changed = previous != entry.health;
+    }
+    if (changed) emit providerHealthChanged();
 }
 
 LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
