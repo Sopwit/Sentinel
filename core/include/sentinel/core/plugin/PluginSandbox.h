@@ -21,6 +21,7 @@ public:
 
     bool checkPermission(const QString& pluginId, const QString& permission) const;
     PluginPermissions getPermissions(const QString& pluginId) const;
+    void setActive(const QString& pluginId, bool active);
 
     void clearPlugin(const QString& pluginId);
     void clearAll();
@@ -28,6 +29,8 @@ public:
 private:
     mutable QReadWriteLock m_mutex;
     QMap<QString, PluginPermissions> m_pluginPermissions;
+    QMap<QString, PluginPermissions> m_declaredPermissions;
+    QMap<QString, bool> m_active;
 };
 
 } // namespace sentinel::core::plugin

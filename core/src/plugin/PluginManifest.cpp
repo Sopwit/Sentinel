@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
+#include <QSet>
 
 namespace sentinel::core::plugin {
 
@@ -84,7 +85,8 @@ bool checkVersionRequirement(const QString& actualVersion, const QString& constr
 }
 
 bool PluginManifest::isValid(QString* errorOut) const {
-    if (id.trimmed().isEmpty()) {
+    static const QRegularExpression ownerId(QStringLiteral("^[A-Za-z0-9._-]{1,80}$"));
+    if (!ownerId.match(id).hasMatch() || id != id.toLower()) {
         if (errorOut)
             *errorOut = QStringLiteral("Plugin manifest is missing 'id'");
         return false;
@@ -103,6 +105,19 @@ bool PluginManifest::isValid(QString* errorOut) const {
         if (errorOut)
             *errorOut = QStringLiteral("Plugin manifest is missing 'entry_point'");
         return false;
+    }
+    QSet<QString> credentialIds;
+    static const QRegularExpression credentialId(QStringLiteral("^[A-Za-z0-9._-]{1,80}$"));
+    for (const auto& credential : credentials) {
+        if (!credentialId.match(credential.id).hasMatch() ||
+            !credentialId.match(credential.labelId).hasMatch() ||
+            !QStringList{QStringLiteral("apiKey"), QStringLiteral("token"),
+                         QStringLiteral("password")}.contains(credential.kind) ||
+            credentialIds.contains(credential.id)) {
+            if (errorOut) *errorOut = QStringLiteral("Invalid plugin credential declaration");
+            return false;
+        }
+        credentialIds.insert(credential.id);
     }
     return true;
 }
@@ -125,6 +140,41 @@ PluginManifest PluginManifest::parseJson(const QJsonObject& json, QString* error
     manifest.description = json.value(QStringLiteral("description")).toString();
     manifest.category = json.value(QStringLiteral("category")).toString();
     manifest.entryPoint = json.value(QStringLiteral("entry_point")).toString();
+    if (json.contains(QStringLiteral("credentials"))) {
+        if (json.value(QStringLiteral("credential_schema_version")).toInt(-1) != 1) {
+            if (errorOut) *errorOut = QStringLiteral("Unsupported credential schema version");
+            return {};
+        }
+        if (!json.value(QStringLiteral("credentials")).isArray() ||
+            json.value(QStringLiteral("credentials")).toArray().size() > 20) {
+            if (errorOut) *errorOut = QStringLiteral("Invalid credential declarations");
+            return {};
+        }
+        for (const auto& value : json.value(QStringLiteral("credentials")).toArray()) {
+            if (!value.isObject()) return {};
+            const auto item = value.toObject();
+            for (auto field = item.constBegin(); field != item.constEnd(); ++field) {
+                if (!QStringList{QStringLiteral("id"), QStringLiteral("label_id"),
+                                 QStringLiteral("kind"), QStringLiteral("required")}.contains(field.key())) {
+                    if (errorOut) *errorOut = QStringLiteral("Unsupported credential manifest field");
+                    return {};
+                }
+            }
+            if (!item.value(QStringLiteral("id")).isString() ||
+                !item.value(QStringLiteral("label_id")).isString() ||
+                !item.value(QStringLiteral("kind")).isString() ||
+                (item.contains(QStringLiteral("required")) &&
+                 !item.value(QStringLiteral("required")).isBool()) ||
+                item.contains(QStringLiteral("value")) || item.contains(QStringLiteral("secret"))) {
+                if (errorOut) *errorOut = QStringLiteral("Credential values are forbidden in manifests");
+                return {};
+            }
+            manifest.credentials.append({item.value(QStringLiteral("id")).toString(),
+                item.value(QStringLiteral("label_id")).toString(),
+                item.value(QStringLiteral("kind")).toString(),
+                item.value(QStringLiteral("required")).toBool()});
+        }
+    }
 
     if (json.contains(QStringLiteral("permissions")) &&
         json.value(QStringLiteral("permissions")).isArray()) {
@@ -177,6 +227,14 @@ QJsonObject PluginManifest::toJson() const {
     json[QStringLiteral("category")] = category;
     json[QStringLiteral("entry_point")] = entryPoint;
     json[QStringLiteral("permissions")] = permissions.toJsonArray();
+    QJsonArray credentialsJson;
+    for (const auto& credential : credentials)
+        credentialsJson.append(QJsonObject{{QStringLiteral("id"), credential.id},
+            {QStringLiteral("label_id"), credential.labelId},
+            {QStringLiteral("kind"), credential.kind},
+            {QStringLiteral("required"), credential.required}});
+    json[QStringLiteral("credentials")] = credentialsJson;
+    json[QStringLiteral("credential_schema_version")] = 1;
 
     QJsonObject deps;
     for (auto it = dependencies.begin(); it != dependencies.end(); ++it) {

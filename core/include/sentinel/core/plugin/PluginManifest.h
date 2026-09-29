@@ -9,8 +9,16 @@
 #include <QMap>
 #include <QString>
 #include <QStringList>
+#include <QList>
 
 namespace sentinel::core::plugin {
+
+struct PluginCredentialDeclaration {
+    QString id;
+    QString labelId;
+    QString kind;
+    bool required = false;
+};
 
 struct PluginManifest {
     QString id;
@@ -23,6 +31,7 @@ struct PluginManifest {
     QString entryPoint;
     PluginPermissions permissions;
     QMap<QString, QString> dependencies;
+    QList<PluginCredentialDeclaration> credentials;
 
     bool isValid(QString* errorOut = nullptr) const;
     bool isCompatibleWithCore(const QString& currentCoreVersion) const;

@@ -6,6 +6,7 @@
 
 #include "sentinel/core/plugin/IPluginContext.h"
 #include "sentinel/core/plugin/PluginPermissions.h"
+#include "sentinel/core/plugin/PluginManifest.h"
 #include <QJsonObject>
 #include <QMap>
 #include <QString>
@@ -32,16 +33,12 @@ public:
     bool hasPermission(const QString& permission) const override;
     void logMessage(const QString& level, const QString& message) override;
     QJsonObject pluginConfig() const override;
+    std::optional<QString> credential(const QString& credentialId) const override;
+    void setCredentialDeclarations(QList<PluginCredentialDeclaration> declarations);
 
     // Core service accessors
-    IToolRegistry* toolRegistry() const override;
     bool registerTool(ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) override;
-    IMemoryStore* memoryStore() const override;
-    IProviderCatalog* providerCatalog() const override;
 
-    // Service registration for plugin-to-plugin discovery
-    void registerService(const QString& serviceName, void* servicePtr) override;
-    void* lookupService(const QString& serviceName) const override;
 
     // Setters for core services (called by PluginManager during initialization)
     void setToolRegistry(IToolRegistry* registry);
@@ -49,6 +46,7 @@ public:
     void setToolRegistrar(ToolRegistrar registrar);
     void setMemoryStore(IMemoryStore* store);
     void setProviderCatalog(IProviderCatalog* catalog);
+    void setPermissionCheck(std::function<bool(const QString&)> check);
 
 private:
     QString m_pluginId;
@@ -56,6 +54,7 @@ private:
     QString m_dataDir;
     PluginPermissions m_permissions;
     QJsonObject m_config;
+    QList<PluginCredentialDeclaration> m_credentials;
     LoggerCallback m_logger;
 
     // Core service pointers (non-owning)
@@ -63,9 +62,8 @@ private:
     ToolRegistrar m_toolRegistrar;
     IMemoryStore* m_memoryStore{nullptr};
     IProviderCatalog* m_providerCatalog{nullptr};
+    std::function<bool(const QString&)> m_permissionCheck;
 
-    // Plugin-to-plugin service registry (shared across all contexts)
-    static QMap<QString, void*> s_serviceRegistry;
 };
 
 } // namespace sentinel::core::plugin

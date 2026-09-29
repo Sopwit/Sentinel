@@ -11,12 +11,25 @@ namespace sentinel::core::plugin {
 void PluginSandbox::registerPluginPermissions(const QString& pluginId,
                                               const PluginPermissions& permissions) {
     QWriteLocker lock(&m_mutex);
-    m_pluginPermissions[pluginId] = permissions;
+    m_declaredPermissions[pluginId] = permissions;
+    if (!m_pluginPermissions.contains(pluginId)) {
+        m_pluginPermissions.insert(pluginId, permissions);
+        m_active.insert(pluginId, true);
+        return;
+    }
+    // Rediscovery and reload may narrow grants, but may not grant new host access.
+    PluginPermissions retained;
+    for (const auto& permission : permissions.toList()) {
+        if (m_pluginPermissions.value(pluginId).has(permission))
+            retained.grant(permission);
+    }
+    m_pluginPermissions[pluginId] = retained;
 }
 
 void PluginSandbox::grantPermission(const QString& pluginId, const QString& permission) {
     QWriteLocker lock(&m_mutex);
-    m_pluginPermissions[pluginId].grant(permission);
+    if (m_declaredPermissions.value(pluginId).has(permission))
+        m_pluginPermissions[pluginId].grant(permission);
 }
 
 void PluginSandbox::revokePermission(const QString& pluginId, const QString& permission) {
@@ -28,10 +41,17 @@ void PluginSandbox::revokePermission(const QString& pluginId, const QString& per
 
 bool PluginSandbox::checkPermission(const QString& pluginId, const QString& permission) const {
     QReadLocker lock(&m_mutex);
-    if (!m_pluginPermissions.contains(pluginId)) {
+    if (!m_pluginPermissions.contains(pluginId) || !m_active.value(pluginId, false)) {
         return false;
     }
-    return m_pluginPermissions.value(pluginId).has(permission);
+    return m_declaredPermissions.value(pluginId).has(permission) &&
+           m_pluginPermissions.value(pluginId).has(permission);
+}
+
+void PluginSandbox::setActive(const QString& pluginId, bool active) {
+    QWriteLocker lock(&m_mutex);
+    if (m_pluginPermissions.contains(pluginId))
+        m_active[pluginId] = active;
 }
 
 PluginPermissions PluginSandbox::getPermissions(const QString& pluginId) const {
@@ -42,11 +62,15 @@ PluginPermissions PluginSandbox::getPermissions(const QString& pluginId) const {
 void PluginSandbox::clearPlugin(const QString& pluginId) {
     QWriteLocker lock(&m_mutex);
     m_pluginPermissions.remove(pluginId);
+    m_declaredPermissions.remove(pluginId);
+    m_active.remove(pluginId);
 }
 
 void PluginSandbox::clearAll() {
     QWriteLocker lock(&m_mutex);
     m_pluginPermissions.clear();
+    m_declaredPermissions.clear();
+    m_active.clear();
 }
 
 } // namespace sentinel::core::plugin

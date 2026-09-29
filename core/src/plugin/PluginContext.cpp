@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/plugin/PluginContext.h"
+#include "sentinel/core/plugin/PluginPermissions.h"
 #include <QDebug>
 
 namespace sentinel::core::plugin {
 
-QMap<QString, void*> PluginContext::s_serviceRegistry;
 
 PluginContext::PluginContext(QString pluginId, QString coreVersion, QString dataDir,
                              PluginPermissions permissions, QJsonObject config,
@@ -25,14 +25,20 @@ QString PluginContext::pluginDataDir() const {
 }
 
 bool PluginContext::hasPermission(const QString& permission) const {
-    return m_permissions.has(permission);
+    return m_permissions.has(permission) &&
+           (!m_permissionCheck || m_permissionCheck(permission));
 }
 
 void PluginContext::logMessage(const QString& level, const QString& message) {
+    QString safe = message.left(4096);
+    for (const auto& declaration : m_credentials) {
+        const auto secret = credential(declaration.id);
+        if (secret && !secret->isEmpty()) safe.replace(*secret, QStringLiteral("[credential redacted]"));
+    }
     if (m_logger) {
-        m_logger(level, message);
+        m_logger(level, safe);
     } else {
-        qDebug() << QStringLiteral("[%1][%2] %3").arg(m_pluginId, level, message);
+        qDebug() << QStringLiteral("[%1][%2] %3").arg(m_pluginId, level, safe);
     }
 }
 
@@ -40,34 +46,17 @@ QJsonObject PluginContext::pluginConfig() const {
     return m_config;
 }
 
-IToolRegistry* PluginContext::toolRegistry() const {
-    // Tool registrations must pass through registerTool so provider ownership is enforced.
-    return nullptr;
+void PluginContext::setCredentialDeclarations(QList<PluginCredentialDeclaration> declarations) {
+    m_credentials = std::move(declarations);
+}
+
+std::optional<QString> PluginContext::credential(const QString& credentialId) const {
+    Q_UNUSED(credentialId)
+    return std::nullopt;
 }
 
 bool PluginContext::registerTool(ToolDescriptor descriptor, std::shared_ptr<IToolHandler> handler) {
     return m_toolRegistrar && m_toolRegistrar(std::move(descriptor), std::move(handler));
-}
-
-IMemoryStore* PluginContext::memoryStore() const {
-    return m_memoryStore;
-}
-
-IProviderCatalog* PluginContext::providerCatalog() const {
-    return m_providerCatalog;
-}
-
-void PluginContext::registerService(const QString& serviceName, void* servicePtr) {
-    if (s_serviceRegistry.contains(serviceName)) {
-        qWarning()
-            << QStringLiteral("Plugin '%1' overwriting service '%2'").arg(m_pluginId, serviceName);
-    }
-    s_serviceRegistry[serviceName] = servicePtr;
-    qDebug() << QStringLiteral("Plugin '%1' registered service '%2'").arg(m_pluginId, serviceName);
-}
-
-void* PluginContext::lookupService(const QString& serviceName) const {
-    return s_serviceRegistry.value(serviceName, nullptr);
 }
 
 void PluginContext::setToolRegistry(IToolRegistry* registry) {
@@ -84,6 +73,10 @@ void PluginContext::setMemoryStore(IMemoryStore* store) {
 
 void PluginContext::setProviderCatalog(IProviderCatalog* catalog) {
     m_providerCatalog = catalog;
+}
+
+void PluginContext::setPermissionCheck(std::function<bool(const QString&)> check) {
+    m_permissionCheck = std::move(check);
 }
 
 } // namespace sentinel::core::plugin

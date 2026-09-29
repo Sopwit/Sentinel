@@ -38,5 +38,5 @@ public:
 
 } // namespace sentinel::core::plugin
 
-#define ISentinelPlugin_iid "dev.sentinel.ISentinelPlugin/1.0"
+#define ISentinelPlugin_iid "dev.sentinel.ISentinelPlugin/2.0"
 Q_DECLARE_INTERFACE(sentinel::core::plugin::ISentinelPlugin, ISentinelPlugin_iid)

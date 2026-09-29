@@ -31,9 +31,9 @@ QString CustomLlmPlugin::requiredCoreVersion() const {
     return QStringLiteral(">=1.0.0");
 }
 
-bool CustomLlmPlugin::initialize(std::shared_ptr<sentinel::core::plugin::IPluginContext> context) {
-    m_context = std::move(context);
-    m_state = sentinel::core::plugin::PluginState::Initialized;
+bool CustomLlmPlugin::initialize(sentinel::plugin_sdk::IPluginContext* context) {
+    m_context = context;
+    m_state = sentinel::plugin_sdk::PluginState::Initialized;
     if (m_context) {
         m_context->logMessage(QStringLiteral("INFO"), QStringLiteral("CustomLlmPlugin initialized successfully."));
     }
@@ -41,10 +41,10 @@ bool CustomLlmPlugin::initialize(std::shared_ptr<sentinel::core::plugin::IPlugin
 }
 
 bool CustomLlmPlugin::start() {
-    if (m_state != sentinel::core::plugin::PluginState::Initialized) {
+    if (m_state != sentinel::plugin_sdk::PluginState::Initialized) {
         return false;
     }
-    m_state = sentinel::core::plugin::PluginState::Active;
+    m_state = sentinel::plugin_sdk::PluginState::Active;
     if (m_context) {
         m_context->logMessage(QStringLiteral("INFO"), QStringLiteral("CustomLlmPlugin started."));
     }
@@ -52,8 +52,8 @@ bool CustomLlmPlugin::start() {
 }
 
 void CustomLlmPlugin::stop() {
-    if (m_state == sentinel::core::plugin::PluginState::Active) {
-        m_state = sentinel::core::plugin::PluginState::Initialized;
+    if (m_state == sentinel::plugin_sdk::PluginState::Active) {
+        m_state = sentinel::plugin_sdk::PluginState::Initialized;
         if (m_context) {
             m_context->logMessage(QStringLiteral("INFO"), QStringLiteral("CustomLlmPlugin stopped."));
         }
@@ -62,11 +62,11 @@ void CustomLlmPlugin::stop() {
 
 void CustomLlmPlugin::shutdown() {
     stop();
-    m_context.reset();
-    m_state = sentinel::core::plugin::PluginState::Unloaded;
+    m_context = nullptr;
+    m_state = sentinel::plugin_sdk::PluginState::Unloaded;
 }
 
-sentinel::core::plugin::PluginState CustomLlmPlugin::state() const {
+sentinel::plugin_sdk::PluginState CustomLlmPlugin::state() const {
     return m_state;
 }
 

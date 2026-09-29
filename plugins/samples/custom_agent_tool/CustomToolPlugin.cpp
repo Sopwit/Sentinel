@@ -4,29 +4,17 @@
 
 #include "CustomToolPlugin.h"
 #include <QJsonArray>
-#include <QTimer>
+#include <QThread>
 
 namespace {
-class EchoTool final : public sentinel::core::IToolHandler {
+class EchoTool final : public sentinel::plugin_sdk::IPluginTool {
 public:
     explicit EchoTool(bool delayed = false) : delayed_(delayed) {}
-    sentinel::core::IToolExecutor::Cancel
-    execute(const sentinel::core::ToolExecutionRequest& request, const QString&, const QString&,
-            sentinel::core::IToolExecutor::Output,
-            sentinel::core::IToolExecutor::Completion completion) override {
-        QString text;
-        for (const auto& argument : request.plan.invocations.first().arguments)
-            if (argument.id == QStringLiteral("text"))
-                text = argument.value;
-        auto finish = [completion = std::move(completion), text] {
-            completion({sentinel::core::ToolExecutionStatus::Succeeded,
-                        QStringLiteral("PLUGIN ECHO: %1").arg(text)});
-        };
-        if (delayed_)
-            QTimer::singleShot(200, std::move(finish));
-        else
-            finish();
-        return {};
+    sentinel::plugin_sdk::PluginResult
+    execute(const sentinel::plugin_sdk::PluginInvocation& invocation) override {
+        if (delayed_) QThread::msleep(200);
+        return {true, QStringLiteral("PLUGIN ECHO: %1").arg(
+            invocation.arguments.value(QStringLiteral("text")).toString())};
     }
 
 private:
@@ -62,49 +50,53 @@ QString CustomToolPlugin::requiredCoreVersion() const {
     return QStringLiteral(">=1.0.0");
 }
 
-bool CustomToolPlugin::initialize(std::shared_ptr<sentinel::core::plugin::IPluginContext> context) {
-    m_context = std::move(context);
-    m_state = sentinel::core::plugin::PluginState::Initialized;
+bool CustomToolPlugin::initialize(sentinel::plugin_sdk::IPluginContext* context) {
+    m_context = context;
+    m_state = sentinel::plugin_sdk::PluginState::Initialized;
     if (m_context) {
         m_context->logMessage(QStringLiteral("INFO"),
                               QStringLiteral("CustomToolPlugin initialized successfully."));
-        sentinel::core::ToolDescriptor descriptor;
+        sentinel::plugin_sdk::PluginToolDescriptor descriptor;
         descriptor.id = QStringLiteral("echo");
         descriptor.name = QStringLiteral("Echo");
         descriptor.description = QStringLiteral("Echo text through a plugin tool.");
         descriptor.category = QStringLiteral("Plugin sample");
-        descriptor.riskLevel = sentinel::core::ToolRiskLevel::Medium;
+        descriptor.risk = QStringLiteral("medium");
         descriptor.inputSchema = QJsonObject{
             {QStringLiteral("type"), QStringLiteral("object")},
             {QStringLiteral("properties"),
              QJsonObject{{QStringLiteral("text"),
                           QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}}}},
-            {QStringLiteral("required"), QJsonArray{QStringLiteral("text")}}};
-        if (!m_context->registerTool(std::move(descriptor), std::make_shared<EchoTool>()))
+            {QStringLiteral("required"), QJsonArray{QStringLiteral("text")}},
+            {QStringLiteral("additionalProperties"), false}};
+        m_echoTool = std::make_unique<EchoTool>();
+        if (!m_context->registerTool(descriptor, m_echoTool.get()))
             return false;
-        sentinel::core::ToolDescriptor delayed;
+        sentinel::plugin_sdk::PluginToolDescriptor delayed;
         delayed.id = QStringLiteral("delayed_echo");
         delayed.name = QStringLiteral("Delayed Echo");
-        delayed.description = QStringLiteral("Echo text after an asynchronous timer.");
+        delayed.description = QStringLiteral("Echo text after a short delay.");
         delayed.category = QStringLiteral("Plugin sample");
-        delayed.riskLevel = sentinel::core::ToolRiskLevel::Medium;
+        delayed.risk = QStringLiteral("medium");
         delayed.inputSchema = QJsonObject{
             {QStringLiteral("type"), QStringLiteral("object")},
             {QStringLiteral("properties"),
              QJsonObject{{QStringLiteral("text"),
                           QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}}}},
-            {QStringLiteral("required"), QJsonArray{QStringLiteral("text")}}};
-        if (!m_context->registerTool(std::move(delayed), std::make_shared<EchoTool>(true)))
+            {QStringLiteral("required"), QJsonArray{QStringLiteral("text")}},
+            {QStringLiteral("additionalProperties"), false}};
+        m_delayedTool = std::make_unique<EchoTool>(true);
+        if (!m_context->registerTool(delayed, m_delayedTool.get()))
             return false;
     }
     return true;
 }
 
 bool CustomToolPlugin::start() {
-    if (m_state != sentinel::core::plugin::PluginState::Initialized) {
+    if (m_state != sentinel::plugin_sdk::PluginState::Initialized) {
         return false;
     }
-    m_state = sentinel::core::plugin::PluginState::Active;
+    m_state = sentinel::plugin_sdk::PluginState::Active;
     if (m_context) {
         m_context->logMessage(QStringLiteral("INFO"), QStringLiteral("CustomToolPlugin started."));
     }
@@ -112,8 +104,8 @@ bool CustomToolPlugin::start() {
 }
 
 void CustomToolPlugin::stop() {
-    if (m_state == sentinel::core::plugin::PluginState::Active) {
-        m_state = sentinel::core::plugin::PluginState::Initialized;
+    if (m_state == sentinel::plugin_sdk::PluginState::Active) {
+        m_state = sentinel::plugin_sdk::PluginState::Initialized;
         if (m_context) {
             m_context->logMessage(QStringLiteral("INFO"),
                                   QStringLiteral("CustomToolPlugin stopped."));
@@ -123,11 +115,13 @@ void CustomToolPlugin::stop() {
 
 void CustomToolPlugin::shutdown() {
     stop();
-    m_context.reset();
-    m_state = sentinel::core::plugin::PluginState::Unloaded;
+    m_context = nullptr;
+    m_echoTool.reset();
+    m_delayedTool.reset();
+    m_state = sentinel::plugin_sdk::PluginState::Unloaded;
 }
 
-sentinel::core::plugin::PluginState CustomToolPlugin::state() const {
+sentinel::plugin_sdk::PluginState CustomToolPlugin::state() const {
     return m_state;
 }
 

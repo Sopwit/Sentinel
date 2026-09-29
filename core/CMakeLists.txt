@@ -156,6 +156,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/plugin/PluginDependencyResolver.h
     include/sentinel/core/plugin/PluginHotReloader.h
     include/sentinel/core/plugin/PluginManager.h
+    include/sentinel/core/plugin/PluginHostProtocol.h
+    include/sentinel/core/plugin/PluginHostSession.h
     include/sentinel/core/plugin/PluginManifest.h
     include/sentinel/core/plugin/PluginPermissions.h
     include/sentinel/core/plugin/PluginSandbox.h
@@ -411,6 +413,7 @@ add_library(sentinel_core STATIC
     src/plugin/PluginDependencyResolver.cpp
     src/plugin/PluginHotReloader.cpp
     src/plugin/PluginManager.cpp
+    src/plugin/PluginHostSession.cpp
     src/plugin/PluginManifest.cpp
     src/plugin/PluginPermissions.cpp
     src/plugin/PluginSandbox.cpp
