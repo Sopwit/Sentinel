@@ -36,6 +36,13 @@ struct StoredAgentRun {
     int providerAttempts = 0;
     bool providerRetryOccurred = false;
     QString providerRequestLifecycle;
+    QString terminalReason;
+    QString delegationPurpose;
+    int providerRecoveryAttempts = 0;
+    QString workspaceId;
+    QString workspaceName;
+    QString presetId;
+    QString profileVersion;
 };
 
 struct StoredAgentStep {
@@ -96,6 +103,12 @@ struct StoredAgentAuthorization {
 class IAgentRunStore {
 public:
     virtual ~IAgentRunStore() = default;
+    virtual bool clearHistory() { return false; }
+    virtual int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 100) {
+        Q_UNUSED(cutoffUtc)
+        Q_UNUSED(limit)
+        return -1;
+    }
     virtual bool record(const AgentEvent& event) = 0;
     virtual QList<StoredAgentRun> recentRuns(int limit) const = 0;
     virtual QList<StoredAgentRun> runsBefore(const QDateTime& startedAt,

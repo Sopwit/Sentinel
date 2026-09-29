@@ -78,11 +78,11 @@ QList<AgentRecord> baseAgents() {
 
 QStringList candidateToolsForGoal(const QString& goal, const AgentRecord& agent) {
     const auto lower = goal.toLower();
-    QStringList tools{QStringLiteral("summarize-current-conversation")};
+    QStringList tools;
 
     if (agent.agentId == QStringLiteral("workspace-assistant") ||
         lower.contains(QStringLiteral("workspace"))) {
-        tools.append(QStringLiteral("open-workspace"));
+        tools.append(QStringLiteral("list-directory"));
     }
     if (agent.agentId == QStringLiteral("coding-assistant") ||
         lower.contains(QStringLiteral("code")) || lower.contains(QStringLiteral("file")) ||

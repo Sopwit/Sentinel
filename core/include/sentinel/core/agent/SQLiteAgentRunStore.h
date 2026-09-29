@@ -11,6 +11,8 @@ namespace sentinel::core {
 class SQLiteAgentRunStore final : public IAgentRunStore {
 public:
     explicit SQLiteAgentRunStore(QString databasePath);
+    bool clearHistory() override;
+    int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 100) override;
     bool record(const AgentEvent& event) override;
     QList<StoredAgentRun> recentRuns(int limit) const override;
     QList<StoredAgentRun> runsBefore(const QDateTime& startedAt,

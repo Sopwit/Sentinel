@@ -97,6 +97,9 @@ public:
         observationIntentPolicy_ = std::move(policy);
     }
     void setObservationContext(QString context) { observationContext_ = std::move(context); }
+    void setWorkspaceContext(AgentContextInput::WorkspaceContext context) {
+        workspaceContext_ = std::move(context);
+    }
     void setResourceScope(QString root) { resourceScope_ = std::move(root); }
     void setContextSources(const IMemoryStore* memory, const IChatHistoryStore* history,
                            int contextWindowTokens, int maxOutputTokens = 0) {
@@ -128,7 +131,8 @@ private:
     void grantExternalPaths(const ToolInvocationPlan& plan, const QString& sessionId);
     bool hasAuthorizationGrants(const ToolInvocationPlan& plan, const QString& sessionId) const;
     bool hasAuthorizationDeny(const ToolInvocationPlan& plan, const QString& sessionId) const;
-    void applyPermissionPolicy(const ToolInvocationPlan& plan, ApprovalDecision& approval) const;
+    void applyPermissionPolicy(const ToolInvocationPlan& plan, const QString& sessionId,
+                               ApprovalDecision& approval) const;
     QList<AuthorizationRequest> resolveAuthorizationRequests(
         const ToolInvocationPlan& plan) const;
     ResourceAuthorizationResult prepareResources(ToolInvocationPlan& plan) const;
@@ -166,6 +170,7 @@ private:
     const IToolRegistry* toolRegistry_ = nullptr;
     std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
     QString observationContext_;
+    AgentContextInput::WorkspaceContext workspaceContext_;
     QString resourceScope_;
     ContextEngine contextEngine_;
     const IMemoryStore* memoryStore_ = nullptr;

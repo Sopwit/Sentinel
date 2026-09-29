@@ -319,7 +319,10 @@ QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
         record.qualifier = argumentValue(invocation, produced.qualifierArgument);
         record.freshness = produced.freshness;
         record.scope = produced.scope;
-        record.outcome = succeeded ? EvidenceOutcome::Verified
+        const bool partialObservation = structuredObservation &&
+            structuredObservation->data.value(QStringLiteral("partialEvidence")).toBool();
+        record.outcome = succeeded && partialObservation ? EvidenceOutcome::Partial
+                       : succeeded ? EvidenceOutcome::Verified
                                  : status == ToolExecutionStatus::Cancelled ? EvidenceOutcome::Partial
                                  : denied ? EvidenceOutcome::Denied
                                  : unavailable ? EvidenceOutcome::Unavailable

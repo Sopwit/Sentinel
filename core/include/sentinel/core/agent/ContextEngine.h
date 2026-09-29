@@ -8,6 +8,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 namespace sentinel::core {
 class IChatHistoryStore;
@@ -31,6 +32,14 @@ struct AgentPlanningContext {
 };
 
 struct AgentContextInput {
+    struct WorkspaceContext {
+        QString id;
+        QString rootPath;
+        QStringList includeHints;
+        QStringList excludeHints;
+        QString retrievalPreference;
+        QString memoryScope;
+    } workspaceContext;
     QString goal;
     QString workspace;
     const IChatHistoryStore* chatHistoryStore = nullptr;

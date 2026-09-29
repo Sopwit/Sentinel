@@ -7,6 +7,7 @@
 #include "sentinel/core/agent/ObservationEvidence.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
+#include "sentinel/core/runtime/ToolExecution.h"
 #include "sentinel/core/runtime/ToolInvocationPlan.h"
 
 #include <QList>
@@ -27,6 +28,7 @@ struct AgentStepRecord {
     StructuredObservationPtr structuredObservation;
     QString batchId;
     SandboxExecutionResult sandbox;
+    ToolFailureCategory failureCategory = ToolFailureCategory::None;
 };
 
 struct AgentToolAction {
@@ -74,6 +76,7 @@ public:
     virtual void setPlannerFeedback(const QString&) {}
     virtual void setStructuredFacts(const QList<StructuredFact>&) {}
     virtual void setPlanningContext(const AgentPlanningContext&) {}
+    virtual int lastProviderRecoveryAttempts() const { return 0; }
 };
 
 inline QString agentStepRecordSummary(const AgentStepRecord& record) {
