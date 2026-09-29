@@ -29,6 +29,11 @@ public:
     }
     virtual void appendMessage(const ChatMessage& message) = 0;
     virtual void clear() = 0;
+    virtual int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 500) {
+        Q_UNUSED(cutoffUtc)
+        Q_UNUSED(limit)
+        return -1;
+    }
     virtual bool isAvailable() const {
         return true;
     }

@@ -27,6 +27,7 @@ public:
                                        int beforeId = 0) const override;
     void appendMessage(const ChatMessage& message) override;
     void clear() override;
+    int pruneCompletedBefore(const QDateTime& cutoffUtc, int limit = 500) override;
     bool isAvailable() const override;
     QString lastError() const override;
 

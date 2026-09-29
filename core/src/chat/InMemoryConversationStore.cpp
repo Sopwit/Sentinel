@@ -8,6 +8,16 @@
 
 namespace sentinel::core {
 
+bool InMemoryConversationStore::clearHistory() {
+    conversations_.clear();
+    conversationOrder_.clear();
+    messagesByConversation_.clear();
+    summaryMetadataByConversation_.clear();
+    nextConversationNumber_ = 1;
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
 QString InMemoryConversationStore::normalizedTitle(const QString& title) {
     const auto trimmed = title.trimmed();
     return trimmed.isEmpty() ? QStringLiteral("Untitled Conversation") : trimmed;
@@ -247,6 +257,35 @@ bool InMemoryConversationStore::deleteConversation(const QString& conversationId
     conversation->summary = QStringLiteral("%1 (deleted metadata)").arg(conversation->title);
     setLastError(ConversationStoreErrorCode::None, {});
     return true;
+}
+
+bool InMemoryConversationStore::discardImportedConversation(const QString& conversationId) {
+    if (!conversations_.contains(conversationId)) return false;
+    conversations_.remove(conversationId);
+    conversationOrder_.removeAll(conversationId);
+    messagesByConversation_.remove(conversationId);
+    summaryMetadataByConversation_.remove(conversationId);
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+int InMemoryConversationStore::pruneCompletedBefore(const QDateTime& cutoffUtc, int limit) {
+    if (!cutoffUtc.isValid() || limit < 1 || limit > 100) return -1;
+    QStringList ids;
+    for (const auto& id : conversationOrder_) {
+        const auto record = conversations_.value(id);
+        if (record.pinned || record.updatedAtUtc >= cutoffUtc) continue;
+        bool active = false;
+        for (const auto& message : messagesByConversation_.value(id))
+            if (message.status == ChatMessageStatus::Queued ||
+                message.status == ChatMessageStatus::Sending ||
+                message.status == ChatMessageStatus::Streaming ||
+                message.status == ChatMessageStatus::Received) active = true;
+        if (!active) ids.append(id);
+        if (ids.size() == limit) break;
+    }
+    for (const auto& id : ids) discardImportedConversation(id);
+    return ids.size();
 }
 
 bool InMemoryConversationStore::saveSummaryMetadata(

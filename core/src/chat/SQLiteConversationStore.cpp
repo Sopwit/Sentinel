@@ -394,8 +394,108 @@ bool SQLiteConversationStore::unpinConversation(const QString& conversationId) {
     return updatePinnedMetadata(conversationId, false);
 }
 
+bool SQLiteConversationStore::clearHistory() {
+    if (!database_.isOpen() || !database_.transaction()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure,
+                     QStringLiteral("Conversation store unavailable"));
+        return false;
+    }
+    QSqlQuery query(database_);
+    const QStringList statements{
+        QStringLiteral("DELETE FROM conversation_summary_metadata"),
+        QStringLiteral("DELETE FROM conversation_messages"),
+        QStringLiteral("DELETE FROM conversations")};
+    for (const auto& statement : statements) {
+        if (!query.exec(statement)) {
+            setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+            database_.rollback();
+            return false;
+        }
+    }
+    if (!database_.commit()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, database_.lastError().text());
+        database_.rollback();
+        return false;
+    }
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
 bool SQLiteConversationStore::deleteConversation(const QString& conversationId) {
     return updateConversationMetadata(conversationId, true, true);
+}
+
+bool SQLiteConversationStore::discardImportedConversation(const QString& conversationId) {
+    if (!database_.isOpen() || !conversationExists(conversationId) || !database_.transaction())
+        return false;
+    QSqlQuery query(database_);
+    for (const auto& table : {QStringLiteral("conversation_summary_metadata"),
+                              QStringLiteral("conversation_messages"),
+                              QStringLiteral("conversations")}) {
+        query.prepare(QStringLiteral("DELETE FROM %1 WHERE %2 = ?").arg(
+            table, table == QLatin1String("conversations") ? QStringLiteral("id")
+                                                             : QStringLiteral("conversation_id")));
+        query.addBindValue(conversationId);
+        if (!query.exec()) {
+            database_.rollback();
+            setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+            return false;
+        }
+    }
+    if (!database_.commit()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure,
+                     QStringLiteral("Failed to commit imported conversation rollback."));
+        return false;
+    }
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+int SQLiteConversationStore::pruneCompletedBefore(const QDateTime& cutoffUtc, int limit) {
+    if (!database_.isOpen() || !cutoffUtc.isValid() || limit < 1 || limit > 100 ||
+        !database_.transaction()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure,
+                     QStringLiteral("Conversation retention unavailable."));
+        return -1;
+    }
+    QSqlQuery select(database_);
+    select.prepare(QStringLiteral("SELECT id FROM conversations c WHERE pinned=0 AND "
+        "updated_at<? AND NOT EXISTS (SELECT 1 FROM conversation_messages m "
+        "WHERE m.conversation_id=c.id AND m.status IN "
+        "('queued','sending','streaming','received')) ORDER BY updated_at LIMIT ?"));
+    select.addBindValue(cutoffUtc.toUTC().toString(Qt::ISODateWithMs));
+    select.addBindValue(limit);
+    if (!select.exec()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, select.lastError().text());
+        database_.rollback();
+        return -1;
+    }
+    QStringList ids;
+    while (select.next()) ids.append(select.value(0).toString());
+    select.finish();
+    QSqlQuery remove(database_);
+    for (const auto& id : ids) {
+        for (const auto& table : {QStringLiteral("conversation_summary_metadata"),
+                                  QStringLiteral("conversation_messages"),
+                                  QStringLiteral("conversations")}) {
+            remove.prepare(QStringLiteral("DELETE FROM %1 WHERE %2=?").arg(table,
+                table == QLatin1String("conversations") ? QStringLiteral("id")
+                                                       : QStringLiteral("conversation_id")));
+            remove.addBindValue(id);
+            if (!remove.exec()) {
+                setLastError(ConversationStoreErrorCode::StorageFailure, remove.lastError().text());
+                database_.rollback();
+                return -1;
+            }
+        }
+    }
+    if (!database_.commit()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, database_.lastError().text());
+        database_.rollback();
+        return -1;
+    }
+    setLastError(ConversationStoreErrorCode::None, {});
+    return ids.size();
 }
 
 bool SQLiteConversationStore::saveSummaryMetadata(
@@ -610,6 +710,32 @@ void SQLiteConversationStore::initializeSchema() {
         return;
     }
 
+    QSqlQuery versionCheck(database_);
+    if (!versionCheck.exec(QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' "
+                                          "AND name='conversation_schema_metadata'"))) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, versionCheck.lastError().text());
+        database_.close();
+        return;
+    }
+    const bool hasMetadata = versionCheck.next();
+    versionCheck.finish();
+    if (hasMetadata) {
+        if (!versionCheck.exec(QStringLiteral("SELECT value FROM conversation_schema_metadata "
+                                               "WHERE key='schema_version'"))) {
+            setLastError(ConversationStoreErrorCode::StorageFailure, versionCheck.lastError().text());
+            database_.close();
+            return;
+        }
+        if (versionCheck.next() && versionCheck.value(0).toInt() > currentSchemaVersion) {
+            setLastError(ConversationStoreErrorCode::UnsupportedSchema,
+                         QStringLiteral("Conversation schema version is newer than this application."));
+            versionCheck.finish();
+            database_.close();
+            return;
+        }
+        versionCheck.finish();
+    }
+
     QSqlQuery query(database_);
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversations("
                                    "id TEXT PRIMARY KEY NOT NULL,"
@@ -714,6 +840,11 @@ void SQLiteConversationStore::initializeSchema() {
         return;
     }
 
+    if (!query.exec(QStringLiteral("UPDATE conversation_messages SET status='interrupted' "
+                                   "WHERE status IN ('sending','streaming')"))) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return;
+    }
     setLastError(ConversationStoreErrorCode::None, {});
 }
 
