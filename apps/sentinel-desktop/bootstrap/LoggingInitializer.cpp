@@ -30,7 +30,7 @@ void configureLogging(bool verbose, bool quiet, const QString& logDir) {
                                                         "qt.qpa.*=false"));
     }
 
-    sentinel::core::FileLogger::instance().initialize(logDir);
+    sentinel::core::FileLogger::instance().initialize(logDir, 0);
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& ctx, const QString& msg) {
         sentinel::core::FileLogger::instance().handleMessage(type, ctx, msg);
 

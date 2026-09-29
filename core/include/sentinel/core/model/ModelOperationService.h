@@ -15,6 +15,7 @@
 #include <QSaveFile>
 #include <QCryptographicHash>
 #include <QUrl>
+#include <QJsonObject>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -29,12 +30,12 @@ enum class ModelOperationKind {
     Pull, Remove, Import, RemoveRegistration, Refresh, OpenExternalManager,
     Download, DownloadAndRegister, RemoveManagedArtifact, RevealLocalFile
 };
-enum class ModelOperationState { Queued, Running, Succeeded, Failed, Cancelled };
+enum class ModelOperationState { Queued, Running, Succeeded, Failed, Cancelled, Interrupted };
 enum class ModelOperationError {
     None, RuntimeUnavailable, AuthenticationOrConfiguration, ModelNotFound,
     NetworkFailure, DiskOrStorageFailure, OperationRejected, Cancelled,
     UnsupportedAction, MalformedRuntimeResponse, RateLimited, IntegrityFailure,
-    AuthenticationRequired, AccessDenied, GatedModel
+    AuthenticationRequired, AccessDenied, GatedModel, Offline
 };
 
 struct ModelOperationRecord {
@@ -48,6 +49,7 @@ struct ModelOperationRecord {
     QString sourceId;
     QString nativeModelId;
     QString localFile;
+    QString managedStorageRoot;
     QString targetUrl;
     QString repositoryId;
     QString artifactFilename;
@@ -62,6 +64,7 @@ struct ModelOperationRecord {
     QDateTime startedAt;
     QDateTime endedAt;
     bool cancellable = false;
+    bool managedDownloadStarted = false;
 };
 
 class ModelOperationService final : public QObject {
@@ -83,12 +86,18 @@ public:
     bool cancel(const QString& operationId);
     ModelOperationRecord operation(const QString& operationId) const;
     QList<ModelOperationRecord> operations() const;
+    QJsonObject clearOwnedCache(int olderThanDays = 0);
+    bool resolveInterrupted(const QString& operationId);
+    int pruneOperationHistory(int olderThanDays);
 
 signals:
     void operationChanged(const sentinel::core::ModelOperationRecord& record);
     void catalogChanged(const QString& providerId);
 
 private:
+    void loadRecoveryJournal();
+    bool saveRecoveryJournal();
+    int cleanupInterruptedDownload(const ModelOperationRecord& record);
     QString enqueue(ModelOperationRecord record);
     void startNext();
     void beginNetwork(const ModelOperationRecord& record);

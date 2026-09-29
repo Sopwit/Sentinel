@@ -40,7 +40,6 @@ public:
     ModelStorageSnapshot snapshot(const QString& cachePath = {}, qint64 partialBytes = 0) const;
     bool removeArtifact(const QString& path) const;
     bool revealArtifact(const QString& path) const;
-    bool clearCache(const QString& cachePath) const;
     bool removeOwnedPartial(const QString& path) const;
     bool removeOrphanedSidecar(const QString& path) const;
 

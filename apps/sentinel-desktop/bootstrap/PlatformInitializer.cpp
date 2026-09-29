@@ -70,9 +70,7 @@ void configureDefaultUiFont() {
 QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
     const auto configured = settings.appLanguage();
     const auto systemLanguage = QLocale::system().name().left(2).toLower();
-    const QStringList supported = {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
-                                   QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
-                                   QStringLiteral("ja"), QStringLiteral("ar")};
+    const QStringList supported = settings.availableLanguages();
     if (supported.contains(configured)) {
         return configured;
     }

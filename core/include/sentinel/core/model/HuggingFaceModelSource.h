@@ -21,7 +21,7 @@ namespace sentinel::core {
 
 enum class HuggingFaceCatalogState {
     Current, Stale, Unavailable, AuthenticationRequired, AccessDenied,
-    GatedModel, RateLimited, Empty
+    GatedModel, RateLimited, Empty, Offline
 };
 
 struct HuggingFaceSearchQuery {
@@ -73,6 +73,7 @@ public:
     QString cachedQuery() const;
     QDateTime fetchedAt() const;
     QString cachePath() const;
+    bool clearMetadataCache(int olderThanDays = 0);
     void search(const QString& text);
     void fetchRepository(const QString& repositoryId);
     void setTokenProvider(std::function<QString()> provider);
@@ -81,6 +82,7 @@ public:
     void setKnownStorageRoots(const QStringList& roots);
     QString storageRoot() const;
     QString destinationPath(const ModelLibraryEntry& entry) const;
+    QString destinationPathAtRoot(const ModelLibraryEntry& entry, const QString& root) const;
     QString existingPath(const ModelLibraryEntry& entry) const;
     QUrl downloadUrl(const ModelLibraryEntry& entry) const;
     bool isDownloaded(const ModelLibraryEntry& entry) const;
