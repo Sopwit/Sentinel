@@ -1,3 +1,4 @@
 add_subdirectory(sentinel-desktop)
 add_subdirectory(sentinel-cli)
 add_subdirectory(sentinel-daemon)
+add_subdirectory(sentinel-plugin-host)
