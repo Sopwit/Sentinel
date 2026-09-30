@@ -154,7 +154,7 @@ QList<ConversationRecord> SQLiteConversationStore::listConversations() const {
                                    "LEFT JOIN conversation_messages m ON m.conversation_id = c.id "
                                    "WHERE c.deleted = 0 "
                                    "GROUP BY c.id "
-                                   "ORDER BY c.pinned DESC, c.updated_at DESC, c.id ASC"))) {
+                                   "ORDER BY c.pinned DESC, c.updated_at DESC, c.rowid DESC"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return records;
     }
@@ -261,8 +261,8 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
     query.addBindValue(message.content);
     query.addBindValue(message.timestampUtc.toUTC().toString(Qt::ISODateWithMs));
     query.addBindValue(chatMessageStatusName(message.status));
-    query.addBindValue(message.providerId);
-    query.addBindValue(message.modelId);
+    query.addBindValue(message.providerId.isNull() ? QStringLiteral("") : message.providerId);
+    query.addBindValue(message.modelId.isNull() ? QStringLiteral("") : message.modelId);
     query.addBindValue(message.replyToMessageId);
     query.addBindValue(message.replacesMessageId);
     query.addBindValue(message.partial ? 1 : 0);

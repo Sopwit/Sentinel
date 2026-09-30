@@ -20,13 +20,15 @@ public:
     void remove(const QString& key) override;
 
     QString filePath() const;
+    QString errorCode() const override;
 
 private:
     void load();
-    void save() const;
+    bool save() const;
 
     QString filePath_;
     QJsonObject values_;
+    mutable QString errorCode_;
 };
 
 } // namespace sentinel::core
