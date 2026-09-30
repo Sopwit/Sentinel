@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 #include <QSet>
+#include <QUrl>
 
 namespace sentinel::core::plugin {
 
@@ -86,7 +87,8 @@ bool checkVersionRequirement(const QString& actualVersion, const QString& constr
 
 bool PluginManifest::isValid(QString* errorOut) const {
     static const QRegularExpression ownerId(QStringLiteral("^[A-Za-z0-9._-]{1,80}$"));
-    if (!ownerId.match(id).hasMatch() || id != id.toLower()) {
+    if (!ownerId.match(id).hasMatch() || id != id.toLower() ||
+        id == QStringLiteral(".") || id == QStringLiteral("..")) {
         if (errorOut)
             *errorOut = QStringLiteral("Plugin manifest is missing 'id'");
         return false;
@@ -101,23 +103,50 @@ bool PluginManifest::isValid(QString* errorOut) const {
             *errorOut = QStringLiteral("Plugin manifest is missing 'version'");
         return false;
     }
-    if (entryPoint.trimmed().isEmpty()) {
+    static const QRegularExpression entryName(QStringLiteral("^[A-Za-z0-9._-]{1,128}$"));
+    if (!entryName.match(entryPoint).hasMatch() ||
+        entryPoint == QStringLiteral(".") || entryPoint == QStringLiteral("..")) {
         if (errorOut)
             *errorOut = QStringLiteral("Plugin manifest is missing 'entry_point'");
         return false;
     }
     QSet<QString> credentialIds;
+    QSet<QString> capabilityIds;
+    const QStringList knownCapabilities{QStringLiteral("FilesystemRead"),
+        QStringLiteral("FilesystemWrite"), QStringLiteral("NetworkRequest"),
+        QStringLiteral("ProcessExecute")};
+    for (const auto& capability : hostCapabilities) {
+        if (!knownCapabilities.contains(capability) || capabilityIds.contains(capability)) {
+            if (errorOut) *errorOut = QStringLiteral("Invalid host capability declaration");
+            return false;
+        }
+        capabilityIds.insert(capability);
+    }
     static const QRegularExpression credentialId(QStringLiteral("^[A-Za-z0-9._-]{1,80}$"));
     for (const auto& credential : credentials) {
-        if (!credentialId.match(credential.id).hasMatch() ||
+        if (!hostCapabilities.contains(QStringLiteral("NetworkRequest")) ||
+            credential.allowedHosts.isEmpty() ||
+            !credentialId.match(credential.id).hasMatch() ||
             !credentialId.match(credential.labelId).hasMatch() ||
-            !QStringList{QStringLiteral("apiKey"), QStringLiteral("token"),
-                         QStringLiteral("password")}.contains(credential.kind) ||
+            !QStringList{QStringLiteral("apiKey"), QStringLiteral("token")}.contains(credential.kind) ||
             credentialIds.contains(credential.id)) {
             if (errorOut) *errorOut = QStringLiteral("Invalid plugin credential declaration");
             return false;
         }
         credentialIds.insert(credential.id);
+        QSet<QString> hosts;
+        for (const auto& host : credential.allowedHosts) {
+            const QUrl url(QStringLiteral("https://") + host);
+            static const QRegularExpression hostName(QStringLiteral("^[a-z0-9.-]{1,253}$"));
+            if (!hostName.match(host).hasMatch() || host.startsWith(QLatin1Char('.')) ||
+                host.endsWith(QLatin1Char('.')) || host.contains(QStringLiteral("..")) ||
+                host != host.toLower() || host.contains(QLatin1Char('/')) ||
+                host.contains(QLatin1Char('@')) || url.host() != host || hosts.contains(host)) {
+                if (errorOut) *errorOut = QStringLiteral("Invalid credential host binding");
+                return false;
+            }
+            hosts.insert(host);
+        }
     }
     return true;
 }
@@ -140,6 +169,20 @@ PluginManifest PluginManifest::parseJson(const QJsonObject& json, QString* error
     manifest.description = json.value(QStringLiteral("description")).toString();
     manifest.category = json.value(QStringLiteral("category")).toString();
     manifest.entryPoint = json.value(QStringLiteral("entry_point")).toString();
+    if (json.contains(QStringLiteral("host_capabilities"))) {
+        const auto capabilities = json.value(QStringLiteral("host_capabilities"));
+        if (!capabilities.isArray() || capabilities.toArray().size() > 4) {
+            if (errorOut) *errorOut = QStringLiteral("Invalid host capability declarations");
+            return {};
+        }
+        for (const auto& value : capabilities.toArray()) {
+            if (!value.isString()) {
+                if (errorOut) *errorOut = QStringLiteral("Invalid host capability declaration");
+                return {};
+            }
+            manifest.hostCapabilities.append(value.toString());
+        }
+    }
     if (json.contains(QStringLiteral("credentials"))) {
         if (json.value(QStringLiteral("credential_schema_version")).toInt(-1) != 1) {
             if (errorOut) *errorOut = QStringLiteral("Unsupported credential schema version");
@@ -155,7 +198,8 @@ PluginManifest PluginManifest::parseJson(const QJsonObject& json, QString* error
             const auto item = value.toObject();
             for (auto field = item.constBegin(); field != item.constEnd(); ++field) {
                 if (!QStringList{QStringLiteral("id"), QStringLiteral("label_id"),
-                                 QStringLiteral("kind"), QStringLiteral("required")}.contains(field.key())) {
+                                 QStringLiteral("kind"), QStringLiteral("required"),
+                                 QStringLiteral("allowed_hosts")}.contains(field.key())) {
                     if (errorOut) *errorOut = QStringLiteral("Unsupported credential manifest field");
                     return {};
                 }
@@ -165,14 +209,24 @@ PluginManifest PluginManifest::parseJson(const QJsonObject& json, QString* error
                 !item.value(QStringLiteral("kind")).isString() ||
                 (item.contains(QStringLiteral("required")) &&
                  !item.value(QStringLiteral("required")).isBool()) ||
+                (item.contains(QStringLiteral("allowed_hosts")) &&
+                 !item.value(QStringLiteral("allowed_hosts")).isArray()) ||
                 item.contains(QStringLiteral("value")) || item.contains(QStringLiteral("secret"))) {
                 if (errorOut) *errorOut = QStringLiteral("Credential values are forbidden in manifests");
                 return {};
             }
+            QStringList allowedHosts;
+            for (const auto& host : item.value(QStringLiteral("allowed_hosts")).toArray()) {
+                if (!host.isString() || allowedHosts.size() >= 16) {
+                    if (errorOut) *errorOut = QStringLiteral("Invalid credential host binding");
+                    return {};
+                }
+                allowedHosts.append(host.toString());
+            }
             manifest.credentials.append({item.value(QStringLiteral("id")).toString(),
                 item.value(QStringLiteral("label_id")).toString(),
                 item.value(QStringLiteral("kind")).toString(),
-                item.value(QStringLiteral("required")).toBool()});
+                item.value(QStringLiteral("required")).toBool(), allowedHosts});
         }
     }
 
@@ -227,12 +281,16 @@ QJsonObject PluginManifest::toJson() const {
     json[QStringLiteral("category")] = category;
     json[QStringLiteral("entry_point")] = entryPoint;
     json[QStringLiteral("permissions")] = permissions.toJsonArray();
+    QJsonArray capabilitiesJson;
+    for (const auto& capability : hostCapabilities) capabilitiesJson.append(capability);
+    json[QStringLiteral("host_capabilities")] = capabilitiesJson;
     QJsonArray credentialsJson;
     for (const auto& credential : credentials)
         credentialsJson.append(QJsonObject{{QStringLiteral("id"), credential.id},
             {QStringLiteral("label_id"), credential.labelId},
             {QStringLiteral("kind"), credential.kind},
-            {QStringLiteral("required"), credential.required}});
+            {QStringLiteral("required"), credential.required},
+            {QStringLiteral("allowed_hosts"), QJsonArray::fromStringList(credential.allowedHosts)}});
     json[QStringLiteral("credentials")] = credentialsJson;
     json[QStringLiteral("credential_schema_version")] = 1;
 

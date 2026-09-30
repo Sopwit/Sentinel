@@ -6,8 +6,8 @@
 #include <QJsonParseError>
 
 namespace sentinel::core::plugin {
-inline constexpr int PluginHostProtocolVersion = 2;
-inline constexpr int NativePluginAbiVersion = 3;
+inline constexpr int PluginHostProtocolVersion = 3;
+inline constexpr int NativePluginAbiVersion = 5;
 inline constexpr qsizetype PluginHostMaxFrame = 1024 * 1024;
 
 inline QByteArray pluginHostFrame(const QJsonObject& object) {

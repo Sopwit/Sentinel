@@ -5,8 +5,6 @@
 #pragma once
 
 #include "sentinel/core/plugin/PluginHotReloader.h"
-#include "sentinel/core/plugin/ISentinelPlugin.h"
-#include "sentinel/core/plugin/IPluginContext.h"
 #include "sentinel/core/plugin/PluginManifest.h"
 #include "sentinel/core/plugin/PluginSandbox.h"
 #include "sentinel/core/plugin/PluginState.h"
@@ -15,7 +13,6 @@
 #include <QList>
 #include <QMap>
 #include <QObject>
-#include <QPluginLoader>
 #include <QString>
 #include <QSet>
 #include <QHash>
@@ -23,6 +20,7 @@
 
 namespace sentinel::core {
 class IToolRegistry;
+class ExternalDirectoryGate;
 } // namespace sentinel::core
 
 namespace sentinel::core::plugin {
@@ -31,13 +29,10 @@ struct PluginDescriptor {
     PluginManifest manifest;
     QString pluginFilePath;
     PluginState state{PluginState::Unloaded};
-    // Legacy inspection fields remain empty for isolated native plugins.
-    ISentinelPlugin* instance{nullptr};
-    std::shared_ptr<QPluginLoader> loader;
-    std::shared_ptr<IPluginContext> context;
     std::shared_ptr<PluginHostSession> host;
     QJsonArray remoteTools;
     QString failureCategory;
+    QString lastCapabilityFailure;
     QString errorString;
 };
 
@@ -62,6 +57,7 @@ public:
     const PluginSandbox& sandbox() const;
 
     void setToolRegistry(IToolRegistry* registry);
+    void setExternalDirectoryGate(const ExternalDirectoryGate* gate) { m_resourceGate = gate; }
 
     // Discovery & Lifecycle Operations
     int discoverPlugins(const QString& searchDir);
@@ -91,7 +87,7 @@ public:
     PluginState pluginState(const QString& pluginId) const;
     const PluginDescriptor* descriptor(const QString& pluginId) const;
     // Deliberately returns null: native plugins never enter the Sentinel process.
-    ISentinelPlugin* pluginInstance(const QString& pluginId) const;
+    QObject* pluginInstance(const QString& pluginId) const;
     QList<PluginCredentialState> credentialStates(const QString& pluginId) const;
     bool setCredential(const QString& pluginId, const QString& credentialId,
                        const QString& value);
@@ -122,9 +118,11 @@ private:
     QMap<QString, PluginDescriptor> m_plugins;
     QList<QString> m_orderedIds;
     QHash<QString, QSet<QString>> m_reloadCredentialIds;
+    QHash<QString, PluginManifest> m_reloadManifests;
 
     // Core service pointers (non-owning)
     IToolRegistry* m_toolRegistry{nullptr};
+    const ExternalDirectoryGate* m_resourceGate{nullptr};
 
     // Hot-reload support
     std::unique_ptr<PluginHotReloader> m_hotReloader;

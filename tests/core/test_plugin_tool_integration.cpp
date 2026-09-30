@@ -112,25 +112,32 @@ void PluginToolIntegrationTest::loadedPluginExecutesAndUnloadsSafely() {
     PluginManager manager(QStringLiteral("1.0.0"), directory.path());
     manager.setToolRegistry(&registry);
     QVERIFY(manager.discoverPlugins(
-                QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).absolutePath()) >= 2);
-    QVERIFY(manager.initializePlugin(pluginId));
-    QVERIFY(manager.startPlugin(pluginId));
+                QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).dir().filePath(
+                    QStringLiteral(".."))) >= 2);
+    if (!manager.initializePlugin(pluginId)) {
+#ifdef Q_OS_MACOS
+        QCOMPARE(manager.descriptor(pluginId)->failureCategory,
+                 QStringLiteral("PluginSandboxUnavailable"));
+        QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+        QFAIL("Plugin host failed to initialize.");
+#endif
+    }
+    if (!manager.startPlugin(pluginId)) {
+#ifdef Q_OS_MACOS
+        QCOMPARE(manager.descriptor(pluginId)->failureCategory,
+                 QStringLiteral("PluginSandboxUnavailable"));
+        QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+        QFAIL("Plugin host failed to start.");
+#endif
+    }
     QVERIFY(manager.initializePlugin(secondPluginId));
     QVERIFY(manager.startPlugin(secondPluginId));
     QVERIFY(registry.findRegistration(secondEchoId));
-    ToolDescriptor colliding;
-    colliding.id = QStringLiteral("read-file");
-    colliding.providerId = QStringLiteral("forged-provider");
-    colliding.inputSchema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
-                                        {QStringLiteral("additionalProperties"), false}};
-    QVERIFY(manager.descriptor(pluginId)->context->registerTool(colliding,
-                                                                std::make_shared<FixedHandler>()));
-    QVERIFY(registry.findRegistration(
-        QStringLiteral("plugin.dev_2e_sentinel_2e_plugin_2e_custom_2d_tool.read_2d_file")));
     QCOMPARE(registry.findRegistration(QStringLiteral("read-file"))->descriptor.source,
              ToolSource::BuiltIn);
-    QVERIFY(!manager.descriptor(pluginId)->context->registerTool(colliding,
-                                                                 std::make_shared<FixedHandler>()));
+    QVERIFY(manager.pluginInstance(pluginId) == nullptr);
     auto registration = registry.findRegistration(echoId);
     QVERIFY(registration && registration->handler);
     QCOMPARE(registration->descriptor.source, ToolSource::Plugin);
@@ -201,8 +208,8 @@ void PluginToolIntegrationTest::loadedPluginExecutesAndUnloadsSafely() {
     gateway.executeAsync(echo, fallback, {}, {}, {}, [&](auto result) { allowed = result; });
     QCOMPARE(allowed.status, ToolExecutionStatus::Succeeded);
     auto delayed = requestFor(delayedId);
-    auto loadedLibrary = manager.descriptor(pluginId)->loader;
-    QVERIFY(loadedLibrary && loadedLibrary->isLoaded());
+    auto host = manager.descriptor(pluginId)->host;
+    QVERIFY(host && host->isRunning());
     int activeCompletions = 0;
     ToolExecutionResult activeResult;
     auto cancel = gateway.executeAsync(delayed, fallback, {}, {}, {}, [&](auto result) {
@@ -214,17 +221,15 @@ void PluginToolIntegrationTest::loadedPluginExecutesAndUnloadsSafely() {
     QVERIFY(!registry.findRegistration(echoId));
     QVERIFY(!registry.findRegistration(delayedId));
     QVERIFY(registry.findRegistration(secondEchoId));
-    QVERIFY(manager.isModuleResident(pluginId));
-    QVERIFY(loadedLibrary->isLoaded());
+    QVERIFY(!host->isRunning());
     ToolExecutionResult stale;
     gateway.executeAsync(delayed, fallback, {}, {}, {}, [&](auto result) { stale = result; });
     QCOMPARE(stale.status, ToolExecutionStatus::UnknownTool);
     QVERIFY(QTest::qWaitFor([&] { return activeCompletions == 1; }, 5000));
-    QCOMPARE(activeResult.status, ToolExecutionStatus::Succeeded);
+    QVERIFY(activeResult.status != ToolExecutionStatus::Succeeded);
     cancel = {};
     registration.reset();
     QVERIFY(QTest::qWaitFor([&] { return !manager.isModuleResident(pluginId); }, 5000));
-    QVERIFY(QTest::qWaitFor([&] { return !loadedLibrary->isLoaded(); }, 5000));
     QVERIFY(manager.initializePlugin(pluginId));
     QVERIFY(manager.startPlugin(pluginId));
     QVERIFY(manager.reloadPlugin(pluginId));
@@ -240,13 +245,24 @@ void PluginToolIntegrationTest::failedReloadLeavesNoTool() {
     const auto copiedPlugin =
         directory.filePath(QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).fileName());
     QVERIFY(QFile::copy(QString::fromUtf8(TEST_PLUGIN_PATH), copiedPlugin));
+    QVERIFY(QFile::copy(QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).dir().filePath(
+                            QStringLiteral("plugin.json")),
+                        directory.filePath(QStringLiteral("plugin.json"))));
     InMemoryToolRegistry registry;
     PluginManager manager(QStringLiteral("1.0.0"), directory.path());
     manager.setToolRegistry(&registry);
     const auto pluginId = QStringLiteral("dev.sentinel.plugin.custom-tool");
     const auto echoId = QStringLiteral("plugin.dev_2e_sentinel_2e_plugin_2e_custom_2d_tool.echo");
     QVERIFY(manager.discoverPlugins(directory.path()) >= 1);
-    QVERIFY(manager.startPlugin(pluginId));
+    if (!manager.startPlugin(pluginId)) {
+#ifdef Q_OS_MACOS
+        QCOMPARE(manager.descriptor(pluginId)->failureCategory,
+                 QStringLiteral("PluginSandboxUnavailable"));
+        QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+        QFAIL("Plugin host failed to start.");
+#endif
+    }
     QVERIFY(registry.findRegistration(echoId));
     QSignalSpy failed(&manager, &PluginManager::pluginReloadFailed);
     QVERIFY(QFile::remove(copiedPlugin));
@@ -274,7 +290,15 @@ void PluginToolIntegrationTest::runtimeEventsAndCorrelation() {
     const auto echoId = QStringLiteral("plugin.dev_2e_sentinel_2e_plugin_2e_custom_2d_tool.echo");
     QVERIFY(manager.discoverPlugins(
                 QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).absolutePath()) >= 1);
-    QVERIFY(manager.startPlugin(pluginId));
+    if (!manager.startPlugin(pluginId)) {
+#ifdef Q_OS_MACOS
+        QCOMPARE(manager.descriptor(pluginId)->failureCategory,
+                 QStringLiteral("PluginSandboxUnavailable"));
+        QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+        QFAIL("Plugin host failed to start.");
+#endif
+    }
     const auto session = runtime.createSession();
     AgentSessionOptions options;
     options.availableToolIds = {echoId};
@@ -342,7 +366,15 @@ void PluginToolIntegrationTest::permissionDeniedAtRegistrationAndShutdownCleanup
         manager.setToolRegistry(&registry);
         QVERIFY(manager.discoverPlugins(
                     QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).absolutePath()) >= 1);
-        QVERIFY(manager.startPlugin(pluginId));
+        if (!manager.startPlugin(pluginId)) {
+#ifdef Q_OS_MACOS
+            QCOMPARE(manager.descriptor(pluginId)->failureCategory,
+                     QStringLiteral("PluginSandboxUnavailable"));
+            QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+            QFAIL("Plugin host failed to start.");
+#endif
+        }
         QVERIFY(registry.findRegistration(echoId));
     }
     QVERIFY(!registry.findRegistration(echoId));

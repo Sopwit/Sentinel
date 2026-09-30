@@ -86,7 +86,7 @@ void PluginManagerTest::testPermissionsAndSandbox() {
     QVERIFY(!sandbox.checkPermission(QStringLiteral("plugin.a"), Permissions::FileSystemWrite));
 
     sandbox.grantPermission(QStringLiteral("plugin.a"), Permissions::FileSystemWrite);
-    QVERIFY(sandbox.checkPermission(QStringLiteral("plugin.a"), Permissions::FileSystemWrite));
+    QVERIFY(!sandbox.checkPermission(QStringLiteral("plugin.a"), Permissions::FileSystemWrite));
 
     sandbox.revokePermission(QStringLiteral("plugin.a"), Permissions::ToolExecution);
     QVERIFY(!sandbox.checkPermission(QStringLiteral("plugin.a"), Permissions::ToolExecution));
@@ -161,6 +161,7 @@ void PluginManagerTest::testPluginManagerLifecycle() {
     json[QStringLiteral("name")] = QStringLiteral("Mock Plugin");
     json[QStringLiteral("version")] = QStringLiteral("1.0.0");
     json[QStringLiteral("entry_point")] = QStringLiteral("nonexistent_binary");
+    json[QStringLiteral("api_version")] = QStringLiteral("5.0");
 
     QFile manifestFile(pluginDir + QStringLiteral("/plugin.json"));
     QVERIFY(manifestFile.open(QIODevice::WriteOnly));
@@ -194,8 +195,8 @@ void PluginManagerTest::testSamplePluginsLoading() {
     }
 
     QTemporaryDir dataDir;
-    PluginManager manager(QStringLiteral("1.0.0"), dataDir.path());
     sentinel::core::InMemoryToolRegistry registry;
+    PluginManager manager(QStringLiteral("1.0.0"), dataDir.path());
     manager.setToolRegistry(&registry);
     int discovered = manager.discoverPlugins(samplesDir.absolutePath());
     QVERIFY(discovered >= 2);
@@ -205,7 +206,15 @@ void PluginManagerTest::testSamplePluginsLoading() {
     QVERIFY(
         manager.registeredPluginIds().contains(QStringLiteral("dev.sentinel.plugin.custom-tool")));
 
-    QVERIFY(manager.initializeAll());
+    if (!manager.initializeAll()) {
+#ifdef Q_OS_MACOS
+        QCOMPARE(manager.descriptor(QStringLiteral("dev.sentinel.plugin.custom-tool"))
+                     ->failureCategory, QStringLiteral("PluginSandboxUnavailable"));
+        QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+#else
+        QFAIL("Sample plugin host failed to initialize.");
+#endif
+    }
     QVERIFY(manager.startAll());
 
     QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.plugin.ollama-extended")),
@@ -216,8 +225,8 @@ void PluginManagerTest::testSamplePluginsLoading() {
     // Check plugin instance queries
     auto* ollamaPlugin =
         manager.pluginInstance(QStringLiteral("dev.sentinel.plugin.ollama-extended"));
-    QVERIFY(ollamaPlugin != nullptr);
-    QCOMPARE(ollamaPlugin->displayName(), QStringLiteral("Ollama Extended Provider"));
+    QVERIFY(ollamaPlugin == nullptr);
+    QVERIFY(manager.descriptor(QStringLiteral("dev.sentinel.plugin.ollama-extended"))->host);
 
     // Check sandbox permissions
     QVERIFY(manager.sandbox().checkPermission(QStringLiteral("dev.sentinel.plugin.ollama-extended"),

@@ -110,6 +110,7 @@ AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPl
     if (auto* nativeExecutor = dynamic_cast<RealToolExecutor*>(&executor_))
         setMcpService(nativeExecutor->mcpService());
     pluginManager_.setToolRegistry(&toolRegistry_);
+    pluginManager_.setExternalDirectoryGate(&externalDirectoryGate_);
     if (dynamic_cast<RealToolExecutor*>(&executor_)) {
         pluginManager_.discoverPlugins({});
         pluginManager_.startAll();
