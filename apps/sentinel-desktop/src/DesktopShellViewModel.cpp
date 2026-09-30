@@ -7,6 +7,9 @@
 
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/OnboardingService.h"
+#include "sentinel/core/app/ProductMessages.h"
+#include "sentinel/core/app/SettingsService.h"
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/model/ModelRegistry.h"
@@ -32,7 +35,6 @@
 #include <QNetworkRequest>
 #include <QPointer>
 #include <QProcess>
-#include <QRegularExpression>
 #include <QSaveFile>
 #include <QScreen>
 #include <QSslSocket>
@@ -211,33 +213,6 @@ bool updateNotification(const QString& json, const QString& notificationId,
     return true;
 }
 
-struct FfmpegConfig {
-    QString format;
-    QString device;
-    QString description;
-};
-
-QList<FfmpegConfig> getFfmpegConfigs() {
-    QList<FfmpegConfig> configs;
-#if defined(Q_OS_MAC)
-    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":default"),
-                    QStringLiteral("macOS AVFoundation (Default)")});
-    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":0"),
-                    QStringLiteral("macOS AVFoundation (Index 0)")});
-#elif defined(Q_OS_WIN)
-    configs.append({QStringLiteral("wasapi"), QStringLiteral("default"),
-                    QStringLiteral("Windows WASAPI (Default)")});
-    configs.append({QStringLiteral("dshow"), QStringLiteral("audio=default"),
-                    QStringLiteral("Windows DirectShow (Default)")});
-#else
-    configs.append(
-        {QStringLiteral("pulse"), QStringLiteral("default"), QStringLiteral("Linux PulseAudio")});
-    configs.append(
-        {QStringLiteral("alsa"), QStringLiteral("default"), QStringLiteral("Linux ALSA")});
-#endif
-    return configs;
-}
-
 } // namespace
 
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
@@ -248,6 +223,22 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
       localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())), chatMessages_(this),
       taskbar_(taskbar) {
     controller_.attachControlledTaskSettings(settings_);
+    if (auto* session = controller_.audioSession()) {
+        connect(session, &core::VoiceSessionService::stateChanged, this,
+                [this](core::VoiceInteractionState state) {
+                    const bool listening = state == core::VoiceInteractionState::Listening;
+                    if (voiceRecordingActive_ == listening) return;
+                    voiceRecordingActive_ = listening;
+                    emit voiceRecordingActiveChanged();
+                });
+        connect(session, &core::VoiceSessionService::finalTranscriptChanged, this,
+                &DesktopShellViewModel::voiceTranscriptionCompleted);
+        connect(session, &core::VoiceSessionService::failed, this,
+                [this](core::AudioFailure failure, const QString& detail) {
+                    emit voiceTranscriptionCompleted(
+                        QStringLiteral("%1: %2").arg(core::audioFailureName(failure), detail));
+                });
+    }
     controller_.setToolPermissionPolicyState(settings_.defaultPermissionPolicyState());
     if (auto* controlledTasks = controller_.controlledTasks())
         connect(controlledTasks, &core::ControlledTaskService::tasksChanged, this,
@@ -409,6 +400,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::onboardingUseCaseChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::onboardingUseCaseChanged, this,
+            &DesktopShellViewModel::onboardingStateChanged);
+    connect(&settings_, &core::AppSettings::onboardingCompleteChanged, this,
+            &DesktopShellViewModel::onboardingStateChanged);
     connect(&settings_, &core::AppSettings::recoveryDraftTextChanged, this,
             &DesktopShellViewModel::recoveryDraftTextChanged);
     connect(&settings_, &core::AppSettings::productExperienceChanged, this,
@@ -485,12 +480,14 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
     connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
             [this]() { controller_.setPiperModelPath(settings_.piperModelPath()); });
-    connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this,
-            [this]() { emit voiceConfigurationChanged(); });
-    connect(&settings_, &core::AppSettings::kokoroModelPathChanged, this,
-            [this]() { emit voiceConfigurationChanged(); });
-    connect(&settings_, &core::AppSettings::kokoroVoiceChanged, this,
-            [this]() { emit voiceConfigurationChanged(); });
+    auto refreshSpeechTts = [this] {
+        controller_.configureSpeechTts(settings_.selectedTtsEngine(),
+                                       settings_.kokoroModelPath(), settings_.kokoroVoice());
+        emit voiceConfigurationChanged();
+    };
+    connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this, refreshSpeechTts);
+    connect(&settings_, &core::AppSettings::kokoroModelPathChanged, this, refreshSpeechTts);
+    connect(&settings_, &core::AppSettings::kokoroVoiceChanged, this, refreshSpeechTts);
     connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this,
             [this]() { controller_.setWhisperBinaryPath(settings_.whisperBinaryPath()); });
     connect(&settings_, &core::AppSettings::whisperModelPathChanged, this,
@@ -522,6 +519,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
     controller_.setWhisperModelPath(settings_.whisperModelPath());
+    controller_.configureSpeechTts(settings_.selectedTtsEngine(),
+                                   settings_.kokoroModelPath(), settings_.kokoroVoice());
     controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     controller_.setWhisperTranscriptionExecutionEnabled(
         settings_.whisperTranscriptionExecutionEnabled());
@@ -1238,15 +1237,10 @@ QString DesktopShellViewModel::selectedRuntimeProvider() const {
 }
 
 void DesktopShellViewModel::setSelectedRuntimeProvider(const QString& providerId) {
-    settings_.setSelectedRuntimeProvider(providerId);
-    if (controller_.selectedRuntimeProvider() != settings_.selectedRuntimeProvider()) {
-        controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
-    }
-    const auto providerModel =
-        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
-    if (controller_.selectedLocalModel() != providerModel) {
+    controller_.setSelectedRuntimeProvider(providerId);
+    const auto providerModel = settings_.selectedModelForProvider(controller_.selectedRuntimeProvider());
+    if (controller_.selectedLocalModel() != providerModel)
         controller_.setSelectedLocalModel(providerModel);
-    }
 }
 
 QString DesktopShellViewModel::activeRuntimeProviderId() const {
@@ -1354,10 +1348,10 @@ QString DesktopShellViewModel::ollamaEndpoint() const {
 }
 
 void DesktopShellViewModel::setOllamaEndpoint(const QString& endpoint) {
-    if (controller_.ollamaEndpoint() != endpoint) {
-        settings_.setOllamaEndpoint(endpoint);
-        controller_.setOllamaEndpoint(endpoint);
-    }
+    const auto result = core::SettingsService(settings_, controller_.modelService())
+                            .set(QStringLiteral("models.ollama-endpoint"), endpoint);
+    if (result.accepted && controller_.ollamaEndpoint() != settings_.ollamaEndpoint())
+        controller_.setOllamaEndpoint(settings_.ollamaEndpoint());
 }
 
 QString DesktopShellViewModel::lmStudioEndpoint() const {
@@ -1365,10 +1359,9 @@ QString DesktopShellViewModel::lmStudioEndpoint() const {
 }
 
 void DesktopShellViewModel::setLmStudioEndpoint(const QString& endpoint) {
-    if (settings_.lmStudioEndpoint() != endpoint) {
-        settings_.setLmStudioEndpoint(endpoint);
-        controller_.setLmStudioEndpoint(endpoint);
-    }
+    const auto result = core::SettingsService(settings_, controller_.modelService())
+                            .set(QStringLiteral("models.lm-studio-endpoint"), endpoint);
+    if (result.accepted) controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
 }
 
 QString DesktopShellViewModel::llamaCppEndpoint() const {
@@ -1376,10 +1369,9 @@ QString DesktopShellViewModel::llamaCppEndpoint() const {
 }
 
 void DesktopShellViewModel::setLlamaCppEndpoint(const QString& endpoint) {
-    if (settings_.llamaCppEndpoint() != endpoint) {
-        settings_.setLlamaCppEndpoint(endpoint);
-        controller_.setLlamaCppEndpoint(endpoint);
-    }
+    const auto result = core::SettingsService(settings_, controller_.modelService())
+                            .set(QStringLiteral("models.llama-cpp-endpoint"), endpoint);
+    if (result.accepted) controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
 }
 
 QString DesktopShellViewModel::cloudApiEndpoint() const {
@@ -1466,7 +1458,11 @@ void DesktopShellViewModel::setProxyUser(const QString& user) {
 }
 
 QString DesktopShellViewModel::proxyPassword() const {
-    return settings_.proxyPassword();
+    return {};
+}
+
+bool DesktopShellViewModel::proxyPasswordConfigured() const {
+    return !settings_.proxyPassword().isEmpty();
 }
 
 void DesktopShellViewModel::setProxyPassword(const QString& password) {
@@ -1507,12 +1503,7 @@ QString DesktopShellViewModel::selectedLocalModel() const {
 }
 
 void DesktopShellViewModel::setSelectedLocalModel(const QString& model) {
-    settings_.setSelectedModelForProvider(settings_.selectedRuntimeProvider(), model);
-    const auto providerModel =
-        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
-    if (controller_.selectedLocalModel() != providerModel) {
-        controller_.setSelectedLocalModel(providerModel);
-    }
+    controller_.setSelectedLocalModel(model);
 }
 
 QString DesktopShellViewModel::selectedLocalModelStatus() const {
@@ -2191,297 +2182,16 @@ QVariantMap DesktopShellViewModel::autoDetectVoicePathStatus() {
 }
 
 void DesktopShellViewModel::startVoiceCapture() {
-    if (voiceRecordingActive_) {
-        return;
-    }
-
-#if defined(Q_OS_WIN)
-    QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg.exe"));
-    if (ffmpegPath.isEmpty()) {
-        ffmpegPath = QStandardPaths::findExecutable(
-            QStringLiteral("ffmpeg.exe"),
-            {QStringLiteral("C:\\ffmpeg\\bin"), QStringLiteral("C:\\tools\\ffmpeg\\bin"),
-             QStringLiteral("C:\\Program Files\\ffmpeg\\bin"),
-             QStringLiteral("C:\\Program Files (x86)\\ffmpeg\\bin")});
-    }
-    QString recPath = QStandardPaths::findExecutable(QStringLiteral("rec.exe"));
-    if (recPath.isEmpty()) {
-        recPath = QStandardPaths::findExecutable(
-            QStringLiteral("rec.exe"),
-            {QStringLiteral("C:\\Program Files (x86)\\sox-*"), QStringLiteral("C:\\tools\\sox")});
-    }
-#else
-    QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
-    if (ffmpegPath.isEmpty()) {
-        ffmpegPath = QStandardPaths::findExecutable(
-            QStringLiteral("ffmpeg"),
-            {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
-    }
-    QString recPath = QStandardPaths::findExecutable(QStringLiteral("rec"));
-    if (recPath.isEmpty()) {
-        recPath = QStandardPaths::findExecutable(
-            QStringLiteral("rec"),
-            {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
-    }
-#endif
-
-    voiceRecordingFile_ = QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_voice.wav"));
-    QFile::remove(voiceRecordingFile_);
-
-    auto configs = getFfmpegConfigs();
-    if (currentFfmpegConfigIndex_ >= configs.size()) {
-        currentFfmpegConfigIndex_ = 0;
-    }
-
-    tryNextVoiceCaptureConfig(ffmpegPath, recPath);
-}
-
-void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
-                                                      const QString& recPath) {
-    auto configs = getFfmpegConfigs();
-    bool hasFfmpeg = !ffmpegPath.isEmpty();
-
-    if (hasFfmpeg && currentFfmpegConfigIndex_ < configs.size()) {
-        auto config = configs.at(currentFfmpegConfigIndex_);
-
-        recordingProcess_ = new QProcess(this);
-
-        // Pre-emptively flag active recording so the finished slot catches early failures
-        voiceRecordingActive_ = true;
-        emit voiceRecordingActiveChanged();
-
-        connect(recordingProcess_, &QProcess::finished, this,
-                [this, ffmpegPath, recPath](int exitCode, QProcess::ExitStatus exitStatus) {
-                    Q_UNUSED(exitCode);
-                    Q_UNUSED(exitStatus);
-                    if (voiceRecordingActive_) {
-                        // Read standard error output to capture permission or hardware issues
-                        QByteArray errorOutput = recordingProcess_->readAllStandardError();
-                        lastRecordingError_ = QString::fromUtf8(errorOutput).trimmed();
-
-                        recordingProcess_->deleteLater();
-                        recordingProcess_ = nullptr;
-
-                        // Move to next configuration
-                        currentFfmpegConfigIndex_++;
-                        tryNextVoiceCaptureConfig(ffmpegPath, recPath);
-                    }
-                });
-
-        // Start ffmpeg with specified format, input device, and output format conversion (16kHz
-        // 16-bit Mono PCM WAV)
-        recordingProcess_->start(ffmpegPath,
-                                 {QStringLiteral("-y"), QStringLiteral("-f"), config.format,
-                                  QStringLiteral("-i"), config.device, QStringLiteral("-acodec"),
-                                  QStringLiteral("pcm_s16le"), QStringLiteral("-ar"),
-                                  QStringLiteral("16000"), QStringLiteral("-ac"),
-                                  QStringLiteral("1"), voiceRecordingFile_});
-
-        if (!recordingProcess_->waitForStarted(1500)) {
-            // Process failed to start, reset active state and try next config
-            voiceRecordingActive_ = false;
-            emit voiceRecordingActiveChanged();
-
-            lastRecordingError_ =
-                QStringLiteral("QProcess failed to start (binary permission or path issue).");
-
-            recordingProcess_->deleteLater();
-            recordingProcess_ = nullptr;
-            currentFfmpegConfigIndex_++;
-            tryNextVoiceCaptureConfig(ffmpegPath, recPath);
-        }
-    } else {
-        // Fall back to rec (SoX) if available
-        if (!recPath.isEmpty()) {
-            recordingProcess_ = new QProcess(this);
-
-            voiceRecordingActive_ = true;
-            emit voiceRecordingActiveChanged();
-
-            connect(recordingProcess_, &QProcess::finished, this,
-                    [this](int exitCode, QProcess::ExitStatus exitStatus) {
-                        Q_UNUSED(exitCode);
-                        Q_UNUSED(exitStatus);
-                        if (voiceRecordingActive_) {
-                            QByteArray errorOutput = recordingProcess_->readAllStandardError();
-                            QString errorMsg = QString::fromUtf8(errorOutput).trimmed();
-
-                            voiceRecordingActive_ = false;
-                            emit voiceRecordingActiveChanged();
-
-                            emit voiceTranscriptionCompleted(
-                                QCoreApplication::translate("DesktopShellViewModel",
-                                                            "Error: Audio recording (rec) stopped "
-                                                            "unexpectedly.\nDetail: ") +
-                                errorMsg);
-
-                            recordingProcess_->deleteLater();
-                            recordingProcess_ = nullptr;
-                        }
-                    });
-
-            recordingProcess_->start(recPath, {QStringLiteral("-r"), QStringLiteral("16000"),
-                                               QStringLiteral("-c"), QStringLiteral("1"),
-                                               QStringLiteral("-b"), QStringLiteral("16"),
-                                               voiceRecordingFile_});
-
-            if (!recordingProcess_->waitForStarted(1500)) {
-                voiceRecordingActive_ = false;
-                emit voiceRecordingActiveChanged();
-                emit voiceTranscriptionCompleted(QCoreApplication::translate(
-                    "DesktopShellViewModel", "Error: Audio recording (rec) could not be started."));
-                recordingProcess_->deleteLater();
-                recordingProcess_ = nullptr;
-            }
-        } else {
-            // Both ffmpeg and rec failed or are missing
-            voiceRecordingActive_ = false;
-            emit voiceRecordingActiveChanged();
-
-            QString errorMsg = QCoreApplication::translate(
-                "DesktopShellViewModel", "Error: Could not start audio recording. ");
-            if (hasFfmpeg) {
-                errorMsg += QCoreApplication::translate(
-                    "DesktopShellViewModel", "Could not open audio input devices on this system. "
-                                             "Please check microphone permissions and default "
-                                             "audio input device.");
-                if (!lastRecordingError_.isEmpty()) {
-                    errorMsg += QCoreApplication::translate("DesktopShellViewModel", "\nDetail: ") +
-                                lastRecordingError_;
-                }
-            } else {
-#if defined(Q_OS_WIN)
-                errorMsg += QCoreApplication::translate(
-                    "DesktopShellViewModel",
-                    "'ffmpeg' was not found on this system. Please download ffmpeg from the "
-                    "official site and add it to PATH.");
-#else
-                errorMsg += QCoreApplication::translate(
-                    "DesktopShellViewModel",
-                    "'ffmpeg' or 'sox' (rec) was not found on this system. Please install ffmpeg "
-                    "using 'brew install ffmpeg' (macOS) or your package manager.");
-#endif
-            }
-            emit voiceTranscriptionCompleted(errorMsg);
-        }
-    }
+    if (auto* session = controller_.audioSession())
+        session->startPushToTalk(core::VoiceInteractionMode::Dictation);
 }
 
 void DesktopShellViewModel::stopVoiceCapture() {
-    if (!voiceRecordingActive_) {
-        return;
-    }
+    if (auto* session = controller_.audioSession()) session->stopPushToTalk();
+}
 
-    voiceRecordingActive_ = false;
-    emit voiceRecordingActiveChanged();
-
-    if (recordingProcess_) {
-        // Disconnect to avoid triggering the finished callback logic during controlled shutdown
-        recordingProcess_->disconnect(this);
-
-        recordingProcess_->terminate();
-        if (!recordingProcess_->waitForFinished(3000)) {
-            recordingProcess_->kill();
-            recordingProcess_->waitForFinished();
-        }
-        recordingProcess_->deleteLater();
-        recordingProcess_ = nullptr;
-    }
-
-    QString whisperPath = settings_.whisperBinaryPath();
-    QString modelPath = settings_.whisperModelPath();
-
-    if (whisperPath.isEmpty() || whisperPath == QStringLiteral("not configured") ||
-        modelPath.isEmpty() || modelPath == QStringLiteral("not configured")) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Whisper binary veya model yolu ayarlanmamış. Lütfen Settings -> "
-                           "Voice sekmesinden whisper-cli ve model yollarını belirtin."));
-        return;
-    }
-
-    if (!QFile::exists(whisperPath)) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Whisper binary dosyası bulunamadı: ") + whisperPath);
-        return;
-    }
-    QFileInfo whisperInfo(whisperPath);
-    if (whisperInfo.isDir()) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Seçilen Whisper program yolu bir klasördür: ") + whisperPath +
-            QStringLiteral("\nLütfen bu klasörün içindeki 'whisper-cli' veya 'whisper' "
-                           "çalıştırılabilir dosyasını seçin."));
-        return;
-    }
-
-    if (!QFile::exists(modelPath)) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Whisper model dosyası bulunamadı: ") + modelPath);
-        return;
-    }
-    QFileInfo modelInfo(modelPath);
-    if (modelInfo.isDir()) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Seçilen Whisper model yolu bir klasördür: ") + modelPath +
-            QStringLiteral(
-                "\nLütfen bu klasörün içindeki 'ggml-*.bin' uzantılı model dosyasını seçin."));
-        return;
-    }
-
-    if (!QFile::exists(voiceRecordingFile_)) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Kaydedilen ses dosyası bulunamadı."));
-        return;
-    }
-
-    whisperProcess_ = new QProcess(this);
-    QProcess* proc = whisperProcess_;
-
-    connect(proc, &QProcess::finished, this,
-            [this, proc](int exitCode, QProcess::ExitStatus exitStatus) {
-                if (exitStatus == QProcess::CrashExit || exitCode != 0) {
-                    QByteArray errorBytes = proc->readAllStandardError();
-                    QString errorMsg = QString::fromUtf8(errorBytes).trimmed();
-                    if (errorMsg.isEmpty()) {
-                        errorMsg = QStringLiteral(
-                            "Whisper işlemi beklenmedik şekilde kapandı veya hata kodu döndürdü.");
-                    }
-                    emit voiceTranscriptionCompleted(
-                        QStringLiteral("Hata: Whisper deşifre işlemi başarısız oldu. ") + errorMsg);
-                } else {
-                    QByteArray outputBytes = proc->readAllStandardOutput();
-                    QString transcript = QString::fromUtf8(outputBytes).trimmed();
-
-                    static const QRegularExpression timestampRegex(QStringLiteral(
-                        "\\[\\d\\d:\\d\\d\\.\\d\\d\\d\\s*->\\s*\\d\\d:\\d\\d\\.\\d\\d\\d\\]\\s*"));
-                    transcript.replace(timestampRegex, QString());
-
-                    transcript = transcript.simplified();
-
-                    if (transcript.isEmpty()) {
-                        emit voiceTranscriptionCompleted(
-                            QStringLiteral("Hata: Ses deşifre edilemedi (deşifre sonucu boş)."));
-                    } else {
-                        emit voiceTranscriptionCompleted(transcript);
-                    }
-                }
-
-                proc->deleteLater();
-                if (whisperProcess_ == proc) {
-                    whisperProcess_ = nullptr;
-                }
-            });
-
-    whisperProcess_->start(whisperPath, {QStringLiteral("-m"), modelPath, QStringLiteral("-f"),
-                                         voiceRecordingFile_, QStringLiteral("-nt")});
-
-    if (!whisperProcess_->waitForStarted(2000)) {
-        emit voiceTranscriptionCompleted(
-            QStringLiteral("Hata: Whisper deşifre işlemi başlatılamadı."));
-        if (whisperProcess_) {
-            whisperProcess_->deleteLater();
-            whisperProcess_ = nullptr;
-        }
-    }
+void DesktopShellViewModel::transcribeAudioFile(const QString& path) {
+    if (auto* session = controller_.audioSession()) session->transcribeAudioFile(path);
 }
 
 bool DesktopShellViewModel::generatePiperTtsFile(const QString& text) {
@@ -3985,10 +3695,11 @@ void DesktopShellViewModel::setWebSearchProvider(const QString& provider) {
 }
 
 QString DesktopShellViewModel::webSearchApiKey() const {
-    return settings_.webSearchApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setWebSearchApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setWebSearchApiKey(key);
 }
 
@@ -4055,7 +3766,8 @@ QString DesktopShellViewModel::themeName() const {
 }
 
 void DesktopShellViewModel::setThemeName(const QString& themeName) {
-    settings_.setThemeName(themeName);
+    core::SettingsService(settings_, controller_.modelService()).set(
+        QStringLiteral("appearance.theme"), themeName);
 }
 
 QString DesktopShellViewModel::configurationProfile() const {
@@ -4071,7 +3783,8 @@ QString DesktopShellViewModel::appLanguage() const {
 }
 
 void DesktopShellViewModel::setAppLanguage(const QString& language) {
-    settings_.setAppLanguage(language);
+    core::SettingsService(settings_, controller_.modelService()).set(
+        QStringLiteral("general.language"), language);
 }
 
 QStringList DesktopShellViewModel::availableLanguages() const {
@@ -4305,7 +4018,8 @@ QString DesktopShellViewModel::updateCheckPolicy() const {
 }
 
 void DesktopShellViewModel::setUpdateCheckPolicy(const QString& policy) {
-    settings_.setUpdateCheckPolicy(policy);
+    core::SettingsService(settings_, controller_.modelService()).set(
+        QStringLiteral("network.update-check"), policy);
 }
 
 QString DesktopShellViewModel::updateCheckUrl() const {
@@ -4340,7 +4054,8 @@ QString DesktopShellViewModel::notificationPolicy() const {
 }
 
 void DesktopShellViewModel::setNotificationPolicy(const QString& policy) {
-    settings_.setNotificationPolicy(policy);
+    core::SettingsService(settings_, controller_.modelService()).set(
+        QStringLiteral("notifications.policy"), policy);
 }
 
 bool DesktopShellViewModel::onboardingComplete() const {
@@ -4348,7 +4063,270 @@ bool DesktopShellViewModel::onboardingComplete() const {
 }
 
 void DesktopShellViewModel::setOnboardingComplete(bool complete) {
-    settings_.setOnboardingComplete(complete);
+    core::OnboardingService service(settings_, controller_.modelService());
+    if (complete) service.finish();
+    else service.reopen();
+}
+
+int DesktopShellViewModel::onboardingStepIndex() const {
+    return static_cast<int>(core::OnboardingService(settings_, controller_.modelService())
+                                .snapshot().step);
+}
+
+QString DesktopShellViewModel::onboardingProcessingMode() const {
+    return core::OnboardingService(settings_, controller_.modelService())
+        .snapshot().processingMode;
+}
+
+void DesktopShellViewModel::setOnboardingProcessingMode(const QString& mode) {
+    const auto result = core::OnboardingService(settings_, controller_.modelService())
+                            .chooseProcessingMode(mode);
+    onboardingErrorCode_ = result.errorCode;
+    emit onboardingStateChanged();
+}
+
+QString DesktopShellViewModel::onboardingErrorText() const {
+    return onboardingErrorCode_.isEmpty() ? QString{}
+        : core::ProductMessages::present({onboardingErrorCode_, {}, {}});
+}
+
+bool DesktopShellViewModel::advanceOnboarding(bool skip) {
+    const auto result = core::OnboardingService(settings_, controller_.modelService()).advance(skip);
+    onboardingErrorCode_ = result.errorCode;
+    emit onboardingStateChanged();
+    return result.accepted;
+}
+
+bool DesktopShellViewModel::backOnboarding() {
+    const auto result = core::OnboardingService(settings_, controller_.modelService()).back();
+    onboardingErrorCode_ = result.errorCode;
+    emit onboardingStateChanged();
+    return result.accepted;
+}
+
+void DesktopShellViewModel::reopenOnboarding() {
+    core::OnboardingService(settings_, controller_.modelService()).reopen();
+    onboardingErrorCode_.clear();
+    emit onboardingStateChanged();
+}
+
+QVariantMap DesktopShellViewModel::onboardingState() const {
+    const auto state = core::OnboardingService(settings_, controller_.modelService()).snapshot();
+    return {{QStringLiteral("version"), state.version},
+            {QStringLiteral("stepId"), core::OnboardingService::stepId(state.step)},
+            {QStringLiteral("stepIndex"), static_cast<int>(state.step)},
+            {QStringLiteral("processingMode"), state.processingMode},
+            {QStringLiteral("completedSteps"), state.completedSteps},
+            {QStringLiteral("complete"), state.complete},
+            {QStringLiteral("resumed"), state.resumed},
+            {QStringLiteral("providerId"), state.providerId},
+            {QStringLiteral("modelId"), state.modelId}};
+}
+
+static core::SettingsService composedSettingsService(core::AppSettings& settings,
+                                                     core::ApplicationController& controller) {
+    return core::SettingsService(settings, controller.modelService(),
+        controller.extensionService(), controller.audioSession(), controller.permissionService(),
+        controller.conversationStore(), controller.memoryStore(),
+        controller.mutableAgentRunStore(), controller.chatHistoryStore(),
+        controller.modelOperations());
+}
+
+QVariantList DesktopShellViewModel::productSettings() const {
+    auto service = composedSettingsService(settings_, controller_);
+    QVariantList result;
+    for (const auto& row : service.snapshots())
+        result.append(QVariantMap{{QStringLiteral("id"), row.id},
+            {QStringLiteral("section"), static_cast<int>(row.section)},
+            {QStringLiteral("value"), row.value},
+            {QStringLiteral("defaultValue"), row.defaultValue},
+            {QStringLiteral("source"), row.source},
+            {QStringLiteral("allowedValues"), row.allowedValues},
+            {QStringLiteral("keywords"), row.keywords},
+            {QStringLiteral("scope"), static_cast<int>(row.scope)},
+            {QStringLiteral("enabled"), row.enabled},
+            {QStringLiteral("restartRequired"), row.restartRequired},
+            {QStringLiteral("sensitive"), row.sensitive},
+            {QStringLiteral("unavailableReason"), row.unavailableReason}});
+    return result;
+}
+
+QStringList DesktopShellViewModel::productSettingsSections() const {
+    return composedSettingsService(settings_, controller_).sectionIds();
+}
+
+QVariantMap DesktopShellViewModel::setProductSetting(const QString& id, const QVariant& value) {
+    auto result = composedSettingsService(settings_, controller_).set(id, value);
+    if (result.accepted) {
+        if (id == QLatin1String("models.ollama-endpoint"))
+            controller_.setOllamaEndpoint(settings_.ollamaEndpoint());
+        else if (id == QLatin1String("models.lm-studio-endpoint"))
+            controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
+        else if (id == QLatin1String("models.llama-cpp-endpoint"))
+            controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
+    }
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field},
+            {QStringLiteral("parameters"), result.parameters.toVariantMap()}};
+}
+
+QVariantMap DesktopShellViewModel::resetProductSetting(const QString& id) {
+    auto result = composedSettingsService(settings_, controller_).reset(id);
+    if (result.accepted) {
+        if (id == QLatin1String("models.ollama-endpoint"))
+            controller_.setOllamaEndpoint(settings_.ollamaEndpoint());
+        else if (id == QLatin1String("models.lm-studio-endpoint"))
+            controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
+        else if (id == QLatin1String("models.llama-cpp-endpoint"))
+            controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
+    }
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+}
+
+QVariantList DesktopShellViewModel::resetProductSettingsSection(int section) {
+    if (section < 0 || section > static_cast<int>(core::SettingSection::Advanced)) return {};
+    QVariantList result;
+    for (const auto& item : composedSettingsService(settings_, controller_)
+            .resetSection(static_cast<core::SettingSection>(section)))
+        result.append(QVariantMap{{QStringLiteral("accepted"), item.accepted},
+                                  {QStringLiteral("code"), item.code},
+                                  {QStringLiteral("field"), item.field}});
+    if (section == static_cast<int>(core::SettingSection::Advanced)) {
+        controller_.setOllamaEndpoint(settings_.ollamaEndpoint());
+        controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
+        controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
+    }
+    return result;
+}
+
+QVariantMap DesktopShellViewModel::clearWorkspaceSettingOverride(const QString& workspaceId,
+                                                                  const QString& key) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .clearWorkspaceOverride(workspaceId, key);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+}
+
+QVariantMap DesktopShellViewModel::providerSettingsState(const QString& providerId) const {
+    return composedSettingsService(settings_, controller_)
+        .providerState(providerId).toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::extensionSettingsState(const QString& extensionId) const {
+    return composedSettingsService(settings_, controller_)
+        .extensionState(extensionId).toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::performExtensionSettingsAction(const QString& extensionId,
+                                                                   int action) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .performExtensionAction(extensionId, action);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+}
+
+QVariantMap DesktopShellViewModel::speechSettingsState() const {
+    return composedSettingsService(settings_, controller_)
+        .speechState().toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::securitySettingsState() const {
+    auto state = composedSettingsService(settings_, controller_).securityState().toVariantMap();
+    state.insert(QStringLiteral("latestSandboxStatus"), controller_.latestSandboxStatus());
+    state.insert(QStringLiteral("latestSandboxSummary"), controller_.latestSandboxSummary());
+    return state;
+}
+
+QVariantMap DesktopShellViewModel::productPrivacyState() const {
+    return composedSettingsService(settings_, controller_).privacyState().toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::productRecoveryState() const {
+    return composedSettingsService(settings_, controller_).recoveryState().toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::productBackupAvailability() const {
+    return composedSettingsService(settings_, controller_).backupAvailability().toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::exportProductBackup(const QStringList& domains) const {
+    const auto result = composedSettingsService(settings_, controller_).exportBackupJson(domains);
+    return {{QStringLiteral("succeeded"), result.succeeded()},
+            {QStringLiteral("error"), static_cast<int>(result.error)},
+            {QStringLiteral("data"), result.data}, {QStringLiteral("detail"), result.detail}};
+}
+
+QVariantMap DesktopShellViewModel::importProductBackup(const QByteArray& data,
+                                                        const QStringList& domains, bool replace) {
+    const auto result = composedSettingsService(settings_, controller_).importBackupJson(
+        data, domains, replace ? core::ImportMode::ReplaceSelectedDomains : core::ImportMode::Merge);
+    return {{QStringLiteral("succeeded"), result.succeeded()},
+            {QStringLiteral("error"), static_cast<int>(result.error)},
+            {QStringLiteral("detail"), result.detail}};
+}
+
+QVariantMap DesktopShellViewModel::clearProductData(const QString& domain) {
+    auto service = composedSettingsService(settings_, controller_);
+    core::SettingActionResult result;
+    if (domain == QLatin1String("chat")) result = service.clearChatHistory();
+    else if (domain == QLatin1String("memory")) result = service.clearMemory();
+    else if (domain == QLatin1String("agentRuns")) result = service.clearAgentHistory();
+    else if (domain == QLatin1String("temporaryData")) result = service.clearStaleTemporaryArtifacts();
+    else if (domain == QLatin1String("cacheAndTemporaryData")) {
+        const auto cleanup = service.clearCacheAndTemporaryData();
+        return {{QStringLiteral("accepted"), !cleanup.value(QStringLiteral("partialFailure")).toBool()},
+                {QStringLiteral("parameters"), cleanup.toVariantMap()}};
+    }
+    else return {{QStringLiteral("accepted"), false},
+                 {QStringLiteral("code"), QStringLiteral("UnknownDataDomain")}};
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code},
+            {QStringLiteral("parameters"), result.parameters.toVariantMap()}};
+}
+
+QVariantMap DesktopShellViewModel::runProductMaintenance() {
+    auto service = composedSettingsService(settings_, controller_);
+    return service.runRetentionMaintenance().toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::resolveInterruptedModelOperation(
+    const QString& operationId) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .resolveInterruptedModelOperation(operationId);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}};
+}
+
+QVariantMap DesktopShellViewModel::clearProductCredential(const QString& id) {
+    const auto result = composedSettingsService(settings_, controller_).clearCredential(id);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}};
+}
+
+QVariantMap DesktopShellViewModel::setProductProviderCredential(const QString& providerId,
+                                                                 const QString& value) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .setProviderCredential(providerId, value);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}};
+}
+
+QVariantMap DesktopShellViewModel::setProductPluginCredential(const QString& pluginId,
+                                                               const QString& credentialId,
+                                                               const QString& value) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .setPluginCredential(pluginId, credentialId, value);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}};
+}
+
+QVariantMap DesktopShellViewModel::clearProductPluginCredential(const QString& pluginId,
+                                                                 const QString& credentialId) {
+    const auto result = composedSettingsService(settings_, controller_)
+        .clearPluginCredential(pluginId, credentialId);
+    return {{QStringLiteral("accepted"), result.accepted},
+            {QStringLiteral("code"), result.code}};
 }
 
 QString DesktopShellViewModel::onboardingUseCase() const {
@@ -4680,9 +4658,118 @@ QString DesktopShellViewModel::selectedWorkspaceId() const {
                                                    settings_.workspaceCatalogJson());
 }
 
+QString DesktopShellViewModel::selectedWorkspaceRootPath() const {
+    return workspaceService_.selectedWorkspace(selectedWorkspaceId(),
+                                               settings_.workspaceCatalogJson()).rootPath;
+}
+
+bool DesktopShellViewModel::workspaceRequiresLocalProvider() const {
+    return controller_.currentWorkspaceRequiresLocal();
+}
+
+QVariantMap DesktopShellViewModel::currentWorkspaceProfile() const {
+    const auto snapshot = controller_.currentWorkspaceProfile();
+    return {{QStringLiteral("workspaceId"), snapshot.workspaceId},
+            {QStringLiteral("presetId"), snapshot.presetId},
+            {QStringLiteral("configured"), snapshot.configured.toVariantMap()},
+            {QStringLiteral("effective"), snapshot.effective.toVariantMap()},
+            {QStringLiteral("sources"), snapshot.sources.toVariantMap()},
+            {QStringLiteral("statuses"), snapshot.statuses.toVariantMap()},
+            {QStringLiteral("reasons"), snapshot.reasons.toVariantMap()},
+            {QStringLiteral("unavailableReferences"), snapshot.unavailableReferences}};
+}
+
+QStringList DesktopShellViewModel::presetIds() const {
+    QStringList ids;
+    for (const auto& preset : workspaceService_.presets(settings_.workspaceProfilesJson()))
+        ids.append(preset.id);
+    return ids;
+}
+
+QStringList DesktopShellViewModel::presetNames() const {
+    QStringList names;
+    for (const auto& preset : workspaceService_.presets(settings_.workspaceProfilesJson()))
+        names.append(preset.name);
+    return names;
+}
+
+bool DesktopShellViewModel::setWorkspaceProfile(const QString& workspaceId,
+                                                const QString& presetId,
+                                                const QVariantMap& overrides) {
+    if (workspaceService_.normalizedWorkspaceId(workspaceId, settings_.workspaceCatalogJson()) !=
+        workspaceId) return false;
+    const auto json = workspaceService_.updateProfile(settings_.workspaceProfilesJson(),
+                                                     workspaceId, presetId,
+                                                     QJsonObject::fromVariantMap(overrides));
+    if (json.isEmpty()) return false;
+    settings_.setWorkspaceProfilesJson(json);
+    return true;
+}
+
+QString DesktopShellViewModel::createPreset(const QString& name,
+                                             const QVariantMap& preferences) {
+    const auto before = workspaceService_.presets(settings_.workspaceProfilesJson());
+    const auto json = workspaceService_.createPreset(settings_.workspaceProfilesJson(), name,
+                                                     QJsonObject::fromVariantMap(preferences));
+    if (json.isEmpty()) return {};
+    settings_.setWorkspaceProfilesJson(json);
+    const auto after = workspaceService_.presets(json);
+    for (const auto& preset : after) {
+        const auto existing = std::find_if(before.cbegin(), before.cend(),
+            [&preset](const core::WorkspacePreset& item) { return item.id == preset.id; });
+        if (existing == before.cend()) return preset.id;
+    }
+    return {};
+}
+
+bool DesktopShellViewModel::renamePreset(const QString& presetId, const QString& name) {
+    const auto json = workspaceService_.renamePreset(settings_.workspaceProfilesJson(), presetId, name);
+    if (json.isEmpty()) return false;
+    settings_.setWorkspaceProfilesJson(json);
+    return true;
+}
+
+bool DesktopShellViewModel::updatePreset(const QString& presetId,
+                                          const QVariantMap& preferences) {
+    const auto json = workspaceService_.updatePreset(settings_.workspaceProfilesJson(), presetId,
+                                                      QJsonObject::fromVariantMap(preferences));
+    if (json.isEmpty()) return false;
+    settings_.setWorkspaceProfilesJson(json);
+    return true;
+}
+
+QString DesktopShellViewModel::duplicatePreset(const QString& presetId) {
+    const auto before = workspaceService_.presets(settings_.workspaceProfilesJson());
+    const auto json = workspaceService_.duplicatePreset(settings_.workspaceProfilesJson(), presetId);
+    if (json.isEmpty()) return {};
+    settings_.setWorkspaceProfilesJson(json);
+    const auto after = workspaceService_.presets(json);
+    for (const auto& preset : after) {
+        const auto existing = std::find_if(before.cbegin(), before.cend(),
+            [&preset](const core::WorkspacePreset& item) { return item.id == preset.id; });
+        if (existing == before.cend()) return preset.id;
+    }
+    return {};
+}
+
+bool DesktopShellViewModel::deletePreset(const QString& presetId) {
+    const auto json = workspaceService_.deletePreset(settings_.workspaceProfilesJson(), presetId);
+    if (json.isEmpty()) return false;
+    settings_.setWorkspaceProfilesJson(json);
+    return true;
+}
+
 void DesktopShellViewModel::setSelectedWorkspaceId(const QString& workspaceId) {
     settings_.setSelectedWorkspaceId(
         workspaceService_.normalizedWorkspaceId(workspaceId, settings_.workspaceCatalogJson()));
+}
+
+bool DesktopShellViewModel::setWorkspaceRoot(const QString& workspaceId, const QString& rootPath) {
+    const auto result = workspaceService_.setWorkspaceRoot(settings_.workspaceCatalogJson(),
+                                                           workspaceId, rootPath);
+    if (!result.success) return false;
+    settings_.setWorkspaceCatalogJson(result.catalogJson);
+    return true;
 }
 
 QString DesktopShellViewModel::selectedWorkspaceName() const {
@@ -5178,7 +5265,8 @@ QString DesktopShellViewModel::defaultPermissionPolicyState() const {
 }
 
 void DesktopShellViewModel::setDefaultPermissionPolicyState(const QString& state) {
-    settings_.setDefaultPermissionPolicyState(permissionPolicyService_.normalizedState(state));
+    core::SettingsService(settings_, controller_.modelService()).set(
+        QStringLiteral("privacy.permission-policy"), state);
 }
 
 QString DesktopShellViewModel::permissionPolicyStatus() const {
@@ -6587,50 +6675,56 @@ void DesktopShellViewModel::setSoundEffectsEnabled(bool enabled) {
 }
 
 QString DesktopShellViewModel::openAiApiKey() const {
-    return settings_.openAiApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setOpenAiApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setOpenAiApiKey(key);
 }
 
 QString DesktopShellViewModel::claudeApiKey() const {
-    return settings_.claudeApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setClaudeApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setClaudeApiKey(key);
 }
 
 QString DesktopShellViewModel::geminiApiKey() const {
-    return settings_.geminiApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setGeminiApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setGeminiApiKey(key);
 }
 
 QString DesktopShellViewModel::deepseekApiKey() const {
-    return settings_.deepseekApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setDeepseekApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setDeepseekApiKey(key);
 }
 
 QString DesktopShellViewModel::groqApiKey() const {
-    return settings_.groqApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setGroqApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setGroqApiKey(key);
 }
 
 QString DesktopShellViewModel::mistralApiKey() const {
-    return settings_.mistralApiKey();
+    return {};
 }
 
 void DesktopShellViewModel::setMistralApiKey(const QString& key) {
+    if (key.trimmed().isEmpty()) return;
     settings_.setMistralApiKey(key);
 }
 
