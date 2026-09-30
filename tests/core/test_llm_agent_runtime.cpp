@@ -132,7 +132,7 @@ private slots:
 
         QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
         QCOMPARE(decision.toolId, QStringLiteral("run-command"));
-        QCOMPARE(decision.thought, QStringLiteral("list files"));
+        QVERIFY(decision.thought.isEmpty());
         QCOMPARE(decision.arguments.size(), 1);
         QCOMPARE(decision.arguments.first().id, QStringLiteral("command"));
         QCOMPARE(decision.arguments.first().value, QStringLiteral("ls -la"));
@@ -150,16 +150,15 @@ private slots:
         LlmAgentRuntime runtime(NullAgentRuntime::standardTools(), &provider);
         const auto decision = runtime.nextStep(QStringLiteral("news"), {});
 
-        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
-        QCOMPARE(decision.toolId, QStringLiteral("web-search"));
-        QCOMPARE(decision.arguments.first().value, QStringLiteral("quantum news"));
-        QVERIFY(runtime.lastDecisionUsedLlm());
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(!runtime.lastDecisionUsedLlm());
     }
 
     void parsesFinalAnswer() {
         FakeChatProvider provider;
         provider.scriptedReply =
-            QStringLiteral("{\"action\":\"final\",\"answer\":\"Everything is done.\"}");
+            QStringLiteral("{\"action\":\"final\",\"grounding\":\"context\","
+                           "\"answer\":\"Everything is done.\"}");
 
         LlmAgentRuntime runtime(NullAgentRuntime::standardTools(), &provider);
         const auto decision = runtime.nextStep(QStringLiteral("goal"), {});

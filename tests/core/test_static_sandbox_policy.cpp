@@ -83,7 +83,7 @@ void StaticSandboxPolicyTest::allowsMetadataOnlyCapability() {
 
     QCOMPARE(decision.status, SandboxStatus::Allowed);
     QCOMPARE(decision.summary,
-             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
+             QStringLiteral("Planned capabilities are allowed; process confinement is enforced at launch."));
     QCOMPARE(decision.capabilityDecisions.size(), 1);
     QCOMPARE(decision.capabilityDecisions.first().toolId, QStringLiteral("safe-tool"));
     QCOMPARE(decision.capabilityDecisions.first().capability.id,
@@ -132,7 +132,10 @@ void StaticSandboxPolicyTest::approvedButNotCapableRemainsDenied() {
     StaticSandboxPolicy policy;
 
     const auto decision = policy.evaluate(
-        makePlan({makeInvocation(QStringLiteral("risky-tool"), ToolRiskLevel::High)}), approved());
+        makePlan({makeInvocation(
+            QStringLiteral("risky-tool"), ToolRiskLevel::High,
+            {CapabilityDescriptor{QStringLiteral("tool.risk.high"),
+                                  QStringLiteral("High risk capability.")}})}), approved());
 
     QCOMPARE(decision.status, SandboxStatus::Denied);
     QVERIFY(!decision.capabilityDecisions.isEmpty());

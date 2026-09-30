@@ -29,7 +29,7 @@ void PermissionPolicyServiceTest::exposesDefaultDisabledRegistry() {
     QCOMPARE(registry.stateLabels,
              QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
                           QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
-    QVERIFY(registry.summary.contains(QStringLiteral("registry is operational")));
+    QVERIFY(registry.summary.contains(QStringLiteral("explicit grants")));
 }
 
 void PermissionPolicyServiceTest::normalizesPermissionStates() {

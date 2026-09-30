@@ -72,7 +72,7 @@ void SQLiteConversationStoreTest::startsEmptyAndInitializesSchema() {
     SQLiteConversationStore store(databasePath(dir));
 
     QCOMPARE(store.status(), ConversationStoreStatus::Ready);
-    QCOMPARE(store.schemaVersion(), 3);
+    QCOMPARE(store.schemaVersion(), 5);
     QVERIFY(store.listConversations().isEmpty());
 }
 
@@ -86,10 +86,10 @@ void SQLiteConversationStoreTest::createsListsAndLoadsConversation() {
     const auto conversations = store.listConversations();
 
     QCOMPARE(conversations.size(), 2);
-    QCOMPARE(conversations.at(0).id, first.id);
-    QCOMPARE(conversations.at(0).title, QStringLiteral("Alpha"));
-    QCOMPARE(conversations.at(1).id, second.id);
-    QCOMPARE(conversations.at(1).title, QStringLiteral("Beta"));
+    QCOMPARE(conversations.at(0).id, second.id);
+    QCOMPARE(conversations.at(0).title, QStringLiteral("Beta"));
+    QCOMPARE(conversations.at(1).id, first.id);
+    QCOMPARE(conversations.at(1).title, QStringLiteral("Alpha"));
     QCOMPARE(store.lastError().code, ConversationStoreErrorCode::None);
 }
 
@@ -312,7 +312,7 @@ void SQLiteConversationStoreTest::doesNotMigrateOrClearSingleTranscriptStore() {
 
     {
         SQLiteConversationStore conversationStore(conversationPath);
-        QCOMPARE(conversationStore.schemaVersion(), 3);
+    QCOMPARE(conversationStore.schemaVersion(), 5);
         QVERIFY(conversationStore.listConversations().isEmpty());
     }
 

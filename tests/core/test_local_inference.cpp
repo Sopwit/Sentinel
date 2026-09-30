@@ -39,7 +39,7 @@ void LocalInferenceTest::nullClientDeterministicallyRefuses() {
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),
         QStringLiteral("hello"),
-        {QStringLiteral("llama3.2"), 100, false, false},
+        {.model = QStringLiteral("llama3.2"), .timeoutMs = 100},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::Refused);
@@ -49,12 +49,13 @@ void LocalInferenceTest::nullClientDeterministicallyRefuses() {
 }
 
 void LocalInferenceTest::blankPromptRejectedBeforeOllamaCall() {
-    OllamaLocalInferenceClient client{OllamaConfig::fromEndpoint(QStringLiteral("bad")), 1};
+    OllamaLocalInferenceClient client{
+        OllamaConfig::fromEndpoint(QStringLiteral("http://127.0.0.1:11434")), 1};
 
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),
         QStringLiteral("   "),
-        {QStringLiteral("llama3.2"), 1, false, false},
+        {.model = QStringLiteral("llama3.2"), .timeoutMs = 1},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::InvalidRequest);
@@ -63,12 +64,13 @@ void LocalInferenceTest::blankPromptRejectedBeforeOllamaCall() {
 }
 
 void LocalInferenceTest::missingModelRejectedBeforeOllamaCall() {
-    OllamaLocalInferenceClient client{OllamaConfig::fromEndpoint(QStringLiteral("bad")), 1};
+    OllamaLocalInferenceClient client{
+        OllamaConfig::fromEndpoint(QStringLiteral("http://127.0.0.1:11434")), 1};
 
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),
         QStringLiteral("hello"),
-        {QString(), 1, false, false},
+        {.model = QString(), .timeoutMs = 1},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::InvalidRequest);
@@ -80,16 +82,20 @@ void LocalInferenceTest::unavailableModelRejectedBeforeGeneration() {
     auto config = OllamaConfig::fromEndpoint(QStringLiteral("http://127.0.0.1:11434"));
     config.modelDiscoveryEnabled = false;
     OllamaLocalInferenceClient client{config, 1};
+    sentinel::core::OllamaModelDiscoveryResult discovery;
+    discovery.lifecycle = sentinel::core::ChatRequestLifecycle::Completed;
+    discovery.models.append({QStringLiteral("installed-model")});
 
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),
         QStringLiteral("hello"),
-        {QStringLiteral("__sentinel_missing_model__"), 1, false, false},
+        {.model = QStringLiteral("__sentinel_missing_model__"),
+         .modelValidation = discovery, .timeoutMs = 1},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::ModelUnavailable);
     QCOMPARE(response.error, LocalInferenceError::ModelUnavailable);
-    QVERIFY(response.summary.contains(QStringLiteral("model is not installed")));
+    QVERIFY(response.summary.contains(QStringLiteral("selected model is unavailable")));
 }
 
 void LocalInferenceTest::invalidEndpointIsBlocked() {
@@ -102,7 +108,7 @@ void LocalInferenceTest::invalidEndpointIsBlocked() {
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),
         QStringLiteral("hello"),
-        {QStringLiteral("llama3.2"), 1, false, false},
+        {.model = QStringLiteral("llama3.2"), .timeoutMs = 1},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::Blocked);
@@ -117,7 +123,8 @@ void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
         LocalInferenceRequest{
             QStringLiteral("stream-request-1"),
             QStringLiteral("hello"),
-            {QStringLiteral("llama3.2"), 1, true, false},
+            {.model = QStringLiteral("llama3.2"), .timeoutMs = 1,
+             .streamingRequested = true},
         },
         {});
 

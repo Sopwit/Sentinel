@@ -28,7 +28,8 @@ void ControlledAgentTasksTest::plannerLifecycleRequiresApproval() {
                                    QStringLiteral("llama3"), {QStringLiteral("paper.pdf")}, tasks);
 
     QCOMPARE(task.state, ControlledTaskState::PendingApproval);
-    QCOMPARE(task.steps.size(), 3);
+    QCOMPARE(task.steps.size(), 1);
+    QCOMPARE(task.steps.first().title, QStringLiteral("Run agent task"));
     QVERIFY(service.start(task, tasks).state != ControlledTaskState::Running);
 
     task = service.approve(task, QStringLiteral("Approve Once"));

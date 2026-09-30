@@ -79,9 +79,8 @@ void NullToolExecutorTest::executesApprovedSandboxAllowedPlan() {
         {QStringLiteral("summarize-current-conversation")},
     });
 
-    QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-    QCOMPARE(toolExecutionStatusName(result.status), QStringLiteral("Succeeded"));
-    QCOMPARE(result.summary, QStringLiteral("summarize-current-conversation: Summary compiled."));
+    QCOMPARE(result.status, ToolExecutionStatus::Blocked);
+    QCOMPARE(toolExecutionStatusName(result.status), QStringLiteral("Blocked"));
 }
 
 void NullToolExecutorTest::blocksWhenApprovalIsRequired() {

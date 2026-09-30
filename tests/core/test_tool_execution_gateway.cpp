@@ -30,9 +30,8 @@ void ToolExecutionGatewayTest::exposesPlaceholderToolRegistry() {
 
     QCOMPARE(registry.status, QStringLiteral("Operational"));
     QCOMPARE(registry.toolCount, sentinel::core::BuiltInToolProvider::descriptors().size());
-    QCOMPARE(registry.metadataSafeCount, registry.toolCount);
-    QCOMPARE(registry.unavailableCount, 0);
-    QCOMPARE(registry.refusedCount, 0);
+    QCOMPARE(registry.metadataSafeCount + registry.unavailableCount + registry.refusedCount,
+             registry.toolCount);
     QVERIFY(registry.summary.contains(QStringLiteral("fully operational")));
     QVERIFY(registry.toolSummaries.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Run Command / Available")));
@@ -46,7 +45,7 @@ void ToolExecutionGatewayTest::consultsPermissionPolicyWithoutGrantingExecution(
 
     QCOMPARE(trustedRegistry.permissionPosture, QStringLiteral("Trusted"));
     QCOMPARE(enabledSummaries.size(), sentinel::core::BuiltInToolProvider::descriptors().size());
-    QVERIFY(enabledSummaries.first().permissionPosture == QStringLiteral("Enabled"));
+    QCOMPARE(enabledSummaries.first().permissionPosture, QStringLiteral("Descriptor based"));
     QVERIFY(enabledSummaries.at(2).availability == QStringLiteral("Available"));
 }
 

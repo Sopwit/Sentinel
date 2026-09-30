@@ -159,7 +159,7 @@ void SQLiteMemoryStoreTest::initializesSchemaVersion() {
     QVERIFY(dir.isValid());
     SQLiteMemoryStore store(databasePath(dir));
 
-    QCOMPARE(store.schemaVersion(), 1);
+    QCOMPARE(store.schemaVersion(), 3);
 }
 
 void SQLiteMemoryStoreTest::reportsAvailabilityForValidDatabase() {

@@ -97,7 +97,7 @@ void McpIntegrationTest::realStdioAgentLoop() {
     QVERIFY(service->addServer(config));
     InMemoryToolRegistry registry;
     McpToolProvider provider(service, registry);
-    QVERIFY(service->connectToServer(config.name));
+    QVERIFY2(service->connectToServer(config.name), qPrintable(service->lastError(config.name)));
     QCOMPARE(service->connectionState(config.name), McpConnectionState::Connected);
     const auto id = QStringLiteral("mcp.test_2d_server.echo_5f_value");
     const auto registration = registry.findRegistration(id);

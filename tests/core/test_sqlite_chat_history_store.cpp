@@ -152,7 +152,7 @@ void SQLiteChatHistoryStoreTest::initializesSchemaVersion() {
     QVERIFY(dir.isValid());
     SQLiteChatHistoryStore store(databasePath(dir));
 
-    QCOMPARE(store.schemaVersion(), 2);
+    QCOMPARE(store.schemaVersion(), 3);
 }
 
 void SQLiteChatHistoryStoreTest::safelyNoOpsForUnopenableDatabasePath() {
