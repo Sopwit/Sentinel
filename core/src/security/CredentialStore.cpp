@@ -121,6 +121,18 @@ CredentialStoreSummary summaryForBackend(CredentialStoreBackend backend,
     };
 }
 
+#if defined(Q_OS_MACOS)
+CFStringRef makeKeychainString(const QByteArray& value) {
+    return CFStringCreateWithCString(kCFAllocatorDefault, value.constData(),
+                                     kCFStringEncodingUTF8);
+}
+
+CFDictionaryRef makeKeychainDictionary(const void** keys, const void** values, CFIndex count) {
+    return CFDictionaryCreate(kCFAllocatorDefault, keys, values, count,
+                              &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+}
+#endif
+
 } // namespace
 
 QString CredentialKey::normalizedProviderId() const {
@@ -417,23 +429,44 @@ public:
             return invalidKeyResult(CredentialBackendOperation::Store, backend(), key);
         }
 #if defined(Q_OS_MACOS)
-        const QByteArray account("Sentinel");
-        const QByteArray service = key.storageKey().toUtf8();
-        const QByteArray data = secret.toUtf8();
-        SecKeychainItemRef item = nullptr;
-        OSStatus status = SecKeychainFindGenericPassword(
-            nullptr, static_cast<UInt32>(service.size()), service.constData(),
-            static_cast<UInt32>(account.size()), account.constData(), nullptr, nullptr, &item);
-        if (status == errSecSuccess && item) {
-            status = SecKeychainItemModifyAttributesAndData(
-                item, nullptr, static_cast<UInt32>(data.size()), data.constData());
-            CFRelease(item);
-        } else if (status == errSecItemNotFound) {
-            status = SecKeychainAddGenericPassword(
-                nullptr, static_cast<UInt32>(service.size()), service.constData(),
-                static_cast<UInt32>(account.size()), account.constData(),
-                static_cast<UInt32>(data.size()), data.constData(), nullptr);
+        CFStringRef service = makeKeychainString(key.storageKey().toUtf8());
+        CFStringRef account = makeKeychainString(QByteArrayLiteral("Sentinel"));
+        const QByteArray secretBytes = secret.toUtf8();
+        CFDataRef data = CFDataCreate(kCFAllocatorDefault,
+                                      reinterpret_cast<const UInt8*>(secretBytes.constData()),
+                                      static_cast<CFIndex>(secretBytes.size()));
+        const void* matchKeys[] = {kSecClass, kSecAttrService, kSecAttrAccount};
+        const void* matchValues[] = {kSecClassGenericPassword, service, account};
+        const void* dataKeys[] = {kSecValueData};
+        const void* dataValues[] = {data};
+        CFDictionaryRef matchQuery =
+            service && account ? makeKeychainDictionary(matchKeys, matchValues, 3) : nullptr;
+        CFDictionaryRef dataUpdate =
+            data ? makeKeychainDictionary(dataKeys, dataValues, 1) : nullptr;
+        OSStatus status = errSecParam;
+        if (matchQuery && dataUpdate)
+            status = SecItemUpdate(matchQuery, dataUpdate);
+        if (status == errSecItemNotFound && matchQuery && service && account && data) {
+            const void* addKeys[] = {kSecClass, kSecAttrService, kSecAttrAccount, kSecValueData,
+                                     kSecAttrAccessible};
+            const void* addValues[] = {kSecClassGenericPassword, service, account, data,
+                                       kSecAttrAccessibleAfterFirstUnlock};
+            CFDictionaryRef addQuery = makeKeychainDictionary(addKeys, addValues, 5);
+            if (addQuery) {
+                status = SecItemAdd(addQuery, nullptr);
+                CFRelease(addQuery);
+            }
         }
+        if (dataUpdate)
+            CFRelease(dataUpdate);
+        if (matchQuery)
+            CFRelease(matchQuery);
+        if (data)
+            CFRelease(data);
+        if (service)
+            CFRelease(service);
+        if (account)
+            CFRelease(account);
         if (status != errSecSuccess) {
             return refusedBackendResult(CredentialBackendOperation::Store, backend(), key,
                                         "macOS Keychain store failed");
@@ -457,20 +490,33 @@ public:
                     std::nullopt};
         }
 #if defined(Q_OS_MACOS)
-        const QByteArray account("Sentinel");
-        const QByteArray service = key.storageKey().toUtf8();
-        UInt32 length = 0;
-        void* bytes = nullptr;
-        const OSStatus status = SecKeychainFindGenericPassword(
-            nullptr, static_cast<UInt32>(service.size()), service.constData(),
-            static_cast<UInt32>(account.size()), account.constData(), &length, &bytes, nullptr);
-        if (status != errSecSuccess) {
+        CFStringRef service = makeKeychainString(key.storageKey().toUtf8());
+        CFStringRef account = makeKeychainString(QByteArrayLiteral("Sentinel"));
+        const void* keys[] = {kSecClass,   kSecAttrService,   kSecAttrAccount,
+                              kSecReturnData, kSecMatchLimit};
+        const void* values[] = {kSecClassGenericPassword, service, account, kCFBooleanTrue,
+                                kSecMatchLimitOne};
+        CFDictionaryRef query =
+            service && account ? makeKeychainDictionary(keys, values, 5) : nullptr;
+        CFTypeRef itemData = nullptr;
+        const OSStatus status =
+            query ? SecItemCopyMatching(query, &itemData) : errSecParam;
+        if (query)
+            CFRelease(query);
+        if (service)
+            CFRelease(service);
+        if (account)
+            CFRelease(account);
+        if (status != errSecSuccess || !itemData) {
             return {refusedBackendResult(CredentialBackendOperation::Read, backend(), key,
                                          "macOS Keychain read failed or credential not found"),
                     std::nullopt};
         }
-        const QString secret = QString::fromUtf8(static_cast<const char*>(bytes), length);
-        SecKeychainItemFreeContent(nullptr, bytes);
+        const CFDataRef data = static_cast<CFDataRef>(itemData);
+        const auto length = static_cast<qsizetype>(CFDataGetLength(data));
+        const auto* bytes = reinterpret_cast<const char*>(CFDataGetBytePtr(data));
+        const QString secret = bytes && length > 0 ? QString::fromUtf8(bytes, length) : QString();
+        CFRelease(itemData);
         return {CredentialBackendResult{CredentialBackendOperation::Read, backend(), true, false,
                                         true, key.normalizedProviderId(),
                                         key.normalizedCredentialName(),
