@@ -78,22 +78,24 @@ Item {
 
         InfoRow {
             compact: false
-            label: qsTr("Use Case")
-            value: root.viewModel.onboardingUseCase ? root.viewModel.onboardingUseCase : qsTr("General Assistant")
+            label: qsTr("Processing")
+            value: root.viewModel.onboardingProcessingMode === "local" ? qsTr("Local")
+                   : root.viewModel.onboardingProcessingMode === "cloud" ? qsTr("Cloud")
+                   : qsTr("Hybrid")
             Layout.fillWidth: true
         }
 
         InfoRow {
             compact: false
             label: qsTr("Provider")
-            value: root.viewModel.onboardingAiProvider ? root.viewModel.onboardingAiProvider : root.viewModel.activeRuntimeProviderLabel
+            value: root.viewModel.onboardingSnapshot.providerId || qsTr("Set up later")
             Layout.fillWidth: true
         }
 
         InfoRow {
             compact: false
             label: qsTr("Model")
-            value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : root.viewModel.selectedLocalModel
+            value: root.viewModel.onboardingSnapshot.modelId || qsTr("Set up later")
             Layout.fillWidth: true
         }
 

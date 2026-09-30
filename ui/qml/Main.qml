@@ -71,7 +71,6 @@ ApplicationWindow {
         }
         function onOnboardingCompleteChanged() {
             if (!root.viewModel.onboardingComplete && !onboardingScreen.active) {
-                onboardingScreen.step = 0
                 onboardingScreen.active = true
             }
         }

@@ -37,15 +37,6 @@ Item {
         }
     }
 
-    function syncOnboardingProvider(id) {
-        switch (id) {
-        case "ollama": root.viewModel.onboardingAiProvider = "Ollama"; break
-        case "lm-studio": root.viewModel.onboardingAiProvider = "LM Studio"; break
-        case "llama-cpp-server": root.viewModel.onboardingAiProvider = "llama.cpp server"; break
-        case "cloud-api": root.viewModel.onboardingAiProvider = "Cloud API"; break
-        }
-    }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: SentinelTheme.spaceLg
@@ -83,7 +74,6 @@ Item {
                 onActivated: (index) => {
                     var id = root.providerIdAt(index)
                     root.viewModel.selectedRuntimeProvider = id
-                    root.syncOnboardingProvider(id)
                 }
             }
         }

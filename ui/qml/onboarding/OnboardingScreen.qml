@@ -12,9 +12,9 @@ Item {
     id: onboarding
     required property var viewModel
 
-    property int step: 0
+    readonly property int step: viewModel.onboardingStepIndex
     property bool active: false
-    readonly property int totalSteps: 9
+    readonly property int totalSteps: 7
     readonly property color brandAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool reducedMotion: viewModel.reducedMotionEnabled
 
@@ -27,14 +27,12 @@ Item {
 
     readonly property var stepMeta: [
         { key: "welcome",      title: qsTr("Welcome"),      caption: qsTr("A calm assistant built around you.") },
-        { key: "privacy",      title: qsTr("Privacy"),      caption: qsTr("Your data stays on your device.") },
-        { key: "appearance",   title: qsTr("Appearance"),   caption: qsTr("Make Sentinel feel like home.") },
+        { key: "processing-mode", title: qsTr("Processing"), caption: qsTr("Choose local, cloud, or hybrid use.") },
         { key: "provider",     title: qsTr("AI Provider"),  caption: qsTr("Connect to models, your way.") },
         { key: "model",        title: qsTr("AI Model"),     caption: qsTr("Choose and download a model.") },
-        { key: "settings",     title: qsTr("Preferences"),  caption: qsTr("Fine-tune your local assistant.") },
         { key: "voice",        title: qsTr("Voice Setup"),  caption: qsTr("Configure voice engines and models.") },
-        { key: "capabilities", title: qsTr("Capabilities"), caption: qsTr("Everything Sentinel can do.") },
-        { key: "finish",       title: qsTr("Finish"),       caption: qsTr("You're ready to begin.") }
+        { key: "privacy",      title: qsTr("Privacy"),      caption: qsTr("Review processing and permissions.") },
+        { key: "ready",        title: qsTr("Ready"),        caption: qsTr("You can begin without optional integrations.") }
     ]
 
     // ── Ambient background ──────────────────────────────────────────────────
@@ -240,11 +238,7 @@ Item {
                         viewModel: onboarding.viewModel
                     }
 
-                    PrivacyConsentStep {
-                        viewModel: onboarding.viewModel
-                    }
-
-                    AppearanceStep {
+                    ProcessingModeStep {
                         viewModel: onboarding.viewModel
                     }
 
@@ -256,15 +250,11 @@ Item {
                         viewModel: onboarding.viewModel
                     }
 
-                    PreferencesStep {
-                        viewModel: onboarding.viewModel
-                    }
-
                     VoiceSetupStep {
                         viewModel: onboarding.viewModel
                     }
 
-                    CapabilitiesStep {
+                    PrivacyConsentStep {
                         viewModel: onboarding.viewModel
                     }
 
@@ -276,6 +266,15 @@ Item {
         }
 
         // Footer navigation
+        Label {
+            Layout.fillWidth: true
+            visible: onboarding.viewModel.onboardingErrorText.length > 0
+            text: onboarding.viewModel.onboardingErrorText
+            color: SentinelTheme.errorText
+            wrapMode: Text.WordWrap
+            Accessible.name: text
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceMd
@@ -283,7 +282,7 @@ Item {
             SentinelButton {
                 text: qsTr("Back")
                 enabled: onboarding.step > 0
-                onClicked: onboarding.step--
+                onClicked: onboarding.viewModel.backOnboarding()
             }
 
             Item { Layout.fillWidth: true }
@@ -295,7 +294,7 @@ Item {
                 implicitWidth: 140
                 onClicked: {
                     if (onboarding.step < onboarding.totalSteps - 1) {
-                        onboarding.step++
+                        onboarding.viewModel.advanceOnboarding()
                     } else {
                         onboarding.viewModel.onboardingComplete = true
                         onboarding.active = false

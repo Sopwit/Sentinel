@@ -227,15 +227,12 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SecuritySettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SystemSettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/OnboardingScreen.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/OnboardingToggle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/WelcomeStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/PrivacyConsentStep.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/AppearanceStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/ProcessingModeStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/ProviderSetupStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/ModelSetupStep.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/PreferencesStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/VoiceSetupStep.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/CapabilitiesStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/FinishStep.qml
 )
 

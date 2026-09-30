@@ -78,10 +78,8 @@ SystemSettingsTab 1.0 pages/settings/SystemSettingsTab.qml
 OnboardingScreen 1.0 onboarding/OnboardingScreen.qml
 WelcomeStep 1.0 onboarding/WelcomeStep.qml
 PrivacyConsentStep 1.0 onboarding/PrivacyConsentStep.qml
-AppearanceStep 1.0 onboarding/AppearanceStep.qml
+ProcessingModeStep 1.0 onboarding/ProcessingModeStep.qml
 ProviderSetupStep 1.0 onboarding/ProviderSetupStep.qml
 ModelSetupStep 1.0 onboarding/ModelSetupStep.qml
-PreferencesStep 1.0 onboarding/PreferencesStep.qml
 VoiceSetupStep 1.0 onboarding/VoiceSetupStep.qml
-CapabilitiesStep 1.0 onboarding/CapabilitiesStep.qml
 FinishStep 1.0 onboarding/FinishStep.qml
