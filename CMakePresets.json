@@ -56,9 +56,15 @@
     },
     {
       "name": "no-ccache",
-      "displayName": "Debug without ccache wrapper",
+      "displayName": "Debug with ccache disabled",
       "inherits": "debug",
-      "binaryDir": "${sourceDir}/build/no-ccache"
+      "binaryDir": "${sourceDir}/build/no-ccache",
+      "environment": {
+        "CCACHE_DISABLE": "1"
+      },
+      "cacheVariables": {
+        "SENTINEL_USE_CCACHE": "OFF"
+      }
     },
     {
       "name": "asan",
