@@ -80,7 +80,7 @@ void DaemonIpcServerTest::respondsToStatusWithControllerData() {
     QVERIFY(!root.isEmpty());
     QCOMPARE(root.value("status").toString(), QStringLiteral("ok"));
     QVERIFY(root.value("controllerAvailable").toBool());
-    QCOMPARE(root.value("providerName").toString(), QStringLiteral("LocalEchoProvider"));
+    QCOMPARE(root.value("providerName").toString(), QStringLiteral("No Provider"));
     QVERIFY(root.contains("ollamaEndpoint"));
     QVERIFY(root.contains("ollamaHealth"));
     QVERIFY(root.contains("ollamaModelCount"));

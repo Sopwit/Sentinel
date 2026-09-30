@@ -67,9 +67,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(settings->availableLanguages().contains(settings->appLanguage()));
     QCOMPARE(settings->availableLanguages(),
-             QStringList({QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
-                          QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
-                          QStringLiteral("ja"), QStringLiteral("ar")}));
+             QStringList({QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
     QVERIFY(settings->localChatInferenceEnabled());

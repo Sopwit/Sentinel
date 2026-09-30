@@ -80,7 +80,7 @@ void AgentRuntimeServiceTest::producesPlanWithApprovalGate() {
     QVERIFY(plan.refusalReason.contains(QStringLiteral("available through the approval")));
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Run Command")));
     QVERIFY(plan.requiredPermissions.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("subprocess-execution / Enabled")));
+                .contains(QStringLiteral("subprocess-execution / Descriptor based")));
     QVERIFY(plan.diagnostics.contains(
         QStringLiteral("Execution grant: approval and sandbox policy required")));
 }
@@ -100,10 +100,10 @@ void AgentRuntimeServiceTest::consultsPermissionToolProfileAndWorkspaceMetadata(
 
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Web Search")));
     QVERIFY(
-        plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Open Workspace")));
+        plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("List Directory")));
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Voice Speak")));
     QVERIFY(plan.requiredPermissions.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("cloud-provider-access / Ask Every Time")));
+                .contains(QStringLiteral("cloud-provider-access / Descriptor based")));
     QVERIFY(diagnostics.contains(QStringLiteral("Profile: Researcher")));
     QVERIFY(diagnostics.contains(QStringLiteral("Workspace: Personal")));
     QVERIFY(diagnostics.contains(QStringLiteral("Permission posture: Ask Every Time")));

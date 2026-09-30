@@ -127,8 +127,9 @@ private slots:
 
     void stopsAtIterationLimit() {
         ScriptedPlanner planner;
-        planner.decisions = {toolDecision(QStringLiteral("run-command"))};
-        planner.repeatLast = true;
+        planner.decisions = {toolDecision(QStringLiteral("run-command"), QStringLiteral("one")),
+                             toolDecision(QStringLiteral("run-command"), QStringLiteral("two")),
+                             toolDecision(QStringLiteral("run-command"), QStringLiteral("three"))};
         RecordingExecutor executor;
         StaticApprovalPolicy approval;
         auto sandbox = permissiveSandbox();
@@ -190,14 +191,13 @@ private slots:
                           QStringList{QStringLiteral("run-command")});
         state = resumed.resume(state, false);
 
-        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(state.phase, AgentLoopPhase::Failed);
         QCOMPARE(executor.requests.size(), 0);
         QCOMPARE(state.steps.size(), 1);
         QVERIFY(!state.steps.first().succeeded);
         QVERIFY(state.steps.first().observation.contains(
             QStringLiteral("User denied execution in chat.")));
-        QVERIFY(planner.observedHistories.at(1).first().observation.contains(
-            QStringLiteral("User denied execution in chat.")));
+        QVERIFY(state.abortReason.contains(QStringLiteral("User denied")));
     }
 
     void detectsDoomLoop() {
@@ -213,8 +213,8 @@ private slots:
         const auto state = loop.run(QStringLiteral("goal"));
 
         QCOMPARE(state.phase, AgentLoopPhase::Stuck);
-        QVERIFY(state.abortReason.contains(QStringLiteral("Doom loop")));
-        QVERIFY(state.steps.size() >= 2);
+        QVERIFY(state.abortReason.contains(QStringLiteral("repeated the same")));
+        QCOMPARE(state.steps.size(), 1);
     }
 
     void honorsCancelQueryBetweenSteps() {

@@ -30,6 +30,7 @@ void ProcessExecutorTest::outputAndExit() {
     QByteArray out, err;
     QStringList transitions;
     ProcessRequest request;
+    request.unconfinedPermitted = true;
     request.program = QStringLiteral("/bin/sh");
     request.arguments = {QStringLiteral("-c"),
                          QStringLiteral("printf 'line1\nline2\n'; printf 'problem\n' >&2; exit 7")};
@@ -57,6 +58,7 @@ void ProcessExecutorTest::outputAndExit() {
 void ProcessExecutorTest::failedStart() {
     ProcessExecutor executor;
     ProcessRequest request;
+    request.unconfinedPermitted = true;
     request.program = QStringLiteral("/nonexistent/sentinel-process-test");
     const auto id = executor.start(request, [&](const ProcessRecord& record) {
         if (record.state == ProcessState::Failed)
@@ -73,6 +75,7 @@ void ProcessExecutorTest::timeoutAndCancellation() {
 #endif
     ProcessExecutor executor;
     ProcessRequest request;
+    request.unconfinedPermitted = true;
     request.program = QStringLiteral("/bin/sh");
     request.arguments = {QStringLiteral("-c"), QStringLiteral("sleep 30")};
     request.timeoutMs = 50;
@@ -96,6 +99,7 @@ void ProcessExecutorTest::concurrentOwnership() {
     QStringList ids;
     for (const auto& session : {QStringLiteral("one"), QStringLiteral("two")}) {
         ProcessRequest request;
+        request.unconfinedPermitted = true;
         request.program = QStringLiteral("/bin/sh");
         request.arguments = {QStringLiteral("-c"), QStringLiteral("printf ready")};
         request.sessionId = session;
@@ -117,6 +121,7 @@ void ProcessExecutorTest::cancellationAndShutdown() {
 #endif
     ProcessExecutor executor;
     ProcessRequest request;
+    request.unconfinedPermitted = true;
     request.program = QStringLiteral("/bin/sh");
     request.arguments = {QStringLiteral("-c"), QStringLiteral("exec sleep 30")};
     request.timeoutMs = 60000;

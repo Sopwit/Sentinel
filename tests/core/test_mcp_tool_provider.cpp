@@ -205,14 +205,19 @@ void McpToolProviderTest::cancellationAndFailedRefresh() {
     NoFallback fallback;
     ToolExecutionGateway gateway(&registry);
     int completions = 0;
-    auto cancel = gateway.executeAsync(request, fallback, {}, {}, {}, [&](auto) { ++completions; });
+    ToolExecutionResult cancelled;
+    auto cancel = gateway.executeAsync(request, fallback, {}, {}, {}, [&](auto result) {
+        cancelled = result;
+        ++completions;
+    });
     cancel();
     service->pending({{"result", QJsonObject{{"content", QJsonArray{}}}}});
-    QCOMPARE(completions, 0);
+    QCOMPARE(completions, 1);
+    QCOMPARE(cancelled.status, ToolExecutionStatus::Cancelled);
     service->definitions[QStringLiteral("test")].append({QStringLiteral("alpha"), {}, {}, {}});
     QVERIFY(!provider.refresh(QStringLiteral("test")));
-    QVERIFY(registry.findRegistration(QStringLiteral("mcp.test.alpha")));
-    QCOMPARE(registry.enabledTools().size(), 1);
+    QVERIFY(!registry.findRegistration(QStringLiteral("mcp.test.alpha")));
+    QCOMPARE(registry.enabledTools().size(), 0);
 }
 
 QTEST_MAIN(McpToolProviderTest)

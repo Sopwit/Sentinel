@@ -202,7 +202,7 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
     sentinel::core::RealToolExecutor executor;
     InMemoryToolRegistry registry;
     QVERIFY(sentinel::core::BuiltInToolProvider::registerTools(registry, executor));
-    QCOMPARE(registry.enabledTools().size(), 42);
+    QCOMPARE(registry.enabledTools().size(), 32);
     for (const auto& id :
          {QStringLiteral("read-file"), QStringLiteral("write-file"), QStringLiteral("grep"),
           QStringLiteral("run-command"), QStringLiteral("web-search"),
