@@ -279,22 +279,13 @@ private slots:
     void voiceRuntimeConfigurationReportsMissingAndReadyMetadata();
     void voiceRuntimeConfigurationRefusesUnsafeNonLocalPaths();
     void nullWhisperTranscriptionClientRefusesWithoutSideEffects();
-    void localWhisperTranscriptionRefusesMissingUnsafeAndNonLocalInput();
-    void localWhisperTranscriptionReportsTimeoutFallbackWithoutExecution();
-    void localWhisperTranscriptionExecutesControlledSubprocessWhenEnabled();
-    void localWhisperTranscriptionAttemptsSubprocessWhenExecutionEnabled();
+    void retiredDirectVoiceClientsRefuseWithoutExecuting();
     void nullPiperSynthesisClientRefusesWithoutSideEffects();
-    void localPiperSynthesisRefusesMissingUnsafeAndNonLocalInput();
-    void localPiperSynthesisReportsTimeoutFallbackWithoutExecution();
-    void localPiperSynthesisExecutesControlledSubprocessWhenEnabled();
-    void localPiperSynthesisAttemptsSubprocessWhenExecutionEnabled();
     void nullPiperTtsClientRefusesWithoutSideEffects();
     void piperTextToSpeechProviderRefusesMissingBinaryAndModel();
     void piperTextToSpeechProviderReportsSafetyBlockedMetadata();
     void piperFileOutputRefusesPolicyBlockedAndInvalidRequests();
     void piperLegacyFileOutputRefusesWithoutSideEffects();
-    void localPiperTtsClientExecutesControlledSubprocessWhenEnabled();
-    void whisperSpeechToTextProviderExecutesControlledSubprocessWhenEnabled();
     void whisperSpeechToTextProviderReportsDisabledAndMissingMetadata();
 };
 
@@ -739,146 +730,49 @@ void VoiceTest::nullWhisperTranscriptionClientRefusesWithoutSideEffects() {
     QCOMPARE(result.traces.size(), 1);
 }
 
-void VoiceTest::localWhisperTranscriptionRefusesMissingUnsafeAndNonLocalInput() {
+void VoiceTest::retiredDirectVoiceClientsRefuseWithoutExecuting() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
-    LocalWhisperTranscriptionClient client;
-    auto config = configuredWhisperTranscriptionConfig({}, {});
+    const auto marker = dir.filePath(QStringLiteral("unexpected-execution"));
+    const auto script = QByteArray("#!/bin/sh\ntouch ") + marker.toUtf8() + QByteArray("\n");
+    const auto binary = dir.filePath(QStringLiteral("voice-tool"));
+    QVERIFY(writeFile(binary, script));
+    makeExecutable(binary);
+    const auto model = dir.filePath(QStringLiteral("voice-model"));
+    const auto audio = dir.filePath(QStringLiteral("input.wav"));
+    QVERIFY(writeFile(model, "model"));
+    QVERIFY(writeFile(audio, "audio"));
 
-    auto result = client.transcribe(WhisperTranscriptionRequest{}, config);
-    QCOMPARE(result.status, WhisperTranscriptionStatus::Disabled);
-    QVERIFY(!result.executionAttempted);
+    LocalWhisperTranscriptionClient whisper;
+    const auto whisperResult = whisper.transcribe(
+        WhisperTranscriptionRequest{audio, {}, true, true, false, false, false, false, 5000},
+        configuredWhisperTranscriptionConfig(binary, model, true));
+    QCOMPARE(whisper.status(), WhisperTranscriptionStatus::Refused);
+    QCOMPARE(whisperResult.status, WhisperTranscriptionStatus::Refused);
+    QVERIFY(!whisperResult.executionAttempted);
+    QVERIFY(whisperResult.transcript.isEmpty());
 
-    config = configuredWhisperTranscriptionConfig(QStringLiteral("https://example.invalid/whisper"),
-                                                  QStringLiteral("/local/model.bin"));
-    result = client.transcribe(WhisperTranscriptionRequest{dir.filePath(QStringLiteral("a.wav"))},
-                               config);
-    QCOMPARE(result.status, WhisperTranscriptionStatus::UnsafePath);
-    QVERIFY(!result.summary.contains(QStringLiteral("https://example.invalid")));
+    LocalPiperSynthesisClient synthesis;
+    const auto synthesisResult = synthesis.synthesize(
+        PiperSynthesisRequest{QStringLiteral("hello"), {}, {}, true, true, false, false,
+                              false, false, false, 5000},
+        configuredPiperSynthesisConfig(binary, model, true));
+    QCOMPARE(synthesis.status(), PiperSynthesisStatus::Refused);
+    QCOMPARE(synthesisResult.status, PiperSynthesisStatus::Refused);
+    QVERIFY(!synthesisResult.executionAttempted);
 
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
-    const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-#if !defined(Q_OS_WIN)
-    QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                                  QFileDevice::ExeOwner));
-#endif
-    QVERIFY(writeFile(modelPath, "model"));
-    config = configuredWhisperTranscriptionConfig(binaryPath, modelPath);
-
-    result = client.transcribe(WhisperTranscriptionRequest{audioPath}, config);
-    QCOMPARE(result.status, WhisperTranscriptionStatus::MissingAudio);
-    QVERIFY(!result.executionAttempted);
-
-    QVERIFY(writeFile(audioPath, "audio"));
-    result = client.transcribe(
-        WhisperTranscriptionRequest{audioPath, {}, false, true, false, false, false, false, 100},
-        config);
-    QCOMPARE(result.status, WhisperTranscriptionStatus::UnsafePath);
-    QVERIFY(!result.executionAttempted);
-
-    result = client.transcribe(
-        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 100},
-        config);
-    QCOMPARE(result.status, WhisperTranscriptionStatus::Refused);
-    QVERIFY(result.summary.contains(QStringLiteral("No subprocess")));
-    QVERIFY(!result.executionAttempted);
-    QVERIFY(result.transcript.isEmpty());
-
-    const auto readiness =
-        whisperTranscriptionReadiness(config, WhisperTranscriptionRequest{audioPath});
-    QCOMPARE(readiness.status, WhisperTranscriptionStatus::ReadyMetadata);
-    QVERIFY(!whisperTranscriptionSafetyReport(config.policy).executionAttempted);
-    QCOMPARE(whisperTranscriptionStatusName(readiness.status), QStringLiteral("Ready Metadata"));
+    LocalPiperTtsClient tts;
+    auto config = configuredPiperConfig(dir);
+    config.processExecutionAllowed = true;
+    const auto ttsResult = tts.synthesize(
+        PiperTtsRequest{QStringLiteral("hello"), {}, dir.filePath(QStringLiteral("out.wav")),
+                        true, true, false, 5000}, config);
+    QCOMPARE(tts.status(), PiperTtsStatus::Refused);
+    QCOMPARE(ttsResult.status, PiperTtsStatus::Refused);
+    QVERIFY(!ttsResult.success);
+    QVERIFY(!QFile::exists(marker));
 }
 
-void VoiceTest::localWhisperTranscriptionReportsTimeoutFallbackWithoutExecution() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
-    const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-    QVERIFY(writeFile(audioPath, "audio"));
-
-    LocalWhisperTranscriptionClient client;
-    const auto result = client.transcribe(
-        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 0},
-        configuredWhisperTranscriptionConfig(binaryPath, modelPath));
-
-    QCOMPARE(result.status, WhisperTranscriptionStatus::Timeout);
-    QVERIFY(result.fallback.summary.contains(QStringLiteral("timeout")));
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(QStringLiteral("Timeout")));
-    QVERIFY(!result.executionAttempted);
-    QVERIFY(!result.safetyReport.executionAttempted);
-    QVERIFY(result.transcriptSummary.contains(QStringLiteral("No transcript")));
-}
-
-void VoiceTest::localWhisperTranscriptionExecutesControlledSubprocessWhenEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
-    const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\necho HELLO WORLD\nexit 0\n"));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-    QVERIFY(writeFile(audioPath, "audio"));
-
-    LocalWhisperTranscriptionClient client;
-    const auto result = client.transcribe(
-        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 5000},
-        configuredWhisperTranscriptionConfig(binaryPath, modelPath, true));
-
-    QCOMPARE(result.status, WhisperTranscriptionStatus::Succeeded);
-    QVERIFY(result.success);
-    QVERIFY(result.transcript.contains(QStringLiteral("HELLO WORLD")));
-    QVERIFY(result.executionAttempted);
-    QVERIFY(result.safetyReport.executionAttempted);
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(QStringLiteral("code 0")));
-}
-
-void VoiceTest::localWhisperTranscriptionAttemptsSubprocessWhenExecutionEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
-    const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-    QVERIFY(writeFile(audioPath, "audio"));
-
-    LocalWhisperTranscriptionClient client;
-    const auto result = client.transcribe(
-        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 5000},
-        configuredWhisperTranscriptionConfig(binaryPath, modelPath, true));
-
-    QVERIFY(result.executionAttempted);
-    QVERIFY(result.status != WhisperTranscriptionStatus::Refused);
-    QVERIFY(result.status != WhisperTranscriptionStatus::SafetyBlocked);
-    QVERIFY(result.traces.join(QStringLiteral(" "))
-                .contains(QStringLiteral("started a controlled subprocess")));
-}
 
 void VoiceTest::nullPiperSynthesisClientRefusesWithoutSideEffects() {
     NullPiperSynthesisClient client;
@@ -893,143 +787,6 @@ void VoiceTest::nullPiperSynthesisClientRefusesWithoutSideEffects() {
     QVERIFY(!result.safetyReport.executionAttempted);
     QVERIFY(safePiperSynthesisResultSummary(result).contains(QStringLiteral("disabled")));
     QCOMPARE(result.traces.size(), 1);
-}
-
-void VoiceTest::localPiperSynthesisRefusesMissingUnsafeAndNonLocalInput() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    LocalPiperSynthesisClient client;
-    auto config = configuredPiperSynthesisConfig({}, {});
-
-    auto result = client.synthesize(PiperSynthesisRequest{}, config);
-    QCOMPARE(result.status, PiperSynthesisStatus::Disabled);
-    QVERIFY(!result.executionAttempted);
-
-    config = configuredPiperSynthesisConfig(QStringLiteral("https://example.invalid/piper"),
-                                            QStringLiteral("/local/voice.onnx"));
-    result = client.synthesize(PiperSynthesisRequest{QStringLiteral("hello")}, config);
-    QCOMPARE(result.status, PiperSynthesisStatus::UnsafePath);
-    QVERIFY(!result.summary.contains(QStringLiteral("https://example.invalid")));
-
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("piper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("piper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-#if !defined(Q_OS_WIN)
-    QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                                  QFileDevice::ExeOwner));
-#endif
-    config = configuredPiperSynthesisConfig(binaryPath, modelPath);
-    result = client.synthesize(PiperSynthesisRequest{QStringLiteral("hello")}, config);
-    QCOMPARE(result.status, PiperSynthesisStatus::MissingModel);
-    QVERIFY(!result.executionAttempted);
-
-    QVERIFY(writeFile(modelPath, "model"));
-    config = configuredPiperSynthesisConfig(binaryPath, modelPath);
-    result = client.synthesize(
-        PiperSynthesisRequest{
-            QStringLiteral("hello"), {}, {}, false, true, false, false, false, false, false, 100},
-        config);
-    QCOMPARE(result.status, PiperSynthesisStatus::UnsafePath);
-    QVERIFY(!result.executionAttempted);
-
-    result = client.synthesize(
-        PiperSynthesisRequest{
-            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 100},
-        config);
-    QCOMPARE(result.status, PiperSynthesisStatus::Refused);
-    QVERIFY(result.summary.contains(QStringLiteral("No subprocess")));
-    QVERIFY(!result.executionAttempted);
-
-    const auto readiness =
-        piperSynthesisReadiness(config, PiperSynthesisRequest{QStringLiteral("hello")});
-    QCOMPARE(readiness.status, PiperSynthesisStatus::ReadyMetadata);
-    QVERIFY(!piperSynthesisSafetyReport(config.policy).executionAttempted);
-    QCOMPARE(piperSynthesisStatusName(readiness.status), QStringLiteral("Ready Metadata"));
-}
-
-void VoiceTest::localPiperSynthesisReportsTimeoutFallbackWithoutExecution() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("piper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("piper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-
-    LocalPiperSynthesisClient client;
-    const auto result = client.synthesize(
-        PiperSynthesisRequest{
-            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 0},
-        configuredPiperSynthesisConfig(binaryPath, modelPath));
-
-    QCOMPARE(result.status, PiperSynthesisStatus::Timeout);
-    QVERIFY(result.fallback.summary.contains(QStringLiteral("timeout")));
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(QStringLiteral("Timeout")));
-    QVERIFY(!result.executionAttempted);
-    QVERIFY(!result.safetyReport.executionAttempted);
-    QVERIFY(result.audioSummary.contains(QStringLiteral("No audio")));
-}
-
-void VoiceTest::localPiperSynthesisExecutesControlledSubprocessWhenEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("piper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("piper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(
-        binaryPath, "#!/bin/sh\nfor a in \"$@\"; do last=\"$a\"; done\ntouch \"$last\"\nexit 0\n"));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-
-    LocalPiperSynthesisClient client;
-    const auto result = client.synthesize(
-        PiperSynthesisRequest{
-            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 5000},
-        configuredPiperSynthesisConfig(binaryPath, modelPath, true));
-
-    QCOMPARE(result.status, PiperSynthesisStatus::Succeeded);
-    QVERIFY(result.success);
-    QVERIFY(result.executionAttempted);
-    QVERIFY(result.audioSummary.contains(QStringLiteral("Controlled local audio file")));
-    QVERIFY(result.safetyReport.executionAttempted);
-    QVERIFY(result.traces.join(QStringLiteral(" ")).contains(QStringLiteral("code 0")));
-}
-
-void VoiceTest::localPiperSynthesisAttemptsSubprocessWhenExecutionEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("piper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("piper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, QByteArray()));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-
-    LocalPiperSynthesisClient client;
-    const auto result = client.synthesize(
-        PiperSynthesisRequest{
-            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 5000},
-        configuredPiperSynthesisConfig(binaryPath, modelPath, true));
-
-    QVERIFY(result.executionAttempted);
-    QVERIFY(result.status != PiperSynthesisStatus::Refused);
-    QVERIFY(result.status != PiperSynthesisStatus::SafetyBlocked);
-    QVERIFY(result.traces.join(QStringLiteral(" "))
-                .contains(QStringLiteral("started a controlled subprocess")));
 }
 
 void VoiceTest::nullPiperTtsClientRefusesWithoutSideEffects() {
@@ -1189,77 +946,6 @@ void VoiceTest::piperLegacyFileOutputRefusesWithoutSideEffects() {
     QCOMPARE(result.timeoutMs, 100);
     QCOMPARE(result.exitCode, -1);
     QVERIFY(result.summary.contains(QStringLiteral("refused")));
-}
-
-void VoiceTest::localPiperTtsClientExecutesControlledSubprocessWhenEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    auto config = configuredPiperConfig(dir);
-    config.processExecutionAllowed = true;
-    config.fileOutputAllowed = true;
-    config.voiceModel.speaker = QStringLiteral("female");
-
-    const auto outputPath =
-        QDir(config.controlledOutputDirectory).filePath(QStringLiteral("sentinel-piper-tts.wav"));
-    const auto script = QStringLiteral(
-        "#!/bin/sh\n"
-        "prev=\"\"\n"
-        "for arg in \"$@\"; do\n"
-        "  if [ \"$prev\" = \"--output_file\" ]; then printf 'fake-wav' > \"$arg\"; fi\n"
-        "  prev=\"$arg\"\n"
-        "done\n"
-        "exit 0\n");
-    QVERIFY(writeFile(config.binary.expectedPath, script.toUtf8()));
-    makeExecutable(config.binary.expectedPath);
-
-    LocalPiperTtsClient client;
-    const auto result = client.synthesize(
-        PiperTtsRequest{
-            QStringLiteral("hello"), {}, outputPath, true, true, false, config.timeoutMs},
-        config);
-
-    QCOMPARE(result.status, PiperTtsStatus::Succeeded);
-    QVERIFY(result.success);
-    QVERIFY(result.audioPath == outputPath);
-    QVERIFY(QFile::exists(outputPath));
-    QCOMPARE(result.exitCode, 0);
-}
-
-void VoiceTest::whisperSpeechToTextProviderExecutesControlledSubprocessWhenEnabled() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-#ifdef Q_OS_WIN
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper.exe"));
-#else
-    const auto binaryPath = dir.filePath(QStringLiteral("whisper"));
-#endif
-    const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
-    const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\necho HELLO WORLD\nexit 0\n"));
-    makeExecutable(binaryPath);
-    QVERIFY(writeFile(modelPath, "model"));
-    QVERIFY(writeFile(audioPath, "audio"));
-
-    auto config = configuredWhisperTranscriptionConfig(binaryPath, modelPath, true);
-    config.policy.processExecutionAllowed = true;
-    WhisperSpeechToTextProvider provider{config,
-                                         std::make_unique<LocalWhisperTranscriptionClient>()};
-
-    QCOMPARE(provider.descriptor().id, QStringLiteral("whisper-stt"));
-    QCOMPARE(provider.status(), WhisperTranscriptionStatus::ReadyMetadata);
-
-    const auto result = provider.transcribeWhisper(
-        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 5000});
-    QCOMPARE(result.status, WhisperTranscriptionStatus::Succeeded);
-    QVERIFY(result.success);
-    QVERIFY(result.transcript.contains(QStringLiteral("HELLO WORLD")));
-    QVERIFY(result.executionAttempted);
-
-    const auto response =
-        provider.transcribe(VoiceRequest{audioPath, {}, VoiceRuntimeMode::FutureLocal});
-    QCOMPARE(response.status, VoiceProviderStatus::MetadataOnly);
-    QVERIFY(response.available);
-    QVERIFY(response.text.contains(QStringLiteral("HELLO WORLD")));
 }
 
 void VoiceTest::whisperSpeechToTextProviderReportsDisabledAndMissingMetadata() {

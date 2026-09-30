@@ -11,6 +11,7 @@
 #include "sentinel/core/agent/SQLiteAgentRunStore.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/WorkspaceService.h"
 #include "sentinel/core/app/ControlledTaskService.h"
 #include "sentinel/core/app/StaticTaskPlanner.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
@@ -105,6 +106,8 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
     case LocalInferenceError::StreamInterrupted:
         return QStringLiteral("Local inference failed: the Ollama stream ended before a complete "
                               "assistant response was received.");
+    case LocalInferenceError::Offline:
+        return QStringLiteral("Inference blocked by network policy.");
     case LocalInferenceError::BusyRequest:
         return QStringLiteral("Local inference is already running. Wait for the current request "
                               "to finish before sending another message.");
@@ -797,12 +800,12 @@ ApplicationController::ApplicationController(
       textToSpeechProvider_(textToSpeechProvider ? std::move(textToSpeechProvider)
                                                  : std::make_unique<PiperTextToSpeechProvider>(
                                                        defaultDisabledPiperTtsConfig(),
-                                                       std::make_unique<LocalPiperTtsClient>())),
+                                                       std::make_unique<NullPiperTtsClient>())),
       speechToTextProvider_(speechToTextProvider
                                 ? std::move(speechToTextProvider)
                                 : std::make_unique<WhisperSpeechToTextProvider>(
                                       defaultDisabledWhisperTranscriptionConfig(),
-                                      std::make_unique<LocalWhisperTranscriptionClient>())),
+                                      std::make_unique<NullWhisperTranscriptionClient>())),
       voiceRuntimeCoordinator_(voiceRuntimeCoordinator
                                    ? std::move(voiceRuntimeCoordinator)
                                    : std::make_unique<StaticVoiceRuntimeCoordinator>()),
@@ -813,9 +816,7 @@ ApplicationController::ApplicationController(
           piperTextToSpeechProvider
               ? std::move(piperTextToSpeechProvider)
               : std::make_unique<PiperTextToSpeechProvider>(
-                    defaultDisabledPiperTtsConfig(), std::make_unique<LocalPiperTtsClient>())),
-      piperSynthesisClient_(std::make_unique<LocalPiperSynthesisClient>()),
-      whisperTranscriptionClient_(std::make_unique<LocalWhisperTranscriptionClient>()),
+                    defaultDisabledPiperTtsConfig(), std::make_unique<NullPiperTtsClient>())),
       memoryStore_(std::move(memoryStore)),
       memoryCandidateStore_(std::make_unique<InMemoryMemoryCandidateStore>()),
       chatSession_(chatSession ? std::move(chatSession)
@@ -838,6 +839,8 @@ ApplicationController::ApplicationController(
     modelService_->setLlamaCppEndpoint(llamaCppEndpoint());
     modelService_->setLocalInferenceTimeoutMs(localInferenceTimeoutMs_);
     modelLibrary_ = std::make_unique<ModelLibraryService>(*modelService_);
+    speechAssetCatalog_ = std::make_unique<SpeechAssetCatalogAdapter>();
+    modelLibrary_->addSourceAdapter(speechAssetCatalog_.get());
     modelOperations_ = std::make_unique<ModelOperationService>(*modelService_, *modelLibrary_);
     modelOperations_->setOllamaEndpoint(ollamaEndpoint());
     modelOperations_->setLmStudioEndpoint(lmStudioEndpoint());
@@ -860,6 +863,8 @@ ApplicationController::ApplicationController(
             std::make_shared<SQLitePermissionGrantStore>(
                 QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
                     .filePath(QStringLiteral("permission_grants.sqlite3"))));
+        if (auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get()))
+            runtime->extensionService().setModelService(modelService_.get());
         QPointer<ApplicationController> self(this);
         agentEventSubscriptionId_ = agentRuntime_->subscribe([self](const AgentEvent& event) {
             if (!self)
@@ -986,6 +991,55 @@ ApplicationController::ApplicationController(
     ollamaPollTimer_ = new QTimer(this);
     connect(ollamaPollTimer_, &QTimer::timeout, this, &ApplicationController::pollOllama);
     ollamaPollTimer_->start(5000);
+    audioSession_ = new VoiceSessionService(this);
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
+        audioSession_->setFileSystemService(executor->fileSystemService());
+        const auto cwd = QDir::currentPath();
+        audioSession_->setFileAuthorization([executor, cwd](const QString& path) {
+            return executor->authorizeAudioRead(path, cwd);
+        }, cwd);
+    }
+    if (modelLibrary_) audioSession_->setHardwareFacts(modelLibrary_->hardwareFacts());
+    updateWhisperSttProviderConfig();
+    updatePiperTtsProviderConfig();
+    audioSession_->setChatBridge([this](const QString& transcript,
+                                      std::function<void(QString)> completion) {
+        if (!chatMode_) { completion({}); return; }
+        auto connection = std::make_shared<QMetaObject::Connection>();
+        *connection = connect(chatMode_.get(), &ChatModeService::requestStateChanged, this,
+            [this, completion, connection] {
+                if (!chatMode_ || chatMode_->busy()) return;
+                disconnect(*connection);
+                const auto& history = chatSession_->messages();
+                completion(!history.isEmpty() && history.last().role == ChatRole::Assistant &&
+                           history.last().status == ChatMessageStatus::Completed
+                               ? history.last().content : QString{});
+            });
+        if (!sendMessage(transcript)) { disconnect(*connection); completion({}); }
+    });
+    audioSession_->setAgentBridge([this](const QString& transcript,
+                                       std::function<void(QString, bool)> completion) {
+        if (agentLoopActive()) { completion({}, false); return; }
+        auto connection = std::make_shared<QMetaObject::Connection>();
+        auto approvalShown = std::make_shared<bool>(false);
+        *connection = connect(this, &ApplicationController::agentStatusChanged, this,
+            [this, completion, connection, approvalShown] {
+                const auto state = currentAgentSessionState();
+                if (state.phase == AgentLoopPhase::AwaitingApproval && !*approvalShown) {
+                    *approvalShown = true;
+                    completion({}, true);
+                } else if (state.phase == AgentLoopPhase::Completed ||
+                           state.phase == AgentLoopPhase::Failed ||
+                           state.phase == AgentLoopPhase::Cancelled ||
+                           state.phase == AgentLoopPhase::Stuck) {
+                    disconnect(*connection);
+                    completion(state.phase == AgentLoopPhase::Completed ? state.finalAnswer : QString{}, false);
+                }
+            });
+        if (!runAgentRequest(transcript)) { disconnect(*connection); completion({}, false); }
+    });
+    audioSession_->setBridgeCancellation([this] { stopChatGeneration(); },
+                                         [this] { cancelAgentRun(); });
 }
 
 ApplicationController::~ApplicationController() {
@@ -3177,14 +3231,11 @@ void ApplicationController::updatePiperTtsProviderConfig() {
         modelConfigured ? piperModelPath_.trimmed() : QStringLiteral("not configured");
     config.voiceModel.loadAllowed = piperFileOutputExecutionEnabled_;
     config.controlledOutputDirectory =
-        binaryConfigured
-            ? QDir(QFileInfo(piperBinaryPath_).absolutePath())
-                  .filePath(QStringLiteral("piper-tts-cache"))
-            : QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation).isEmpty()
-                       ? QDir::tempPath()
-                       : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
-                  .filePath(QStringLiteral("piper-tts"));
-    config.timeoutMs = 15000;
+        QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation).isEmpty()
+                 ? QDir::tempPath()
+                 : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+            .filePath(QStringLiteral("piper-tts"));
+    config.timeoutMs = 60000;
     config.summary =
         piperFileOutputExecutionEnabled_
             ? QStringLiteral("Piper TTS file output is configured for explicit local synthesis; "
@@ -3192,6 +3243,12 @@ void ApplicationController::updatePiperTtsProviderConfig() {
             : QStringLiteral("Piper TTS file output exposes readiness metadata; execution is "
                              "disabled.");
     piperTextToSpeechProvider_->setConfig(std::move(config));
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get()))
+        executor->setTtsRuntime(std::make_shared<PiperTtsRuntime>(piperTextToSpeechProvider_->config()));
+    if (speechAssetCatalog_)
+        speechAssetCatalog_->setAsset(QStringLiteral("piper"),
+                                     piperTextToSpeechProvider_->config().voiceModel.expectedPath);
+    refreshSpeechTtsRuntime();
 }
 
 void ApplicationController::updateWhisperSttProviderConfig() {
@@ -3204,6 +3261,39 @@ void ApplicationController::updateWhisperSttProviderConfig() {
                                                        whisperTranscriptionExecutionEnabled_);
     config.policy.processExecutionAllowed = whisperTranscriptionExecutionEnabled_;
     whisperProvider->setConfig(std::move(config));
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get()))
+        executor->setSttRuntime(std::make_shared<WhisperSttRuntime>(whisperProvider->config()));
+    if (speechAssetCatalog_)
+        speechAssetCatalog_->setAsset(QStringLiteral("whisper.cpp"), whisperProvider->config().model.expectedPath);
+    if (audioSession_)
+        audioSession_->setSttRuntime(std::make_shared<WhisperSttRuntime>(whisperProvider->config()));
+}
+
+void ApplicationController::configureSpeechTts(const QString& engine,
+                                                const QString& kokoroModelPath,
+                                                const QString& kokoroVoice) {
+    selectedSpeechTtsEngine_ = engine == QLatin1String("Kokoro")
+        ? QStringLiteral("Kokoro") : QStringLiteral("Piper");
+    kokoroSpeechModelPath_ = kokoroModelPath.trimmed();
+    kokoroSpeechVoice_ = kokoroVoice.trimmed();
+    if (speechAssetCatalog_)
+        speechAssetCatalog_->setAsset(QStringLiteral("kokoro"), kokoroSpeechModelPath_);
+    if (speechAssetCatalog_)
+        speechAssetCatalog_->setAsset(QStringLiteral("kokoro-voices"),
+            kokoroSpeechModelPath_.isEmpty() ? QString{}
+                : QFileInfo(kokoroSpeechModelPath_).absolutePath() +
+                    QStringLiteral("/voices-v1.0.bin"));
+    refreshSpeechTtsRuntime();
+}
+
+void ApplicationController::refreshSpeechTtsRuntime() {
+    if (!audioSession_) return;
+    if (selectedSpeechTtsEngine_ == QLatin1String("Kokoro"))
+        audioSession_->setTtsRuntime(std::make_shared<KokoroTtsRuntime>(
+            kokoroSpeechModelPath_, kokoroSpeechVoice_));
+    else if (piperTextToSpeechProvider_)
+        audioSession_->setTtsRuntime(std::make_shared<PiperTtsRuntime>(
+            piperTextToSpeechProvider_->config()));
 }
 
 bool ApplicationController::whisperTranscriptionExecutionEnabled() const {
@@ -3507,15 +3597,27 @@ bool ApplicationController::generatePiperTtsFile(const QString& text) {
         return false;
     }
 
-    latestPiperTtsResult_ = piperTextToSpeechProvider_->synthesizePiper(PiperTtsRequest{
-        text,
-        {},
-        {},
-        true,
-        true,
-        false,
+    PiperTtsRuntime runtime(piperTextToSpeechProvider_->config());
+    const auto audio = runtime.synthesize(SpeechSynthesisRequest{text, {}, {}, 1.0}, {});
+    const auto status = audio.failure == AudioFailure::None ? PiperTtsStatus::Succeeded
+        : audio.failure == AudioFailure::Timeout ? PiperTtsStatus::Timeout
+        : audio.failure == AudioFailure::Cancelled ? PiperTtsStatus::Cancelled
+                                                   : PiperTtsStatus::Failed;
+    latestPiperTtsResult_ = PiperTtsResult{
+        status,
+        audio.failure == AudioFailure::None,
+        audio.filePath,
+        audio.filePath.isEmpty() ? QString{}
+            : QStringLiteral("Controlled Piper TTS output path: %1").arg(audio.filePath),
         piperTextToSpeechProvider_->config().timeoutMs,
-    });
+        audio.failure == AudioFailure::None ? 0 : -1,
+        audio.detail,
+        audio.failure == AudioFailure::None
+            ? QStringLiteral("Piper generated local audio without playback.")
+            : QStringLiteral("Piper synthesis: %1. %2")
+                .arg(audioFailureName(audio.failure), audio.detail.left(300)),
+        {QStringLiteral("Shared Piper runtime completed synthesis without playback.")},
+    };
     emit voiceConfigurationChanged();
     return latestPiperTtsResult_.success;
 }
@@ -8010,7 +8112,9 @@ bool ApplicationController::sendMessage(const QString& message) {
                              QStringLiteral("A chat response is already active."));
         return false;
     }
-    const auto accepted = chatMode_->send(activeConversationId_, message);
+    const auto accepted = chatMode_->send(activeConversationId_, message, {},
+                                          currentWorkspaceModelSelection(),
+                                          currentWorkspaceRequiresLocal());
     if (!accepted)
         setChatSendLifecycle(QStringLiteral("refused"),
                              QStringLiteral("The message could not be persisted or sent."));
@@ -8093,7 +8197,8 @@ bool ApplicationController::regenerateChatResponse(int userMessageId) {
     if (requestedText.isEmpty()) return false;
     if (userMessageId != latestUserId)
         return !editAndResendChatMessage(userMessageId, requestedText).isEmpty();
-    return chatMode_->regenerate(activeConversationId_, userMessageId);
+    return chatMode_->regenerate(activeConversationId_, userMessageId,
+                                 currentWorkspaceModelSelection(), currentWorkspaceRequiresLocal());
 }
 
 bool ApplicationController::retryChatResponse(int assistantMessageId) {
@@ -8117,7 +8222,8 @@ bool ApplicationController::retryChatResponse(int assistantMessageId) {
             if (message.id == targetUserId) targetText = message.content;
         return !editAndResendChatMessage(targetUserId, targetText).isEmpty();
     }
-    return chatMode_->retry(activeConversationId_, assistantMessageId);
+    return chatMode_->retry(activeConversationId_, assistantMessageId,
+                            currentWorkspaceModelSelection(), currentWorkspaceRequiresLocal());
 }
 
 QString ApplicationController::editAndResendChatMessage(int userMessageId, const QString& text) {
@@ -8148,7 +8254,8 @@ QString ApplicationController::editAndResendChatMessage(int userMessageId, const
         conversationStore_->deleteConversation(branch.id);
         return {};
     }
-    if (!chatMode_->sendExisting(branch.id, userMessageId)) {
+    if (!chatMode_->sendExisting(branch.id, userMessageId, 0,
+                                 currentWorkspaceModelSelection(), currentWorkspaceRequiresLocal())) {
         switchConversation(source);
         conversationStore_->deleteConversation(branch.id);
         return {};
@@ -8995,7 +9102,19 @@ bool ApplicationController::agentLoopActive() const {
 }
 
 bool ApplicationController::startAgentLoopRun(const QString& goal) {
-    const auto resolved = modelService_->resolve(modelService_->selectedModel());
+    const auto selection = currentWorkspaceModelSelection();
+    const bool blockedByLocalPolicy = currentWorkspaceRequiresLocal() &&
+        modelService_->currentModelMetadata(selection.providerId, selection.modelId).providerKind ==
+            ProviderKind::Cloud;
+    const auto resolved = blockedByLocalPolicy ? ModelBindingResolution{}
+                                               : modelService_->resolve(selection);
+    if (blockedByLocalPolicy) {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("local-only workspace blocks cloud provider"));
+        lastAgentResponse_ = QStringLiteral("Local Only requires a local provider and model. The configured selection is cloud-based.");
+        emit agentResponseChanged();
+        return false;
+    }
     if (!bindAgentPlannerToResolvedModel(resolved)) {
         const auto summary = modelBindingFailureSummary(resolved);
         transitionConversationState(ConversationState::Error,
@@ -9016,6 +9135,39 @@ bool ApplicationController::startAgentLoopRun(const QString& goal) {
     activeAgentSessionId_ = agentRuntime_->createSession();
     AgentSessionOptions options;
     options.autonomousMode = agentAutonomousMode_;
+    if (workspaceSettings_) {
+        const WorkspaceService workspaces;
+        const auto id = workspaces.normalizedWorkspaceId(
+            workspaceSettings_->selectedWorkspaceId(), workspaceSettings_->workspaceCatalogJson());
+        const auto workspace = workspaces.selectedWorkspace(id, workspaceSettings_->workspaceCatalogJson());
+        const auto profile = workspaces.resolveProfile(workspaceSettings_->workspaceProfilesJson(), id);
+        options.workspaceContext.id = id;
+        options.workspaceName = workspace.name;
+        options.presetId = profile.presetId;
+        options.profileVersion = QStringLiteral("1");
+        options.workspaceContext.rootPath = workspace.rootPath;
+        const auto context = profile.configured.value(QStringLiteral("context")).toObject();
+        for (const auto& value : context.value(QStringLiteral("include")).toArray())
+            if (value.isString()) options.workspaceContext.includeHints.append(value.toString());
+        for (const auto& value : context.value(QStringLiteral("exclude")).toArray())
+            if (value.isString()) options.workspaceContext.excludeHints.append(value.toString());
+        options.workspaceContext.retrievalPreference =
+            context.value(QStringLiteral("retrieval")).toString();
+        options.workspaceContext.memoryScope = context.value(QStringLiteral("memoryScope")).toString();
+        const auto toolPreferences = profile.configured.value(QStringLiteral("tools")).toObject();
+        const auto extensionPreferences =
+            profile.configured.value(QStringLiteral("extensions")).toObject();
+        if (!toolPreferences.isEmpty() || !extensionPreferences.isEmpty()) {
+            options.restrictAvailableTools = true;
+            for (const auto& tool : agentRuntime_->availableTools()) {
+                if (toolPreferences.value(tool.id).isBool() &&
+                    !toolPreferences.value(tool.id).toBool()) continue;
+                if (extensionPreferences.value(tool.providerId).isBool() &&
+                    !extensionPreferences.value(tool.providerId).toBool()) continue;
+                options.availableToolIds.append(tool.id);
+            }
+        }
+    }
     agentRuntime_->configureSession(activeAgentSessionId_, std::move(options));
 
     transitionConversationState(ConversationState::Planning,
@@ -9098,6 +9250,18 @@ bool ApplicationController::clearPersistentPermissions() {
 void ApplicationController::onAgentEvent(const AgentEvent& event) {
     if (event.sessionId != activeAgentSessionId_)
         return;
+    if (audioSession_) {
+        if (event.type == AgentEventType::ToolApprovalRequired)
+            audioSession_->updateAgentActivity(VoiceInteractionState::WaitingForApproval);
+        else if (event.type == AgentEventType::ToolExecutionStarted ||
+                 event.type == AgentEventType::ToolOutput)
+            audioSession_->updateAgentActivity(VoiceInteractionState::ToolActivity);
+        else if (event.type == AgentEventType::ToolApprovalResolved ||
+                 event.type == AgentEventType::ToolExecutionCompleted ||
+                 event.type == AgentEventType::ToolExecutionFailed ||
+                 event.type == AgentEventType::ModelRequestStarted)
+            audioSession_->updateAgentActivity(VoiceInteractionState::Thinking);
+    }
     if (event.type == AgentEventType::ToolOutput) {
         // Live process output belongs to agent activity; the assistant response is
         // reserved for the planner's final answer.
@@ -9318,6 +9482,12 @@ void ApplicationController::setToolPermissionPolicyState(const QString& state) {
 }
 
 void ApplicationController::attachControlledTaskSettings(AppSettings& settings) {
+    workspaceSettings_ = &settings;
+    connect(&settings, &AppSettings::selectedWorkspaceIdChanged, this,
+            &ApplicationController::refreshWorkspaceExtensions, Qt::UniqueConnection);
+    connect(&settings, &AppSettings::workspaceSettingsChanged, this,
+            &ApplicationController::refreshWorkspaceExtensions, Qt::UniqueConnection);
+    refreshWorkspaceExtensions();
     if (controlledTaskService_ || !agentRuntime_ || !modelRouter_)
         return;
     controlledTaskService_ = std::make_unique<ControlledTaskService>(
@@ -9330,6 +9500,63 @@ void ApplicationController::attachControlledTaskSettings(AppSettings& settings) 
                    planner->modelProvider()->status() == ChatProviderStatus::Ready;
         },
         [this] { return agentLoopActive(); });
+}
+
+void ApplicationController::refreshWorkspaceExtensions() {
+    auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get());
+    if (!runtime || !workspaceSettings_) return;
+    const WorkspaceService workspaces;
+    const auto workspaceId = workspaces.normalizedWorkspaceId(
+        workspaceSettings_->selectedWorkspaceId(), workspaceSettings_->workspaceCatalogJson());
+    const auto profile = workspaces.resolveProfile(workspaceSettings_->workspaceProfilesJson(),
+                                                  workspaceId);
+    runtime->extensionService().setWorkspacePreferences(
+        workspaceId, profile.configured.value(QStringLiteral("extensions")).toObject());
+}
+
+ExtensionService* ApplicationController::extensionService() const {
+    auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get());
+    return runtime ? &runtime->extensionService() : nullptr;
+}
+
+const PermissionService* ApplicationController::permissionService() const {
+    const auto* runtime = dynamic_cast<const AgentRuntime*>(agentRuntime_.get());
+    return runtime ? &runtime->permissionService() : nullptr;
+}
+
+ModelSelection ApplicationController::currentWorkspaceModelSelection() const {
+    auto selection = modelService_->selectedModel();
+    if (!workspaceSettings_) return selection;
+    const auto profile = currentWorkspaceProfile();
+    const auto provider = profile.configured.value(QStringLiteral("providerId")).toString();
+    const auto model = profile.configured.value(QStringLiteral("modelId")).toString();
+    if (!provider.isEmpty()) selection.providerId = provider;
+    if (!model.isEmpty()) selection.modelId = model;
+    return selection;
+}
+
+bool ApplicationController::currentWorkspaceRequiresLocal() const {
+    return currentWorkspaceProfile().configured.value(QStringLiteral("privacy")).toString() ==
+           QLatin1String("local-only");
+}
+
+WorkspaceProfileSnapshot ApplicationController::currentWorkspaceProfile() const {
+    if (!workspaceSettings_) return {};
+    const WorkspaceService workspaces;
+    const auto workspaceId = workspaces.normalizedWorkspaceId(
+        workspaceSettings_->selectedWorkspaceId(), workspaceSettings_->workspaceCatalogJson());
+    auto* runtime = dynamic_cast<AgentRuntime*>(agentRuntime_.get());
+    const auto stt = audioSession_ ? audioSession_->sttInfo() : SpeechProviderInfo{};
+    const auto tts = audioSession_ ? audioSession_->ttsInfo() : SpeechProviderInfo{};
+    const auto selected = modelService_->selectedModel();
+    const QJsonObject globals{{QStringLiteral("providerId"), selected.providerId},
+                              {QStringLiteral("modelId"), selected.modelId}};
+    return workspaces.resolveProfile(workspaceSettings_->workspaceProfilesJson(), workspaceId,
+                                     globals, {}, modelService_.get(),
+                                     runtime ? &runtime->toolRegistry() : nullptr,
+                                     runtime ? &runtime->extensionService() : nullptr,
+                                     audioSession_ ? &stt : nullptr,
+                                     audioSession_ ? &tts : nullptr);
 }
 
 void ApplicationController::resetCompletedConversationState() {

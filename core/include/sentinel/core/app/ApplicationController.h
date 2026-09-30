@@ -18,6 +18,7 @@
 #include "sentinel/core/app/ITaskPlanner.h"
 #include "sentinel/core/app/OrchestrationDiagnostics.h"
 #include "sentinel/core/app/OrchestrationSnapshot.h"
+#include "sentinel/core/app/WorkspaceService.h"
 #include "sentinel/core/chat/AudioFileSession.h"
 #include "sentinel/core/chat/ChatSession.h"
 #include "sentinel/core/chat/ConversationHistoryMetadata.h"
@@ -55,6 +56,8 @@
 #include "sentinel/core/voice/PiperTts.h"
 #include "sentinel/core/voice/Voice.h"
 #include "sentinel/core/voice/WhisperTranscription.h"
+#include "sentinel/core/voice/UnifiedAudioService.h"
+#include "sentinel/core/voice/SpeechAssetCatalogAdapter.h"
 
 #include <QHash>
 #include <QObject>
@@ -71,6 +74,7 @@ namespace sentinel::core {
 class AlarmStore;
 class AppSettings;
 class ControlledTaskService;
+class PermissionService;
 class ModelLibraryService;
 class ModelOperationService;
 
@@ -1077,6 +1081,10 @@ class ApplicationController final : public QObject {
 
 public:
     const IAgentRunStore* agentRunStore() const { return agentRunStore_.get(); }
+    IAgentRunStore* mutableAgentRunStore() const { return agentRunStore_.get(); }
+    IConversationStore* conversationStore() const { return conversationStore_.get(); }
+    IChatHistoryStore* chatHistoryStore() const { return chatHistoryStore_.get(); }
+    IMemoryStore* memoryStore() const { return memoryStore_.get(); }
     QVariantList persistentPermissionGrants() const;
     bool revokePersistentPermission(const QString& id);
     bool clearPersistentPermissions();
@@ -1122,6 +1130,9 @@ public:
 
     ModelLibraryService* modelLibrary() const { return modelLibrary_.get(); }
     ModelOperationService* modelOperations() const { return modelOperations_.get(); }
+    VoiceSessionService* audioSession() const { return audioSession_; }
+    void configureSpeechTts(const QString& engine, const QString& kokoroModelPath,
+                            const QString& kokoroVoice);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -1930,6 +1941,13 @@ public:
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
     void attachControlledTaskSettings(AppSettings& settings);
+    ModelSelection currentWorkspaceModelSelection() const;
+    bool currentWorkspaceRequiresLocal() const;
+    WorkspaceProfileSnapshot currentWorkspaceProfile() const;
+    ModelService* modelService() const { return modelService_.get(); }
+    ExtensionService* extensionService() const;
+    const PermissionService* permissionService() const;
+    void refreshWorkspaceExtensions();
     void setToolPermissionPolicyState(const QString& state);
     ControlledTaskService* controlledTasks() const {
         return controlledTaskService_.get();
@@ -2091,7 +2109,9 @@ private:
     WhisperTranscriptionReadiness currentWhisperTranscriptionReadiness() const;
 
     std::unique_ptr<ModelService> modelService_;
+    AppSettings* workspaceSettings_ = nullptr;
     std::unique_ptr<ModelLibraryService> modelLibrary_;
+    std::unique_ptr<SpeechAssetCatalogAdapter> speechAssetCatalog_;
     std::unique_ptr<ModelOperationService> modelOperations_;
     std::unique_ptr<IAgentRunStore> agentRunStore_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -2150,14 +2170,17 @@ private:
     ILocalInferenceWorker* activeLocalInferenceWorker() const;
     void updatePiperTtsProviderConfig();
     void updateWhisperSttProviderConfig();
+    void refreshSpeechTtsRuntime();
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
     std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator_;
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment_;
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider_;
-    std::unique_ptr<IPiperSynthesisClient> piperSynthesisClient_;
-    std::unique_ptr<IWhisperTranscriptionClient> whisperTranscriptionClient_;
+    VoiceSessionService* audioSession_{nullptr}; // QObject child; no raw recording persistence
+    QString selectedSpeechTtsEngine_{QStringLiteral("Piper")};
+    QString kokoroSpeechModelPath_;
+    QString kokoroSpeechVoice_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<IMemoryCandidateStore> memoryCandidateStore_;
     MemoryCandidateReviewResult latestMemoryCandidateReviewResult_;
