@@ -89,7 +89,29 @@
   metadata has a typed seam but is rejected until provider transports support it.
 
 ### B. Workspace Isolation & Storage Separation
-- **Strict Scope Isolation:** Memory scopes, conversational history, and document embeddings are strictly separated by `workspace_id` (`Personal`, `Engineering`, `Student`, `Custom`).
+- **Native plugin isolation:** User native libraries are loaded only by `sentinel-plugin-host`, one
+  sandboxed process per plugin. `PluginManager` owns each process through `ProcessExecutor` and
+  speaks bounded JSON-line protocol v3 over its private standard streams. The plugin ABI is v5;
+  manifests must declare API 5.0. The dedicated SDK exposes only Qt-based plugin DTOs and interfaces,
+  with explicit host/plugin object ownership and translation at the host boundary. An incompatible
+  plugin or unavailable enforced process sandbox
+  fails closed. The host returns tool declarations, while Sentinel validates and atomically
+  registers handlers only after the plugin starts. Crashes remove that provider's tools and
+  surface a structured failure through `ExtensionService`. There is no in-process native load
+  fallback. Filesystem, network, and process requests use named host capabilities, the active
+  invocation's authorization snapshot, plugin and tool declarations, and Sentinel-owned services.
+  Network credentials are bound to declared hosts and attached only inside Sentinel; no raw secret
+  retrieval API remains in the plugin SDK. Broker operations are cancelled with their invocation.
+  The plugin host retains no direct network or unrestricted child-process permission.
+  Plugin-host Secrets / Privacy / Network / Offline / Recovery security boundaries are
+  **Implementation Complete / Validation Deferred**. Final Production Hardening owns builds,
+  tests, runtime verification, and platform validation.
+- **Workspace profiles:** `WorkspaceService` owns stable workspace IDs, roots, sparse overrides, and reusable presets. Effective preferences resolve in global, preset, workspace, then session order. Workspace roots provide context and never grant filesystem or process access.
+- **Run snapshots:** New Agent runs capture workspace and preset identity, model selection, tool visibility, and typed context. New Chat turns resolve the active profile. Local Only blocks cloud model selection for new turns and runs.
+- **Extensions:** Global installation and enable state remain with MCP, plugin, and skill services. Workspace preferences are an effective overlay; they do not uninstall or globally disable extensions.
+- **Product configuration:** `SettingsService` presents searchable, typed setting snapshots and validates supported writes before delegating to `AppSettings`, `ModelService`, `ExtensionService`, `WorkspaceService`, and speech services. It exposes credential presence without returning secrets. Reset actions are scoped to a setting, section, or workspace override.
+- **First run:** `OnboardingService` persists a versioned step ID, processing preference, and completed steps in the existing settings store. A completed legacy installation stays complete; interrupted setup resumes at its saved step. Local setup does not require cloud credentials or a model.
+- **Localization:** User-facing product error IDs remain stable in the backend. `ProductMessages` resolves their presentation text through Qt translations; English and Turkish are bundled. Provider, model, tool, and extension IDs remain untranslated.
 - **Dedicated SQLite Databases:**
   - `memory.sqlite3`: Semantic key-value memory records, user preferences, and project goals.
   - `chat_history.sqlite3`: Conversation threads, message roles, tokens, and timestamps.
@@ -184,14 +206,45 @@ in the agent runtime's production registry. The planner and gateway use that sam
 registry. MCP tool IDs use `mcp.<server>.<tool>`; each UTF-8 byte outside lowercase
 ASCII letters and digits is escaped as `_hh_`, including underscores. This keeps
 IDs stable and distinct while the original server and tool names remain in the
-handler. Unknown or duplicate names reject a refresh and leave prior entries in
-place. Disconnect removes only that server's entries.
+handler. Unknown, duplicate, or invalid definitions reject a refresh and remove
+that server's executable entries. Disconnect removes only that server's entries.
 
-Dynamic MCP tools default to medium risk. Their input schemas are retained without
-validation. MCP agent calls are asynchronous; cancellation suppresses late results
-locally and aborts an HTTP reply or drops a pending stdio response when possible.
-The MCP protocol cancellation notification is not implemented. The built-in
-`mcp-list` and `mcp-call` tools remain for compatibility.
+Dynamic MCP tools default to medium risk. The registry validates discovered input
+schemas before registration, and the gateway validates arguments before execution.
+MCP agent calls are asynchronous; cancellation suppresses late results locally and
+aborts an HTTP reply or drops a pending stdio response when possible. The MCP
+protocol cancellation notification is not implemented. Paginated discovery commits
+only after the complete inventory arrives; failed discovery clears executable tools
+and retains last-known names for diagnostics. Advertised resources use the same
+bounded paginated lifecycle and change notifications. The unused alternate
+`McpClient` launcher, placeholder resource store, and metadata-only registration
+path have been removed.
+
+`McpService` owns long-lived stdio processes, applies `PlatformProcessSandbox`,
+times out startup and calls, and terminates Unix process groups on shutdown or
+restart. Windows stdio uses the existing `ProcessExecutor` restricted-token,
+filtered-environment, and Job Object path. Windows filesystem confinement is not
+available through that path, so it fails closed unless the server configuration
+explicitly allows partial confinement. Remote MCP uses a configured HTTPS
+endpoint (or loopback HTTP), rejects redirects, and accepts JSON or SSE POST
+responses. It probes the 2026-07-28 per-request protocol and falls back to the
+2025-11-25 Streamable HTTP handshake when the endpoint identifies as legacy.
+Modern change notifications use `subscriptions/listen`; legacy servers use the
+optional GET event stream and a server-issued session ID. A connection generation
+prevents late responses from changing a newer connection. Modern tool header
+annotations are validated and mirrored into request headers.
+The deprecated 2024-11-05 HTTP+SSE remote transport and modern multi-round-trip
+input requests are not implemented; these remain explicit compatibility limits.
+`ExtensionService` projects MCP, plugin, and skill state into normalized product
+snapshots and delegates lifecycle actions to their native services. It neither
+registers nor authorizes tools. `AgentRuntime` exposes this view with its existing
+plugin manager and a global skill directory under `AppDataLocation`. Plugin tools
+are staged during initialization and
+committed through one provider replacement. Manifest host grants remain separate
+from runtime tool authorization. Skills keep enabled preference in an atomic
+settings file, separate from transient failures. Tool inventory and model provider
+health/capability changes update effective requirements; only enabled skills with
+satisfied requirements provide content.
 
 The gateway checks the MCP `tool-execution` permission domain before invoking
 its handler. Disabled blocks execution; Ask Every Time requires explicit approval;
@@ -257,3 +310,62 @@ a failed or denied attempt can support only a neutral `unable_to_verify` answer.
 The final grounding and evidence IDs remain in runtime state and events; chat stores
 only the answer text. Tool schemas, authorization, and evidence policy have separate
 responsibilities.
+
+# MCP interaction boundary
+
+Modern remote MCP `tools/call` uses the 2026-07-28 multi round-trip request pattern.
+`McpService` owns the in-flight call and validates each `elicitation/create` request into a
+bounded, typed `McpInteractionRequest`. `ExtensionService` exposes pending requests and
+accepts a response identified by interaction ID and connection generation. It does not
+put responses in extension snapshots. A completed input round retries the original tool
+call with a fresh JSON-RPC ID, per-round responses, and the server's opaque request state.
+The tool completion callback fires only on a final result or structured failure.
+
+Form fields allow bounded text, boolean confirmation, and string selection. HTTPS URL
+interaction is marked sensitive. Credential collection through a form is rejected;
+response values stay in the MCP call state and are not emitted as product state. Cancel,
+timeout, disconnect, and generation change terminate pending work. Elicitation is separate
+from tool approval, semantic permission grants, filesystem access, and sandbox policy.
+Sampling and roots input requests remain unsupported because the client does not
+advertise them. Local stdio and the 2025-11-25 compatibility path do not advertise this
+interaction capability. Legacy 2024 HTTP+SSE is not implemented; endpoints that reject
+Streamable HTTP with 404/405 are reported as `UnsupportedLegacyTransport` after the
+modern and compatibility handshakes. The transport seam remains at `McpService`.
+
+# Unified speech and audio platform
+
+`VoiceSessionService` coordinates Dictation, Voice Chat, Voice Agent, Read Aloud, and
+standalone Audio Transcription. Its UI-independent runtime interfaces normalize STT/TTS
+provider identity, model/voice, readiness, final output, cancellation, and typed
+failures. `AudioDeviceService` owns Qt Multimedia device discovery and in-memory
+microphone capture, emits measured input level, and normalizes capture to 16 kHz mono
+PCM. Push-to-Talk is the only interactive capture mode. A bounded energy VAD detects
+speech and trailing silence. Completed VAD segments and continuous 15-second segments
+are transcribed once each. Their accumulated text is provisional; only Push-to-Talk
+completion emits the final transcript. No wake word or always-listening path exists.
+Hardware suitability is informational and uses the Model Library's existing
+`HardwareCapabilityService` facts; it never changes the selected runtime.
+
+`AudioPlaybackService` alone owns output-device selection, pause, stop, replacement,
+and playback progress. Voice interruption stops playback and cancels the active local
+Whisper/Piper process where supported. Microphone audio is kept in memory; Whisper
+receives a private temporary WAV removed when transcription returns. Raw recording
+retention is disabled and separate from chat transcript persistence. Audio-file STT
+requires a Read authorization from the application's existing filesystem service
+and an identity-bound `AuthorizedPath`. The filesystem service revalidates that grant
+at execution time and rejects files outside its configured workspace or external grants.
+Voice Chat enters `ChatModeService`; Voice Agent enters `AgentRuntime` and waits for its
+answer or approval-required state. Agent tool events project ToolActivity into the
+same voice session; speech never grants tool approval.
+
+The unified Whisper, Piper, and Kokoro runtime adapters execute through
+`ProcessExecutor` with bounded output, cancellation, and an explicit sandbox plan.
+Model-visible Whisper and Piper tools invoke these adapters after the gateway and
+filesystem resource checks. Configured speech model and Kokoro voice asset paths
+appear in Model Library through its read-only source adapter; ModelOperationService
+and ModelStorageManager remain the asset lifecycle authorities. Kokoro targets the
+documented `kokoro-tts` CLI and requires its ONNX model and sibling
+`voices-v1.0.bin`. The desktop capture action now uses the shared Qt capture and
+STT path. Legacy local clients retain their metadata interfaces but refuse direct
+process execution; existing voice metadata APIs remain while product surfaces
+migrate to the session service.
