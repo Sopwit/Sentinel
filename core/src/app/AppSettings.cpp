@@ -735,14 +735,14 @@ ModelCapabilities AppSettings::modelCapabilitiesOverride(const QString& provider
     capabilities.combinedToolsAndStructuredOutput =
         support(object.value(QStringLiteral("combinedToolsAndStructuredOutput")));
     if (object.value(QStringLiteral("contextWindow")).isDouble()) {
-        const int value = object.value(QStringLiteral("contextWindow")).toInt();
-        if (value > 0)
-            capabilities.contextWindow = value;
+        const int contextWindow = object.value(QStringLiteral("contextWindow")).toInt();
+        if (contextWindow > 0)
+            capabilities.contextWindow = contextWindow;
     }
     if (object.value(QStringLiteral("maxOutputTokens")).isDouble()) {
-        const int value = object.value(QStringLiteral("maxOutputTokens")).toInt();
-        if (value > 0)
-            capabilities.maxOutputTokens = value;
+        const int maxOutputTokens = object.value(QStringLiteral("maxOutputTokens")).toInt();
+        if (maxOutputTokens > 0)
+            capabilities.maxOutputTokens = maxOutputTokens;
     }
     return capabilities;
 }
