@@ -444,9 +444,13 @@ Item {
                 SentinelTextField {
                     anchors.fill: parent
                     echoMode: TextInput.Password
-                    placeholderText: "••••••••"
-                    text: root.viewModel.proxyPassword
-                    onEditingFinished: root.viewModel.proxyPassword = text
+                    placeholderText: root.viewModel.proxyPasswordConfigured ? qsTr("Configured") : qsTr("Not configured")
+                    onEditingFinished: {
+                        if (text.length > 0) {
+                            root.viewModel.proxyPassword = text
+                            text = ""
+                        }
+                    }
                 }
             }
         }

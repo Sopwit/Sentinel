@@ -332,6 +332,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString proxyUser READ proxyUser WRITE setProxyUser NOTIFY proxySettingsChanged)
     Q_PROPERTY(
         QString proxyPassword READ proxyPassword WRITE setProxyPassword NOTIFY proxySettingsChanged)
+    Q_PROPERTY(bool proxyPasswordConfigured READ proxyPasswordConfigured NOTIFY proxySettingsChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelSummary READ selectedLocalModelSummary NOTIFY
@@ -1260,6 +1261,11 @@ class DesktopShellViewModel final : public QObject {
                    nativeExperienceChanged)
     Q_PROPERTY(bool onboardingComplete READ onboardingComplete WRITE setOnboardingComplete NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(int onboardingStepIndex READ onboardingStepIndex NOTIFY onboardingStateChanged)
+    Q_PROPERTY(QString onboardingProcessingMode READ onboardingProcessingMode WRITE
+                   setOnboardingProcessingMode NOTIFY onboardingStateChanged)
+    Q_PROPERTY(QString onboardingErrorText READ onboardingErrorText NOTIFY onboardingStateChanged)
+    Q_PROPERTY(QVariantMap onboardingSnapshot READ onboardingState NOTIFY onboardingStateChanged)
     Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString onboardingAiProvider READ onboardingAiProvider WRITE setOnboardingAiProvider
@@ -1714,6 +1720,7 @@ public:
     QString proxyUser() const;
     void setProxyUser(const QString& user);
     QString proxyPassword() const;
+    bool proxyPasswordConfigured() const;
     void setProxyPassword(const QString& password);
     int ollamaModelCount() const;
     bool isOnline() const;
@@ -2298,6 +2305,43 @@ public:
     void setNotificationPolicy(const QString& policy);
     bool onboardingComplete() const;
     void setOnboardingComplete(bool complete);
+    int onboardingStepIndex() const;
+    QString onboardingProcessingMode() const;
+    QString onboardingErrorText() const;
+    void setOnboardingProcessingMode(const QString& mode);
+    Q_INVOKABLE bool advanceOnboarding(bool skip = false);
+    Q_INVOKABLE bool backOnboarding();
+    Q_INVOKABLE void reopenOnboarding();
+    Q_INVOKABLE QVariantMap onboardingState() const;
+    Q_INVOKABLE QVariantList productSettings() const;
+    Q_INVOKABLE QStringList productSettingsSections() const;
+    Q_INVOKABLE QVariantMap setProductSetting(const QString& id, const QVariant& value);
+    Q_INVOKABLE QVariantMap resetProductSetting(const QString& id);
+    Q_INVOKABLE QVariantList resetProductSettingsSection(int section);
+    Q_INVOKABLE QVariantMap clearWorkspaceSettingOverride(const QString& workspaceId,
+                                                           const QString& key);
+    Q_INVOKABLE QVariantMap providerSettingsState(const QString& providerId) const;
+    Q_INVOKABLE QVariantMap extensionSettingsState(const QString& extensionId) const;
+    Q_INVOKABLE QVariantMap performExtensionSettingsAction(const QString& extensionId, int action);
+    Q_INVOKABLE QVariantMap speechSettingsState() const;
+    Q_INVOKABLE QVariantMap securitySettingsState() const;
+    Q_INVOKABLE QVariantMap productPrivacyState() const;
+    Q_INVOKABLE QVariantMap productRecoveryState() const;
+    Q_INVOKABLE QVariantMap productBackupAvailability() const;
+    Q_INVOKABLE QVariantMap exportProductBackup(const QStringList& domains) const;
+    Q_INVOKABLE QVariantMap importProductBackup(const QByteArray& data,
+                                                const QStringList& domains, bool replace);
+    Q_INVOKABLE QVariantMap clearProductData(const QString& domain);
+    Q_INVOKABLE QVariantMap runProductMaintenance();
+    Q_INVOKABLE QVariantMap resolveInterruptedModelOperation(const QString& operationId);
+    Q_INVOKABLE QVariantMap clearProductCredential(const QString& id);
+    Q_INVOKABLE QVariantMap setProductProviderCredential(const QString& providerId,
+                                                         const QString& value);
+    Q_INVOKABLE QVariantMap setProductPluginCredential(const QString& pluginId,
+                                                       const QString& credentialId,
+                                                       const QString& value);
+    Q_INVOKABLE QVariantMap clearProductPluginCredential(const QString& pluginId,
+                                                         const QString& credentialId);
     QString onboardingUseCase() const;
     void setOnboardingUseCase(const QString& useCase);
     QString onboardingAiProvider() const;
@@ -2354,6 +2398,19 @@ public:
     QStringList skillProfileReadinessChecks() const;
     QStringList skillProfileDeveloperDiagnostics() const;
     QString selectedWorkspaceId() const;
+    Q_INVOKABLE QString selectedWorkspaceRootPath() const;
+    Q_INVOKABLE bool workspaceRequiresLocalProvider() const;
+    Q_INVOKABLE QVariantMap currentWorkspaceProfile() const;
+    Q_INVOKABLE QStringList presetIds() const;
+    Q_INVOKABLE QStringList presetNames() const;
+    Q_INVOKABLE bool setWorkspaceProfile(const QString& workspaceId,
+                                         const QString& presetId,
+                                         const QVariantMap& overrides);
+    Q_INVOKABLE QString createPreset(const QString& name, const QVariantMap& preferences);
+    Q_INVOKABLE bool renamePreset(const QString& presetId, const QString& name);
+    Q_INVOKABLE bool updatePreset(const QString& presetId, const QVariantMap& preferences);
+    Q_INVOKABLE QString duplicatePreset(const QString& presetId);
+    Q_INVOKABLE bool deletePreset(const QString& presetId);
     void setSelectedWorkspaceId(const QString& workspaceId);
     QString selectedWorkspaceName() const;
     QString selectedWorkspaceAccessState() const;
@@ -2478,6 +2535,7 @@ public:
     Q_INVOKABLE bool requestConversationExport(const QString& format);
     Q_INVOKABLE QString createWorkspace(const QString& name, const QString& templateName);
     Q_INVOKABLE bool renameWorkspace(const QString& workspaceId, const QString& name);
+    Q_INVOKABLE bool setWorkspaceRoot(const QString& workspaceId, const QString& rootPath);
     Q_INVOKABLE bool archiveWorkspace(const QString& workspaceId);
     Q_INVOKABLE bool deleteWorkspace(const QString& workspaceId);
     Q_INVOKABLE QString duplicateWorkspace(const QString& workspaceId);
@@ -2561,6 +2619,7 @@ public:
     Q_INVOKABLE QVariantMap autoDetectVoicePathStatus();
     Q_INVOKABLE void startVoiceCapture();
     Q_INVOKABLE void stopVoiceCapture();
+    Q_INVOKABLE void transcribeAudioFile(const QString& path);
     QString selectedCloudProvider() const;
     void setSelectedCloudProvider(const QString& provider);
     QString webSearchProvider() const;
@@ -2597,6 +2656,7 @@ signals:
     void currentPageChanged();
     void recoveryDraftTextChanged();
     void nativeExperienceChanged();
+    void onboardingStateChanged();
     void requestWindowActive(const QString& pageName);
     void maintenanceStatusChanged();
     void agentStatusChanged();
@@ -2655,8 +2715,8 @@ signals:
     void globalErrorChanged();
 
 private:
+    QString onboardingErrorCode_;
     static QString normalizedPageOrDefault(const QString& page);
-    void tryNextVoiceCaptureConfig(const QString& ffmpegPath, const QString& recPath);
 
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
@@ -2684,11 +2744,6 @@ private:
     bool companionPaused_ = false;
     bool companionChatVisible_ = false;
     bool voiceRecordingActive_ = false;
-    QProcess* recordingProcess_ = nullptr;
-    QProcess* whisperProcess_ = nullptr;
-    QString voiceRecordingFile_;
-    int currentFfmpegConfigIndex_ = 0;
-    QString lastRecordingError_;
 
     core::WinTaskbarIntegration* taskbar_ = nullptr;
     QSystemTrayIcon* trayIcon_ = nullptr;
