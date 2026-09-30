@@ -61,29 +61,6 @@ int toInt(qsizetype value) {
     return static_cast<int>(value);
 }
 
-AgentActivityStatus planActivityStatus(ToolInvocationPlanStatus status) {
-    return status == ToolInvocationPlanStatus::Planned ? AgentActivityStatus::Completed
-                                                       : AgentActivityStatus::Blocked;
-}
-
-AgentActivityStatus approvalActivityStatus(ApprovalStatus status) {
-    return status == ApprovalStatus::Denied || status == ApprovalStatus::RequiresApproval
-               ? AgentActivityStatus::Blocked
-               : AgentActivityStatus::Completed;
-}
-
-AgentActivityStatus sandboxActivityStatus(SandboxStatus status) {
-    return status == SandboxStatus::Allowed ? AgentActivityStatus::Completed
-                                            : AgentActivityStatus::Blocked;
-}
-
-AgentActivityStatus executionActivityStatus(ToolExecutionStatus status) {
-    return (status == ToolExecutionStatus::PlaceholderSucceeded ||
-            status == ToolExecutionStatus::Succeeded)
-               ? AgentActivityStatus::Completed
-               : AgentActivityStatus::Blocked;
-}
-
 OrchestrationHealthStatus healthStatusFor(const QString& routingStatus,
                                           const QString& taskPlanStatus) {
     if (routingStatus == QStringLiteral("Unavailable") ||
