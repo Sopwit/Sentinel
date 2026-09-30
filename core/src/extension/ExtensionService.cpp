@@ -245,9 +245,20 @@ QList<ExtensionSnapshot> ExtensionService::extensions() const {
         item.nativeAbiVersion = plugin::NativePluginAbiVersion;
         item.hostProtocolVersion = plugin::PluginHostProtocolVersion;
         item.declaredCredentialCount = descriptor->manifest.credentials.size();
+        for (const auto& credential : descriptor->manifest.credentials)
+            if (!credential.allowedHosts.isEmpty() &&
+                descriptor->manifest.hostCapabilities.contains(QStringLiteral("NetworkRequest")))
+                item.brokeredCredentialSupport = true;
+        item.rawScopedCredentialFallback = false;
+        item.credentialMode = item.brokeredCredentialSupport ? QStringLiteral("Brokered")
+                                                             : QStringLiteral("None");
+        item.requestedHostCapabilities = descriptor->manifest.hostCapabilities;
+        item.brokeredHostCapabilities = descriptor->manifest.hostCapabilities;
         item.connectionState = descriptor->host && descriptor->host->isRunning()
             ? QStringLiteral("Running") : QStringLiteral("Stopped");
         item.sessionState = item.connectionState;
+        item.sandboxStatus = descriptor->host && descriptor->host->isRunning()
+            ? QStringLiteral("Enforced") : QStringLiteral("Unavailable");
         item.publisher = descriptor->manifest.vendor;
         item.requestedPermissions = descriptor->manifest.permissions.toList();
         const auto granted = plugins_->sandbox().getPermissions(id);
@@ -259,6 +270,7 @@ QList<ExtensionSnapshot> ExtensionService::extensions() const {
         item.enabledPreference = item.enabled;
         item.health = descriptor->state == plugin::PluginState::Disabled ? ExtensionHealth::Disabled
                     : descriptor->state == plugin::PluginState::Error ? ExtensionHealth::Failed
+                    : !descriptor->lastCapabilityFailure.isEmpty() ? ExtensionHealth::Degraded
                     : !item.requirements.isEmpty() ? ExtensionHealth::Degraded
                     : descriptor->state == plugin::PluginState::Active ? ExtensionHealth::Ready
                     : ExtensionHealth::Disconnected;
@@ -268,6 +280,8 @@ QList<ExtensionSnapshot> ExtensionService::extensions() const {
         item.available = item.health == ExtensionHealth::Ready;
         item.failureCategory = !descriptor->failureCategory.isEmpty()
                                    ? descriptor->failureCategory
+                                   : !descriptor->lastCapabilityFailure.isEmpty()
+                                   ? descriptor->lastCapabilityFailure
                                    : !item.requirements.isEmpty()
                                    ? QStringLiteral("PermissionPending")
                                    : descriptor->state == plugin::PluginState::Error

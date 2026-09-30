@@ -527,7 +527,14 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 [](const auto& item) { return item.domain == SecurityDomain::FileSystem; }) ||
                 (registration->descriptor.source == ToolSource::BuiltIn &&
                  registration->descriptor.id == QLatin1String("apply-patch"));
-            if (usesFileSystem) {
+            const bool usesPluginBrokerResources = registration->descriptor.source == ToolSource::Plugin &&
+                std::any_of(registration->descriptor.authorizationRequirements.cbegin(),
+                            registration->descriptor.authorizationRequirements.cend(),
+                            [](const auto& item) {
+                                return item.domain == SecurityDomain::Network ||
+                                       item.domain == SecurityDomain::Process;
+                            });
+            if (usesFileSystem || usesPluginBrokerResources) {
                 if (!invocation.resourceSnapshot || !invocation.resourceSnapshot->authorized ||
                     invocation.resourceSnapshot->normalizedArguments != invocation.arguments) {
                     completion({ToolExecutionStatus::Blocked,

@@ -40,44 +40,88 @@ public:
     bool hasPermission(const QString& permission) const override { return permissions.contains(permission); }
     void logMessage(const QString&, const QString&) override {} // Never forward plugin text into diagnostics.
     QJsonObject pluginConfig() const override { return {}; }
-    bool credential(const QString& credentialId, QString* value) const override {
+    FilesystemReadResult filesystemRead(const FilesystemReadRequest& request) const override {
+        const auto response = capability(QStringLiteral("FilesystemRead"),
+            {{QStringLiteral("operation"), QStringLiteral("read")},
+             {QStringLiteral("argument"), request.argument},
+             {QStringLiteral("path"), request.path}});
+        return {response.value(QStringLiteral("ok")).toBool(),
+                response.value(QStringLiteral("category")).toString(),
+                QByteArray::fromBase64(response.value(QStringLiteral("contentBase64")).toString().toLatin1()),
+                response.value(QStringLiteral("truncated")).toBool(),
+                response.value(QStringLiteral("binary")).toBool()};
+    }
+    FilesystemWriteResult filesystemWrite(const FilesystemWriteRequest& request) const override {
+        const auto response = capability(QStringLiteral("FilesystemWrite"),
+            {{QStringLiteral("operation"), QStringLiteral("write")},
+             {QStringLiteral("argument"), request.argument},
+             {QStringLiteral("path"), request.path},
+             {QStringLiteral("contentBase64"), QString::fromLatin1(request.content.toBase64())}});
+        return {response.value(QStringLiteral("ok")).toBool(),
+                response.value(QStringLiteral("category")).toString(),
+                response.value(QStringLiteral("bytesWritten")).toInt(),
+                response.value(QStringLiteral("created")).toBool(),
+                response.value(QStringLiteral("mutation")).toObject().value(QStringLiteral("path")).toString()};
+    }
+    NetworkResult networkRequest(const NetworkRequest& request) const override {
+        QJsonObject headers;
+        for (auto it = request.headers.begin(); it != request.headers.end(); ++it)
+            headers.insert(it.key(), it.value());
+        QJsonObject payload{{QStringLiteral("method"), request.method == NetworkMethod::Get
+                                 ? QStringLiteral("GET") : QStringLiteral("POST")},
+                            {QStringLiteral("urlArgument"), request.urlArgument},
+                            {QStringLiteral("url"), request.url},
+                            {QStringLiteral("headers"), headers},
+                            {QStringLiteral("timeoutMs"), request.timeoutMs}};
+        if (request.method == NetworkMethod::Post)
+            payload.insert(QStringLiteral("bodyBase64"), QString::fromLatin1(request.body.toBase64()));
+        if (!request.credentialId.isEmpty())
+            payload.insert(QStringLiteral("credentialId"), request.credentialId);
+        const auto response = capability(QStringLiteral("NetworkRequest"), payload);
+        return {response.value(QStringLiteral("ok")).toBool(),
+                response.value(QStringLiteral("category")).toString(),
+                response.value(QStringLiteral("status")).toInt(),
+                QByteArray::fromBase64(response.value(QStringLiteral("bodyBase64")).toString().toLatin1())};
+    }
+    ProcessExecuteResult processExecute(const ProcessExecuteRequest& request) const override {
+        QJsonArray arguments;
+        for (const auto& argument : request.arguments) arguments.append(argument);
+        const auto response = capability(QStringLiteral("ProcessExecute"),
+            {{QStringLiteral("programArgument"), request.programArgument},
+             {QStringLiteral("program"), request.program},
+             {QStringLiteral("argumentsArgument"), request.argumentsArgument},
+             {QStringLiteral("arguments"), arguments},
+             {QStringLiteral("timeoutMs"), request.timeoutMs}});
+        return {response.value(QStringLiteral("ok")).toBool(),
+                response.value(QStringLiteral("category")).toString(),
+                response.value(QStringLiteral("exitCode")).toInt(-1),
+                QByteArray::fromBase64(response.value(QStringLiteral("stdoutBase64")).toString().toLatin1()),
+                QByteArray::fromBase64(response.value(QStringLiteral("stderrBase64")).toString().toLatin1())};
+    }
+    QJsonObject capability(const QString& name, const QJsonObject& request) const {
         const auto invocation = invocationId();
-        if (!value || invocation.isEmpty() || !requestCredential)
-            return false;
-        if (executingInvocation != invocation) {
+        if (invocation.isEmpty() || executingInvocation != invocation || !requestCapability) {
             QMutexLocker lock(&invocationMutex);
-            credentialFailure = QStringLiteral("PluginInvocationExpired");
-            return false;
+            capabilityFailure = QStringLiteral("PluginInvocationExpired");
+            return {{QStringLiteral("ok"), false},
+                    {QStringLiteral("category"), QStringLiteral("PluginInvocationExpired")}};
         }
-        if (credentialId.isEmpty() || credentialId.size() > 128) {
-            QMutexLocker lock(&invocationMutex);
-            credentialFailure = QStringLiteral("PluginCredentialNotDeclared");
-            return false;
-        }
-        auto response = requestCredential(invocation, credentialId);
+        auto response = requestCapability(invocation, name, request);
         if (!response.value(QStringLiteral("ok")).toBool()) {
             QMutexLocker lock(&invocationMutex);
-            credentialFailure = response.value(QStringLiteral("category")).toString(
-                QStringLiteral("PluginCredentialUnavailable"));
-            return false;
+            capabilityFailure = response.value(QStringLiteral("category")).toString(
+                QStringLiteral("PluginHostCapabilityDenied"));
         }
-        if (!response.value(QStringLiteral("secret")).isString()) {
-            QMutexLocker lock(&invocationMutex);
-            credentialFailure = QStringLiteral("PluginProtocolError");
-            return false;
-        }
-        *value = response.value(QStringLiteral("secret")).toString();
-        response = {};
-        return true;
+        return response;
     }
     QString invocationId() const { QMutexLocker lock(&invocationMutex); return activeInvocation; }
-    QString takeCredentialFailure() {
+    QString takeCapabilityFailure() {
         QMutexLocker lock(&invocationMutex);
-        return std::exchange(credentialFailure, QString());
+        return std::exchange(capabilityFailure, QString());
     }
     void beginInvocation(const QString& id) {
         QMutexLocker lock(&invocationMutex);
-        credentialFailure.clear(); activeInvocation = id;
+        capabilityFailure.clear(); activeInvocation = id;
     }
     void endInvocation(const QString& id) {
         QMutexLocker lock(&invocationMutex);
@@ -95,6 +139,14 @@ public:
             descriptor.risk != QStringLiteral("high")) {
             registrationFailed = true; return false;
         }
+        QSet<QString> seenCapabilities;
+        for (const auto& value : descriptor.hostCapabilities) {
+            if (!value.isString() || !declaredCapabilities.contains(value.toString()) ||
+                seenCapabilities.contains(value.toString())) {
+                registrationFailed = true; return false;
+            }
+            seenCapabilities.insert(value.toString());
+        }
         tools.insert(descriptor.id, tool);
         descriptors.append(descriptor);
         return true;
@@ -102,20 +154,22 @@ public:
     bool accepting = false;
     bool registrationFailed = false;
     QSet<QString> permissions;
+    QSet<QString> declaredCapabilities;
     QHash<QString, IPluginTool*> tools;
     QList<PluginToolDescriptor> descriptors;
     QString pluginId;
     mutable QMutex invocationMutex;
     QString activeInvocation;
-    mutable QString credentialFailure;
-    std::function<QJsonObject(const QString&, const QString&)> requestCredential;
+    mutable QString capabilityFailure;
+    std::function<QJsonObject(const QString&, const QString&, const QJsonObject&)> requestCapability;
 };
 
 QJsonObject descriptorJson(const PluginToolDescriptor& descriptor) {
     return {{QStringLiteral("id"), descriptor.id}, {QStringLiteral("name"), descriptor.name},
         {QStringLiteral("description"), descriptor.description}, {QStringLiteral("category"), descriptor.category},
         {QStringLiteral("risk"), descriptor.risk}, {QStringLiteral("schema"), descriptor.inputSchema},
-        {QStringLiteral("requirements"), descriptor.authorizationRequirements}};
+        {QStringLiteral("requirements"), descriptor.authorizationRequirements},
+        {QStringLiteral("hostCapabilities"), descriptor.hostCapabilities}};
 }
 
 class Host final : public QObject {
@@ -136,11 +190,12 @@ public:
         reader.detach();
     }
 private:
-    QJsonObject credential(const QString& invocationId, const QString& credentialId) {
+    QJsonObject capability(const QString& invocationId, const QString& name,
+                           const QJsonObject& payload) {
         if (QThread::currentThread() != thread()) {
             QJsonObject value;
-            QMetaObject::invokeMethod(this, [this, &value, invocationId, credentialId] {
-                value = credential(invocationId, credentialId);
+            QMetaObject::invokeMethod(this, [this, &value, invocationId, name, payload] {
+                value = capability(invocationId, name, payload);
             }, Qt::BlockingQueuedConnection);
             return value;
         }
@@ -150,14 +205,15 @@ private:
         waiting.insert(id, [&response, &loop](const QJsonObject& value) {
             response = value; loop.quit();
         });
-        send({{QStringLiteral("op"), QStringLiteral("hostRequest")},
+        QJsonObject message{{QStringLiteral("op"), QStringLiteral("hostRequest")},
               {QStringLiteral("id"), id},
               {QStringLiteral("invocationId"), invocationId},
               {QStringLiteral("pluginId"), context ? context->pluginId : QString()},
-              {QStringLiteral("kind"), QStringLiteral("credential")},
-              {QStringLiteral("credentialId"), credentialId},
-              {QStringLiteral("purpose"), QStringLiteral("tool-execution")}});
-        QTimer::singleShot(10000, &loop, &QEventLoop::quit);
+              {QStringLiteral("kind"), QStringLiteral("capability")},
+              {QStringLiteral("capability"), name},
+              {QStringLiteral("payload"), payload}};
+        send(message);
+        QTimer::singleShot(20000, &loop, &QEventLoop::quit);
         if (response.isEmpty()) loop.exec();
         waiting.remove(id);
         if (response.isEmpty()) return {{QStringLiteral("ok"), false},
@@ -223,8 +279,11 @@ private:
             }
             context = std::make_shared<HostContext>();
             context->pluginId = expectedId;
-            context->requestCredential = [this](const QString& invocationId, const QString& credentialId) {
-                return credential(invocationId, credentialId);
+            for (const auto& value : request.value(QStringLiteral("hostCapabilities")).toArray())
+                if (value.isString()) context->declaredCapabilities.insert(value.toString());
+            context->requestCapability = [this](const QString& invocationId, const QString& name,
+                                                const QJsonObject& payload) {
+                return capability(invocationId, name, payload);
             };
             for (const auto& permission : request.value(QStringLiteral("permissions")).toArray())
                 if (permission.isString()) context->permissions.insert(permission.toString());
@@ -278,12 +337,12 @@ private:
             try {
                 const auto result = handler->execute({id, toolId,
                     request.value(QStringLiteral("arguments")).toObject()});
-                const auto credentialFailure = invocationContext->takeCredentialFailure();
+                const auto capabilityFailure = invocationContext->takeCapabilityFailure();
                 invocationContext->endInvocation(id);
                 executingInvocation.clear();
                 send({{QStringLiteral("id"), id},
-                    {QStringLiteral("ok"), credentialFailure.isEmpty() && result.ok},
-                    {QStringLiteral("category"), !credentialFailure.isEmpty() ? credentialFailure :
+                    {QStringLiteral("ok"), capabilityFailure.isEmpty() && result.ok},
+                    {QStringLiteral("category"), !capabilityFailure.isEmpty() ? capabilityFailure :
                         result.ok ? QString() : QStringLiteral("PluginLoadFailure")},
                     {QStringLiteral("summary"), result.summary.left(65536)}});
             } catch (...) { invocationContext->endInvocation(id); executingInvocation.clear();

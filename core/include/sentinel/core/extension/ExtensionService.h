@@ -48,7 +48,12 @@ struct ExtensionSnapshot {
     int nativeAbiVersion{0};
     int hostProtocolVersion{0};
     int declaredCredentialCount{0};
+    bool brokeredCredentialSupport{false};
+    bool rawScopedCredentialFallback{false};
+    QString credentialMode = QStringLiteral("None");
     QStringList requestedHostCapabilities;
+    QStringList brokeredHostCapabilities;
+    QString sandboxStatus;
     QStringList requirements;
     int registeredToolCount{0};
     int resourceCount{0};

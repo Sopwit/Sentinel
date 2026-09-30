@@ -7,6 +7,8 @@
 #include "sentinel/core/plugin/PluginDependencyResolver.h"
 #include "sentinel/core/plugin/PluginHostProtocol.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
+#include "sentinel/core/security/ExternalDirectoryGate.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDirIterator>
@@ -19,6 +21,13 @@
 #include <QTimer>
 #include <QThread>
 #include <QPointer>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QNetworkProxy>
+#include <QHostAddress>
+#include <QEventLoop>
+#include <QUrl>
 #include <algorithm>
 #include <atomic>
 
@@ -55,14 +64,15 @@ QStringList hostPermissionsFor(const ToolDescriptor& descriptor) {
             permission = requirement.access == AccessMode::Read ? Permissions::FileSystemRead
                                                                  : Permissions::FileSystemWrite;
             break;
-        case SecurityDomain::Network:
         case SecurityDomain::Browser:
-        case SecurityDomain::ExternalService:
             permission = Permissions::NetworkExternal;
             break;
         case SecurityDomain::Memory:
         case SecurityDomain::Conversation:
             permission = Permissions::DatabaseAccess;
+            break;
+        case SecurityDomain::Process:
+            permission = Permissions::ProcessExecute;
             break;
         default:
             break;
@@ -71,6 +81,414 @@ QStringList hostPermissionsFor(const ToolDescriptor& descriptor) {
             permissions.append(permission);
     }
     return permissions;
+}
+
+QJsonObject brokerFailure(const QString& category) {
+    return {{QStringLiteral("ok"), false}, {QStringLiteral("category"), category}};
+}
+
+bool onlyFields(const QJsonObject& object, const QStringList& names) {
+    for (auto it = object.begin(); it != object.end(); ++it)
+        if (!names.contains(it.key())) return false;
+    return true;
+}
+
+bool isCancelled(const PlannedToolInvocation& invocation) {
+    return (invocation.cancellation && invocation.cancellation->load()) ||
+           (invocation.toolCancellation && invocation.toolCancellation->load());
+}
+
+bool authorizedRequest(const PlannedToolInvocation& invocation, SecurityDomain domain,
+                       AccessMode access, const QString& resource) {
+    if (!invocation.resourceSnapshot || !invocation.resourceSnapshot->authorized) return false;
+    for (const auto& item : invocation.resourceSnapshot->requests)
+        if (item.domain == domain && item.access == access && item.resource == resource)
+            return true;
+    return false;
+}
+
+QJsonObject filesystemBroker(const QString& capability, const QJsonObject& payload,
+                             const PlannedToolInvocation& invocation,
+                             const ExternalDirectoryGate* gate) {
+    const bool writing = capability == QStringLiteral("FilesystemWrite");
+    const auto denied = writing ? QStringLiteral("PluginFilesystemWriteDenied")
+                                : QStringLiteral("PluginFilesystemReadDenied");
+    if (isCancelled(invocation)) return brokerFailure(QStringLiteral("PluginCancelled"));
+    if (!gate || !invocation.resourceSnapshot || !invocation.resourceSnapshot->authorized ||
+        !onlyFields(payload, writing
+            ? QStringList{QStringLiteral("operation"), QStringLiteral("argument"),
+                          QStringLiteral("path"), QStringLiteral("contentBase64")}
+            : QStringList{QStringLiteral("operation"), QStringLiteral("argument"),
+                          QStringLiteral("path")}) ||
+        payload.value(QStringLiteral("operation")).toString() !=
+            (writing ? QStringLiteral("write") : QStringLiteral("read")) ||
+        !payload.value(QStringLiteral("argument")).isString() ||
+        !payload.value(QStringLiteral("path")).isString()) return brokerFailure(denied);
+    const auto argument = payload.value(QStringLiteral("argument")).toString();
+    const auto rawPath = payload.value(QStringLiteral("path")).toString();
+    const auto access = writing ? AccessMode::Write : AccessMode::Read;
+    const auto filesystemAccess = writing ? FileSystemAccess::Write : FileSystemAccess::Read;
+    QtFileSystemService service(gate);
+    for (const auto& resource : invocation.resourceSnapshot->files) {
+        if (resource.argument != argument || resource.access != access ||
+            !resource.patchAction.isEmpty() || resource.path.displayPath != rawPath ||
+            resource.path.access != filesystemAccess ||
+            !authorizedRequest(invocation, SecurityDomain::FileSystem, access,
+                               resource.path.canonicalPath)) continue;
+        const auto checked = service.revalidateAuthorized(resource.path,
+            invocation.resourceSnapshot->workingDirectory);
+        if (!checked.ok() || checked.value->canonicalPath != resource.path.canonicalPath)
+            return brokerFailure(QStringLiteral("PluginResourceDenied"));
+        if (!gate->isAccessAllowed(resource.path.canonicalPath,
+                                   invocation.resourceSnapshot->workingDirectory, writing))
+            return brokerFailure(QStringLiteral("PluginResourceDenied"));
+        if (isCancelled(invocation)) return brokerFailure(QStringLiteral("PluginCancelled"));
+        if (!writing) {
+            const auto result = service.readFile(*checked.value, 256 * 1024);
+            if (!result.ok()) return brokerFailure(denied);
+            if (isCancelled(invocation)) return brokerFailure(QStringLiteral("PluginCancelled"));
+            return {{QStringLiteral("ok"), true},
+                    {QStringLiteral("contentBase64"), QString::fromLatin1(result.value->content.toBase64())},
+                    {QStringLiteral("truncated"), result.value->truncated},
+                    {QStringLiteral("binary"), result.value->binary}};
+        }
+        if (!payload.value(QStringLiteral("contentBase64")).isString()) return brokerFailure(denied);
+        const auto encoded = payload.value(QStringLiteral("contentBase64")).toString().toLatin1();
+        if (encoded.size() > 350000) return brokerFailure(denied);
+        const auto decoded = QByteArray::fromBase64Encoding(encoded, QByteArray::AbortOnBase64DecodingErrors);
+        if (!decoded || decoded.decoded.size() > 256 * 1024) return brokerFailure(denied);
+        const auto result = service.writeFile(*checked.value, decoded.decoded, false);
+        if (!result.ok()) return brokerFailure(denied);
+        if (isCancelled(invocation)) return brokerFailure(QStringLiteral("PluginCancelled"));
+        return {{QStringLiteral("ok"), true},
+                {QStringLiteral("bytesWritten"), result.value->bytesWritten},
+                {QStringLiteral("created"), result.value->created},
+                {QStringLiteral("mutation"), QJsonObject{
+                    {QStringLiteral("path"), resource.path.displayPath},
+                    {QStringLiteral("kind"), result.value->created
+                        ? QStringLiteral("Created") : QStringLiteral("Modified")}}}};
+    }
+    return brokerFailure(QStringLiteral("PluginResourceDenied"));
+}
+
+bool networkResourceAuthorized(const PlannedToolInvocation& invocation,
+                               const QString& argument, const QString& rawUrl, const QUrl& url,
+                               const QString& method) {
+    if (!invocation.descriptorSnapshot || !invocation.resourceSnapshot ||
+        !invocation.resourceSnapshot->authorized) return false;
+    bool matchedArgument = false;
+    for (const auto& item : invocation.arguments)
+        if (item.id == argument && item.value == rawUrl) matchedArgument = true;
+    if (!matchedArgument) return false;
+    for (const auto& requirement : invocation.descriptorSnapshot->authorizationRequirements) {
+        if (requirement.domain != SecurityDomain::Network ||
+            requirement.resourceKind != AuthorizationResourceKind::Host ||
+            requirement.resourceArgument != argument) continue;
+        if (method == QStringLiteral("GET") && requirement.access != AccessMode::Read) continue;
+        if (method == QStringLiteral("POST") && requirement.access != AccessMode::Write) continue;
+        if (authorizedRequest(invocation, SecurityDomain::Network, requirement.access,
+                              url.host().toLower())) return true;
+    }
+    return false;
+}
+
+QJsonObject networkBroker(const QString& pluginId, const PluginManifest& manifest,
+                          const PluginSandbox& sandbox, const QString& invocationId,
+                          const QString& requestId, const QJsonObject& payload,
+                          const PlannedToolInvocation& invocation,
+                          PluginHostSession& session) {
+    if (isCancelled(invocation) || !session.invocationActive(invocationId))
+        return brokerFailure(QStringLiteral("PluginCancelled"));
+    const auto method = payload.value(QStringLiteral("method")).toString();
+    const auto rawUrl = payload.value(QStringLiteral("url")).toString();
+    const auto argument = payload.value(QStringLiteral("urlArgument")).toString();
+    const QUrl url(rawUrl);
+    if (!onlyFields(payload, {QStringLiteral("method"), QStringLiteral("url"),
+                              QStringLiteral("urlArgument"), QStringLiteral("headers"),
+                              QStringLiteral("bodyBase64"), QStringLiteral("timeoutMs"),
+                              QStringLiteral("credentialId")}) ||
+        !QStringList{QStringLiteral("GET"), QStringLiteral("POST")}.contains(method) ||
+        rawUrl.size() > 2048 || !url.isValid() || url.host().isEmpty() ||
+        (payload.contains(QStringLiteral("headers")) &&
+         !payload.value(QStringLiteral("headers")).isObject()) ||
+        (payload.contains(QStringLiteral("credentialId")) &&
+         !payload.value(QStringLiteral("credentialId")).isString()) ||
+        (payload.contains(QStringLiteral("timeoutMs")) &&
+         !payload.value(QStringLiteral("timeoutMs")).isDouble()) ||
+        !QStringList{QStringLiteral("http"), QStringLiteral("https")}.contains(url.scheme()) ||
+        !url.userInfo().isEmpty() || url.hasFragment() ||
+        !networkResourceAuthorized(invocation, argument, rawUrl, url, method))
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    const auto decision = NetworkPolicyService::instance().check(url);
+    if (decision == NetworkDecision::Offline)
+        return brokerFailure(QStringLiteral("PluginNetworkOffline"));
+    if (decision != NetworkDecision::Allowed)
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    const bool local = url.host().compare(QStringLiteral("localhost"), Qt::CaseInsensitive) == 0 ||
+                       QHostAddress(url.host()).isLoopback();
+    if (!sandbox.checkPermission(pluginId, local ? Permissions::NetworkLoopback :
+                                                 Permissions::NetworkExternal))
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    const auto timeoutMs = payload.value(QStringLiteral("timeoutMs")).toInt(10000);
+    if (timeoutMs < 1000 || timeoutMs > 15000)
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    QByteArray body;
+    if (method == QStringLiteral("POST")) {
+        if (!payload.value(QStringLiteral("bodyBase64")).isString() ||
+            payload.value(QStringLiteral("bodyBase64")).toString().size() > 350000)
+            return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+        const auto decoded = QByteArray::fromBase64Encoding(
+            payload.value(QStringLiteral("bodyBase64")).toString().toLatin1(),
+            QByteArray::AbortOnBase64DecodingErrors);
+        if (!decoded || decoded.decoded.size() > 256 * 1024)
+            return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+        body = decoded.decoded;
+    } else if (payload.contains(QStringLiteral("bodyBase64"))) {
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    }
+    QNetworkRequest networkRequest(url);
+    networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                                QNetworkRequest::ManualRedirectPolicy);
+    const auto headers = payload.value(QStringLiteral("headers")).toObject();
+    if (headers.size() > 8) return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    for (auto it = headers.begin(); it != headers.end(); ++it) {
+        const auto name = it.key().toLower();
+        if (!it.value().isString() ||
+            !QStringList{QStringLiteral("accept"), QStringLiteral("content-type"),
+                         QStringLiteral("user-agent")}.contains(name) ||
+            it.value().toString().size() > 256 ||
+            it.value().toString().contains(QLatin1Char('\r')) ||
+            it.value().toString().contains(QLatin1Char('\n')))
+            return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+        networkRequest.setRawHeader(name.toLatin1(), it.value().toString().toUtf8());
+    }
+    QString secret;
+    const auto credentialId = payload.value(QStringLiteral("credentialId")).toString();
+    if (!credentialId.isEmpty()) {
+        bool toolDeclaredCredential = false;
+        if (invocation.descriptorSnapshot) {
+            for (const auto& requirement :
+                 invocation.descriptorSnapshot->authorizationRequirements) {
+                if (requirement.domain == SecurityDomain::ExternalService &&
+                    requirement.access == AccessMode::Invoke &&
+                    requirement.staticResource ==
+                        QStringLiteral("credential:%1").arg(credentialId)) {
+                    toolDeclaredCredential = true;
+                    break;
+                }
+            }
+        }
+        if (url.scheme() != QStringLiteral("https") ||
+            !toolDeclaredCredential ||
+            !sandbox.checkPermission(pluginId, Permissions::CredentialUse) ||
+            !authorizedRequest(invocation, SecurityDomain::ExternalService,
+                               AccessMode::Invoke, QStringLiteral("credential:%1").arg(credentialId)))
+            return brokerFailure(QStringLiteral("PluginCredentialDenied"));
+        bool bound = false;
+        for (const auto& declaration : manifest.credentials)
+            if (declaration.id == credentialId && declaration.allowedHosts.contains(url.host().toLower()) &&
+                (declaration.kind == QStringLiteral("token") ||
+                 declaration.kind == QStringLiteral("apiKey"))) bound = true;
+        if (!bound) return brokerFailure(QStringLiteral("PluginCredentialDenied"));
+        auto store = defaultCredentialStore();
+        if (store.summary().status != CredentialStoreStatus::Ready)
+            return brokerFailure(QStringLiteral("PluginCredentialDenied"));
+        auto retrieved = store.readCredential({QStringLiteral("plugin.") + pluginId, credentialId});
+        if (!retrieved.result.succeeded || !retrieved.secret || retrieved.secret->isEmpty())
+            return brokerFailure(QStringLiteral("PluginCredentialDenied"));
+        secret = *retrieved.secret;
+        retrieved.secret->fill(QChar(0));
+        retrieved.secret.reset();
+        auto authorizationHeader = QByteArray("Bearer ") + secret.toUtf8();
+        networkRequest.setRawHeader("Authorization", authorizationHeader);
+        authorizationHeader.fill('\0');
+        secret.fill(QChar(0));
+    }
+    QNetworkAccessManager transport;
+    transport.setProxy(QNetworkProxy(QNetworkProxy::NoProxy));
+    QNetworkReply* reply = method == QStringLiteral("GET")
+        ? transport.get(networkRequest) : transport.post(networkRequest, body);
+    networkRequest.setRawHeader("Authorization", {});
+    body.fill('\0');
+    if (!reply) return brokerFailure(QStringLiteral("PluginHostCapabilityUnavailable"));
+    reply->setReadBufferSize(256 * 1024 + 1);
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    QByteArray responseBody;
+    bool oversized = false;
+    bool timedOut = false;
+    QObject::connect(reply, &QNetworkReply::readyRead, &loop, [&] {
+        responseBody += reply->read(256 * 1024 + 1 - responseBody.size());
+        if (responseBody.size() > 256 * 1024) { oversized = true; reply->abort(); }
+    });
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, [&] {
+        timedOut = true; reply->abort(); loop.quit();
+    });
+    if (!session.trackBrokerOperation(invocationId, requestId,
+                                      QStringLiteral("NetworkRequest"),
+                                      [&] { reply->abort(); loop.quit(); })) {
+        reply->abort(); reply->deleteLater();
+        return brokerFailure(QStringLiteral("PluginInvocationExpired"));
+    }
+    timer.start(timeoutMs);
+    if (!reply->isFinished()) loop.exec();
+    session.finishBrokerOperation(invocationId, requestId);
+    responseBody += reply->read(256 * 1024 + 1 - responseBody.size());
+    const auto status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const auto error = reply->error();
+    reply->deleteLater();
+    if (!session.invocationActive(invocationId) || isCancelled(invocation))
+        return brokerFailure(QStringLiteral("PluginCancelled"));
+    if (timedOut) return brokerFailure(QStringLiteral("PluginTimeout"));
+    if (oversized || responseBody.size() > 256 * 1024)
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    if (status >= 300 && status < 400) return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    if (error != QNetworkReply::NoError)
+        return brokerFailure(QStringLiteral("PluginNetworkDenied"));
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("status"), status},
+            {QStringLiteral("bodyBase64"), QString::fromLatin1(responseBody.toBase64())}};
+}
+
+QJsonObject processBroker(const QString& invocationId, const QString& requestId,
+                          const QJsonObject& payload,
+                          const PlannedToolInvocation& invocation,
+                          const ExternalDirectoryGate* gate,
+                          const QString& privateDirectory,
+                          PluginHostSession& session) {
+    if (isCancelled(invocation) || !session.invocationActive(invocationId))
+        return brokerFailure(QStringLiteral("PluginCancelled"));
+    if (!onlyFields(payload, {QStringLiteral("program"), QStringLiteral("programArgument"),
+                              QStringLiteral("argumentsArgument"), QStringLiteral("arguments"),
+                              QStringLiteral("timeoutMs")}) ||
+        !gate || !invocation.descriptorSnapshot || !invocation.resourceSnapshot ||
+        !invocation.resourceSnapshot->authorized ||
+        !payload.value(QStringLiteral("program")).isString() ||
+        !payload.value(QStringLiteral("programArgument")).isString() ||
+        !payload.value(QStringLiteral("argumentsArgument")).isString() ||
+        !payload.value(QStringLiteral("arguments")).isArray() ||
+        (payload.contains(QStringLiteral("timeoutMs")) &&
+         !payload.value(QStringLiteral("timeoutMs")).isDouble()))
+        return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    const auto rawProgram = payload.value(QStringLiteral("program")).toString();
+    const auto programArgument = payload.value(QStringLiteral("programArgument")).toString();
+    const auto argumentsArgument = payload.value(QStringLiteral("argumentsArgument")).toString();
+    const QFileInfo programInfo(rawProgram);
+    const auto program = programInfo.canonicalFilePath();
+    if (!programInfo.isAbsolute() || !programInfo.isExecutable() || program.isEmpty() ||
+        rawProgram != program) return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    bool argumentBound = false;
+    for (const auto& arg : invocation.arguments)
+        if (arg.id == programArgument && arg.value == rawProgram) argumentBound = true;
+    bool requirementBound = false;
+    for (const auto& requirement : invocation.descriptorSnapshot->authorizationRequirements)
+        if (requirement.domain == SecurityDomain::Process &&
+            requirement.access == AccessMode::Execute &&
+            requirement.resourceKind == AuthorizationResourceKind::Argument &&
+            requirement.resourceArgument == programArgument) requirementBound = true;
+    if (!argumentBound || !requirementBound ||
+        !authorizedRequest(invocation, SecurityDomain::Process, AccessMode::Execute, rawProgram))
+        return brokerFailure(QStringLiteral("PluginResourceDenied"));
+    QStringList arguments;
+    const auto suppliedArguments = payload.value(QStringLiteral("arguments")).toArray();
+    if (suppliedArguments.size() > 32) return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    bool argumentsBound = false;
+    for (const auto& arg : invocation.arguments)
+        if (arg.id == argumentsArgument && arg.jsonValue.isArray() &&
+            arg.jsonValue.toArray() == suppliedArguments) argumentsBound = true;
+    if (!argumentsBound) return brokerFailure(QStringLiteral("PluginResourceDenied"));
+    for (const auto& value : suppliedArguments) {
+        if (!value.isString() || value.toString().size() > 4096 ||
+            value.toString().contains(QChar(0)))
+            return brokerFailure(QStringLiteral("PluginProcessDenied"));
+        arguments.append(value.toString());
+    }
+    const auto timeoutMs = payload.value(QStringLiteral("timeoutMs")).toInt(10000);
+    if (timeoutMs < 1000 || timeoutMs > 15000)
+        return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    const auto resourceCwd = invocation.resourceSnapshot->workingDirectory;
+    const auto workdir = QFileInfo(privateDirectory).canonicalFilePath();
+    if (workdir.isEmpty() || !QFileInfo(workdir).isDir())
+        return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    QtFileSystemService filesystem(gate);
+    SandboxExecutionPlan plan;
+    plan.workingDirectory = workdir;
+    plan.readablePaths.append(program);
+    plan.writablePaths.append(workdir);
+    plan.networkAllowed = false;
+    plan.requireEnforcement = true;
+    plan.restrictedEnvironment = true;
+    plan.forbidDetachedChildren = true;
+    for (const auto& resource : invocation.resourceSnapshot->files) {
+        const auto checked = filesystem.revalidateAuthorized(resource.path, resourceCwd);
+        if (!checked.ok() || checked.value->canonicalPath != resource.path.canonicalPath)
+            return brokerFailure(QStringLiteral("PluginResourceDenied"));
+        if (!gate->isAccessAllowed(resource.path.canonicalPath, resourceCwd,
+                                   resource.access != AccessMode::Read))
+            return brokerFailure(QStringLiteral("PluginResourceDenied"));
+        if (resource.access == AccessMode::Read)
+            plan.readablePaths.append(resource.path.canonicalPath);
+        else if (resource.access == AccessMode::Write)
+            plan.writablePaths.append(resource.path.canonicalPath);
+    }
+    ProcessRequest processRequest;
+    processRequest.program = program;
+    processRequest.arguments = arguments;
+    processRequest.workingDirectory = workdir;
+    processRequest.environment = QProcessEnvironment();
+    processRequest.environment.insert(QStringLiteral("PATH"), QFileInfo(program).absolutePath());
+    processRequest.timeoutMs = timeoutMs;
+    processRequest.sandbox = plan;
+    processRequest.sessionId = invocationId;
+    processRequest.toolCallId = requestId;
+    QEventLoop loop;
+    ProcessRecord terminal;
+    bool done = false;
+    bool oversized = false;
+    QByteArray output;
+    QByteArray errors;
+    ProcessExecutor executor;
+    const auto processId = executor.start(processRequest, [&](const ProcessRecord& record) {
+        if (record.state == ProcessState::Failed || record.state == ProcessState::Exited ||
+            record.state == ProcessState::Cancelled) {
+            terminal = record;
+            done = true;
+            loop.quit();
+        }
+    }, [&](const QString& id, ProcessStream stream, const QByteArray& bytes) {
+        auto& target = stream == ProcessStream::Stdout ? output : errors;
+        const auto remaining = 64 * 1024 - target.size();
+        if (bytes.size() > remaining) {
+            target += bytes.left(remaining);
+            oversized = true;
+            executor.kill(id);
+        } else target += bytes;
+    });
+    if (processId.isEmpty()) return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    if (!done && !session.trackBrokerOperation(invocationId, requestId,
+                                                QStringLiteral("ProcessExecute"),
+                                                [&] { executor.kill(processId); loop.quit(); })) {
+        executor.kill(processId);
+        return brokerFailure(QStringLiteral("PluginInvocationExpired"));
+    }
+    if (!done) loop.exec();
+    session.finishBrokerOperation(invocationId, requestId);
+    if (!session.invocationActive(invocationId) || isCancelled(invocation))
+        return brokerFailure(QStringLiteral("PluginCancelled"));
+    if (terminal.timedOut) return brokerFailure(QStringLiteral("PluginTimeout"));
+    if (oversized || terminal.state != ProcessState::Exited ||
+        terminal.sandbox.enforcement != SandboxEnforcement::Enforced)
+        return brokerFailure(QStringLiteral("PluginProcessDenied"));
+    if (terminal.exitCode != 0)
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("category"), QStringLiteral("PluginProcessFailed")},
+                {QStringLiteral("exitCode"), terminal.exitCode},
+                {QStringLiteral("stdoutBase64"), QString::fromLatin1(output.toBase64())},
+                {QStringLiteral("stderrBase64"), QString::fromLatin1(errors.toBase64())}};
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("exitCode"), terminal.exitCode},
+            {QStringLiteral("stdoutBase64"), QString::fromLatin1(output.toBase64())},
+            {QStringLiteral("stderrBase64"), QString::fromLatin1(errors.toBase64())}};
 }
 
 QString escapedId(const QString& value) {
@@ -89,9 +507,10 @@ class RemotePluginToolHandler final : public IToolHandler {
 public:
     RemotePluginToolHandler(std::weak_ptr<PluginHostSession> host,
                             std::shared_ptr<PluginSandbox> sandbox, QString pluginId,
-                            QString localId, QStringList permissions)
+                            QString localId, QStringList permissions, bool processRequired)
         : host_(std::move(host)), sandbox_(std::move(sandbox)), pluginId_(std::move(pluginId)),
-          localId_(std::move(localId)), permissions_(std::move(permissions)) {}
+          localId_(std::move(localId)), permissions_(std::move(permissions)),
+          processRequired_(processRequired) {}
     IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString&,
                                   const QString&, IToolExecutor::Output,
                                   IToolExecutor::Completion completion) override {
@@ -108,6 +527,12 @@ public:
             completion({ToolExecutionStatus::InvalidArguments, QStringLiteral("Missing plugin invocation")});
             return {};
         }
+        if (processRequired_ && request.sandbox.status != SandboxStatus::Allowed) {
+            ToolExecutionResult result{ToolExecutionStatus::Blocked, QStringLiteral("PluginProcessDenied")};
+            result.failureCategory = ToolFailureCategory::SecurityDenied;
+            completion(result);
+            return {};
+        }
         QJsonObject arguments;
         for (const auto& argument : request.plan.invocations.first().arguments)
             arguments.insert(argument.id, argument.jsonValue.isUndefined()
@@ -115,9 +540,13 @@ public:
         auto requestId = std::make_shared<QString>();
         auto cancelled = std::make_shared<std::atomic_bool>(false);
         QPointer<QObject> callbackContext = request.callbackContext;
+        auto authorization = request.plan.invocations.first();
+        if (!authorization.toolCancellation) authorization.toolCancellation = cancelled;
+        const auto toolCancellation = authorization.toolCancellation;
         QMetaObject::invokeMethod(host.get(), [host, localId = localId_, arguments,
-            requestId, cancelled, callbackContext, completion = std::move(completion)]() mutable {
-          *requestId = host->invoke(localId, arguments,
+            authorization, requestId, cancelled, callbackContext,
+            completion = std::move(completion)]() mutable {
+          *requestId = host->invoke(localId, arguments, authorization,
             [callbackContext, completion = std::move(completion)](QJsonObject response) mutable {
                 auto deliver = [completion = std::move(completion), response]() mutable {
                 ToolExecutionResult result;
@@ -128,14 +557,26 @@ public:
                     const auto category = response.value(QStringLiteral("category")).toString();
                     result.summary = category;
                     result.failureCategory = category == QStringLiteral("PluginTimeout")
-                        ? ToolFailureCategory::Timeout : category == QStringLiteral("PluginCancelled")
+                        ? ToolFailureCategory::Timeout :
+                        (category == QStringLiteral("PluginCancelled") ||
+                         category == QStringLiteral("PluginInvocationExpired"))
                         ? ToolFailureCategory::Cancelled : category == QStringLiteral("PluginProtocolError")
                         ? ToolFailureCategory::ProtocolError :
                         (category == QStringLiteral("PluginCredentialDenied") ||
                          category == QStringLiteral("PluginCredentialNotDeclared") ||
                          category == QStringLiteral("PluginHostCapabilityDenied") ||
-                         category == QStringLiteral("PluginHostCapabilityNotDeclared"))
-                        ? ToolFailureCategory::SecurityDenied : ToolFailureCategory::RuntimeUnavailable;
+                         category == QStringLiteral("PluginHostCapabilityNotDeclared") ||
+                         category == QStringLiteral("PluginResourceDenied") ||
+                         category == QStringLiteral("PluginFilesystemReadDenied") ||
+                         category == QStringLiteral("PluginFilesystemWriteDenied") ||
+                         category == QStringLiteral("PluginNetworkDenied") ||
+                         category == QStringLiteral("PluginProcessDenied"))
+                        ? ToolFailureCategory::SecurityDenied :
+                        category == QStringLiteral("PluginNetworkOffline")
+                        ? ToolFailureCategory::NetworkFailure :
+                        category == QStringLiteral("PluginProcessFailed")
+                        ? ToolFailureCategory::RemoteExecutionFailure :
+                        ToolFailureCategory::RuntimeUnavailable;
                 }
                 completion(std::move(result));
                 };
@@ -144,8 +585,9 @@ public:
             });
           if (cancelled->load() && !requestId->isEmpty()) host->cancel(*requestId);
         }, Qt::QueuedConnection);
-        return [host, requestId, cancelled] {
+        return [host, requestId, cancelled, toolCancellation] {
             cancelled->store(true);
+            toolCancellation->store(true);
             QMetaObject::invokeMethod(host.get(), [host, requestId] {
                 if (!requestId->isEmpty()) host->cancel(*requestId);
             }, Qt::QueuedConnection);
@@ -157,6 +599,7 @@ private:
     QString pluginId_;
     QString localId_;
     QStringList permissions_;
+    bool processRequired_ = false;
 };
 } // namespace
 
@@ -274,7 +717,7 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
             desc.manifest = manifest;
             desc.pluginFilePath = QFileInfo(manifestPath).absolutePath(); // directory
             if (!manifest.isCompatibleWithCore(m_coreVersion) ||
-                manifest.apiVersion != QStringLiteral("3.0")) {
+                manifest.apiVersion != QStringLiteral("5.0")) {
                 desc.state = PluginState::Error;
                 desc.failureCategory = QStringLiteral("PluginIncompatible");
                 desc.errorString = desc.failureCategory;
@@ -327,7 +770,7 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
     desc.failureCategory.clear();
     desc.errorString.clear();
     if (!desc.manifest.isValid() || !desc.manifest.isCompatibleWithCore(m_coreVersion) ||
-        desc.manifest.apiVersion != QStringLiteral("3.0")) {
+        desc.manifest.apiVersion != QStringLiteral("5.0")) {
         desc.failureCategory = QStringLiteral("PluginIncompatible");
         desc.errorString = desc.failureCategory;
         updateState(desc, PluginState::Error);
@@ -337,7 +780,7 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
     const QStringList supportedPermissions{Permissions::NetworkLoopback, Permissions::NetworkExternal,
         Permissions::ModelConfigRead, Permissions::ModelConfigWrite, Permissions::FileSystemRead,
         Permissions::FileSystemWrite, Permissions::ToolExecution, Permissions::DatabaseAccess,
-        Permissions::CredentialUse};
+            Permissions::CredentialUse, Permissions::ProcessExecute};
     for (const auto& permission : desc.manifest.permissions.toList()) {
         if (!supportedPermissions.contains(permission)) {
             desc.failureCategory = QStringLiteral("PluginIncompatible");
@@ -361,7 +804,15 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
 #endif
         }
     }
-    if (!QFileInfo(libPath).isFile()) {
+    const auto canonicalPluginDir = QFileInfo(desc.pluginFilePath).canonicalFilePath();
+    const auto canonicalLibrary = QFileInfo(libPath).canonicalFilePath();
+    const auto relativeLibrary = QDir(canonicalPluginDir).relativeFilePath(canonicalLibrary);
+    if (!QFileInfo(libPath).isFile() || canonicalPluginDir.isEmpty() ||
+        canonicalLibrary.isEmpty() ||
+        QFileInfo(relativeLibrary).isAbsolute() || relativeLibrary == QStringLiteral("..") ||
+        relativeLibrary.startsWith(QStringLiteral("../")) ||
+        relativeLibrary.startsWith(QStringLiteral("..\\")) ||
+        relativeLibrary == QStringLiteral(".")) {
         desc.failureCategory = QStringLiteral("PluginLoadFailure");
         desc.errorString = desc.failureCategory;
         updateState(desc, PluginState::Error);
@@ -370,58 +821,73 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
     }
     m_sandbox->setActive(pluginId, true);
     auto host = std::make_shared<PluginHostSession>();
+    host->setPluginIdentity(pluginId);
     host->setHostRequestHandler([this, pluginId, generation = std::weak_ptr<PluginHostSession>(host)](
-                                                 const QString&, const QString& toolId,
-                                                 const QJsonObject& request) -> QJsonObject {
+                                                 const QString& invocationId, const QString& toolId,
+                                                 const QJsonObject& request,
+                                                 const PlannedToolInvocation& authorization,
+                                                 PluginHostSession& session) -> QJsonObject {
         const auto denied = [](const QString& category) {
             return QJsonObject{{QStringLiteral("ok"), false}, {QStringLiteral("category"), category}};
         };
-        if (request.value(QStringLiteral("kind")) == QStringLiteral("capability"))
-            return denied(QStringLiteral("PluginHostCapabilityNotDeclared"));
         const auto found = m_plugins.constFind(pluginId);
         const auto currentHost = generation.lock();
         if (found == m_plugins.cend() || !currentHost || found->host != currentHost ||
-            request.value(QStringLiteral("kind")) != QStringLiteral("credential") ||
-            request.value(QStringLiteral("purpose")) != QStringLiteral("tool-execution") ||
             request.value(QStringLiteral("pluginId")).toString() != pluginId)
-            return denied(QStringLiteral("PluginCredentialDenied"));
-        const auto credentialId = request.value(QStringLiteral("credentialId")).toString();
-        if (credentialId.isEmpty() || credentialId.size() > 128)
-            return denied(QStringLiteral("PluginCredentialNotDeclared"));
-        bool declared = false;
-        for (const auto& credential : found->manifest.credentials)
-            if (credential.id == credentialId) { declared = true; break; }
-        if (!declared) return denied(QStringLiteral("PluginCredentialNotDeclared"));
-        // The active tool must name this exact credential as an external-service resource.
-        // Manifest declaration and a general plugin permission are insufficient alone.
-        bool scoped = false;
-        for (const auto& item : found->remoteTools) {
-            const auto tool = item.toObject();
-            if (tool.value(QStringLiteral("id")).toString() != toolId) continue;
-            for (const auto& value : tool.value(QStringLiteral("requirements")).toArray()) {
-                const auto requirement = value.toObject();
-                if (requirement.value(QStringLiteral("domain")).toString() == QStringLiteral("external-service") &&
-                    requirement.value(QStringLiteral("staticResource")).toString() ==
-                        QStringLiteral("credential:%1").arg(credentialId)) scoped = true;
+            return denied(QStringLiteral("PluginInvocationExpired"));
+        const auto recordResult = [this, pluginId, &currentHost](QJsonObject result) {
+            auto entry = m_plugins.find(pluginId);
+            if (entry != m_plugins.end() && entry->host == currentHost &&
+                !result.value(QStringLiteral("ok")).toBool())
+                entry->lastCapabilityFailure = result.value(QStringLiteral("category")).toString();
+            return result;
+        };
+        if (request.value(QStringLiteral("kind")) == QStringLiteral("capability")) {
+            const auto capability = request.value(QStringLiteral("capability")).toString();
+            if (!found->manifest.hostCapabilities.contains(capability))
+                return recordResult(denied(QStringLiteral("PluginHostCapabilityNotDeclared")));
+            bool toolDeclared = false;
+            for (const auto& item : found->remoteTools) {
+                const auto tool = item.toObject();
+                if (tool.value(QStringLiteral("id")).toString() != toolId) continue;
+                for (const auto& value : tool.value(QStringLiteral("hostCapabilities")).toArray())
+                    if (value.toString() == capability) toolDeclared = true;
             }
+            if (!toolDeclared)
+                return recordResult(denied(QStringLiteral("PluginHostCapabilityNotDeclared")));
+            if (!request.value(QStringLiteral("payload")).isObject())
+                return recordResult(denied(QStringLiteral("PluginProtocolError")));
+            const auto payload = request.value(QStringLiteral("payload")).toObject();
+            if (capability == QStringLiteral("FilesystemRead") ||
+                capability == QStringLiteral("FilesystemWrite")) {
+                const auto permission = capability == QStringLiteral("FilesystemRead")
+                    ? Permissions::FileSystemRead : Permissions::FileSystemWrite;
+                if (!m_sandbox->checkPermission(pluginId, permission))
+                    return recordResult(denied(QStringLiteral("PluginHostCapabilityDenied")));
+                return recordResult(filesystemBroker(capability, payload, authorization, m_resourceGate));
+            }
+            if (capability == QStringLiteral("NetworkRequest")) {
+                const auto manifest = found->manifest;
+                return recordResult(networkBroker(pluginId, manifest, *m_sandbox, invocationId,
+                    request.value(QStringLiteral("id")).toString(), payload,
+                    authorization, session));
+            }
+            if (capability == QStringLiteral("ProcessExecute")) {
+                if (!m_sandbox->checkPermission(pluginId, Permissions::ProcessExecute))
+                    return recordResult(denied(QStringLiteral("PluginProcessDenied")));
+                return recordResult(processBroker(invocationId, request.value(QStringLiteral("id")).toString(),
+                    payload, authorization, m_resourceGate,
+                    m_pluginStorageDir + QLatin1Char('/') + pluginId, session));
+            }
+            return recordResult(denied(QStringLiteral("PluginHostCapabilityUnavailable")));
         }
-        if (!scoped || !m_sandbox->checkPermission(pluginId, Permissions::CredentialUse))
-            return denied(QStringLiteral("PluginCredentialDenied"));
-        auto store = defaultCredentialStore();
-        if (store.summary().status != CredentialStoreStatus::Ready)
-            return denied(QStringLiteral("PluginCredentialUnavailable"));
-        auto secret = store.readCredential({QStringLiteral("plugin.") + pluginId, credentialId});
-        if (!secret.result.succeeded || !secret.secret || secret.secret->isEmpty())
-            return denied(QStringLiteral("PluginCredentialNotConfigured"));
-        QJsonObject response{{QStringLiteral("ok"), true},
-                             {QStringLiteral("secret"), *secret.secret}};
-        secret.secret->fill(QChar(0));
-        secret.secret.reset();
-        return response;
+        return denied(QStringLiteral("PluginCredentialDenied"));
     });
-    connect(host.get(), &PluginHostSession::failed, this, [this, pluginId](const QString& category) {
+    connect(host.get(), &PluginHostSession::failed, this,
+            [this, pluginId, generation = std::weak_ptr<PluginHostSession>(host)](const QString& category) {
         auto found = m_plugins.find(pluginId);
-        if (found == m_plugins.end() || !found->host) return;
+        if (found == m_plugins.end() || !found->host ||
+            found->host != generation.lock()) return;
         m_sandbox->setActive(pluginId, false);
         if (m_toolRegistry) m_toolRegistry->unregisterProvider(ToolSource::Plugin,
             QStringLiteral("plugin:%1").arg(pluginId));
@@ -431,7 +897,7 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
         emit pluginError(pluginId, category);
     });
     desc.host = host;
-    if (!host->start(libPath, m_pluginStorageDir + QLatin1Char('/') + pluginId)) {
+    if (!host->start(canonicalLibrary, m_pluginStorageDir + QLatin1Char('/') + pluginId)) {
         desc.failureCategory = host->failureCategory();
         desc.errorString = desc.failureCategory;
         desc.host.reset();
@@ -441,9 +907,10 @@ bool PluginManager::loadPlugin(const QString& pluginId) {
         return false;
     }
     const auto result = host->call(QStringLiteral("load"),
-        {{QStringLiteral("path"), QFileInfo(libPath).absoluteFilePath()},
+        {{QStringLiteral("path"), canonicalLibrary},
          {QStringLiteral("pluginId"), pluginId},
          {QStringLiteral("abi"), NativePluginAbiVersion},
+         {QStringLiteral("hostCapabilities"), QJsonArray::fromStringList(desc.manifest.hostCapabilities)},
          {QStringLiteral("permissions"), m_sandbox->getPermissions(pluginId).toJsonArray()}});
     if (!result.value(QStringLiteral("ok")).toBool() ||
         !result.value(QStringLiteral("tools")).isArray()) {
@@ -504,6 +971,15 @@ bool PluginManager::registerRemoteTools(const QString& pluginId) {
             if (!property.value().isObject() ||
                 !property.value().toObject().contains(QStringLiteral("type"))) valid = false;
         if (!valid) break;
+        QSet<QString> toolCapabilities;
+        for (const auto& capabilityValue : item.value(QStringLiteral("hostCapabilities")).toArray()) {
+            const auto capability = capabilityValue.toString();
+            if (!capabilityValue.isString() ||
+                !desc.manifest.hostCapabilities.contains(capability) ||
+                toolCapabilities.contains(capability)) valid = false;
+            toolCapabilities.insert(capability);
+        }
+        if (!valid) break;
         names.insert(localId);
         ToolDescriptor tool;
         tool.id = QStringLiteral("plugin.%1.%2").arg(escapedId(pluginId), escapedId(localId));
@@ -536,10 +1012,43 @@ bool PluginManager::registerRemoteTools(const QString& pluginId) {
                 object.value(QStringLiteral("staticResource")).toString()});
         }
         if (!valid) break;
+        for (const auto& capability : toolCapabilities) {
+            const bool declaredResource = std::any_of(
+                tool.authorizationRequirements.cbegin(),
+                tool.authorizationRequirements.cend(), [&](const auto& requirement) {
+                    if (capability == QStringLiteral("FilesystemRead"))
+                        return requirement.domain == SecurityDomain::FileSystem &&
+                               requirement.access == AccessMode::Read &&
+                               requirement.resourceKind == AuthorizationResourceKind::FileSystemPath;
+                    if (capability == QStringLiteral("FilesystemWrite"))
+                        return requirement.domain == SecurityDomain::FileSystem &&
+                               requirement.access == AccessMode::Write &&
+                               requirement.resourceKind == AuthorizationResourceKind::FileSystemPath;
+                    if (capability == QStringLiteral("NetworkRequest"))
+                        return requirement.domain == SecurityDomain::Network &&
+                               (requirement.access == AccessMode::Read ||
+                                requirement.access == AccessMode::Write) &&
+                               requirement.resourceKind == AuthorizationResourceKind::Host &&
+                               !requirement.resourceArgument.isEmpty();
+                    if (capability == QStringLiteral("ProcessExecute"))
+                        return requirement.domain == SecurityDomain::Process &&
+                               requirement.access == AccessMode::Execute &&
+                               requirement.resourceKind == AuthorizationResourceKind::Argument;
+                    return false;
+                });
+            if (!declaredResource) valid = false;
+        }
+        if (!valid) break;
         if (tool.authorizationRequirements.isEmpty())
             tool.authorizationRequirements = {{SecurityDomain::Application, AccessMode::Invoke,
                 AuthorizationResourceKind::Provider, {}, tool.providerId}};
         const auto permissions = hostPermissionsFor(tool);
+        if (toolCapabilities.contains(QStringLiteral("NetworkRequest")) &&
+            !m_sandbox->checkPermission(pluginId, Permissions::NetworkLoopback) &&
+            !m_sandbox->checkPermission(pluginId, Permissions::NetworkExternal)) {
+            desc.failureCategory = QStringLiteral("PluginPermissionDenied");
+            valid = false;
+        }
         for (const auto& permission : permissions)
             if (!m_sandbox->checkPermission(pluginId, permission)) {
                 desc.failureCategory = QStringLiteral("PluginPermissionDenied");
@@ -547,7 +1056,8 @@ bool PluginManager::registerRemoteTools(const QString& pluginId) {
             }
         if (!valid) break;
         registrations.append({std::move(tool), std::make_shared<RemotePluginToolHandler>(
-            desc.host, m_sandbox, pluginId, localId, permissions)});
+            desc.host, m_sandbox, pluginId, localId, permissions,
+            toolCapabilities.contains(QStringLiteral("ProcessExecute")))});
     }
     if (!valid || !m_toolRegistry->replaceProvider(ToolSource::Plugin,
             QStringLiteral("plugin:%1").arg(pluginId), std::move(registrations))) {
@@ -639,11 +1149,20 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
         return false;
     PluginState previousState = desc.state;
     QSet<QString> declaredIds;
-    for (const auto& credential : desc.manifest.credentials)
+    for (const auto& credential : desc.manifest.credentials) {
+        auto hosts = credential.allowedHosts;
+        hosts.sort();
         declaredIds.insert(credential.id + QLatin1Char(':') + credential.kind +
                            (credential.required ? QLatin1String(":required") :
-                                                  QLatin1String(":optional")));
+                                                  QLatin1String(":optional")) +
+                           QLatin1Char(':') + hosts.join(QLatin1Char(',')));
+    }
+    for (const auto& capability : desc.manifest.hostCapabilities)
+        declaredIds.insert(QStringLiteral("host:") + capability);
+    for (const auto& permission : desc.manifest.permissions.toList())
+        declaredIds.insert(QStringLiteral("permission:") + permission);
     m_reloadCredentialIds.insert(pluginId, declaredIds);
+    m_reloadManifests.insert(pluginId, desc.manifest);
 
     qDebug() << QStringLiteral(
                     "PluginManager::reloadPlugin: Reloading plugin '%1' (previous state: %2)")
@@ -653,6 +1172,7 @@ bool PluginManager::reloadPlugin(const QString& pluginId) {
     // Unload the plugin completely
     if (!unloadPlugin(pluginId)) {
         m_reloadCredentialIds.remove(pluginId);
+        m_reloadManifests.remove(pluginId);
         emit pluginReloadFailed(pluginId, QStringLiteral("Failed to unload plugin"));
         return false;
     }
@@ -686,14 +1206,39 @@ void PluginManager::finishReload(const QString& pluginId, PluginState previousSt
     const auto previousCredentials = m_reloadCredentialIds.take(pluginId);
     const auto refreshed = m_plugins.constFind(pluginId);
     if (refreshed == m_plugins.cend()) {
+        m_reloadManifests.remove(pluginId);
         emit pluginReloadFailed(pluginId, QStringLiteral("Plugin disappeared during discovery"));
         return;
     }
+    const auto previousManifest = m_reloadManifests.take(pluginId);
+    const auto rejectWidening = [&desc, &previousManifest, this, &pluginId](const QString& message) {
+        desc.manifest = previousManifest;
+        m_sandbox->registerPluginPermissions(pluginId, previousManifest.permissions);
+        m_sandbox->setActive(pluginId, false);
+        desc.failureCategory = QStringLiteral("PluginHostCapabilityDenied");
+        desc.errorString = message;
+        updateState(desc, PluginState::Error);
+        emit pluginReloadFailed(pluginId, message);
+    };
     for (const auto& credential : refreshed->manifest.credentials) {
+        auto hosts = credential.allowedHosts;
+        hosts.sort();
         if (!previousCredentials.contains(credential.id + QLatin1Char(':') + credential.kind +
-            (credential.required ? QLatin1String(":required") : QLatin1String(":optional")))) {
-            emit pluginReloadFailed(pluginId,
-                QStringLiteral("New credential declarations require a fresh plugin discovery"));
+            (credential.required ? QLatin1String(":required") : QLatin1String(":optional")) +
+            QLatin1Char(':') + hosts.join(QLatin1Char(',')))) {
+            rejectWidening(QStringLiteral("New credential declarations require a fresh plugin discovery"));
+            return;
+        }
+    }
+    for (const auto& capability : refreshed->manifest.hostCapabilities) {
+        if (!previousCredentials.contains(QStringLiteral("host:") + capability)) {
+            rejectWidening(QStringLiteral("New host capabilities require a fresh plugin discovery"));
+            return;
+        }
+    }
+    for (const auto& permission : refreshed->manifest.permissions.toList()) {
+        if (!previousCredentials.contains(QStringLiteral("permission:") + permission)) {
+            rejectWidening(QStringLiteral("New permissions require a fresh plugin discovery"));
             return;
         }
     }
@@ -836,7 +1381,7 @@ const PluginDescriptor* PluginManager::descriptor(const QString& pluginId) const
     return &it.value();
 }
 
-ISentinelPlugin* PluginManager::pluginInstance(const QString&) const {
+QObject* PluginManager::pluginInstance(const QString&) const {
     return nullptr;
 }
 

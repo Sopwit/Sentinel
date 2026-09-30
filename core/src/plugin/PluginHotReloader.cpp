@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QLibrary>
 
 namespace sentinel::core::plugin {
 

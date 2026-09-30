@@ -19,6 +19,7 @@ inline const QString ModelConfigWrite = QStringLiteral("model.config.write");
 inline const QString FileSystemRead = QStringLiteral("filesystem.read");
 inline const QString FileSystemWrite = QStringLiteral("filesystem.write");
 inline const QString ToolExecution = QStringLiteral("tool.execute");
+inline const QString ProcessExecute = QStringLiteral("process.execute");
 inline const QString CredentialUse = QStringLiteral("credential.use");
 inline const QString DatabaseAccess = QStringLiteral("database.access");
 } // namespace Permissions

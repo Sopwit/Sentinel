@@ -152,9 +152,6 @@ add_library(sentinel_core STATIC
     include/sentinel/core/platform/WinCrashHandler.h
     include/sentinel/core/platform/WinProtocolHandler.h
     include/sentinel/core/platform/WinTaskbarIntegration.h
-    include/sentinel/core/plugin/IPluginContext.h
-    include/sentinel/core/plugin/ISentinelPlugin.h
-    include/sentinel/core/plugin/PluginContext.h
     include/sentinel/core/plugin/PluginDependencyResolver.h
     include/sentinel/core/plugin/PluginHotReloader.h
     include/sentinel/core/plugin/PluginManager.h
@@ -411,7 +408,6 @@ add_library(sentinel_core STATIC
     src/platform/WinCrashHandler.cpp
     src/platform/WinProtocolHandler.cpp
     src/platform/WinTaskbarIntegration.cpp
-    src/plugin/PluginContext.cpp
     src/plugin/PluginDependencyResolver.cpp
     src/plugin/PluginHotReloader.cpp
     src/plugin/PluginManager.cpp

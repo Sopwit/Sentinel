@@ -18,6 +18,7 @@ struct PluginCredentialDeclaration {
     QString labelId;
     QString kind;
     bool required = false;
+    QStringList allowedHosts;
 };
 
 struct PluginManifest {
@@ -30,6 +31,7 @@ struct PluginManifest {
     QString category;
     QString entryPoint;
     PluginPermissions permissions;
+    QStringList hostCapabilities;
     QMap<QString, QString> dependencies;
     QList<PluginCredentialDeclaration> credentials;
 
