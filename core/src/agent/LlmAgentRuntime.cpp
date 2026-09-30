@@ -534,11 +534,11 @@ AgentStepDecision LlmAgentRuntime::decisionFromObject(const QJsonObject& object)
 
 QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                                             const QList<AgentStepRecord>& history) const {
-    Q_UNUSED(history)
     auto context = planningContext_;
     if (context.items.isEmpty()) {
         AgentContextInput input;
         input.goal = goal;
+        input.steps = history;
         input.tools = availableTools();
         input.contextWindowTokens = modelBinding_.capabilities.contextWindow.value_or(0);
         input.maxOutputTokens = modelBinding_.capabilities.maxOutputTokens.value_or(0);
