@@ -13,11 +13,11 @@ Item {
     property color brandAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
 
     readonly property var assurances: [
-        qsTr("All memory, chat history, and Local RAG metadata stays on your device."),
-        qsTr("No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
-        qsTr("Task execution advances only through visible user actions."),
-        qsTr("Model downloads go directly to your configured local runtimes."),
-        qsTr("Workspace metadata does not grant folder scans or filesystem authority.")
+        qsTr("Memory, chat history, and local retrieval data use local storage."),
+        qsTr("Cloud model requests send prompt context to the selected provider when cloud use is configured."),
+        qsTr("Tool execution remains subject to authorization and sandbox policy."),
+        qsTr("Raw microphone recordings are not retained by default."),
+        qsTr("A workspace root gives context; it does not grant file or process access.")
     ]
 
     ColumnLayout {
@@ -25,8 +25,8 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         SectionTitle {
-            title: qsTr("Private by design")
-            subtitle: qsTr("Sentinel is built so your information stays entirely on your local machine.")
+            title: qsTr("Privacy summary")
+            subtitle: qsTr("Processing and network use depend on the providers and features you enable.")
             Layout.fillWidth: true
         }
 
@@ -75,23 +75,5 @@ Item {
             Layout.minimumHeight: 0
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 96
-            radius: SentinelTheme.radiusLg
-            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
-            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-            border.width: 1
-
-            OnboardingToggle {
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                accent: root.brandAccent
-                label: qsTr("I understand these privacy commitments")
-                caption: qsTr("You can review these guarantees anytime in Settings.")
-                checked: true
-                onToggled: (on) => { /* consent is informational during setup */ }
-            }
-        }
     }
 }

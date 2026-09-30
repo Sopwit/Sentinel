@@ -45,6 +45,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/app/ModeManager.h
     include/sentinel/core/app/OrchestrationDiagnostics.h
     include/sentinel/core/app/OrchestrationSnapshot.h
+    include/sentinel/core/app/OnboardingService.h
     include/sentinel/core/app/SettingsService.h
     include/sentinel/core/app/BackupService.h
     include/sentinel/core/app/RecoveryService.h
@@ -346,6 +347,7 @@ add_library(sentinel_core STATIC
     src/app/IContextEngine.cpp
     src/app/ModeManager.cpp
     src/app/OrchestrationDiagnostics.cpp
+    src/app/OnboardingService.cpp
     src/app/SettingsService.cpp
     src/app/BackupService.cpp
     src/app/ProductMessages.cpp

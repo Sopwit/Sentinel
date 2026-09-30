@@ -849,6 +849,11 @@ Detay: </translation>
 </context>
 <context>
     <name>FinishStep</name>
+    <message><source>Processing</source><translation>İşleme</translation></message>
+    <message><source>Local</source><translation>Yerel</translation></message>
+    <message><source>Cloud</source><translation>Bulut</translation></message>
+    <message><source>Hybrid</source><translation>Karma</translation></message>
+    <message><source>Set up later</source><translation>Daha sonra ayarla</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/FinishStep.qml" line="23"/>
         <source>You&apos;re ready!</source>
@@ -2623,6 +2628,11 @@ Detay: </translation>
 </context>
 <context>
     <name>OnboardingScreen</name>
+    <message><source>Processing</source><translation>İşleme</translation></message>
+    <message><source>Choose local, cloud, or hybrid use.</source><translation>Yerel, bulut veya karma kullanımı seçin.</translation></message>
+    <message><source>Review processing and permissions.</source><translation>İşleme ve izinleri gözden geçirin.</translation></message>
+    <message><source>Ready</source><translation>Hazır</translation></message>
+    <message><source>You can begin without optional integrations.</source><translation>İsteğe bağlı entegrasyonlar olmadan başlayabilirsiniz.</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="29"/>
         <source>Welcome</source>
@@ -2778,6 +2788,13 @@ Detay: </translation>
 </context>
 <context>
     <name>PrivacyConsentStep</name>
+    <message><source>Privacy summary</source><translation>Gizlilik özeti</translation></message>
+    <message><source>Processing and network use depend on the providers and features you enable.</source><translation>İşleme ve ağ kullanımı, etkinleştirdiğiniz sağlayıcılara ve özelliklere bağlıdır.</translation></message>
+    <message><source>Memory, chat history, and local retrieval data use local storage.</source><translation>Bellek, sohbet geçmişi ve yerel erişim verileri yerel depolamayı kullanır.</translation></message>
+    <message><source>Cloud model requests send prompt context to the selected provider when cloud use is configured.</source><translation>Bulut kullanımı yapılandırıldığında model istekleri istem bağlamını seçilen sağlayıcıya gönderir.</translation></message>
+    <message><source>Tool execution remains subject to authorization and sandbox policy.</source><translation>Araç çalıştırma, yetkilendirme ve yalıtım politikalarına bağlıdır.</translation></message>
+    <message><source>Raw microphone recordings are not retained by default.</source><translation>Ham mikrofon kayıtları varsayılan olarak saklanmaz.</translation></message>
+    <message><source>A workspace root gives context; it does not grant file or process access.</source><translation>Çalışma alanı kökü bağlam sağlar; dosya veya işlem erişimi vermez.</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/PrivacyConsentStep.qml" line="23"/>
         <source>Private by design</source>
@@ -3607,6 +3624,14 @@ Detay: </translation>
 </context>
 <context>
     <name>VoiceSetupStep</name>
+    <message><source>Optional speech setup</source><translation>İsteğe bağlı konuşma kurulumu</translation></message>
+    <message><source>Speech is optional. Only configured runtime and device information appears here.</source><translation>Konuşma özelliği isteğe bağlıdır. Burada yalnızca yapılandırılmış çalışma ortamı ve aygıt bilgileri gösterilir.</translation></message>
+    <message><source>Speech recognition</source><translation>Konuşma tanıma</translation></message>
+    <message><source>No ready STT runtime</source><translation>Hazır STT çalışma ortamı yok</translation></message>
+    <message><source>Speech synthesis</source><translation>Konuşma sentezi</translation></message>
+    <message><source>No ready TTS runtime</source><translation>Hazır TTS çalışma ortamı yok</translation></message>
+    <message><source>Microphone</source><translation>Mikrofon</translation></message>
+    <message><source>You can finish setup now and configure speech later in Settings.</source><translation>Kurulumu şimdi bitirip konuşma özelliğini daha sonra Ayarlar'da yapılandırabilirsiniz.</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/VoiceSetupStep.qml" line="23"/>
         <source>Voice Setup</source>
@@ -4099,5 +4124,32 @@ Detay: </translation>
         <source>Received: %1</source>
         <translation>Alındı: %1</translation>
     </message>
+</context>
+<context>
+    <name>ProcessingModeStep</name>
+    <message><source>Processing preference</source><translation>İşleme tercihi</translation></message>
+    <message><source>Start locally or configure a cloud provider later. No account or API key is required to continue.</source><translation>Yerel olarak başlayın veya daha sonra bulut sağlayıcısı yapılandırın. Devam etmek için hesap ya da API anahtarı gerekmez.</translation></message>
+    <message><source>Local</source><translation>Yerel</translation></message>
+    <message><source>Cloud</source><translation>Bulut</translation></message>
+    <message><source>Hybrid</source><translation>Karma</translation></message>
+    <message><source>Local mode uses configured local runtimes. If none is ready, you can finish setup and configure one later.</source><translation>Yerel mod, yapılandırılmış yerel çalışma ortamlarını kullanır. Hiçbiri hazır değilse kurulumu bitirip daha sonra yapılandırabilirsiniz.</translation></message>
+    <message><source>Cloud requests use the provider you choose and require its credentials. Permissions still apply to tools and files.</source><translation>Bulut istekleri seçtiğiniz sağlayıcıyı kullanır ve kimlik bilgisi gerektirir. Araçlar ve dosyalar için izinler geçerliliğini korur.</translation></message>
+</context>
+<context>
+    <name>ProductMessages</name>
+    <message><source>Enter a value within the supported range.</source><translation>Desteklenen aralıkta bir değer girin.</translation></message>
+    <message><source>This audio device is unavailable.</source><translation>Bu ses aygıtı kullanılamıyor.</translation></message>
+    <message><source>%1 is unavailable.</source><translation>%1 kullanılamıyor.</translation></message>
+    <message><source>This setting has the wrong value type.</source><translation>Bu ayarın değer türü yanlış.</translation></message>
+    <message><source>Choose a supported value.</source><translation>Desteklenen bir değer seçin.</translation></message>
+    <message><source>A value is required.</source><translation>Bir değer gerekli.</translation></message>
+    <message><source>Enter an HTTP or HTTPS endpoint without credentials in the URL.</source><translation>URL içinde kimlik bilgisi olmadan bir HTTP veya HTTPS uç noktası girin.</translation></message>
+    <message><source>This workspace is unavailable.</source><translation>Bu çalışma alanı kullanılamıyor.</translation></message>
+    <message><source>This provider is unavailable.</source><translation>Bu sağlayıcı kullanılamıyor.</translation></message>
+    <message><source>Choose an available model or continue without one.</source><translation>Kullanılabilir bir model seçin veya modelsiz devam edin.</translation></message>
+    <message><source>This workspace already inherits the setting.</source><translation>Bu çalışma alanı ayarı zaten üst düzeyden devralıyor.</translation></message>
+    <message><source>Local mode cannot select a cloud provider.</source><translation>Yerel modda bulut sağlayıcısı seçilemez.</translation></message>
+    <message><source>Choose local, cloud, or hybrid processing.</source><translation>Yerel, bulut veya karma işlemeyi seçin.</translation></message>
+    <message><source>The requested change is unavailable.</source><translation>İstenen değişiklik kullanılamıyor.</translation></message>
 </context>
 </TS>
