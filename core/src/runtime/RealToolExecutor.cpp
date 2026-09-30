@@ -892,9 +892,7 @@ namespace {
 
 constexpr int kDefaultReadLimit = 2000;
 constexpr int kMaxLineLength = 2000;
-constexpr int kMaxReadBytes = 50 * 1024;
 constexpr int kGrepGlobLimit = 100;
-constexpr int kDirListLimit = 100;
 constexpr int kWebFetchPreviewChars = 8000;
 
 bool isSensitiveToolPath(const QString& canonicalPath);
