@@ -180,7 +180,11 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
         launch.result.failureCategory = QStringLiteral("DetachedProcessControlUnavailable");
         return launch;
     }
-    QString profile = QStringLiteral("(version 1)(deny default)"
+    // system.sb provides the macOS runtime baseline needed for a child to
+    // start (including its inherited stdio descriptors).  Without it even a
+    // simple stdio process aborts before exec, which makes the MCP transport
+    // fail during its initialize handshake.
+    QString profile = QStringLiteral("(version 1)(deny default)(import \"system.sb\")"
                                      "(allow process-exec)(allow process-fork)"
                                      "(allow signal (target self))"
                                      "(allow file-read* (subpath \"/System\")"
@@ -188,6 +192,14 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
                                      "(subpath \"/sbin\") (subpath \"/Library\")"
                                      "(literal \"/dev/null\"))");
     profile += QStringLiteral("(allow file-read* (literal %1))").arg(profileLiteral(program));
+    // Homebrew is the supported Qt distribution on macOS.  A Qt-based local
+    // MCP server can load its framework dependencies from this immutable
+    // prefix; denying it makes the child exit before the stdio handshake.
+    const QString homebrewQtBase = QFileInfo(QStringLiteral("/opt/homebrew/opt/qtbase"))
+                                      .canonicalFilePath();
+    if (!homebrewQtBase.isEmpty())
+        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                       .arg(profileLiteral(homebrewQtBase));
     for (const auto& path : plan.readablePaths)
         profile += QStringLiteral("(allow file-read* (subpath %1))").arg(profileLiteral(path));
     for (const auto& path : plan.writablePaths)

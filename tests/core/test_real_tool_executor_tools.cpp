@@ -8,11 +8,15 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 
-#include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
 #include "sentinel/core/runtime/AlarmStore.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/security/ResourceAuthorizationResolver.h"
+#include "sentinel/core/security/StaticSandboxPolicy.h"
 
 using namespace sentinel::core;
 namespace {
@@ -121,23 +125,108 @@ ToolInvocationPlan approvedPlan(const QString& toolId,
     return plan;
 }
 
-ToolExecutionResult runTool(const RealToolExecutor& executor, const QString& toolId,
-                            const QList<ToolInvocationArgument>& arguments,
-                            const QStringList& knownToolIds) {
-    return executor.execute(ToolExecutionRequest{
-        approvedPlan(toolId, arguments),
-        ApprovalDecision{ApprovalStatus::Approved, QStringLiteral("test"), {}},
-        SandboxEvaluationResult{SandboxStatus::Allowed, QStringLiteral("test"), {}},
-        knownToolIds,
-    });
+ToolInvocationArgument intArgument(const QString& id, int value) {
+    ToolInvocationArgument argument{id, QString::number(value)};
+    argument.jsonValue = QJsonValue(value);
+    return argument;
 }
 
-QStringList allToolIds() {
-    QStringList ids;
-    for (const auto& tool : NullAgentRuntime::standardTools()) {
-        ids.append(tool.id);
+ToolExecutionResult runTool(RealToolExecutor& executor, const QString& toolId,
+                            const QList<ToolInvocationArgument>& arguments,
+                            const QStringList& knownToolIds) {
+    Q_UNUSED(knownToolIds)
+    InMemoryToolRegistry registry;
+    if (!BuiltInToolProvider::registerTools(registry, executor))
+        return {ToolExecutionStatus::Failed, QStringLiteral("Built-in tools did not register.")};
+
+    ToolExecutionGateway gateway(&registry);
+    ToolInvocationPlan plan = approvedPlan(toolId, arguments);
+
+    const auto validation = gateway.validatePlan(plan);
+    if (validation.status != ToolExecutionStatus::Succeeded) {
+        if (qEnvironmentVariableIsSet("SENTINEL_TEST_TRACE")) {
+            QStringList ids;
+            for (const auto& tool : registry.listTools())
+                ids.append(tool.id);
+            qWarning().noquote() << toolId << "validate"
+                                 << static_cast<int>(validation.status) << validation.summary
+                                 << "| registered:" << ids.join(QLatin1Char(','));
+        }
+        return validation;
     }
-    return ids;
+
+    // Mirror AgentLoop: capture the authoritative descriptor, then resolve
+    // and authorize resources before the gateway hands the call to a handler.
+    for (auto& invocation : plan.invocations) {
+        const auto registration = registry.findRegistration(invocation.toolId);
+        if (registration)
+            invocation.descriptorSnapshot =
+                std::make_shared<const ToolDescriptor>(registration->descriptor);
+    }
+
+    // Resolve then authorize resources before the gateway
+    // hands the invocation to the registered handler. A security denial maps to
+    // Blocked; every other resource failure maps to InvalidArguments, matching
+    // the labels AgentLoop reports for a blocked step.
+    const auto resourceFailure = [](const QString& reason, FileSystemFailure failure) {
+        const bool security = failure == FileSystemFailure::PermissionDenied ||
+                              failure == FileSystemFailure::ResourceChanged ||
+                              failure == FileSystemFailure::SymlinkEscape ||
+                              failure == FileSystemFailure::UnsafeParent ||
+                              failure == FileSystemFailure::SecurityBoundaryViolation;
+        return ToolExecutionResult{security ? ToolExecutionStatus::Blocked
+                                            : ToolExecutionStatus::InvalidArguments,
+                                   reason};
+    };
+    for (auto& invocation : plan.invocations) {
+        if (!invocation.descriptorSnapshot)
+            continue;
+        auto resolved = ResourceAuthorizationResolver::resolve(
+            *invocation.descriptorSnapshot, invocation, QDir::currentPath(), nullptr);
+        if (!resolved.ok())
+            return resourceFailure(resolved.reason, resolved.failure);
+        invocation.resourceSnapshot = std::make_shared<const ResourceAuthorizationSnapshot>(
+            std::move(resolved.snapshot));
+        auto authorized = ResourceAuthorizationResolver::authorize(*invocation.resourceSnapshot,
+                                                                   nullptr, nullptr, {});
+        if (!authorized.ok())
+            return resourceFailure(authorized.reason, authorized.failure);
+        invocation.resourceSnapshot = std::make_shared<const ResourceAuthorizationSnapshot>(
+            std::move(authorized.snapshot));
+    }
+
+    ToolExecutionResult result;
+    bool completed = false;
+    const ApprovalDecision approval{ApprovalStatus::Approved, QStringLiteral("test"), {}};
+    // Built-in descriptors currently use the default metadata capability.
+    const StaticSandboxPolicy sandboxPolicy{QSet<QString>{QStringLiteral("tool.metadata.read")}};
+    // The returned cancellation handle owns the active process execution, so it
+    // must stay alive until the completion callback fires.
+    const IToolExecutor::Cancel active = gateway.executeAsync(
+        ToolExecutionRequest{
+            plan,
+            approval,
+            sandboxPolicy.evaluate(plan, approval),
+            knownToolIds,
+        },
+        executor, {}, {}, {}, [&](ToolExecutionResult value) {
+            result = std::move(value);
+            completed = true;
+        });
+
+    // Process-backed tools finish from a QProcess terminal signal; immediate
+    // tools already completed inline above.
+    const bool waited = QTest::qWaitFor([&completed] { return completed; }, 30000);
+    if (qEnvironmentVariableIsSet("SENTINEL_TEST_TRACE")) {
+        QString trace = result.summary;
+        trace.replace(QLatin1Char('\n'), QLatin1Char('|'));
+        qWarning().noquote() << toolId << static_cast<int>(result.status) << "completed:"
+                             << completed << "waited:" << waited << trace;
+    }
+    if (!completed)
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Tool execution did not complete in time.")};
+    return result;
 }
 
 } // namespace
@@ -146,7 +235,7 @@ class RealToolExecutorToolsTest final : public QObject {
     Q_OBJECT
 
 private slots:
-    void readFileReturnsNumberedLinesAndPagingFooter() {
+    void readFileReturnsNumberedLines() {
         QTemporaryDir dir;
         const QString path = dir.filePath(QStringLiteral("sample.txt"));
         QFile file(path);
@@ -162,14 +251,15 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("read-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("sample.txt")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("1: alpha")));
         QVERIFY(result.summary.contains(QStringLiteral("3: gamma")));
-        QVERIFY(result.summary.contains(QStringLiteral("total 3 lines")));
+        QVERIFY(result.summary.contains(QStringLiteral("4: ")));
+        QVERIFY(!result.summary.contains(QStringLiteral("5: ")));
     }
 
     void readFileOffsetOutOfRangeFailsGracefully() {
@@ -186,13 +276,20 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("read-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("tiny.txt")},
-                     ToolInvocationArgument{QStringLiteral("offset"), QStringLiteral("42")}},
-                    allToolIds());
+                     intArgument(QStringLiteral("offset"), 42)},
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
+        // Paging past the end succeeds with no content and reports an
+        // incomplete view instead of inventing lines.
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("out of range")));
+        QVERIFY(result.summary.isEmpty());
+        QVERIFY(result.structuredObservation);
+        QCOMPARE(result.structuredObservation->data.value(QStringLiteral("complete")).toBool(),
+                 false);
+        QCOMPARE(result.structuredObservation->data.value(QStringLiteral("truncated")).toBool(),
+                 true);
     }
 
     void readDirectoryListsEntries() {
@@ -204,13 +301,32 @@ private slots:
 
         RealToolExecutor executor;
         const auto result = runTool(
-            executor, QStringLiteral("read-file"),
-            {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral(".")}}, allToolIds());
+            executor, QStringLiteral("list-directory"),
+            {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral(".")}}, QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("nested/")));
+        QVERIFY(result.summary.contains(QStringLiteral("nested")));
+    }
+
+    void readFileRejectsDirectoryWithPathGuidance() {
+        QTemporaryDir dir;
+        QVERIFY(QDir(dir.filePath(QStringLiteral("nested"))).mkpath(QStringLiteral(".")));
+
+        const auto oldCwd = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("read-file"),
+            {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("nested")}},
+            QStringList{});
+
+        QVERIFY(QDir::setCurrent(oldCwd));
+
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
+        QVERIFY(result.summary.contains(QStringLiteral("list-directory")));
     }
 
     void editFileAppliesReplacement() {
@@ -230,7 +346,7 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("code.cpp")},
              ToolInvocationArgument{QStringLiteral("oldString"), QStringLiteral("return 1;")},
              ToolInvocationArgument{QStringLiteral("newString"), QStringLiteral("return 0;")}},
-            allToolIds());
+            QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -255,7 +371,7 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("fresh.md")},
              ToolInvocationArgument{QStringLiteral("oldString"), QString()},
              ToolInvocationArgument{QStringLiteral("newString"), QStringLiteral("# hello")}},
-            allToolIds());
+            QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -281,14 +397,15 @@ private slots:
         const auto result = runTool(
             executor, QStringLiteral("grep"),
             {ToolInvocationArgument{QStringLiteral("pattern"), QStringLiteral("keep this")}},
-            allToolIds());
+            QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("a.txt:")));
-        QVERIFY(result.summary.contains(QStringLiteral("Line 1: keep this line")));
-        QVERIFY(result.summary.contains(QStringLiteral("2 match")));
+        QVERIFY(result.summary.contains(QStringLiteral("a.txt:1: keep this line")));
+        QVERIFY(result.summary.contains(QStringLiteral("b.txt:")));
+        QVERIFY(result.structuredObservation);
+        QCOMPARE(result.structuredObservation->data.value(QStringLiteral("matchCount")).toInt(), 2);
     }
 
     void globListsMatchingFiles() {
@@ -304,7 +421,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("glob"),
                     {ToolInvocationArgument{QStringLiteral("pattern"), QStringLiteral("*.cpp")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -314,7 +431,10 @@ private slots:
         QVERIFY(!result.summary.contains(QStringLiteral("three.txt")));
     }
 
-    void todoWriteAndReadRoundTrip() {
+    void todoToolsAreRegisteredButRefusedWhileDisabled() {
+        // The checklist tools ship with handlers, but they are registered
+        // disabled and hidden from the model while their state is executor-wide
+        // rather than session-scoped. The execution boundary must refuse them.
         RealToolExecutor executor;
         const QString todos = QStringLiteral(
             "[{\"content\":\"find files\",\"status\":\"completed\",\"priority\":\"high\"},"
@@ -322,27 +442,13 @@ private slots:
 
         const auto writeResult =
             runTool(executor, QStringLiteral("todo-write"),
-                    {ToolInvocationArgument{QStringLiteral("todos"), todos}}, allToolIds());
-        QCOMPARE(writeResult.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(writeResult.summary.contains(QStringLiteral("2 todo")));
+                    {ToolInvocationArgument{QStringLiteral("todos"), todos}}, QStringList{});
+        QCOMPARE(writeResult.status, ToolExecutionStatus::UnknownTool);
+        QVERIFY(writeResult.summary.contains(QStringLiteral("todo-write")));
 
-        const auto readResult = runTool(executor, QStringLiteral("todo-read"), {}, allToolIds());
-        QCOMPARE(readResult.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(readResult.summary.contains(QStringLiteral("find files")));
-        QVERIFY(readResult.summary.contains(QStringLiteral("in_progress")));
-    }
-
-    void todoWriteRejectsInvalidStatus() {
-        RealToolExecutor executor;
-        const auto result =
-            runTool(executor, QStringLiteral("todo-write"),
-                    {ToolInvocationArgument{QStringLiteral("todos"),
-                                            QStringLiteral("[{\"content\":\"x\",\"status\":"
-                                                           "\"banana\"}]")}},
-                    allToolIds());
-
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("Invalid status 'banana'")));
+        const auto readResult = runTool(executor, QStringLiteral("todo-read"), {}, QStringList{});
+        QCOMPARE(readResult.status, ToolExecutionStatus::UnknownTool);
+        QVERIFY(readResult.summary.contains(QStringLiteral("todo-read")));
     }
 
     void setAlarmAndListAlarmsRoundTrip() {
@@ -356,12 +462,12 @@ private slots:
             runTool(executor, QStringLiteral("set-alarm"),
                     {ToolInvocationArgument{QStringLiteral("time"), QStringLiteral("23:59")},
                      ToolInvocationArgument{QStringLiteral("label"), QStringLiteral("test alarm")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(setResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(setResult.summary.contains(QStringLiteral("Alarm scheduled")));
 
-        const auto listResult = runTool(executor, QStringLiteral("list-alarms"), {}, allToolIds());
+        const auto listResult = runTool(executor, QStringLiteral("list-alarms"), {}, QStringList{});
         QCOMPARE(listResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(listResult.summary.contains(QStringLiteral("test alarm")));
     }
@@ -374,9 +480,9 @@ private slots:
             runTool(executor, QStringLiteral("set-alarm"),
                     {ToolInvocationArgument{QStringLiteral("time"), QStringLiteral("next tuesday")},
                      ToolInvocationArgument{QStringLiteral("label"), QStringLiteral("x")}},
-                    allToolIds());
+                    QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("Could not parse time")));
     }
 
@@ -407,12 +513,12 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("read-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("/etc/passwd")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("outside the approved workspace")));
+        QCOMPARE(result.status, ToolExecutionStatus::Blocked);
+        QVERIFY(result.summary.contains(QStringLiteral("Filesystem access denied for /etc/passwd")));
     }
 
     void deleteFileRemovesFileAndRefusesDirectories() {
@@ -427,17 +533,18 @@ private slots:
         const auto fileResult =
             runTool(executor, QStringLiteral("delete-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("doomed.txt")}},
-                    allToolIds());
+                    QStringList{});
         const auto dirResult =
             runTool(executor, QStringLiteral("delete-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("keepdir")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(fileResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(fileResult.summary.contains(QStringLiteral("delete-file: Deleted")));
         QVERIFY(!QFile::exists(dir.filePath(QStringLiteral("doomed.txt"))));
+        QCOMPARE(dirResult.status, ToolExecutionStatus::Failed);
         QVERIFY(dirResult.summary.contains(QStringLiteral("Refusing to delete a directory")));
         QVERIFY(QDir(dir.filePath(QStringLiteral("keepdir"))).exists());
     }
@@ -451,12 +558,12 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("delete-file"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("/etc/passwd")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("outside the approved workspace")));
+        QCOMPARE(result.status, ToolExecutionStatus::Blocked);
+        QVERIFY(result.summary.contains(QStringLiteral("Filesystem access denied for /etc/passwd")));
         QVERIFY(QFile::exists(QStringLiteral("/etc/passwd")));
     }
 
@@ -476,7 +583,7 @@ private slots:
             executor, QStringLiteral("move-file"),
             {ToolInvocationArgument{QStringLiteral("source"), QStringLiteral("old-name.txt")},
              ToolInvocationArgument{QStringLiteral("destination"), QStringLiteral("new-name.txt")}},
-            allToolIds());
+            QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -501,7 +608,7 @@ private slots:
             executor, QStringLiteral("move-file"),
             {ToolInvocationArgument{QStringLiteral("source"), QStringLiteral("a.txt")},
              ToolInvocationArgument{QStringLiteral("destination"), QStringLiteral("b.txt")}},
-            allToolIds());
+            QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -522,7 +629,7 @@ private slots:
 
         const auto cancelResult =
             runTool(executor, QStringLiteral("cancel-alarm"),
-                    {ToolInvocationArgument{QStringLiteral("id"), entry.id}}, allToolIds());
+                    {ToolInvocationArgument{QStringLiteral("id"), entry.id}}, QStringList{});
         QCOMPARE(cancelResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(cancelResult.summary.contains(
             QStringLiteral("cancel-alarm: Alarm %1 cancelled").arg(entry.id)));
@@ -530,7 +637,7 @@ private slots:
 
         const auto missingResult = runTool(
             executor, QStringLiteral("cancel-alarm"),
-            {ToolInvocationArgument{QStringLiteral("id"), QStringLiteral("nope")}}, allToolIds());
+            {ToolInvocationArgument{QStringLiteral("id"), QStringLiteral("nope")}}, QStringList{});
         QVERIFY(missingResult.summary.contains(QStringLiteral("No active alarm with id nope")));
     }
 
@@ -539,7 +646,7 @@ private slots:
         const auto result = runTool(
             executor, QStringLiteral("open-url"),
             {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("file:///etc/passwd")}},
-            allToolIds());
+            QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("Only http and https URLs can be opened")));
@@ -547,7 +654,7 @@ private slots:
 
     void currentTimeReportsUtcAndEpoch() {
         RealToolExecutor executor;
-        const auto result = runTool(executor, QStringLiteral("current-time"), {}, allToolIds());
+        const auto result = runTool(executor, QStringLiteral("current-time"), {}, QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("current-time:")));
@@ -559,7 +666,7 @@ private slots:
 
     void systemInfoReportsPlatform() {
         RealToolExecutor executor;
-        const auto result = runTool(executor, QStringLiteral("system-info"), {}, allToolIds());
+        const auto result = runTool(executor, QStringLiteral("system-info"), {}, QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("OS:")));
@@ -569,7 +676,7 @@ private slots:
 
     void processListReportsProcessLines() {
         RealToolExecutor executor;
-        const auto result = runTool(executor, QStringLiteral("process-list"), {}, allToolIds());
+        const auto result = runTool(executor, QStringLiteral("process-list"), {}, QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("process-list:")));
@@ -583,7 +690,7 @@ private slots:
         if (!guiApp) {
             RealToolExecutor executor;
             const auto readResult =
-                runTool(executor, QStringLiteral("clipboard-read"), {}, allToolIds());
+                runTool(executor, QStringLiteral("clipboard-read"), {}, QStringList{});
             QCOMPARE(readResult.status, ToolExecutionStatus::Succeeded);
             QVERIFY(
                 readResult.summary.contains(QStringLiteral("unavailable without a GUI session")));
@@ -597,12 +704,12 @@ private slots:
         RealToolExecutor executor;
         const auto writeResult =
             runTool(executor, QStringLiteral("clipboard-write"),
-                    {ToolInvocationArgument{QStringLiteral("text"), sample}}, allToolIds());
+                    {ToolInvocationArgument{QStringLiteral("text"), sample}}, QStringList{});
         QCOMPARE(writeResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(writeResult.summary.contains(QStringLiteral("Copied 26 character(s)")));
 
         const auto readResult =
-            runTool(executor, QStringLiteral("clipboard-read"), {}, allToolIds());
+            runTool(executor, QStringLiteral("clipboard-read"), {}, QStringList{});
         QCOMPARE(readResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(readResult.summary.contains(sample));
 
@@ -619,7 +726,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("memory-search"),
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("milk")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("match(es) for 'milk'")));
@@ -627,7 +734,7 @@ private slots:
 
         const auto noMatch = runTool(
             executor, QStringLiteral("memory-search"),
-            {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("yzk")}}, allToolIds());
+            {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("yzk")}}, QStringList{});
         QVERIFY(noMatch.summary.contains(QStringLiteral("No memory entries match 'yzk'")));
     }
 
@@ -636,7 +743,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("memory-search"),
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("anything")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(
@@ -650,7 +757,7 @@ private slots:
         const auto result = runTool(
             executor, QStringLiteral("app-launch"),
             {ToolInvocationArgument{QStringLiteral("app"), QStringLiteral("sahibinden.com")}},
-            allToolIds());
+            QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("is a website address")));
@@ -678,7 +785,7 @@ private slots:
         RealToolExecutor executor;
         const auto result =
             runTool(executor, QStringLiteral("apply-patch"),
-                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -711,7 +818,7 @@ private slots:
         RealToolExecutor executor;
         const auto result =
             runTool(executor, QStringLiteral("apply-patch"),
-                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -746,7 +853,7 @@ private slots:
         RealToolExecutor executor;
         const auto result =
             runTool(executor, QStringLiteral("apply-patch"),
-                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+                    {ToolInvocationArgument{QStringLiteral("patch"), patch}}, QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -764,7 +871,7 @@ private slots:
         const auto result = runTool(executor, QStringLiteral("apply-patch"),
                                     {ToolInvocationArgument{QStringLiteral("patch"),
                                                             QStringLiteral("this is not a patch")}},
-                                    allToolIds());
+                                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("No file sections found")));
@@ -789,7 +896,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("list-code-definitions"),
                     {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("sample.py")}},
-                    allToolIds());
+                    QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
@@ -814,7 +921,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("history-search"),
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("bisiklet")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("match(es) for 'bisiklet'")));
@@ -823,7 +930,7 @@ private slots:
         const auto missing =
             runTool(executor, QStringLiteral("history-search"),
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("xyzzy")}},
-                    allToolIds());
+                    QStringList{});
         QVERIFY(missing.summary.contains(QStringLiteral("No history entries match 'xyzzy'")));
     }
 
@@ -832,7 +939,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("history-search"),
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("anything")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("No chat history is available")));
@@ -846,7 +953,7 @@ private slots:
                                             QStringLiteral("Hangi dosyayı düzenleyelim?")},
                      ToolInvocationArgument{QStringLiteral("options"),
                                             QStringLiteral("config.json\nsettings.ini")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("Hangi dosyayı düzenleyelim?")));
@@ -856,7 +963,7 @@ private slots:
 
     void mcpToolsWithoutServiceAreGraceful() {
         RealToolExecutor executor;
-        const auto listResult = runTool(executor, QStringLiteral("mcp-list"), {}, allToolIds());
+        const auto listResult = runTool(executor, QStringLiteral("mcp-list"), {}, QStringList{});
         QCOMPARE(listResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(listResult.summary.contains(QStringLiteral("No MCP servers are configured")));
 
@@ -864,7 +971,7 @@ private slots:
             executor, QStringLiteral("mcp-call"),
             {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
              ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")}},
-            allToolIds());
+            QStringList{});
         QCOMPARE(callResult.status, ToolExecutionStatus::Succeeded);
         QVERIFY(callResult.summary.contains(QStringLiteral("No MCP servers are configured")));
     }
@@ -879,7 +986,7 @@ private slots:
         service->addServer(config);
         executor.setMcpService(service);
 
-        const auto result = runTool(executor, QStringLiteral("mcp-list"), {}, allToolIds());
+        const auto result = runTool(executor, QStringLiteral("mcp-list"), {}, QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("weather (local, connected)")));
@@ -897,7 +1004,7 @@ private slots:
                      ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
                      ToolInvocationArgument{QStringLiteral("arguments"),
                                             QStringLiteral("{\"city\": \"Ankara\"}")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("weather/get_forecast result:")));
@@ -917,7 +1024,7 @@ private slots:
             runTool(executor, QStringLiteral("mcp-call"),
                     {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
                      ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("boom")}},
-                    allToolIds());
+                    QStringList{});
         QVERIFY(errorResult.summary.contains(QStringLiteral("server exploded")));
 
         const auto badArgs = runTool(
@@ -925,7 +1032,7 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
              ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
              ToolInvocationArgument{QStringLiteral("arguments"), QStringLiteral("not json")}},
-            allToolIds());
+            QStringList{});
         QVERIFY(badArgs.summary.contains(QStringLiteral("must be a JSON object")));
     }
 
@@ -940,7 +1047,7 @@ private slots:
         const auto result = runTool(
             executor, QStringLiteral("spawn-agent"),
             {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("count the TODOs")}},
-            allToolIds());
+            QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QCOMPARE(receivedTasks.size(), 1);
@@ -954,7 +1061,7 @@ private slots:
         const auto result =
             runTool(executor, QStringLiteral("spawn-agent"),
                     {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("No subagent runner is configured")));
@@ -962,7 +1069,7 @@ private slots:
 
     void spawnAgentRequiresTask() {
         RealToolExecutor executor;
-        const auto result = runTool(executor, QStringLiteral("spawn-agent"), {}, allToolIds());
+        const auto result = runTool(executor, QStringLiteral("spawn-agent"), {}, QStringList{});
         QVERIFY(result.summary.contains(QStringLiteral("No task argument provided")));
     }
 
@@ -981,7 +1088,7 @@ private slots:
             runTool(executor, QStringLiteral("run-command"),
                     {ToolInvocationArgument{QStringLiteral("command"), QStringLiteral("ls")},
                      ToolInvocationArgument{QStringLiteral("sandbox"), QStringLiteral("docker")}},
-                    allToolIds());
+                    QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("docker CLI is not available")));
@@ -1000,14 +1107,14 @@ private slots:
         const auto screenshot = runTool(
             executor, QStringLiteral("browser-screenshot"),
             {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("https://example.com")}},
-            allToolIds());
+            QStringList{});
         QCOMPARE(screenshot.status, ToolExecutionStatus::Succeeded);
         QVERIFY(screenshot.summary.contains(QStringLiteral("Node.js")));
 
         const auto pdf = runTool(
             executor, QStringLiteral("browser-pdf"),
             {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("https://example.com")}},
-            allToolIds());
+            QStringList{});
         QCOMPARE(pdf.status, ToolExecutionStatus::Succeeded);
         QVERIFY(pdf.summary.contains(QStringLiteral("Node.js")));
     }
@@ -1015,10 +1122,10 @@ private slots:
     void browserToolsRequireUrl() {
         RealToolExecutor executor;
         const auto screenshot =
-            runTool(executor, QStringLiteral("browser-screenshot"), {}, allToolIds());
+            runTool(executor, QStringLiteral("browser-screenshot"), {}, QStringList{});
         QVERIFY(screenshot.summary.contains(QStringLiteral("No url argument provided")));
 
-        const auto pdf = runTool(executor, QStringLiteral("browser-pdf"), {}, allToolIds());
+        const auto pdf = runTool(executor, QStringLiteral("browser-pdf"), {}, QStringList{});
         QVERIFY(pdf.summary.contains(QStringLiteral("No url argument provided")));
     }
 };

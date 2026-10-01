@@ -1037,6 +1037,17 @@ bool McpService::connectToLocalServer(McpServerState& state) {
 #endif
         ) {
         state.errorString = response["error"].toObject()["message"].toString();
+        // Keep a bounded child diagnostic when initialization cannot receive a
+        // response.  It is transport-only stderr (not a prompt or credential)
+        // and is essential for distinguishing sandbox launch failures from
+        // JSON-RPC framing failures.
+#if !defined(Q_OS_WIN)
+        const auto childDiagnostic = QString::fromUtf8(process->readAllStandardError())
+                                         .simplified().left(512);
+        if (!childDiagnostic.isEmpty())
+            state.errorString += state.errorString.isEmpty() ? childDiagnostic
+                                                               : QStringLiteral(": ") + childDiagnostic;
+#endif
         if (state.errorString.isEmpty())
             state.errorString = QStringLiteral("MCP process exited during initialization");
         return false;

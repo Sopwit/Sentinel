@@ -1403,7 +1403,17 @@ ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocatio
     const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
     if (!path.ok()) return fileToolFailure(QStringLiteral("read-file"), path);
     const auto read = fileSystemService_.readFile(*path.value, 64 * 1024);
-    if (!read.ok()) return fileToolFailure(QStringLiteral("read-file"), read);
+    if (!read.ok()) {
+        if (read.failure == FileSystemFailure::NotFile) {
+            FileSystemResult<FileRead> rejected;
+            rejected.resource = read.resource;
+            rejected.failure = FileSystemFailure::NotFile;
+            rejected.diagnostic =
+                QStringLiteral("Path is a directory; use list-directory to list it.");
+            return fileToolFailure(QStringLiteral("read-file"), rejected);
+        }
+        return fileToolFailure(QStringLiteral("read-file"), read);
+    }
     if (read.value->binary) {
         FileSystemResult<FileRead> rejected;
         rejected.resource = read.resource;
@@ -1494,6 +1504,12 @@ ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocatio
 ToolExecutionResult RealToolExecutor::executeDeleteFile(const PlannedToolInvocation& invocation, QString& cwd) const {
     const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Delete, cwd);
     if (!path.ok()) return fileToolFailure(QStringLiteral("delete-file"), path);
+    const auto stat = fileSystemService_.stat(*path.value);
+    if (stat.ok() && stat.value->directory) {
+        return {ToolExecutionStatus::Failed,
+                QStringLiteral("delete-file: Refusing to delete a directory: %1")
+                    .arg(stat.resource)};
+    }
     const auto deleted = fileSystemService_.deleteFile(*path.value);
     if (!deleted.ok()) return fileToolFailure(QStringLiteral("delete-file"), deleted);
     return {ToolExecutionStatus::Succeeded, QStringLiteral("delete-file: Deleted '%1'.").arg(deleted.resource), {}, deleted.mutations};

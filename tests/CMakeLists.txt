@@ -18,6 +18,8 @@ endfunction()
 
 add_sentinel_core_test(test_mode_manager core/test_mode_manager.cpp)
 add_sentinel_core_test(test_chat_session core/test_chat_session.cpp)
+add_sentinel_core_test(test_chat_mode_service core/test_chat_mode_service.cpp)
+add_sentinel_core_test(test_chat_application_controller core/test_chat_application_controller.cpp)
 add_sentinel_core_test(test_conversation_session core/test_conversation_session.cpp)
 add_sentinel_core_test(test_conversation_state_graph core/test_conversation_state_graph.cpp)
 add_sentinel_core_test(test_context_assembly core/test_context_assembly.cpp)
@@ -121,6 +123,7 @@ add_sentinel_core_test(test_web_search_tool core/test_web_search_tool.cpp)
 add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)
 add_sentinel_core_test(test_default_platform_services test_default_platform_services.cpp)
 add_sentinel_core_test(test_desktop_shell_view_model desktop/test_desktop_shell_view_model.cpp)
+add_sentinel_core_test(test_chat_view_model desktop/test_chat_view_model.cpp)
 
 qt_add_executable(test_daemon_ipc
     core/test_daemon_ipc.cpp
@@ -148,6 +151,11 @@ target_link_libraries(test_graphics_backend
 add_test(NAME test_graphics_backend COMMAND $<TARGET_FILE:test_graphics_backend>)
 
 target_link_libraries(test_desktop_shell_view_model
+    PRIVATE
+        sentinel_desktop_viewmodels
+)
+
+target_link_libraries(test_chat_view_model
     PRIVATE
         sentinel_desktop_viewmodels
 )

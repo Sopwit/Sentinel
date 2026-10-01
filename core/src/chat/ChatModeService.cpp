@@ -5,6 +5,7 @@
 #include "sentinel/core/chat/ChatModeService.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QMetaObject>
 #include <QSet>
 
@@ -29,7 +30,11 @@ ChatMessage ChatModeService::activeMessage() const {
 }
 
 bool ChatModeService::persist(const QString& conversationId, const ChatMessage& message) {
-    return store_.appendMessage({conversationId, message.id, message.role, message.content,
+    // A newly created assistant placeholder intentionally has no text yet.  QString's default
+    // null value must be stored as an empty string, not bound as SQL NULL against the durable
+    // conversation schema's NOT NULL content column.
+    const auto content = message.content.isNull() ? QStringLiteral("") : message.content;
+    return store_.appendMessage({conversationId, message.id, message.role, content,
         message.timestamp, message.status, message.providerUsed, message.modelUsed,
         message.replyToMessageId, message.replacesMessageId, message.partial,
         message.errorCategory});
@@ -167,8 +172,12 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
     if (!persist(conversationId, assistant)) {
         assistant.status = ChatMessageStatus::Failed;
         assistant.errorCategory = ChatProviderErrorCategory::ProviderUnavailable;
+        assistant.content = QStringLiteral("Unable to save the assistant response placeholder. Please retry this message.");
+        qWarning().noquote() << "Chat assistant placeholder persistence failed:"
+                             << store_.lastError().summary.left(512);
         session_.updateMessage(assistant);
         emit messagesChanged();
+        emit requestStateChanged();
         return false;
     }
     activeConversationId_ = conversationId;
@@ -179,8 +188,18 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
     if (blockedByLocalPolicy || !resolved.ok() ||
         resolved.provider->status() != ChatProviderStatus::Ready) {
         assistant.status = ChatMessageStatus::Failed;
-        if (blockedByLocalPolicy)
+        if (blockedByLocalPolicy) {
             assistant.content = QStringLiteral("Local Only requires a local provider and model. The configured selection is cloud-based.");
+        } else if (!resolved.reason.trimmed().isEmpty()) {
+            // Binding resolution happens after the placeholder has been persisted.  Surface the
+            // provider-neutral reason on that exact entry so a rejected turn cannot appear as a
+            // successful-but-empty assistant bubble.
+            assistant.content = resolved.reason.trimmed();
+        } else if (!resolved.ok()) {
+            assistant.content = QStringLiteral("The selected provider or model could not be prepared for this request.");
+        } else {
+            assistant.content = QStringLiteral("The selected provider is not ready to accept requests.");
+        }
         assistant.errorCategory = blockedByLocalPolicy
             ? ChatProviderErrorCategory::RequestRejected : resolved.ok()
             ? ChatProviderErrorCategory::ProviderUnavailable : bindingError(resolved.error);
@@ -260,7 +279,8 @@ void ChatModeService::acceptResult(const QString& conversationId, int messageId,
                                    const ChatProviderReply& reply) {
     if (activeConversationId_ != conversationId || activeMessageId_ != messageId) return;
     auto message = activeMessage();
-    if (reply.success &&
+    const bool cancellationRequested = cancellation_ && cancellation_->load();
+    if (!cancellationRequested && reply.success &&
         (reply.lifecycle == ChatRequestLifecycle::Completed ||
          reply.lifecycle == ChatRequestLifecycle::Pending) &&
         (!reply.message.isEmpty() || !message.content.isEmpty())) {
@@ -271,7 +291,7 @@ void ChatModeService::acceptResult(const QString& conversationId, int messageId,
     } else {
         const bool cancelled = reply.lifecycle == ChatRequestLifecycle::Cancelled ||
             reply.category == ChatProviderErrorCategory::Cancelled ||
-            (cancellation_ && cancellation_->load() && !reply.success);
+            cancellationRequested;
         message.status = cancelled ? ChatMessageStatus::Cancelled : ChatMessageStatus::Failed;
         message.partial = !message.content.isEmpty();
         message.errorCategory = cancelled ? ChatProviderErrorCategory::Cancelled
@@ -282,6 +302,19 @@ void ChatModeService::acceptResult(const QString& conversationId, int messageId,
             : reply.lifecycle == ChatRequestLifecycle::RateLimited
                 ? ChatProviderErrorCategory::RateLimited
                 : ChatProviderErrorCategory::ProviderFailure;
+        // A queued placeholder must never become a visually empty terminal
+        // assistant message.  Keep any partial streamed content, but make a
+        // zero-content cancellation/failure truthful and actionable in every
+        // presentation layer, including QML delegates that only render text.
+        if (message.content.trimmed().isEmpty()) {
+            if (cancelled) {
+                message.content = QStringLiteral("Generation was cancelled before any response was received.");
+            } else if (!reply.message.trimmed().isEmpty()) {
+                message.content = reply.message.trimmed();
+            } else {
+                message.content = QStringLiteral("Generation failed before the provider returned usable assistant text.");
+            }
+        }
         lastError_ = message.errorCategory;
     }
     session_.updateMessage(message);
@@ -301,6 +334,28 @@ void ChatModeService::acceptResult(const QString& conversationId, int messageId,
 bool ChatModeService::stop() {
     if (!busy() || !cancellation_) return false;
     cancellation_->store(true);
+
+    // Cancellation is a terminal UI action.  Do not wait for a provider worker to
+    // notice the token: some transports only return after an I/O timeout.  Closing
+    // the active turn here makes the request state truthful immediately; the
+    // worker's eventual callback is rejected by its now-stale message id.
+    auto message = activeMessage();
+    message.status = ChatMessageStatus::Cancelled;
+    message.partial = !message.content.isEmpty();
+    message.errorCategory = ChatProviderErrorCategory::Cancelled;
+    if (message.content.trimmed().isEmpty()) {
+        message.content = QStringLiteral("Generation was cancelled before any response was received.");
+    }
+    session_.updateMessage(message);
+    if (!persist(activeConversationId_, message)) {
+        qWarning().noquote() << "Chat cancellation persistence failed:"
+                             << store_.lastError().summary.left(512);
+    }
+    lastError_ = ChatProviderErrorCategory::Cancelled;
+    activeMessageId_ = 0;
+    cancellation_.reset();
+    emit messagesChanged();
+    emit requestStateChanged();
     return true;
 }
 
