@@ -1,36 +1,13 @@
-# Sentinel Automated Test Suite Architecture
+# Tests
 
-Sentinel utilizes QtTest and QtQuickTest frameworks across a 5-tier modular testing hierarchy:
+Sentinel uses QtTest executables registered with CTest. Core tests are under `tests/core`; GUI/QML tests and benchmarks are also configured from this tree. The source and target list in `tests/CMakeLists.txt` is authoritative.
 
-## Test Architecture Layout
+Run the suite with:
 
-```
-tests/
-├── unit/                 # C++ unit tests (ModeManager, Stores, RAG, Ollama, Runtime)
-├── integration/          # End-to-end integration tests (RAG pipeline, ViewModel sync)
-├── gui/                  # QtQuickTest QML component & UI navigation tests
-├── performance/          # Performance & load verification (Startup time, Memory limits)
-└── benchmarks/           # Micro-performance latency benchmarks (QBENCHMARK)
-```
-
-## Running Tests
-
-### 1. Run Complete Test Suite
 ```bash
 cmake --preset tests
 cmake --build --preset tests
-ctest --preset tests
+ctest --preset tests --output-on-failure
 ```
 
-### 2. Run Specific Test Subsuites
-```bash
-# Integration Tests
-ctest --test-dir build -R test_rag_e2e_pipeline --output-on-failure
-
-# Benchmarks (Semantic Search & Context Compression Latency)
-ctest --test-dir build -R bench_ --output-on-failure
-
-# Cold Startup Performance Verification
-ctest --test-dir build -R test_startup_time --output-on-failure
-```
-
+For a focused target, use `ctest --test-dir build/tests -R <name> --output-on-failure`. See the canonical [testing guide](../docs/development/TESTING.md).
