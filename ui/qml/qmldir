@@ -3,7 +3,6 @@ module Sentinel.Desktop
 singleton SentinelTheme 1.0 theme/SentinelTheme.qml
 singleton MotionTokens 1.0 theme/MotionTokens.qml
 singleton InteractionTokens 1.0 theme/InteractionTokens.qml
-singleton Fonts 1.0 theme/Fonts.qml
 
 Main 1.0 Main.qml
 
@@ -52,7 +51,6 @@ ShellPanel 1.0 components/navigation/ShellPanel.qml
 StatusBar 1.0 components/navigation/StatusBar.qml
 TitleBar 1.0 components/navigation/TitleBar.qml
 TitleBarButton 1.0 components/navigation/TitleBarButton.qml
-WorkspacePresence 1.0 components/navigation/WorkspacePresence.qml
 
 # Notification Components
 NotificationCenterPanel 1.0 components/notifications/NotificationCenterPanel.qml

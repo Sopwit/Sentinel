@@ -157,13 +157,10 @@ Platform packaging sources live under `packaging/`:
 git archive --prefix=sentinel-desktop-1.0.0/ -o sentinel-desktop-1.0.0.tar.gz HEAD
 # then rpmbuild / mock / COPR via packaging/linux/fedora-kde/build_copr.sh
 
-# CPack (DEB / RPM / TGZ on Linux; DragNDrop on macOS; NSIS / WiX on Windows)
+# CPack (DEB / RPM / TGZ on Linux; DMG on macOS; NSIS / WiX on Windows)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 cpack --config build/CPackConfig.cmake
-
-# macOS DMG & PKG
-./packaging/macos/build_pkg.sh
 
 # Flatpak / Snap
 ./packaging/flatpak/build_flatpak.sh

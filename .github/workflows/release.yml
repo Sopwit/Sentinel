@@ -3,7 +3,6 @@ name: Release Build
 on:
   push:
     tags: ['v*']
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,14 +18,14 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install dependencies
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core rpm wget
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: linux_gcc_64
@@ -72,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: linux-release
           path: artifacts/
@@ -83,9 +82,9 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: clang_64
@@ -97,7 +96,7 @@ jobs:
           cmake --preset package-ready
           cmake --build --preset package-ready
           cmake --install build/package-ready --prefix "$GITHUB_WORKSPACE/dist"
-      - name: Bundle, sign, and package
+      - name: Bundle, sign, and create DMG
         env:
           APPLE_CERT_BASE64: ${{ secrets.APPLE_DEVELOPER_CERT_BASE64 }}
           APPLE_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_CERT_PASS }}
@@ -129,8 +128,6 @@ jobs:
           brew install create-dmg
           mkdir artifacts
           create-dmg --volname 'Sentinel Desktop Installer' --window-pos 200 120 --window-size 600 300 --icon-size 100 --icon 'Sentinel Desktop.app' 175 120 --hide-extension 'Sentinel Desktop.app' --app-drop-link 425 120 artifacts/Sentinel-Desktop-macOS.dmg dist/
-          chmod +x packaging/macos/build_pkg.sh
-          ./packaging/macos/build_pkg.sh "$app" artifacts/Sentinel-Desktop-macOS.pkg ''
           if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_APP_PASS:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
             xcrun notarytool submit artifacts/Sentinel-Desktop-macOS.dmg --apple-id "$APPLE_ID" --password "$APPLE_APP_PASS" --team-id "$APPLE_TEAM_ID" --wait
             xcrun stapler staple artifacts/Sentinel-Desktop-macOS.dmg
@@ -139,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           (cd artifacts && shasum -a 256 * > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: macos-release
           path: artifacts/
@@ -150,16 +147,16 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install Ninja and WiX
         shell: pwsh
         run: choco install ninja wixtoolset --no-progress --yes
       - name: Set up MSVC x64 environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@7defe9254715b088f12dddd9942945a3d75cdad5 # v1.9.0
         with:
           arch: x64
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: win64_msvc2022_64
@@ -178,7 +175,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force artifacts | Out-Null
           windeployqt --qmldir ui/qml dist/sentinel-desktop.exe
-          Compress-Archive -Path dist/* -DestinationPath artifacts/Sentinel-Desktop-Windows-x64.zip
           cpack --config build/package-ready/CPackConfig.cmake
           $exe = Get-ChildItem build/package-ready -Filter '*.exe' | Select-Object -First 1
           $msi = Get-ChildItem build/package-ready -Filter '*.msi' | Select-Object -First 1
@@ -200,7 +196,7 @@ jobs:
       - name: Generate checksums
         shell: pwsh
         run: Get-FileHash artifacts/* -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } | Set-Content artifacts/SHA256SUMS.txt
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: windows-release
           path: artifacts/
@@ -215,7 +211,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: release-artifacts
       - name: Prepare release files
@@ -224,7 +220,7 @@ jobs:
           mkdir final-artifacts
           find release-artifacts -type f -exec cp {} final-artifacts/ \;
       - name: Create release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           files: final-artifacts/*
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-pre') }}
