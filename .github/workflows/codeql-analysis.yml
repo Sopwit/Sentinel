@@ -21,13 +21,14 @@ on:
     - cron: '0 3 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   analyze:
     name: CodeQL Analyze (C++)
     runs-on: ubuntu-22.04
+    timeout-minutes: 50
     permissions:
       security-events: write
       actions: read
@@ -39,6 +40,7 @@ jobs:
 
       - name: Install build tools
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
 
@@ -62,4 +64,3 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-

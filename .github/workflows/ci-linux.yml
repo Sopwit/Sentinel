@@ -2,114 +2,130 @@ name: Linux CI
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
+    branches: [main]
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
+
+permissions:
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-test:
-    name: Build & Test (Linux)
+  quality:
+    name: Format, lint, and static analysis
     runs-on: ubuntu-22.04
-
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Format check (Fail-Fast)
+      - name: Install build and validation tools
         run: |
-          pip3 install --break-system-packages clang-format==18.1.8 || pip3 install clang-format==18.1.8
-          find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
-            | xargs -0 clang-format --dry-run --Werror
-
-      - name: Install build tools
-        run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core desktop-file-utils appstream libappstream-glib-dev
-
-      - name: Validate Desktop Entry & AppStream Metadata
-        run: |
-          desktop-file-validate packaging/linux/dev.sentinel.Sentinel.desktop
-          appstream-util validate-relax --nonet packaging/linux/dev.sentinel.Sentinel.metainfo.xml || appstreamcli validate --no-net packaging/linux/dev.sentinel.Sentinel.metainfo.xml || true
-
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ runner.os }}-sentinel-${{ github.job }}
-          max-size: 500M
-
+          sudo apt-get install -y cmake ninja-build g++ clang-format clang-tidy libgl1-mesa-dev libvulkan-dev fonts-noto-core desktop-file-utils appstream jq
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.*'
-          arch: 'linux_gcc_64'
-          modules: 'qtmultimedia'
+          arch: linux_gcc_64
+          modules: qtmultimedia
           cache: true
-
+      - name: Check C++ formatting
+        run: |
+          set -euo pipefail
+          find apps core integrations plugins tests -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' \) -print0 |
+            xargs -0 -r clang-format --dry-run --Werror
+      - name: Validate Linux desktop metadata
+        run: |
+          set -euo pipefail
+          desktop-file-validate packaging/linux/dev.sentinel.Sentinel.desktop
+          if command -v appstreamcli >/dev/null; then
+            appstreamcli validate --no-net packaging/linux/dev.sentinel.Sentinel.metainfo.xml
+          elif command -v appstream-util >/dev/null; then
+            appstream-util validate-relax --nonet packaging/linux/dev.sentinel.Sentinel.metainfo.xml
+          else
+            echo 'No AppStream validator is available.' >&2
+            exit 1
+          fi
       - name: Configure
         run: cmake --preset tests
-
-      - name: Build
-        run: cmake --build --preset tests
-
-      - name: Test
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: ctest --preset tests
-
-      - name: QML Lint Check
+      - name: Run clang-tidy on compiled Sentinel sources
         run: |
-          find ui/qml -name "*.qml" -print0 | xargs -0 qmllint -I ui/qml || true
+          set -euo pipefail
+          jq -r '.[].file' build/tests/compile_commands.json | sort -u |
+            grep -E '/(apps|core|integrations|plugins)/.*\.(cpp|cc|cxx)$' |
+            xargs -r clang-tidy -p build/tests
+      - name: Run QML lint
+        run: |
+          set -euo pipefail
+          find ui/qml -type f -name '*.qml' -print0 |
+            xargs -0 -r qmllint -I ui/qml -I build/tests/apps/sentinel-desktop
 
-  asan-build-test:
-    name: AddressSanitizer Build & Test
+  build-test:
+    name: Build and test
     runs-on: ubuntu-22.04
-
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Install build tools
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev
-
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ runner.os }}-sentinel-${{ github.job }}
           max-size: 500M
-
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.*'
-          arch: 'linux_gcc_64'
-          modules: 'qtmultimedia'
+          arch: linux_gcc_64
+          modules: qtmultimedia
           cache: true
-
-      - name: Configure with ASan
-        run: cmake --preset asan
-
+      - name: Configure
+        run: cmake --preset tests
       - name: Build
-        run: cmake --build --preset asan
-
+        run: cmake --build --preset tests
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-          ASAN_OPTIONS: 'detect_leaks=0:halt_on_error=1'
-        run: ctest --preset asan --output-on-failure
+        run: ctest --preset tests --output-on-failure
 
+  asan-build-test:
+    name: AddressSanitizer build and test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-sentinel-${{ github.job }}
+          max-size: 500M
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.11.*'
+          arch: linux_gcc_64
+          modules: qtmultimedia
+          cache: true
+      - name: Configure with ASan
+        run: cmake --preset asan
+      - name: Build
+        run: cmake --build --preset asan
+      - name: Test
+        env:
+          QT_QPA_PLATFORM: offscreen
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+        run: ctest --preset asan --output-on-failure
