@@ -11,7 +11,19 @@
   - changed-files:
       - any-glob-to-any-file: 'packaging/**/*'
 
-'area: devops':
+'component: plugins':
+  - changed-files:
+      - any-glob-to-any-file: 'plugins/**/*'
+
+'component: integrations':
+  - changed-files:
+      - any-glob-to-any-file: 'integrations/**/*'
+
+'component: tests':
+  - changed-files:
+      - any-glob-to-any-file: 'tests/**/*'
+
+'area: ci':
   - changed-files:
       - any-glob-to-any-file: '.github/**/*'
 
@@ -20,3 +32,21 @@
       - any-glob-to-any-file: 'CMakeLists.txt'
       - any-glob-to-any-file: 'CMakePresets.json'
       - any-glob-to-any-file: 'cmake/**/*'
+
+'platform: linux':
+  - changed-files:
+      - any-glob-to-any-file: 'packaging/linux/**/*'
+
+'platform: macos':
+  - changed-files:
+      - any-glob-to-any-file: 'packaging/macos/**/*'
+      - any-glob-to-any-file: 'resources/platform/macos/**/*'
+
+'platform: windows':
+  - changed-files:
+      - any-glob-to-any-file: 'packaging/windows/**/*'
+      - any-glob-to-any-file: 'resources/platform/windows/**/*'
+
+'documentation':
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'

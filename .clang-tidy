@@ -12,7 +12,7 @@ Checks: >
   readability-redundant-member-init,
   readability-simplify-boolean-expr
 WarningsAsErrors: ''
-HeaderFilterRegex: '^(core|apps|tests)/.*'
+HeaderFilterRegex: '^(core|apps|integrations|plugins)/.*'
 SystemHeaders: false
 FormatStyle: file
 CheckOptions:
