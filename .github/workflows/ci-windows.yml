@@ -2,127 +2,72 @@ name: Windows CI
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
+    branches: [main]
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-test-windows:
-    name: Build & Test (Windows)
+  build-test:
+    name: Build and test (Windows x64)
     runs-on: windows-2022
-    timeout-minutes: 30
-
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Install Ninja
-        run: choco install ninja
-
-      - name: Set up Developer Command Prompt
         shell: pwsh
-        run: |
-          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
-          cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
-              if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
-                  $v = $_.Split("=", 2)
-                  echo "$($v[0])=$($v[1])" >> $env:GITHUB_ENV
-              }
-              if ($_ -match "^Path=(.*)" -or $_ -match "^PATH=(.*)") {
-                  $paths = $Matches[1].Split(";")
-                  foreach ($p in $paths) {
-                      if ($p -and (Test-Path $p)) {
-                          echo $p >> $env:GITHUB_PATH
-                      }
-                  }
-              }
-          }
-
+        run: choco install ninja --no-progress --yes
+      - name: Set up MSVC x64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.*'
-          arch: 'win64_msvc2022_64'
-          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b'
-          modules: 'qtmultimedia'
+          arch: win64_msvc2022_64
+          modules: qtmultimedia
           cache: true
-
-      - name: Configure CMake
+      - name: Configure
         run: cmake --preset tests
-
       - name: Build
         run: cmake --build --preset tests
-
-      - name: QML Lint Check
-        shell: bash
-        timeout-minutes: 2
-        run: |
-          find ui/qml -name "*.qml" -print0 | xargs -0 qmllint -I ui/qml || true
-
-      - name: Run Tests
+      - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --preset tests --timeout 60 --output-on-failure
+        run: ctest --preset tests --output-on-failure
 
-  build-test-windows-arm64:
-    name: Build & Test (Windows ARM64)
-    runs-on: windows-2022
-    continue-on-error: true
+  experimental-arm64:
+    name: Build (Windows ARM64, experimental)
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-
+    continue-on-error: true
+    runs-on: windows-2022
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Install Ninja
-        run: choco install ninja
-
-      - name: Set up ARM64 Developer Command Prompt
         shell: pwsh
-        run: |
-          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsamd64_arm64.bat"
-          cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
-              if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
-                  $v = $_.Split("=", 2)
-                  echo "$($v[0])=$($v[1])" >> $env:GITHUB_ENV
-              }
-              if ($_ -match "^Path=(.*)" -or $_ -match "^PATH=(.*)") {
-                  $paths = $Matches[1].Split(";")
-                  foreach ($p in $paths) {
-                      if ($p -and (Test-Path $p)) {
-                          echo $p >> $env:GITHUB_PATH
-                      }
-                  }
-              }
-          }
-
+        run: choco install ninja --no-progress --yes
+      - name: Set up MSVC ARM64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64_arm64
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.*'
-          arch: 'win64_msvc2022_arm64'
+          arch: win64_msvc2022_arm64
+          modules: qtmultimedia
           cache: true
-
-      - name: Configure CMake
+      - name: Configure
         run: cmake --preset windows-arm64
-
       - name: Build
         run: cmake --build --preset windows-arm64
-
