@@ -1,22 +1,21 @@
 ## Summary
 
-- 
+<!-- What changed, and why? -->
 
 ## Related Issue
 
-Fixes #
+<!-- Fixes #123, if applicable. -->
+
+## Changes
+
+- [ ] Focused and documented where non-obvious
 
 ## Validation
 
-- [ ] `git diff --check`
-- [ ] `cmake --preset tests`
-- [ ] `cmake --build --preset tests`
-- [ ] `ctest --preset tests --output-on-failure`
+- [ ] Relevant tests/build checks were run (list them below)
 
-## Boundary Check
+## Security / Privacy Impact
 
-- [ ] No telemetry added
-- [ ] No hidden cloud calls added
-- [ ] No silent update checks added
-- [ ] No autonomous behavior added
-- [ ] MVVM boundaries preserved
+- [ ] No new autonomous authority, tool capability, permission bypass, or background behavior was introduced without explicit security and permission consideration.
+- [ ] No telemetry, hidden cloud calls, or silent update checks were introduced.
+- [ ] Not applicable

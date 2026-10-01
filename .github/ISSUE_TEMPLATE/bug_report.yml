@@ -6,13 +6,54 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to report a bug! Please fill out the form below as completely as possible.
+        Thank you for reporting a bug. Do not include API keys, tokens, passwords, private prompts, or other sensitive data in this report or its logs.
+  - type: input
+    id: version
+    attributes:
+      label: Sentinel version
+      description: Release version, commit, or build number.
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
       label: Bug Description
       description: A clear and concise description of what the bug is.
       placeholder: Describe what happened...
+    validations:
+      required: true
+  - type: input
+    id: os_version
+    attributes:
+      label: OS version
+      placeholder: Fedora 42, macOS 15.4, Windows 11 24H2
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Architecture
+      options:
+        - x86_64 / x64
+        - ARM64 / aarch64
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation / package type
+      options:
+        - AppImage
+        - DEB
+        - RPM
+        - DMG
+        - PKG
+        - ZIP
+        - EXE installer
+        - MSI
+        - Built from source
+        - Other
     validations:
       required: true
   - type: dropdown
@@ -46,10 +87,17 @@ body:
     validations:
       required: false
   - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: Describe what Sentinel did instead, including any visible error message.
+    validations:
+      required: true
+  - type: textarea
     id: logs
     attributes:
       label: Relevant Logs or Stack Traces
-      description: Paste any relevant logs, Qt debug output, or crash stack traces here.
+      description: Paste relevant, redacted logs, Qt debug output, or crash stack traces here. Never include API keys, tokens, passwords, private prompts, or other sensitive data.
       render: shell
     validations:
       required: false

@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Suggest an improvement or new feature for Sentinel Desktop Companion.
+        Suggest an improvement for Sentinel. Please consider its local-first and privacy-oriented design.
   - type: textarea
     id: problem
     attributes:
@@ -16,10 +16,10 @@ body:
     validations:
       required: true
   - type: textarea
-    id: solution
+    id: proposed_behavior
     attributes:
-      label: Proposed Solution
-      description: A clear and concise description of what you want to happen.
+      label: Proposed Behavior
+      description: Describe the outcome Sentinel should provide.
     validations:
       required: true
   - type: textarea
@@ -32,7 +32,7 @@ body:
   - type: dropdown
     id: scope
     attributes:
-      label: Component Scope
+      label: Affected Component
       options:
         - UI / QML Presentation
         - Core Engine / C++
@@ -42,3 +42,11 @@ body:
         - Packaging & CI/CD
     validations:
       required: true
+  - type: textarea
+    id: security_privacy
+    attributes:
+      label: Security / privacy implications
+      description: Does this add network access, model/provider access, tools, permissions, background work, or sensitive data handling?
+      placeholder: None known, or describe the implications and mitigations.
+    validations:
+      required: false
