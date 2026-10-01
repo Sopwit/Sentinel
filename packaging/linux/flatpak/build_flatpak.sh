@@ -6,13 +6,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build-flatpak"
 REPO_DIR="${REPO_ROOT}/build-flatpak-repo"
 
-MANIFEST_YAML="${SCRIPT_DIR}/../../flatpak/org.sentinel.Sentinel.yml"
+MANIFEST_YAML="${SCRIPT_DIR}/org.sentinel.Sentinel.yml"
 if [ ! -f "${MANIFEST_YAML}" ]; then
-    MANIFEST_YAML="${SCRIPT_DIR}/../../flatpak/dev.sentinel.Sentinel.yaml"
+    MANIFEST_YAML="${SCRIPT_DIR}/dev.sentinel.Sentinel.yaml"
 fi
 
 echo "==> Building Sentinel Flatpak package locally..."

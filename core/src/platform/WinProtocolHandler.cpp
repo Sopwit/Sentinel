@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/platform/WinProtocolHandler.h"
+#include "sentinel/core/app/AppMetadata.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -99,7 +100,7 @@ void registerSentinelProtocol() {
     HKEY hAppMeta = nullptr;
     if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Sopwit\\Sentinel Desktop", 0, nullptr, 0,
                         KEY_SET_VALUE, nullptr, &hAppMeta, nullptr) == ERROR_SUCCESS) {
-        std::wstring versionStr = L"1.0.0";
+        const std::wstring versionStr = AppMetadata::version().toStdWString();
         RegSetValueExW(hAppMeta, L"Version", 0, REG_SZ,
                        reinterpret_cast<const BYTE*>(versionStr.c_str()),
                        static_cast<DWORD>((versionStr.size() + 1) * sizeof(wchar_t)));

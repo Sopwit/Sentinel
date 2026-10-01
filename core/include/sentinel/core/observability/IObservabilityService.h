@@ -8,12 +8,14 @@
 #include <QMap>
 #include <QString>
 
+#include "sentinel/core/AppBuildConfig.h"
+
 namespace sentinel::core {
 
 struct ObservabilityConfig {
     bool enabled{false};
     QString serviceName{"sentinel"};
-    QString serviceVersion{"1.0.0"};
+    QString serviceVersion{QString::fromLatin1(SENTINEL_APP_VERSION)};
     QString otlpEndpoint{"http://localhost:4318"};
     QString protocol{"http"};
     double samplingRatio{1.0};

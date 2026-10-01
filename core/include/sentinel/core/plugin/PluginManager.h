@@ -46,7 +46,7 @@ struct PluginCredentialState {
 class PluginManager : public QObject {
     Q_OBJECT
 public:
-    explicit PluginManager(QString coreVersion = QStringLiteral("1.0.0"),
+    explicit PluginManager(QString coreVersion = {},
                            QString pluginStorageDir = QString(), QObject* parent = nullptr);
     ~PluginManager() override;
 

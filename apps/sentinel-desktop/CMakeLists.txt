@@ -81,9 +81,9 @@ set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.S
 set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.svg)
 set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.icns)
 set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.ico)
-set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/resources/platform/windows/sentinel-desktop.exe.manifest)
+set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/packaging/windows/sentinel-desktop.exe.manifest)
 set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
-set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/platform/macos/Info.plist.in)
+set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/Info.plist.in)
 
 set_source_files_properties(${SENTINEL_APP_ICON_PNG}
     PROPERTIES
@@ -155,7 +155,7 @@ endif()
 
 if(WIN32)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/resources/platform/windows/sentinel-desktop.rc.in
+        ${CMAKE_SOURCE_DIR}/packaging/windows/sentinel-desktop.rc.in
         ${SENTINEL_WINDOWS_RESOURCE}
         @ONLY
     )
@@ -280,33 +280,33 @@ set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE_ICON_FILE "dev.sentinel.Sentinel.icns"
     MACOSX_BUNDLE_INFO_PLIST ${SENTINEL_MACOS_INFO_PLIST}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
-    MACOSX_BUNDLE_BUNDLE_VERSION ${SENTINEL_BUILD_NUMBER}
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     WIN32_EXECUTABLE TRUE
 )
 
 if(APPLE)
     set(SENTINEL_MACOS_RESOURCES
         ${SENTINEL_APP_ICON_ICNS}
-        ${CMAKE_SOURCE_DIR}/resources/platform/macos/PrivacyInfo.xcprivacy
-        ${CMAKE_SOURCE_DIR}/resources/platform/macos/Sentinel.sdef
+        ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/PrivacyInfo.xcprivacy
+        ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/Sentinel.sdef
         ${CMAKE_SOURCE_DIR}/packaging/macos/uninstall.sh
     )
     set_source_files_properties(${SENTINEL_MACOS_RESOURCES} PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources"
     )
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/platform/macos/en.lproj/InfoPlist.strings PROPERTIES
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/packaging/macos/bundle/en.lproj/InfoPlist.strings PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources/en.lproj"
     )
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/platform/macos/tr.lproj/InfoPlist.strings PROPERTIES
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/packaging/macos/bundle/tr.lproj/InfoPlist.strings PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources/tr.lproj"
     )
     target_sources(sentinel-desktop PRIVATE
         ${SENTINEL_MACOS_RESOURCES}
-        ${CMAKE_SOURCE_DIR}/resources/platform/macos/en.lproj/InfoPlist.strings
-        ${CMAKE_SOURCE_DIR}/resources/platform/macos/tr.lproj/InfoPlist.strings
+        ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/en.lproj/InfoPlist.strings
+        ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/tr.lproj/InfoPlist.strings
     )
     set_target_properties(sentinel-desktop PROPERTIES
-        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/resources/platform/macos/sentinel.entitlements"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/packaging/macos/bundle/sentinel.entitlements"
     )
 endif()
 
@@ -393,15 +393,15 @@ if(UNIX AND NOT APPLE)
         DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 
-    install(FILES ${CMAKE_SOURCE_DIR}/packaging/etc/sentinel/config.json.template
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/etc/sentinel/config.json.template
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/sentinel
     )
 
-    install(FILES ${CMAKE_SOURCE_DIR}/packaging/systemd/sentinel-desktop.service
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/systemd/sentinel-desktop.service
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/user
     )
 
-    install(FILES ${CMAKE_SOURCE_DIR}/packaging/dbus/dev.sentinel.Sentinel.service
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dbus/dev.sentinel.Sentinel.service
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/services
     )
 endif()

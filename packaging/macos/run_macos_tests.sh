@@ -27,15 +27,15 @@ fi
 
 # 3. Verify PrivacyInfo.xcprivacy
 echo "[3/6] Verifying PrivacyInfo.xcprivacy Manifest..."
-test -f "resources/platform/macos/PrivacyInfo.xcprivacy"
-grep -q "NSPrivacyAccessedAPICategoryFileTimestamp" "resources/platform/macos/PrivacyInfo.xcprivacy"
-grep -q "NSPrivacyAccessedAPICategoryDiskSpace" "resources/platform/macos/PrivacyInfo.xcprivacy"
+test -f "packaging/macos/bundle/PrivacyInfo.xcprivacy"
+grep -q "NSPrivacyAccessedAPICategoryFileTimestamp" "packaging/macos/bundle/PrivacyInfo.xcprivacy"
+grep -q "NSPrivacyAccessedAPICategoryDiskSpace" "packaging/macos/bundle/PrivacyInfo.xcprivacy"
 echo "  ✅ Apple Privacy Manifest verified."
 
 # 4. Verify Entitlements
 echo "[4/6] Verifying macOS Entitlements..."
-test -f "resources/platform/macos/sentinel.entitlements"
-grep -q "com.apple.security.network.client" "resources/platform/macos/sentinel.entitlements"
+test -f "packaging/macos/bundle/sentinel.entitlements"
+grep -q "com.apple.security.network.client" "packaging/macos/bundle/sentinel.entitlements"
 echo "  ✅ macOS Entitlements verified."
 
 # 5. Verify Silent Uninstaller
@@ -46,7 +46,7 @@ echo "  ✅ Silent uninstaller script verified."
 # 6. Verify Homebrew Cask & AppleScript SDEF
 echo "[6/6] Verifying Homebrew Cask Formula & AppleScript SDEF..."
 test -f "packaging/macos/Cask/sentinel.rb"
-test -f "resources/platform/macos/Sentinel.sdef"
+test -f "packaging/macos/bundle/Sentinel.sdef"
 echo "  ✅ Homebrew Cask formula and AppleScript dictionary verified."
 
 echo ""

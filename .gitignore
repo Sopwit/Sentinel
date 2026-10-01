@@ -11,9 +11,30 @@
 /CMakeUserPresets.json
 /compile_commands.json
 *.qm
-# Log & Test outputs
+# CPack and release artifacts
+/_CPack_Packages/
+/*.AppImage
+/*.deb
+/*.dmg
+/*.exe
+/*.msi
+/*.pkg
+/*.rpm
+/*.tar.gz
+/*.zip
+
+# Log, test, coverage, and sanitizer outputs
 /*.txt
 !/CMakeLists.txt
+*.log
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+*.dSYM/
+/coverage/
+/coverage-html/
+*.qmlc
 
 # Tool caches
 /.cache/
@@ -23,7 +44,11 @@
 # IDE/editor state
 /.idea/
 /.vscode/
+/.vs/
 *.code-workspace
+*.pro.user
+*.qtc_clangd
+*.suo
 *.user
 
 # OS-generated files
@@ -31,14 +56,12 @@
 Thumbs.db
 Desktop.ini
 
-# UI design reference workspace (TS/React)
-/lovable-tasarim/node_modules/
-/lovable-tasarim/dist/
-/lovable-tasarim/.tanstack/
-/lovable-tasarim/.wrangler/
-/lovable-tasarim/.vite/
-/lovable-tasarim/.cache/
-/lovable-tasarim/coverage/
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Package-manager and editor logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

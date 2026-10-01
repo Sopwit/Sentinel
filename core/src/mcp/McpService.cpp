@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/mcp/McpService.h"
+#include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/security/CredentialStore.h"
 #include <QDebug>
@@ -113,7 +114,7 @@ QJsonObject modernMeta() {
     return {{QStringLiteral("io.modelcontextprotocol/protocolVersion"), QStringLiteral("2026-07-28")},
             {QStringLiteral("io.modelcontextprotocol/clientInfo"),
              QJsonObject{{QStringLiteral("name"), QStringLiteral("Sentinel")},
-                         {QStringLiteral("version"), QStringLiteral("1.0.0")}}},
+                         {QStringLiteral("version"), AppMetadata::version()}}},
             {QStringLiteral("io.modelcontextprotocol/clientCapabilities"), QJsonObject{
                 {QStringLiteral("elicitation"), QJsonObject{
                     {QStringLiteral("form"), QJsonObject{}},
@@ -1026,7 +1027,7 @@ bool McpService::connectToLocalServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2024-11-05";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", AppMetadata::version()}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error") ||
@@ -1119,7 +1120,7 @@ bool McpService::connectToRemoteServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2025-11-25";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", AppMetadata::version()}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error")) {
