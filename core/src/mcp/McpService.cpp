@@ -6,12 +6,12 @@
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/security/CredentialStore.h"
-#include <QDebug>
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QElapsedTimer>
+#include <QEventLoop>
 #include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -20,9 +20,9 @@
 #include <QPointer>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
-#include <QStandardPaths>
-#include <QSet>
 #include <QScopedValueRollback>
+#include <QSet>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
@@ -111,14 +111,15 @@ McpFailureCategory categoryFromName(const QString& name) {
     return McpFailureCategory::ProtocolError;
 }
 QJsonObject modernMeta() {
-    return {{QStringLiteral("io.modelcontextprotocol/protocolVersion"), QStringLiteral("2026-07-28")},
-            {QStringLiteral("io.modelcontextprotocol/clientInfo"),
-             QJsonObject{{QStringLiteral("name"), QStringLiteral("Sentinel")},
-                         {QStringLiteral("version"), AppMetadata::version()}}},
-            {QStringLiteral("io.modelcontextprotocol/clientCapabilities"), QJsonObject{
-                {QStringLiteral("elicitation"), QJsonObject{
-                    {QStringLiteral("form"), QJsonObject{}},
-                    {QStringLiteral("url"), QJsonObject{}}}}}}};
+    return {
+        {QStringLiteral("io.modelcontextprotocol/protocolVersion"), QStringLiteral("2026-07-28")},
+        {QStringLiteral("io.modelcontextprotocol/clientInfo"),
+         QJsonObject{{QStringLiteral("name"), QStringLiteral("Sentinel")},
+                     {QStringLiteral("version"), AppMetadata::version()}}},
+        {QStringLiteral("io.modelcontextprotocol/clientCapabilities"),
+         QJsonObject{{QStringLiteral("elicitation"),
+                      QJsonObject{{QStringLiteral("form"), QJsonObject{}},
+                                  {QStringLiteral("url"), QJsonObject{}}}}}}};
 }
 QByteArray headerValue(const QString& value) {
     const auto bytes = value.toUtf8();
