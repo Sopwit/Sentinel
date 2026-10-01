@@ -2,6 +2,7 @@
 #include "SentinelPluginSdk.h"
 #include "sentinel/core/plugin/PluginHostProtocol.h"
 #include "sentinel/core/plugin/PluginManifest.h"
+#include "sentinel/core/AppBuildConfig.h"
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QDir>
@@ -35,7 +36,7 @@ namespace {
 thread_local QString executingInvocation;
 class HostContext final : public IPluginContext {
 public:
-    QString coreVersion() const override { return QStringLiteral("1.0.0"); }
+    QString coreVersion() const override { return QString::fromLatin1(SENTINEL_APP_VERSION); }
     QString pluginDataDir() const override { return QDir::currentPath(); }
     bool hasPermission(const QString& permission) const override { return permissions.contains(permission); }
     void logMessage(const QString&, const QString&) override {} // Never forward plugin text into diagnostics.
@@ -274,7 +275,7 @@ private:
             if (!loader.load()) { reply(request, false, QStringLiteral("PluginLoadFailure")); return; }
             plugin = qobject_cast<ISentinelPlugin*>(loader.instance());
             if (!plugin || plugin->pluginId() != expectedId ||
-                !checkVersionRequirement(QStringLiteral("1.0.0"), plugin->requiredCoreVersion())) {
+                !checkVersionRequirement(QString::fromLatin1(SENTINEL_APP_VERSION), plugin->requiredCoreVersion())) {
                 plugin = nullptr; loader.unload(); reply(request, false, QStringLiteral("PluginIncompatible")); return;
             }
             context = std::make_shared<HostContext>();

@@ -21,7 +21,7 @@
     <key>CFBundleShortVersionString</key>
     <string>@PROJECT_VERSION@</string>
     <key>CFBundleVersion</key>
-    <string>@SENTINEL_BUILD_NUMBER@</string>
+    <string>@PROJECT_VERSION@</string>
     <key>LSApplicationCategoryType</key>
     <string>@SENTINEL_MACOS_CATEGORY@</string>
     <key>LSMinimumSystemVersion</key>

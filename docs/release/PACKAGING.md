@@ -1,6 +1,6 @@
 # Packaging
 
-Packaging inputs live in `packaging/` and CPack configuration lives in `cmake/SentinelCPack.cmake`. Fedora RPM specs, Flatpak manifests, Snap metadata, desktop/AppStream metadata, macOS assets, and Windows signing/Winget metadata are maintained there.
+Packaging inputs live in `packaging/` and CPack configuration lives in `cmake/SentinelCPack.cmake`. Linux metadata and service definitions are under `packaging/linux/`; macOS bundle inputs are under `packaging/macos/bundle/`; Windows executable and installer inputs are under `packaging/windows/`. Canonical runtime icons remain in `resources/app-icons/`.
 
 The tagged release workflow builds the `package-ready` preset and currently publishes:
 
