@@ -48,8 +48,6 @@ body:
         - DEB
         - RPM
         - DMG
-        - PKG
-        - ZIP
         - EXE installer
         - MSI
         - Built from source

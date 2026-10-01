@@ -71,11 +71,6 @@ brew install --cask Sopwit/tap/sentinel
 2. Run the installer wizard and follow the prompts.
 3. Sentinel installs to `C:\Program Files\Sentinel` and registers desktop shortcuts and start menu entries.
 
-#### Portable ZIP Archive
-1. Download `sentinel-1.0.0-win64.zip`.
-2. Extract to a directory of your choice (e.g., `C:\Tools\Sentinel`).
-3. Run `sentinel-desktop.exe`.
-
 ---
 
 ## 3. Local AI Runtime Setup

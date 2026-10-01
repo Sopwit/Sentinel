@@ -67,7 +67,7 @@ elseif(UNIX AND NOT APPLE)
     set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/usr;/usr/bin;/usr/lib;/usr/lib/systemd;/usr/lib/systemd/user;/usr/share;/usr/share/applications;/usr/share/icons;/usr/share/icons/hicolor;/usr/share/icons/hicolor/scalable;/usr/share/icons/hicolor/scalable/apps;/usr/share/icons/hicolor/1024x1024;/usr/share/icons/hicolor/1024x1024/apps;/usr/share/metainfo;/usr/share/dbus-1;/usr/share/dbus-1/services;/etc;/etc/sentinel")
 
 elseif(APPLE)
-    set(CPACK_GENERATOR "DragNDrop;TGZ")
+    set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_DMG_VOLUME_NAME "Sentinel Desktop")
     set(CPACK_DMG_FORMAT "UDBZ")
     set(CPACK_BUNDLE_NAME "Sentinel Desktop")

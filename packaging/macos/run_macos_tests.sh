@@ -38,11 +38,10 @@ test -f "resources/platform/macos/sentinel.entitlements"
 grep -q "com.apple.security.network.client" "resources/platform/macos/sentinel.entitlements"
 echo "  ✅ macOS Entitlements verified."
 
-# 5. Verify PKG Script & Uninstaller
-echo "[5/6] Verifying PKG Builder & Silent Uninstaller..."
-test -x "packaging/macos/build_pkg.sh"
+# 5. Verify Silent Uninstaller
+echo "[5/6] Verifying Silent Uninstaller..."
 test -f "packaging/macos/uninstall.sh"
-echo "  ✅ PKG builder and uninstaller scripts verified."
+echo "  ✅ Silent uninstaller script verified."
 
 # 6. Verify Homebrew Cask & AppleScript SDEF
 echo "[6/6] Verifying Homebrew Cask Formula & AppleScript SDEF..."

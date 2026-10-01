@@ -19,14 +19,19 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install build and validation tools
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ clang-format clang-tidy libgl1-mesa-dev libvulkan-dev fonts-noto-core desktop-file-utils appstream jq
+          sudo apt-get install -y cmake ninja-build g++ clang-tidy libgl1-mesa-dev libvulkan-dev fonts-noto-core desktop-file-utils appstream jq
+      - name: Install clang-format
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user clang-format==18.1.8
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: linux_gcc_64
@@ -54,8 +59,8 @@ jobs:
       - name: Run clang-tidy on compiled Sentinel sources
         run: |
           set -euo pipefail
-          jq -r '.[].file' build/tests/compile_commands.json | sort -u |
-            grep -E '/(apps|core|integrations|plugins)/.*\.(cpp|cc|cxx)$' |
+          jq -r --arg root "$GITHUB_WORKSPACE/" '.[] | .file | select(startswith($root + "apps/") or startswith($root + "core/") or startswith($root + "integrations/") or startswith($root + "plugins/"))' build/tests/compile_commands.json | sort -u |
+            grep -E '\.(cpp|cc|cxx)$' |
             xargs -r clang-tidy -p build/tests
       - name: Run QML lint
         run: |
@@ -69,19 +74,19 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install build tools
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
           key: ${{ runner.os }}-sentinel-${{ github.job }}
           max-size: 500M
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: linux_gcc_64
@@ -102,19 +107,19 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install build tools
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
           key: ${{ runner.os }}-sentinel-${{ github.job }}
           max-size: 500M
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.11.*'
           arch: linux_gcc_64
