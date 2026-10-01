@@ -1,4 +1,6 @@
-# Packaging Specifications & Distribution Metadata
+# Packaging sources
+
+The canonical user and maintainer documentation is [docs/release/PACKAGING.md](../docs/release/PACKAGING.md) and [docs/release/RELEASE_PROCESS.md](../docs/release/RELEASE_PROCESS.md). This file describes only the source layout retained in this directory.
 
 This directory contains cross-platform distribution metadata, specs, and manifests for **Sentinel Desktop** (`dev.sentinel.Sentinel`).
 
@@ -98,4 +100,3 @@ To enable Portable Data Mode:
 - **Linux / Fedora KDE Plasma**: Full native FHS 3.0 layout, systemd user service, D-Bus session activation, AppStream metadata, desktop entry, RPM spec, Flatpak manifest, and Fedora COPR build automation (`packaging/linux/fedora-kde/build_copr.sh`).
 - **macOS**: App bundle structure (`Sentinel Desktop.app`), Info.plist, code signing entitlements, DMG packaging via CPack / DragNDrop.
 - **Windows**: Executable manifest, MSVC / MinGW DLL bundling, NSIS installer (`.exe`), WiX installer (`.msi`), and signtool code signing integration.
-
