@@ -1674,6 +1674,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         body.insert(QStringLiteral("model"), result.model);
         body.insert(QStringLiteral("messages"), messagesArr);
         body.insert(QStringLiteral("stream"), true);
+        // Reasoning-capable local models can spend a server's small default
+        // generation budget entirely on hidden reasoning tokens, producing a
+        // completed SSE stream with no assistant content.  Give chat a
+        // bounded explicit output budget unless a caller supplied one.
+        body.insert(QStringLiteral("max_tokens"),
+                    request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
     }
     networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
                              QStringLiteral("application/json"));

@@ -147,7 +147,12 @@ ResourceAuthorizationResult ResourceAuthorizationResolver::authorize(
                                 .arg(resource.path.displayPath);
             return result;
         }
+        // The revalidated entry carries the canonical path as its display path.
+        // Keep the caller's original display path so a snapshot authorized here
+        // still compares equal to a freshly resolved one.
+        const QString displayPath = resource.path.displayPath;
         resource.path = *checked.value;
+        resource.path.displayPath = displayPath;
     }
     result.snapshot.authorized = true;
     return result;

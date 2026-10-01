@@ -185,10 +185,9 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
         ToolDescriptor{
             QStringLiteral("read-file"),
             QStringLiteral("Read File"),
-            QStringLiteral("Reads a text file (or lists a directory) inside the workspace. "
-                           "Output has line numbers. Use offset/limit to page through long "
-                           "files instead of re-reading the whole file. Handles directories by "
-                           "listing entries."),
+            QStringLiteral("Reads a text file inside the workspace. Output has line numbers. "
+                           "Use offset/limit to page through long files instead of re-reading "
+                           "the whole file. Use list-directory for directories."),
             ToolRiskLevel::Low,
             ToolExecutionMode::Local,
             {
