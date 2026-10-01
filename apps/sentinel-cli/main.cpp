@@ -17,8 +17,8 @@ int main(int argc, char* argv[]) {
     const QStringList args = QCoreApplication::arguments();
 
     if (args.size() < 2) {
-        std::cout << "Sentinel CLI Tool v"
-                  << sentinel::core::AppMetadata::version().toStdString() << std::endl;
+        std::cout << "Sentinel CLI Tool v" << sentinel::core::AppMetadata::version().toStdString()
+                  << std::endl;
         std::cout << "Usage: sentinel-cli <command> [args...]" << std::endl;
         std::cout << "\nAvailable Commands:" << std::endl;
         std::cout << "  chat <prompt>          Send a prompt and receive response" << std::endl;

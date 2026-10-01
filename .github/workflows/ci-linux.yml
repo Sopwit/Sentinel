@@ -38,10 +38,17 @@ jobs:
           modules: qtmultimedia
           cache: true
       - name: Check C++ formatting
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          find apps core integrations plugins tests -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o -name '*.h' -o -name '*.hpp' -o -name '*.hxx' \) -print0 |
-            xargs -0 -r clang-format --dry-run --Werror
+          base_ref="${BASE_SHA:-HEAD^}"
+          format_diff="$(git diff -U0 "$base_ref" HEAD -- \
+            apps core integrations plugins tests | clang-format-diff.py -p1)"
+          if [ -n "$format_diff" ]; then
+            printf '%s\n' "$format_diff"
+            exit 1
+          fi
       - name: Validate Linux desktop metadata
         run: |
           set -euo pipefail

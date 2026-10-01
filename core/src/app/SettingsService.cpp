@@ -18,10 +18,11 @@
 #include "sentinel/core/app/RecoveryService.h"
 #include "sentinel/core/app/FileLogger.h"
 
-#include <QJsonDocument>
 #include <QJsonArray>
-#include <QUrl>
+#include <QJsonDocument>
 #include <QSet>
+#include <QUrl>
+#include <QUrlQuery>
 
 namespace sentinel::core {
 SettingsService::SettingsService(AppSettings& settings, ModelService* models,
@@ -354,7 +355,7 @@ QJsonObject SettingsService::providerState(const QString& providerId) const {
     if (!endpoint.isEmpty()) {
         QUrl safe(endpoint);
         safe.setUserInfo({});
-        safe.setQuery({});
+        safe.setQuery(QUrlQuery{});
         safe.setFragment({});
         endpoint = safe.toString();
     }
