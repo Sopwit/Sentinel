@@ -2,143 +2,102 @@ name: Release Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+# Releases must never be cancelled halfway through signing or publishing.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-release:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            qt-arch: linux_gcc_64
-            artifact-name: sentinel-desktop-linux-x64.tar.gz
-            aqt-source: ''
-          - os: macos-14
-            qt-arch: clang_64
-            artifact-name: sentinel-desktop-macos-arm64.dmg
-            aqt-source: ''
-          - os: windows-2022
-            qt-arch: win64_msvc2022_64
-            artifact-name: sentinel-desktop-windows-x64.zip
-            aqt-source: 'git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b'
-
+  linux:
+    name: Package Linux
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Get App Version
-        id: get_version
-        shell: bash
+      - uses: actions/checkout@v7
+      - name: Install dependencies
         run: |
-          VERSION=$(grep -oE 'SENTINEL_APP_VERSION "[^"]+"' CMakeLists.txt | cut -d'"' -f2)
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core rpm
-
-      - name: Install Windows dependencies
-        if: matrix.os == 'windows-2022'
-        run: choco install ninja
-
-      - name: Set up Developer Command Prompt (Windows)
-        if: matrix.os == 'windows-2022'
-        shell: pwsh
-        run: |
-          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $arch = "${{ matrix.vcvars-arch }}"
-          if (-not $arch) { $arch = "x64" }
-          if ($arch -eq "x64") { $vcvars = "vcvars64.bat" } else { $vcvars = "vcvars$arch.bat" }
-          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\$vcvars"
-          cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
-              if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
-                  $v = $_.Split("=", 2)
-                  echo "$($v[0])=$($v[1])" >> $env:GITHUB_ENV
-              }
-              if ($_ -match "^Path=(.*)" -or $_ -match "^PATH=(.*)") {
-                  $paths = $Matches[1].Split(";")
-                  foreach ($p in $paths) {
-                      if ($p -and (Test-Path $p)) {
-                          echo $p >> $env:GITHUB_PATH
-                      }
-                  }
-              }
-          }
-
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core rpm wget
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.11.*'
-          arch: ${{ matrix.qt-arch }}
-          aqtsource: ${{ matrix.aqt-source }}
-          modules: 'qtmultimedia'
+          arch: linux_gcc_64
+          modules: qtmultimedia
           cache: true
-
-      - name: Configure CMake
-        shell: bash
+      - name: Configure, build, and install
         run: |
-          PRESET="${{ matrix.cmake-preset }}"
-          COMPILER_ARGS=""
-          if [ "${{ matrix.os }}" = "windows-2022" ]; then
-            COMPILER_ARGS="-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl"
-          fi
-          if [ -n "$PRESET" ]; then
-            cmake --preset "$PRESET" -DCMAKE_INSTALL_PREFIX=dist $COMPILER_ARGS
-          else
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist $COMPILER_ARGS
-          fi
-
-      - name: Build and Install
-        shell: bash
+          set -euo pipefail
+          cmake --preset package-ready
+          cmake --build --preset package-ready
+          cmake --install build/package-ready --prefix "$GITHUB_WORKSPACE/dist"
+      - name: Create Linux packages
         run: |
-          BUILD_DIR="${{ matrix.cmake-preset && 'build/arm64' || 'build' }}"
-          cmake --build "$BUILD_DIR" --target install
-
-      - name: Bundle and Package (Linux)
-        if: matrix.os == 'ubuntu-22.04'
+          set -euo pipefail
+          mkdir -p artifacts
+          cpack --config build/package-ready/CPackConfig.cmake
+          tar -C dist -czf "artifacts/Sentinel-Desktop-Linux.tar.gz" .
+          cp build/package-ready/*.deb artifacts/
+          cp build/package-ready/*.rpm artifacts/
+      - name: Create AppImage
         run: |
-          # 1. Create standard portable tarball
-          tar -czvf Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.tar.gz -C dist .
-
-          # 2. Build DEB and RPM packages using CPack
-          cpack --config build/CPackConfig.cmake
-          mv sentinel-desktop-*Linux.deb Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.deb || mv sentinel-desktop-*.deb Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.deb || true
-          mv sentinel-desktop-*Linux.rpm Sentinel-Desktop-Fedora-${{ env.APP_VERSION }}.rpm || mv sentinel-desktop-*.rpm Sentinel-Desktop-Fedora-${{ env.APP_VERSION }}.rpm || true
-
-          # 3. Build AppImage using linuxdeploy and linuxdeploy-plugin-qt
-          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy*.AppImage
-
-          # Clean up unused SQL drivers to prevent missing dependency errors (e.g. libmimerapi.so) and shrink bundle size
-          find "${QT_ROOT_DIR}/plugins/sqldrivers/" -type f ! -name "libqsqlite.so" -delete
-
-          export QMAKE="${QT_ROOT_DIR}/bin/qmake"
-          export LD_LIBRARY_PATH="${QT_ROOT_DIR}/lib:${LD_LIBRARY_PATH}"
-          export PATH="${QT_ROOT_DIR}/bin:${PATH}"
-
+          set -euo pipefail
+          # Upstream does not publish signed release checksums for these assets. Pinning
+          # named releases removes the previous mutable continuous endpoint.
+          wget --https-only --no-verbose -O linuxdeploy-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+          wget --https-only --no-verbose -O linuxdeploy-plugin-qt-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
+          export QMAKE="$QT_ROOT_DIR/bin/qmake"
+          export LD_LIBRARY_PATH="$QT_ROOT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          export PATH="$QT_ROOT_DIR/bin:$PATH"
           ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
             --appdir dist \
             -e dist/bin/sentinel-desktop \
             -d dist/share/applications/dev.sentinel.Sentinel.desktop \
             -i dist/share/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg \
-            --plugin qt \
-            --output appimage
+            --plugin qt --output appimage
+          appimage=$(find . -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          test -n "$appimage"
+          mv "$appimage" artifacts/Sentinel-Desktop-Linux.AppImage
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          (cd artifacts && sha256sum * > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v6
+        with:
+          name: linux-release
+          path: artifacts/
+          if-no-files-found: error
 
-          mv Sentinel_Desktop-*.AppImage Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.AppImage || mv Sentinel-Desktop-*.AppImage Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.AppImage || true
-
-      - name: Bundle and Package (macOS)
-        if: matrix.os == 'macos-14'
+  macos:
+    name: Package macOS
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.11.*'
+          arch: clang_64
+          modules: qtmultimedia
+          cache: true
+      - name: Configure, build, and install
+        run: |
+          set -euo pipefail
+          cmake --preset package-ready
+          cmake --build --preset package-ready
+          cmake --install build/package-ready --prefix "$GITHUB_WORKSPACE/dist"
+      - name: Bundle, sign, and package
         env:
           APPLE_CERT_BASE64: ${{ secrets.APPLE_DEVELOPER_CERT_BASE64 }}
           APPLE_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_CERT_PASS }}
@@ -146,180 +105,126 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASS: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
-          # 1. Rename to user-friendly name
-          mv dist/sentinel-desktop.app "dist/Sentinel Desktop.app"
-
-          # 2. Setup Keychain for Developer ID signing if secret is present
-          SIGNING_IDENTITY="-"
+          set -euo pipefail
+          app='dist/Sentinel Desktop.app'
+          mv dist/sentinel-desktop.app "$app"
+          signing_identity='-'
           if [ -n "${APPLE_CERT_BASE64:-}" ]; then
-            echo "Importing Apple Developer ID Certificate..."
-            KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
-            KEYCHAIN_PASS=$(openssl rand -base64 12)
-            security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
-            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-            security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
-
-            CERT_PATH=$RUNNER_TEMP/cert.p12
-            echo "$APPLE_CERT_BASE64" | base64 --decode > "$CERT_PATH"
-            security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$APPLE_CERT_PASS" -T /usr/bin/codesign
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
-
-            SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
+            keychain="$RUNNER_TEMP/build.keychain"
+            keychain_password=$(openssl rand -base64 24)
+            security create-keychain -p "$keychain_password" "$keychain"
+            security set-keychain-settings -lut 21600 "$keychain"
+            security unlock-keychain -p "$keychain_password" "$keychain"
+            cert="$RUNNER_TEMP/cert.p12"
+            printf '%s' "$APPLE_CERT_BASE64" | base64 --decode > "$cert"
+            security import "$cert" -k "$keychain" -P "$APPLE_CERT_PASS" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain"
+            signing_identity=$(security find-identity -v -p codesigning "$keychain" | awk -F '"' '/Developer ID Application/ { print $2; exit }')
+            test -n "$signing_identity"
           fi
-
-          # 3. Run macdeployqt
-          macdeployqt "dist/Sentinel Desktop.app" -qmldir=ui/qml -codesign="$SIGNING_IDENTITY"
-
-          # 4. Sign app bundle with entitlements
-          if [ "$SIGNING_IDENTITY" != "-" ]; then
-            codesign --force --deep --options runtime --entitlements resources/platform/macos/sentinel.entitlements --sign "$SIGNING_IDENTITY" "dist/Sentinel Desktop.app"
+          macdeployqt "$app" -qmldir=ui/qml -codesign="$signing_identity"
+          if [ "$signing_identity" != '-' ]; then
+            codesign --force --deep --options runtime --entitlements resources/platform/macos/sentinel.entitlements --sign "$signing_identity" "$app"
           fi
-
-          # 5. Build DMG
           brew install create-dmg
-          create-dmg \
-            --volname "Sentinel Desktop Installer" \
-            --volicon "resources/app-icons/dev.sentinel.Sentinel.icns" \
-            --window-pos 200 120 \
-            --window-size 600 300 \
-            --icon-size 100 \
-            --icon "Sentinel Desktop.app" 175 120 \
-            --hide-extension "Sentinel Desktop.app" \
-            --app-drop-link 425 120 \
-            "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
-            "dist/"
-
-          # 6. Build PKG (best-effort: pkgbuild can crash on unsigned bundles; DMG is the primary macOS artifact)
+          mkdir artifacts
+          create-dmg --volname 'Sentinel Desktop Installer' --window-pos 200 120 --window-size 600 300 --icon-size 100 --icon 'Sentinel Desktop.app' 175 120 --hide-extension 'Sentinel Desktop.app' --app-drop-link 425 120 artifacts/Sentinel-Desktop-macOS.dmg dist/
           chmod +x packaging/macos/build_pkg.sh
-          if ./packaging/macos/build_pkg.sh "dist/Sentinel Desktop.app" "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg" ""; then
-            echo "PKG created successfully."
-          else
-            echo "Warning: PKG creation failed; continuing with DMG-only release."
-            rm -f "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg"
-          fi
-
-          # 7. Notarize and Staple if Apple ID credentials are provided
+          ./packaging/macos/build_pkg.sh "$app" artifacts/Sentinel-Desktop-macOS.pkg ''
           if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_APP_PASS:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
-            echo "Submitting DMG for Apple Notarization..."
-            xcrun notarytool submit "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_APP_PASS" \
-              --team-id "$APPLE_TEAM_ID" \
-              --wait
-            xcrun stapler staple "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg"
+            xcrun notarytool submit artifacts/Sentinel-Desktop-macOS.dmg --apple-id "$APPLE_ID" --password "$APPLE_APP_PASS" --team-id "$APPLE_TEAM_ID" --wait
+            xcrun stapler staple artifacts/Sentinel-Desktop-macOS.dmg
           fi
-
-      - name: Install Windows Code Signing Certificate
-        if: matrix.os == 'windows-2022'
-        shell: pwsh
+      - name: Generate checksums
         run: |
-          $certBase64 = "${{ secrets.WIN_CERT_BASE64 }}"
-          if (-not $certBase64) {
-              Write-Host "No signing certificate configured; skipping."
-              exit 0
-          }
-          $certPath = "$env:RUNNER_TEMP\cert.pfx"
-          [System.IO.File]::WriteAllBytes($certPath, [System.Convert]::FromBase64String($certBase64))
-          Write-Host "Certificate saved to $certPath"
-
-      - name: Bundle and Package (Windows)
-        if: matrix.os == 'windows-2022'
-        shell: pwsh
-        run: |
-          $isArm64 = "${{ matrix.vcvars-arch }}" -eq "amd64_arm64"
-          $buildDir = if ($isArm64) { "build/arm64" } else { "build" }
-
-          # 1. Deploy Qt and MSVC runtime DLLs
-          windeployqt --qmldir ui/qml dist/sentinel-desktop.exe
-
-          # 2. Zip portable files
-          $suffix = if ($isArm64) { "ARM64" } else { "x64" }
-          Compress-Archive -Path dist/* -DestinationPath "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.zip"
-  
-          # 3. Build MSI and EXE installers using CPack
-          cpack --config "${buildDir}/CPackConfig.cmake"
-          if ($LASTEXITCODE -ne 0) {
-              Get-Content "_CPack_Packages/win64/NSIS/NSISOutput.log" -ErrorAction SilentlyContinue
-              Get-Content "_CPack_Packages/win64/WIX/heatOutput.txt" -ErrorAction SilentlyContinue
-              exit $LASTEXITCODE
-          }
-          Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
-          Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
-
-      - name: Sign Windows Binaries
-        if: matrix.os == 'windows-2022'
-        shell: pwsh
-        run: |
-          $certBase64 = "${{ secrets.WIN_CERT_BASE64 }}"
-          if (-not $certBase64) {
-              Write-Host "No signing certificate configured; skipping."
-              exit 0
-          }
-          $certPath = "$env:RUNNER_TEMP\cert.pfx"
-          $certPassword = "${{ secrets.WIN_CERT_PASSWORD }}"
-          $timestampUrl = "http://timestamp.digicert.com"
-
-          # Sign the main executable
-          & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 dist/sentinel-desktop.exe
-
-          # Sign the installers
-          Get-ChildItem -Path . -Filter "Sentinel-Desktop-Windows-*.exe" | ForEach-Object {
-            & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 $_.FullName
-          }
-          Get-ChildItem -Path . -Filter "Sentinel-Desktop-Windows-*.msi" | ForEach-Object {
-            & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 $_.FullName
-          }
-
-          # Sign the portable ZIP (by re-signing the exe inside, but ZIP signature is not standard)
-          Write-Host "Executable and installers signed successfully."
-
-      - name: Generate SHA256 Checksums
-        shell: bash
-        run: |
-          if command -v sha256sum >/dev/null 2>&1; then
-            HASHA=sha256sum
-          else
-            HASHA="shasum -a 256"
-          fi
-          for f in Sentinel-Desktop-* sentinel-desktop-*; do
-            if [ -f "$f" ]; then
-              $HASHA "$f" >> checksums.txt
-            fi
-          done
-          cat checksums.txt
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v6
+          set -euo pipefail
+          (cd artifacts && shasum -a 256 * > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v6
         with:
-          name: ${{ matrix.os }}-artifact
-          path: |
-            Sentinel-Desktop-*
-            sentinel-desktop-*
-            checksums.txt
+          name: macos-release
+          path: artifacts/
           if-no-files-found: error
 
-  create-release:
-    name: Create GitHub Release
-    needs: build-release
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+  windows:
+    name: Package Windows
+    runs-on: windows-2022
+    timeout-minutes: 60
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v7
+      - uses: actions/checkout@v7
+      - name: Install Ninja and WiX
+        shell: pwsh
+        run: choco install ninja wixtoolset --no-progress --yes
+      - name: Set up MSVC x64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.11.*'
+          arch: win64_msvc2022_64
+          modules: qtmultimedia
+          cache: true
+      - name: Configure, build, and install
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cmake --preset package-ready
+          cmake --build --preset package-ready
+          cmake --install build/package-ready --prefix "$env:GITHUB_WORKSPACE\dist"
+      - name: Bundle and package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          windeployqt --qmldir ui/qml dist/sentinel-desktop.exe
+          Compress-Archive -Path dist/* -DestinationPath artifacts/Sentinel-Desktop-Windows-x64.zip
+          cpack --config build/package-ready/CPackConfig.cmake
+          $exe = Get-ChildItem build/package-ready -Filter '*.exe' | Select-Object -First 1
+          $msi = Get-ChildItem build/package-ready -Filter '*.msi' | Select-Object -First 1
+          if ($null -eq $exe -or $null -eq $msi) { throw 'CPack did not produce both EXE and MSI installers.' }
+          Copy-Item $exe.FullName artifacts/Sentinel-Desktop-Windows-x64.exe
+          Copy-Item $msi.FullName artifacts/Sentinel-Desktop-Windows-x64.msi
+      - name: Sign Windows binaries when configured
+        if: ${{ secrets.WIN_CERT_BASE64 != '' }}
+        shell: pwsh
+        env:
+          WIN_CERT_BASE64: ${{ secrets.WIN_CERT_BASE64 }}
+          WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $certPath = "$env:RUNNER_TEMP\cert.pfx"
+          [System.IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WIN_CERT_BASE64))
+          & signtool sign /fd SHA256 /f $certPath /p $env:WIN_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 dist/sentinel-desktop.exe
+          Get-ChildItem artifacts -Include '*.exe', '*.msi' -Recurse | ForEach-Object { & signtool sign /fd SHA256 /f $certPath /p $env:WIN_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 $_.FullName }
+      - name: Generate checksums
+        shell: pwsh
+        run: Get-FileHash artifacts/* -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } | Set-Content artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v6
+        with:
+          name: windows-release
+          path: artifacts/
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: [linux, macos, windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
         with:
           path: release-artifacts
-
-      - name: Flatten directory structure
+      - name: Prepare release files
         run: |
-          mkdir -p final-artifacts
-          find release-artifacts -type f -iname "sentinel-desktop-*" -exec cp {} final-artifacts/ \;
-          ls -R final-artifacts
-
-      - name: Create Release
+          set -euo pipefail
+          mkdir final-artifacts
+          find release-artifacts -type f -exec cp {} final-artifacts/ \;
+      - name: Create release
         uses: softprops/action-gh-release@v3
         with:
           files: final-artifacts/*
-          draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-pre') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
