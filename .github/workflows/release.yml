@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-release
           path: artifacts/
@@ -139,7 +139,7 @@ jobs:
         run: |
           set -euo pipefail
           (cd artifacts && shasum -a 256 * > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: macos-release
           path: artifacts/
@@ -200,7 +200,7 @@ jobs:
       - name: Generate checksums
         shell: pwsh
         run: Get-FileHash artifacts/* -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } | Set-Content artifacts/SHA256SUMS.txt
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-release
           path: artifacts/
@@ -215,7 +215,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           path: release-artifacts
       - name: Prepare release files
