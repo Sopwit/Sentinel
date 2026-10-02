@@ -5,11 +5,15 @@
 #include <QtTest>
 
 #include "sentinel/core/agent/AgentLoop.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
 #include <functional>
+#include <QFileInfo>
+#include <QTemporaryDir>
 
 using namespace sentinel::core;
 
@@ -53,6 +57,19 @@ public:
     ToolExecutionResult execute(const ToolExecutionRequest& request) const override {
         requests.append(request);
         return {status, summary};
+    }
+};
+
+class RecordingHandler final : public IToolHandler {
+public:
+    QList<ToolExecutionRequest> requests;
+
+    IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString&,
+                                  const QString&, IToolExecutor::Output,
+                                  IToolExecutor::Completion completion) override {
+        requests.append(request);
+        completion({ToolExecutionStatus::Succeeded, QStringLiteral("observation-from-handler")});
+        return {};
     }
 };
 
@@ -123,6 +140,41 @@ private slots:
         QCOMPARE(planner.observedHistories.at(1).size(), 1);
         QVERIFY(planner.observedHistories.at(1).first().observation.contains(
             QStringLiteral("observation-from-tool")));
+    }
+
+    void bindsFilesystemAuthorizationToConfiguredWorkspaceRoot() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto descriptors = BuiltInToolProvider::descriptors();
+        const auto descriptor = std::find_if(descriptors.cbegin(), descriptors.cend(),
+            [](const ToolDescriptor& item) { return item.id == QLatin1String("list-directory"); });
+        QVERIFY(descriptor != descriptors.cend());
+
+        auto handler = std::make_shared<RecordingHandler>();
+        InMemoryToolRegistry registry;
+        QVERIFY(registry.registerTool({*descriptor, handler}));
+        ScriptedPlanner planner;
+        auto list = toolDecision(QStringLiteral("list-directory"), QStringLiteral("."));
+        list.arguments.first().id = QStringLiteral("path");
+        planner.decisions = {list, finalDecision(QStringLiteral("done"))};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+
+        AgentLoop loop(planner, executor, approval, sandbox,
+                       QStringList{QStringLiteral("list-directory")});
+        loop.setToolRegistry(&registry);
+        AgentContextInput::WorkspaceContext context;
+        context.id = QStringLiteral("workspace");
+        context.rootPath = workspace.path();
+        loop.setWorkspaceContext(context);
+        const auto state = loop.run(QStringLiteral("list the workspace"));
+
+        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(handler->requests.size(), 1);
+        QVERIFY(handler->requests.first().plan.invocations.first().resourceSnapshot);
+        QCOMPARE(handler->requests.first().plan.invocations.first().resourceSnapshot->workingDirectory,
+                 QFileInfo(workspace.path()).canonicalFilePath());
     }
 
     void stopsAtIterationLimit() {

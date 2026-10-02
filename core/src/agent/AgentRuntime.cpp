@@ -843,6 +843,11 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
 void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                  const AgentSessionOptions& options, const QString& goal) {
     loop.setWorkspaceContext(options.workspaceContext);
+    const auto workspaceRoot = options.workspaceContext.rootPath.trimmed().isEmpty()
+        ? QString{}
+        : PathGuard::canonicalPath(options.workspaceContext.rootPath);
+    if (!workspaceRoot.isEmpty())
+        loop.setResourceScope(workspaceRoot);
     if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_)) {
         llm->setAllowedToolIds((options.restrictAvailableTools || !options.availableToolIds.isEmpty()) ? options.availableToolIds
                                                                : toolIds());
@@ -897,7 +902,7 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                   static_cast<int>(context.items.size()),
                                   context.omittedItems, context.compacted}, index);
     });
-    loop.setToolCallback([this, sessionId](AgentLoop::ToolTransition transition, int index,
+    loop.setToolCallback([this, sessionId, workspaceRoot](AgentLoop::ToolTransition transition, int index,
                                            const ToolInvocationPlan& plan,
                                            const AgentStepRecord* record) {
         if (plan.invocations.isEmpty())
@@ -908,7 +913,8 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
             for (const auto& item : plan.invocations) {
                 if (item.descriptorSnapshot)
                     authorizationRequests.append(AuthorizationResolver::resolve(
-                        *item.descriptorSnapshot, item, &externalDirectoryGate_, QDir::currentPath()));
+                        *item.descriptorSnapshot, item, &externalDirectoryGate_,
+                        workspaceRoot.isEmpty() ? QDir::currentPath() : workspaceRoot));
             }
         }
         AgentToolEvent payload{invocation.toolId, invocation.riskLevel,
