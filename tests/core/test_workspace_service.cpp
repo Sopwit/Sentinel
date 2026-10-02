@@ -5,6 +5,8 @@
 #include "sentinel/core/app/WorkspaceService.h"
 
 #include <QtTest>
+#include <QFileInfo>
+#include <QTemporaryDir>
 
 using sentinel::core::WorkspaceService;
 
@@ -73,8 +75,18 @@ void WorkspaceServiceTest::supportsWorkspaceLifecycle() {
     QCOMPARE(service.selectedWorkspace(created.selectedWorkspaceId, renamed.catalogJson).name,
              QStringLiteral("Client Research"));
 
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const auto rooted = service.setWorkspaceRoot(renamed.catalogJson, created.selectedWorkspaceId,
+                                                 root.path());
+    QVERIFY(rooted.success);
+    QCOMPARE(service.selectedWorkspace(created.selectedWorkspaceId, rooted.catalogJson).rootPath,
+             QFileInfo(root.path()).canonicalFilePath());
+    QVERIFY(!service.setWorkspaceRoot(rooted.catalogJson, QStringLiteral("personal"),
+                                      root.path()).success);
+
     const auto archived =
-        service.archiveWorkspace(renamed.catalogJson, created.selectedWorkspaceId);
+        service.archiveWorkspace(rooted.catalogJson, created.selectedWorkspaceId);
     QVERIFY(archived.success);
     QVERIFY(service.selectedWorkspace(created.selectedWorkspaceId, archived.catalogJson).archived);
 
