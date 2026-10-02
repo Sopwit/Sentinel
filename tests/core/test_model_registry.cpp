@@ -22,6 +22,7 @@ private slots:
     void exposesSelectedModelReadinessSummary();
     void disabledProviderPlaceholderDoesNotEnableExecutionMetadata();
     void exposesLocalAiEcosystemFoundationMetadata();
+    void exposesSelectedModelDefaultAndRefusesSilentFallbackOrSubstitution();
 };
 
 void ModelRegistryTest::mapsOllamaModelsDeterministically() {
@@ -117,6 +118,62 @@ void ModelRegistryTest::exposesLocalAiEcosystemFoundationMetadata() {
     QVERIFY(sentinel::core::benchmarkHubPlaceholderSummaries(registry.models())
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("no benchmark result recorded")));
+}
+
+void ModelRegistryTest::exposesSelectedModelDefaultAndRefusesSilentFallbackOrSubstitution() {
+    auto models = sentinel::core::modelSummariesFromOllama({
+        OllamaModelSummary{QStringLiteral("llama3.2:3b"), {}, 1024},
+        OllamaModelSummary{QStringLiteral("qwen2.5-coder:7b"), {}, 2048},
+    });
+    models.append(sentinel::core::disabledProviderModelPlaceholder(
+        QStringLiteral("openai-compatible"), QStringLiteral("OpenAI-Compatible API")));
+
+    // 1. No selected model state -> no fallback to first installed model
+    const ModelRegistry noSelectionRegistry{models, QStringLiteral("ollama"), QString()};
+    QVERIFY(noSelectionRegistry.summary().selectedModelId.isEmpty());
+    QVERIFY(noSelectionRegistry.selectedModel().rawName.isEmpty());
+    QCOMPARE(noSelectionRegistry.selectedModelReadinessSummary(),
+             QStringLiteral("No model selected for ollama."));
+
+    // 2. Unavailable/missing selected model -> no substitution to existing model
+    const ModelRegistry missingSelectionRegistry{models, QStringLiteral("ollama"),
+                                                 QStringLiteral("missing-model")};
+    QCOMPARE(missingSelectionRegistry.summary().selectedModelId, QStringLiteral("missing-model"));
+    QVERIFY(missingSelectionRegistry.selectedModel().rawName.isEmpty());
+    QCOMPARE(missingSelectionRegistry.selectedModelReadinessSummary(),
+             QStringLiteral("Selected model missing-model is missing from ollama metadata."));
+    QVERIFY(!missingSelectionRegistry.hasAvailableModel(QStringLiteral("ollama"),
+                                                       QStringLiteral("missing-model")));
+
+    // 3. Provider unavailable/disabled -> disabled status when only placeholders, missing readiness, no redirection
+    const ModelRegistry disabledProviderOnlyRegistry{
+        {sentinel::core::disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
+                                                          QStringLiteral("OpenAI-Compatible API"))},
+        QStringLiteral("openai-compatible"),
+        QStringLiteral("gpt-placeholder")};
+    QCOMPARE(disabledProviderOnlyRegistry.summary().status, ModelRegistryStatus::Disabled);
+    QCOMPARE(disabledProviderOnlyRegistry.summary().selectedReadiness, QStringLiteral("missing"));
+    QVERIFY(disabledProviderOnlyRegistry.selectedModel().rawName.isEmpty());
+
+    const ModelRegistry disabledProviderRegistry{models, QStringLiteral("openai-compatible"),
+                                                 QStringLiteral("gpt-placeholder")};
+    QVERIFY(disabledProviderRegistry.selectedModel().rawName.isEmpty());
+    QCOMPARE(disabledProviderRegistry.summary().selectedReadiness, QStringLiteral("missing"));
+    QVERIFY(!disabledProviderRegistry.hasAvailableModel(QStringLiteral("openai-compatible"),
+                                                        QStringLiteral("gpt-placeholder")));
+    QVERIFY(!disabledProviderRegistry.hasAvailableModel(QStringLiteral("ollama"),
+                                                        QStringLiteral("gpt-placeholder")));
+
+    // 4. Valid selected model metadata
+    const ModelRegistry validRegistry{models, QStringLiteral("ollama"),
+                                      QStringLiteral("llama3.2:3b")};
+    const auto selected = validRegistry.selectedModel();
+    QCOMPARE(selected.rawName, QStringLiteral("llama3.2:3b"));
+    QCOMPARE(selected.readiness, ModelReadiness::Available);
+    QCOMPARE(selected.status, ModelStatus::Available);
+    QCOMPARE(selected.providerId, QStringLiteral("ollama"));
+    QVERIFY(!selected.summary.isEmpty());
+    QVERIFY(!validRegistry.selectedModelReadinessSummary().contains(QStringLiteral("missing")));
 }
 
 QTEST_MAIN(ModelRegistryTest)

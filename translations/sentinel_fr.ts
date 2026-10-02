@@ -3206,11 +3206,6 @@ Détail : </translation>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/SystemSettingsTab.qml" line="37"/>
-        <source>1.0.0-rc.7</source>
-        <translation>1.0.0-rc.7</translation>
-    </message>
-    <message>
         <location filename="../ui/qml/pages/settings/SystemSettingsTab.qml" line="43"/>
         <source>Platform</source>
         <translation>Plateforme</translation>

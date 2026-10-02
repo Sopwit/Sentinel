@@ -30,7 +30,6 @@ parts:
     source: .
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
-      - -DSENTINEL_APP_VERSION=1.0.0
     build-packages:
       - cmake
       - ninja-build

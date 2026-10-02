@@ -32,7 +32,7 @@
 - Added Windows/macOS/Linux platform services (DefaultPlatformService), DPAPI-encrypted settings
   store, crash handler, protocol handler, and taskbar integration.
 - Added plugin SDK with sandbox, manifest, permissions, dependency resolution, and sample plugins.
-- Added daemon, CLI, packaging (AppImage, RPM, DEB, DMG, PKG, MSI, EXE), and release automation.
+- Added daemon, CLI, packaging (AppImage, RPM, DEB, DMG, MSI, EXE), and release automation.
 - Resolved all production-readiness audit findings including dead interfaces, stub implementations,
   QML-backend property mismatches, and missing UI controls.
 - Preserved manual-only update behavior, local diagnostics export, no telemetry, no hidden cloud

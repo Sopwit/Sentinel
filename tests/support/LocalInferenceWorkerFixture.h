@@ -46,6 +46,63 @@ private:
     std::shared_ptr<WorkerClientState> state_;
 };
 
+struct StreamClientState {
+    QSemaphore entryRelease;
+    QSemaphore chunkRelease;
+    QSemaphore finalRelease;
+    std::atomic_int calls{0};
+    std::atomic_int chunkCallbacks{0};
+    std::atomic_bool entered{false};
+    std::atomic_bool cancelled{false};
+    QList<core::LocalInferenceStreamChunk> chunks;
+    core::LocalInferenceStreamResult result;
+    QString requestId;
+};
+
+// A deliberately gated stream client.  Tests release entry, each chunk, and the
+// terminal result explicitly; no timing or network behaviour is involved.
+class GatedInferenceStreamClient final : public core::ILocalInferenceStreamClient {
+public:
+    explicit GatedInferenceStreamClient(std::shared_ptr<StreamClientState> state)
+        : state_(std::move(state)) {}
+
+    core::LocalInferenceStreamResult startStream(
+        const core::LocalInferenceRequest& request,
+        const std::function<void(const core::LocalInferenceStreamChunk&)>& onChunk) override {
+        ++state_->calls;
+        state_->requestId = request.id;
+        state_->entered = true;
+        state_->entryRelease.acquire();
+        for (const auto& chunk : state_->chunks) {
+            state_->chunkRelease.acquire();
+            state_->cancelled = request.options.cancellationToken &&
+                                request.options.cancellationToken->load();
+            if (state_->cancelled) break;
+            if (onChunk) {
+                onChunk(chunk);
+                ++state_->chunkCallbacks;
+            }
+        }
+        state_->finalRelease.acquire();
+        state_->cancelled = request.options.cancellationToken &&
+                            request.options.cancellationToken->load();
+        auto result = state_->result;
+        result.requestId = request.id;
+        if (result.model.isEmpty()) result.model = request.options.model;
+        if (state_->cancelled && result.status == core::LocalInferenceStreamStatus::Completed) {
+            result.status = core::LocalInferenceStreamStatus::Cancelled;
+            result.cancelled = true;
+        }
+        return result;
+    }
+
+    QString statusSummary() const override { return QStringLiteral("Gated test stream client"); }
+    bool isAvailable() const override { return true; }
+
+private:
+    std::shared_ptr<StreamClientState> state_;
+};
+
 class LocalInferenceWorkerFixture {
 public:
     std::shared_ptr<WorkerClientState> state = std::make_shared<WorkerClientState>();

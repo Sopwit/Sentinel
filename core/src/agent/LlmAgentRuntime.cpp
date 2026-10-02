@@ -99,6 +99,13 @@ QJsonObject plannerDecisionSchema() {
             QStringLiteral("claims"), QStringLiteral("requiresObservation")}}};
 }
 
+bool canUseNativeToolCalling(const ModelBinding& binding, bool structuredOutput) {
+    return binding.capabilities.nativeToolCalling == CapabilitySupport::Supported &&
+           (!structuredOutput ||
+            binding.capabilities.combinedToolsAndStructuredOutput ==
+                CapabilitySupport::Supported);
+}
+
 } // namespace
 
 LlmAgentRuntime::LlmAgentRuntime(QList<ToolDescriptor> tools, IChatProvider* provider)
@@ -214,11 +221,7 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
         options.cancellationToken = streamCancellationToken_;
         options.structuredOutput =
             modelBinding_.capabilities.structuredOutput == CapabilitySupport::Supported;
-        options.nativeToolCalling =
-            modelBinding_.capabilities.nativeToolCalling == CapabilitySupport::Supported &&
-            (!options.structuredOutput ||
-             modelBinding_.capabilities.combinedToolsAndStructuredOutput ==
-                 CapabilitySupport::Supported);
+        options.nativeToolCalling = canUseNativeToolCalling(modelBinding_, options.structuredOutput);
         if (options.structuredOutput) {
             options.structuredSchemaName = QStringLiteral("sentinel_agent_action");
             options.structuredSchema = plannerDecisionSchema();
@@ -321,7 +324,31 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                     return decision;
                 }
             } else {
-                decision = decisionFromLlmOutput(reply.message);
+                // Native tool protocols return a normal assistant message after the
+                // tool-result continuation. That message is a final answer, not a
+                // legacy JSON planner action. Preserve the evidence gate by deriving
+                // only required claims from the structured observations it already
+                // supplied to this planner; unsupported claims still make the loop
+                // request a repaired next action.
+                if (options.nativeToolCalling && !reply.message.trimmed().isEmpty()) {
+                    decision.kind = AgentStepDecision::Kind::FinalAnswer;
+                    decision.answer = reply.message;
+                    decision.grounding = GroundingMode::Verified;
+                    decision.groundingDeclared = true;
+                    for (const auto& requirement : activeIntent_.requirements) {
+                        if (requirement.claimType == ClaimType::None)
+                            continue;
+                        const auto fact = std::find_if(structuredFacts_.cbegin(),
+                                                       structuredFacts_.cend(),
+                                                       [&](const StructuredFact& item) {
+                                                           return item.id == requirement.claimId;
+                                                       });
+                        if (fact != structuredFacts_.cend())
+                            decision.claims.append({requirement.claimId, fact->value});
+                    }
+                } else {
+                    decision = decisionFromLlmOutput(reply.message);
+                }
             }
         }
         bool valid = decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty();
@@ -545,7 +572,14 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
         context = ContextEngine{}.build(input);
     }
     QJsonArray items;
+    const bool nativeToolCalling = canUseNativeToolCalling(
+        modelBinding_, modelBinding_.capabilities.structuredOutput == CapabilitySupport::Supported);
     for (const auto& item : context.items) {
+        // Native providers receive these contracts through ChatRequestOptions::tools.
+        // Repeating them in the planner message can overflow a model's context window,
+        // especially on the post-tool continuation request.
+        if (nativeToolCalling && item.kind == AgentContextKind::Tool)
+            continue;
         QJsonObject object;
         object.insert(QStringLiteral("kind"), static_cast<int>(item.kind));
         object.insert(QStringLiteral("source"), item.source);

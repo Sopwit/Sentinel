@@ -41,7 +41,7 @@ Item {
 
             SettingControlRow {
                 title: qsTr("Check for Updates")
-                subtitle: qsTr("Current version: v%1 (%2)").arg(Qt.application.version || "1.0.0-rc.7").arg(Qt.platform.os)
+                subtitle: qsTr("Current version: v%1 (%2)").arg(Qt.application.version).arg(Qt.platform.os)
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -66,7 +66,7 @@ Item {
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Version")
-                    value: Qt.application.version || qsTr("1.0.0-rc.7")
+                    value: Qt.application.version
                     Layout.fillWidth: true
                 }
 

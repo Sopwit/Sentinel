@@ -3,7 +3,7 @@ Version:        1.0.0
 Release:        1%{?dist}
 Summary:        Local-first AI desktop assistant
 
-License:        Apache-2.0
+License:        GPL-3.0-or-later
 URL:            https://sentinel.dev
 Source0:        %{name}-%{version}.tar.gz
 
@@ -40,7 +40,6 @@ companionship while ensuring privacy and explicit user control.
 %build
 %cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DSENTINEL_APP_VERSION="%{version}" \
     -DSENTINEL_BUILD_NUMBER="%{release}"
 %cmake_build
 

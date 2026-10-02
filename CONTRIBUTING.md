@@ -1,6 +1,6 @@
 # Contributing
 
-Sentinel is a C++20, Qt 6, QML, CMake, and SQLite desktop application.
+Sentinel is a C++20, Qt 6, QML, CMake, and SQLite agent platform. Start with the repository [agent contract](AGENTS.md); read the [architecture](docs/development/ARCHITECTURE.md), [agent runtime](docs/concepts/AGENT_RUNTIME.md), and [security model](docs/security/SECURITY_MODEL.md) before architecture-sensitive changes.
 
 ## Development Rules
 
@@ -36,6 +36,7 @@ Optional checks:
 ## Pull Requests
 
 - Keep changes scoped.
+- Follow the repository issue and pull-request templates.
 - Update docs when architecture, privacy, security, packaging, or phase boundaries change.
 - Do not include signing credentials, API keys, secrets, update feed credentials, or generated
   packages.

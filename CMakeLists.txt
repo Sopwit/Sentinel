@@ -1,7 +1,19 @@
 cmake_minimum_required(VERSION 3.24)
 
+# Canonical human-controlled release identity. CMake's project version and
+# platform package versions derive their numeric major.minor.patch prefix.
+set(SENTINEL_APP_VERSION "1.0.0-rc.8" CACHE STRING "User-visible application version")
+string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" SENTINEL_PROJECT_VERSION "${SENTINEL_APP_VERSION}")
+if(NOT SENTINEL_PROJECT_VERSION)
+    message(FATAL_ERROR "SENTINEL_APP_VERSION must begin with major.minor.patch.")
+endif()
+set(SENTINEL_BUILD_NUMBER "0")
+if(SENTINEL_APP_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+-[A-Za-z]+\\.([0-9]+)$")
+    set(SENTINEL_BUILD_NUMBER "${CMAKE_MATCH_1}")
+endif()
+
 project(Sentinel
-    VERSION 1.0.0
+    VERSION ${SENTINEL_PROJECT_VERSION}
     DESCRIPTION "Sentinel local-first AI desktop assistant"
     LANGUAGES CXX
 )
@@ -9,8 +21,6 @@ project(Sentinel
 set(SENTINEL_APP_ID "dev.sentinel.Sentinel" CACHE STRING "Reverse-DNS application id")
 set(SENTINEL_DISPLAY_NAME "Sentinel Desktop" CACHE STRING "User-visible application name")
 set(SENTINEL_ORGANIZATION_NAME "Sopwit" CACHE STRING "Application organization name")
-set(SENTINEL_APP_VERSION "1.0.0-rc.7" CACHE STRING "User-visible application version")
-set(SENTINEL_BUILD_NUMBER "0" CACHE STRING "Release build number")
 set(SENTINEL_COPYRIGHT "© 2026 Sopwit. All rights reserved." CACHE STRING "Application copyright")
 set(SENTINEL_MACOS_CATEGORY "public.app-category.productivity" CACHE STRING "macOS App Store category")
 set(SENTINEL_MACOS_MIN_VERSION "13.0" CACHE STRING "Minimum supported macOS version for release bundles")
@@ -54,19 +64,19 @@ include(cmake/SentinelPch.cmake)
 include(cmake/SentinelDependencies.cmake)
 include(cmake/SentinelQmlHelpers.cmake)
 
-# ── Code Signing & CPack Packaging Modules ──────────────────────────────────
-include(cmake/SentinelSigning.cmake)
+# ── CPack Packaging Module ──────────────────────────────────────────────────
 include(cmake/SentinelCPack.cmake)
 
 add_subdirectory(core)
 add_subdirectory(plugins)
 add_subdirectory(apps)
 
+# Signing hooks attach to executable targets, so they must be included only
+# after the application composition targets exist.
+include(cmake/SentinelSigning.cmake)
+
 option(SENTINEL_BUILD_TESTS "Build Sentinel unit tests" ON)
 if(SENTINEL_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
-
-
-

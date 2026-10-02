@@ -74,6 +74,69 @@ Item {
         }
 
         SettingCard {
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
+
+                SettingControlRow {
+                    title: qsTr("Workspace")
+                    subtitle: qsTr("Agent context and tool authorization are scoped to the active workspace.")
+                    accent: root.modeAccent
+                    compact: root.compact
+                    showDivider: true
+
+                    SentinelComboBox {
+                        anchors.fill: parent
+                        accent: root.modeAccent
+                        model: root.viewModel.workspaceNames
+                        currentIndex: root.viewModel.workspaceIds.indexOf(root.viewModel.selectedWorkspaceId)
+                        onActivated: function(index) {
+                            if (index >= 0 && index < root.viewModel.workspaceIds.length)
+                                root.viewModel.selectedWorkspaceId = root.viewModel.workspaceIds[index]
+                        }
+                    }
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Folder")
+                    value: root.viewModel.selectedWorkspaceRootSummary
+                    Layout.fillWidth: true
+                    valueMaximumLineCount: 3
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    SentinelButton {
+                        text: qsTr("Choose Folder")
+                        accent: root.modeAccent
+                        onClicked: workspaceFolderDialog.open()
+                    }
+                    SentinelButton {
+                        text: qsTr("Clear Folder")
+                        accent: SentinelTheme.warning
+                        enabled: root.viewModel.selectedWorkspaceRootPath.length > 0
+                        onClicked: root.viewModel.clearWorkspaceRoot()
+                    }
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Last Workspace Action")
+                    value: root.viewModel.workspaceLastActionStatus + ": " + root.viewModel.workspaceLastActionSummary
+                    Layout.fillWidth: true
+                    valueMaximumLineCount: 3
+                }
+            }
+        }
+
+        SettingCard {
             SettingToggleRow {
                 title: qsTr("Local Knowledge Base")
                 subtitle: qsTr("Enable local RAG vector indexing and semantic retrieval for workspace documents.")
@@ -321,6 +384,15 @@ Item {
                     Layout.fillWidth: true
                 }
             }
+        }
+    }
+
+    FolderDialog {
+        id: workspaceFolderDialog
+        title: qsTr("Choose Workspace Folder")
+        onAccepted: {
+            if (selectedFolder)
+                root.viewModel.openWorkspaceFolder(selectedFolder.toString().replace("file://", ""))
         }
     }
 

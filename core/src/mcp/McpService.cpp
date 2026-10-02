@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/mcp/McpService.h"
+#include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/security/CredentialStore.h"
-#include <QDebug>
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDebug>
 #include <QDir>
-#include <QEventLoop>
 #include <QElapsedTimer>
+#include <QEventLoop>
 #include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -19,9 +20,9 @@
 #include <QPointer>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
-#include <QStandardPaths>
-#include <QSet>
 #include <QScopedValueRollback>
+#include <QSet>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
@@ -110,14 +111,15 @@ McpFailureCategory categoryFromName(const QString& name) {
     return McpFailureCategory::ProtocolError;
 }
 QJsonObject modernMeta() {
-    return {{QStringLiteral("io.modelcontextprotocol/protocolVersion"), QStringLiteral("2026-07-28")},
-            {QStringLiteral("io.modelcontextprotocol/clientInfo"),
-             QJsonObject{{QStringLiteral("name"), QStringLiteral("Sentinel")},
-                         {QStringLiteral("version"), QStringLiteral("1.0.0")}}},
-            {QStringLiteral("io.modelcontextprotocol/clientCapabilities"), QJsonObject{
-                {QStringLiteral("elicitation"), QJsonObject{
-                    {QStringLiteral("form"), QJsonObject{}},
-                    {QStringLiteral("url"), QJsonObject{}}}}}}};
+    return {
+        {QStringLiteral("io.modelcontextprotocol/protocolVersion"), QStringLiteral("2026-07-28")},
+        {QStringLiteral("io.modelcontextprotocol/clientInfo"),
+         QJsonObject{{QStringLiteral("name"), QStringLiteral("Sentinel")},
+                     {QStringLiteral("version"), AppMetadata::version()}}},
+        {QStringLiteral("io.modelcontextprotocol/clientCapabilities"),
+         QJsonObject{{QStringLiteral("elicitation"),
+                      QJsonObject{{QStringLiteral("form"), QJsonObject{}},
+                                  {QStringLiteral("url"), QJsonObject{}}}}}}};
 }
 QByteArray headerValue(const QString& value) {
     const auto bytes = value.toUtf8();
@@ -1026,7 +1028,7 @@ bool McpService::connectToLocalServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2024-11-05";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", AppMetadata::version()}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error") ||
@@ -1119,7 +1121,7 @@ bool McpService::connectToRemoteServer(McpServerState& state) {
     QJsonObject params;
     params["protocolVersion"] = "2025-11-25";
     params["capabilities"] = QJsonObject();
-    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", "1.0.0"}};
+    params["clientInfo"] = QJsonObject{{"name", "Sentinel"}, {"version", AppMetadata::version()}};
 
     QJsonObject response = sendJsonRpc(state.config.name, "initialize", params);
     if (response.contains("error")) {

@@ -31,8 +31,26 @@ public:
         return {true, scriptedReply, {}};
     }
 
+    ChatProviderReply sendRequest(const QString& message,
+                                  const ChatRequestOptions& options) override {
+        prompts.append(message);
+        requestOptions.append(options);
+        if (!options.structuredOutput && !options.nativeToolCalling) {
+            if (failNext) {
+                failNext = false;
+                return {false, {}, QStringLiteral("provider offline")};
+            }
+            return {true, scriptedReply, {}};
+        }
+        if (scriptedRequests.isEmpty())
+            return {false, {}, QStringLiteral("missing scripted request")};
+        return scriptedRequests.takeFirst();
+    }
+
     QStringList prompts;
     QString scriptedReply;
+    QList<ChatProviderReply> scriptedRequests;
+    QList<ChatRequestOptions> requestOptions;
     bool failNext = false;
 };
 
@@ -166,6 +184,53 @@ private slots:
         QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
         QCOMPARE(decision.answer, QStringLiteral("Everything is done."));
         QVERIFY(runtime.lastDecisionUsedLlm());
+    }
+
+    void acceptsNativeToolContinuationFinalWithEvidenceClaims() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply toolCall;
+        toolCall.success = true;
+        toolCall.toolCalls.append({QStringLiteral("call-1"), QStringLiteral("list-directory"),
+                                   QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}}, {}});
+        ChatProviderReply finalReply;
+        finalReply.success = true;
+        finalReply.message = QStringLiteral("The workspace contains CMakeLists.txt.");
+        provider->scriptedRequests = {toolCall, finalReply};
+
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.providerId = QStringLiteral("local");
+        binding.modelId = QStringLiteral("model");
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        ObservationIntent intent;
+        intent.requirements.append({ObservationDomain::FileSystem, QStringLiteral("CMakeLists.txt"),
+                                    EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect,
+                                    ClaimType::FileExists, QStringLiteral("claim-1")});
+        runtime.setObservationIntent(intent);
+        runtime.setStructuredFacts({{QStringLiteral("claim-1"), QStringLiteral("CMakeLists.txt"),
+                                    true, {QStringLiteral("call-1")}}});
+
+        const auto tool = runtime.nextStep(QStringLiteral("List the workspace"), {});
+        QCOMPARE(tool.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(tool.toolId, QStringLiteral("list-directory"));
+        QVERIFY(provider->requestOptions.first().nativeToolCalling);
+        QVERIFY(provider->requestOptions.first().tools.size() > 0);
+        QVERIFY(!provider->prompts.first().contains(QStringLiteral("risk=")));
+
+        auto record = sampleRecord();
+        record.toolId = QStringLiteral("list-directory");
+        record.observation = QStringLiteral("CMakeLists.txt");
+        const auto final = runtime.nextStep(QStringLiteral("List the workspace"), {record});
+        QCOMPARE(final.kind, AgentStepDecision::Kind::FinalAnswer);
+        QCOMPARE(final.answer, finalReply.message);
+        QCOMPARE(final.grounding, GroundingMode::Verified);
+        QVERIFY(final.groundingDeclared);
+        QCOMPARE(final.claims.size(), 1);
+        QCOMPARE(final.claims.first().id, QStringLiteral("claim-1"));
+        QVERIFY(final.claims.first().value);
+        QCOMPARE(provider->requestOptions.last().toolResults.first().callId, QStringLiteral("call-1"));
+        QVERIFY(!provider->prompts.last().contains(QStringLiteral("risk=")));
     }
 
     void fallsBackToHeuristicOnGarbage() {

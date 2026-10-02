@@ -27,10 +27,16 @@
 
 namespace sentinel::core {
 
+QString AgentLoop::workingDirectory() const {
+    if (!workspaceContext_.rootPath.trimmed().isEmpty())
+        return PathGuard::canonicalPath(workspaceContext_.rootPath);
+    return QDir::currentPath();
+}
+
 void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
     AgentContextInput input;
     input.goal = state.goal;
-    input.workspace = QDir::currentPath();
+    input.workspace = workingDirectory();
     input.workspaceContext = workspaceContext_;
     input.steps = state.steps;
     input.evidence = state.evidence;
@@ -152,13 +158,13 @@ QStringList AgentLoop::externalPathsRequiringApproval(const ToolInvocationPlan& 
         if (!descriptor)
             continue;
         for (const auto& request : AuthorizationResolver::resolve(
-                 *descriptor, invocation, externalDirectoryGate_, QDir::currentPath())) {
+                 *descriptor, invocation, externalDirectoryGate_, workingDirectory())) {
             if (request.domain != SecurityDomain::FileSystem || request.resource.isEmpty())
                 continue;
             if (permissionService_ && permissionService_->evaluateAuthorization(
                                           request, sessionId) == PermissionEffect::Allow)
                 continue;
-            if (externalDirectoryGate_->canRequestPermission(request.resource, QDir::currentPath()))
+            if (externalDirectoryGate_->canRequestPermission(request.resource, workingDirectory()))
                 paths.append(request.resource);
         }
     }
@@ -177,10 +183,10 @@ void AgentLoop::grantExternalPaths(const ToolInvocationPlan& plan, const QString
         if (!descriptor)
             continue;
         for (const auto& request : AuthorizationResolver::resolve(
-                 *descriptor, invocation, externalDirectoryGate_, QDir::currentPath())) {
+                 *descriptor, invocation, externalDirectoryGate_, workingDirectory())) {
             if (permissionService_ && externalDirectoryGate_ &&
                 request.domain == SecurityDomain::FileSystem && !request.resource.isEmpty() &&
-                externalDirectoryGate_->canRequestPermission(request.resource, QDir::currentPath()))
+                externalDirectoryGate_->canRequestPermission(request.resource, workingDirectory()))
                 permissionService_->grantAuthorization(request, sessionId, false);
         }
     }
@@ -199,7 +205,7 @@ bool AgentLoop::hasAuthorizationGrants(const ToolInvocationPlan& plan,
         if (!descriptor)
             return false;
         const auto requests = AuthorizationResolver::resolve(
-            *descriptor, invocation, externalDirectoryGate_, QDir::currentPath());
+            *descriptor, invocation, externalDirectoryGate_, workingDirectory());
         for (const auto& request : requests) {
             found = true;
             if (permissionService_->evaluateAuthorization(request, sessionId) !=
@@ -222,7 +228,7 @@ bool AgentLoop::hasAuthorizationDeny(const ToolInvocationPlan& plan,
         if (!descriptor)
             return true;
         for (const auto& request : AuthorizationResolver::resolve(
-                 *descriptor, invocation, externalDirectoryGate_, QDir::currentPath())) {
+                 *descriptor, invocation, externalDirectoryGate_, workingDirectory())) {
             if (permissionService_->evaluateAuthorization(request, sessionId) ==
                 PermissionEffect::Deny)
                 return true;
@@ -243,7 +249,7 @@ AgentLoop::resolveAuthorizationRequests(const ToolInvocationPlan& plan) const {
                                      : (registration ? &registration->descriptor : nullptr);
         if (descriptor)
             requests.append(AuthorizationResolver::resolve(
-                *descriptor, invocation, externalDirectoryGate_, QDir::currentPath()));
+                *descriptor, invocation, externalDirectoryGate_, workingDirectory()));
     }
     return requests;
 }
@@ -253,7 +259,7 @@ ResourceAuthorizationResult AgentLoop::prepareResources(ToolInvocationPlan& plan
         if (!invocation.descriptorSnapshot)
             continue;
         auto resolved = ResourceAuthorizationResolver::resolve(
-            *invocation.descriptorSnapshot, invocation, QDir::currentPath(),
+            *invocation.descriptorSnapshot, invocation, workingDirectory(),
             externalDirectoryGate_);
         if (!resolved.ok()) return resolved;
         if (!resourceScope_.isEmpty()) {
@@ -301,7 +307,7 @@ void AgentLoop::applyPermissionPolicy(const ToolInvocationPlan& plan, const QStr
             return;
         }
         const auto requests = AuthorizationResolver::resolve(
-            *descriptor, invocation, externalDirectoryGate_, QDir::currentPath());
+            *descriptor, invocation, externalDirectoryGate_, workingDirectory());
         for (const auto& request : requests) {
             const auto effect = permissionPolicy_->defaultEffect(request, defaultPermissionState_);
             if (effect == PermissionEffect::Deny) {
@@ -1300,7 +1306,7 @@ void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& desc
         QStringList changed;
         for (const auto& mutation : trustedMutations ? mutations : QList<FileMutation>{})
             changed.append(normalizedObservationResource(mutation.path, ObservationDomain::FileSystem));
-        if (descriptor.id == QLatin1String("run-command")) changed.append(QDir::currentPath());
+        if (descriptor.id == QLatin1String("run-command")) changed.append(workingDirectory());
         for (auto& prior : state.evidence) {
             if (prior.domain != ObservationDomain::FileSystem && prior.domain != ObservationDomain::Workspace)
                 continue;
