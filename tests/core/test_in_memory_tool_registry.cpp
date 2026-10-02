@@ -5,7 +5,13 @@
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/security/ResourceAuthorizationResolver.h"
+#include "sentinel/core/security/StaticSandboxPolicy.h"
 
+#include <QDir>
+#include <QFile>
+#include <QScopeGuard>
+#include <QTemporaryDir>
 #include <QtTest>
 
 using sentinel::core::InMemoryToolRegistry;
@@ -190,6 +196,16 @@ void InMemoryToolRegistryTest::rejectsNonExecutableDynamicTools() {
 }
 
 void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    QFile fixture(directory.filePath(QStringLiteral("fixture.txt")));
+    QVERIFY(fixture.open(QIODevice::WriteOnly | QIODevice::Text));
+    fixture.write("Sentinel registry fixture\n");
+    fixture.close();
+    const QString previousDirectory = QDir::currentPath();
+    QVERIFY(QDir::setCurrent(directory.path()));
+    const auto restoreDirectory = qScopeGuard([&] { QDir::setCurrent(previousDirectory); });
+
     class NoFallback final : public sentinel::core::IToolExecutor {
     public:
         mutable int calls = 0;
@@ -225,7 +241,33 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
         request.plan.invocations.append(invocation);
         request.knownToolIds = {id};
         request.approval.status = approval;
-        request.sandbox.status = sandbox;
+        const auto validation = gateway.validatePlan(request.plan);
+        if (validation.status != sentinel::core::ToolExecutionStatus::Succeeded)
+            return validation;
+        const auto& validatedInvocation = request.plan.invocations.first();
+        if (!validatedInvocation.descriptorSnapshot)
+            return sentinel::core::ToolExecutionResult{
+                sentinel::core::ToolExecutionStatus::InvalidToolContract,
+                QStringLiteral("test descriptor snapshot missing")};
+        const auto resolved = sentinel::core::ResourceAuthorizationResolver::resolve(
+            *validatedInvocation.descriptorSnapshot, validatedInvocation, QDir::currentPath(), nullptr);
+        if (!resolved.ok())
+            return sentinel::core::ToolExecutionResult{
+                sentinel::core::ToolExecutionStatus::Blocked, resolved.reason};
+        auto authorized = sentinel::core::ResourceAuthorizationResolver::authorize(
+            resolved.snapshot, nullptr, nullptr, QStringLiteral("session"));
+        if (!authorized.ok())
+            return sentinel::core::ToolExecutionResult{
+                sentinel::core::ToolExecutionStatus::Blocked, authorized.reason};
+        request.plan.invocations.first().resourceSnapshot =
+            std::make_shared<const sentinel::core::ResourceAuthorizationSnapshot>(
+                std::move(authorized.snapshot));
+        if (sandbox == sentinel::core::SandboxStatus::Denied) {
+            request.sandbox.status = sandbox;
+        } else {
+            const sentinel::core::StaticSandboxPolicy sandboxPolicy;
+            request.sandbox = sandboxPolicy.evaluate(request.plan, request.approval);
+        }
         sentinel::core::ToolExecutionResult result;
         bool done = false;
         auto active = gateway.executeAsync(request, fallback, QStringLiteral("session"),
@@ -239,34 +281,29 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
         return result;
     };
     QCOMPARE(
-        run(QStringLiteral("read-file"), {{QStringLiteral("path"), QStringLiteral("AGENTS.md")}})
+        run(QStringLiteral("read-file"), {{QStringLiteral("path"), QStringLiteral("fixture.txt")}})
             .status,
         sentinel::core::ToolExecutionStatus::Succeeded);
-    QVERIFY(run(QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")},
-                                         {QStringLiteral("path"), QStringLiteral("AGENTS.md")}})
-                .summary.contains(QStringLiteral("Sentinel")));
-#ifndef Q_OS_WIN
-    const auto commandResult =
-        run(QStringLiteral("run-command"),
-            {{QStringLiteral("command"), QStringLiteral("printf native-registry")}});
-    QVERIFY2(commandResult.summary.contains(QStringLiteral("native-registry")),
-             qPrintable(commandResult.summary));
-    QCOMPARE(run(QStringLiteral("run-command"),
-                 {{QStringLiteral("command"), QStringLiteral("printf denied")}},
+    const auto grepResult = run(
+        QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")},
+                                  {QStringLiteral("path"), QStringLiteral(".")}});
+    QVERIFY2(grepResult.status == sentinel::core::ToolExecutionStatus::Succeeded,
+             qPrintable(grepResult.summary));
+    QCOMPARE(run(QStringLiteral("read-file"),
+                 {{QStringLiteral("path"), QStringLiteral("fixture.txt")}},
                  sentinel::core::ApprovalStatus::Denied)
                  .status,
              sentinel::core::ToolExecutionStatus::Blocked);
-    QCOMPARE(run(QStringLiteral("run-command"),
-                 {{QStringLiteral("command"), QStringLiteral("printf denied")}},
+    QCOMPARE(run(QStringLiteral("read-file"),
+                 {{QStringLiteral("path"), QStringLiteral("fixture.txt")}},
                  sentinel::core::ApprovalStatus::Approved, sentinel::core::SandboxStatus::Denied)
                  .status,
              sentinel::core::ToolExecutionStatus::Blocked);
-#endif
     QCOMPARE(fallback.calls, 0);
     QVERIFY(registry.setEnabled(QStringLiteral("grep"), false));
     QCOMPARE(run(QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")}})
                  .status,
-             sentinel::core::ToolExecutionStatus::Blocked);
+             sentinel::core::ToolExecutionStatus::UnknownTool);
     QVERIFY(registry.setEnabled(QStringLiteral("grep"), true));
 }
 

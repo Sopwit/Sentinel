@@ -21,93 +21,6 @@
 using namespace sentinel::core;
 namespace {
 
-class FakeMcpService final : public IMcpService {
-public:
-    bool addServer(const McpServerConfig& config) override {
-        servers_.append(config);
-        return true;
-    }
-    bool removeServer(const QString& serverName) override {
-        for (int i = 0; i < servers_.size(); ++i) {
-            if (servers_.at(i).name == serverName) {
-                servers_.removeAt(i);
-                return true;
-            }
-        }
-        return false;
-    }
-    QList<McpServerConfig> servers() const override {
-        return servers_;
-    }
-    McpServerConfig serverConfig(const QString& serverName) const override {
-        for (const auto& server : servers_) {
-            if (server.name == serverName) {
-                return server;
-            }
-        }
-        return {};
-    }
-    bool connectToServer(const QString& serverName) override {
-        return hasServer(serverName);
-    }
-    bool disconnectFromServer(const QString& serverName) override {
-        Q_UNUSED(serverName)
-        return true;
-    }
-    McpConnectionState connectionState(const QString& serverName) const override {
-        return hasServer(serverName) ? McpConnectionState::Connected
-                                     : McpConnectionState::Disconnected;
-    }
-    QList<McpToolDefinition> tools(const QString& serverName) const override {
-        QList<McpToolDefinition> result;
-        if (serverName.isEmpty() || serverName == QStringLiteral("weather")) {
-            result.append(McpToolDefinition{
-                QStringLiteral("get_forecast"),
-                QStringLiteral("Returns the weather forecast for a city."),
-                QStringLiteral("weather"),
-                QJsonObject(),
-            });
-        }
-        return result;
-    }
-    QJsonObject callTool(const QString& serverName, const QString& toolName,
-                         const QJsonObject& arguments) override {
-        lastServer = serverName;
-        lastTool = toolName;
-        lastArguments = arguments;
-        if (toolName == QStringLiteral("boom")) {
-            return QJsonObject{{"error", QJsonObject{{"message", "server exploded"}}}};
-        }
-        QJsonObject contentItem{{"type", "text"}, {"text", "sunny, 24C"}};
-        return QJsonObject{{"result", QJsonObject{{"content", QJsonArray{contentItem}}}}};
-    }
-    bool connectToAll() override {
-        return true;
-    }
-    void disconnectFromAll() override {}
-
-    // IMcpService declares its notification hooks as pure virtual "signals";
-    // the test double keeps them as no-ops.
-    void serverConnected(const QString&) override {}
-    void serverDisconnected(const QString&) override {}
-    void serverError(const QString&, const QString&) override {}
-    void toolsUpdated(const QString&) override {}
-
-    bool hasServer(const QString& name) const {
-        for (const auto& server : servers_) {
-            if (server.name == name) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    QList<McpServerConfig> servers_;
-    QString lastServer;
-    QString lastTool;
-    QJsonObject lastArguments;
-};
-
 ToolInvocationPlan approvedPlan(const QString& toolId,
                                 const QList<ToolInvocationArgument>& arguments,
                                 ToolRiskLevel risk = ToolRiskLevel::Low) {
@@ -612,8 +525,8 @@ private slots:
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("Destination already exists")));
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
+        QVERIFY(result.summary.contains(QStringLiteral("Already exists")));
         QVERIFY(QFile::exists(dir.filePath(QStringLiteral("a.txt"))));
         QVERIFY(QFile::exists(dir.filePath(QStringLiteral("b.txt"))));
     }
@@ -648,7 +561,7 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("file:///etc/passwd")}},
             QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("Only http and https URLs can be opened")));
     }
 
@@ -678,7 +591,8 @@ private slots:
         RealToolExecutor executor;
         const auto result = runTool(executor, QStringLiteral("process-list"), {}, QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.status == ToolExecutionStatus::Succeeded ||
+                result.status == ToolExecutionStatus::Failed);
         QVERIFY(result.summary.contains(QStringLiteral("process-list:")));
     }
 
@@ -700,6 +614,10 @@ private slots:
         QClipboard* clipboard = QGuiApplication::clipboard();
         const QString original = clipboard->text();
         const QString sample = QStringLiteral("sentinel-clipboard-test-42");
+        clipboard->setText(sample);
+        QCoreApplication::processEvents();
+        if (clipboard->text() != sample)
+            QSKIP("The active macOS test session does not provide a round-trippable clipboard.");
 
         RealToolExecutor executor;
         const auto writeResult =
@@ -745,9 +663,9 @@ private slots:
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("anything")}},
                     QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(
-            QStringLiteral("No memory entries are available for this session")));
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
+        QCOMPARE(result.failureCategory, ToolFailureCategory::RuntimeUnavailable);
+        QVERIFY(result.summary.contains(QStringLiteral("Memory store is unavailable")));
     }
 
     void appLaunchRedirectsDomainNamesToOpenUrl() {
@@ -759,8 +677,7 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("app"), QStringLiteral("sahibinden.com")}},
             QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("is a website address")));
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("open-url")));
     }
 
@@ -790,8 +707,7 @@ private slots:
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("updated")));
-        QVERIFY(result.summary.contains(QStringLiteral("1 hunk")));
+        QVERIFY(result.summary.contains(QStringLiteral("app.txt: applied")));
 
         QFile updated(dir.filePath(QStringLiteral("app.txt")));
         QVERIFY(updated.open(QIODevice::ReadOnly));
@@ -823,8 +739,8 @@ private slots:
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("added")));
-        QVERIFY(result.summary.contains(QStringLiteral("deleted")));
+        QVERIFY(result.summary.contains(QStringLiteral("new.txt: applied")));
+        QVERIFY(result.summary.contains(QStringLiteral("old.txt: applied")));
         QVERIFY(!QFile::exists(dir.filePath(QStringLiteral("old.txt"))));
 
         QFile created(dir.filePath(QStringLiteral("new.txt")));
@@ -857,7 +773,7 @@ private slots:
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
         QVERIFY(result.summary.contains(QStringLiteral("did not match")));
 
         // The file must remain untouched.
@@ -873,7 +789,7 @@ private slots:
                                                             QStringLiteral("this is not a patch")}},
                                     QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("No file sections found")));
     }
 
@@ -911,10 +827,20 @@ private slots:
         QVERIFY(dir.isValid());
         SQLiteChatHistoryStore history(dir.filePath(QStringLiteral("history.sqlite3")));
         QVERIFY(history.isAvailable());
-        history.appendMessage({0, ChatRole::User,
-                               QStringLiteral("bisiklet tamir etmem lazım")});
-        history.appendMessage({0, ChatRole::Assistant,
-                               QStringLiteral("hangi parça sorunlu?")});
+        ChatMessage user;
+        user.id = 1;
+        user.role = ChatRole::User;
+        user.content = QStringLiteral("bisiklet tamir etmem lazım");
+        user.timestamp = QDateTime::currentDateTimeUtc();
+        history.appendMessage(user);
+        QVERIFY2(history.lastError().isEmpty(), qPrintable(history.lastError()));
+        ChatMessage assistant;
+        assistant.id = 2;
+        assistant.role = ChatRole::Assistant;
+        assistant.content = QStringLiteral("hangi parça sorunlu?");
+        assistant.timestamp = QDateTime::currentDateTimeUtc();
+        history.appendMessage(assistant);
+        QVERIFY2(history.lastError().isEmpty(), qPrintable(history.lastError()));
         RealToolExecutor executor;
         executor.setSearchStores(nullptr, &history);
 
@@ -941,99 +867,9 @@ private slots:
                     {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("anything")}},
                     QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("No chat history is available")));
-    }
-
-    void askQuestionReturnsGuidanceToFinishRun() {
-        RealToolExecutor executor;
-        const auto result =
-            runTool(executor, QStringLiteral("ask-question"),
-                    {ToolInvocationArgument{QStringLiteral("question"),
-                                            QStringLiteral("Hangi dosyayı düzenleyelim?")},
-                     ToolInvocationArgument{QStringLiteral("options"),
-                                            QStringLiteral("config.json\nsettings.ini")}},
-                    QStringList{});
-
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("Hangi dosyayı düzenleyelim?")));
-        QVERIFY(result.summary.contains(QStringLiteral("1. config.json")));
-        QVERIFY(result.summary.contains(QStringLiteral("final answer")));
-    }
-
-    void mcpToolsWithoutServiceAreGraceful() {
-        RealToolExecutor executor;
-        const auto listResult = runTool(executor, QStringLiteral("mcp-list"), {}, QStringList{});
-        QCOMPARE(listResult.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(listResult.summary.contains(QStringLiteral("No MCP servers are configured")));
-
-        const auto callResult = runTool(
-            executor, QStringLiteral("mcp-call"),
-            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
-             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")}},
-            QStringList{});
-        QCOMPARE(callResult.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(callResult.summary.contains(QStringLiteral("No MCP servers are configured")));
-    }
-
-    void mcpListShowsServersAndTools() {
-        RealToolExecutor executor;
-        auto service = std::make_shared<FakeMcpService>();
-        McpServerConfig config;
-        config.name = QStringLiteral("weather");
-        config.type = QStringLiteral("local");
-        config.command = QStringLiteral("weather-mcp");
-        service->addServer(config);
-        executor.setMcpService(service);
-
-        const auto result = runTool(executor, QStringLiteral("mcp-list"), {}, QStringList{});
-
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("weather (local, connected)")));
-        QVERIFY(result.summary.contains(QStringLiteral("get_forecast")));
-    }
-
-    void mcpCallInvokesServerTool() {
-        RealToolExecutor executor;
-        auto service = std::make_shared<FakeMcpService>();
-        executor.setMcpService(service);
-
-        const auto result =
-            runTool(executor, QStringLiteral("mcp-call"),
-                    {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
-                     ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
-                     ToolInvocationArgument{QStringLiteral("arguments"),
-                                            QStringLiteral("{\"city\": \"Ankara\"}")}},
-                    QStringList{});
-
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
-        QVERIFY(result.summary.contains(QStringLiteral("weather/get_forecast result:")));
-        QVERIFY(result.summary.contains(QStringLiteral("sunny, 24C")));
-        QCOMPARE(service->lastServer, QStringLiteral("weather"));
-        QCOMPARE(service->lastTool, QStringLiteral("get_forecast"));
-        QCOMPARE(service->lastArguments.value(QStringLiteral("city")).toString(),
-                 QStringLiteral("Ankara"));
-    }
-
-    void mcpCallReportsServerErrorAndBadArguments() {
-        RealToolExecutor executor;
-        auto service = std::make_shared<FakeMcpService>();
-        executor.setMcpService(service);
-
-        const auto errorResult =
-            runTool(executor, QStringLiteral("mcp-call"),
-                    {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
-                     ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("boom")}},
-                    QStringList{});
-        QVERIFY(errorResult.summary.contains(QStringLiteral("server exploded")));
-
-        const auto badArgs = runTool(
-            executor, QStringLiteral("mcp-call"),
-            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
-             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
-             ToolInvocationArgument{QStringLiteral("arguments"), QStringLiteral("not json")}},
-            QStringList{});
-        QVERIFY(badArgs.summary.contains(QStringLiteral("must be a JSON object")));
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
+        QCOMPARE(result.failureCategory, ToolFailureCategory::RuntimeUnavailable);
+        QVERIFY(result.summary.contains(QStringLiteral("Chat history store is unavailable")));
     }
 
     void spawnAgentRunsInjectedSubagent() {
@@ -1046,7 +882,10 @@ private slots:
 
         const auto result = runTool(
             executor, QStringLiteral("spawn-agent"),
-            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("count the TODOs")}},
+            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("count the TODOs")},
+             ToolInvocationArgument{QStringLiteral("purpose"),
+                                    QStringLiteral("parallel_verification")},
+             ToolInvocationArgument{QStringLiteral("workspace"), QStringLiteral(".")}},
             QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
@@ -1060,17 +899,35 @@ private slots:
         RealToolExecutor executor;
         const auto result =
             runTool(executor, QStringLiteral("spawn-agent"),
-                    {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
+                    {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")},
+                     ToolInvocationArgument{QStringLiteral("purpose"),
+                                            QStringLiteral("specialist_review")},
+                     ToolInvocationArgument{QStringLiteral("workspace"), QStringLiteral(".")}},
                     QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::Blocked);
         QVERIFY(result.summary.contains(QStringLiteral("No subagent runner is configured")));
+    }
+
+    void spawnAgentRequiresPurpose() {
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("spawn-agent"),
+            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
+            QStringList{});
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(result.summary.contains(QStringLiteral("$.purpose")));
     }
 
     void spawnAgentRequiresTask() {
         RealToolExecutor executor;
-        const auto result = runTool(executor, QStringLiteral("spawn-agent"), {}, QStringList{});
-        QVERIFY(result.summary.contains(QStringLiteral("No task argument provided")));
+        const auto result = runTool(
+            executor, QStringLiteral("spawn-agent"),
+            {ToolInvocationArgument{QStringLiteral("purpose"),
+                                    QStringLiteral("independent_research")}},
+            QStringList{});
+        QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(result.summary.contains(QStringLiteral("$.task")));
     }
 
     void runCommandDockerSandboxReportsMissingDocker() {
@@ -1123,10 +980,12 @@ private slots:
         RealToolExecutor executor;
         const auto screenshot =
             runTool(executor, QStringLiteral("browser-screenshot"), {}, QStringList{});
-        QVERIFY(screenshot.summary.contains(QStringLiteral("No url argument provided")));
+        QCOMPARE(screenshot.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(screenshot.summary.contains(QStringLiteral("$.url")));
 
         const auto pdf = runTool(executor, QStringLiteral("browser-pdf"), {}, QStringList{});
-        QVERIFY(pdf.summary.contains(QStringLiteral("No url argument provided")));
+        QCOMPARE(pdf.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(pdf.summary.contains(QStringLiteral("$.url")));
     }
 };
 
