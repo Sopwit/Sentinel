@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/LocalInference.h"
+#include "../support/LocalInferenceWorkerFixture.h"
 
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -29,6 +30,13 @@ private slots:
     void unavailableModelRejectedBeforeGeneration();
     void invalidEndpointIsBlocked();
     void streamSkeletonIsDeterministicallyDisabled();
+    void workerStreamsOrderedChunksOnceAndCleansUp();
+    void workerRejectsConcurrentStreamWhileTerminalDeliveryIsQueued();
+    void workerCancellationPropagatesToGatedStreamClient();
+    void workerCompletesWithFakeClient();
+    void workerReportsClientFailure();
+    void workerRejectsConcurrentInference();
+    void workerPropagatesCancellationToInferenceClient();
     void cloudEndpointWithoutKeyIsBlocked();
     void cloudOpenAiCompatibleRequestCarriesBearerKey();
 };
@@ -134,6 +142,158 @@ void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
     QVERIFY(result.chunks.isEmpty());
     QCOMPARE(client.statusSummary(), QStringLiteral("Local inference streaming is disabled."));
     QVERIFY(!client.isAvailable());
+}
+
+void LocalInferenceTest::workerStreamsOrderedChunksOnceAndCleansUp() {
+    using namespace sentinel::test;
+    auto state = std::make_shared<StreamClientState>();
+    state->chunks = {{1, QStringLiteral("hello "), false, false, {}},
+                     {2, QStringLiteral("world"), true, false, {}}};
+    state->result.status = LocalInferenceStreamStatus::Completed;
+    state->result.accumulatedText = QStringLiteral("hello world");
+    QObject context;
+    sentinel::core::LocalInferenceWorker worker(
+        nullptr, std::make_unique<GatedInferenceStreamClient>(state), &context, true, true);
+    QStringList received;
+    int finalCallbacks = 0;
+    QString finalId;
+    LocalInferenceStreamStatus finalStatus = LocalInferenceStreamStatus::NotStarted;
+    LocalInferenceRequest request;
+    request.id = QStringLiteral("stream-ordered-1");
+    request.prompt = QStringLiteral("test prompt");
+    request.options.model = QStringLiteral("test-model");
+
+    QVERIFY(worker.startStream(
+        request,
+        [&received](const QString&, const sentinel::core::LocalInferenceStreamChunk& chunk) {
+            received.append(chunk.text);
+        },
+        [&finalCallbacks, &finalId, &finalStatus](const QString& id,
+                                                   const sentinel::core::LocalInferenceStreamResult& result) {
+            ++finalCallbacks;
+            finalId = id;
+            finalStatus = result.status;
+        }));
+    QTRY_VERIFY_WITH_TIMEOUT(state->entered.load(), 3000);
+    state->entryRelease.release();
+    state->chunkRelease.release(2);
+    state->finalRelease.release();
+    QTRY_COMPARE_WITH_TIMEOUT(finalCallbacks, 1, 3000);
+    QCOMPARE(state->calls.load(), 1);
+    QCOMPARE(state->requestId, request.id);
+    QCOMPARE(state->chunkCallbacks.load(), 2);
+    QCOMPARE(received, QStringList({QStringLiteral("hello "), QStringLiteral("world")}));
+    QCOMPARE(finalId, request.id);
+    QCOMPARE(finalStatus, LocalInferenceStreamStatus::Completed);
+}
+
+void LocalInferenceTest::workerRejectsConcurrentStreamWhileTerminalDeliveryIsQueued() {
+    using namespace sentinel::test;
+    auto state = std::make_shared<StreamClientState>();
+    state->result.status = LocalInferenceStreamStatus::Completed;
+    QObject context;
+    sentinel::core::LocalInferenceWorker worker(
+        nullptr, std::make_unique<GatedInferenceStreamClient>(state), &context, true, true);
+    LocalInferenceRequest request;
+    request.id = QStringLiteral("stream-gated-1");
+    request.prompt = QStringLiteral("test prompt");
+    request.options.model = QStringLiteral("test-model");
+    int firstFinalCallbacks = 0;
+    QVERIFY(worker.startStream(request, {},
+                               [&firstFinalCallbacks](const QString&,
+                                                      const sentinel::core::LocalInferenceStreamResult&) {
+                                   ++firstFinalCallbacks;
+                               }));
+    QTRY_VERIFY_WITH_TIMEOUT(state->entered.load(), 3000);
+    state->entryRelease.release();
+    state->finalRelease.release();
+    // The worker thread may finish before its queued terminal callback runs.
+    // It must still reserve the request slot until that callback releases it.
+    QVERIFY(!worker.startStream(request, {}, {}));
+    QCOMPARE(state->calls.load(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(firstFinalCallbacks, 1, 3000);
+    QVERIFY(worker.startStream(request, {}, {}));
+    state->entryRelease.release();
+    state->finalRelease.release();
+}
+
+void LocalInferenceTest::workerCancellationPropagatesToGatedStreamClient() {
+    using namespace sentinel::test;
+    auto state = std::make_shared<StreamClientState>();
+    state->chunks = {{1, QStringLiteral("never delivered"), false, false, {}}};
+    state->result.status = LocalInferenceStreamStatus::Completed;
+    QObject context;
+    sentinel::core::LocalInferenceWorker worker(
+        nullptr, std::make_unique<GatedInferenceStreamClient>(state), &context, true, true);
+    int finalCallbacks = 0;
+    LocalInferenceStreamStatus finalStatus = LocalInferenceStreamStatus::NotStarted;
+    LocalInferenceRequest request;
+    request.id = QStringLiteral("stream-cancel-1");
+    request.prompt = QStringLiteral("test prompt");
+    request.options.model = QStringLiteral("test-model");
+    QVERIFY(worker.startStream(request, {},
+                               [&finalCallbacks, &finalStatus](const QString&,
+                                                                const sentinel::core::LocalInferenceStreamResult& result) {
+                                   ++finalCallbacks;
+                                   finalStatus = result.status;
+                               }));
+    QTRY_VERIFY_WITH_TIMEOUT(state->entered.load(), 3000);
+    worker.cancel(request.id);
+    state->entryRelease.release();
+    state->chunkRelease.release();
+    state->finalRelease.release();
+    QTRY_COMPARE_WITH_TIMEOUT(finalCallbacks, 1, 3000);
+    QVERIFY(state->cancelled.load());
+    QCOMPARE(state->chunkCallbacks.load(), 0);
+    QCOMPARE(finalStatus, LocalInferenceStreamStatus::Cancelled);
+}
+
+void LocalInferenceTest::workerCompletesWithFakeClient() {
+    sentinel::test::LocalInferenceWorkerFixture fixture;
+    QVERIFY(fixture.start());
+    fixture.state->release.release();
+    QTRY_COMPARE_WITH_TIMEOUT(fixture.callbacks, 1, 3000);
+    QCOMPARE(fixture.state->calls.load(), 1);
+    QCOMPARE(fixture.response.status, LocalInferenceStatus::Succeeded);
+    QCOMPARE(fixture.response.text, QStringLiteral("worker result"));
+    QCOMPARE(fixture.completedId, QStringLiteral("worker-1"));
+    QVERIFY(fixture.state->exited.load());
+}
+
+void LocalInferenceTest::workerReportsClientFailure() {
+    sentinel::test::LocalInferenceWorkerFixture fixture;
+    fixture.state->outcome = LocalInferenceStatus::Error;
+    QVERIFY(fixture.start());
+    fixture.state->release.release();
+    QTRY_COMPARE_WITH_TIMEOUT(fixture.callbacks, 1, 3000);
+    QCOMPARE(fixture.response.status, LocalInferenceStatus::Error);
+    QCOMPARE(fixture.response.error, LocalInferenceError::ClientUnavailable);
+    QVERIFY(fixture.response.text.isEmpty());
+}
+
+void LocalInferenceTest::workerRejectsConcurrentInference() {
+    sentinel::test::LocalInferenceWorkerFixture fixture;
+    QVERIFY(fixture.start());
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.state->entered.load(), 3000);
+    QVERIFY(!fixture.start(QStringLiteral("duplicate")));
+    QCOMPARE(fixture.state->calls.load(), 1);
+    fixture.state->release.release();
+    QTRY_COMPARE_WITH_TIMEOUT(fixture.callbacks, 1, 3000);
+    QVERIFY(fixture.start(QStringLiteral("worker-2")));
+    fixture.state->release.release();
+    QTRY_COMPARE_WITH_TIMEOUT(fixture.callbacks, 2, 3000);
+    QCOMPARE(fixture.completedId, QStringLiteral("worker-2"));
+}
+
+void LocalInferenceTest::workerPropagatesCancellationToInferenceClient() {
+    sentinel::test::LocalInferenceWorkerFixture fixture;
+    QVERIFY(fixture.start());
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.state->entered.load(), 3000);
+    fixture.worker->cancel(QStringLiteral("worker-1"));
+    fixture.state->release.release();
+    QTRY_COMPARE_WITH_TIMEOUT(fixture.callbacks, 1, 3000);
+    QVERIFY(fixture.state->cancelled.load());
+    QCOMPARE(fixture.response.status, LocalInferenceStatus::Succeeded);
 }
 
 QTEST_MAIN(LocalInferenceTest)

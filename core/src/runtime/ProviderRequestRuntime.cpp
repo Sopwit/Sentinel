@@ -65,7 +65,8 @@ ProviderTransportResult ProviderRequestRuntime::wait(
         });
         cancellationTimer.start();
     }
-    deadline.start(timeoutMs > 0 ? timeoutMs : 30000);
+    if (timeoutMs > 0)
+        deadline.start(timeoutMs);
     if (!reply->isFinished() && !(cancellationToken && cancellationToken->load())) loop.exec();
     cancellationTimer.stop();
     result.cancelled = cancellationToken && cancellationToken->load();
