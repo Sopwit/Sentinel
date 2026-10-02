@@ -270,6 +270,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::maintenanceStatusChanged);
     connect(&controller_, &core::ApplicationController::agentStatusChanged, this, [this]() {
         emit agentStatusChanged();
+        emit agentLoopChanged();
         emit providerStatusChanged();
         const QString currentStatus = controller_.agentStatus();
         if (currentStatus == QLatin1String("Ready") && lastAgentStatus_ == QLatin1String("Busy")) {
@@ -300,8 +301,12 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::runtimeContextChanged);
     connect(&controller_, &core::ApplicationController::conversationSessionChanged, this,
             &DesktopShellViewModel::conversationSessionChanged);
-    connect(&controller_, &core::ApplicationController::conversationStateChanged, this,
-            &DesktopShellViewModel::conversationStateChanged);
+    connect(&controller_, &core::ApplicationController::conversationStateChanged, this, [this]() {
+        emit conversationStateChanged();
+        emit agentLoopChanged();
+    });
+    connect(&controller_, &core::ApplicationController::agentLoopStateChanged, this,
+            &DesktopShellViewModel::agentLoopChanged);
     connect(&controller_, &core::ApplicationController::conversationRuntimeChanged, this,
             &DesktopShellViewModel::conversationRuntimeChanged);
     connect(&controller_, &core::ApplicationController::conversationSearchChanged, this,
@@ -654,6 +659,14 @@ QString DesktopShellViewModel::providerStatus() const {
 
 QString DesktopShellViewModel::agentStatus() const {
     return controller_.agentStatus();
+}
+
+bool DesktopShellViewModel::agentLoopActive() const {
+    return controller_.agentLoopActive();
+}
+
+bool DesktopShellViewModel::agentAwaitingApproval() const {
+    return controller_.agentAwaitingApproval();
 }
 
 QString DesktopShellViewModel::lastAgentResponse() const {
@@ -4767,9 +4780,67 @@ void DesktopShellViewModel::setSelectedWorkspaceId(const QString& workspaceId) {
 bool DesktopShellViewModel::setWorkspaceRoot(const QString& workspaceId, const QString& rootPath) {
     const auto result = workspaceService_.setWorkspaceRoot(settings_.workspaceCatalogJson(),
                                                            workspaceId, rootPath);
-    if (!result.success) return false;
-    settings_.setWorkspaceCatalogJson(result.catalogJson);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success)
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::openWorkspaceFolder(const QString& rootPath) {
+    const QFileInfo folder(rootPath.trimmed());
+    if (!folder.isDir() || !folder.isReadable()) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ =
+            QStringLiteral("Workspace folder must be an existing readable directory.");
+        emit workspaceChanged();
+        return false;
+    }
+
+    const auto active = workspaceService_.selectedWorkspace(
+        selectedWorkspaceId(), settings_.workspaceCatalogJson());
+    if (active.kind != QLatin1String("Built-in template"))
+        return setWorkspaceRoot(active.id, folder.absoluteFilePath());
+
+    const auto name = folder.fileName().trimmed().isEmpty()
+        ? QStringLiteral("Workspace") : folder.fileName().trimmed();
+    const auto created = workspaceService_.createWorkspace(
+        settings_.workspaceCatalogJson(), name, QStringLiteral("Coding"));
+    if (!created.success) {
+        workspaceLastActionStatus_ = created.status;
+        workspaceLastActionSummary_ = created.summary;
+        emit workspaceChanged();
+        return false;
+    }
+
+    const auto rooted = workspaceService_.setWorkspaceRoot(created.catalogJson,
+                                                            created.selectedWorkspaceId,
+                                                            folder.absoluteFilePath());
+    workspaceLastActionStatus_ = rooted.status;
+    workspaceLastActionSummary_ = rooted.success
+        ? QStringLiteral("Opened workspace folder: %1").arg(folder.absoluteFilePath())
+        : rooted.summary;
+    if (!rooted.success) {
+        emit workspaceChanged();
+        return false;
+    }
+    settings_.setWorkspaceCatalogJson(rooted.catalogJson);
+    settings_.setSelectedWorkspaceId(created.selectedWorkspaceId);
+    emit workspaceChanged();
     return true;
+}
+
+bool DesktopShellViewModel::clearWorkspaceRoot() {
+    const auto active = workspaceService_.selectedWorkspace(
+        selectedWorkspaceId(), settings_.workspaceCatalogJson());
+    if (active.rootPath.isEmpty()) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("The active workspace has no folder root.");
+        emit workspaceChanged();
+        return false;
+    }
+    return setWorkspaceRoot(active.id, {});
 }
 
 QString DesktopShellViewModel::selectedWorkspaceName() const {

@@ -26,3 +26,7 @@
 *.png binary
 *.bmp binary
 *.wav binary
+*.ttf binary
+*.dmg binary
+*.msi binary
+*.AppImage binary

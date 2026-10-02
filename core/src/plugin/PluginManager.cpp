@@ -3,30 +3,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/plugin/PluginManager.h"
-#include "sentinel/core/security/CredentialStore.h"
+#include "sentinel/core/app/AppMetadata.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/plugin/PluginDependencyResolver.h"
 #include "sentinel/core/plugin/PluginHostProtocol.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
+#include "sentinel/core/security/CredentialStore.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
-#include "sentinel/core/network/NetworkPolicyService.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDirIterator>
+#include <QEventLoop>
 #include <QFileInfo>
+#include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLibrary>
-#include <QStandardPaths>
-#include <QSet>
-#include <QTimer>
-#include <QThread>
-#include <QPointer>
 #include <QNetworkAccessManager>
+#include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QNetworkProxy>
-#include <QHostAddress>
-#include <QEventLoop>
+#include <QPointer>
+#include <QSet>
+#include <QStandardPaths>
+#include <QThread>
+#include <QTimer>
 #include <QUrl>
 #include <algorithm>
 #include <atomic>
@@ -604,7 +605,8 @@ private:
 } // namespace
 
 PluginManager::PluginManager(QString coreVersion, QString pluginStorageDir, QObject* parent)
-    : QObject(parent), m_coreVersion(std::move(coreVersion)),
+    : QObject(parent),
+      m_coreVersion(coreVersion.isEmpty() ? AppMetadata::version() : std::move(coreVersion)),
       m_pluginStorageDir(std::move(pluginStorageDir)) {
     if (m_pluginStorageDir.isEmpty()) {
         m_pluginStorageDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +

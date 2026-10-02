@@ -47,6 +47,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
     Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY providerStatusChanged)
     Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
+    Q_PROPERTY(bool agentLoopActive READ agentLoopActive NOTIFY agentLoopChanged)
+    Q_PROPERTY(bool agentAwaitingApproval READ agentAwaitingApproval NOTIFY agentLoopChanged)
     Q_PROPERTY(QString lastAgentResponse READ lastAgentResponse NOTIFY agentResponseChanged)
     Q_PROPERTY(QString latestToolPlanStatus READ latestToolPlanStatus NOTIFY toolPlanChanged)
     Q_PROPERTY(QString latestToolPlanSummary READ latestToolPlanSummary NOTIFY toolPlanChanged)
@@ -1376,6 +1378,8 @@ class DesktopShellViewModel final : public QObject {
         QString workspacePermissionPosture READ workspacePermissionPosture NOTIFY workspaceChanged)
     Q_PROPERTY(QString selectedWorkspaceRootSummary READ selectedWorkspaceRootSummary NOTIFY
                    workspaceChanged)
+    Q_PROPERTY(QString selectedWorkspaceRootPath READ selectedWorkspaceRootPath NOTIFY
+                   workspaceChanged)
     Q_PROPERTY(
         QString workspaceReadinessStatus READ workspaceReadinessStatus NOTIFY workspaceChanged)
     Q_PROPERTY(
@@ -1523,6 +1527,8 @@ public:
     QString providerName() const;
     QString providerStatus() const;
     QString agentStatus() const;
+    bool agentLoopActive() const;
+    bool agentAwaitingApproval() const;
     QString lastAgentResponse() const;
     QString latestToolPlanStatus() const;
     QString latestToolPlanSummary() const;
@@ -2398,7 +2404,7 @@ public:
     QStringList skillProfileReadinessChecks() const;
     QStringList skillProfileDeveloperDiagnostics() const;
     QString selectedWorkspaceId() const;
-    Q_INVOKABLE QString selectedWorkspaceRootPath() const;
+    QString selectedWorkspaceRootPath() const;
     Q_INVOKABLE bool workspaceRequiresLocalProvider() const;
     Q_INVOKABLE QVariantMap currentWorkspaceProfile() const;
     Q_INVOKABLE QStringList presetIds() const;
@@ -2536,6 +2542,8 @@ public:
     Q_INVOKABLE QString createWorkspace(const QString& name, const QString& templateName);
     Q_INVOKABLE bool renameWorkspace(const QString& workspaceId, const QString& name);
     Q_INVOKABLE bool setWorkspaceRoot(const QString& workspaceId, const QString& rootPath);
+    Q_INVOKABLE bool openWorkspaceFolder(const QString& rootPath);
+    Q_INVOKABLE bool clearWorkspaceRoot();
     Q_INVOKABLE bool archiveWorkspace(const QString& workspaceId);
     Q_INVOKABLE bool deleteWorkspace(const QString& workspaceId);
     Q_INVOKABLE QString duplicateWorkspace(const QString& workspaceId);
@@ -2660,6 +2668,7 @@ signals:
     void requestWindowActive(const QString& pageName);
     void maintenanceStatusChanged();
     void agentStatusChanged();
+    void agentLoopChanged();
     void agentResponseChanged();
     void toolPlanChanged();
     void approvalChanged();

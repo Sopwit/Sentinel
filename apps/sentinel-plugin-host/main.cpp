@@ -1,27 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SentinelPluginSdk.h"
+#include "sentinel/core/AppBuildConfig.h"
 #include "sentinel/core/plugin/PluginHostProtocol.h"
 #include "sentinel/core/plugin/PluginManifest.h"
 #include <QCoreApplication>
-#include <QFileInfo>
 #include <QDir>
-#include <QJsonArray>
-#include <QSet>
-#include <cstdio>
-#include <cstring>
-#include <thread>
-#include <atomic>
-#include <functional>
-#include <memory>
-#include <utility>
-#include <QPluginLoader>
-#include <QTimer>
-#include <QHash>
 #include <QEventLoop>
-#include <QUuid>
-#include <QThread>
+#include <QFileInfo>
+#include <QHash>
+#include <QJsonArray>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QPluginLoader>
+#include <QSet>
+#include <QThread>
+#include <QTimer>
+#include <QUuid>
+#include <atomic>
+#include <cstdio>
+#include <cstring>
+#include <functional>
+#include <memory>
+#include <thread>
+#include <utility>
 
 using namespace sentinel::plugin_sdk;
 using sentinel::core::plugin::PluginHostMaxFrame;
@@ -35,7 +36,9 @@ namespace {
 thread_local QString executingInvocation;
 class HostContext final : public IPluginContext {
 public:
-    QString coreVersion() const override { return QStringLiteral("1.0.0"); }
+    QString coreVersion() const override {
+        return QString::fromLatin1(SENTINEL_APP_VERSION);
+    }
     QString pluginDataDir() const override { return QDir::currentPath(); }
     bool hasPermission(const QString& permission) const override { return permissions.contains(permission); }
     void logMessage(const QString&, const QString&) override {} // Never forward plugin text into diagnostics.
@@ -274,7 +277,8 @@ private:
             if (!loader.load()) { reply(request, false, QStringLiteral("PluginLoadFailure")); return; }
             plugin = qobject_cast<ISentinelPlugin*>(loader.instance());
             if (!plugin || plugin->pluginId() != expectedId ||
-                !checkVersionRequirement(QStringLiteral("1.0.0"), plugin->requiredCoreVersion())) {
+                !checkVersionRequirement(QString::fromLatin1(SENTINEL_APP_VERSION),
+                                         plugin->requiredCoreVersion())) {
                 plugin = nullptr; loader.unload(); reply(request, false, QStringLiteral("PluginIncompatible")); return;
             }
             context = std::make_shared<HostContext>();

@@ -21,8 +21,10 @@ ShellPanel {
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
     readonly property string sendState: viewModel.chatSendLifecycleState
+    readonly property bool agentBusy: viewModel.agentLoopActive
+    readonly property bool agentAwaitingApproval: viewModel.agentAwaitingApproval
     readonly property bool sendBusy: sendState === "queued" || sendState === "validating" || sendState === "sending"
-                                     || sendState === "streaming"
+                                     || sendState === "streaming" || agentBusy
     readonly property bool streamingActive: sendState === "streaming"
     property int editTargetMessageId: 0
     property string editConversationId: ""
@@ -202,7 +204,8 @@ ShellPanel {
 
     function sendComposerText() {
         var prompt = promptInput.text.trim()
-        if (prompt.length === 0 || !homeChat.canSend || homeChat.sendBusy)
+        if (prompt.length === 0 || !homeChat.canSend
+                || (homeChat.sendBusy && !homeChat.agentAwaitingApproval))
             return
         var accepted = false
         if (homeChat.editTargetMessageId > 0
@@ -1257,7 +1260,8 @@ ShellPanel {
                                 Layout.maximumHeight: 126 * homeChat.resolutionScale
                                 placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? qsTr("Sentinel is responding") : qsTr("Ask Sentinel"))
                                                                     : homeChat.viewModel.localChatSendAvailabilitySummary
-                                enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
+                                enabled: !homeChat.viewModel.activeConversationArchived
+                                         && (!homeChat.sendBusy || homeChat.agentAwaitingApproval)
                                 color: SentinelTheme.textPrimary
                                 placeholderTextColor: SentinelTheme.textPlaceholder
                                 wrapMode: TextEdit.WordWrap
@@ -1336,15 +1340,19 @@ ShellPanel {
 
                             SentinelButton {
                                 id: homeSendButton
-                                text: homeChat.sendBusy ? qsTr("Stop") : qsTr("Send")
+                                text: homeChat.sendBusy && !homeChat.agentAwaitingApproval
+                                      ? qsTr("Stop") : qsTr("Send")
                                 Layout.preferredWidth: 82 * homeChat.resolutionScale
                                 Layout.alignment: Qt.AlignBottom
                                 font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
-                                enabled: homeChat.sendBusy || (homePromptInput.text.trim().length > 0
-                                                               && homeChat.canSend)
+                                enabled: (homeChat.sendBusy && !homeChat.agentAwaitingApproval)
+                                         || (homePromptInput.text.trim().length > 0
+                                             && homeChat.canSend
+                                             && (!homeChat.sendBusy
+                                                 || homeChat.agentAwaitingApproval))
                                 opacity: enabled ? 1.0 : 0.58
                                 onClicked: {
-                                    if (homeChat.sendBusy) {
+                                    if (homeChat.sendBusy && !homeChat.agentAwaitingApproval) {
                                         homeChat.viewModel.cancelLocalInference()
                                     } else {
                                         promptInput.text = homePromptInput.text
@@ -2068,7 +2076,8 @@ ShellPanel {
                     Layout.maximumHeight: 126 * homeChat.resolutionScale
                     placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? qsTr("Sentinel is responding") : qsTr("Ask Sentinel"))
                                                         : homeChat.viewModel.localChatSendAvailabilitySummary
-                    enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
+                    enabled: !homeChat.viewModel.activeConversationArchived
+                             && (!homeChat.sendBusy || homeChat.agentAwaitingApproval)
                     color: SentinelTheme.textPrimary
                     placeholderTextColor: SentinelTheme.textPlaceholder
                     wrapMode: TextEdit.WordWrap
@@ -2144,15 +2153,18 @@ ShellPanel {
                 SentinelButton {
                     id: sendButton
                     visible: true
-                    text: homeChat.sendBusy ? qsTr("Stop") : qsTr("Send")
+                    text: homeChat.sendBusy && !homeChat.agentAwaitingApproval
+                          ? qsTr("Stop") : qsTr("Send")
                     Layout.preferredWidth: 82 * homeChat.resolutionScale
                     Layout.alignment: Qt.AlignBottom
                     font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
-                    enabled: homeChat.sendBusy || (promptInput.text.trim().length > 0
-                                                   && homeChat.canSend)
+                    enabled: (homeChat.sendBusy && !homeChat.agentAwaitingApproval)
+                             || (promptInput.text.trim().length > 0
+                                 && homeChat.canSend
+                                 && (!homeChat.sendBusy || homeChat.agentAwaitingApproval))
                     opacity: enabled ? 1.0 : 0.58
                     onClicked: {
-                        if (homeChat.sendBusy)
+                        if (homeChat.sendBusy && !homeChat.agentAwaitingApproval)
                             homeChat.viewModel.cancelLocalInference()
                         else
                             homeChat.sendComposerText()
@@ -2164,6 +2176,56 @@ ShellPanel {
                     Layout.fillWidth: true
                     Layout.topMargin: SentinelTheme.spaceXs * homeChat.resolutionScale
                     spacing: SentinelTheme.spaceXs * homeChat.resolutionScale
+
+                    Text {
+                        text: qsTr("Mode")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                    }
+
+                    SentinelComboBox {
+                        id: activeComposerModeSelector
+                        accent: homeChat.modeAccent
+                        Layout.preferredWidth: Math.min(140, 110 * homeChat.resolutionScale)
+                        Layout.preferredHeight: 30 * homeChat.resolutionScale
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        enabled: !homeChat.sendBusy
+                        model: homeChat.viewModel.availableModes
+                        currentIndex: homeChat.viewModel.availableModes.indexOf(homeChat.viewModel.currentModeName)
+                        onActivated: function(index) {
+                            if (index >= 0 && index < homeChat.viewModel.availableModes.length)
+                                homeChat.viewModel.currentModeName = homeChat.viewModel.availableModes[index]
+                        }
+                        displayText: currentIndex >= 0 ? homeChat.viewModel.availableModes[currentIndex] : qsTr("Mode")
+                    }
+
+                    Text {
+                        text: qsTr("Provider")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                    }
+
+                    SentinelComboBox {
+                        id: activeComposerProviderSelector
+                        accent: homeChat.modeAccent
+                        Layout.preferredWidth: Math.min(200, 160 * homeChat.resolutionScale)
+                        Layout.preferredHeight: 30 * homeChat.resolutionScale
+                        font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        enabled: !homeChat.sendBusy
+                        model: homeChat.viewModel.selectableRuntimeProviderLabels
+                        currentIndex: homeChat.viewModel.selectableRuntimeProviderIds.indexOf(homeChat.viewModel.selectedRuntimeProvider)
+                        onActivated: function(index) {
+                            if (index >= 0 && index < homeChat.viewModel.selectableRuntimeProviderIds.length)
+                                homeChat.viewModel.selectedRuntimeProvider = homeChat.viewModel.selectableRuntimeProviderIds[index]
+                        }
+                        displayText: currentIndex >= 0 ? homeChat.viewModel.selectableRuntimeProviderLabels[currentIndex] : homeChat.viewModel.activeRuntimeProviderLabel
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: 20 * homeChat.resolutionScale
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                    }
 
                     Text {
                         text: qsTr("Model")

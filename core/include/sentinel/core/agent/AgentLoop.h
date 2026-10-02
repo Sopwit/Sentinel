@@ -126,6 +126,7 @@ public:
     void cancelAsync();
 
 private:
+    QString workingDirectory() const;
     QStringList externalPathsRequiringApproval(const ToolInvocationPlan& plan,
                                                const QString& sessionId) const;
     void grantExternalPaths(const ToolInvocationPlan& plan, const QString& sessionId);

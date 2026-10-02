@@ -1,8 +1,11 @@
 # Integrations
 
-Local integrations are implemented behind explicit, permission-aware service boundaries.
+`integrations/` is reserved for Sentinel-owned concrete adapters to external
+systems: provider transports, OS services, secure storage, or protocol clients.
+An integration implements a core contract; it does not own agent policy, QML,
+plugin lifecycle, or package installation.
 
-Optional network integrations require explicit configuration and credentials. They must not run as
-hidden background services or bypass the provider, approval, sandbox, and privacy boundaries.
-
-Future integrations should start behind `sentinel::core::IIntegration` and remain explicit, local-first, and permission-aware. This directory should not contain provider networking or OS automation until those phases are intentionally started.
+There are currently no production integration targets in this directory. The
+existing provider, MCP, and platform implementations remain in `core/` as part
+of the modular monolith and should only move here alongside a deliberate target
+and composition-boundary change. See the [architecture](../docs/development/ARCHITECTURE.md).

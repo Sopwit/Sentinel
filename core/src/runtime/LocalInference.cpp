@@ -438,7 +438,11 @@ LocalInferenceWorker::~LocalInferenceWorker() {
 }
 
 bool LocalInferenceWorker::hasActiveThread() const {
-    return activeThread_ && activeThread_->isRunning();
+    // A finished thread still owns a queued terminal callback.  Accepting a new
+    // request before that callback clears the slot can overwrite activeThread_
+    // and leave the first request's cleanup/callback associated with the wrong
+    // run.  The slot remains active until the terminal delivery releases it.
+    return activeThread_ != nullptr;
 }
 
 bool LocalInferenceWorker::requestCancelled(const LocalInferenceRequest& request) const {

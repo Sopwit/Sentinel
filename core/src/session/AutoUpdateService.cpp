@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/session/AutoUpdateService.h"
+#include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 
 #include <QCryptographicHash>
@@ -113,7 +114,7 @@ bool AutoUpdateService::autoCheckEnabled() const {
     return m_autoCheck;
 }
 QString AutoUpdateService::currentVersion() const {
-    return "1.0.0";
+    return AppMetadata::version();
 }
 
 void AutoUpdateService::setManifestUrl(const QUrl& url) {
