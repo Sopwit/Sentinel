@@ -286,6 +286,8 @@ private slots:
     void piperTextToSpeechProviderReportsSafetyBlockedMetadata();
     void piperFileOutputRefusesPolicyBlockedAndInvalidRequests();
     void piperLegacyFileOutputRefusesWithoutSideEffects();
+    void piperFileOutputExecutionUsesFakeClientForControlledSuccess();
+    void piperFileOutputExecutionReportsFailureAndTimeout();
     void whisperSpeechToTextProviderReportsDisabledAndMissingMetadata();
 };
 
@@ -965,6 +967,68 @@ void VoiceTest::whisperSpeechToTextProviderReportsDisabledAndMissingMetadata() {
     auto refused = notConfigured.transcribeWhisper(WhisperTranscriptionRequest{});
     QCOMPARE(refused.status, WhisperTranscriptionStatus::NotConfigured);
     QVERIFY(!refused.executionAttempted);
+}
+
+void VoiceTest::piperFileOutputExecutionUsesFakeClientForControlledSuccess() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto config = configuredPiperConfig(dir);
+    config.processExecutionAllowed = true;
+    config.fileOutputAllowed = true;
+
+    PiperTextToSpeechProvider provider{
+        config, std::make_unique<FakePiperTtsClient>(FakePiperTtsClient::Mode::Success)};
+    QCOMPARE(provider.status(), PiperTtsStatus::Configured);
+
+    const auto request =
+        PiperTtsRequest{QStringLiteral("hello"), {}, {}, true, true, false, 1000};
+    const auto result = provider.synthesizePiper(request);
+
+    QVERIFY(result.success);
+    QCOMPARE(result.status, PiperTtsStatus::Succeeded);
+    QCOMPARE(result.exitCode, 0);
+    QVERIFY(!result.audioPath.isEmpty());
+    QVERIFY(result.audioPath.contains(QStringLiteral("sentinel-piper-tts.wav")));
+    QVERIFY(QFile::exists(result.audioPath));
+
+    QFile writtenFile{result.audioPath};
+    QVERIFY(writtenFile.open(QIODevice::ReadOnly));
+    QCOMPARE(writtenFile.readAll(), QByteArray("FAKE-WAV"));
+    writtenFile.close();
+}
+
+void VoiceTest::piperFileOutputExecutionReportsFailureAndTimeout() {
+    QTemporaryDir failureDir;
+    QVERIFY(failureDir.isValid());
+    auto failConfig = configuredPiperConfig(failureDir);
+    failConfig.processExecutionAllowed = true;
+    failConfig.fileOutputAllowed = true;
+
+    PiperTextToSpeechProvider failProvider{
+        failConfig, std::make_unique<FakePiperTtsClient>(FakePiperTtsClient::Mode::Failure)};
+    const auto failResult = failProvider.synthesizePiper(
+        PiperTtsRequest{QStringLiteral("hello"), {}, {}, true, true, false, 1000});
+
+    QVERIFY(!failResult.success);
+    QCOMPARE(failResult.status, PiperTtsStatus::Failed);
+    QCOMPARE(failResult.exitCode, 7);
+    QCOMPARE(failResult.error, QStringLiteral("fake failure"));
+
+    QTemporaryDir timeoutDir;
+    QVERIFY(timeoutDir.isValid());
+    auto timeoutConfig = configuredPiperConfig(timeoutDir);
+    timeoutConfig.processExecutionAllowed = true;
+    timeoutConfig.fileOutputAllowed = true;
+
+    PiperTextToSpeechProvider timeoutProvider{
+        timeoutConfig, std::make_unique<FakePiperTtsClient>(FakePiperTtsClient::Mode::Timeout)};
+    const auto timeoutResult = timeoutProvider.synthesizePiper(
+        PiperTtsRequest{QStringLiteral("hello"), {}, {}, true, true, false, 1000});
+
+    QVERIFY(!timeoutResult.success);
+    QCOMPARE(timeoutResult.status, PiperTtsStatus::Timeout);
+    QCOMPARE(timeoutResult.exitCode, -1);
+    QCOMPARE(timeoutResult.error, QStringLiteral("fake timeout"));
 }
 
 QTEST_MAIN(VoiceTest)

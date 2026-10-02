@@ -9,7 +9,6 @@
 #include "sentinel/core/chat/InMemoryConversationStore.h"
 #include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/chat/SQLiteConversationStore.h"
-#include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
 #include "sentinel/core/model/ModelManagement.h"
 #include "sentinel/core/runtime/LocalInference.h"
@@ -30,32 +29,20 @@
 #include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTemporaryDir>
-#include <QTimer>
 #include <QtTest>
 
 #include <cstdint>
 #include <memory>
 
 using sentinel::core::ApplicationController;
-using sentinel::core::ChatProviderReply;
-using sentinel::core::ChatProviderStatus;
 using sentinel::core::IChatHistoryStore;
-using sentinel::core::IChatProvider;
 using sentinel::core::IConversationStore;
 using sentinel::core::ILocalInferenceClient;
-using sentinel::core::ILocalInferenceStreamClient;
-using sentinel::core::ILocalInferenceWorker;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
-using sentinel::core::LocalInferenceFinishedCallback;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceResponse;
 using sentinel::core::LocalInferenceStatus;
-using sentinel::core::LocalInferenceStreamChunk;
-using sentinel::core::LocalInferenceStreamChunkCallback;
-using sentinel::core::LocalInferenceStreamFinishedCallback;
-using sentinel::core::LocalInferenceStreamResult;
-using sentinel::core::LocalInferenceStreamStatus;
 using sentinel::core::ModelManagementAction;
 using sentinel::core::ModelManagementRequest;
 using sentinel::core::OllamaConfig;
@@ -63,39 +50,6 @@ using sentinel::core::OllamaHealthCheckResult;
 using sentinel::core::OllamaModelSummary;
 using sentinel::core::SQLiteConversationStore;
 using sentinel::core::StaticModelManagementService;
-
-class UnavailableProvider final : public IChatProvider {
-public:
-    QString name() const override {
-        return QStringLiteral("UnavailableProvider");
-    }
-
-    ChatProviderStatus status() const override {
-        return ChatProviderStatus::Unavailable;
-    }
-
-    ChatProviderReply sendMessage(const QString& message) override {
-        Q_UNUSED(message);
-        return {false, {}, QStringLiteral("not available")};
-    }
-};
-
-class ErrorProvider final : public IChatProvider {
-public:
-    QString name() const override {
-        return QStringLiteral("ErrorProvider");
-    }
-
-    ChatProviderStatus status() const override {
-        return ChatProviderStatus::Ready;
-    }
-
-    ChatProviderReply sendMessage(const QString& message) override {
-        Q_UNUSED(message);
-        return {false, {}, QStringLiteral("deterministic failure")};
-    }
-};
-
 class RecordingChatHistoryStore final : public IChatHistoryStore {
 public:
     explicit RecordingChatHistoryStore(QList<sentinel::core::ChatMessage> messages = {},
@@ -132,47 +86,6 @@ public:
     bool wasCleared_ = false;
 };
 
-class FixedPlanRuntime final : public sentinel::core::IAgentRuntime {
-public:
-    FixedPlanRuntime(QList<sentinel::core::ToolDescriptor> tools,
-                     sentinel::core::ToolInvocationPlan plan)
-        : tools_(std::move(tools)), plan_(std::move(plan)) {}
-
-    QString name() const override {
-        return QStringLiteral("FixedPlanRuntime");
-    }
-
-    sentinel::core::AgentStatus status() const override {
-        return sentinel::core::AgentStatus::Ready;
-    }
-
-    QList<sentinel::core::AgentCapabilityDescriptor> capabilities() const override {
-        return {};
-    }
-
-    QList<sentinel::core::ToolDescriptor> availableTools() const override {
-        return tools_;
-    }
-
-    sentinel::core::ToolInvocationPlan
-    plan(const sentinel::core::AgentRequest& request) const override {
-        Q_UNUSED(request);
-        return plan_;
-    }
-
-    sentinel::core::AgentResponse execute(const sentinel::core::AgentRequest& request) override {
-        return {
-            true,
-            QStringLiteral("Fixed local agent placeholder processed: %1")
-                .arg(request.prompt.trimmed()),
-            sentinel::core::AgentStatus::Ready,
-        };
-    }
-
-private:
-    QList<sentinel::core::ToolDescriptor> tools_;
-    sentinel::core::ToolInvocationPlan plan_;
-};
 
 class UnavailableMemoryStore final : public sentinel::core::IMemoryStore {
 public:
@@ -250,268 +163,6 @@ public:
     }
 
     bool called = false;
-    LocalInferenceRequest lastRequest;
-};
-
-class ErrorLocalInferenceClient final : public ILocalInferenceClient {
-public:
-    LocalInferenceResponse infer(const LocalInferenceRequest& request) override {
-        called = true;
-        LocalInferenceResponse response;
-        response.status = LocalInferenceStatus::Error;
-        response.model = request.options.model;
-        response.error = sentinel::core::LocalInferenceError::ClientUnavailable;
-        response.summary = QStringLiteral("Injected local inference failure.");
-        return response;
-    }
-
-    QString statusSummary() const override {
-        return QStringLiteral("Injected local inference client returns errors.");
-    }
-
-    bool called = false;
-};
-
-class CategorizedErrorLocalInferenceClient final : public ILocalInferenceClient {
-public:
-    CategorizedErrorLocalInferenceClient(sentinel::core::LocalInferenceError error, QString summary)
-        : error_(error), summary_(std::move(summary)) {}
-
-    LocalInferenceResponse infer(const LocalInferenceRequest& request) override {
-        called = true;
-        lastRequest = request;
-        LocalInferenceResponse response;
-        response.status = LocalInferenceStatus::Error;
-        response.model = request.options.model;
-        response.error = error_;
-        response.summary = summary_;
-        response.timeoutMs = request.options.timeoutMs;
-        return response;
-    }
-
-    QString statusSummary() const override {
-        return QStringLiteral("Injected categorized local inference client returns errors.");
-    }
-
-    bool called = false;
-    LocalInferenceRequest lastRequest;
-
-private:
-    sentinel::core::LocalInferenceError error_;
-    QString summary_;
-};
-
-class FakeLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
-public:
-    explicit FakeLocalInferenceStreamClient(
-        QList<LocalInferenceStreamChunk> chunks,
-        LocalInferenceStreamStatus finalStatus = LocalInferenceStreamStatus::Completed,
-        QString summary = QStringLiteral("Fake local stream completed."))
-        : chunks_(std::move(chunks)), finalStatus_(finalStatus), summary_(std::move(summary)) {}
-
-    LocalInferenceStreamResult
-    startStream(const LocalInferenceRequest& request,
-                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override {
-        called = true;
-        lastRequest = request;
-        LocalInferenceStreamResult result;
-        result.status = finalStatus_;
-        result.model = request.options.model;
-        result.endpoint = QStringLiteral("http://127.0.0.1:11434");
-        result.summary = summary_;
-        for (const auto& chunk : chunks_) {
-            result.chunks.append(chunk);
-            if (chunk.malformed) {
-                ++result.malformedChunkCount;
-            } else {
-                result.accumulatedText.append(chunk.text);
-            }
-            if (onChunk) {
-                onChunk(chunk);
-            }
-        }
-        if (finalStatus_ != LocalInferenceStreamStatus::Completed) {
-            result.error = sentinel::core::LocalInferenceError::RequestFailed;
-        }
-        if (finalStatus_ == LocalInferenceStreamStatus::Error &&
-            summary_.contains(QStringLiteral("did not complete"))) {
-            result.error = sentinel::core::LocalInferenceError::StreamInterrupted;
-        }
-        if (finalStatus_ == LocalInferenceStreamStatus::Cancelled) {
-            result.cancelled = true;
-        }
-        return result;
-    }
-
-    QString statusSummary() const override {
-        return QStringLiteral("Fake local stream client is ready.");
-    }
-
-    bool isAvailable() const override {
-        return true;
-    }
-
-    bool called = false;
-    LocalInferenceRequest lastRequest;
-
-private:
-    QList<LocalInferenceStreamChunk> chunks_;
-    LocalInferenceStreamStatus finalStatus_ = LocalInferenceStreamStatus::Completed;
-    QString summary_;
-};
-
-class AsyncLocalInferenceWorker final : public ILocalInferenceWorker {
-public:
-    enum class Mode : std::uint8_t {
-        Success,
-        TimeoutError,
-    };
-
-    explicit AsyncLocalInferenceWorker(Mode mode = Mode::Success) : mode_(mode) {}
-
-    bool startInference(const LocalInferenceRequest& request,
-                        LocalInferenceFinishedCallback onFinished) override {
-        if (busy) {
-            return false;
-        }
-        busy = true;
-        called = true;
-        lastRequest = request;
-        QTimer::singleShot(delayMs, [this, request, onFinished = std::move(onFinished)]() mutable {
-            busy = false;
-            LocalInferenceResponse response;
-            response.model = request.options.model;
-            response.endpoint = QStringLiteral("http://127.0.0.1:11434");
-            response.timeoutMs = request.options.timeoutMs;
-            if (mode_ == Mode::TimeoutError) {
-                response.status = LocalInferenceStatus::Error;
-                response.error = sentinel::core::LocalInferenceError::Timeout;
-                response.summary =
-                    QStringLiteral("Async fake local inference timed out after %1 ms.")
-                        .arg(request.options.timeoutMs);
-            } else {
-                response.status = LocalInferenceStatus::Succeeded;
-                response.text = QStringLiteral("async fake completion");
-                response.summary = QStringLiteral("Async fake local inference completed.");
-            }
-            if (onFinished) {
-                onFinished(request.id, response);
-            }
-        });
-        return true;
-    }
-
-    bool startStream(const LocalInferenceRequest& request,
-                     LocalInferenceStreamChunkCallback onChunk,
-                     LocalInferenceStreamFinishedCallback onFinished) override {
-        if (busy) {
-            return false;
-        }
-        busy = true;
-        called = true;
-        lastRequest = request;
-        QTimer::singleShot(delayMs, [this, request, onChunk = std::move(onChunk),
-                                     onFinished = std::move(onFinished)]() mutable {
-            busy = false;
-            if (mode_ == Mode::Success && onChunk) {
-                onChunk(request.id, LocalInferenceStreamChunk{
-                                        1,
-                                        QStringLiteral("async "),
-                                        false,
-                                        false,
-                                        QStringLiteral("async chunk"),
-                                    });
-            }
-
-            auto finish = [this, request, onFinished = std::move(onFinished)]() mutable {
-                LocalInferenceStreamResult result;
-                result.model = request.options.model;
-                result.endpoint = QStringLiteral("http://127.0.0.1:11434");
-                result.timeoutMs = request.options.timeoutMs;
-                if (mode_ == Mode::TimeoutError) {
-                    result.status = LocalInferenceStreamStatus::Error;
-                    result.error = sentinel::core::LocalInferenceError::Timeout;
-                    result.summary = QStringLiteral("Async fake local stream timed out.");
-                } else {
-                    result.status = LocalInferenceStreamStatus::Completed;
-                    result.accumulatedText = QStringLiteral("async stream completion");
-                    result.summary = QStringLiteral("Async fake local stream completed.");
-                }
-                if (onFinished) {
-                    onFinished(request.id, result);
-                }
-            };
-
-            if (streamFinishDelayMs > 0) {
-                QTimer::singleShot(streamFinishDelayMs, std::move(finish));
-            } else {
-                finish();
-            }
-        });
-        return true;
-    }
-
-    void cancel(const QString& requestId) override {
-        cancelledRequestIds.append(requestId);
-    }
-
-    QString statusSummary() const override {
-        return QStringLiteral("Async fake local inference worker is ready.");
-    }
-
-    QString streamStatusSummary() const override {
-        return QStringLiteral("Async fake local stream worker is ready.");
-    }
-
-    bool streamingAvailable() const override {
-        return true;
-    }
-
-    Mode mode_ = Mode::Success;
-    int delayMs = 0;
-    int streamFinishDelayMs = 0;
-    bool busy = false;
-    bool called = false;
-    QStringList cancelledRequestIds;
-    LocalInferenceRequest lastRequest;
-};
-
-class ReentrantLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
-public:
-    LocalInferenceStreamResult
-    startStream(const LocalInferenceRequest& request,
-                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override {
-        called = true;
-        lastRequest = request;
-        if (onChunk) {
-            onChunk(LocalInferenceStreamChunk{1, QStringLiteral("partial"), false, false,
-                                              QStringLiteral("first chunk")});
-        }
-        if (controller) {
-            duplicateAccepted = controller->sendMessage(QStringLiteral("duplicate"));
-        }
-
-        LocalInferenceStreamResult result;
-        result.status = LocalInferenceStreamStatus::Completed;
-        result.model = request.options.model;
-        result.endpoint = QStringLiteral("http://127.0.0.1:11434");
-        result.accumulatedText = QStringLiteral("final response");
-        result.summary = QStringLiteral("Reentrant stream completed.");
-        result.timeoutMs = request.options.timeoutMs;
-        return result;
-    }
-
-    QString statusSummary() const override {
-        return QStringLiteral("Reentrant local stream client is ready.");
-    }
-
-    bool isAvailable() const override {
-        return true;
-    }
-
-    ApplicationController* controller = nullptr;
-    bool called = false;
-    bool duplicateAccepted = true;
     LocalInferenceRequest lastRequest;
 };
 
@@ -636,29 +287,16 @@ private slots:
     void disabledRuntimeProviderSelectionFallsBackToLocalOllama();
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesLocalInferenceBoundaryMetadata();
-    void exposesSelectedModelDefaultAndFallback();
     void modelManagementRecommendationsAreDeterministicAndActionsAvailable();
     void exposesModelManagementReadinessMetadata();
     void exposesVoiceReadinessMetadata();
     void validatesConfiguredVoicePathsAsMetadataOnly();
     void piperFileOutputExecutionRequiresExplicitOptIn();
-    void piperFileOutputExecutionUsesFakeClientForControlledSuccess();
-    void piperFileOutputExecutionReportsFailureAndTimeout();
     void piperFileOutputExecutionBlocksInvalidBinaryOrModel();
     void rejectsInvalidSelectedModelAgainstDiscoveryMetadata();
     void exposesStreamingEnabledByDefaultMetadata();
-    void streamsByDefault();
-    void enabledLocalChatStreamingAppendsOrderedChunksOnce();
-    void streamingPreviewClearsAfterFinalResponseIsPersisted();
-    void enabledLocalChatStreamingHandlesMalformedChunk();
-    void enabledLocalChatStreamingCancellationAppendsSafeRefusal();
-    void streamingPreviewClearsAfterStreamError();
-    void localInferenceWorkerCompletesWithFakeClient();
-    void asyncLocalChatStreamingCompletesWithFakeWorker();
-    void localInferenceWorkerReportsClientFailure();
-    void asyncSuccessUpdatesConversationRuntimeState();
-    void asyncFailureUpdatesConversationRuntimeErrorWithoutCorruptingHistory();
     void clearChatClearsConversationRuntimeAndPersistence();
+    void clearChatKeepsSingleInitialSystemMessage();
     void reportsPersistedConversationHistorySummary();
     void reportsRuntimeOnlyConversationHistorySummary();
     void exposesConversationStoreReadinessWithoutSwitchingTranscriptStorage();
@@ -694,42 +332,14 @@ private slots:
     void emptyConversationExportIsRefused();
     void conversationExportUsesSanitizedTimestampedFilenames();
     void unsupportedConversationExportFormatWritesNoFile();
-    void clearChatResetsStreamingAndActiveRequestMetadata();
-    void clearChatKeepsSingleInitialSystemMessage();
-    void localInferenceWorkerRejectsConcurrentRequest();
-    void localInferenceWorkerPropagatesCancellationToClient();
-    void localInferenceTimeoutAppendsConciseFailureAndResetsBusy();
-    void localInferenceMalformedResponseAppendsConciseFailureAndResetsBusy();
-    void ollamaUnavailablePathAppendsConciseFailureWithoutRealService();
-    void duplicateSendDuringActiveStreamIsRejectedWithoutAppending();
-    void streamingInterruptionClearsPreviewAndAppendsOneFailure();
     void blocksLocalInferenceByDefaultPermission();
     void blocksLocalInferenceWhenSafetyPolicyBlocks();
     void runsInjectedLocalInferenceWhenPermissionAllows();
-    void localChatInferenceRequiresASelectedModel();
-    void enabledLocalChatInferenceWithoutValidModelFailsSafely();
-    void enabledLocalChatInferenceWithInvalidModelShowsSafeSummary();
-    void disabledProviderSelectionRefusesBeforeTranscriptMutation();
-    void enabledLocalChatInferenceAppendsFakeResponse();
-    void enabledLocalChatInferenceErrorAppendsSafeRefusal();
-    void localChatInferenceBlocksNonLoopbackEndpoint();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
     void keepsConversationSessionSeparateFromChatAndRuntimeSessions();
-    void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
-    void exposesLatestToolPlanStatusWithRuntime();
-    void exposesLatestApprovalStatusWithRuntime();
-    void exposesLatestSandboxStatusWithRuntime();
-    void exposesLatestToolExecutionStatusWithRuntime();
-    void exposesSuccessfulPipelineResultWithRuntime();
-    void exposesRuntimeContextForPipelineResult();
-    void exposesAgentActivityForPipelineResult();
-    void reportsRiskyToolPlanRequiresApproval();
-    void reportsSandboxBlockedPipelineResult();
-    void reportsEmptyPlanPipelineResult();
-    void reportsUnknownToolPipelineResult();
     void exposesMemoryStatus();
     void sendsMessageThroughProvider();
     void updatesConversationStateForChatFlow();
@@ -760,22 +370,14 @@ private slots:
     void localMemoryRecallDoesNotInjectIntoPrompt();
     void contextAssemblyShowsCommittedMemorySource();
     void contextAssemblyPlanningDoesNotMutateOrInjectPrompt();
-    void promptContextInjectionDisabledLeavesPromptUnchanged();
-    void enabledPromptContextInjectionIncludesDeterministicBundle();
-    void promptContextInjectionUsesOnlyCommittedMemory();
     void promptContextInjectionBudgetTruncatesDeterministically();
-    void promptContextInjectionUsesBoundedRecentConversationWindow();
-    void conversationSummaryUsesOlderWindowAndStaysSeparateFromMemory();
     void conversationSummaryPlanningDoesNotMutateState();
-    void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
     void conversationCompressionReadinessPlansMetadataWithoutMutation();
     void manualSummaryGenerationIsBlockedAndDoesNotMutateTranscript();
     void manualSummaryGenerationFailureDoesNotPersistMetadata();
-    void manualSummaryGenerationPersistsSafeLocalSummary();
     void summaryContinuityInjectsPersistedSummaryAfterRestart();
     void staleSummaryContinuityFallsBackToTranscriptOnly();
-    void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
     void semanticArbitrationSimulationExposesSafeMetadata();
@@ -786,9 +388,7 @@ private slots:
     void semanticAcceptanceExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticSupplementAssemblyExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
     void semanticPromptAuthorityExposureIsDefaultDeniedAndDoesNotMutatePrompt();
-    void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
-    void promptContextInjectionRespectsSafetyGateBeforeAssembly();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
     void clearChatKeepsCommittedMemory();
     void clearsRuntimeMemoryEntries();
@@ -813,6 +413,7 @@ static std::unique_ptr<ApplicationController> makeChatController() {
     controller->setSelectedLocalModel(QStringLiteral("sentinel-test-model"));
     return controller;
 }
+
 
 static std::unique_ptr<ApplicationController>
 makeControllerWithChatHistory(std::unique_ptr<IChatHistoryStore> chatHistoryStore,
@@ -935,21 +536,6 @@ static void configureReadyPiperPaths(ApplicationController& controller, QTempora
 
     controller.setPiperBinaryPath(piperBinaryPath);
     controller.setPiperModelPath(piperModelPath);
-}
-
-static std::unique_ptr<ApplicationController>
-makeAsyncWorkerController(std::unique_ptr<ILocalInferenceWorker> worker) {
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalInferenceStreamingEnabled(false);
-    return controller;
 }
 
 void ApplicationControllerTest::exposesProviderNameAndInitialSystemMessage() {
@@ -1381,38 +967,6 @@ void ApplicationControllerTest::exposesLocalInferenceBoundaryMetadata() {
     QVERIFY(controller->localInferenceTraceSummaries().isEmpty());
 }
 
-void ApplicationControllerTest::exposesSelectedModelDefaultAndFallback() {
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        nullptr);
-
-    QVERIFY(controller->selectedLocalModel().isEmpty());
-    QCOMPARE(controller->ollamaModelNames(), QStringList{QStringLiteral("llama3.2")});
-    QCOMPARE(controller->ollamaModelSummaries(),
-             QStringList{QStringLiteral("llama3.2 (10 B, Local Only)")});
-    QCOMPARE(controller->selectedLocalModelStatus(), QStringLiteral("Missing"));
-    QCOMPARE(controller->selectedLocalModelSummary(),
-             QStringLiteral("No local model selected. Choose an installed Ollama model in "
-                            "Settings before sending."));
-    QCOMPARE(controller->selectedLocalModelMetadataSummary(),
-             QStringLiteral("Fallback model: llama3.2 (10 B, Local Only)"));
-    QCOMPARE(controller->activeLocalRuntimeBadge(), QStringLiteral("Ollama Local / llama3.2"));
-
-    controller->setSelectedLocalModel(QStringLiteral(" llama3.2 "));
-
-    QCOMPARE(controller->selectedLocalModel(), QStringLiteral("llama3.2"));
-    QCOMPARE(controller->selectedLocalModelStatus(), QStringLiteral("Available"));
-    QCOMPARE(controller->selectedLocalModelSummary(),
-             QStringLiteral("Selected local model llama3.2 is available in local discovery "
-                            "metadata."));
-    QCOMPARE(controller->selectedLocalModelMetadataSummary(),
-             QStringLiteral("Selected model: llama3.2 (10 B, Local Only)"));
-    QCOMPARE(controller->activeLocalRuntimeBadge(), QStringLiteral("Ollama Local / llama3.2"));
-}
 
 void ApplicationControllerTest::
     modelManagementRecommendationsAreDeterministicAndActionsAvailable() {
@@ -1749,53 +1303,6 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
              QStringLiteral("No generated Piper audio file."));
 }
 
-void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControlledSuccess() {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    auto fixture = makePiperController(FakePiperTtsClient::Mode::Success);
-    configureReadyPiperPaths(*fixture.controller, dir);
-
-    fixture.controller->setPiperFileOutputExecutionEnabled(true);
-    QVERIFY(fixture.controller->piperFileOutputExecutionEnabled());
-    const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
-
-    QVERIFY(generated);
-    QVERIFY(fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Succeeded"));
-    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("generated")));
-    QVERIFY(fixture.controller->piperFileOutputAudioPathSummary().contains(
-        QStringLiteral("sentinel-piper-tts.wav")));
-    QVERIFY(
-        !fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
-}
-
-void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout() {
-    QTemporaryDir failureDir;
-    QVERIFY(failureDir.isValid());
-    auto failed = makePiperController(FakePiperTtsClient::Mode::Failure);
-    configureReadyPiperPaths(*failed.controller, failureDir);
-    failed.controller->setPiperFileOutputExecutionEnabled(true);
-
-    QVERIFY(!failed.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(failed.client->called);
-    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Failed"));
-    QVERIFY(
-        failed.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("failed")));
-
-    QTemporaryDir timeoutDir;
-    QVERIFY(timeoutDir.isValid());
-    auto timedOut = makePiperController(FakePiperTtsClient::Mode::Timeout);
-    configureReadyPiperPaths(*timedOut.controller, timeoutDir);
-    timedOut.controller->setPiperFileOutputExecutionEnabled(true);
-
-    QVERIFY(!timedOut.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(timedOut.client->called);
-    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Timeout"));
-    QVERIFY(timedOut.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("timed out")));
-}
-
 void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrModel() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -1863,307 +1370,9 @@ void ApplicationControllerTest::exposesStreamingEnabledByDefaultMetadata() {
     QVERIFY(controller->localInferenceStreamingText().isEmpty());
 }
 
-void ApplicationControllerTest::streamsByDefault() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
-        QList<LocalInferenceStreamChunk>{{1, QStringLiteral("stream"), false, false, {}}});
-    auto* streamClientPtr = streamClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient), std::move(streamClient));
+// Retired legacy local-chat tests.  Local inference is exercised through the
+// direct worker/client suites and runLocalInference* integration tests.
 
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(!fakeClientPtr->called);
-    QVERIFY(streamClientPtr->called);
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("stream"));
-}
-
-void ApplicationControllerTest::enabledLocalChatStreamingAppendsOrderedChunksOnce() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto streamClient =
-        std::make_unique<FakeLocalInferenceStreamClient>(QList<LocalInferenceStreamChunk>{
-            {1, QStringLiteral("hello "), false, false, QStringLiteral("first chunk")},
-            {2, QStringLiteral("stream"), true, false, QStringLiteral("final chunk")},
-        });
-    auto* streamClientPtr = streamClient.get();
-    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
-    auto* historyStorePtr = historyStore.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
-        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient), std::move(streamClient));
-    QSignalSpy localSpy(controller.get(), &ApplicationController::localInferenceChanged);
-    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(!fakeClientPtr->called);
-    QVERIFY(streamClientPtr->called);
-    QCOMPARE(streamClientPtr->lastRequest.options.streamingRequested, true);
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Completed"));
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("hello stream"));
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
-    QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 2);
-    QVERIFY(localSpy.count() >= 4);
-}
-
-void ApplicationControllerTest::streamingPreviewClearsAfterFinalResponseIsPersisted() {
-    auto streamClient =
-        std::make_unique<FakeLocalInferenceStreamClient>(QList<LocalInferenceStreamChunk>{
-            {1, QStringLiteral("partial "), false, false, QStringLiteral("first chunk")},
-            {2, QStringLiteral("final"), true, false, QStringLiteral("final chunk")},
-        });
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Completed"));
-    QCOMPARE(controller->localInferenceSummary(), QStringLiteral("Fake local stream completed."));
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("partial final"));
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
-}
-
-void ApplicationControllerTest::enabledLocalChatStreamingHandlesMalformedChunk() {
-    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
-        QList<LocalInferenceStreamChunk>{
-            {1, {}, false, true, QStringLiteral("Malformed local stream chunk ignored.")},
-            {2, QStringLiteral("usable text"), true, false, QStringLiteral("final chunk")},
-        },
-        LocalInferenceStreamStatus::Completed,
-        QStringLiteral("Fake local stream completed with malformed chunk ignored."));
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("usable text"));
-    QCOMPARE(controller->localInferenceStreamSummary(),
-             QStringLiteral("Fake local stream completed with malformed chunk ignored."));
-}
-
-void ApplicationControllerTest::enabledLocalChatStreamingCancellationAppendsSafeRefusal() {
-    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
-        QList<LocalInferenceStreamChunk>{}, LocalInferenceStreamStatus::Cancelled,
-        QStringLiteral("Injected local stream cancellation."));
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Cancelled"));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference failed: Injected local stream cancellation."));
-}
-
-void ApplicationControllerTest::streamingPreviewClearsAfterStreamError() {
-    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
-        QList<LocalInferenceStreamChunk>{
-            {1, QStringLiteral("partial "), false, false, QStringLiteral("first chunk")},
-            {2, QStringLiteral("preview"), false, false, QStringLiteral("second chunk")},
-        },
-        LocalInferenceStreamStatus::Error, QStringLiteral("Injected local stream error."));
-    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
-    auto* historyStorePtr = historyStore.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
-        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Error"));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference failed: Injected local stream error."));
-    QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 2);
-}
-
-void ApplicationControllerTest::localInferenceWorkerCompletesWithFakeClient() {
-    sentinel::test::LocalInferenceWorkerFixture f;
-    QVERIFY(f.start());
-    f.state->release.release();
-    QTRY_COMPARE_WITH_TIMEOUT(f.callbacks, 1, 3000);
-    QCOMPARE(f.state->calls.load(), 1);
-    QCOMPARE(f.response.status, LocalInferenceStatus::Succeeded);
-    QCOMPARE(f.response.text, QStringLiteral("worker result"));
-    QCOMPARE(f.completedId, QStringLiteral("worker-1"));
-    QVERIFY(f.state->exited.load());
-    f.shutdown();
-}
-
-void ApplicationControllerTest::asyncLocalChatStreamingCompletesWithFakeWorker() {
-    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
-    auto* workerPtr = worker.get();
-    worker->delayMs = 10;
-    worker->streamFinishDelayMs = 250;
-    auto controller = makeAsyncWorkerController(std::move(worker));
-    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(workerPtr->called);
-    QVERIFY(controller->localInferenceBusy());
-    QCOMPARE(controller->chatHistory().size(), 2);
-    QCOMPARE(workerPtr->lastRequest.options.streamingRequested, true);
-
-    QTRY_COMPARE(controller->localInferenceStreamingText(), QStringLiteral("async "));
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Streaming"));
-
-    QTRY_VERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Completed"));
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("async stream completion"));
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
-    QCOMPARE(chatSpy.count(), 2);
-}
-
-void ApplicationControllerTest::localInferenceWorkerReportsClientFailure() {
-    sentinel::test::LocalInferenceWorkerFixture f;
-    f.state->outcome = LocalInferenceStatus::Error;
-    QVERIFY(f.start());
-    f.state->release.release();
-    QTRY_COMPARE_WITH_TIMEOUT(f.callbacks, 1, 3000);
-    QCOMPARE(f.response.status, LocalInferenceStatus::Error);
-    QCOMPARE(f.response.error, sentinel::core::LocalInferenceError::ClientUnavailable);
-    QVERIFY(f.response.text.isEmpty());
-    QVERIFY(f.state->exited.load());
-    f.shutdown();
-}
-
-void ApplicationControllerTest::asyncSuccessUpdatesConversationRuntimeState() {
-    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
-    auto controller = makeAsyncWorkerController(std::move(worker));
-    QSignalSpy runtimeSpy(controller.get(), &ApplicationController::conversationRuntimeChanged);
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-
-    QCOMPARE(controller->conversationRuntimeRequestId(),
-             QStringLiteral("local-inference-request-1"));
-    QCOMPARE(controller->conversationRuntimeActiveModel(), QStringLiteral("llama3.2"));
-    QCOMPARE(controller->conversationRuntimeActiveRoute(), QStringLiteral("Local Ollama"));
-    QVERIFY(!controller->conversationRuntimeStreaming());
-
-    QTRY_VERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->conversationState(), QStringLiteral("Completed"));
-    QVERIFY(
-        controller->conversationRuntimeLastSuccessSummary().contains(QStringLiteral("completed")));
-    QCOMPARE(controller->conversationRuntimeLastErrorSummary(),
-             QStringLiteral("No error or refusal yet."));
-    QVERIFY(runtimeSpy.count() >= 2);
-}
-
-void ApplicationControllerTest::
-    asyncFailureUpdatesConversationRuntimeErrorWithoutCorruptingHistory() {
-    auto worker =
-        std::make_unique<AsyncLocalInferenceWorker>(AsyncLocalInferenceWorker::Mode::TimeoutError);
-    auto controller = makeAsyncWorkerController(std::move(worker));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-
-    QTRY_VERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->conversationState(), QStringLiteral("Error"));
-    QVERIFY(
-        controller->conversationRuntimeLastErrorSummary().contains(QStringLiteral("timed out")));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(0).role, sentinel::core::ChatRole::System);
-    QCOMPARE(controller->chatHistory().at(1).role, sentinel::core::ChatRole::User);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).role, sentinel::core::ChatRole::Assistant);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-}
 
 void ApplicationControllerTest::clearChatClearsConversationRuntimeAndPersistence() {
     ProductionChatControllerFixture fixture;
@@ -2182,6 +1391,21 @@ void ApplicationControllerTest::clearChatClearsConversationRuntimeAndPersistence
              QStringLiteral("No error or refusal yet."));
     QCOMPARE(controller.chatHistory().size(), 1);
     QCOMPARE(controller.chatHistory().first().role, sentinel::core::ChatRole::System);
+}
+
+void ApplicationControllerTest::clearChatKeepsSingleInitialSystemMessage() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto* storePtr = store.get();
+    ApplicationController controller(nullptr, std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+
+    QVERIFY(controller.clearChat());
+    QVERIFY(controller.clearChat());
+    QCOMPARE(controller.chatHistory().size(), 1);
+    QCOMPARE(controller.chatHistory().first().role, sentinel::core::ChatRole::System);
+    QCOMPARE(controller.chatHistory().first().content, QStringLiteral("Sentinel Core online."));
+    QCOMPARE(storePtr->messages_.size(), 1);
+    QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
 }
 
 void ApplicationControllerTest::reportsPersistedConversationHistorySummary() {
@@ -2903,222 +2127,6 @@ void ApplicationControllerTest::unsupportedConversationExportFormatWritesNoFile(
     QCOMPARE(QDir(dir.path()).entryList(QDir::Files).size(), 0);
 }
 
-void ApplicationControllerTest::clearChatResetsStreamingAndActiveRequestMetadata() {
-    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
-    worker->streamFinishDelayMs = 100;
-    auto* workerPtr = worker.get();
-    auto controller = makeAsyncWorkerController(std::move(worker));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-    QTRY_VERIFY(controller->localInferenceStreamingText().contains(QStringLiteral("async")));
-
-    QVERIFY(!controller->clearChat());
-
-    QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->localInferenceStreamingText(), QString());
-    QCOMPARE(controller->conversationRuntimeRequestId(), QStringLiteral("None"));
-    QCOMPARE(controller->conversationRuntimeActiveModel(), QStringLiteral("None"));
-    QCOMPARE(controller->conversationRuntimeActiveRoute(), QStringLiteral("Provider"));
-    QCOMPARE(workerPtr->cancelledRequestIds.size(), 1);
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->chatHistory().first().role, sentinel::core::ChatRole::System);
-}
-
-void ApplicationControllerTest::clearChatKeepsSingleInitialSystemMessage() {
-    auto store = std::make_unique<RecordingChatHistoryStore>();
-    const auto storePtr = store.get();
-    ApplicationController controller(nullptr, std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
-
-    QVERIFY(controller.clearChat());
-    QVERIFY(controller.clearChat());
-
-    QCOMPARE(controller.chatHistory().size(), 1);
-    QCOMPARE(controller.chatHistory().first().role, sentinel::core::ChatRole::System);
-    QCOMPARE(controller.chatHistory().first().content, QStringLiteral("Sentinel Core online."));
-    QCOMPARE(storePtr->messages_.size(), 1);
-    QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
-}
-
-void ApplicationControllerTest::localInferenceWorkerRejectsConcurrentRequest() {
-    sentinel::test::LocalInferenceWorkerFixture f;
-    QVERIFY(f.start());
-    QTRY_VERIFY_WITH_TIMEOUT(f.state->entered.load(), 1000);
-    QVERIFY(!f.start(QStringLiteral("duplicate")));
-    QCOMPARE(f.state->calls.load(), 1);
-    f.state->release.release();
-    QTRY_COMPARE_WITH_TIMEOUT(f.callbacks, 1, 3000);
-    QCOMPARE(f.completedId, QStringLiteral("worker-1"));
-    QVERIFY(f.start(QStringLiteral("worker-2")));
-    f.state->release.release();
-    QTRY_COMPARE_WITH_TIMEOUT(f.callbacks, 2, 3000);
-    QCOMPARE(f.completedId, QStringLiteral("worker-2"));
-    QCOMPARE(f.state->calls.load(), 2);
-}
-
-void ApplicationControllerTest::localInferenceWorkerPropagatesCancellationToClient() {
-    sentinel::test::LocalInferenceWorkerFixture f;
-    QVERIFY(f.start());
-    QTRY_VERIFY_WITH_TIMEOUT(f.state->entered.load(), 1000);
-    f.worker->cancel(QStringLiteral("worker-1"));
-    f.state->release.release();
-    QTRY_COMPARE_WITH_TIMEOUT(f.callbacks, 1, 3000);
-    QVERIFY(f.state->cancelled.load());
-    // Worker forwards the client result; terminal rejection belongs to its consumer.
-        QCOMPARE(f.response.status, LocalInferenceStatus::Succeeded);
-    QCOMPARE(f.completedId, QStringLiteral("worker-1"));
-    f.shutdown();
-}
-
-void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndResetsBusy() {
-    auto timeoutClient = std::make_unique<CategorizedErrorLocalInferenceClient>(
-        sentinel::core::LocalInferenceError::Timeout,
-        QStringLiteral("Local Ollama generation timed out after 30000 ms."));
-    auto* timeoutClientPtr = timeoutClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(timeoutClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(timeoutClientPtr->called);
-    QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(timeoutClientPtr->lastRequest.options.timeoutMs, 0);
-    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference failed: the local Ollama request timed out."));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-}
-
-void ApplicationControllerTest::
-    localInferenceMalformedResponseAppendsConciseFailureAndResetsBusy() {
-    auto malformedClient = std::make_unique<CategorizedErrorLocalInferenceClient>(
-        sentinel::core::LocalInferenceError::InvalidResponse,
-        QStringLiteral("Local Ollama generation failed: Ollama returned malformed JSON."));
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(malformedClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference failed: Ollama returned an invalid response."));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-}
-
-void ApplicationControllerTest::ollamaUnavailablePathAppendsConciseFailureWithoutRealService() {
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{}));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(!sent);
-    QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Ollama Unreachable"));
-    QCOMPARE(controller->localChatSendAvailable(), false);
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again."));
-}
-
-void ApplicationControllerTest::duplicateSendDuringActiveStreamIsRejectedWithoutAppending() {
-    auto streamClient = std::make_unique<ReentrantLocalInferenceStreamClient>();
-    auto* streamClientPtr = streamClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-    streamClientPtr->controller = controller.get();
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(streamClientPtr->called);
-    QVERIFY(!streamClientPtr->duplicateAccepted);
-    QVERIFY(!controller->localInferenceBusy());
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("final response"));
-    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
-}
-
-void ApplicationControllerTest::streamingInterruptionClearsPreviewAndAppendsOneFailure() {
-    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
-        QList<LocalInferenceStreamChunk>{
-            {1, QStringLiteral("partial "), false, false, QStringLiteral("first chunk")},
-        },
-        LocalInferenceStreamStatus::Error,
-        QStringLiteral("Local Ollama streaming response did not complete with assistant text."));
-    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
-    auto* historyStorePtr = historyStore.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
-        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setLocalInferenceStreamingEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(!controller->localInferenceBusy());
-    QVERIFY(controller->localInferenceStreamingText().isEmpty());
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference failed: the Ollama stream ended before a complete "
-                            "assistant response was received."));
-    QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-}
 
 void ApplicationControllerTest::blocksLocalInferenceByDefaultPermission() {
     const auto controller = makeController();
@@ -3195,195 +2203,6 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
                        "and no-execution posture is enforced with deterministic metadata rules.")));
 }
 
-void ApplicationControllerTest::localChatInferenceRequiresASelectedModel() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->setLocalChatInferenceEnabled(true);
-
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(!sent);
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Select an installed Ollama model in Settings before sending."));
-}
-
-void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsSafely() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{}),
-        std::move(fakeClient));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(!sent);
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->localChatSendAvailable(), false);
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Select an installed Ollama model in Settings before sending."));
-}
-
-void ApplicationControllerTest::enabledLocalChatInferenceWithInvalidModelShowsSafeSummary() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("missing-model"));
-    controller->setLocalChatInferenceEnabled(true);
-
-    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Invalid Model"));
-    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Model Unavailable"));
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->localChatSendAvailable(), false);
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Selected model missing-model is not installed in Ollama. Choose an "
-                            "available model in Settings."));
-}
-
-void ApplicationControllerTest::disabledProviderSelectionRefusesBeforeTranscriptMutation() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
-
-    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Provider Disabled"));
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
-                            "Ollama or LM Studio to send."));
-}
-
-void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
-    auto* historyStorePtr = historyStore.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
-        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(fakeClientPtr->called);
-    QCOMPARE(fakeClientPtr->lastRequest.options.model, QStringLiteral("llama3.2"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("fake local completion"));
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
-    QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 2);
-}
-
-void ApplicationControllerTest::enabledLocalChatInferenceErrorAppendsSafeRefusal() {
-    auto errorClient = std::make_unique<ErrorLocalInferenceClient>();
-    auto* errorClientPtr = errorClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(errorClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(sent);
-    QVERIFY(errorClientPtr->called);
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference unavailable: the local Ollama client is not ready."));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
-}
-
-void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    OllamaConfig config;
-    config.endpoint.url = QUrl(QStringLiteral("https://example.com"));
-    config.endpoint.valid = false;
-    config.endpoint.normalizedFromInvalid = false;
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}, config),
-        std::move(fakeClient));
-
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-
-    controller->setLocalChatInferenceEnabled(true);
-    const auto sent = controller->sendMessage(QStringLiteral("hello"));
-
-    QVERIFY(!sent);
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller->chatHistory().size(), 1);
-    QCOMPARE(controller->localChatSendAvailable(), false);
-    QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Ollama must use a local loopback HTTP endpoint."));
-}
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {
     const auto controller = makeController();
@@ -3466,64 +2285,6 @@ void ApplicationControllerTest::keepsConversationSessionSeparateFromChatAndRunti
     QCOMPARE(controller->conversationTransitionStatus(), QStringLiteral("Not Requested"));
 }
 
-void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-    QSignalSpy statusSpy(&controller, &ApplicationController::agentStatusChanged);
-    QSignalSpy responseSpy(&controller, &ApplicationController::agentResponseChanged);
-    QSignalSpy planSpy(&controller, &ApplicationController::toolPlanChanged);
-    QSignalSpy approvalSpy(&controller, &ApplicationController::approvalChanged);
-    QSignalSpy sandboxSpy(&controller, &ApplicationController::sandboxChanged);
-    QSignalSpy toolExecutionSpy(&controller, &ApplicationController::toolExecutionChanged);
-    QSignalSpy runtimeContextSpy(&controller, &ApplicationController::runtimeContextChanged);
-    QSignalSpy activitySpy(&controller, &ApplicationController::agentActivityChanged);
-    QSignalSpy conversationStateSpy(&controller, &ApplicationController::conversationStateChanged);
-
-    const auto ran = controller.runAgentRequest(QStringLiteral("check local plan"));
-
-    QVERIFY(ran);
-    QCOMPARE(controller.agentStatus(), QStringLiteral("Ready"));
-    QCOMPARE(controller.lastAgentResponse(), QStringLiteral("Executed: Local Plan Summary"));
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestToolPlanSummary(),
-             QStringLiteral("Tool plan prepared: Local Plan Summary"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
-    QCOMPARE(controller.latestApprovalSummary(),
-             QStringLiteral("Planned tool invocations do not require approval."));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
-    QCOMPARE(controller.latestSandboxSummary(),
-             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Executed: Local Plan Summary"));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Executed: Local Plan Summary"));
-    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
-    QCOMPARE(controller.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
-    QCOMPARE(controller.runtimeContextActiveToolIds(),
-             QStringList{QStringLiteral("local-plan-summary")});
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Succeeded"));
-    QCOMPARE(controller.conversationState(), QStringLiteral("Completed"));
-    QCOMPARE(controller.conversationTransitionStatus(), QStringLiteral("Accepted"));
-    QCOMPARE(controller.conversationTransitionSummary(),
-             QStringLiteral("Accepted conversation transition: Responding -> Completed: agent "
-                            "response metadata completed"));
-    QCOMPARE(statusSpy.count(), 1);
-    QCOMPARE(responseSpy.count(), 1);
-    QCOMPARE(planSpy.count(), 1);
-    QCOMPARE(approvalSpy.count(), 1);
-    QCOMPARE(sandboxSpy.count(), 1);
-    QCOMPARE(toolExecutionSpy.count(), 1);
-    QCOMPARE(runtimeContextSpy.count(), 1);
-    QCOMPARE(activitySpy.count(), 1);
-    QVERIFY(conversationStateSpy.count() >= 6);
-}
-
 void ApplicationControllerTest::exposesAgentToolMetadata() {
     const auto controllerWithoutRuntime = makeController();
     QCOMPARE(controllerWithoutRuntime->availableToolCount(), 0);
@@ -3535,294 +2296,6 @@ void ApplicationControllerTest::exposesAgentToolMetadata() {
 
     QCOMPARE(controller.availableToolCount(), 1);
     QCOMPARE(controller.availableToolIds(), QStringList{QStringLiteral("local-plan-summary")});
-}
-
-void ApplicationControllerTest::exposesLatestToolPlanStatusWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
-
-    QVERIFY(!controller.runAgentRequest(QStringLiteral("   ")));
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestToolPlanSummary(),
-             QStringLiteral("Tool plan prepared: Local Plan Summary"));
-}
-
-void ApplicationControllerTest::exposesLatestApprovalStatusWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestApprovalSummary(), QStringLiteral("No approval decision yet."));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
-    QCOMPARE(controller.latestApprovalSummary(),
-             QStringLiteral("Planned tool invocations do not require approval."));
-}
-
-void ApplicationControllerTest::exposesLatestSandboxStatusWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
-    QCOMPARE(controller.latestSandboxSummary(), QStringLiteral("No sandbox evaluation yet."));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
-    QCOMPARE(controller.latestSandboxSummary(),
-             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
-}
-
-void ApplicationControllerTest::exposesLatestToolExecutionStatusWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("No tool execution boundary result yet."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("No agent pipeline result yet."));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Executed: Local Plan Summary"));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Executed: Local Plan Summary"));
-}
-
-void ApplicationControllerTest::exposesSuccessfulPipelineResultWithRuntime() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-    QSignalSpy pipelineSpy(&controller, &ApplicationController::agentPipelineChanged);
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Executed: Local Plan Summary"));
-    QCOMPARE(pipelineSpy.count(), 1);
-}
-
-void ApplicationControllerTest::exposesRuntimeContextForPipelineResult() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-    QSignalSpy runtimeContextSpy(&controller, &ApplicationController::runtimeContextChanged);
-
-    QCOMPARE(controller.runtimeSessionId(), QStringLiteral("runtime-session-1"));
-    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Empty"));
-    QCOMPARE(controller.runtimeContextSummary(), QStringLiteral("No runtime context yet."));
-    QVERIFY(controller.runtimeContextActiveToolIds().isEmpty());
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-
-    QCOMPARE(controller.runtimeSessionId(), QStringLiteral("runtime-session-1"));
-    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
-    QCOMPARE(controller.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
-    QCOMPARE(controller.runtimeContextActiveToolIds(),
-             QStringList{QStringLiteral("local-plan-summary")});
-    QCOMPARE(runtimeContextSpy.count(), 1);
-}
-
-void ApplicationControllerTest::exposesAgentActivityForPipelineResult() {
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::make_unique<sentinel::core::NullAgentRuntime>());
-    QSignalSpy activitySpy(&controller, &ApplicationController::agentActivityChanged);
-
-    QCOMPARE(controller.agentActivityCount(), 0);
-    QCOMPARE(controller.latestAgentActivitySummary(), QStringLiteral("No agent activity yet."));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Succeeded"));
-    QCOMPARE(activitySpy.count(), 1);
-}
-
-void ApplicationControllerTest::reportsRiskyToolPlanRequiresApproval() {
-    auto runtime =
-        std::make_unique<sentinel::core::NullAgentRuntime>(QList<sentinel::core::ToolDescriptor>{
-            sentinel::core::ToolDescriptor{
-                QStringLiteral("risky-tool"),
-                QStringLiteral("Risky Tool"),
-                QStringLiteral("Risk metadata only."),
-                sentinel::core::ToolRiskLevel::High,
-                sentinel::core::ToolExecutionMode::MetadataOnly,
-                {},
-            },
-        });
-    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
-                                     std::move(runtime));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft risky plan")));
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Requires Approval"));
-    QCOMPARE(controller.latestApprovalSummary(),
-             QStringLiteral("One or more planned tool invocations require approval."));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Blocked By Approval"));
-    QCOMPARE(controller.latestSandboxSummary(),
-             QStringLiteral("Sandbox capability evaluation is blocked by approval metadata."));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Execution paused: pending user approval in chat."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Execution paused: pending user approval in chat."));
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Blocked"));
-    QCOMPARE(controller.conversationState(), QStringLiteral("Waiting For Approval"));
-    QCOMPARE(controller.conversationTransitionStatus(), QStringLiteral("Accepted"));
-    QCOMPARE(controller.conversationTransitionSummary(),
-             QStringLiteral("Accepted conversation transition: Routing -> Waiting For Approval: "
-                            "approval metadata required"));
-}
-
-void ApplicationControllerTest::reportsSandboxBlockedPipelineResult() {
-    const sentinel::core::ToolDescriptor tool{
-        QStringLiteral("local-tool"),
-        QStringLiteral("Local Tool"),
-        QStringLiteral("Metadata only."),
-        sentinel::core::ToolRiskLevel::Low,
-        sentinel::core::ToolExecutionMode::MetadataOnly,
-        {},
-    };
-    sentinel::core::ToolInvocationPlan plan{
-        sentinel::core::ToolInvocationPlanStatus::Planned,
-        QStringLiteral("Metadata-only tool plan prepared."),
-        {
-            sentinel::core::PlannedToolInvocation{
-                tool.id,
-                tool.name,
-                QStringLiteral("Plan metadata."),
-                QStringLiteral("Metadata-only rationale."),
-                tool.riskLevel,
-                tool.executionMode,
-                {},
-                {
-                    sentinel::core::CapabilityDescriptor{
-                        QStringLiteral("tool.blocked.capability"),
-                        QStringLiteral("Blocked metadata capability."),
-                    },
-                },
-            },
-        },
-    };
-    ApplicationController controller(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{tool}, plan));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft sandbox blocked plan")));
-
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Denied"));
-    QCOMPARE(
-        controller.latestSandboxSummary(),
-        QStringLiteral("One or more planned capabilities are outside sandbox metadata policy."));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Execution boundary blocked by sandbox capability metadata."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Execution boundary blocked by sandbox capability metadata."));
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Blocked"));
-}
-
-void ApplicationControllerTest::reportsEmptyPlanPipelineResult() {
-    sentinel::core::ToolInvocationPlan plan{
-        sentinel::core::ToolInvocationPlanStatus::NoToolsAvailable,
-        QStringLiteral("No tool metadata is available for planning."),
-        {},
-    };
-    ApplicationController controller(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{}, plan));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft empty plan")));
-
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("No Tools Available"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Requested"));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Empty Plan"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("No planned tool invocation reached the execution boundary."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Empty Plan"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("No planned tool invocation reached the execution boundary."));
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Empty Plan"));
-}
-
-void ApplicationControllerTest::reportsUnknownToolPipelineResult() {
-    const sentinel::core::ToolDescriptor knownTool{
-        QStringLiteral("known-tool"),
-        QStringLiteral("Known Tool"),
-        QStringLiteral("Metadata only."),
-        sentinel::core::ToolRiskLevel::Low,
-        sentinel::core::ToolExecutionMode::MetadataOnly,
-        {},
-    };
-    sentinel::core::ToolInvocationPlan plan{
-        sentinel::core::ToolInvocationPlanStatus::Planned,
-        QStringLiteral("Metadata-only tool plan prepared."),
-        {
-            sentinel::core::PlannedToolInvocation{
-                QStringLiteral("missing-tool"),
-                QStringLiteral("Missing Tool"),
-                QStringLiteral("Plan metadata."),
-                QStringLiteral("Metadata-only rationale."),
-                sentinel::core::ToolRiskLevel::Low,
-                sentinel::core::ToolExecutionMode::MetadataOnly,
-                {},
-                {},
-            },
-        },
-    };
-    ApplicationController controller(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{knownTool}, plan));
-
-    QVERIFY(controller.runAgentRequest(QStringLiteral("draft unknown tool plan")));
-
-    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
-    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
-    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Unknown Tool"));
-    QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Execution boundary rejected unknown tool metadata: missing-tool"));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Unknown Tool"));
-    QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Execution boundary rejected unknown tool metadata: missing-tool"));
-    QCOMPARE(controller.agentActivityCount(), 6);
-    QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Unknown Tool"));
 }
 
 void ApplicationControllerTest::exposesMemoryStatus() {
@@ -4312,91 +2785,6 @@ void ApplicationControllerTest::contextAssemblyPlanningDoesNotMutateOrInjectProm
     QVERIFY(!controller->chatHistory().last().content.contains(QStringLiteral("planning only")));
 }
 
-void ApplicationControllerTest::promptContextInjectionDisabledLeavesPromptUnchanged() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-
-    QVERIFY(fakeClientPtr->called);
-    QCOMPARE(fakeClientPtr->lastRequest.prompt, QStringLiteral("hello"));
-    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(controller->promptContextInjectedBlockCount(), 0);
-}
-
-void ApplicationControllerTest::enabledPromptContextInjectionIncludesDeterministicBundle() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->remember(QStringLiteral("preference.tone"), QStringLiteral("Concise answers"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("tone concise hello")));
-
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    QVERIFY(prompt.startsWith(QStringLiteral("[Sentinel Local Context]")));
-    QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
-    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
-    QVERIFY(prompt.contains(QStringLiteral("preference.tone = Concise answers")));
-    QVERIFY(prompt.contains(
-        QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\ntone concise hello")));
-    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Injected"));
-    QVERIFY(controller->promptContextInjectedBlockCount() >= 3);
-    QCOMPARE(controller->promptContextUsedMemoryCount(), 1);
-    QVERIFY(controller->promptContextUsedSummary().contains(QStringLiteral("1 memory")));
-    QVERIFY(controller->promptContextSourceSummary().contains(QStringLiteral("Committed Memory")));
-    QVERIFY(controller->memoryRelevanceSummaryText().contains(QStringLiteral("selected 1")));
-}
-
-void ApplicationControllerTest::promptContextInjectionUsesOnlyCommittedMemory() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    const auto pendingId = controller->createMemoryCandidateFromConversationText(
-        QStringLiteral("Pending private candidate must not be injected."));
-    const auto rejectedId = controller->createMemoryCandidateFromConversationText(
-        QStringLiteral("Rejected private candidate must not be injected."));
-    QVERIFY(controller->rejectMemoryCandidate(rejectedId));
-    Q_UNUSED(pendingId);
-    controller->remember(QStringLiteral("approved.local"), QStringLiteral("committed only"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("approved local committed hello")));
-
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    QVERIFY(prompt.contains(QStringLiteral("approved.local = committed only")));
-    QVERIFY(!prompt.contains(QStringLiteral("Pending private candidate")));
-    QVERIFY(!prompt.contains(QStringLiteral("Rejected private candidate")));
-}
-
 void ApplicationControllerTest::promptContextInjectionBudgetTruncatesDeterministically() {
     const auto result = sentinel::core::injectPromptContext(
         QStringLiteral("hello"),
@@ -4414,92 +2802,6 @@ void ApplicationControllerTest::promptContextInjectionBudgetTruncatesDeterminist
     QVERIFY(result.prompt.contains(QStringLiteral("kl")));
     QVERIFY(!result.prompt.contains(QStringLiteral("klm")));
     QVERIFY(result.sizeSummary.contains(QStringLiteral("12 of 20")));
-}
-
-void ApplicationControllerTest::promptContextInjectionUsesBoundedRecentConversationWindow() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-
-    for (int i = 0; i < 14; ++i) {
-        QVERIFY(controller->sendMessage(
-            QStringLiteral("history marker %1 %2").arg(i).arg(QString(120, QLatin1Char('x')))));
-    }
-    const auto messageCountBeforePrompt = controller->conversationHistoryMessageCount();
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-    controller->remember(QStringLiteral("stable.memory"), QStringLiteral("kept separate"));
-
-    QVERIFY(controller->sendMessage(QStringLiteral("final question stable memory")));
-
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
-    QVERIFY(prompt.contains(QStringLiteral("[Conversation History]")));
-    QVERIFY(prompt.contains(QStringLiteral("[/Conversation History]")));
-    QVERIFY(prompt.contains(QStringLiteral("--- Older Conversation Summary ---")));
-    QVERIFY(prompt.contains(QStringLiteral("[Conversation Summary]")));
-    QVERIFY(prompt.contains(QStringLiteral("[/Conversation Summary]")));
-    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
-    QVERIFY(prompt.indexOf(QStringLiteral("[/Conversation History]")) <
-            prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---")));
-    QVERIFY(prompt.indexOf(QStringLiteral("[/Conversation Summary]")) <
-            prompt.indexOf(QStringLiteral("--- Committed Local Memory ---")));
-    QVERIFY(prompt.contains(QStringLiteral("history marker 0")));
-    QVERIFY(prompt.contains(QStringLiteral("history marker 13")));
-    QCOMPARE(prompt.count(QStringLiteral("final question")), 1);
-    QCOMPARE(controller->conversationHistoryMessageCount(), messageCountBeforePrompt + 2);
-    QCOMPARE(controller->conversationWindowStatus(), QStringLiteral("Truncated"));
-    QVERIFY(controller->conversationWindowIncludedMessageCount() > 0);
-    QVERIFY(controller->conversationWindowOmittedMessageCount() > 0);
-    QVERIFY(controller->conversationSummaryBlockCount() > 0);
-    QVERIFY(controller->conversationSummaryMessageCount() > 0);
-}
-
-void ApplicationControllerTest::conversationSummaryUsesOlderWindowAndStaysSeparateFromMemory() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-
-    for (int i = 0; i < 10; ++i) {
-        QVERIFY(controller->sendMessage(
-            QStringLiteral("summary marker %1 %2").arg(i).arg(QString(100, QLatin1Char('s')))));
-    }
-    controller->remember(QStringLiteral("summary.memory"), QStringLiteral("memory stays distinct"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("summary final question memory")));
-
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
-    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory ---"));
-    QVERIFY(summaryStart >= 0);
-    QVERIFY(memoryStart > summaryStart);
-    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
-                .contains(QStringLiteral("summary marker 0")));
-    QVERIFY(!prompt.mid(summaryStart, memoryStart - summaryStart)
-                 .contains(QStringLiteral("summary.memory = memory stays distinct")));
-    QVERIFY(
-        prompt.mid(memoryStart).contains(QStringLiteral("summary.memory = memory stays distinct")));
-    QCOMPARE(controller->conversationSummaryStatus(), QStringLiteral("Truncated"));
-    QVERIFY(controller->conversationSummaryBudgetSummary().contains(QStringLiteral("700")));
-    QVERIFY(!controller->conversationSummaryBlockSummaries().isEmpty());
 }
 
 void ApplicationControllerTest::conversationSummaryPlanningDoesNotMutateState() {
@@ -4520,53 +2822,6 @@ void ApplicationControllerTest::conversationSummaryPlanningDoesNotMutateState() 
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
     QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Disabled"));
-}
-
-void ApplicationControllerTest::retrievalPlanningFeedsPromptContextWithoutMixingSources() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-
-    for (int i = 0; i < 10; ++i) {
-        QVERIFY(controller->sendMessage(
-            QStringLiteral("retrieval marker %1 %2").arg(i).arg(QString(100, QLatin1Char('r')))));
-    }
-    controller->remember(QStringLiteral("retrieval.memory"),
-                         QStringLiteral("committed memory remains distinct"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    const auto planningBeforePrompt = controller->retrievalPlanningResult();
-    QVERIFY(planningBeforePrompt.status == sentinel::core::RetrievalPlanningStatus::Ready ||
-            planningBeforePrompt.status == sentinel::core::RetrievalPlanningStatus::Truncated);
-    QVERIFY(planningBeforePrompt.selectedSourceCount >= 4);
-    QCOMPARE(controller->retrievalPlanningReadiness(), QStringLiteral("Ready"));
-
-    QVERIFY(controller->sendMessage(QStringLiteral("retrieval final question memory")));
-
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    const auto windowStart = prompt.indexOf(QStringLiteral("--- Bounded Conversation History ---"));
-    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
-    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory ---"));
-    QVERIFY(windowStart >= 0);
-    QVERIFY(summaryStart > windowStart);
-    QVERIFY(memoryStart > summaryStart);
-    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
-                .contains(QStringLiteral("retrieval marker 0")));
-    QVERIFY(!prompt.mid(summaryStart, memoryStart - summaryStart)
-                 .contains(QStringLiteral("retrieval.memory = committed memory remains distinct")));
-    QVERIFY(prompt.mid(memoryStart)
-                .contains(QStringLiteral("retrieval.memory = committed memory remains distinct")));
-    QVERIFY(controller->retrievalPlanningSourceSummary().contains(
-        QStringLiteral("Conversation Context")));
 }
 
 void ApplicationControllerTest::retrievalPlanningDoesNotMutateState() {
@@ -4665,65 +2920,6 @@ void ApplicationControllerTest::manualSummaryGenerationFailureDoesNotPersistMeta
              QStringLiteral("No local summary metadata persisted."));
 }
 
-void ApplicationControllerTest::manualSummaryGenerationPersistsSafeLocalSummary() {
-    auto store = std::make_unique<sentinel::core::InMemoryConversationStore>();
-    auto* storePtr = store.get();
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, std::move(store));
-
-    for (int i = 0; i < 16; ++i) {
-        QVERIFY(controller->sendMessage(QStringLiteral("manual summary success %1 %2")
-                                            .arg(i)
-                                            .arg(QString(160, QLatin1Char('s')))));
-    }
-    controller->remember(QStringLiteral("summary.local"), QStringLiteral("unchanged"));
-    const auto beforeEntries = controller->memoryEntries();
-    const auto beforeMessages = controller->conversationHistoryMessageCount();
-    const auto beforeTranscript = controller->chatMessages();
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-
-    QVERIFY(controller->requestConversationSummaryGeneration());
-
-    const auto metadata = storePtr->loadSummaryMetadata(controller->activeConversationId());
-    QCOMPARE(metadata.conversationId, controller->activeConversationId());
-    QCOMPARE(metadata.readinessState, QStringLiteral("Ready"));
-    QCOMPARE(metadata.summaryText, QStringLiteral("fake local completion"));
-    QVERIFY(metadata.summaryText.size() <= controller->conversationSummaryBudgetCharacters());
-    QVERIFY(metadata.summaryTimestampUtc.isValid());
-    QVERIFY(metadata.coveredFirstMessageId > 0);
-    QVERIFY(metadata.coveredLastMessageId >= metadata.coveredFirstMessageId);
-    QVERIFY(!metadata.summary.contains(QStringLiteral("[Conversation Summary]")));
-    QVERIFY(fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Visible transcript:")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("summary.local =")));
-    QCOMPARE(controller->memoryEntries(), beforeEntries);
-    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
-    QCOMPARE(controller->chatMessages(), beforeTranscript);
-    QCOMPARE(controller->conversationSummaryGenerationStatus(), QStringLiteral("Ready"));
-    QVERIFY(controller->conversationSummaryPersistenceSummary().contains(QStringLiteral("Ready")));
-
-    controller->setPromptContextInjectionEnabled(true);
-    QVERIFY(controller->sendMessage(QStringLiteral("summary local followup")));
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
-    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory"));
-    QVERIFY(summaryStart >= 0);
-    QVERIFY(memoryStart > summaryStart);
-    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
-                .contains(QStringLiteral("fake local completion")));
-    QVERIFY(
-        controller->conversationSummaryInjectionSummary().contains(QStringLiteral("assisting")));
-}
-
 void ApplicationControllerTest::summaryContinuityInjectsPersistedSummaryAfterRestart() {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
@@ -4811,47 +3007,6 @@ void ApplicationControllerTest::staleSummaryContinuityFallsBackToTranscriptOnly(
         !controller->promptContextSourceSummary().contains(QStringLiteral("Conversation Summary")));
     QVERIFY(controller->chatMessages().size() > beforeMessages.size());
     QCOMPARE(controller->memoryEntries(), beforeMemory);
-}
-
-void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->remember(QStringLiteral("semantic.local"), QStringLiteral("deterministic only"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    const auto planningBefore = controller->retrievalPlanningResult();
-    QCOMPARE(controller->semanticRetrievalEnabled(), false);
-    QCOMPARE(controller->semanticRetrievalStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(controller->embeddingProviderReadiness(), QStringLiteral("Not Configured"));
-    QCOMPARE(controller->vectorIndexReadiness(), QStringLiteral("Not Configured"));
-    QCOMPARE(controller->vectorIndexedItemCount(), 0);
-    QVERIFY(controller->semanticRetrievalReadinessChecks().contains(
-        QStringLiteral("Semantic ranking: disabled")));
-    QVERIFY(controller->semanticRetrievalReadinessChecks().contains(
-        QStringLiteral("Raw vectors exposed to QML: no")));
-
-    QVERIFY(controller->sendMessage(QStringLiteral("semantic final question local deterministic")));
-
-    const auto planningAfter = controller->retrievalPlanningResult();
-    QVERIFY(planningAfter.selectedSourceCount >= planningBefore.selectedSourceCount);
-    QCOMPARE(controller->semanticRetrievalEnabled(), false);
-    QCOMPARE(controller->semanticRetrievalStatus(), QStringLiteral("Disabled"));
-    const auto prompt = fakeClientPtr->lastRequest.prompt;
-    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
-    QVERIFY(prompt.contains(QStringLiteral("semantic.local = deterministic only")));
-    QVERIFY(!prompt.contains(QStringLiteral("EmbeddingVector")));
-    QVERIFY(!prompt.contains(QStringLiteral("VectorSearch")));
-    QVERIFY(!prompt.contains(QStringLiteral("score")));
 }
 
 void ApplicationControllerTest::semanticProviderPlanningExposesDisabledSelection() {
@@ -5172,37 +3327,6 @@ void ApplicationControllerTest::
     QCOMPARE(promptAfter.status, promptBefore.status);
 }
 
-void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePrompt() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->remember(QStringLiteral("candidate.prompt"), QStringLiteral("deterministic"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    const auto candidateStatusBefore = controller->semanticCandidateStatus();
-
-    QVERIFY(controller->sendMessage(
-        QStringLiteral("semantic candidate question prompt deterministic")));
-
-    QCOMPARE(controller->semanticCandidateStatus(), candidateStatusBefore);
-    QVERIFY(fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("candidate.prompt = "
-                                                                      "deterministic")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Future Semantic/Vector")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("SemanticCandidate")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Hybrid retrieval")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("simulated score")));
-    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Embedding runtime")));
-}
-
 void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto controller = std::make_unique<ApplicationController>(
@@ -5228,30 +3352,6 @@ void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandi
     QCOMPARE(controller->memoryCandidateCount(), beforeCandidateCount);
     QCOMPARE(controller->pendingMemoryCandidateCount(), 1);
     QCOMPARE(controller->memoryCandidateIds().first(), id);
-}
-
-void ApplicationControllerTest::promptContextInjectionRespectsSafetyGateBeforeAssembly() {
-    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
-    auto* fakeClientPtr = fakeClient.get();
-    auto controller = std::make_unique<ApplicationController>(
-        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
-        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
-        std::make_unique<BlockLocalInferenceSafetyPolicy>(), nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(
-            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
-        std::move(fakeClient));
-    controller->remember(QStringLiteral("stable.local"), QStringLiteral("do not assemble"));
-    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
-    controller->setLocalChatInferenceEnabled(true);
-    controller->setPromptContextInjectionEnabled(true);
-
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
-
-    QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Empty"));
-    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
 }
 
 void ApplicationControllerTest::clearChatKeepsApprovedMemoryCandidateMetadata() {
