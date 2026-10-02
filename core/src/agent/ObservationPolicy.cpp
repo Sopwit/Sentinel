@@ -77,6 +77,30 @@ std::optional<ObservationDomain> domainFromName(const QString& name) {
                                    : std::optional<ObservationDomain>(*found);
 }
 
+QString strictJsonObject(const QString& text) {
+    const auto trimmed = text.trimmed();
+    if (trimmed.startsWith(QLatin1Char('{')) && trimmed.endsWith(QLatin1Char('}')))
+        return trimmed;
+
+    // Some OpenAI-compatible local models wrap an otherwise valid structured
+    // response in one Markdown JSON fence. This is presentation-only framing:
+    // accept it only when the entire reply is that single fenced object, then
+    // retain the normal JSON/schema validation below.
+    if (!trimmed.startsWith(QStringLiteral("```")) ||
+        !trimmed.endsWith(QStringLiteral("```")))
+        return {};
+    const auto firstLineEnd = trimmed.indexOf(QLatin1Char('\n'));
+    if (firstLineEnd < 0)
+        return {};
+    const auto fence = trimmed.left(firstLineEnd).trimmed().toLower();
+    if (fence != QLatin1String("```") && fence != QLatin1String("```json"))
+        return {};
+    const auto object = trimmed.mid(firstLineEnd + 1, trimmed.size() - firstLineEnd - 4).trimmed();
+    return object.startsWith(QLatin1Char('{')) && object.endsWith(QLatin1Char('}'))
+               ? object
+               : QString{};
+}
+
 bool compatibleDomain(ObservationDomain required, ObservationDomain produced) {
     return required == produced ||
            (required == ObservationDomain::Workspace &&
@@ -216,8 +240,8 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         intent.error = reply.errorMessage;
         return intent;
     }
-    const auto candidate = reply.message.trimmed();
-    if (!candidate.startsWith(QLatin1Char('{')) || !candidate.endsWith(QLatin1Char('}'))) {
+    const auto candidate = strictJsonObject(reply.message);
+    if (candidate.isEmpty()) {
         intent.indeterminate = true;
         return intent;
     }
