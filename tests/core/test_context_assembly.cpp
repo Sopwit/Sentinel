@@ -31,6 +31,7 @@ using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
 using sentinel::core::explainContextDecision;
+using sentinel::core::injectPromptContext;
 using sentinel::core::makeContextAssemblySource;
 using sentinel::core::MemoryRelevanceCandidate;
 using sentinel::core::MemoryRelevancePolicy;
@@ -77,6 +78,10 @@ private slots:
     void conversationSummaryGenerationPlansSegmentsAndBudgetDeterministically();
     void contextDecisionExplainabilityReportsOrderingBudgetAndFallback();
     void contextDecisionExplainabilityDoesNotExposeRawPrompt();
+    void promptContextInjectionDisabledLeavesPromptUnchanged();
+    void enabledPromptContextInjectionIncludesDeterministicBundle();
+    void promptContextInjectionUsesOnlyCommittedMemory();
+    void promptContextInjectionRespectsSafetyGateBeforeAssembly();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -745,6 +750,91 @@ void ContextAssemblyTest::contextDecisionExplainabilityDoesNotExposeRawPrompt() 
     QVERIFY(!exposed.contains(QStringLiteral("RAW_SYSTEM_PROMPT")));
     QVERIFY(!exposed.contains(QStringLiteral("provider_payload")));
     QVERIFY(!exposed.contains(QStringLiteral("secret-vector")));
+}
+
+void ContextAssemblyTest::promptContextInjectionDisabledLeavesPromptUnchanged() {
+    const auto result = injectPromptContext(
+        QStringLiteral("hello raw prompt"),
+        {
+            PromptContextBlock{ContextAssemblySourceKind::Conversation,
+                               QStringLiteral("Bounded Conversation History"),
+                               QStringLiteral("history text")},
+            PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
+                               QStringLiteral("Committed Local Memory"),
+                               QStringLiteral("key = value")},
+        },
+        PromptContextInjectionPolicy{false, 2000});
+
+    QCOMPARE(result.status, PromptContextInjectionStatus::Disabled);
+    QCOMPARE(result.prompt, QStringLiteral("hello raw prompt"));
+    QCOMPARE(result.injectedBlockCount, 0);
+    QCOMPARE(result.injectedCharacterCount, 0);
+    QVERIFY(result.bundle.blocks.isEmpty());
+}
+
+void ContextAssemblyTest::enabledPromptContextInjectionIncludesDeterministicBundle() {
+    const auto result = injectPromptContext(
+        QStringLiteral("tone concise hello"),
+        {
+            PromptContextBlock{ContextAssemblySourceKind::Conversation,
+                               QStringLiteral("Bounded Conversation History"),
+                               QStringLiteral("history turn")},
+            PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
+                               QStringLiteral("Committed Local Memory"),
+                               QStringLiteral("preference.tone = Concise answers")},
+        },
+        PromptContextInjectionPolicy{true, 2000});
+
+    QCOMPARE(result.status, PromptContextInjectionStatus::Injected);
+    QVERIFY(result.prompt.startsWith(QStringLiteral("[Sentinel Local Context]")));
+    QVERIFY(result.prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
+    QVERIFY(result.prompt.contains(QStringLiteral("history turn")));
+    QVERIFY(result.prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
+    QVERIFY(result.prompt.contains(QStringLiteral("preference.tone = Concise answers")));
+    QVERIFY(result.prompt.contains(
+        QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\ntone concise hello")));
+    QCOMPARE(result.injectedBlockCount, 2);
+    QVERIFY(result.sourceSummary.contains(QStringLiteral("Committed Memory")));
+}
+
+void ContextAssemblyTest::promptContextInjectionUsesOnlyCommittedMemory() {
+    const auto emptyResult = injectPromptContext(
+        QStringLiteral("hello prompt"),
+        {
+            PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
+                               QStringLiteral("Committed Local Memory"), QString()},
+        },
+        PromptContextInjectionPolicy{true, 2000});
+
+    QCOMPARE(emptyResult.status, PromptContextInjectionStatus::Empty);
+    QCOMPARE(emptyResult.prompt, QStringLiteral("hello prompt"));
+    QCOMPARE(emptyResult.injectedBlockCount, 0);
+
+    const auto relevance = rankMemoryRelevance(
+        {
+            MemoryRelevanceCandidate{QStringLiteral("approved.local"),
+                                     QStringLiteral("committed only"), 0},
+            MemoryRelevanceCandidate{QStringLiteral("unrelated.entry"),
+                                     QStringLiteral("not relevant"), 1},
+        },
+        QStringLiteral("approved local"), {}, {}, MemoryRelevancePolicy{});
+
+    QCOMPARE(relevance.includedCount, 1);
+    QCOMPARE(relevance.selections.at(0).candidate.key, QStringLiteral("approved.local"));
+    QCOMPARE(relevance.excludedCount, 1);
+}
+
+void ContextAssemblyTest::promptContextInjectionRespectsSafetyGateBeforeAssembly() {
+    const auto result = injectPromptContext(
+        QStringLiteral("hello safe prompt"),
+        {},
+        PromptContextInjectionPolicy{true, 2000});
+
+    QCOMPARE(result.status, PromptContextInjectionStatus::Empty);
+    QCOMPARE(result.prompt, QStringLiteral("hello safe prompt"));
+    QCOMPARE(result.injectedBlockCount, 0);
+    QVERIFY(result.bundle.blocks.isEmpty());
+    QCOMPARE(result.sourceSummary, QStringLiteral("No context sources injected."));
 }
 
 QTEST_MAIN(ContextAssemblyTest)
