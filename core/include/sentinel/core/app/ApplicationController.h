@@ -1937,6 +1937,7 @@ public:
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool cancelAgentRun();
     Q_INVOKABLE bool agentLoopActive() const;
+    bool agentAwaitingApproval() const;
     void attachAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
@@ -1982,6 +1983,7 @@ signals:
     void memoryRecallChanged();
     void contextAssemblyChanged();
     void agentActivityChanged();
+    void agentLoopStateChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
     void orchestrationSnapshotChanged();

@@ -9101,6 +9101,10 @@ bool ApplicationController::agentLoopActive() const {
            phase == AgentLoopPhase::AwaitingApproval;
 }
 
+bool ApplicationController::agentAwaitingApproval() const {
+    return currentAgentSessionState().phase == AgentLoopPhase::AwaitingApproval;
+}
+
 bool ApplicationController::startAgentLoopRun(const QString& goal) {
     const auto selection = currentWorkspaceModelSelection();
     const bool blockedByLocalPolicy = currentWorkspaceRequiresLocal() &&
@@ -9250,6 +9254,8 @@ bool ApplicationController::clearPersistentPermissions() {
 void ApplicationController::onAgentEvent(const AgentEvent& event) {
     if (event.sessionId != activeAgentSessionId_)
         return;
+    if (event.type == AgentEventType::RuntimeStateChanged)
+        emit agentLoopStateChanged();
     if (audioSession_) {
         if (event.type == AgentEventType::ToolApprovalRequired)
             audioSession_->updateAgentActivity(VoiceInteractionState::WaitingForApproval);
