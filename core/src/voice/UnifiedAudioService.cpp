@@ -812,6 +812,9 @@ VoiceSessionService::VoiceSessionService(QObject* parent)
         }
     });
 }
+VoiceSessionService::~VoiceSessionService() {
+    cancel();
+}
 void VoiceSessionService::setSttRuntime(std::shared_ptr<ISpeechToTextRuntime> runtime) {
     if (state_ == VoiceInteractionState::Listening || state_ == VoiceInteractionState::Transcribing)
         cancel();
@@ -860,6 +863,7 @@ void VoiceSessionService::setState(VoiceInteractionState state) {
     emit stateChanged(state);
 }
 void VoiceSessionService::fail(AudioFailure error, const QString& detail) {
+    cancel();
     failure_ = error;
     privacy_.processingRawAudio = false;
     emit privacyChanged(privacy_);
@@ -900,8 +904,11 @@ void VoiceSessionService::stopPushToTalk() {
     if (state_ != VoiceInteractionState::Listening) return;
     const auto pcm = devices_.stopCapture();
     const bool speech = devices_.speechDetected();
+    if (devices_.lastFailure() != AudioFailure::None) {
+        fail(devices_.lastFailure(), QStringLiteral("Microphone capture failed"));
+        return;
+    }
     setState(VoiceInteractionState::Transcribing);
-    if (devices_.lastFailure() != AudioFailure::None) return;
     if (!speech) { fail(AudioFailure::NoSpeechDetected, QStringLiteral("No speech detected")); return; }
     if (!pcm.isEmpty()) pendingSegments_.enqueue(pcm);
     finalSegmentsRequested_ = true;
@@ -971,6 +978,10 @@ void VoiceSessionService::processFile(const AuthorizedPath& path, const QString&
         privacy_.processingRawAudio = false;
         emit privacyChanged(privacy_);
         if (result.failure != AudioFailure::None) { fail(result.failure, result.detail); return; }
+        if (result.finalText.trimmed().isEmpty()) {
+            fail(AudioFailure::TranscriptionFailure, QStringLiteral("Empty transcript"));
+            return;
+        }
         emit finalTranscriptChanged(result.finalText);
         deliverTranscript(generation);
     });
@@ -1068,26 +1079,41 @@ void VoiceSessionService::speak(const QString& text, const QString& voice, quint
     operationCancellation_ = std::make_shared<std::atomic_bool>(false);
     const auto cancellation = operationCancellation_;
     auto* watcher = new QFutureWatcher<SpeechAudio>(this);
-    connect(watcher, &QFutureWatcher<SpeechAudio>::finished, this, [this, watcher, generation] {
-        const auto audio = watcher->result();
-        watcher->deleteLater();
-        if (generation != generation_) {
-            if (!audio.filePath.isEmpty())
-                QFile::remove(audio.filePath);
-            return;
-        }
-        if (audio.failure != AudioFailure::None) { fail(audio.failure, audio.detail); return; }
-        generatedAudioPath_ = audio.filePath;
-        if (!playback_.playFile(audio.filePath)) {
-            QFile::remove(generatedAudioPath_);
-            generatedAudioPath_.clear();
-            fail(playback_.lastFailure(), QStringLiteral("Playback failed"));
-            return;
-        }
-        setState(VoiceInteractionState::Speaking);
+    // Until the session accepts playback ownership, the worker and completion callback
+    // share cleanup ownership. Destroying the session cannot strand a late artifact.
+    auto artifact = std::shared_ptr<QString>(new QString, [](QString* path) {
+        if (!path->isEmpty())
+            QFile::remove(*path);
+        delete path;
     });
-    watcher->setFuture(QtConcurrent::run([runtime, text, voice, cancellation] {
-        return runtime->synthesize(SpeechSynthesisRequest{text, voice, {}, 1.0}, cancellation);
+    connect(watcher, &QFutureWatcher<SpeechAudio>::finished, this,
+            [this, watcher, generation, artifact] {
+                const auto audio = watcher->result();
+                watcher->deleteLater();
+                if (generation != generation_) {
+                    if (!audio.filePath.isEmpty())
+                        QFile::remove(audio.filePath);
+                    return;
+                }
+                if (audio.failure != AudioFailure::None) {
+                    fail(audio.failure, audio.detail);
+                    return;
+                }
+                generatedAudioPath_ = audio.filePath;
+                artifact->clear();
+                if (!playback_.playFile(audio.filePath)) {
+                    QFile::remove(generatedAudioPath_);
+                    generatedAudioPath_.clear();
+                    fail(playback_.lastFailure(), QStringLiteral("Playback failed"));
+                    return;
+                }
+                setState(VoiceInteractionState::Speaking);
+            });
+    watcher->setFuture(QtConcurrent::run([runtime, text, voice, cancellation, artifact] {
+        auto audio =
+            runtime->synthesize(SpeechSynthesisRequest{text, voice, {}, 1.0}, cancellation);
+        *artifact = audio.filePath;
+        return audio;
     }));
 }
 void VoiceSessionService::readAloud(const QString& text, const QString& voice) {

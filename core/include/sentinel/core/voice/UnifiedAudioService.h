@@ -244,6 +244,7 @@ class VoiceSessionService final : public QObject {
     Q_OBJECT
 public:
     explicit VoiceSessionService(QObject* parent = nullptr);
+    ~VoiceSessionService() override;
     AudioDeviceService* devices() { return &devices_; }
     AudioPlaybackService* playback() { return &playback_; }
     void setSttRuntime(std::shared_ptr<ISpeechToTextRuntime> runtime);
