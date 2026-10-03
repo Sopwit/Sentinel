@@ -51,6 +51,13 @@
 </context>
 <context>
     <name>AppearanceSettingsTab</name>
+    <message><source>Desktop shell and localization preferences.</source><translation>Masaüstü kabuğu ve dil tercihleri.</translation></message>
+    <message><source>Application interface display language.</source><translation>Uygulama arayüzünün görüntüleme dili.</translation></message>
+    <message><source>Theme foundation and visual presets for desktop UI.</source><translation>Masaüstü arayüzü için tema ve görünüm hazır ayarları.</translation></message>
+    <message><source>Active Theme</source><translation>Etkin Tema</translation></message>
+    <message><source>Primary color theme palette.</source><translation>Ana renk teması paleti.</translation></message>
+    <message><source>Comfort, motion, contrast, and density preferences.</source><translation>Konfor, hareket, kontrast ve yoğunluk tercihleri.</translation></message>
+    <message><source>Scale layout density for compact or spacious controls.</source><translation>Sıkışık veya geniş kontroller için düzen yoğunluğunu ayarlayın.</translation></message>
     <message>
         <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="70"/>
         <source>General</source>
@@ -915,6 +922,10 @@ Detay: </translation>
 </context>
 <context>
     <name>HomeChatSurface</name>
+    <message><source>No model selected</source><translation>Model seçilmedi</translation></message>
+    <message><source>A model becomes selectable when the active runtime reports one</source><translation>Etkin çalışma ortamı bir model bildirdiğinde model seçilebilir.</translation></message>
+    <message><source>Choose the model for the next response</source><translation>Sonraki yanıt için modeli seçin</translation></message>
+    <message><source>Retry</source><translation>Yeniden Dene</translation></message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1397"/>
         <source>Provider</source>
@@ -3640,6 +3651,15 @@ Detay: </translation>
 </context>
 <context>
     <name>WelcomeStep</name>
+    <message><source>Local-first</source><translation>Önce yerel</translation></message>
+    <message><source>Inference runs on your machine with Ollama, LM Studio, or llama.cpp.</source><translation>Çıkarım, Ollama, LM Studio veya llama.cpp ile makinenizde çalışır.</translation></message>
+    <message><source>Private by design</source><translation>Tasarım gereği özel</translation></message>
+    <message><source>Memory, chat history, and knowledge stay on your device.</source><translation>Bellek, sohbet geçmişi ve bilgi cihazınızda kalır.</translation></message>
+    <message><source>No telemetry</source><translation>Telemetri yok</translation></message>
+    <message><source>No hidden uploads, silent updates, or cloud activation.</source><translation>Gizli yükleme, sessiz güncelleme veya bulut etkinleştirmesi yoktur.</translation></message>
+    <message><source>Cross-platform</source><translation>Platformlar arası</translation></message>
+    <message><source>A portable Qt experience across Linux, Windows, and macOS.</source><translation>Linux, Windows ve macOS üzerinde taşınabilir bir Qt deneyimi.</translation></message>
+    <message><source>A few quick steps will tailor Sentinel to how you work.</source><translation>Birkaç kısa adım Sentinel'i çalışma biçiminize göre ayarlayacak.</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/WelcomeStep.qml" line="23"/>
         <source>Welcome to Sentinel</source>
@@ -4146,5 +4166,27 @@ Detay: </translation>
     <message><source>Local mode cannot select a cloud provider.</source><translation>Yerel modda bulut sağlayıcısı seçilemez.</translation></message>
     <message><source>Choose local, cloud, or hybrid processing.</source><translation>Yerel, bulut veya karma işlemeyi seçin.</translation></message>
     <message><source>The requested change is unavailable.</source><translation>İstenen değişiklik kullanılamıyor.</translation></message>
+</context>
+<context>
+    <name>ApplicationController</name>
+    <message><source>Select a provider and model before sending.</source><translation>Göndermeden önce bir sağlayıcı ve model seçin.</translation></message>
+    <message><source>A chat response is active.</source><translation>Bir sohbet yanıtı oluşturuluyor.</translation></message>
+    <message><source>Another local request is active.</source><translation>Başka bir yerel istek sürüyor.</translation></message>
+    <message><source>Ready to send.</source><translation>Göndermeye hazır.</translation></message>
+</context>
+<context>
+    <name>ChatMessageListModel</name>
+    <message>
+        <source>Response interrupted.</source>
+        <translation>Yanıt kesintiye uğradı.</translation>
+    </message>
+    <message>
+        <source>Response cancelled.</source>
+        <translation>Yanıt iptal edildi.</translation>
+    </message>
+    <message>
+        <source>Response failed.</source>
+        <translation>Yanıt başarısız oldu.</translation>
+    </message>
 </context>
 </TS>

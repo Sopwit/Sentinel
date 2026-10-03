@@ -20,6 +20,12 @@ const QStringList ids{QStringLiteral("welcome"), QStringLiteral("processing-mode
 OnboardingService::OnboardingService(AppSettings& settings, ModelService* models)
     : settings_(settings), models_(models) {}
 
+OnboardingActionResult OnboardingService::persistedResult(const OnboardingSnapshot& state) const {
+    const auto error = settings_.storageErrorCode();
+    return error.isEmpty() ? OnboardingActionResult{true, {}, state}
+                           : OnboardingActionResult{false, error, snapshot()};
+}
+
 QString OnboardingService::stepId(OnboardingStep step) {
     return ids.value(static_cast<int>(step), ids.first());
 }
@@ -69,7 +75,7 @@ OnboardingActionResult OnboardingService::chooseProcessingMode(const QString& mo
              .contains(mode)) return {false, QStringLiteral("onboarding.invalid-mode"), state};
     state.processingMode = mode;
     save(state);
-    return {true, {}, state};
+    return persistedResult(state);
 }
 
 OnboardingActionResult OnboardingService::chooseModel(const QString& providerId,
@@ -85,7 +91,7 @@ OnboardingActionResult OnboardingService::chooseModel(const QString& providerId,
     state.modelId = modelId;
     models_->setSelectedModel({providerId, modelId});
     save(state);
-    return {true, {}, state};
+    return persistedResult(state);
 }
 
 OnboardingActionResult OnboardingService::advance(bool skip) {
@@ -116,7 +122,7 @@ OnboardingActionResult OnboardingService::advance(bool skip) {
         state.completedSteps.append(ids.at(index));
     state.step = static_cast<OnboardingStep>(index + 1);
     save(state);
-    return {true, {}, state};
+    return persistedResult(state);
 }
 
 OnboardingActionResult OnboardingService::back() {
@@ -126,7 +132,7 @@ OnboardingActionResult OnboardingService::back() {
         return {false, QStringLiteral("onboarding.no-previous-step"), state};
     state.step = static_cast<OnboardingStep>(index - 1);
     save(state);
-    return {true, {}, state};
+    return persistedResult(state);
 }
 
 OnboardingActionResult OnboardingService::reopen() {
@@ -135,7 +141,7 @@ OnboardingActionResult OnboardingService::reopen() {
     state.step = OnboardingStep::Welcome;
     settings_.setOnboardingComplete(false);
     save(state);
-    return {true, {}, state};
+    return persistedResult(state);
 }
 
 OnboardingActionResult OnboardingService::finish() {
@@ -161,6 +167,6 @@ OnboardingActionResult OnboardingService::finish() {
     save(state);
     settings_.setOnboardingComplete(true);
     state.complete = true;
-    return {true, {}, state};
+    return persistedResult(state);
 }
 } // namespace sentinel::core

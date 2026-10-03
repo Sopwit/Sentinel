@@ -189,7 +189,11 @@ QString normalizedExportFormat(const QString& format) {
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
-    : QObject(parent), store_(std::move(store)) {
+    : AppSettings(std::move(store), platformCredentialStore(), parent) {}
+
+AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, CredentialStore credentials,
+                         QObject* parent)
+    : QObject(parent), store_(std::move(store)), credentialStore_(std::move(credentials)) {
     applyNetworkPolicy();
 }
 
