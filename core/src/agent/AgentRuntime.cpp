@@ -746,8 +746,8 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             subagentPlanner ? subagentPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
             subagentPlanner ? subagentPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0) : 0);
         if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
-            loop.setObservationIntentPolicy(
-                std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
+            loop.setObservationIntentPolicy(std::make_shared<ObservationIntentPolicy>(
+                llm->modelProvider(), modelCancellationToken_));
         loop.setExternalDirectoryGate(&externalDirectoryGate_);
         loop.setPermissionService(&permissionService_);
         loop.setToolHookService(&toolHooks_);
@@ -843,16 +843,17 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
 void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                  const AgentSessionOptions& options, const QString& goal) {
     loop.setWorkspaceContext(options.workspaceContext);
+    loop.setSkills(skillService_.skills());
     const auto workspaceRoot = options.workspaceContext.rootPath.trimmed().isEmpty()
-        ? QString{}
-        : PathGuard::canonicalPath(options.workspaceContext.rootPath);
+                                   ? QString{}
+                                   : PathGuard::canonicalPath(options.workspaceContext.rootPath);
     if (!workspaceRoot.isEmpty())
         loop.setResourceScope(workspaceRoot);
     if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_)) {
         llm->setAllowedToolIds((options.restrictAvailableTools || !options.availableToolIds.isEmpty()) ? options.availableToolIds
                                                                : toolIds());
-        loop.setObservationIntentPolicy(
-            std::make_shared<ObservationIntentPolicy>(llm->modelProvider()));
+        loop.setObservationIntentPolicy(std::make_shared<ObservationIntentPolicy>(
+            llm->modelProvider(), modelCancellationToken_));
     }
     const auto* boundPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
     loop.setContextSources(memoryStore_, chatHistoryStore_,
@@ -902,9 +903,9 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                   static_cast<int>(context.items.size()),
                                   context.omittedItems, context.compacted}, index);
     });
-    loop.setToolCallback([this, sessionId, workspaceRoot](AgentLoop::ToolTransition transition, int index,
-                                           const ToolInvocationPlan& plan,
-                                           const AgentStepRecord* record) {
+    loop.setToolCallback([this, sessionId, workspaceRoot](AgentLoop::ToolTransition transition,
+                                                          int index, const ToolInvocationPlan& plan,
+                                                          const AgentStepRecord* record) {
         if (plan.invocations.isEmpty())
             return;
         const auto& invocation = plan.invocations.first();
@@ -927,10 +928,18 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                      : (registration ? &registration->descriptor : nullptr);
         if (descriptor) {
             switch (descriptor->source) {
-            case ToolSource::BuiltIn: payload.source = QStringLiteral("built-in"); break;
-            case ToolSource::MCP: payload.source = QStringLiteral("mcp"); break;
-            case ToolSource::Plugin: payload.source = QStringLiteral("plugin"); break;
-            case ToolSource::Internal: payload.source = QStringLiteral("internal"); break;
+            case ToolSource::BuiltIn:
+                payload.source = QStringLiteral("built-in");
+                break;
+            case ToolSource::MCP:
+                payload.source = QStringLiteral("mcp");
+                break;
+            case ToolSource::Plugin:
+                payload.source = QStringLiteral("plugin");
+                break;
+            case ToolSource::Internal:
+                payload.source = QStringLiteral("internal");
+                break;
             }
         }
         AgentEventType type;

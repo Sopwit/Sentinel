@@ -135,7 +135,7 @@ int SkillService::loadSkillsFromUrl(const QString& indexUrl) {
 }
 
 bool SkillService::addSkill(const Skill& skill) {
-    if (!skill.isValid()) {
+    if (!skill.isValid() || m_skills.contains(skill.name)) {
         return false;
     }
 

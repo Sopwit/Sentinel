@@ -5,6 +5,7 @@
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/chat/ChatMessage.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
+#include "sentinel/core/skill/Skill.h"
 
 #include <QList>
 #include <QString>
@@ -13,7 +14,18 @@
 namespace sentinel::core {
 class IChatHistoryStore;
 
-enum class AgentContextKind { Goal, Conversation, History, Workspace, Memory, Observation, Fact, Tool, Requirement };
+enum class AgentContextKind {
+    Goal,
+    Conversation,
+    History,
+    Workspace,
+    Memory,
+    Observation,
+    Fact,
+    Tool,
+    Requirement,
+    Skill
+};
 enum class AgentContextPriority { Critical, High, Normal, Low };
 
 struct AgentContextItem {
@@ -49,6 +61,7 @@ struct AgentContextInput {
     QList<StructuredFact> facts;
     ObservationIntent intent;
     QList<ToolDescriptor> tools;
+    QList<Skill> skills;
     int contextWindowTokens = 0;
     int maxOutputTokens = 0;
 };

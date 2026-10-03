@@ -87,6 +87,27 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
             toolBudget -= cost(result.items.last());
     }
 
+    // Instructions are context, never authorization. Preserve the existing
+    // SkillService enable/requirements decision and additionally bind workspace
+    // skills to this session's frozen workspace, not a later UI selection.
+    auto skills = input.skills;
+    std::stable_sort(skills.begin(), skills.end(),
+                     [](const Skill& a, const Skill& b) { return a.name < b.name; });
+    QSet<QString> skillNames;
+    int skillBudget = qMin(remaining / 3, 1200);
+    for (const auto& skill : skills) {
+        if (!skill.isValid() || !skill.enabledPreference || skill.state != SkillState::Enabled ||
+            (skill.scope == SkillScope::Workspace &&
+             (skill.workspaceId.isEmpty() || skill.workspaceId != input.workspaceContext.id)) ||
+            skillNames.contains(skill.name))
+            continue;
+        skillNames.insert(skill.name);
+        AgentContextItem item{AgentContextKind::Skill, AgentContextPriority::Normal,
+                              QStringLiteral("skill:") + skill.name, skill.content, false};
+        if (add(std::move(item), skillBudget))
+            skillBudget -= cost(result.items.last());
+    }
+
     for (const auto& fact : input.facts)
         add({AgentContextKind::Fact, AgentContextPriority::High,
              fact.evidenceCallIds.join(QLatin1Char(',')),

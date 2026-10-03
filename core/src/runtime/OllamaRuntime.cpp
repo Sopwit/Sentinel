@@ -1579,6 +1579,45 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
     return models;
 }
 
+QList<OllamaModelSummary>
+fetchLlamaCppModels(const QUrl& modelsUrl, int timeoutMs,
+                    const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                    ProviderDiscoveryOutcome* outcome) {
+    auto models =
+        fetchOpenAiCompatibleModels(modelsUrl, timeoutMs, {}, nullptr, cancellationToken, outcome);
+    if (models.size() != 1 || (cancellationToken && cancellationToken->load()))
+        return models;
+    auto propsUrl = modelsUrl;
+    auto path = propsUrl.path();
+    const auto suffix = QStringLiteral("/v1/models");
+    if (!path.endsWith(suffix))
+        return models;
+    path.chop(suffix.size());
+    propsUrl.setPath(path + QStringLiteral("/props"));
+    const auto reply = getJson(propsUrl, timeoutMs, nullptr, {}, cancellationToken);
+    if (!reply.ok)
+        return models; // Optional metadata must not invalidate working Chat discovery.
+    const auto props = reply.document.object();
+    // /props describes the loaded runtime, not every model in a router catalog.
+    // Bind it only to an unambiguous, matching loaded-model identity.
+    if (props.value(QStringLiteral("model_alias")).toString() != models.front().name)
+        return models;
+    const auto caps = props.value(QStringLiteral("chat_template_caps")).toObject();
+    const auto tools = caps.value(QStringLiteral("supports_tools"));
+    const auto calls = caps.value(QStringLiteral("supports_tool_calls"));
+    if (tools.isBool() && calls.isBool())
+        models.front().capabilities.nativeToolCalling = tools.toBool() && calls.toBool()
+                                                            ? CapabilitySupport::Supported
+                                                            : CapabilitySupport::Unsupported;
+    const auto context = props.value(QStringLiteral("default_generation_settings"))
+                             .toObject()
+                             .value(QStringLiteral("n_ctx"))
+                             .toDouble();
+    if (context > 0 && context <= std::numeric_limits<int>::max() && context == std::floor(context))
+        models.front().capabilities.contextWindow = static_cast<int>(context);
+    return models;
+}
+
 QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs,
                                                  QString* errorOut,
                                                  const std::shared_ptr<std::atomic_bool>& cancellationToken,
