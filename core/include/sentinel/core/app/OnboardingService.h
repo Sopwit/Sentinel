@@ -43,6 +43,7 @@ public:
 
 private:
     void save(const OnboardingSnapshot& state);
+    OnboardingActionResult persistedResult(const OnboardingSnapshot& state) const;
     AppSettings& settings_;
     ModelService* models_;
 };

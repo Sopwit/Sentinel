@@ -51,6 +51,13 @@
 </context>
 <context>
     <name>AppearanceSettingsTab</name>
+    <message><source>Desktop shell and localization preferences.</source><translation>Desktop shell and localization preferences.</translation></message>
+    <message><source>Application interface display language.</source><translation>Application interface display language.</translation></message>
+    <message><source>Theme foundation and visual presets for desktop UI.</source><translation>Theme foundation and visual presets for desktop UI.</translation></message>
+    <message><source>Active Theme</source><translation>Active Theme</translation></message>
+    <message><source>Primary color theme palette.</source><translation>Primary color theme palette.</translation></message>
+    <message><source>Comfort, motion, contrast, and density preferences.</source><translation>Comfort, motion, contrast, and density preferences.</translation></message>
+    <message><source>Scale layout density for compact or spacious controls.</source><translation>Scale layout density for compact or spacious controls.</translation></message>
     <message>
         <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="70"/>
         <source>General</source>
@@ -910,6 +917,10 @@ Detail: </translation>
 </context>
 <context>
     <name>HomeChatSurface</name>
+    <message><source>No model selected</source><translation>No model selected</translation></message>
+    <message><source>A model becomes selectable when the active runtime reports one</source><translation>A model becomes selectable when the active runtime reports one</translation></message>
+    <message><source>Choose the model for the next response</source><translation>Choose the model for the next response</translation></message>
+    <message><source>Retry</source><translation>Retry</translation></message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1397"/>
         <source>Provider</source>
@@ -3615,6 +3626,15 @@ Detail: </translation>
 </context>
 <context>
     <name>WelcomeStep</name>
+    <message><source>Local-first</source><translation>Local-first</translation></message>
+    <message><source>Inference runs on your machine with Ollama, LM Studio, or llama.cpp.</source><translation>Inference runs on your machine with Ollama, LM Studio, or llama.cpp.</translation></message>
+    <message><source>Private by design</source><translation>Private by design</translation></message>
+    <message><source>Memory, chat history, and knowledge stay on your device.</source><translation>Memory, chat history, and knowledge stay on your device.</translation></message>
+    <message><source>No telemetry</source><translation>No telemetry</translation></message>
+    <message><source>No hidden uploads, silent updates, or cloud activation.</source><translation>No hidden uploads, silent updates, or cloud activation.</translation></message>
+    <message><source>Cross-platform</source><translation>Cross-platform</translation></message>
+    <message><source>A portable Qt experience across Linux, Windows, and macOS.</source><translation>A portable Qt experience across Linux, Windows, and macOS.</translation></message>
+    <message><source>A few quick steps will tailor Sentinel to how you work.</source><translation>A few quick steps will tailor Sentinel to how you work.</translation></message>
     <message>
         <location filename="../ui/qml/onboarding/WelcomeStep.qml" line="23"/>
         <source>Welcome to Sentinel</source>
@@ -4093,6 +4113,28 @@ Detail: </translation>
         <location filename="../apps/sentinel-desktop/bootstrap/SingleInstanceGuard.cpp" line="63"/>
         <source>Received: %1</source>
         <translation>Received: %1</translation>
+    </message>
+</context>
+<context>
+    <name>ApplicationController</name>
+    <message><source>Select a provider and model before sending.</source><translation>Select a provider and model before sending.</translation></message>
+    <message><source>A chat response is active.</source><translation>A chat response is active.</translation></message>
+    <message><source>Another local request is active.</source><translation>Another local request is active.</translation></message>
+    <message><source>Ready to send.</source><translation>Ready to send.</translation></message>
+</context>
+<context>
+    <name>ChatMessageListModel</name>
+    <message>
+        <source>Response interrupted.</source>
+        <translation>Response interrupted.</translation>
+    </message>
+    <message>
+        <source>Response cancelled.</source>
+        <translation>Response cancelled.</translation>
+    </message>
+    <message>
+        <source>Response failed.</source>
+        <translation>Response failed.</translation>
     </message>
 </context>
 </TS>

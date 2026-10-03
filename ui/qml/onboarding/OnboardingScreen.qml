@@ -297,8 +297,10 @@ Item {
                         onboarding.viewModel.advanceOnboarding()
                     } else {
                         onboarding.viewModel.onboardingComplete = true
-                        onboarding.active = false
-                        onboarding.finished()
+                        if (onboarding.viewModel.onboardingComplete) {
+                            onboarding.active = false
+                            onboarding.finished()
+                        }
                     }
                 }
             }

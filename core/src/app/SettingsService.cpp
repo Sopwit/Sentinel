@@ -179,19 +179,23 @@ SettingActionResult SettingsService::set(const QString& id, const QVariant& valu
     auto invalid = [&id](const QString& code) {
         return SettingActionResult{false, code, id, {}};
     };
+    auto applied = [this, &id]() {
+        const auto error = settings_.storageErrorCode();
+        return SettingActionResult{error.isEmpty(), error, id, {}};
+    };
     if (!settings_.storageErrorCode().isEmpty())
         return invalid(settings_.storageErrorCode());
     if (id.startsWith(QLatin1String("privacy.retention."))) {
         const auto domain = id.mid(QStringLiteral("privacy.retention.").size());
         if (!RetentionPolicy::set(settings_, domain, value.toString()))
             return invalid(QStringLiteral("settings.invalid-retention-policy"));
-        return {true, {}, id, {}};
+        return applied();
     }
     if (id == QLatin1String("agent.autonomous-mode")) {
         if (value.typeId() != QMetaType::Bool)
             return invalid(QStringLiteral("settings.invalid-type"));
         settings_.setAgentAutonomousMode(value.toBool());
-        return {true, {}, id, {}};
+        return applied();
     }
     if (id == QLatin1String("network.web-search-max-results")) {
         bool ok = false;
@@ -199,14 +203,14 @@ SettingActionResult SettingsService::set(const QString& id, const QVariant& valu
         if (!ok || count < 1 || count > 20)
             return invalid(QStringLiteral("settings.invalid-range"));
         settings_.setWebSearchMaxResults(count);
-        return {true, {}, id, {}};
+        return applied();
     }
     if (id == QLatin1String("speech.vad-enabled")) {
         if (!audio_ || (value.typeId() != QMetaType::Bool && value.toString() != QLatin1String("true") &&
                         value.toString() != QLatin1String("false")))
             return invalid(QStringLiteral("settings.invalid-type"));
         audio_->devices()->setVadEnabled(value.toBool());
-        return {true, {}, id, {}};
+        return applied();
     }
     if (!value.canConvert<QString>()) return invalid(QStringLiteral("settings.invalid-type"));
     const auto text = value.toString().trimmed();
@@ -281,7 +285,7 @@ SettingActionResult SettingsService::set(const QString& id, const QVariant& valu
             return invalid(QStringLiteral("settings.invalid-model"));
         models_->setSelectedModelId(text);
     } else return invalid(QStringLiteral("settings.unknown-setting"));
-    return {true, {}, id, {}};
+    return applied();
 }
 
 SettingActionResult SettingsService::reset(const QString& id) {

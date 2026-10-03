@@ -173,6 +173,8 @@ class AppSettings final : public QObject {
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
+    AppSettings(std::unique_ptr<ISettingsStore> store, CredentialStore credentials,
+                QObject* parent = nullptr);
 
     QString themeName() const;
     void setThemeName(const QString& themeName);
