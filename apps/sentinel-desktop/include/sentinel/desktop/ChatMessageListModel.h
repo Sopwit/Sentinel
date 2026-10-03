@@ -28,6 +28,7 @@ public:
         ReplyToRole,
         ReplacesRole,
         ContentPartsRole,
+        StateNoticeRole,
     };
 
     explicit ChatMessageListModel(QObject* parent = nullptr);

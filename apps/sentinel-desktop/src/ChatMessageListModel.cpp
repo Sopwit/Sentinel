@@ -38,6 +38,18 @@ QVariant ChatMessageListModel::data(const QModelIndex& index, int role) const {
     case ReplyToRole: return message.replyToMessageId;
     case ReplacesRole: return message.replacesMessageId;
     case ContentPartsRole: return core::chatContentPartsVariant(message.content);
+    case StateNoticeRole:
+        switch (message.status) {
+        case core::ChatMessageStatus::Interrupted:
+            return tr("Response interrupted.");
+        case core::ChatMessageStatus::Cancelled:
+            return tr("Response cancelled.");
+        case core::ChatMessageStatus::Failed:
+        case core::ChatMessageStatus::Error:
+            return tr("Response failed.");
+        default:
+            return QString{};
+        }
     default:
         return {};
     }
@@ -45,12 +57,19 @@ QVariant ChatMessageListModel::data(const QModelIndex& index, int role) const {
 
 QHash<int, QByteArray> ChatMessageListModel::roleNames() const {
     return {
-        {IdRole, "messageId"},        {RoleRole, "messageRole"},     {ContentRole, "content"},
-        {TimestampRole, "timestamp"}, {StatusRole, "messageStatus"},
-        {PartialRole, "partial"}, {ProviderRole, "providerId"},
-        {ModelRole, "modelId"}, {ErrorCategoryRole, "errorCategory"},
-        {ReplyToRole, "replyToMessageId"}, {ReplacesRole, "replacesMessageId"},
+        {IdRole, "messageId"},
+        {RoleRole, "messageRole"},
+        {ContentRole, "content"},
+        {TimestampRole, "timestamp"},
+        {StatusRole, "messageStatus"},
+        {PartialRole, "partial"},
+        {ProviderRole, "providerId"},
+        {ModelRole, "modelId"},
+        {ErrorCategoryRole, "errorCategory"},
+        {ReplyToRole, "replyToMessageId"},
+        {ReplacesRole, "replacesMessageId"},
         {ContentPartsRole, "contentParts"},
+        {StateNoticeRole, "stateNotice"},
     };
 }
 
