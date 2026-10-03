@@ -63,7 +63,22 @@ bool SQLitePermissionGrantStore::initialize() {
             return false;
         }
     }
-    if (!query.exec(QStringLiteral("PRAGMA user_version=1")) || !connection.db.commit()) {
+    bool ownerColumn = false;
+    if (!query.exec(QStringLiteral("PRAGMA table_info(permission_grants)"))) {
+        lastError_ = query.lastError().text();
+        connection.db.rollback();
+        return false;
+    }
+    while (query.next())
+        ownerColumn |= query.value(1).toString() == QLatin1String("plugin_owner_id");
+    if (!ownerColumn &&
+        !query.exec(QStringLiteral(
+            "ALTER TABLE permission_grants ADD COLUMN plugin_owner_id TEXT NOT NULL DEFAULT ''"))) {
+        lastError_ = query.lastError().text();
+        connection.db.rollback();
+        return false;
+    }
+    if (!query.exec(QStringLiteral("PRAGMA user_version=2")) || !connection.db.commit()) {
         lastError_ = connection.db.lastError().text();
         connection.db.rollback();
         return false;
@@ -78,8 +93,9 @@ bool SQLitePermissionGrantStore::load(QList<PersistentPermissionGrant>& grants) 
     Connection connection(databasePath_);
     QSqlQuery query(connection.db);
     if (!connection.db.isOpen() ||
-        !query.exec(QStringLiteral("SELECT grant_id,domain,access,resource_kind,resource_scope,"
-                                   "created_at FROM permission_grants WHERE decision=1"))) {
+        !query.exec(
+            QStringLiteral("SELECT grant_id,domain,access,resource_kind,resource_scope,"
+                           "created_at,plugin_owner_id FROM permission_grants WHERE decision=1"))) {
         lastError_ = connection.db.isOpen() ? query.lastError().text() : connection.db.lastError().text();
         return false;
     }
@@ -102,9 +118,10 @@ bool SQLitePermissionGrantStore::load(QList<PersistentPermissionGrant>& grants) 
               scope.contains(QLatin1Char('*')))))
             continue;
         grants.append({query.value(0).toString(), static_cast<SecurityDomain>(domain),
-                       static_cast<AccessMode>(access), static_cast<AuthorizationResourceKind>(kind),
-                       scope,
-                       QDateTime::fromString(query.value(5).toString(), Qt::ISODateWithMs)});
+                       static_cast<AccessMode>(access),
+                       static_cast<AuthorizationResourceKind>(kind), scope,
+                       QDateTime::fromString(query.value(5).toString(), Qt::ISODateWithMs),
+                       query.value(6).toString()});
     }
     return true;
 }
@@ -120,14 +137,16 @@ bool SQLitePermissionGrantStore::save(const QList<PersistentPermissionGrant>& gr
     for (const auto& grant : grants) {
         QSqlQuery query(connection.db);
         query.prepare(QStringLiteral("INSERT INTO permission_grants "
-                                     "(grant_id,domain,access,resource_kind,resource_scope,decision,created_at) "
-                                     "VALUES (?,?,?,?,?,1,?)"));
+                                     "(grant_id,domain,access,resource_kind,resource_scope,"
+                                     "decision,created_at,plugin_owner_id) "
+                                     "VALUES (?,?,?,?,?,1,?,?)"));
         query.addBindValue(grant.id);
         query.addBindValue(static_cast<int>(grant.domain));
         query.addBindValue(static_cast<int>(grant.access));
         query.addBindValue(static_cast<int>(grant.resourceKind));
         query.addBindValue(grant.scope);
         query.addBindValue(grant.createdAt.toUTC().toString(Qt::ISODateWithMs));
+        query.addBindValue(grant.pluginOwnerId.isNull() ? QStringLiteral("") : grant.pluginOwnerId);
         if (!query.exec()) {
             lastError_ = query.lastError().text();
             connection.db.rollback();

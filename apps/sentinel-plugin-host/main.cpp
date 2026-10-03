@@ -179,10 +179,12 @@ class Host final : public QObject {
 public:
     Host() {
         reader = std::thread([this] {
-            char line[PluginHostMaxFrame + 2];
-            while (std::fgets(line, sizeof(line), stdin)) {
-                QByteArray frame(line);
-                std::memset(line, 0, sizeof(line));
+            // The bounded frame buffer exceeds macOS's default pthread stack.
+            // Keep protocol limits unchanged, but allocate its storage on heap.
+            QByteArray line(PluginHostMaxFrame + 2, '\0');
+            while (std::fgets(line.data(), static_cast<int>(line.size()), stdin)) {
+                QByteArray frame(line.constData());
+                line.fill('\0');
                 QMetaObject::invokeMethod(this, [this, frame = std::move(frame)]() mutable {
                     readFrame(frame);
                     frame.fill('\0');

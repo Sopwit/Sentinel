@@ -551,33 +551,44 @@ public:
             [callbackContext, completion = std::move(completion)](QJsonObject response) mutable {
                 auto deliver = [completion = std::move(completion), response]() mutable {
                 ToolExecutionResult result;
-                result.status = response.value(QStringLiteral("ok")).toBool()
-                    ? ToolExecutionStatus::Succeeded : ToolExecutionStatus::Failed;
+                const auto category = response.value(QStringLiteral("category")).toString();
+                result.status =
+                    response.value(QStringLiteral("ok")).toBool()   ? ToolExecutionStatus::Succeeded
+                    : category == QStringLiteral("PluginCancelled") ? ToolExecutionStatus::Cancelled
+                                                                    : ToolExecutionStatus::Failed;
                 result.summary = response.value(QStringLiteral("summary")).toString().left(65536);
+                if (result.status == ToolExecutionStatus::Succeeded) {
+                    auto observation = std::make_shared<StructuredObservation>();
+                    observation->kind = StructuredObservationKind::Generic;
+                    observation->data = {{QStringLiteral("summary"), result.summary}};
+                    result.structuredObservation = std::move(observation);
+                }
                 if (result.status != ToolExecutionStatus::Succeeded) {
-                    const auto category = response.value(QStringLiteral("category")).toString();
                     result.summary = category;
-                    result.failureCategory = category == QStringLiteral("PluginTimeout")
-                        ? ToolFailureCategory::Timeout :
-                        (category == QStringLiteral("PluginCancelled") ||
-                         category == QStringLiteral("PluginInvocationExpired"))
-                        ? ToolFailureCategory::Cancelled : category == QStringLiteral("PluginProtocolError")
-                        ? ToolFailureCategory::ProtocolError :
-                        (category == QStringLiteral("PluginCredentialDenied") ||
-                         category == QStringLiteral("PluginCredentialNotDeclared") ||
-                         category == QStringLiteral("PluginHostCapabilityDenied") ||
-                         category == QStringLiteral("PluginHostCapabilityNotDeclared") ||
-                         category == QStringLiteral("PluginResourceDenied") ||
-                         category == QStringLiteral("PluginFilesystemReadDenied") ||
-                         category == QStringLiteral("PluginFilesystemWriteDenied") ||
-                         category == QStringLiteral("PluginNetworkDenied") ||
-                         category == QStringLiteral("PluginProcessDenied"))
-                        ? ToolFailureCategory::SecurityDenied :
-                        category == QStringLiteral("PluginNetworkOffline")
-                        ? ToolFailureCategory::NetworkFailure :
-                        category == QStringLiteral("PluginProcessFailed")
-                        ? ToolFailureCategory::RemoteExecutionFailure :
-                        ToolFailureCategory::RuntimeUnavailable;
+                    result.failureCategory =
+                        category == QStringLiteral("PluginCancelled")
+                            ? ToolFailureCategory::Cancelled
+                        : category == QStringLiteral("PluginTimeout") ? ToolFailureCategory::Timeout
+                        : (category == QStringLiteral("PluginCancelled") ||
+                           category == QStringLiteral("PluginInvocationExpired"))
+                            ? ToolFailureCategory::Cancelled
+                        : category == QStringLiteral("PluginProtocolError")
+                            ? ToolFailureCategory::ProtocolError
+                        : (category == QStringLiteral("PluginCredentialDenied") ||
+                           category == QStringLiteral("PluginCredentialNotDeclared") ||
+                           category == QStringLiteral("PluginHostCapabilityDenied") ||
+                           category == QStringLiteral("PluginHostCapabilityNotDeclared") ||
+                           category == QStringLiteral("PluginResourceDenied") ||
+                           category == QStringLiteral("PluginFilesystemReadDenied") ||
+                           category == QStringLiteral("PluginFilesystemWriteDenied") ||
+                           category == QStringLiteral("PluginNetworkDenied") ||
+                           category == QStringLiteral("PluginProcessDenied"))
+                            ? ToolFailureCategory::SecurityDenied
+                        : category == QStringLiteral("PluginNetworkOffline")
+                            ? ToolFailureCategory::NetworkFailure
+                        : category == QStringLiteral("PluginProcessFailed")
+                            ? ToolFailureCategory::RemoteExecutionFailure
+                            : ToolFailureCategory::RuntimeUnavailable;
                 }
                 completion(std::move(result));
                 };
@@ -711,7 +722,23 @@ int PluginManager::discoverPlugins(const QString& searchDir) {
         PluginManifest manifest = PluginManifest::parseFile(manifestPath, &error);
 
         if (manifest.isValid()) {
+            if (seenIds.contains(manifest.id)) {
+                unloadPlugin(manifest.id);
+                auto& duplicate = m_plugins[manifest.id];
+                duplicate.failureCategory = QStringLiteral("PluginDuplicateId");
+                duplicate.errorString = duplicate.failureCategory;
+                updateState(duplicate, PluginState::Error);
+                emit pluginError(manifest.id, duplicate.errorString);
+                continue;
+            }
             seenIds.insert(manifest.id);
+            const auto existing = m_plugins.constFind(manifest.id);
+            if (existing != m_plugins.cend() &&
+                QFileInfo(existing->pluginFilePath).absoluteFilePath() !=
+                    QFileInfo(manifestPath).absolutePath()) {
+                emit pluginError(manifest.id, QStringLiteral("PluginIdentityCollision"));
+                continue;
+            }
             if (m_plugins.contains(manifest.id) &&
                 m_plugins.value(manifest.id).state != PluginState::Unloaded)
                 continue;
@@ -1044,6 +1071,14 @@ bool PluginManager::registerRemoteTools(const QString& pluginId) {
         if (tool.authorizationRequirements.isEmpty())
             tool.authorizationRequirements = {{SecurityDomain::Application, AccessMode::Invoke,
                 AuthorizationResourceKind::Provider, {}, tool.providerId}};
+        // A plugin result proves only the actual provider invocation, never
+        // filesystem/process/network facts merely claimed by plugin text.
+        tool.structuredObservationKind = StructuredObservationKind::Generic;
+        tool.evidenceProduced = {{ObservationDomain::ExternalService,
+                                  EvidenceFreshness::TurnScoped,
+                                  EvidenceScope::Provider,
+                                  {},
+                                  {}}};
         const auto permissions = hostPermissionsFor(tool);
         if (toolCapabilities.contains(QStringLiteral("NetworkRequest")) &&
             !m_sandbox->checkPermission(pluginId, Permissions::NetworkLoopback) &&
