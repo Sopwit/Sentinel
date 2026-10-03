@@ -101,6 +101,9 @@ public:
         workspaceContext_ = std::move(context);
     }
     void setResourceScope(QString root) { resourceScope_ = std::move(root); }
+    void setSkills(QList<Skill> skills) {
+        skills_ = std::move(skills);
+    }
     void setContextSources(const IMemoryStore* memory, const IChatHistoryStore* history,
                            int contextWindowTokens, int maxOutputTokens = 0) {
         memoryStore_ = memory;
@@ -174,6 +177,7 @@ private:
     AgentContextInput::WorkspaceContext workspaceContext_;
     QString resourceScope_;
     ContextEngine contextEngine_;
+    QList<Skill> skills_;
     const IMemoryStore* memoryStore_ = nullptr;
     const IChatHistoryStore* chatHistoryStore_ = nullptr;
     int contextWindowTokens_ = 0;

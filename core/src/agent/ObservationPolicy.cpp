@@ -86,8 +86,7 @@ QString strictJsonObject(const QString& text) {
     // response in one Markdown JSON fence. This is presentation-only framing:
     // accept it only when the entire reply is that single fenced object, then
     // retain the normal JSON/schema validation below.
-    if (!trimmed.startsWith(QStringLiteral("```")) ||
-        !trimmed.endsWith(QStringLiteral("```")))
+    if (!trimmed.startsWith(QStringLiteral("```")) || !trimmed.endsWith(QStringLiteral("```")))
         return {};
     const auto firstLineEnd = trimmed.indexOf(QLatin1Char('\n'));
     if (firstLineEnd < 0)
@@ -96,9 +95,8 @@ QString strictJsonObject(const QString& text) {
     if (fence != QLatin1String("```") && fence != QLatin1String("```json"))
         return {};
     const auto object = trimmed.mid(firstLineEnd + 1, trimmed.size() - firstLineEnd - 4).trimmed();
-    return object.startsWith(QLatin1Char('{')) && object.endsWith(QLatin1Char('}'))
-               ? object
-               : QString{};
+    return object.startsWith(QLatin1Char('{')) && object.endsWith(QLatin1Char('}')) ? object
+                                                                                    : QString{};
 }
 
 bool compatibleDomain(ObservationDomain required, ObservationDomain produced) {
@@ -234,7 +232,9 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
                             .arg(capabilities.join(QLatin1Char(',')),
                                  conversationContext.left(1500), goal);
-    const auto reply = provider_->sendMessage(prompt);
+    ChatRequestOptions options;
+    options.cancellationToken = cancellationToken_;
+    const auto reply = provider_->sendRequest(prompt, options);
     if (!reply.success) {
         intent.indeterminate = true;
         intent.error = reply.errorMessage;

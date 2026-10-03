@@ -5,6 +5,9 @@
 #include "sentinel/core/agent/ObservationEvidence.h"
 #include "sentinel/core/runtime/ToolDescriptor.h"
 #include "sentinel/core/runtime/ToolExecution.h"
+#include <atomic>
+#include <memory>
+#include <utility>
 
 namespace sentinel::core {
 class IChatProvider;
@@ -21,12 +24,15 @@ public:
 // checked against descriptor metadata and never itself counts as evidence.
 class ObservationIntentPolicy final : public IObservationIntentPolicy {
 public:
-    explicit ObservationIntentPolicy(IChatProvider* provider) : provider_(provider) {}
+    explicit ObservationIntentPolicy(IChatProvider* provider,
+                                     std::shared_ptr<std::atomic_bool> cancellationToken = {})
+        : provider_(provider), cancellationToken_(std::move(cancellationToken)) {}
     ObservationIntent classify(const QString& goal, const QString& conversationContext,
                                const QList<ToolDescriptor>& tools) const override;
 
 private:
     IChatProvider* provider_ = nullptr;
+    std::shared_ptr<std::atomic_bool> cancellationToken_;
 };
 
 struct EvidenceGateResult {

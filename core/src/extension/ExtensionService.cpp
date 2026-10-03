@@ -343,7 +343,8 @@ QList<ExtensionSnapshot> ExtensionService::extensions() const {
     }
     for (auto& item : result) {
         item.globallyEnabled = item.enabledPreference;
-        item.workspaceId = activeWorkspaceId_;
+        if (item.scope != ExtensionScope::Workspace)
+            item.workspaceId = activeWorkspaceId_;
         const auto preference = workspacePreferences_.value(item.id);
         item.workspacePreference = preference.isBool()
             ? (preference.toBool() ? QStringLiteral("enabled") : QStringLiteral("disabled"))

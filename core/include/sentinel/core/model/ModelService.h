@@ -19,6 +19,8 @@
 namespace sentinel::core {
 
 class AppSettings;
+// Gemini's full JSON Schema field preserves the authoritative tool contract.
+QJsonObject geminiFunctionDeclaration(const ToolDescriptor& tool);
 class IModelRouter;
 struct LMStudioConfig;
 struct ProviderHealthRegistry;

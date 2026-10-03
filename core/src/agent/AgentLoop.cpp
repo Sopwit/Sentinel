@@ -38,6 +38,7 @@ void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
     input.goal = state.goal;
     input.workspace = workingDirectory();
     input.workspaceContext = workspaceContext_;
+    input.skills = skills_;
     input.steps = state.steps;
     input.evidence = state.evidence;
     input.intent = state.observationIntent;
@@ -259,8 +260,7 @@ ResourceAuthorizationResult AgentLoop::prepareResources(ToolInvocationPlan& plan
         if (!invocation.descriptorSnapshot)
             continue;
         auto resolved = ResourceAuthorizationResolver::resolve(
-            *invocation.descriptorSnapshot, invocation, workingDirectory(),
-            externalDirectoryGate_);
+            *invocation.descriptorSnapshot, invocation, workingDirectory(), externalDirectoryGate_);
         if (!resolved.ok()) return resolved;
         if (!resourceScope_.isEmpty()) {
             for (const auto& file : resolved.snapshot.files)
@@ -386,8 +386,12 @@ void AgentLoop::runAsync(const QString& goal, const QString& sessionId, QObject*
     asyncState_.sessionId = sessionId;
     asyncState_.goal = goal;
     asyncState_.phase = AgentLoopPhase::Running;
-    initializeObservationIntent(asyncState_);
     asyncFinished_ = false;
+    initializeObservationIntent(asyncState_);
+    // Classification can enter the provider's event loop and process cancellation.
+    // Never resurrect a run whose terminal callback has already been delivered.
+    if (asyncFinished_)
+        return;
     if (statusCallback_)
         statusCallback_(QStringLiteral("Agent loop running for goal: %1").arg(goal));
     scheduleAsyncAdvance();
@@ -1306,7 +1310,8 @@ void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& desc
         QStringList changed;
         for (const auto& mutation : trustedMutations ? mutations : QList<FileMutation>{})
             changed.append(normalizedObservationResource(mutation.path, ObservationDomain::FileSystem));
-        if (descriptor.id == QLatin1String("run-command")) changed.append(workingDirectory());
+        if (descriptor.id == QLatin1String("run-command"))
+            changed.append(workingDirectory());
         for (auto& prior : state.evidence) {
             if (prior.domain != ObservationDomain::FileSystem && prior.domain != ObservationDomain::Workspace)
                 continue;

@@ -311,11 +311,7 @@ ChatProviderReply nativeEndpointReply(
             QJsonArray declarations;
             for (const auto& tool : options.tools) {
                 if (!tool.enabled || !tool.exposedToModel) continue;
-                const auto function = nativeToolDefinition(tool)
-                                          .value(QStringLiteral("function")).toObject();
-                declarations.append(QJsonObject{{QStringLiteral("name"), function.value(QStringLiteral("name"))},
-                                                 {QStringLiteral("description"), function.value(QStringLiteral("description"))},
-                                                 {QStringLiteral("parameters"), function.value(QStringLiteral("parameters"))}});
+                declarations.append(geminiFunctionDeclaration(tool));
             }
             if (!declarations.isEmpty())
                 body.insert(QStringLiteral("tools"),
@@ -769,6 +765,13 @@ ModelCapabilities mergedCapabilities(ModelCapabilities base, const ModelCapabili
 }
 
 } // namespace
+
+QJsonObject geminiFunctionDeclaration(const ToolDescriptor& tool) {
+    auto function = nativeToolDefinition(tool).value(QStringLiteral("function")).toObject();
+    const auto schema = function.take(QStringLiteral("parameters"));
+    function.insert(QStringLiteral("parametersJsonSchema"), schema);
+    return function;
+}
 
 QString modelBindingErrorName(ModelBindingError error) {
     switch (error) {

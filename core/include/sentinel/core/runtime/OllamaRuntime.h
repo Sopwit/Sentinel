@@ -137,6 +137,10 @@ fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
                             QString* errorOut = nullptr,
                             const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
                             ProviderDiscoveryOutcome* outcome = nullptr);
+QList<OllamaModelSummary>
+fetchLlamaCppModels(const QUrl& modelsUrl, int timeoutMs,
+                    const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                    ProviderDiscoveryOutcome* outcome = nullptr);
 QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000,
                                                  QString* errorOut = nullptr,
                                                  const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
