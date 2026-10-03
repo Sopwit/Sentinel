@@ -81,10 +81,14 @@ bool PluginHostSession::start(const QString& pluginBinary, const QString& dataDi
         [this](const ProcessRecord& record) {
             if (record.state == ProcessState::Failed || record.state == ProcessState::Exited ||
                 record.state == ProcessState::Cancelled) {
-                if (!stopping_) fail(record.sandbox.enforcement != SandboxEnforcement::Enforced
-                    ? QStringLiteral("PluginSandboxUnavailable")
-                    : record.state == ProcessState::Failed
-                        ? QStringLiteral("PluginHostStartFailure") : QStringLiteral("PluginCrashed"));
+                if (!stopping_)
+                    fail(record.sandbox.enforcement != SandboxEnforcement::Enforced
+                             ? QStringLiteral("PluginSandboxUnavailable")
+                         : record.state == ProcessState::Cancelled
+                             ? QStringLiteral("PluginCancelled")
+                         : record.state == ProcessState::Failed && record.systemPid == 0
+                             ? QStringLiteral("PluginHostStartFailure")
+                             : QStringLiteral("PluginCrashed"));
             }
         }, [this](const QString&, ProcessStream stream, const QByteArray& bytes) {
             if (stream == ProcessStream::Stdout) receive(bytes);
@@ -130,7 +134,7 @@ QJsonObject PluginHostSession::call(const QString& operation, QJsonObject fields
 QString PluginHostSession::invoke(const QString& toolId, const QJsonObject& arguments,
                                   const PlannedToolInvocation& authorization,
                                   std::function<void(QJsonObject)> completion) {
-    if (!isRunning()) {
+    if (stopping_ || !failureCategory_.isEmpty() || !isRunning()) {
         completion({{QStringLiteral("ok"), false}, {QStringLiteral("category"), QStringLiteral("PluginHostUnavailable")}});
         return {};
     }

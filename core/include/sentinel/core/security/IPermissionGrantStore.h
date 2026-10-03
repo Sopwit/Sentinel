@@ -15,6 +15,7 @@ struct PersistentPermissionGrant {
     AuthorizationResourceKind resourceKind = AuthorizationResourceKind::None;
     QString scope;
     QDateTime createdAt;
+    QString pluginOwnerId;
 };
 
 class IPermissionGrantStore {

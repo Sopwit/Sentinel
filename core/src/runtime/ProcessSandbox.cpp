@@ -7,6 +7,9 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QSet>
+#if defined(Q_OS_MACOS)
+#include <mach-o/dyld.h>
+#endif
 #if defined(Q_OS_WIN)
 #include "WindowsProcessSandbox.h"
 #endif
@@ -175,11 +178,6 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     launch.permitted = true;
     return launch;
 #elif defined(Q_OS_MACOS)
-    if (plan.forbidDetachedChildren) {
-        launch.result.enforcement = SandboxEnforcement::PartiallyEnforced;
-        launch.result.failureCategory = QStringLiteral("DetachedProcessControlUnavailable");
-        return launch;
-    }
     // system.sb provides the macOS runtime baseline needed for a child to
     // start (including its inherited stdio descriptors).  Without it even a
     // simple stdio process aborts before exec, which makes the MCP transport
@@ -191,15 +189,72 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
                                      "(subpath \"/usr\") (subpath \"/bin\")"
                                      "(subpath \"/sbin\") (subpath \"/Library\")"
                                      "(literal \"/dev/null\"))");
+    // This backend has no kill-on-close process-tree primitive. For a host which
+    // forbids detached children, enforce the stronger invariant: no children
+    // can be created at all. Brokered processes are launched by the desktop,
+    // never by plugin code. Deny overrides the runtime baseline's fork allow.
+    if (plan.forbidDetachedChildren)
+        profile += QStringLiteral("(deny process-fork)");
     profile += QStringLiteral("(allow file-read* (literal %1))").arg(profileLiteral(program));
     // Homebrew is the supported Qt distribution on macOS.  A Qt-based local
     // MCP server can load its framework dependencies from this immutable
     // prefix; denying it makes the child exit before the stdio handshake.
-    const QString homebrewQtBase = QFileInfo(QStringLiteral("/opt/homebrew/opt/qtbase"))
-                                      .canonicalFilePath();
-    if (!homebrewQtBase.isEmpty())
+    const QString homebrewQtAlias = QStringLiteral("/opt/homebrew/opt/qtbase");
+    const QString homebrewQtBase = QFileInfo(homebrewQtAlias).canonicalFilePath();
+    if (!homebrewQtBase.isEmpty()) {
         profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
                        .arg(profileLiteral(homebrewQtBase));
+        // dyld also inspects the install-name alias before resolving the Cellar
+        // target. Both names refer to the same read-only runtime dependency.
+        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                       .arg(profileLiteral(homebrewQtAlias));
+    }
+    // Permit library directories of already-loaded Homebrew runtime images
+    // (for example Qt's ICU dependency), not the entire package-manager tree. dyld may check
+    // both an install-name symlink and its canonical target.
+    QSet<QString> runtimeImages;
+    for (uint32_t i = 0; i < _dyld_image_count(); ++i) {
+        const auto* imageName = _dyld_get_image_name(i);
+        if (!imageName)
+            continue;
+        const QString image = QString::fromUtf8(imageName);
+        if (!image.startsWith(QStringLiteral("/opt/homebrew/")))
+            continue;
+        runtimeImages.insert(image);
+        const auto canonical = QFileInfo(image).canonicalFilePath();
+        if (!canonical.isEmpty())
+            runtimeImages.insert(canonical);
+        const QString cellar = QStringLiteral("/opt/homebrew/Cellar/");
+        if (canonical.startsWith(cellar)) {
+            const auto parts = canonical.mid(cellar.size()).split(QLatin1Char('/'));
+            if (parts.size() > 2) {
+                const QString alias = QStringLiteral("/opt/homebrew/opt/%1/%2")
+                                          .arg(parts.first(), parts.mid(2).join(QLatin1Char('/')));
+                if (QFileInfo(alias).canonicalFilePath() == canonical)
+                    runtimeImages.insert(alias);
+                // ABI install names can be additional symlinks (78 -> 78.3).
+                const QDir aliases(QFileInfo(alias).absolutePath());
+                for (const auto& candidate : aliases.entryInfoList(QDir::Files))
+                    if (candidate.canonicalFilePath() == canonical)
+                        runtimeImages.insert(candidate.absoluteFilePath());
+            }
+        }
+    }
+    QSet<QString> runtimeDirectories;
+    for (const auto& image : runtimeImages) {
+        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                       .arg(profileLiteral(QFileInfo(image).absolutePath()));
+        profile += QStringLiteral("(allow file-read* file-map-executable (literal %1))")
+                       .arg(profileLiteral(image));
+        QString directory = QFileInfo(image).absolutePath();
+        while (directory.startsWith(QStringLiteral("/opt/homebrew/"))) {
+            runtimeDirectories.insert(directory);
+            directory = QFileInfo(directory).absolutePath();
+        }
+    }
+    for (const auto& directory : runtimeDirectories)
+        profile += QStringLiteral("(allow file-read-metadata (literal %1))")
+                       .arg(profileLiteral(directory));
     for (const auto& path : plan.readablePaths)
         profile += QStringLiteral("(allow file-read* (subpath %1))").arg(profileLiteral(path));
     for (const auto& path : plan.writablePaths)
@@ -213,7 +268,7 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     launch.program = launcher_;
     launch.arguments = {QStringLiteral("-p"), profile, program};
     launch.arguments.append(arguments);
-    launch.result.processTreeControlled = false;
+    launch.result.processTreeControlled = plan.forbidDetachedChildren;
 #elif defined(Q_OS_LINUX)
     launch.program = launcher_;
     launch.arguments = {QStringLiteral("--die-with-parent"), QStringLiteral("--unshare-user"),

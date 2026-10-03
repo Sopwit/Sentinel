@@ -9,6 +9,9 @@
 namespace sentinel::core {
 
 namespace {
+QString pluginOwner(const AuthorizationRequest& request) {
+    return request.providerId.startsWith(QLatin1String("plugin:")) ? request.providerId : QString{};
+}
 AuthorizationResourceKind effectiveKind(const AuthorizationRequest& request) {
     if (request.resourceKind != AuthorizationResourceKind::None)
         return request.resourceKind;
@@ -31,8 +34,8 @@ QString scopeFor(const AuthorizationRequest& request) {
 }
 
 bool matches(const AuthorizationRequest& request, const AuthorizationRequest& granted) {
-    if (request.domain != granted.domain || request.access != granted.access ||
-        effectiveKind(request) != effectiveKind(granted))
+    if (pluginOwner(request) != pluginOwner(granted) || request.domain != granted.domain ||
+        request.access != granted.access || effectiveKind(request) != effectiveKind(granted))
         return false;
     const QString scope = scopeFor(granted);
     const QString resource = scopeFor(request);
@@ -84,6 +87,7 @@ PermissionEffect PermissionService::evaluateAuthorization(const AuthorizationReq
     for (const auto& grant : persistentGrants_) {
         AuthorizationRequest stored{grant.domain, grant.access, grant.scope};
         stored.resourceKind = grant.resourceKind;
+        stored.providerId = grant.pluginOwnerId;
         allowed |= matches(request, stored);
     }
     return allowed ? PermissionEffect::Allow : PermissionEffect::Ask;
@@ -107,7 +111,7 @@ bool PermissionService::setAuthorization(const AuthorizationRequest& request,
     grants_.removeIf([&](const Grant& grant) {
         return grant.request.domain == request.domain && grant.request.access == request.access &&
                grant.request.resource == request.resource &&
-               grant.sessionId == sessionId;
+               pluginOwner(grant.request) == pluginOwner(request) && grant.sessionId == sessionId;
     });
     if (effect != PermissionEffect::Ask)
         grants_.append({request, sessionId, effect});
@@ -139,13 +143,16 @@ bool PermissionService::grantAuthorizations(const QList<AuthorizationRequest>& r
         bool existing = false;
         for (const auto& grant : persistentGrants_)
             existing |= grant.domain == request.domain && grant.access == request.access &&
-                        grant.resourceKind == kind && grant.scope == scope;
+                        grant.resourceKind == kind && grant.scope == scope &&
+                        grant.pluginOwnerId == pluginOwner(request);
         for (const auto& grant : additions)
             existing |= grant.domain == request.domain && grant.access == request.access &&
-                        grant.resourceKind == kind && grant.scope == scope;
+                        grant.resourceKind == kind && grant.scope == scope &&
+                        grant.pluginOwnerId == pluginOwner(request);
         if (!existing)
             additions.append({QUuid::createUuid().toString(QUuid::WithoutBraces), request.domain,
-                              request.access, kind, scope, QDateTime::currentDateTimeUtc()});
+                              request.access, kind, scope, QDateTime::currentDateTimeUtc(),
+                              pluginOwner(request)});
     }
     if (!store_->save(additions))
         return false;
@@ -173,8 +180,9 @@ void PermissionService::revokeAuthorization(const AuthorizationRequest& request,
                                             const QString& sessionId) {
     std::lock_guard lock(mutex_);
     grants_.removeIf([&](const Grant& grant) {
-        return grant.sessionId == sessionId &&
-               grant.request.domain == request.domain && grant.request.access == request.access &&
+        return grant.sessionId == sessionId && grant.request.domain == request.domain &&
+               grant.request.access == request.access &&
+               pluginOwner(grant.request) == pluginOwner(request) &&
                grant.request.resource == request.resource;
     });
 }
