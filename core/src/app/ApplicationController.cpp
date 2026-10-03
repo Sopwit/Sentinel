@@ -3891,11 +3891,16 @@ bool ApplicationController::localChatSendAvailable() const {
 
 QString ApplicationController::localChatSendAvailabilitySummary() const {
     if (activeConversationArchived()) return activeConversationStateSummary();
-    if (chatMode_ && chatMode_->busy()) return QStringLiteral("A chat response is active.");
-    if (localInferenceBusy_) return QStringLiteral("Another local request is active.");
+    if (chatMode_ && chatMode_->busy())
+        return QCoreApplication::translate("ApplicationController", "A chat response is active.");
+    if (localInferenceBusy_)
+        return QCoreApplication::translate("ApplicationController",
+                                           "Another local request is active.");
     const auto selected = modelService_->selectedModel();
-    if (!selected.isValid()) return QStringLiteral("Select a provider and model before sending.");
-    return QStringLiteral("Ready to send.");
+    if (!selected.isValid())
+        return QCoreApplication::translate("ApplicationController",
+                                           "Select a provider and model before sending.");
+    return QCoreApplication::translate("ApplicationController", "Ready to send.");
 }
 
 QString ApplicationController::chatSendLifecycleState() const {
@@ -10039,6 +10044,17 @@ void ApplicationController::initializeOllamaCache() const {
         return;
     }
     ollamaCacheInitialized_ = true;
+    if (dynamic_cast<OllamaHttpRuntimeClient*>(ollamaRuntimeClient_.get())) {
+        // QML readiness getters must never start synchronous transport while
+        // the desktop engine is being created. Keep discovery pending until
+        // the existing worker reports an authoritative result.
+        cachedOllamaHealthCheck_.endpoint = ollamaRuntimeClient_->config().endpoint.toString();
+        cachedOllamaHealthCheck_.summary = QStringLiteral("Ollama model discovery pending.");
+        auto* controller = const_cast<ApplicationController*>(this);
+        QMetaObject::invokeMethod(
+            controller, [controller] { controller->pollOllama(); }, Qt::QueuedConnection);
+        return;
+    }
     if (ollamaRuntimeClient_) {
         cachedOllamaHealthCheck_ = ollamaRuntimeClient_->healthCheck();
         const auto discovery = ollamaRuntimeClient_->discoverModels();
@@ -10100,8 +10116,7 @@ void ApplicationController::pollOllama() {
             const auto llamaUrl = llamaCppEndpointSnapshot.isEmpty()
                                       ? QStringLiteral("http://127.0.0.1:8080/v1/models")
                                       : llamaCppEndpointSnapshot + QStringLiteral("/v1/models");
-            llamaCppModels = fetchOpenAiCompatibleModels(QUrl(llamaUrl), 1000, {}, nullptr,
-                                                          token, &selectedOutcome);
+            llamaCppModels = fetchLlamaCppModels(QUrl(llamaUrl), 1000, token, &selectedOutcome);
         } else if (provider == QStringLiteral("openai-compatible-local")) {
             openAiModels = fetchOpenAiCompatibleModels(
                 QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000,

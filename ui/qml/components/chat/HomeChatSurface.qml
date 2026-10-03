@@ -1553,6 +1553,7 @@ ShellPanel {
                 required property string messageStatus
                 required property int replyToMessageId
                 required property string content
+                required property string stateNotice
                 readonly property bool displayable: messageRole !== "system"
 
                 width: ListView.view.width
@@ -1796,7 +1797,8 @@ ShellPanel {
                     TextEdit {
                         id: messageBody
                         Layout.fillWidth: true
-                        text: recentMessage.content
+                        text: recentMessage.content.length > 0
+                              ? recentMessage.content : recentMessage.stateNotice
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -1806,6 +1808,14 @@ ShellPanel {
                         textFormat: TextEdit.PlainText
                         selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
                         selectedTextColor: SentinelTheme.textPrimary
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        visible: recentMessage.content.length > 0 && recentMessage.stateNotice.length > 0
+                        text: recentMessage.stateNotice
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
                     }
                 }
             }

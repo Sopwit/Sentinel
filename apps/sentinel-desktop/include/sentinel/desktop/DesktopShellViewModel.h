@@ -1378,8 +1378,8 @@ class DesktopShellViewModel final : public QObject {
         QString workspacePermissionPosture READ workspacePermissionPosture NOTIFY workspaceChanged)
     Q_PROPERTY(QString selectedWorkspaceRootSummary READ selectedWorkspaceRootSummary NOTIFY
                    workspaceChanged)
-    Q_PROPERTY(QString selectedWorkspaceRootPath READ selectedWorkspaceRootPath NOTIFY
-                   workspaceChanged)
+    Q_PROPERTY(
+        QString selectedWorkspaceRootPath READ selectedWorkspaceRootPath NOTIFY workspaceChanged)
     Q_PROPERTY(
         QString workspaceReadinessStatus READ workspaceReadinessStatus NOTIFY workspaceChanged)
     Q_PROPERTY(
