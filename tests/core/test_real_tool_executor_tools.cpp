@@ -46,7 +46,9 @@ ToolInvocationArgument intArgument(const QString& id, int value) {
 
 ToolExecutionResult runTool(RealToolExecutor& executor, const QString& toolId,
                             const QList<ToolInvocationArgument>& arguments,
-                            const QStringList& knownToolIds) {
+                            const QStringList& knownToolIds,
+                            const QString& workspace = QDir::currentPath(),
+                            QObject* callbackContext = nullptr, const QString& sessionId = {}) {
     Q_UNUSED(knownToolIds)
     InMemoryToolRegistry registry;
     if (!BuiltInToolProvider::registerTools(registry, executor))
@@ -94,8 +96,8 @@ ToolExecutionResult runTool(RealToolExecutor& executor, const QString& toolId,
     for (auto& invocation : plan.invocations) {
         if (!invocation.descriptorSnapshot)
             continue;
-        auto resolved = ResourceAuthorizationResolver::resolve(
-            *invocation.descriptorSnapshot, invocation, QDir::currentPath(), nullptr);
+        auto resolved = ResourceAuthorizationResolver::resolve(*invocation.descriptorSnapshot,
+                                                               invocation, workspace, nullptr);
         if (!resolved.ok())
             return resourceFailure(resolved.reason, resolved.failure);
         invocation.resourceSnapshot = std::make_shared<const ResourceAuthorizationSnapshot>(
@@ -121,8 +123,9 @@ ToolExecutionResult runTool(RealToolExecutor& executor, const QString& toolId,
             approval,
             sandboxPolicy.evaluate(plan, approval),
             knownToolIds,
+            callbackContext,
         },
-        executor, {}, {}, {}, [&](ToolExecutionResult value) {
+        executor, sessionId, {}, {}, [&](ToolExecutionResult value) {
             result = std::move(value);
             completed = true;
         });
@@ -148,6 +151,46 @@ class RealToolExecutorToolsTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void registeredFilesystemHandlerUsesFrozenWorkspace() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        QFile file(workspace.filePath(QStringLiteral("frozen-evidence.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("frozen workspace evidence");
+        file.close();
+        const auto processDirectory = QDir::currentPath();
+        QVERIFY(processDirectory != workspace.path());
+        RealToolExecutor executor;
+        QObject callbackContext;
+        for (int path = 0; path < 3; ++path) {
+            const auto result = runTool(executor, QStringLiteral("list-directory"),
+                                        {{QStringLiteral("path"), QStringLiteral(".")}}, {},
+                                        workspace.path(), path == 2 ? &callbackContext : nullptr,
+                                        path == 0 ? QString{} : QStringLiteral("frozen-session"));
+            QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+            QVERIFY(result.summary.contains(QStringLiteral("frozen-evidence.txt")));
+            QCOMPARE(QDir::currentPath(), processDirectory);
+        }
+    }
+
+    void registeredProcessHandlerUsesFrozenWorkspace() {
+#ifdef Q_OS_WIN
+        QSKIP("pwd fixture is Unix-only.");
+#endif
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        RealToolExecutor executor;
+        const auto result = runTool(executor, QStringLiteral("run-command"),
+                                    {{QStringLiteral("command"), QStringLiteral("pwd")},
+                                     {QStringLiteral("workdir"), QStringLiteral(".")}},
+                                    {}, workspace.path());
+        if (result.status == ToolExecutionStatus::Blocked &&
+            result.summary.contains(QStringLiteral("Sandbox")))
+            QSKIP("Host cannot enforce the required process sandbox.");
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QFileInfo(workspace.path()).canonicalFilePath()));
+    }
+
     void readFileReturnsNumberedLines() {
         QTemporaryDir dir;
         const QString path = dir.filePath(QStringLiteral("sample.txt"));
@@ -897,13 +940,12 @@ private slots:
 
     void spawnAgentWithoutRunnerIsGraceful() {
         RealToolExecutor executor;
-        const auto result =
-            runTool(executor, QStringLiteral("spawn-agent"),
-                    {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")},
-                     ToolInvocationArgument{QStringLiteral("purpose"),
-                                            QStringLiteral("specialist_review")},
-                     ToolInvocationArgument{QStringLiteral("workspace"), QStringLiteral(".")}},
-                    QStringList{});
+        const auto result = runTool(
+            executor, QStringLiteral("spawn-agent"),
+            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")},
+             ToolInvocationArgument{QStringLiteral("purpose"), QStringLiteral("specialist_review")},
+             ToolInvocationArgument{QStringLiteral("workspace"), QStringLiteral(".")}},
+            QStringList{});
 
         QCOMPARE(result.status, ToolExecutionStatus::Blocked);
         QVERIFY(result.summary.contains(QStringLiteral("No subagent runner is configured")));
@@ -911,21 +953,21 @@ private slots:
 
     void spawnAgentRequiresPurpose() {
         RealToolExecutor executor;
-        const auto result = runTool(
-            executor, QStringLiteral("spawn-agent"),
-            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
-            QStringList{});
+        const auto result =
+            runTool(executor, QStringLiteral("spawn-agent"),
+                    {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
+                    QStringList{});
         QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("$.purpose")));
     }
 
     void spawnAgentRequiresTask() {
         RealToolExecutor executor;
-        const auto result = runTool(
-            executor, QStringLiteral("spawn-agent"),
-            {ToolInvocationArgument{QStringLiteral("purpose"),
-                                    QStringLiteral("independent_research")}},
-            QStringList{});
+        const auto result =
+            runTool(executor, QStringLiteral("spawn-agent"),
+                    {ToolInvocationArgument{QStringLiteral("purpose"),
+                                            QStringLiteral("independent_research")}},
+                    QStringList{});
         QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("$.task")));
     }

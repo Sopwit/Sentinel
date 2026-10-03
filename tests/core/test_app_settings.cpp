@@ -57,7 +57,8 @@ private slots:
 };
 
 static std::unique_ptr<AppSettings> makeSettings() {
-    return std::make_unique<AppSettings>(std::make_unique<InMemorySettingsStore>());
+    return std::make_unique<AppSettings>(std::make_unique<InMemorySettingsStore>(),
+                                         sentinel::core::inMemoryTestCredentialStore());
 }
 
 void AppSettingsTest::exposesDefaults() {

@@ -22,6 +22,7 @@ void send(const QJsonObject& response) {
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
     const QString logPath = app.arguments().value(1);
+    const bool certification = app.arguments().contains(QStringLiteral("--certification"));
     auto handle = [&](const QByteArray& line) {
         const auto request = QJsonDocument::fromJson(line).object();
         const auto method = request.value(QStringLiteral("method")).toString();
@@ -41,24 +42,74 @@ int main(int argc, char** argv) {
             const QJsonObject schema{
                 {"type", "object"},
                 {"properties", QJsonObject{{"value", QJsonObject{{"type", "string"}}}}},
-                {"required", QJsonArray{QStringLiteral("value")}}};
-            send({{"jsonrpc", "2.0"},
-                  {"id", id},
-                  {"result",
-                   QJsonObject{{"tools", QJsonArray{QJsonObject{{"name", "echo_value"},
-                                                                {"description", "Echo a value"},
-                                                                {"inputSchema", schema}},
-                                                    QJsonObject{{"name", "delayed_echo"},
-                                                                {"description", "Delayed echo"},
-                                                                {"inputSchema", schema}},
-                                                    QJsonObject{{"name", "crash_echo"},
-                                                                {"description", "Exit during call"},
-                                                                {"inputSchema", schema}}}}}}});
+                {"required", QJsonArray{QStringLiteral("value")}},
+                {"additionalProperties", false}};
+            QJsonArray tools{QJsonObject{{"name", "echo_value"},
+                                         {"description", "Echo a value"},
+                                         {"inputSchema", schema}},
+                             QJsonObject{{"name", "delayed_echo"},
+                                         {"description", "Delayed echo"},
+                                         {"inputSchema", schema}},
+                             QJsonObject{{"name", "crash_echo"},
+                                         {"description", "Exit during call"},
+                                         {"inputSchema", schema}}};
+            if (certification) {
+                tools.append(QJsonObject{
+                    {"name", "add"},
+                    {"description", "Add two numbers"},
+                    {"inputSchema",
+                     QJsonObject{
+                         {"type", "object"},
+                         {"additionalProperties", false},
+                         {"required", QJsonArray{"a", "b"}},
+                         {"properties", QJsonObject{{"a", QJsonObject{{"type", "number"}}},
+                                                    {"b", QJsonObject{{"type", "number"}}}}}}}});
+                for (const auto& name :
+                     {"malformed_json", "missing_result", "wrong_id", "server_error"})
+                    tools.append(QJsonObject{{"name", name},
+                                             {"description", "Certification fault injection"},
+                                             {"inputSchema", schema}});
+            }
+            send({{"jsonrpc", "2.0"}, {"id", id}, {"result", QJsonObject{{"tools", tools}}}});
             return;
         }
         if (method == QStringLiteral("tools/call")) {
             const auto params = request.value(QStringLiteral("params")).toObject();
             const auto name = params.value(QStringLiteral("name")).toString();
+            if (certification && name == "add") {
+                const auto arguments = params.value("arguments").toObject();
+                const double sum =
+                    arguments.value("a").toDouble() + arguments.value("b").toDouble();
+                send({{"jsonrpc", "2.0"},
+                      {"id", id},
+                      {"result", QJsonObject{{"content", QJsonArray{QJsonObject{
+                                                             {"type", "text"},
+                                                             {"text", QString::number(sum)}}}},
+                                             {"structuredContent", QJsonObject{{"sum", sum}}}}}});
+                return;
+            }
+            if (certification && name == "malformed_json") {
+                std::fputs("{broken-json\n", stdout);
+                std::fflush(stdout);
+                return;
+            }
+            if (certification && name == "missing_result") {
+                send({{"jsonrpc", "2.0"}, {"id", id}});
+                return;
+            }
+            if (certification && name == "wrong_id") {
+                send({{"jsonrpc", "2.0"},
+                      {"id", id.toInt() + 10000},
+                      {"result", QJsonObject{{"content", QJsonArray{}}}}});
+                return;
+            }
+            if (certification && name == "server_error") {
+                send({{"jsonrpc", "2.0"},
+                      {"id", id},
+                      {"error",
+                       QJsonObject{{"code", -32000}, {"message", "Deterministic server error"}}}});
+                return;
+            }
             QFile log(logPath);
             if (log.open(QIODevice::Append)) {
                 log.write(name.toUtf8() + '\n');

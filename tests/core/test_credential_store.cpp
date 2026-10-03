@@ -4,6 +4,7 @@
 
 #include "sentinel/core/security/CredentialStore.h"
 
+#include <QUuid>
 #include <QtTest>
 #include <memory>
 
@@ -163,12 +164,18 @@ void CredentialStoreTest::safetyPolicyRefusesSecretExposure() {
 
 void CredentialStoreTest::testPlatformCredentialBackend() {
     auto store = sentinel::core::platformCredentialStore();
-    const CredentialKey key{QStringLiteral("open-ai-test"), QStringLiteral("apiKey")};
+    const CredentialKey key{QStringLiteral("certification-") +
+                                QUuid::createUuid().toString(QUuid::WithoutBraces),
+                            QStringLiteral("apiKey")};
 
     const auto summary = store.summary();
+    if (summary.status != sentinel::core::CredentialStoreStatus::Ready)
+        QSKIP("Native credential backend unavailable; no real smoke success claimed.");
     if (summary.status == sentinel::core::CredentialStoreStatus::Ready) {
         // Test storing a credential
         const auto stored = store.storeCredential(key, QStringLiteral("sk-sentinel-test-value"));
+        if (!stored.succeeded)
+            QSKIP("Native credential write refused; no real smoke success claimed.");
         if (stored.succeeded) {
             QVERIFY(store.containsCredential(key).succeeded);
 

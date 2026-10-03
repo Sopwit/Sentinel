@@ -4,6 +4,10 @@
 
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
 
 using sentinel::core::NullOllamaRuntimeClient;
@@ -21,7 +25,78 @@ private slots:
     void acceptsLocalhostEndpointOnly();
     void nullClientIsDeterministicallyUnavailable();
     void parsesOllamaLibraryHtml();
+    void llamaCppLoadedTemplateCapabilities_data();
+    void llamaCppLoadedTemplateCapabilities();
 };
+
+void OllamaRuntimeTest::llamaCppLoadedTemplateCapabilities_data() {
+    QTest::addColumn<QString>("alias");
+    QTest::addColumn<QJsonObject>("caps");
+    QTest::addColumn<int>("modelCount");
+    QTest::addColumn<int>("propsStatus");
+    QTest::addColumn<int>("expected");
+    using sentinel::core::CapabilitySupport;
+    const QJsonObject supported{{"supports_tools", true}, {"supports_tool_calls", true}};
+    QTest::newRow("matching-loaded-model")
+        << QString("loaded") << supported << 1 << 200 << int(CapabilitySupport::Supported);
+    QTest::newRow("wrong-identity")
+        << QString("other") << supported << 1 << 200 << int(CapabilitySupport::Unknown);
+    QTest::newRow("router-catalog")
+        << QString("loaded") << supported << 2 << 200 << int(CapabilitySupport::Unknown);
+    QTest::newRow("unsupported-template")
+        << QString("loaded")
+        << QJsonObject{{"supports_tools", true}, {"supports_tool_calls", false}} << 1 << 200
+        << int(CapabilitySupport::Unsupported);
+    QTest::newRow("missing-metadata")
+        << QString("loaded") << QJsonObject{} << 1 << 200 << int(CapabilitySupport::Unknown);
+    QTest::newRow("props-unavailable")
+        << QString("loaded") << supported << 1 << 404 << int(CapabilitySupport::Unknown);
+}
+
+void OllamaRuntimeTest::llamaCppLoadedTemplateCapabilities() {
+    QFETCH(QString, alias);
+    QFETCH(QJsonObject, caps);
+    QFETCH(int, modelCount);
+    QFETCH(int, propsStatus);
+    QFETCH(int, expected);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    int propsRequests = 0;
+    connect(&server, &QTcpServer::newConnection, &server, [&] {
+        auto* socket = server.nextPendingConnection();
+        connect(socket, &QTcpSocket::readyRead, socket, [&, socket] {
+            const auto request = socket->readAll();
+            const bool props = request.startsWith("GET /props ");
+            QJsonArray models{QJsonObject{{"id", "loaded"}}};
+            if (modelCount > 1)
+                models.append(QJsonObject{{"id", "other"}});
+            if (props)
+                ++propsRequests;
+            const QJsonObject body =
+                props ? QJsonObject{{"model_alias", alias},
+                                    {"chat_template_caps", caps},
+                                    {"default_generation_settings", QJsonObject{{"n_ctx", 8192}}}}
+                      : QJsonObject{{"data", models}};
+            const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact);
+            socket->write(QByteArray("HTTP/1.1 ") + QByteArray::number(props ? propsStatus : 200) +
+                          " OK\r\nContent-Type: application/json\r\nContent-Length: " +
+                          QByteArray::number(bytes.size()) + "\r\nConnection: close\r\n\r\n" +
+                          bytes);
+            socket->disconnectFromHost();
+        });
+        connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+    });
+    sentinel::core::ProviderDiscoveryOutcome outcome;
+    const auto models = sentinel::core::fetchLlamaCppModels(
+        QUrl(QString("http://127.0.0.1:%1/v1/models").arg(server.serverPort())), 1000, {},
+        &outcome);
+    QVERIFY(outcome.completed);
+    QCOMPARE(models.size(), modelCount);
+    QCOMPARE(int(models.front().capabilities.nativeToolCalling), expected);
+    QCOMPARE(propsRequests, modelCount == 1 ? 1 : 0);
+    if (alias == "loaded" && modelCount == 1 && propsStatus == 200)
+        QCOMPARE(models.front().capabilities.contextWindow.value_or(0), 8192);
+}
 
 void OllamaRuntimeTest::defaultEndpointIsLocalLoopback() {
     const auto endpoint = OllamaEndpoint::defaultEndpoint();

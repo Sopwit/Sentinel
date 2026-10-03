@@ -16,7 +16,47 @@ function(add_sentinel_core_test target source)
     add_test(NAME ${target} COMMAND $<TARGET_FILE:${target}>)
 endfunction()
 
+# Opt-in live request probe; never registered with CTest or run by the build.
+qt_add_executable(observation_request_probe EXCLUDE_FROM_ALL helpers/observation_request_probe.cpp)
+target_link_libraries(observation_request_probe PRIVATE sentinel_core)
+qt_add_executable(provider_certification_probe EXCLUDE_FROM_ALL helpers/provider_certification_probe.cpp)
+target_link_libraries(provider_certification_probe PRIVATE sentinel_core)
+qt_add_executable(audio_certification_probe EXCLUDE_FROM_ALL helpers/audio_certification_probe.cpp)
+target_link_libraries(audio_certification_probe PRIVATE sentinel_core)
+if(APPLE)
+    set_target_properties(audio_certification_probe PROPERTIES MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/helpers/audio_certification_Info.plist.in")
+endif()
+qt_add_executable(settings_ui_certification_probe EXCLUDE_FROM_ALL helpers/settings_ui_certification_probe.cpp)
+if(APPLE)
+    set_target_properties(settings_ui_certification_probe PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.SettingsCertification"
+        MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Settings Certification")
+endif()
+target_link_libraries(settings_ui_certification_probe PRIVATE sentinel_desktop_viewmodels Qt6::Quick Qt6::Qml)
+file(GLOB_RECURSE CERTIFICATION_QML_FILES "${CMAKE_SOURCE_DIR}/ui/qml/*.qml")
+foreach(qml_file IN LISTS CERTIFICATION_QML_FILES)
+    get_filename_component(qml_name "${qml_file}" NAME)
+    set_source_files_properties("${qml_file}" PROPERTIES QT_RESOURCE_ALIAS "${qml_name}")
+endforeach()
+qt_add_resources(settings_ui_certification_probe "certification_qml"
+    PREFIX "/qt/qml/Sentinel/Desktop" FILES ${CERTIFICATION_QML_FILES})
+qt_add_resources(settings_ui_certification_probe "certification_qmldir"
+    PREFIX "/qt/qml" BASE "${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
+    FILES "${CMAKE_BINARY_DIR}/apps/sentinel-desktop/Sentinel/Desktop/qmldir")
+file(GLOB CERTIFICATION_ICON_FILES "${CMAKE_SOURCE_DIR}/resources/icons/tabler/*.svg"
+    "${CMAKE_SOURCE_DIR}/resources/icons/lucide/*.svg")
+qt_add_resources(settings_ui_certification_probe "certification_icons"
+    PREFIX "/" BASE "${CMAKE_SOURCE_DIR}/resources" FILES ${CERTIFICATION_ICON_FILES})
+target_compile_definitions(settings_ui_certification_probe PRIVATE
+    CERTIFICATION_QML_IMPORT="${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
+    CERTIFICATION_TRANSLATIONS="${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
+    CERTIFICATION_QML_WRAPPER="${CMAKE_CURRENT_SOURCE_DIR}/helpers/settings_ui_certification.qml")
+
 add_sentinel_core_test(test_mode_manager core/test_mode_manager.cpp)
+add_sentinel_core_test(test_unified_audio_lifecycle core/test_unified_audio_lifecycle.cpp)
+add_sentinel_core_test(test_persistence_startup_certification core/test_persistence_startup_certification.cpp)
 add_sentinel_core_test(test_chat_session core/test_chat_session.cpp)
 add_sentinel_core_test(test_chat_mode_service core/test_chat_mode_service.cpp)
 add_sentinel_core_test(test_chat_application_controller core/test_chat_application_controller.cpp)
@@ -41,6 +81,17 @@ add_dependencies(test_mcp_integration test_mcp_server)
 target_compile_definitions(test_mcp_integration PRIVATE
     TEST_MCP_SERVER_PATH="$<TARGET_FILE:test_mcp_server>")
 add_sentinel_core_test(test_plugin_tool_integration core/test_plugin_tool_integration.cpp)
+qt_add_plugin(broker_certification_plugin SHARED CLASS_NAME BrokerCertificationPlugin
+    helpers/broker_certification_plugin.cpp)
+target_link_libraries(broker_certification_plugin PRIVATE sentinel_plugin_sdk Qt6::Core)
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/broker-fixture")
+configure_file(fixtures/plugins/broker/plugin.json "${CMAKE_CURRENT_BINARY_DIR}/broker-fixture/plugin.json" COPYONLY)
+add_custom_command(TARGET broker_certification_plugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:broker_certification_plugin>"
+        "${CMAKE_CURRENT_BINARY_DIR}/broker-fixture/$<TARGET_FILE_NAME:broker_certification_plugin>")
+add_dependencies(test_plugin_tool_integration broker_certification_plugin)
+target_compile_definitions(test_plugin_tool_integration PRIVATE
+    TEST_BROKER_PLUGIN_DIR="${CMAKE_CURRENT_BINARY_DIR}/broker-fixture")
 add_dependencies(test_plugin_tool_integration custom_agent_tool_plugin second_agent_tool_plugin)
 add_dependencies(test_plugin_tool_integration stage_sample_agent_plugins)
 target_compile_definitions(test_plugin_tool_integration PRIVATE
@@ -80,6 +131,9 @@ add_sentinel_core_test(test_agent_runtime_service core/test_agent_runtime_servic
 add_sentinel_core_test(test_workspace_service core/test_workspace_service.cpp)
 add_sentinel_core_test(test_worktree_service core/test_worktree_service.cpp)
 add_sentinel_core_test(test_skill_profile_service core/test_skill_profile_service.cpp)
+add_sentinel_core_test(test_skill_extension_runtime core/test_skill_extension_runtime.cpp)
+target_compile_definitions(test_skill_extension_runtime PRIVATE
+    TEST_SKILL_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/skills")
 add_sentinel_core_test(test_model_registry core/test_model_registry.cpp)
 add_sentinel_core_test(test_ollama_runtime core/test_ollama_runtime.cpp)
 add_sentinel_core_test(test_local_inference core/test_local_inference.cpp)
@@ -90,6 +144,9 @@ add_sentinel_core_test(test_local_runtime_session core/test_local_runtime_sessio
 add_sentinel_core_test(test_standard_path_provider core/test_standard_path_provider.cpp)
 add_sentinel_core_test(test_application_controller core/test_application_controller.cpp)
 add_sentinel_core_test(test_app_settings core/test_app_settings.cpp)
+add_sentinel_core_test(test_settings_recovery_runtime core/test_settings_recovery_runtime.cpp)
+target_compile_definitions(test_settings_recovery_runtime PRIVATE
+    CERTIFICATION_TRANSLATIONS="${CMAKE_BINARY_DIR}/apps/sentinel-desktop")
 add_sentinel_core_test(test_json_settings_store core/test_json_settings_store.cpp)
 add_sentinel_core_test(test_keyed_mutex core/test_keyed_mutex.cpp)
 add_sentinel_core_test(test_scoped_transform core/test_scoped_transform.cpp)
@@ -125,6 +182,8 @@ add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)
 add_sentinel_core_test(test_default_platform_services test_default_platform_services.cpp)
 add_sentinel_core_test(test_desktop_shell_view_model desktop/test_desktop_shell_view_model.cpp)
 add_sentinel_core_test(test_chat_view_model desktop/test_chat_view_model.cpp)
+add_sentinel_core_test(test_chat_message_recovery desktop/test_chat_message_recovery.cpp)
+target_link_libraries(test_chat_message_recovery PRIVATE sentinel_desktop_viewmodels)
 
 qt_add_executable(test_daemon_ipc
     core/test_daemon_ipc.cpp

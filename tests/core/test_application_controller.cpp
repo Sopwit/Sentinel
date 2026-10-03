@@ -414,7 +414,6 @@ static std::unique_ptr<ApplicationController> makeChatController() {
     return controller;
 }
 
-
 static std::unique_ptr<ApplicationController>
 makeControllerWithChatHistory(std::unique_ptr<IChatHistoryStore> chatHistoryStore,
                               sentinel::test::DeterministicChatReply reply =
@@ -1372,7 +1371,6 @@ void ApplicationControllerTest::exposesStreamingEnabledByDefaultMetadata() {
 
 // Retired legacy local-chat tests.  Local inference is exercised through the
 // direct worker/client suites and runLocalInference* integration tests.
-
 
 void ApplicationControllerTest::clearChatClearsConversationRuntimeAndPersistence() {
     ProductionChatControllerFixture fixture;

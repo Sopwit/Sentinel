@@ -3,9 +3,13 @@
 #include "sentinel/core/agent/AgentLoop.h"
 #include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/agent/ObservationPolicy.h"
+#include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/mcp/McpToolProvider.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
 #include "sentinel/core/runtime/ToolHookService.h"
 #include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
@@ -82,7 +86,176 @@ private slots:
     void realStdioAgentLoop();
     void realDenialSandboxCrashAndCancellation();
     void runtimeEventsAndCorrelation();
+    void certificationDirectValidationAndFaults();
+    void certificationPersistenceAndOwnedShutdown();
 };
+
+void McpIntegrationTest::certificationPersistenceAndOwnedShutdown() {
+    QTemporaryDir directory;
+    const auto path = directory.filePath("settings.json");
+    const QString json = QString::fromUtf8(
+        QJsonDocument(
+            QJsonObject{
+                {"mcpServers",
+                 QJsonObject{{"certification",
+                              QJsonObject{{"command", QString::fromUtf8(TEST_MCP_SERVER_PATH)},
+                                          {"args", QJsonArray{"", "--certification"}}}}}}})
+            .toJson(QJsonDocument::Compact));
+    QString persisted;
+    {
+        AppSettings settings(std::make_unique<JsonSettingsStore>(path));
+        settings.setMcpServersJson(json);
+        persisted = settings.mcpServersJson();
+    }
+    AppSettings restored(std::make_unique<JsonSettingsStore>(path));
+    QCOMPARE(restored.mcpServersJson(), persisted);
+    const auto configJson = QJsonDocument::fromJson(restored.mcpServersJson().toUtf8())
+                                .object()
+                                .value("mcpServers")
+                                .toObject()
+                                .value("certification")
+                                .toObject();
+    McpServerConfig config;
+    config.name = "certification";
+    config.type = "local";
+    config.command = configJson.value("command").toString();
+    for (const auto& argument : configJson.value("args").toArray())
+        config.arguments.append(argument.toString());
+    QPointer<QProcess> process;
+    {
+        auto service = std::make_shared<McpService>();
+        QVERIFY(service->addServer(config));
+        QVERIFY(service->connectToAll());
+        QCOMPARE(service->tools().size(), 8);
+        const auto children = service->findChildren<QProcess*>();
+        QVERIFY(!children.isEmpty());
+        process = children.first();
+        QCOMPARE(process->state(), QProcess::Running);
+    }
+    QVERIFY(process.isNull());
+    auto restarted = std::make_shared<McpService>();
+    QVERIFY(restarted->addServer(config));
+    QVERIFY(restarted->connectToAll());
+    QCOMPARE(restarted->tools().size(), 8);
+    restarted->disconnectFromAll();
+    QCOMPARE(restarted->connectionState(config.name), McpConnectionState::Disconnected);
+    QVERIFY(restarted->tools().isEmpty());
+}
+
+void McpIntegrationTest::certificationDirectValidationAndFaults() {
+    auto service = std::make_shared<McpService>();
+    McpServerConfig config;
+    config.name = "certification";
+    config.type = "local";
+    config.command = QString::fromUtf8(TEST_MCP_SERVER_PATH);
+    config.arguments = {"", "--certification"};
+    QVERIFY(service->addServer(config));
+    QVERIFY(!service->addServer(config));
+    InMemoryToolRegistry registry;
+    McpToolProvider provider(service, registry);
+    QVERIFY2(service->connectToServer(config.name), qPrintable(service->lastError(config.name)));
+    QCOMPARE(registry.enabledTools().size(), 8);
+    const auto initial = registry.enabledTools();
+    QVERIFY(service->refreshTools(config.name));
+    QVERIFY(provider.refresh(config.name));
+    QCOMPARE(registry.enabledTools().size(), 8);
+    for (const auto& descriptor : initial)
+        QVERIFY(registry.findRegistration(descriptor.id));
+    NoFallback fallback;
+    ToolExecutionGateway gateway(&registry);
+    PermissionPolicyService permissions;
+    gateway.setPermissionPolicy(&permissions, "enabled");
+    auto execute = [&](const QString& id, const QJsonObject& arguments,
+                       ApprovalStatus approval = ApprovalStatus::Approved) {
+        ToolExecutionRequest request;
+        request.plan.status = ToolInvocationPlanStatus::Planned;
+        PlannedToolInvocation invocation;
+        invocation.toolId = id;
+        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+            invocation.arguments.append({it.key(), {}, it.value()});
+        request.plan.invocations = {invocation};
+        request.approval.status = approval;
+        request.sandbox.status = SandboxStatus::Allowed;
+        ToolExecutionResult result;
+        int callbacks = 0;
+        gateway.executeAsync(request, fallback, {}, {}, {}, [&](auto value) {
+            result = std::move(value);
+            ++callbacks;
+        });
+        const bool done = QTest::qWaitFor([&] { return callbacks == 1; }, 35000);
+        if (!done)
+            QTest::qFail("MCP gateway did not settle", __FILE__, __LINE__);
+        return result;
+    };
+    const QString echo = "mcp.certification.echo_5f_value";
+    auto result = execute(echo, {{"value", "MERHABA"}});
+    QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+    QVERIFY(result.summary.contains("ECHO: MERHABA"));
+    result = execute("mcp.certification.add", {{"a", 2}, {"b", 3}});
+    QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+    QVERIFY(result.structuredObservation);
+    QCOMPARE(result.structuredObservation->data.value("sum").toDouble(), 5.0);
+    const auto descriptor = registry.findRegistration("mcp.certification.add")->descriptor;
+    PlannedToolInvocation invocation;
+    invocation.toolId = descriptor.id;
+    const auto evidence =
+        EvidencePolicy::record(descriptor, invocation, result.status, result.summary, 1,
+                               "real-call", result.structuredObservation);
+    ObservationIntent intent;
+    intent.requirements = {{ObservationDomain::ExternalService, "certification",
+                            EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect}};
+    QVERIFY(EvidencePolicy::evaluate(intent, evidence, GroundingMode::Verified, true).accepted);
+    intent.requirements = {{ObservationDomain::ExternalService,
+                            {},
+                            EvidenceFreshness::TurnScoped,
+                            ObservationPurpose::Operate}};
+    QVERIFY(EvidencePolicy::evaluate(intent, evidence, GroundingMode::Verified, true).accepted);
+    intent.requirements = {{ObservationDomain::FileSystem,
+                            {},
+                            EvidenceFreshness::TurnScoped,
+                            ObservationPurpose::Inspect}};
+    QVERIFY(!EvidencePolicy::evaluate(intent, evidence, GroundingMode::Verified, true).accepted);
+    intent.requirements = {{ObservationDomain::ExternalService, "certification",
+                            EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect}};
+    for (const auto status : {ToolExecutionStatus::Failed, ToolExecutionStatus::Blocked,
+                              ToolExecutionStatus::Cancelled})
+        QVERIFY(!EvidencePolicy::evaluate(intent,
+                                          EvidencePolicy::record(descriptor, invocation, status,
+                                                                 "failure", 1, "failed-call"),
+                                          GroundingMode::Verified, true)
+                     .accepted);
+    for (const auto& invalid :
+         QList<QJsonObject>{{}, {{"value", 3}}, {{"value", "MERHABA"}, {"unknown", true}}})
+        QCOMPARE(execute(echo, invalid).status, ToolExecutionStatus::InvalidArguments);
+    QCOMPARE(execute(echo, {{"value", "MERHABA"}}, ApprovalStatus::Denied).status,
+             ToolExecutionStatus::Blocked);
+    gateway.setPermissionPolicy(&permissions, "disabled");
+    QCOMPARE(execute(echo, {{"value", "MERHABA"}}).status, ToolExecutionStatus::Blocked);
+    gateway.setPermissionPolicy(&permissions, "enabled");
+    for (const auto& name :
+         QStringList{"malformed_5f_json", "missing_5f_result", "wrong_5f_id", "server_5f_error"}) {
+        if (service->connectionState(config.name) != McpConnectionState::Connected)
+            QVERIFY(service->connectToServer(config.name));
+        result = execute("mcp.certification." + name, {{"value", "fault"}});
+        QVERIFY(result.status != ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.failureCategory, name == "wrong_5f_id" ? ToolFailureCategory::Timeout
+                                         : name == "server_5f_error"
+                                             ? ToolFailureCategory::RemoteExecutionFailure
+                                             : ToolFailureCategory::ProtocolError);
+    }
+    QVERIFY(service->disconnectFromServer(config.name));
+    QVERIFY(registry.enabledTools().isEmpty());
+    QVERIFY(service->connectToServer(config.name));
+    QCOMPARE(registry.enabledTools().size(), 8);
+    QVERIFY(service->disconnectFromServer(config.name));
+    McpServerConfig unavailable = config;
+    unavailable.name = "unavailable";
+    unavailable.command = "/definitely-unavailable-sentinel-mcp";
+    QVERIFY(service->addServer(unavailable));
+    QVERIFY(!service->connectToServer(unavailable.name));
+    QVERIFY(service->connectionState(unavailable.name) != McpConnectionState::Connected);
+    QVERIFY(!service->lastError(unavailable.name).isEmpty());
+}
 
 void McpIntegrationTest::realStdioAgentLoop() {
     QTemporaryDir directory;
@@ -150,9 +323,9 @@ void McpIntegrationTest::realStdioAgentLoop() {
         state.steps.first().observation.contains(QStringLiteral("ECHO: Sentinel MCP integration")));
     QCOMPARE(planner.observation, state.steps.first().observation);
     QCOMPARE(planner.calls, 2);
-    QCOMPARE(calls(logPath),
-             (QStringList{QStringLiteral("before"), QStringLiteral("echo_value"),
-                          QStringLiteral("response:echo_value"), QStringLiteral("after")}));
+    // The child may not write the parent's fixture directory. Its successful
+    // echo observation proves execution; only in-process hooks can log here.
+    QCOMPARE(calls(logPath), (QStringList{QStringLiteral("before"), QStringLiteral("after")}));
     QVERIFY(service->disconnectFromServer(config.name));
     QVERIFY(!registry.findRegistration(id));
     QVERIFY(service->connectToServer(config.name));
@@ -192,12 +365,13 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
         deniedDone = true;
     });
     QVERIFY(QTest::qWaitFor([&] { return deniedDone; }, 5000));
-    QCOMPARE(deniedState.phase, AgentLoopPhase::Completed);
+    QCOMPARE(deniedState.phase, AgentLoopPhase::Failed);
+    QCOMPARE(deniedState.terminalReason, AgentTerminalReason::SecurityDenied);
     QCOMPARE(calls(logPath).size(), 0);
 
     Planner sandboxPlanner(registry);
     StaticApprovalPolicy approval;
-    StaticSandboxPolicy blockedSandbox;
+    StaticSandboxPolicy blockedSandbox(QSet<QString>{});
     AgentLoop blocked(sandboxPlanner, fallback, approval, blockedSandbox, {id});
     blocked.setToolRegistry(&registry);
     AgentLoopState blockedState;
@@ -228,13 +402,11 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
         ++permissionCompletions;
     });
     QVERIFY(QTest::qWaitFor([&] { return permissionCompletions == 1; }, 5000));
-    permissionDenied.resumeAsync(permissionState, true, &context, [&](const auto& state) {
-        permissionState = state;
-        ++permissionCompletions;
-    });
-    QVERIFY(QTest::qWaitFor([&] { return permissionCompletions == 2; }, 5000));
+    QCOMPARE(permissionState.phase, AgentLoopPhase::Failed);
+    QCOMPARE(permissionState.terminalReason, AgentTerminalReason::SecurityDenied);
+    QCOMPARE(permissionCompletions, 1);
     QVERIFY(!permissionState.steps.first().succeeded);
-    QVERIFY(permissionState.steps.first().observation.contains(QStringLiteral("permission")));
+    QVERIFY(permissionState.steps.first().observation.contains(QStringLiteral("authorization")));
     QCOMPARE(calls(logPath).size(), 0);
 
     const auto crashId = QStringLiteral("mcp.test_2d_server.crash_5f_echo");
@@ -253,8 +425,9 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
         crashedState = state;
         ++crashCompletions;
     });
-    QVERIFY(QTest::qWaitFor([&] { return calls(logPath).contains(QStringLiteral("crash_echo")); },
-                            5000));
+    QVERIFY(QTest::qWaitFor(
+        [&] { return service->connectionState(config.name) != McpConnectionState::Connected; },
+        5000));
     QVERIFY(QTest::qWaitFor([&] { return crashCompletions == 2; }, 5000));
     QVERIFY(!crashedState.steps.first().succeeded);
     QCOMPARE(crashCompletions, 2);
@@ -264,6 +437,11 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
     Planner cancelPlanner(registry, QStringLiteral("delayed_echo"));
     AgentLoop cancelling(cancelPlanner, fallback, approval, sandbox, {delayedId});
     cancelling.setToolRegistry(&registry);
+    bool delayedStarted = false;
+    cancelling.setToolCallback([&](AgentLoop::ToolTransition transition, int,
+                                   const ToolInvocationPlan&, const AgentStepRecord*) {
+        delayedStarted |= transition == AgentLoop::ToolTransition::ExecutionStarted;
+    });
     AgentLoopState cancelledState;
     int cancelCompletions = 0;
     cancelling.runAsync(QStringLiteral("cancel"), {}, &context, [&](const auto& state) {
@@ -275,13 +453,14 @@ void McpIntegrationTest::realDenialSandboxCrashAndCancellation() {
         cancelledState = state;
         ++cancelCompletions;
     });
-    QVERIFY(QTest::qWaitFor(
-        [&] { return calls(logPath).count(QStringLiteral("delayed_echo")) == 1; }, 5000));
+    QVERIFY(QTest::qWaitFor([&] { return delayedStarted; }, 5000));
     cancelling.cancelAsync();
     QVERIFY(QTest::qWaitFor([&] { return cancelCompletions == 2; }, 5000));
     QCOMPARE(cancelledState.phase, AgentLoopPhase::Cancelled);
-    QVERIFY(QTest::qWaitFor(
-        [&] { return calls(logPath).contains(QStringLiteral("response:delayed_echo")); }, 5000));
+    // The fixture answers after 400 ms even when its client cancels. A late
+    // response must not publish another terminal result.
+    QTest::qWait(600);
+    QVERIFY(calls(logPath).isEmpty());
     QCOMPARE(cancelCompletions, 2);
     QVERIFY(service->disconnectFromServer(config.name));
 }
@@ -323,7 +502,7 @@ void McpIntegrationTest::runtimeEventsAndCorrelation() {
     QCOMPARE(state.finalAnswer, QStringLiteral("MCP integration completed"));
     QVERIFY(
         state.steps.first().observation.contains(QStringLiteral("ECHO: Sentinel MCP integration")));
-    QCOMPARE(calls(logPath).count(QStringLiteral("echo_value")), 1);
+    QVERIFY(calls(logPath).isEmpty()); // Child filesystem confinement remains enforced.
     const auto events = runtime.eventHistory(session);
     QString callId, stepId, turnId;
     int requested = -1, required = -1, resolved = -1, started = -1, finished = -1;

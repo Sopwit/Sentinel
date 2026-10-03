@@ -75,20 +75,22 @@ public:
         state_->entryRelease.acquire();
         for (const auto& chunk : state_->chunks) {
             state_->chunkRelease.acquire();
-            state_->cancelled = request.options.cancellationToken &&
-                                request.options.cancellationToken->load();
-            if (state_->cancelled) break;
+            state_->cancelled =
+                request.options.cancellationToken && request.options.cancellationToken->load();
+            if (state_->cancelled)
+                break;
             if (onChunk) {
                 onChunk(chunk);
                 ++state_->chunkCallbacks;
             }
         }
         state_->finalRelease.acquire();
-        state_->cancelled = request.options.cancellationToken &&
-                            request.options.cancellationToken->load();
+        state_->cancelled =
+            request.options.cancellationToken && request.options.cancellationToken->load();
         auto result = state_->result;
         result.requestId = request.id;
-        if (result.model.isEmpty()) result.model = request.options.model;
+        if (result.model.isEmpty())
+            result.model = request.options.model;
         if (state_->cancelled && result.status == core::LocalInferenceStreamStatus::Completed) {
             result.status = core::LocalInferenceStreamStatus::Cancelled;
             result.cancelled = true;
@@ -96,8 +98,12 @@ public:
         return result;
     }
 
-    QString statusSummary() const override { return QStringLiteral("Gated test stream client"); }
-    bool isAvailable() const override { return true; }
+    QString statusSummary() const override {
+        return QStringLiteral("Gated test stream client");
+    }
+    bool isAvailable() const override {
+        return true;
+    }
 
 private:
     std::shared_ptr<StreamClientState> state_;
