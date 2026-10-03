@@ -753,17 +753,17 @@ void ContextAssemblyTest::contextDecisionExplainabilityDoesNotExposeRawPrompt() 
 }
 
 void ContextAssemblyTest::promptContextInjectionDisabledLeavesPromptUnchanged() {
-    const auto result = injectPromptContext(
-        QStringLiteral("hello raw prompt"),
-        {
-            PromptContextBlock{ContextAssemblySourceKind::Conversation,
-                               QStringLiteral("Bounded Conversation History"),
-                               QStringLiteral("history text")},
-            PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
-                               QStringLiteral("Committed Local Memory"),
-                               QStringLiteral("key = value")},
-        },
-        PromptContextInjectionPolicy{false, 2000});
+    const auto result =
+        injectPromptContext(QStringLiteral("hello raw prompt"),
+                            {
+                                PromptContextBlock{ContextAssemblySourceKind::Conversation,
+                                                   QStringLiteral("Bounded Conversation History"),
+                                                   QStringLiteral("history text")},
+                                PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
+                                                   QStringLiteral("Committed Local Memory"),
+                                                   QStringLiteral("key = value")},
+                            },
+                            PromptContextInjectionPolicy{false, 2000});
 
     QCOMPARE(result.status, PromptContextInjectionStatus::Disabled);
     QCOMPARE(result.prompt, QStringLiteral("hello raw prompt"));
@@ -825,10 +825,8 @@ void ContextAssemblyTest::promptContextInjectionUsesOnlyCommittedMemory() {
 }
 
 void ContextAssemblyTest::promptContextInjectionRespectsSafetyGateBeforeAssembly() {
-    const auto result = injectPromptContext(
-        QStringLiteral("hello safe prompt"),
-        {},
-        PromptContextInjectionPolicy{true, 2000});
+    const auto result = injectPromptContext(QStringLiteral("hello safe prompt"), {},
+                                            PromptContextInjectionPolicy{true, 2000});
 
     QCOMPARE(result.status, PromptContextInjectionStatus::Empty);
     QCOMPARE(result.prompt, QStringLiteral("hello safe prompt"));

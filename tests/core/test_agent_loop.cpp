@@ -5,19 +5,29 @@
 #include <QtTest>
 
 #include "sentinel/core/agent/AgentLoop.h"
+#include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
-#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
-#include <functional>
 #include <QFileInfo>
 #include <QTemporaryDir>
+#include <functional>
 
 using namespace sentinel::core;
 
 namespace {
+class CallbackIntentPolicy final : public IObservationIntentPolicy {
+public:
+    std::function<void()> onClassify;
+    ObservationIntent classify(const QString&, const QString&,
+                               const QList<ToolDescriptor>&) const override {
+        onClassify();
+        return {};
+    }
+};
 
 class ScriptedPlanner final : public IAgentStepPlanner {
 public:
@@ -104,6 +114,27 @@ class AgentLoopTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void cancellationDuringInitialClassificationIsTerminalOnce() {
+        ScriptedPlanner planner;
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, QStringList{});
+        auto policy = std::make_shared<CallbackIntentPolicy>();
+        policy->onClassify = [&] { loop.cancelAsync(); };
+        loop.setObservationIntentPolicy(policy);
+        int terminals = 0;
+        loop.runAsync(QStringLiteral("List the workspace"), QStringLiteral("initial-cancel"), this,
+                      [&](const AgentLoopState& state) {
+                          ++terminals;
+                          QCOMPARE(state.phase, AgentLoopPhase::Cancelled);
+                      });
+        QTest::qWait(25);
+        QCOMPARE(terminals, 1);
+        QCOMPARE(planner.calls, 0);
+        QVERIFY(executor.requests.isEmpty());
+    }
+
     void runsToolThenFinalAnswer() {
         ScriptedPlanner planner;
         planner.decisions = {toolDecision(QStringLiteral("run-command")),
@@ -146,8 +177,10 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto descriptors = BuiltInToolProvider::descriptors();
-        const auto descriptor = std::find_if(descriptors.cbegin(), descriptors.cend(),
-            [](const ToolDescriptor& item) { return item.id == QLatin1String("list-directory"); });
+        const auto descriptor =
+            std::find_if(descriptors.cbegin(), descriptors.cend(), [](const ToolDescriptor& item) {
+                return item.id == QLatin1String("list-directory");
+            });
         QVERIFY(descriptor != descriptors.cend());
 
         auto handler = std::make_shared<RecordingHandler>();
@@ -173,8 +206,9 @@ private slots:
         QCOMPARE(state.phase, AgentLoopPhase::Completed);
         QCOMPARE(handler->requests.size(), 1);
         QVERIFY(handler->requests.first().plan.invocations.first().resourceSnapshot);
-        QCOMPARE(handler->requests.first().plan.invocations.first().resourceSnapshot->workingDirectory,
-                 QFileInfo(workspace.path()).canonicalFilePath());
+        QCOMPARE(
+            handler->requests.first().plan.invocations.first().resourceSnapshot->workingDirectory,
+            QFileInfo(workspace.path()).canonicalFilePath());
     }
 
     void stopsAtIterationLimit() {

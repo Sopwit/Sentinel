@@ -16,6 +16,7 @@
 #include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/memory/InMemorySettingsStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QDir>
@@ -108,12 +109,14 @@ private slots:
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
+    void restoresPersistedLocalProviderEndpointsOnStartup();
     void exposesLanguageSettings();
     void exposesCompanionReadinessMetadata();
     void exposesWorkspaceReadinessMetadata();
     void exposesSkillProfileMetadata();
     void exposesPermissionPolicyMetadata();
     void exposesProductExcellenceWorkflow();
+    void onboardingWriteFailureRemainsVisible();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -122,8 +125,10 @@ private slots:
 
 class ViewModelFixture {
 public:
-    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
-    sentinel::test::DeterministicModelServiceFixture models;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>(),
+                         sentinel::core::inMemoryTestCredentialStore()};
+    sentinel::test::DeterministicModelServiceFixture models{
+        sentinel::test::DeterministicChatReply::Final, &settings};
     std::unique_ptr<ApplicationController> controller{makeController(models)};
     ModeManager modeManager;
     DesktopShellViewModel viewModel{*controller, modeManager, initializedSettings(settings)};
@@ -251,6 +256,31 @@ private:
     QList<sentinel::core::ToolDescriptor> tools_;
     sentinel::core::ToolInvocationPlan plan_;
 };
+
+void DesktopShellViewModelTest::restoresPersistedLocalProviderEndpointsOnStartup() {
+    QTemporaryDir dir;
+    const auto path = dir.filePath(QStringLiteral("settings.json"));
+    {
+        AppSettings settings(std::make_unique<sentinel::core::JsonSettingsStore>(path),
+                             sentinel::core::inMemoryTestCredentialStore());
+        settings.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:18101"));
+        settings.setLlamaCppEndpoint(QStringLiteral("http://127.0.0.1:18102"));
+    }
+    AppSettings restored(std::make_unique<sentinel::core::JsonSettingsStore>(path),
+                         sentinel::core::inMemoryTestCredentialStore());
+    sentinel::test::DeterministicModelServiceFixture models{
+        sentinel::test::DeterministicChatReply::Final, &restored};
+    sentinel::core::ApplicationControllerBuilder builder;
+    auto controller =
+        builder.withMemoryStore(std::make_unique<InMemoryStore>())
+            .withConversationStore(std::make_unique<sentinel::core::InMemoryConversationStore>())
+            .withModelService(models.takeModelService())
+            .build();
+    ModeManager modes;
+    DesktopShellViewModel viewModel(*controller, modes, restored);
+    QCOMPARE(controller->lmStudioEndpoint(), restored.lmStudioEndpoint());
+    QCOMPARE(controller->llamaCppEndpoint(), restored.llamaCppEndpoint());
+}
 
 void DesktopShellViewModelTest::exposesInitialShellState() {
     ViewModelFixture fixture;
@@ -653,8 +683,8 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
 
     fixture.viewModel.setSelectedRuntimeProvider(QStringLiteral("lm-studio"));
 
-    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("ollama"));
-    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("lm-studio"));
+    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("lm-studio"));
     QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("lm-studio"));
     QCOMPARE(runtimeProviderSpy.count(), 2);
 }
@@ -855,38 +885,20 @@ void DesktopShellViewModelTest::exposesModelManagementReadinessMetadata() {
 }
 
 void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
-    ApplicationController controller{
-        std::make_unique<LocalEchoProvider>(),
-        std::make_unique<InMemoryStore>(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{
-            {QStringLiteral("qwen2.5-coder:7b"), QStringLiteral("2026-05-01T10:00:00Z"),
-             5LL * 1024LL * 1024LL * 1024LL},
-        })};
+    AppSettings settings{std::make_unique<InMemorySettingsStore>(),
+                         sentinel::core::inMemoryTestCredentialStore()};
+    sentinel::core::ApplicationControllerBuilder builder;
+    builder.withProvider(std::make_unique<LocalEchoProvider>())
+        .withMemoryStore(std::make_unique<InMemoryStore>())
+        .withModelService(std::make_unique<sentinel::core::ModelService>(&settings))
+        .withOllamaRuntimeClient(
+            std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{
+                {QStringLiteral("qwen2.5-coder:7b"), QStringLiteral("2026-05-01T10:00:00Z"),
+                 5LL * 1024LL * 1024LL * 1024LL},
+            }));
+    auto controller = builder.build();
     ModeManager modeManager;
-    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
-    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    DesktopShellViewModel viewModel{*controller, modeManager, settings};
 
     viewModel.setSelectedLocalModel(QStringLiteral("qwen2.5-coder:7b"));
     viewModel.assignModelRole(QStringLiteral("coding"), QStringLiteral("qwen2.5-coder:7b"));
@@ -3114,9 +3126,9 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(fixture.viewModel.selectedLocalModel(), QString());
-    QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("sentinel-test-model"));
-    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("ollama"));
-    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("local-model"));
+    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
     QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("ollama"));
     QVERIFY(fixture.viewModel.localChatInferenceEnabled());
     QVERIFY(fixture.settings.localChatInferenceEnabled());
@@ -3153,6 +3165,27 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(skillProfileSpy.count(), 1);
     QCOMPARE(permissionPolicySpy.count(), 0);
     QCOMPARE(contextVisibilitySpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::onboardingWriteFailureRemainsVisible() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QFile blocker(dir.filePath(QStringLiteral("blocked")));
+    QVERIFY(blocker.open(QIODevice::WriteOnly));
+    blocker.write("fixture");
+    blocker.close();
+    AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(
+                             blocker.fileName() + QStringLiteral("/settings.json")),
+                         sentinel::core::inMemoryTestCredentialStore()};
+    sentinel::core::ApplicationControllerBuilder builder;
+    builder.withMemoryStore(std::make_unique<InMemoryStore>())
+        .withModelService(std::make_unique<sentinel::core::ModelService>(&settings));
+    auto controller = builder.build();
+    ModeManager modeManager;
+    DesktopShellViewModel viewModel{*controller, modeManager, settings};
+    viewModel.setOnboardingComplete(true);
+    QVERIFY(!viewModel.onboardingComplete());
+    QVERIFY(!viewModel.onboardingErrorText().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesLanguageSettings() {

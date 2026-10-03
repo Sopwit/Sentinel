@@ -1,0 +1,12 @@
+{
+  "id": "dev.sentinel.test.broker",
+  "name": "Broker certification fixture",
+  "version": "1.0.0",
+  "api_version": "5.0",
+  "vendor": "Sentinel tests",
+  "category": "Tool",
+  "entry_point": "broker_certification_plugin",
+  "permissions": ["tool.execute", "filesystem.read", "process.execute", "network.loopback.read_write"],
+  "host_capabilities": ["FilesystemRead", "ProcessExecute", "NetworkRequest"],
+  "dependencies": {"dev.sentinel.core": ">=1.0.0"}
+}

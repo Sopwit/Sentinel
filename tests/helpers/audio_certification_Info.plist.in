@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
+<key>CFBundleIdentifier</key><string>dev.sentinel.AudioCertification</string>
+<key>CFBundleName</key><string>Sentinel Audio Certification</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>NSMicrophoneUsageDescription</key><string>Record a short disposable Sentinel audio certification sample.</string>
+</dict></plist>

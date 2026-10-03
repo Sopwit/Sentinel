@@ -81,11 +81,12 @@ private:
 // so ModelBinding resolution follows the same rules as a live Ollama catalog.
 class DeterministicModelServiceFixture {
 public:
-    explicit DeterministicModelServiceFixture(DeterministicChatReply reply =
-                                                  DeterministicChatReply::Final)
+    explicit DeterministicModelServiceFixture(
+        DeterministicChatReply reply = DeterministicChatReply::Final,
+        core::AppSettings* settings = nullptr)
         : state(std::make_shared<DeterministicChatProviderState>()) {
         state->reply = reply;
-        models = std::make_unique<core::ModelService>();
+        models = std::make_unique<core::ModelService>(settings);
         models->registerProvider(QStringLiteral("ollama"), [shared = state](const core::ModelBinding&) {
             return std::make_shared<DeterministicChatProvider>(shared);
         });

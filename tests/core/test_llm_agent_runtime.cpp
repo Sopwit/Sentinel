@@ -71,6 +71,25 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void budgetedSkillContextReachesProviderExactlyOnce() {
+        FakeChatProvider provider;
+        provider.scriptedReply = "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":"
+                                 "\"Specific contextual answer\"}";
+        LlmAgentRuntime runtime({}, &provider);
+        AgentContextInput input;
+        input.goal = "task";
+        Skill skill;
+        skill.name = "test";
+        skill.content = "Append [SKILL_OK].";
+        input.skills = {skill};
+        runtime.setPlanningContext(ContextEngine{}.build(input));
+        runtime.nextStep(input.goal, {});
+        QCOMPARE(provider.prompts.last().count("[SKILL_OK]"), 1);
+        input.skills.first().state = SkillState::Disabled;
+        runtime.setPlanningContext(ContextEngine{}.build(input));
+        runtime.nextStep(input.goal, {});
+        QVERIFY(!provider.prompts.last().contains("[SKILL_OK]"));
+    }
     void registryChangesPlannerDiscovery() {
         FakeChatProvider provider;
         provider.scriptedReply = QStringLiteral("{\"action\":\"final\",\"answer\":\"done\"}");
@@ -190,8 +209,10 @@ private slots:
         auto provider = std::make_shared<FakeChatProvider>();
         ChatProviderReply toolCall;
         toolCall.success = true;
-        toolCall.toolCalls.append({QStringLiteral("call-1"), QStringLiteral("list-directory"),
-                                   QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}}, {}});
+        toolCall.toolCalls.append({QStringLiteral("call-1"),
+                                   QStringLiteral("list-directory"),
+                                   QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}},
+                                   {}});
         ChatProviderReply finalReply;
         finalReply.success = true;
         finalReply.message = QStringLiteral("The workspace contains CMakeLists.txt.");
@@ -208,8 +229,10 @@ private slots:
                                     EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect,
                                     ClaimType::FileExists, QStringLiteral("claim-1")});
         runtime.setObservationIntent(intent);
-        runtime.setStructuredFacts({{QStringLiteral("claim-1"), QStringLiteral("CMakeLists.txt"),
-                                    true, {QStringLiteral("call-1")}}});
+        runtime.setStructuredFacts({{QStringLiteral("claim-1"),
+                                     QStringLiteral("CMakeLists.txt"),
+                                     true,
+                                     {QStringLiteral("call-1")}}});
 
         const auto tool = runtime.nextStep(QStringLiteral("List the workspace"), {});
         QCOMPARE(tool.kind, AgentStepDecision::Kind::ToolCall);
@@ -217,6 +240,9 @@ private slots:
         QVERIFY(provider->requestOptions.first().nativeToolCalling);
         QVERIFY(provider->requestOptions.first().tools.size() > 0);
         QVERIFY(!provider->prompts.first().contains(QStringLiteral("risk=")));
+        QVERIFY(provider->prompts.first().contains(QStringLiteral("native tool protocol")));
+        QVERIFY(!provider->prompts.first().contains(QStringLiteral("Return one JSON decision")));
+        QVERIFY(!provider->prompts.first().contains(QStringLiteral("NEXT JSON ACTION")));
 
         auto record = sampleRecord();
         record.toolId = QStringLiteral("list-directory");
@@ -229,8 +255,10 @@ private slots:
         QCOMPARE(final.claims.size(), 1);
         QCOMPARE(final.claims.first().id, QStringLiteral("claim-1"));
         QVERIFY(final.claims.first().value);
-        QCOMPARE(provider->requestOptions.last().toolResults.first().callId, QStringLiteral("call-1"));
+        QCOMPARE(provider->requestOptions.last().toolResults.first().callId,
+                 QStringLiteral("call-1"));
         QVERIFY(!provider->prompts.last().contains(QStringLiteral("risk=")));
+        QVERIFY(provider->prompts.last().contains(QStringLiteral("only observed evidence")));
     }
 
     void fallsBackToHeuristicOnGarbage() {

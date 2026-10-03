@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "sentinel/core/runtime/LocalInference.h"
 #include "../support/LocalInferenceWorkerFixture.h"
+#include "sentinel/core/runtime/LocalInference.h"
 
+#include <QElapsedTimer>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QtTest>
 
 using sentinel::core::LMStudioConfig;
@@ -39,6 +41,8 @@ private slots:
     void workerPropagatesCancellationToInferenceClient();
     void cloudEndpointWithoutKeyIsBlocked();
     void cloudOpenAiCompatibleRequestCarriesBearerKey();
+    void completedReasoningOnlyIsInvalid();
+    void zeroTimeoutCancelsOutstandingRequest();
 };
 
 void LocalInferenceTest::nullClientDeterministicallyRefuses() {
@@ -168,8 +172,8 @@ void LocalInferenceTest::workerStreamsOrderedChunksOnceAndCleansUp() {
         [&received](const QString&, const sentinel::core::LocalInferenceStreamChunk& chunk) {
             received.append(chunk.text);
         },
-        [&finalCallbacks, &finalId, &finalStatus](const QString& id,
-                                                   const sentinel::core::LocalInferenceStreamResult& result) {
+        [&finalCallbacks, &finalId, &finalStatus](
+            const QString& id, const sentinel::core::LocalInferenceStreamResult& result) {
             ++finalCallbacks;
             finalId = id;
             finalStatus = result.status;
@@ -199,11 +203,11 @@ void LocalInferenceTest::workerRejectsConcurrentStreamWhileTerminalDeliveryIsQue
     request.prompt = QStringLiteral("test prompt");
     request.options.model = QStringLiteral("test-model");
     int firstFinalCallbacks = 0;
-    QVERIFY(worker.startStream(request, {},
-                               [&firstFinalCallbacks](const QString&,
-                                                      const sentinel::core::LocalInferenceStreamResult&) {
-                                   ++firstFinalCallbacks;
-                               }));
+    QVERIFY(worker.startStream(
+        request, {},
+        [&firstFinalCallbacks](const QString&, const sentinel::core::LocalInferenceStreamResult&) {
+            ++firstFinalCallbacks;
+        }));
     QTRY_VERIFY_WITH_TIMEOUT(state->entered.load(), 3000);
     state->entryRelease.release();
     state->finalRelease.release();
@@ -231,12 +235,13 @@ void LocalInferenceTest::workerCancellationPropagatesToGatedStreamClient() {
     request.id = QStringLiteral("stream-cancel-1");
     request.prompt = QStringLiteral("test prompt");
     request.options.model = QStringLiteral("test-model");
-    QVERIFY(worker.startStream(request, {},
-                               [&finalCallbacks, &finalStatus](const QString&,
-                                                                const sentinel::core::LocalInferenceStreamResult& result) {
-                                   ++finalCallbacks;
-                                   finalStatus = result.status;
-                               }));
+    QVERIFY(worker.startStream(
+        request, {},
+        [&finalCallbacks, &finalStatus](const QString&,
+                                        const sentinel::core::LocalInferenceStreamResult& result) {
+            ++finalCallbacks;
+            finalStatus = result.status;
+        }));
     QTRY_VERIFY_WITH_TIMEOUT(state->entered.load(), 3000);
     worker.cancel(request.id);
     state->entryRelease.release();
@@ -377,6 +382,65 @@ void LocalInferenceTest::cloudOpenAiCompatibleRequestCarriesBearerKey() {
     QCOMPARE(response.text, QStringLiteral("cloud says hi"));
     QVERIFY(capturedAuth.contains(QStringLiteral("Bearer test-key-123")));
     QVERIFY(capturedRequestLine.contains(QStringLiteral("/v1/chat/completions")));
+}
+
+void LocalInferenceTest::completedReasoningOnlyIsInvalid() {
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    connect(&server, &QTcpServer::newConnection, &server, [&] {
+        auto* socket = server.nextPendingConnection();
+        connect(socket, &QTcpSocket::readyRead, socket, [socket] {
+            socket->readAll();
+            const QByteArray body =
+                R"({"choices":[{"finish_reason":"stop","message":{"content":"","reasoning_content":"Inspect current state","tool_calls":[]}}],"usage":{"completion_tokens_details":{"reasoning_tokens":12}}})";
+            socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " +
+                          QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            socket->disconnectFromHost();
+        });
+    });
+    LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+    LMStudioLocalInferenceClient client(config);
+    LocalInferenceRequest request;
+    request.prompt = QStringLiteral("Classify");
+    request.options.model = QStringLiteral("fixture");
+    const auto response = client.infer(request);
+    QCOMPARE(response.status, LocalInferenceStatus::Error);
+    QCOMPARE(response.error, LocalInferenceError::InvalidResponse);
+    QVERIFY(response.text.isEmpty());
+}
+
+void LocalInferenceTest::zeroTimeoutCancelsOutstandingRequest() {
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    auto token = std::make_shared<std::atomic_bool>(false);
+    bool received = false;
+    connect(&server, &QTcpServer::newConnection, &server, [&] {
+        auto* socket = server.nextPendingConnection();
+        connect(socket, &QTcpSocket::readyRead, socket, [&, socket] {
+            socket->readAll();
+            received = true;
+            QTimer::singleShot(50, &server, [token] { token->store(true); });
+        });
+    });
+    // Test watchdog, not a provider or production timeout.
+    QTimer::singleShot(3000, &server, [token] { token->store(true); });
+    LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+    LMStudioLocalInferenceClient client(config, 0);
+    LocalInferenceRequest request;
+    request.prompt = QStringLiteral("Classify");
+    request.options.model = QStringLiteral("fixture");
+    request.options.timeoutMs = 0;
+    request.options.cancellationToken = token;
+    QElapsedTimer elapsed;
+    elapsed.start();
+    const auto response = client.infer(request);
+    QVERIFY(received);
+    QVERIFY(elapsed.elapsed() < 1000);
+    QCOMPARE(response.providerErrorCategory,
+             static_cast<int>(sentinel::core::ChatProviderErrorCategory::Cancelled));
+    QVERIFY(response.text.isEmpty());
 }
 
 #include "test_local_inference.moc"

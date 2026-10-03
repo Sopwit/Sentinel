@@ -980,8 +980,7 @@ void VoiceTest::piperFileOutputExecutionUsesFakeClientForControlledSuccess() {
         config, std::make_unique<FakePiperTtsClient>(FakePiperTtsClient::Mode::Success)};
     QCOMPARE(provider.status(), PiperTtsStatus::Configured);
 
-    const auto request =
-        PiperTtsRequest{QStringLiteral("hello"), {}, {}, true, true, false, 1000};
+    const auto request = PiperTtsRequest{QStringLiteral("hello"), {}, {}, true, true, false, 1000};
     const auto result = provider.synthesizePiper(request);
 
     QVERIFY(result.success);

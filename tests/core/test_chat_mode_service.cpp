@@ -91,7 +91,25 @@ private slots:
     void bindingFailureDoesNotLeaveEmptyAssistantMessage();
     void lateSuccessfulCallbackAfterCancellationStaysCancelled();
     void sqliteStoreAcceptsInitiallyEmptyAssistantPlaceholder();
+    void geminiPreservesAuthoritativeJsonSchema();
 };
+
+void ChatModeServiceTest::geminiPreservesAuthoritativeJsonSchema() {
+    ToolDescriptor tool;
+    tool.id = QStringLiteral("list-directory");
+    tool.description = QStringLiteral("List actual entries");
+    tool.inputSchema = QJsonObject{
+        {QStringLiteral("type"), QStringLiteral("object")},
+        {QStringLiteral("additionalProperties"), false},
+        {QStringLiteral("properties"),
+         QJsonObject{{QStringLiteral("path"),
+                      QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}}}}};
+    const auto declaration = geminiFunctionDeclaration(tool);
+    QCOMPARE(declaration.value(QStringLiteral("name")).toString(), tool.id);
+    QVERIFY(!declaration.contains(QStringLiteral("parameters")));
+    QCOMPARE(declaration.value(QStringLiteral("parametersJsonSchema")).toObject(),
+             tool.inputSchema);
+}
 
 void ChatModeServiceTest::finalOnlyReplyUpdatesPersistedPlaceholder() {
     Harness harness(FixtureProvider::ReplyMode::FinalOnly);

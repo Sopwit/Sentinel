@@ -5,7 +5,10 @@
 #include "sentinel/core/runtime/ProcessExecutor.h"
 
 #include <QCoreApplication>
+#include <QFile>
+#include <QFileInfo>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QTest>
 
 using namespace sentinel::core;
@@ -20,7 +23,85 @@ private slots:
     void timeoutAndCancellation();
     void concurrentOwnership();
     void cancellationAndShutdown();
+    void macHostContainmentPreventsChildren();
+    void macHostContainmentRestrictsFilesystem();
 };
+
+void ProcessExecutorTest::macHostContainmentRestrictsFilesystem() {
+#ifndef Q_OS_MACOS
+    QSKIP("macOS containment probe.");
+#else
+    QTemporaryDir authorized, external;
+    const auto allowed = authorized.filePath("allowed.txt");
+    const auto denied = external.filePath("denied.txt");
+    for (const auto& path : {allowed, denied}) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("CONTAINMENT_OK");
+    }
+    for (const auto& path : {allowed, denied}) {
+        ProcessExecutor executor;
+        ProcessRequest request;
+        request.program = "/bin/cat";
+        request.arguments = {path};
+        request.workingDirectory = authorized.path();
+        SandboxExecutionPlan plan;
+        plan.workingDirectory = authorized.path();
+        plan.readablePaths = {QFileInfo(authorized.path()).canonicalFilePath()};
+        plan.forbidDetachedChildren = true;
+        request.sandbox = plan;
+        QByteArray out, error;
+        const auto id = executor.start(
+            request, {}, [&](const QString&, ProcessStream stream, const QByteArray& bytes) {
+                (stream == ProcessStream::Stdout ? out : error) += bytes;
+            });
+        QTRY_VERIFY_WITH_TIMEOUT(executor.record(id).state == ProcessState::Exited ||
+                                     executor.record(id).state == ProcessState::Failed,
+                                 5000);
+        QCOMPARE(executor.record(id).sandbox.enforcement, SandboxEnforcement::Enforced);
+        if (path == allowed) {
+            QCOMPARE(executor.record(id).exitCode, 0);
+            QCOMPARE(out, QByteArray("CONTAINMENT_OK"));
+        } else {
+            QVERIFY(executor.record(id).exitCode != 0);
+            QVERIFY(out.isEmpty());
+            QVERIFY(error.contains("Operation not permitted"));
+        }
+    }
+#endif
+}
+
+void ProcessExecutorTest::macHostContainmentPreventsChildren() {
+#ifndef Q_OS_MACOS
+    QSKIP("macOS containment probe.");
+#else
+    QTemporaryDir directory;
+    ProcessExecutor executor;
+    ProcessRequest request;
+    request.program = "/bin/sh";
+    request.arguments = {"-c", "/bin/sleep 1 & wait"};
+    request.workingDirectory = directory.path();
+    SandboxExecutionPlan plan;
+    plan.workingDirectory = directory.path();
+    plan.writablePaths = {directory.path()};
+    plan.forbidDetachedChildren = true;
+    request.sandbox = plan;
+    QByteArray error;
+    const auto id = executor.start(
+        request, {}, [&](const QString&, ProcessStream stream, const QByteArray& bytes) {
+            if (stream == ProcessStream::Stderr)
+                error += bytes;
+        });
+    QTRY_VERIFY_WITH_TIMEOUT(executor.record(id).state == ProcessState::Exited ||
+                                 executor.record(id).state == ProcessState::Failed,
+                             5000);
+    const auto record = executor.record(id);
+    QCOMPARE(record.sandbox.enforcement, SandboxEnforcement::Enforced);
+    QVERIFY(record.sandbox.processTreeControlled);
+    QVERIFY(record.exitCode != 0);
+    QVERIFY(error.contains("Operation not permitted"));
+#endif
+}
 
 void ProcessExecutorTest::outputAndExit() {
 #ifdef Q_OS_WIN

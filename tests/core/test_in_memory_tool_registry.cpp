@@ -250,15 +250,16 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
                 sentinel::core::ToolExecutionStatus::InvalidToolContract,
                 QStringLiteral("test descriptor snapshot missing")};
         const auto resolved = sentinel::core::ResourceAuthorizationResolver::resolve(
-            *validatedInvocation.descriptorSnapshot, validatedInvocation, QDir::currentPath(), nullptr);
+            *validatedInvocation.descriptorSnapshot, validatedInvocation, QDir::currentPath(),
+            nullptr);
         if (!resolved.ok())
-            return sentinel::core::ToolExecutionResult{
-                sentinel::core::ToolExecutionStatus::Blocked, resolved.reason};
+            return sentinel::core::ToolExecutionResult{sentinel::core::ToolExecutionStatus::Blocked,
+                                                       resolved.reason};
         auto authorized = sentinel::core::ResourceAuthorizationResolver::authorize(
             resolved.snapshot, nullptr, nullptr, QStringLiteral("session"));
         if (!authorized.ok())
-            return sentinel::core::ToolExecutionResult{
-                sentinel::core::ToolExecutionStatus::Blocked, authorized.reason};
+            return sentinel::core::ToolExecutionResult{sentinel::core::ToolExecutionStatus::Blocked,
+                                                       authorized.reason};
         request.plan.invocations.first().resourceSnapshot =
             std::make_shared<const sentinel::core::ResourceAuthorizationSnapshot>(
                 std::move(authorized.snapshot));
@@ -284,9 +285,9 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
         run(QStringLiteral("read-file"), {{QStringLiteral("path"), QStringLiteral("fixture.txt")}})
             .status,
         sentinel::core::ToolExecutionStatus::Succeeded);
-    const auto grepResult = run(
-        QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")},
-                                  {QStringLiteral("path"), QStringLiteral(".")}});
+    const auto grepResult =
+        run(QStringLiteral("grep"), {{QStringLiteral("pattern"), QStringLiteral("Sentinel")},
+                                     {QStringLiteral("path"), QStringLiteral(".")}});
     QVERIFY2(grepResult.status == sentinel::core::ToolExecutionStatus::Succeeded,
              qPrintable(grepResult.summary));
     QCOMPARE(run(QStringLiteral("read-file"),

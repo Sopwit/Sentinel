@@ -143,9 +143,10 @@ void ModelRegistryTest::exposesSelectedModelDefaultAndRefusesSilentFallbackOrSub
     QCOMPARE(missingSelectionRegistry.selectedModelReadinessSummary(),
              QStringLiteral("Selected model missing-model is missing from ollama metadata."));
     QVERIFY(!missingSelectionRegistry.hasAvailableModel(QStringLiteral("ollama"),
-                                                       QStringLiteral("missing-model")));
+                                                        QStringLiteral("missing-model")));
 
-    // 3. Provider unavailable/disabled -> disabled status when only placeholders, missing readiness, no redirection
+    // 3. Provider unavailable/disabled -> disabled status when only placeholders, missing
+    // readiness, no redirection
     const ModelRegistry disabledProviderOnlyRegistry{
         {sentinel::core::disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
                                                           QStringLiteral("OpenAI-Compatible API"))},
