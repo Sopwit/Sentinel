@@ -702,7 +702,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
     bool timeoutOk = false;
     const int suppliedTimeout = argument(QStringLiteral("timeout")).trimmed().toInt(&timeoutOk);
     int timeoutMs = qBound(1000, timeoutOk ? suppliedTimeout : 60000, 600000);
-    const QString root = QDir::currentPath();
+    const QString root = invocation.resourceSnapshot ? invocation.resourceSnapshot->workingDirectory
+                                                     : QDir::currentPath();
     QString workdir = root;
     const QString requestedWorkdir = argument(QStringLiteral("workdir")).trimmed();
     if (!requestedWorkdir.isEmpty()) {

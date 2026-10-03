@@ -878,6 +878,11 @@ public:
             return executor_.executeAsync(request, sessionId, toolCallId, std::move(output),
                                           std::move(completion));
         const auto& id = request.plan.invocations.first().toolId;
+        // The gateway has validated this snapshot against the approved resources.
+        // Never replace its frozen workspace with the application's process cwd.
+        const auto& resources = request.plan.invocations.first().resourceSnapshot;
+        const QString executionDirectory =
+            resources ? resources->workingDirectory : QDir::currentPath();
         const bool cancellable = id == QLatin1String("list-directory") ||
                                  id == QLatin1String("glob") || id == QLatin1String("grep") ||
                                  id == QLatin1String("list-code-definitions") ||
@@ -889,7 +894,7 @@ public:
             invocation.toolCancellation = token;
             auto self = shared_from_this();
             QPointer<QObject> context(request.callbackContext);
-            const QString cwd = QDir::currentPath();
+            const QString cwd = executionDirectory;
             pool_.start([self, invocation = std::move(invocation), cwd, context, token,
                          completion = std::move(completion)]() mutable {
                 ToolExecutionResult result;
@@ -913,13 +918,14 @@ public:
             invocation.toolCancellation = token;
             auto self = shared_from_this();
             QTimer::singleShot(0, [self, invocation = std::move(invocation), cancellable,
-                                   completion = std::move(completion), token]() mutable {
+                                   executionDirectory, completion = std::move(completion),
+                                   token]() mutable {
                 if (token->load() || (invocation.cancellation && invocation.cancellation->load())) {
                     completion({ToolExecutionStatus::Cancelled,
                                 QStringLiteral("Filesystem operation cancelled before inspection.")});
                     return;
                 }
-                QString cwd = QDir::currentPath();
+                QString cwd = executionDirectory;
                 auto result = (self->executor_.*self->method_)(invocation, cwd);
                 if (cancellable && invocation.toolId != QLatin1String("apply-patch") &&
                     (token->load() || (invocation.cancellation && invocation.cancellation->load())) &&
@@ -936,7 +942,7 @@ public:
             });
             return [token] { token->store(true); };
         }
-        QString currentWorkingDirectory = QDir::currentPath();
+        QString currentWorkingDirectory = executionDirectory;
         completion((executor_.*method_)(request.plan.invocations.first(), currentWorkingDirectory));
         return {};
     }
