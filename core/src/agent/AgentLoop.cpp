@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/AgentLoop.h"
-#include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/agent/AgentExecutionScheduler.h"
+#include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/interfaces/IMemoryStore.h"
 
@@ -14,15 +14,15 @@
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
-#include "sentinel/core/security/PermissionService.h"
 #include "sentinel/core/security/PathGuard.h"
+#include "sentinel/core/security/PermissionService.h"
 #include <QDir>
 #include <QFileInfo>
 
 #include <QTimer>
 #include <QUuid>
-#include <optional>
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace sentinel::core {
@@ -83,9 +83,8 @@ bool repeatsUnchangedStep(const AgentLoopState& state, const ToolInvocationPlan&
     if (previous.toolId != call.toolId || previous.arguments.size() != call.arguments.size())
         return false;
     auto ordered = [](QList<ToolInvocationArgument> arguments) {
-        std::sort(arguments.begin(), arguments.end(), [](const auto& a, const auto& b) {
-            return a.id < b.id;
-        });
+        std::sort(arguments.begin(), arguments.end(),
+                  [](const auto& a, const auto& b) { return a.id < b.id; });
         return arguments;
     };
     return ordered(previous.arguments) == ordered(call.arguments);
@@ -105,10 +104,8 @@ bool repeatsFailedCycle(const AgentLoopState& state, const ToolInvocationPlan& p
     for (int i = end - 4; i < end; ++i)
         if (state.steps.at(i).succeeded)
             return false;
-    const auto first = key(state.steps.at(end - 4).toolId,
-                           state.steps.at(end - 4).arguments);
-    const auto second = key(state.steps.at(end - 3).toolId,
-                            state.steps.at(end - 3).arguments);
+    const auto first = key(state.steps.at(end - 4).toolId, state.steps.at(end - 4).arguments);
+    const auto second = key(state.steps.at(end - 3).toolId, state.steps.at(end - 3).arguments);
     return first != second &&
            first == key(state.steps.at(end - 2).toolId, state.steps.at(end - 2).arguments) &&
            second == key(state.steps.at(end - 1).toolId, state.steps.at(end - 1).arguments) &&
@@ -145,14 +142,13 @@ bool securityFailure(FileSystemFailure failure) {
 } // namespace
 
 QStringList AgentLoop::externalPathsRequiringApproval(const ToolInvocationPlan& plan,
-                                                     const QString& sessionId) const {
+                                                      const QString& sessionId) const {
     if (!externalDirectoryGate_ || plan.invocations.isEmpty())
         return {};
     QStringList paths;
     for (const auto& invocation : plan.invocations) {
-        const auto registration = toolRegistry_
-                                     ? toolRegistry_->findRegistration(invocation.toolId)
-                                     : std::optional<IToolRegistry::Registration>{};
+        const auto registration = toolRegistry_ ? toolRegistry_->findRegistration(invocation.toolId)
+                                                : std::optional<IToolRegistry::Registration>{};
         const auto* descriptor = invocation.descriptorSnapshot
                                      ? invocation.descriptorSnapshot.get()
                                      : (registration ? &registration->descriptor : nullptr);
@@ -175,9 +171,8 @@ QStringList AgentLoop::externalPathsRequiringApproval(const ToolInvocationPlan& 
 
 void AgentLoop::grantExternalPaths(const ToolInvocationPlan& plan, const QString& sessionId) {
     for (const auto& invocation : plan.invocations) {
-        const auto registration = toolRegistry_
-                                     ? toolRegistry_->findRegistration(invocation.toolId)
-                                     : std::optional<IToolRegistry::Registration>{};
+        const auto registration = toolRegistry_ ? toolRegistry_->findRegistration(invocation.toolId)
+                                                : std::optional<IToolRegistry::Registration>{};
         const auto* descriptor = invocation.descriptorSnapshot
                                      ? invocation.descriptorSnapshot.get()
                                      : (registration ? &registration->descriptor : nullptr);
@@ -242,9 +237,8 @@ QList<AuthorizationRequest>
 AgentLoop::resolveAuthorizationRequests(const ToolInvocationPlan& plan) const {
     QList<AuthorizationRequest> requests;
     for (const auto& invocation : plan.invocations) {
-        const auto registration = toolRegistry_
-                                     ? toolRegistry_->findRegistration(invocation.toolId)
-                                     : std::optional<IToolRegistry::Registration>{};
+        const auto registration = toolRegistry_ ? toolRegistry_->findRegistration(invocation.toolId)
+                                                : std::optional<IToolRegistry::Registration>{};
         const auto* descriptor = invocation.descriptorSnapshot
                                      ? invocation.descriptorSnapshot.get()
                                      : (registration ? &registration->descriptor : nullptr);
@@ -261,13 +255,15 @@ ResourceAuthorizationResult AgentLoop::prepareResources(ToolInvocationPlan& plan
             continue;
         auto resolved = ResourceAuthorizationResolver::resolve(
             *invocation.descriptorSnapshot, invocation, workingDirectory(), externalDirectoryGate_);
-        if (!resolved.ok()) return resolved;
+        if (!resolved.ok())
+            return resolved;
         if (!resourceScope_.isEmpty()) {
             for (const auto& file : resolved.snapshot.files)
                 if (!PathGuard::contains(resourceScope_, file.path.canonicalPath)) {
                     resolved.failure = FileSystemFailure::SecurityBoundaryViolation;
                     resolved.resource = file.path.canonicalPath;
-                    resolved.reason = QStringLiteral("Resource is outside this agent's assigned workspace.");
+                    resolved.reason =
+                        QStringLiteral("Resource is outside this agent's assigned workspace.");
                     return resolved;
                 }
         }
@@ -282,10 +278,10 @@ ResourceAuthorizationResult AgentLoop::authorizeResources(ToolInvocationPlan& pl
     for (auto& invocation : plan.invocations) {
         if (!invocation.resourceSnapshot)
             continue;
-        auto result = ResourceAuthorizationResolver::authorize(*invocation.resourceSnapshot,
-                                                               externalDirectoryGate_,
-                                                               permissionService_, sessionId);
-        if (!result.ok()) return result;
+        auto result = ResourceAuthorizationResolver::authorize(
+            *invocation.resourceSnapshot, externalDirectoryGate_, permissionService_, sessionId);
+        if (!result.ok())
+            return result;
         invocation.resourceSnapshot =
             std::make_shared<const ResourceAuthorizationSnapshot>(std::move(result.snapshot));
     }
@@ -319,7 +315,8 @@ void AgentLoop::applyPermissionPolicy(const ToolInvocationPlan& plan, const QStr
                 const auto granted = permissionService_->evaluateAuthorization(request, sessionId);
                 if (granted == PermissionEffect::Deny) {
                     approval.status = ApprovalStatus::Denied;
-                    approval.summary = QStringLiteral("Denied by an explicit authorization decision.");
+                    approval.summary =
+                        QStringLiteral("Denied by an explicit authorization decision.");
                     return;
                 }
                 if (granted == PermissionEffect::Allow)
@@ -327,7 +324,8 @@ void AgentLoop::applyPermissionPolicy(const ToolInvocationPlan& plan, const QStr
             }
             if (effect == PermissionEffect::Ask && approval.status != ApprovalStatus::Approved) {
                 approval.status = ApprovalStatus::RequiresApproval;
-                approval.summary = QStringLiteral("External service access requires user approval.");
+                approval.summary =
+                    QStringLiteral("External service access requires user approval.");
             }
         }
     }
@@ -429,10 +427,12 @@ void AgentLoop::resumeAsync(AgentLoopState state, bool approved, QObject* contex
 
 void AgentLoop::cancelAsync() {
     cancelled_ = true;
-    if (cancellationToken_) cancellationToken_->store(true);
+    if (cancellationToken_)
+        cancellationToken_->store(true);
     if (asyncFinished_)
         return;
-    if (scheduler_) scheduler_->cancel();
+    if (scheduler_)
+        scheduler_->cancel();
     if (waitingForTool_ && cancelTool_) {
         cancelTool_();
         asyncState_.phase = AgentLoopPhase::Cancelled;
@@ -486,8 +486,10 @@ void AgentLoop::advanceAsync() {
     AgentStepDecision decision;
     try {
         planner_.setObservationIntent(asyncState_.observationIntent);
-        planner_.setStructuredFacts(ClaimGroundingResolver::facts(asyncState_.observationIntent, asyncState_.evidence));
+        planner_.setStructuredFacts(
+            ClaimGroundingResolver::facts(asyncState_.observationIntent, asyncState_.evidence));
         preparePlanningContext(asyncState_);
+        planner_.setEvidence(asyncState_.evidence);
         decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
         asyncState_.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
     } catch (...) {
@@ -517,7 +519,8 @@ void AgentLoop::advanceAsync() {
         asyncState_.providerFailure = decision.providerFailure;
         asyncState_.phase = AgentLoopPhase::Failed;
         asyncState_.terminalReason = decision.providerFailure
-            ? AgentTerminalReason::ProviderFailure : AgentTerminalReason::UnableToComplete;
+                                         ? AgentTerminalReason::ProviderFailure
+                                         : AgentTerminalReason::UnableToComplete;
         asyncState_.abortReason =
             decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
         completeAsync();
@@ -541,9 +544,10 @@ void AgentLoop::advanceAsync() {
     if (repeatsUnchangedStep(asyncState_, plan) || repeatsFailedCycle(asyncState_, plan)) {
         asyncState_.phase = AgentLoopPhase::Stuck;
         asyncState_.terminalReason = asyncState_.steps.last().succeeded
-            ? AgentTerminalReason::UnableToComplete : AgentTerminalReason::ToolFailure;
-        asyncState_.abortReason = QStringLiteral(
-            "Agent repeated the same tool call without a changed argument or intervening observation.");
+                                         ? AgentTerminalReason::UnableToComplete
+                                         : AgentTerminalReason::ToolFailure;
+        asyncState_.abortReason = QStringLiteral("Agent repeated the same tool call without a "
+                                                 "changed argument or intervening observation.");
         completeAsync();
         return;
     }
@@ -574,8 +578,8 @@ void AgentLoop::advanceAsync() {
     const auto resources = prepareResources(plan);
     if (!resources.ok()) {
         appendBlockedStep(asyncState_, plan, decision.thought,
-                          securityFailure(resources.failure)
-                              ? QStringLiteral("Denied") : QStringLiteral("Invalid Arguments"),
+                          securityFailure(resources.failure) ? QStringLiteral("Denied")
+                                                             : QStringLiteral("Invalid Arguments"),
                           resources.reason, resourceFailureObservation(resources));
         if (toolCallback_)
             toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan,
@@ -587,8 +591,8 @@ void AgentLoop::advanceAsync() {
         externalDirectoryGate_->setSecuritySessionId(asyncState_.sessionId);
     ApprovalDecision approval;
     if (hasAuthorizationDeny(plan, asyncState_.sessionId))
-        approval = {ApprovalStatus::Denied,
-                    QStringLiteral("Denied by an explicit permission grant."), {}};
+        approval = {
+            ApprovalStatus::Denied, QStringLiteral("Denied by an explicit permission grant."), {}};
     else if (config_.autonomousMode)
         approval = {ApprovalStatus::Approved,
                     QStringLiteral("Autonomous Mode is enabled: per-step approval is bypassed."),
@@ -597,22 +601,23 @@ void AgentLoop::advanceAsync() {
         approval = hasAuthorizationGrants(plan, asyncState_.sessionId)
                        ? ApprovalDecision{ApprovalStatus::Approved,
                                           QStringLiteral("An explicit semantic permission grant "
-                                                         "covers this invocation."), {}}
+                                                         "covers this invocation."),
+                                          {}}
                        : approvalPolicy_.evaluate(plan);
     }
     const auto externalPaths = externalPathsRequiringApproval(plan, asyncState_.sessionId);
     applyPermissionPolicy(plan, asyncState_.sessionId, approval);
     if (!externalPaths.isEmpty() && approval.status != ApprovalStatus::Denied) {
-        const auto toolName = plan.invocations.isEmpty() ? QStringLiteral("tool")
-                                                         : plan.invocations.first().toolName;
+        const auto toolName =
+            plan.invocations.isEmpty() ? QStringLiteral("tool") : plan.invocations.first().toolName;
         approval.status = ApprovalStatus::RequiresApproval;
         const auto displayed = externalPaths.mid(0, 3).join(QStringLiteral(", "));
-        approval.summary = QStringLiteral("Allow %1 to access %2%3?")
-                               .arg(toolName, displayed,
-                                    externalPaths.size() > 3
-                                        ? QStringLiteral(" and %1 more file(s)")
-                                              .arg(externalPaths.size() - 3)
-                                        : QString{});
+        approval.summary =
+            QStringLiteral("Allow %1 to access %2%3?")
+                .arg(toolName, displayed,
+                     externalPaths.size() > 3
+                         ? QStringLiteral(" and %1 more file(s)").arg(externalPaths.size() - 3)
+                         : QString{});
     }
     if (approval.status == ApprovalStatus::RequiresApproval) {
         if (toolCallback_)
@@ -667,7 +672,8 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
     for (auto& invocation : cancellablePlan.invocations)
         invocation.cancellation = cancellationToken_;
     cancelTool_ = gateway_.executeAsync(
-        {cancellablePlan, approval, sandbox, knownToolIds_, asyncContext_}, executor_, asyncState_.sessionId,
+        {cancellablePlan, approval, sandbox, knownToolIds_, asyncContext_}, executor_,
+        asyncState_.sessionId,
         toolCallIdProvider_ ? toolCallIdProvider_(index) : QString::number(index),
         [this, index](const QString& processId, ProcessStream stream, const QByteArray& bytes) {
             if (!asyncFinished_ && !cancellationRequested() && outputCallback_)
@@ -686,12 +692,14 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
                 fillRecordFromPlan(partial, plan);
                 partial.statusText = toolExecutionStatusName(ToolExecutionStatus::Cancelled);
                 partial.failureCategory = ToolFailureCategory::Cancelled;
-                partial.observation = truncator_.truncate(result.summary.toUtf8(), partial.toolId).preview;
+                partial.observation =
+                    truncator_.truncate(result.summary.toUtf8(), partial.toolId).preview;
                 partial.structuredObservation = result.structuredObservation;
                 asyncState_.steps.append(partial);
                 if (descriptor && result.structuredObservation)
                     recordEvidence(asyncState_, *descriptor, plan, ToolExecutionStatus::Cancelled,
-                                   result.summary, index, result.structuredObservation, result.mutations);
+                                   result.summary, index, result.structuredObservation,
+                                   result.mutations);
                 if (toolCallback_)
                     toolCallback_(ToolTransition::ExecutionFinished, index, plan, &partial);
                 if (stepCallback_)
@@ -720,12 +728,14 @@ void AgentLoop::executeStepAsync(const ToolInvocationPlan& originalPlan, const Q
             record.failureCategory = result.failureCategory;
             asyncState_.steps.append(record);
             if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
-                planner_.setPlannerFeedback(QStringLiteral(
-                    "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
-                    "the same call unchanged.").arg(record.toolId, record.statusText, record.observation));
+                planner_.setPlannerFeedback(
+                    QStringLiteral(
+                        "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+                        "the same call unchanged.")
+                        .arg(record.toolId, record.statusText, record.observation));
             if (descriptor)
-                recordEvidence(asyncState_, *descriptor, plan, result.status, result.summary,
-                               index, result.structuredObservation, result.mutations);
+                recordEvidence(asyncState_, *descriptor, plan, result.status, result.summary, index,
+                               result.structuredObservation, result.mutations);
             if (toolCallback_)
                 toolCallback_(ToolTransition::ExecutionFinished, index, plan, &record);
             if (stepCallback_)
@@ -752,19 +762,19 @@ void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString&
         auto one = plan;
         one.invocations = {plan.invocations.at(i)};
         one.invocations.first().cancellation = cancellationToken_;
-        requests.append({one, approval, sandboxPolicy_.evaluate(one, approval), knownToolIds_,
-                         asyncContext_});
+        requests.append(
+            {one, approval, sandboxPolicy_.evaluate(one, approval), knownToolIds_, asyncContext_});
         callIds.append(toolCallIdProvider_ ? toolCallIdProvider_(firstIndex + i)
                                            : QString::number(firstIndex + i));
     }
     waitingForTool_ = true;
-    scheduler_ = std::make_shared<AgentExecutionScheduler>(gateway_, executor_,
-                                                           config_.maxParallelTools,
-                                                           config_.executionBudget);
+    scheduler_ = std::make_shared<AgentExecutionScheduler>(
+        gateway_, executor_, config_.maxParallelTools, config_.executionBudget);
     scheduler_->start(
         std::move(requests), asyncState_.sessionId, std::move(callIds),
         [this, plan, firstIndex](int i) {
-            if (!toolCallback_) return;
+            if (!toolCallback_)
+                return;
             auto one = plan;
             one.invocations = {plan.invocations.at(i)};
             toolCallback_(ToolTransition::ExecutionStarted, firstIndex + i, one, nullptr);
@@ -775,7 +785,8 @@ void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString&
                 outputCallback_(firstIndex + i, processId, stream, bytes);
         },
         [this, plan, thought, firstIndex](QList<ToolExecutionResult> results) {
-            if (asyncFinished_) return;
+            if (asyncFinished_)
+                return;
             waitingForTool_ = false;
             bool cancelled = cancellationRequested();
             for (int i = 0; i < results.size(); ++i) {
@@ -790,23 +801,26 @@ void AgentLoop::executeBatchAsync(const ToolInvocationPlan& plan, const QString&
                 record.succeeded = result.status == ToolExecutionStatus::Succeeded ||
                                    result.status == ToolExecutionStatus::PlaceholderSucceeded;
                 record.statusText = toolExecutionStatusName(result.status);
-                record.observation = truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
+                record.observation =
+                    truncator_.truncate(result.summary.toUtf8(), record.toolId).preview;
                 record.structuredObservation = result.structuredObservation;
                 record.sandbox = result.sandbox;
                 record.failureCategory = result.failureCategory;
                 asyncState_.steps.append(record);
                 if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
-                    planner_.setPlannerFeedback(QStringLiteral(
-                        "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
-                        "the same call unchanged.").arg(record.toolId, record.statusText,
-                                                         record.observation));
+                    planner_.setPlannerFeedback(
+                        QStringLiteral(
+                            "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+                            "the same call unchanged.")
+                            .arg(record.toolId, record.statusText, record.observation));
                 if (one.invocations.first().descriptorSnapshot)
-                    recordEvidence(asyncState_, *one.invocations.first().descriptorSnapshot,
-                                   one, result.status, result.summary, record.index,
+                    recordEvidence(asyncState_, *one.invocations.first().descriptorSnapshot, one,
+                                   result.status, result.summary, record.index,
                                    result.structuredObservation, result.mutations);
                 if (toolCallback_)
                     toolCallback_(ToolTransition::ExecutionFinished, record.index, one, &record);
-                if (stepCallback_) stepCallback_(record);
+                if (stepCallback_)
+                    stepCallback_(record);
                 cancelled |= result.status == ToolExecutionStatus::Cancelled;
             }
             scheduler_.reset();
@@ -891,8 +905,10 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         AgentStepDecision decision;
         try {
             planner_.setObservationIntent(state.observationIntent);
-            planner_.setStructuredFacts(ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
+            planner_.setStructuredFacts(
+                ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
             preparePlanningContext(state);
+            planner_.setEvidence(state.evidence);
             decision = planner_.nextStep(state.goal, state.steps);
             state.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
         } catch (...) {
@@ -918,17 +934,19 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         if (decision.kind == AgentStepDecision::Kind::GiveUp) {
             state.providerFailure = decision.providerFailure;
             state.phase = AgentLoopPhase::Failed;
-            state.terminalReason = decision.providerFailure
-                ? AgentTerminalReason::ProviderFailure : AgentTerminalReason::UnableToComplete;
+            state.terminalReason = decision.providerFailure ? AgentTerminalReason::ProviderFailure
+                                                            : AgentTerminalReason::UnableToComplete;
             state.abortReason =
                 decision.reason.trimmed().isEmpty() ? decision.thought : decision.reason;
             return state;
         }
 
         const auto known = decision.toolBatch.isEmpty()
-            ? knownToolIds_.contains(decision.toolId)
-            : std::all_of(decision.toolBatch.cbegin(), decision.toolBatch.cend(),
-                          [this](const auto& call) { return knownToolIds_.contains(call.toolId); });
+                               ? knownToolIds_.contains(decision.toolId)
+                               : std::all_of(decision.toolBatch.cbegin(), decision.toolBatch.cend(),
+                                             [this](const auto& call) {
+                                                 return knownToolIds_.contains(call.toolId);
+                                             });
         if (!known) {
             auto unavailablePlan = planFromDecision(decision);
             if (repeatsUnchangedStep(state, unavailablePlan)) {
@@ -947,9 +965,10 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         if (repeatsUnchangedStep(state, plan) || repeatsFailedCycle(state, plan)) {
             state.phase = AgentLoopPhase::Stuck;
             state.terminalReason = state.steps.last().succeeded
-                ? AgentTerminalReason::UnableToComplete : AgentTerminalReason::ToolFailure;
-            state.abortReason = QStringLiteral(
-                "Agent repeated the same tool call without a changed argument or intervening observation.");
+                                       ? AgentTerminalReason::UnableToComplete
+                                       : AgentTerminalReason::ToolFailure;
+            state.abortReason = QStringLiteral("Agent repeated the same tool call without a "
+                                               "changed argument or intervening observation.");
             return state;
         }
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
@@ -979,7 +998,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         if (!resources.ok()) {
             appendBlockedStep(state, plan, decision.thought,
                               securityFailure(resources.failure)
-                                  ? QStringLiteral("Denied") : QStringLiteral("Invalid Arguments"),
+                                  ? QStringLiteral("Denied")
+                                  : QStringLiteral("Invalid Arguments"),
                               resources.reason, resourceFailureObservation(resources));
             if (toolCallback_)
                 toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan,
@@ -992,7 +1012,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         ApprovalDecision approval;
         if (hasAuthorizationDeny(plan, state.sessionId)) {
             approval = {ApprovalStatus::Denied,
-                        QStringLiteral("Denied by an explicit permission grant."), {}};
+                        QStringLiteral("Denied by an explicit permission grant."),
+                        {}};
         } else if (config_.autonomousMode) {
             approval = ApprovalDecision{
                 ApprovalStatus::Approved,
@@ -1003,7 +1024,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             approval = hasAuthorizationGrants(plan, state.sessionId)
                            ? ApprovalDecision{ApprovalStatus::Approved,
                                               QStringLiteral("An explicit semantic permission "
-                                                             "grant covers this invocation."), {}}
+                                                             "grant covers this invocation."),
+                                              {}}
                            : approvalPolicy_.evaluate(plan);
         }
 
@@ -1014,12 +1036,12 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
                                                              : plan.invocations.first().toolName;
             approval.status = ApprovalStatus::RequiresApproval;
             const auto displayed = externalPaths.mid(0, 3).join(QStringLiteral(", "));
-            approval.summary = QStringLiteral("Allow %1 to access %2%3?")
-                                   .arg(toolName, displayed,
-                                        externalPaths.size() > 3
-                                            ? QStringLiteral(" and %1 more file(s)")
-                                                  .arg(externalPaths.size() - 3)
-                                            : QString{});
+            approval.summary =
+                QStringLiteral("Allow %1 to access %2%3?")
+                    .arg(toolName, displayed,
+                         externalPaths.size() > 3
+                             ? QStringLiteral(" and %1 more file(s)").arg(externalPaths.size() - 3)
+                             : QString{});
         }
         if (approval.status == ApprovalStatus::RequiresApproval) {
             if (toolCallback_) {
@@ -1057,7 +1079,8 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
             auto one = originalPlan;
             one.invocations = {invocation};
             executeStep(state, one, thought, approval);
-            if (cancellationRequested()) break;
+            if (cancellationRequested())
+                break;
         }
         return;
     }
@@ -1066,8 +1089,8 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
         externalDirectoryGate_->setSecuritySessionId(state.sessionId);
     const auto authorization = authorizeResources(plan, state.sessionId);
     if (!authorization.ok()) {
-        appendBlockedStep(state, plan, thought, QStringLiteral("Denied"),
-                          authorization.reason, resourceFailureObservation(authorization));
+        appendBlockedStep(state, plan, thought, QStringLiteral("Denied"), authorization.reason,
+                          resourceFailureObservation(authorization));
         if (toolCallback_)
             toolCallback_(ToolTransition::ExecutionFinished, state.steps.size(), plan,
                           &state.steps.last());
@@ -1106,11 +1129,13 @@ void AgentLoop::executeStep(AgentLoopState& state, const ToolInvocationPlan& ori
     record.failureCategory = result.failureCategory;
     state.steps.append(record);
     if (!record.succeeded && result.status != ToolExecutionStatus::Cancelled)
-        planner_.setPlannerFeedback(QStringLiteral(
-            "Tool %1 returned %2: %3. Replan using this observation; do not repeat "
-            "the same call unchanged.").arg(record.toolId, record.statusText, record.observation));
+        planner_.setPlannerFeedback(
+            QStringLiteral("Tool %1 returned %2: %3. Replan using this observation; do not repeat "
+                           "the same call unchanged.")
+                .arg(record.toolId, record.statusText, record.observation));
     if (descriptor)
-        recordEvidence(state, *descriptor, plan, result.status, result.summary, stepIndex, result.structuredObservation, result.mutations);
+        recordEvidence(state, *descriptor, plan, result.status, result.summary, stepIndex,
+                       result.structuredObservation, result.mutations);
     if (toolCallback_) {
         toolCallback_(ToolTransition::ExecutionFinished, stepIndex, plan, &record);
     }
@@ -1143,21 +1168,20 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
     fillRecordFromPlan(record, plan);
     record.succeeded = false;
     record.statusText = statusText;
-    record.failureCategory = statusText == QLatin1String("Denied")
-        ? ToolFailureCategory::SecurityDenied
-        : statusText == QLatin1String("Unknown Tool")
-            ? ToolFailureCategory::Unsupported
-            : statusText == QLatin1String("Invalid Arguments")
-                ? ToolFailureCategory::InvalidArguments
-                : ToolFailureCategory::None;
+    record.failureCategory =
+        statusText == QLatin1String("Denied")              ? ToolFailureCategory::SecurityDenied
+        : statusText == QLatin1String("Unknown Tool")      ? ToolFailureCategory::Unsupported
+        : statusText == QLatin1String("Invalid Arguments") ? ToolFailureCategory::InvalidArguments
+                                                           : ToolFailureCategory::None;
     record.observation = observation;
     record.structuredObservation = std::move(structuredObservation);
 
     state.steps.append(record);
-    planner_.setPlannerFeedback(QStringLiteral(
-        "Tool %1 was blocked (%2). %3 Do not retry the same action unchanged or request "
-        "broader permission to bypass a denial.")
-        .arg(record.toolId, record.statusText, record.observation));
+    planner_.setPlannerFeedback(
+        QStringLiteral(
+            "Tool %1 was blocked (%2). %3 Do not retry the same action unchanged or request "
+            "broader permission to bypass a denial.")
+            .arg(record.toolId, record.statusText, record.observation));
     if (statusText == QLatin1String("Denied") && toolRegistry_ && !plan.invocations.isEmpty()) {
         const auto descriptor = toolRegistry_->findToolById(record.toolId);
         if (descriptor)
@@ -1169,9 +1193,9 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
          record.toolId.startsWith(QLatin1String("plugin.")))) {
         EvidenceRecord unavailable;
         unavailable.toolId = record.toolId;
-        unavailable.toolCallId = toolCallIdProvider_
-                                     ? toolCallIdProvider_(record.index)
-                                     : QStringLiteral("%1:%2").arg(state.sessionId).arg(record.index);
+        unavailable.toolCallId =
+            toolCallIdProvider_ ? toolCallIdProvider_(record.index)
+                                : QStringLiteral("%1:%2").arg(state.sessionId).arg(record.index);
         unavailable.stepIndex = record.index;
         unavailable.domain = ObservationDomain::ExternalService;
         unavailable.scope = EvidenceScope::Provider;
@@ -1189,14 +1213,17 @@ void AgentLoop::initializeObservationIntent(AgentLoopState& state) {
         if (statusCallback_)
             statusCallback_(QStringLiteral("Determining required observations."));
         state.observationIntent = observationIntentPolicy_->classify(
-            state.goal, observationContext_,
+            state.goal,
+            observationContext_ + QStringLiteral("\nACTIVE WORKSPACE ROOT: ") +
+                workspaceContext_.rootPath,
             toolRegistry_ ? toolRegistry_->enabledTools() : QList<ToolDescriptor>{});
     }
     planner_.setObservationIntent(state.observationIntent);
 }
 
 bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision& decision) {
-    planner_.setStructuredFacts(ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
+    planner_.setStructuredFacts(
+        ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
     auto gate = EvidencePolicy::evaluate(state.observationIntent, state.evidence,
                                          decision.grounding, decision.groundingDeclared);
     if (gate.accepted && !state.pendingApprovalPlan.invocations.isEmpty()) {
@@ -1210,21 +1237,25 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
                  operation.domain != ObservationDomain::Workspace) ||
                 operation.outcome != EvidenceOutcome::Verified)
                 continue;
-            const bool confirmed = std::any_of(state.evidence.cbegin(), state.evidence.cend(),
+            const bool confirmed = std::any_of(
+                state.evidence.cbegin(), state.evidence.cend(),
                 [&](const EvidenceRecord& observation) {
                     if (observation.stepIndex <= operation.stepIndex ||
                         observation.scope == EvidenceScope::Operation ||
                         (observation.domain != ObservationDomain::FileSystem &&
                          observation.domain != ObservationDomain::Workspace))
                         return false;
-                    const bool sameResource = operation.resource.isEmpty() ||
-                        normalizedObservationResource(operation.resource, ObservationDomain::FileSystem) ==
-                        normalizedObservationResource(observation.resource, ObservationDomain::FileSystem);
+                    const bool sameResource =
+                        operation.resource.isEmpty() ||
+                        normalizedObservationResource(operation.resource,
+                                                      ObservationDomain::FileSystem) ==
+                            normalizedObservationResource(observation.resource,
+                                                          ObservationDomain::FileSystem);
                     return sameResource && (observation.outcome == EvidenceOutcome::Verified ||
-                        (observation.outcome == EvidenceOutcome::Failed &&
-                         observation.structuredObservation &&
-                         observation.structuredObservation->kind ==
-                             StructuredObservationKind::FileSystemFailure));
+                                            (observation.outcome == EvidenceOutcome::Failed &&
+                                             observation.structuredObservation &&
+                                             observation.structuredObservation->kind ==
+                                                 StructuredObservationKind::FileSystemFailure));
                 });
             if (!confirmed) {
                 gate.accepted = false;
@@ -1239,9 +1270,10 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
         for (const auto& assertion : decision.claims) {
             const bool known = std::any_of(state.observationIntent.requirements.cbegin(),
                                            state.observationIntent.requirements.cend(),
-                [&](const ObservationRequirement& requirement) {
-                    return requirement.claimType != ClaimType::None && requirement.claimId == assertion.id;
-                });
+                                           [&](const ObservationRequirement& requirement) {
+                                               return requirement.claimType != ClaimType::None &&
+                                                      requirement.claimId == assertion.id;
+                                           });
             if (!known) {
                 gate.accepted = false;
                 gate.repair = QStringLiteral("Final references an unknown claim ID.");
@@ -1249,29 +1281,50 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
             }
         }
         for (const auto& requirement : state.observationIntent.requirements) {
-            if (!gate.accepted) break;
-            if (requirement.claimType == ClaimType::None) continue;
-            const auto assertion = std::find_if(decision.claims.cbegin(), decision.claims.cend(),
+            if (!gate.accepted)
+                break;
+            if (requirement.claimType == ClaimType::None)
+                continue;
+            const auto assertion = std::find_if(
+                decision.claims.cbegin(), decision.claims.cend(),
                 [&](const ClaimAssertion& item) { return item.id == requirement.claimId; });
             if (assertion == decision.claims.cend()) {
                 gate.accepted = false;
-                gate.repair = QStringLiteral("Verified final requires a structured assertion for %1.").arg(requirement.claimId);
+                gate.repair =
+                    QStringLiteral("Verified final requires a structured assertion for %1.")
+                        .arg(requirement.claimId);
                 break;
             }
-            const auto resolved = ClaimGroundingResolver::resolve(requirement, state.evidence, *assertion);
+            const auto resolved =
+                ClaimGroundingResolver::resolve(requirement, state.evidence, *assertion);
             if (resolved.verdict != ClaimVerdict::Supported) {
                 gate.accepted = false;
                 gate.repair = resolved.verdict == ClaimVerdict::Contradicted
-                    ? QStringLiteral("The observed result contradicts %1. Use the verified fact when answering.").arg(requirement.claimId)
-                    : QStringLiteral("The observed result cannot determine %1. Observe more or report inability to verify.").arg(requirement.claimId);
+                                  ? QStringLiteral("The observed result contradicts %1. Use the "
+                                                   "verified fact when answering.")
+                                        .arg(requirement.claimId)
+                                  : QStringLiteral("The observed result cannot determine %1. "
+                                                   "Observe more or report inability to verify.")
+                                        .arg(requirement.claimId);
                 break;
             }
             gate.grounding.evidenceCallIds.append(resolved.fact.evidenceCallIds);
         }
         gate.grounding.evidenceCallIds.removeDuplicates();
     }
-    if (gate.accepted && decision.observationRequirementDeclared &&
-        decision.requiresObservation && state.evidence.isEmpty()) {
+    if (gate.accepted && decision.grounding != GroundingMode::UnableToVerify &&
+        gate.answerOverride.isEmpty()) {
+        const auto canonical = ClaimGroundingResolver::filesystemFinalAnswer(
+            state.observationIntent, state.evidence, decision.answer);
+        if (canonical && decision.answer != *canonical) {
+            gate.accepted = false;
+            gate.repair =
+                QStringLiteral("Filesystem final must use the evidence-derived scoped "
+                               "representation; unstructured additional claims are not accepted.");
+        }
+    }
+    if (gate.accepted && decision.observationRequirementDeclared && decision.requiresObservation &&
+        state.evidence.isEmpty()) {
         gate.accepted = false;
         gate.repair = QStringLiteral("You declared that observation is needed. Use an "
                                      "appropriate tool before answering.");
@@ -1297,25 +1350,31 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
 
 void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& descriptor,
                                const ToolInvocationPlan& plan, ToolExecutionStatus status,
-                               const QString& summary, int stepIndex, StructuredObservationPtr structuredObservation,
+                               const QString& summary, int stepIndex,
+                               StructuredObservationPtr structuredObservation,
                                const QList<FileMutation>& mutations) {
     if (plan.invocations.isEmpty())
         return;
-    const auto callId = toolCallIdProvider_ ? toolCallIdProvider_(stepIndex)
-                                           : QStringLiteral("%1:%2").arg(state.sessionId).arg(stepIndex);
-    const bool trustedMutations = descriptor.source == ToolSource::BuiltIn ||
-                                  descriptor.filesystemFailureSemanticContract;
+    const auto callId = toolCallIdProvider_
+                            ? toolCallIdProvider_(stepIndex)
+                            : QStringLiteral("%1:%2").arg(state.sessionId).arg(stepIndex);
+    const bool trustedMutations =
+        descriptor.source == ToolSource::BuiltIn || descriptor.filesystemFailureSemanticContract;
     if ((trustedMutations && !mutations.isEmpty()) ||
-        (status == ToolExecutionStatus::Succeeded && descriptor.id == QLatin1String("run-command"))) {
+        (status == ToolExecutionStatus::Succeeded &&
+         descriptor.id == QLatin1String("run-command"))) {
         QStringList changed;
         for (const auto& mutation : trustedMutations ? mutations : QList<FileMutation>{})
-            changed.append(normalizedObservationResource(mutation.path, ObservationDomain::FileSystem));
+            changed.append(
+                normalizedObservationResource(mutation.path, ObservationDomain::FileSystem));
         if (descriptor.id == QLatin1String("run-command"))
             changed.append(workingDirectory());
         for (auto& prior : state.evidence) {
-            if (prior.domain != ObservationDomain::FileSystem && prior.domain != ObservationDomain::Workspace)
+            if (prior.domain != ObservationDomain::FileSystem &&
+                prior.domain != ObservationDomain::Workspace)
                 continue;
-            const auto resource = normalizedObservationResource(prior.resource, ObservationDomain::FileSystem);
+            const auto resource =
+                normalizedObservationResource(prior.resource, ObservationDomain::FileSystem);
             for (const auto& change : changed)
                 if (resource == change || resource.startsWith(change + QLatin1Char('/')) ||
                     change.startsWith(resource + QLatin1Char('/'))) {
@@ -1325,7 +1384,8 @@ void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& desc
         }
     }
     state.evidence.append(EvidencePolicy::record(descriptor, plan.invocations.first(), status,
-                                                 summary, stepIndex, callId, structuredObservation));
+                                                 summary, stepIndex, callId,
+                                                 structuredObservation));
     if (trustedMutations && !mutations.isEmpty() && status == ToolExecutionStatus::Succeeded)
         planner_.setPlannerFeedback(QStringLiteral(
             "The mutation was reported successful. Observe the affected path before claiming "

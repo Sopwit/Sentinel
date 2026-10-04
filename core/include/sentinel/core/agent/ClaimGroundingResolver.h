@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "sentinel/core/agent/ObservationEvidence.h"
+#include <optional>
 
 namespace sentinel::core {
 
@@ -13,6 +14,9 @@ struct ClaimResolution {
 
 class ClaimGroundingResolver final {
 public:
+    static std::optional<QString> filesystemFinalAnswer(const ObservationIntent& intent,
+                                                        const QList<EvidenceRecord>& evidence,
+                                                        const QString& proposed);
     static ClaimResolution resolve(const ObservationRequirement& claim,
                                    const QList<EvidenceRecord>& evidence,
                                    const ClaimAssertion& assertion);

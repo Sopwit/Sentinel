@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
-#include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/model/ModelRouting.h"
 
@@ -37,21 +37,38 @@ public:
                                const QList<AgentStepRecord>& history) const override;
 
     bool lastDecisionUsedLlm() const;
-    int lastProviderRecoveryAttempts() const override { return lastProviderRecoveryAttempts_; }
+    int lastProviderRecoveryAttempts() const override {
+        return lastProviderRecoveryAttempts_;
+    }
     bool hasModelProvider() const {
         return provider_ != nullptr;
     }
-    IChatProvider* modelProvider() const { return provider_; }
-    void setObservationIntent(const ObservationIntent& intent) override { activeIntent_ = intent; }
-    void setPlannerFeedback(const QString& feedback) override { plannerFeedback_ = feedback; }
-    void setStructuredFacts(const QList<StructuredFact>& facts) override { structuredFacts_ = facts; }
-    void setPlanningContext(const AgentPlanningContext& context) override { planningContext_ = context; }
+    IChatProvider* modelProvider() const {
+        return provider_;
+    }
+    void setObservationIntent(const ObservationIntent& intent) override {
+        activeIntent_ = intent;
+    }
+    void setEvidence(const QList<EvidenceRecord>& evidence) override {
+        activeEvidence_ = evidence;
+    }
+    void setPlannerFeedback(const QString& feedback) override {
+        plannerFeedback_ = feedback;
+    }
+    void setStructuredFacts(const QList<StructuredFact>& facts) override {
+        structuredFacts_ = facts;
+    }
+    void setPlanningContext(const AgentPlanningContext& context) override {
+        planningContext_ = context;
+    }
     // Called before an accepted run; the owned provider and binding stay fixed
     // for every planner iteration in that run.
     using ProviderFactory = std::function<std::shared_ptr<IChatProvider>(const ModelBinding&)>;
     void bindModel(ModelBinding binding, std::shared_ptr<IChatProvider> provider,
                    ProviderFactory providerFactory = {});
-    ModelBinding modelBinding() const { return modelBinding_; }
+    ModelBinding modelBinding() const {
+        return modelBinding_;
+    }
     void setStreamObserver(std::function<void(const QString&)> onDelta,
                            std::shared_ptr<std::atomic_bool> cancellationToken = {}) const;
     void setToolRegistry(const IToolRegistry* registry) {
@@ -80,6 +97,7 @@ private:
     bool serializeProviderRequests_ = false;
     ModelBinding modelBinding_;
     mutable ObservationIntent activeIntent_;
+    mutable QList<EvidenceRecord> activeEvidence_;
     mutable QList<StructuredFact> structuredFacts_;
     mutable AgentPlanningContext planningContext_;
     mutable QString plannerFeedback_;

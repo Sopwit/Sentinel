@@ -5,12 +5,15 @@
 #include <QtTest>
 
 #include "sentinel/core/agent/AgentLoop.h"
+#include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/IToolExecutor.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
+#include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
+#include <QFile>
 
 #include <QFileInfo>
 #include <QTemporaryDir>
@@ -26,6 +29,15 @@ public:
                                const QList<ToolDescriptor>&) const override {
         onClassify();
         return {};
+    }
+};
+
+class FixedFilesystemIntent final : public IObservationIntentPolicy {
+public:
+    ObservationIntent intent;
+    ObservationIntent classify(const QString&, const QString&,
+                               const QList<ToolDescriptor>&) const override {
+        return intent;
     }
 };
 
@@ -135,6 +147,129 @@ private slots:
         QVERIFY(executor.requests.isEmpty());
     }
 
+    void hiddenNegativeClaimReproduction_data() {
+        QTest::addColumn<QString>("finalText");
+        QTest::addColumn<bool>("contextMode");
+        QTest::newRow("original") << QString("No hidden files were found.") << false;
+        QTest::newRow("universal") << QString("There are no hidden files.") << false;
+        QTest::newRow("dotfiles") << QString("No dotfiles were found.") << false;
+        QTest::newRow("context-bypass") << QString("No hidden files exist.") << true;
+    }
+    void hiddenNegativeClaimReproduction() {
+        QFETCH(QString, finalText);
+        QFETCH(bool, contextMode);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        QDir root(workspace.path());
+        QVERIFY(root.mkpath("normal"));
+        QVERIFY(root.mkpath(".hidden-dir"));
+        for (const auto& name :
+             {"visible.txt", ".hidden.txt", "normal/file.txt", ".hidden-dir/nested.txt"}) {
+            QFile file(root.filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("fixture");
+        }
+        ScriptedPlanner planner;
+        auto invocation = toolDecision("list-directory");
+        invocation.arguments = {{"path", workspace.path()}};
+        auto final = finalDecision(finalText);
+        final.grounding = contextMode ? GroundingMode::Context : GroundingMode::Verified;
+        final.groundingDeclared = true;
+        planner.decisions = {invocation, final};
+        planner.repeatLast = true;
+        RealToolExecutor executor;
+        InMemoryToolRegistry registry;
+        QVERIFY(BuiltInToolProvider::registerTools(registry, executor));
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, {"list-directory"});
+        loop.setToolRegistry(&registry);
+        loop.setResourceScope(workspace.path());
+        AgentContextInput::WorkspaceContext context;
+        context.rootPath = workspace.path();
+        loop.setWorkspaceContext(context);
+        const auto state = loop.run("List the workspace");
+        QVERIFY(!state.evidence.isEmpty());
+        const auto observation = state.evidence.first().structuredObservation;
+        QVERIFY(observation);
+        QCOMPARE(observation->kind, StructuredObservationKind::DirectoryListing);
+        QCOMPARE(observation->data.value("includeHidden").toBool(), false);
+        QVERIFY(QFileInfo::exists(root.filePath(".hidden.txt")));
+        QVERIFY(state.phase != AgentLoopPhase::Completed);
+        QVERIFY(state.finalAnswer != finalText);
+    }
+    void typedHiddenAbsenceThroughGateway_data() {
+        QTest::addColumn<bool>("hiddenExists");
+        QTest::addColumn<bool>("includeHidden");
+        QTest::addColumn<bool>("accepted");
+        QTest::newRow("A-hidden-excluded") << true << false << false;
+        QTest::newRow("B-hidden-included-present") << true << true << false;
+        QTest::newRow("C-included-complete-absent") << false << true << true;
+    }
+    void typedHiddenAbsenceThroughGateway() {
+        QFETCH(bool, hiddenExists);
+        QFETCH(bool, includeHidden);
+        QFETCH(bool, accepted);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        if (hiddenExists) {
+            QFile file(QDir(workspace.path()).filePath(".hidden.txt"));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("hidden");
+        }
+        auto policy = std::make_shared<FixedFilesystemIntent>();
+        ObservationRequirement claim;
+        claim.domain = ObservationDomain::FileSystem;
+        claim.claimType = ClaimType::HiddenEntriesExist;
+        claim.claimId = "hidden";
+        claim.resourceHint = QFileInfo(workspace.path()).canonicalFilePath();
+        policy->intent.requirements.append(claim);
+        ScriptedPlanner planner;
+        auto tool = toolDecision("list-directory");
+        tool.arguments = {{"path", workspace.path()},
+                          {"includeHidden", includeHidden ? "true" : "false"}};
+        tool.arguments.last().jsonValue = QJsonValue(includeHidden);
+        auto final = finalDecision("No hidden files exist.");
+        final.grounding = GroundingMode::Verified;
+        final.groundingDeclared = true;
+        final.claims.append({claim.claimId, false});
+        planner.decisions = {tool, final};
+        planner.repeatLast = true;
+        planner.onCall = [&](int index) {
+            if (index == 0)
+                return;
+            const auto history = planner.observedHistories.last();
+            QVERIFY(!history.isEmpty());
+            EvidenceRecord evidence;
+            evidence.structuredObservation = history.first().structuredObservation;
+            evidence.domain = ObservationDomain::FileSystem;
+            evidence.outcome = EvidenceOutcome::Verified;
+            evidence.toolCallId = "observed";
+            if (const auto representation = ClaimGroundingResolver::filesystemFinalAnswer(
+                    policy->intent, {evidence}, final.answer))
+                planner.decisions[1].answer = *representation;
+        };
+        RealToolExecutor executor;
+        InMemoryToolRegistry registry;
+        QVERIFY(BuiltInToolProvider::registerTools(registry, executor));
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, {"list-directory"});
+        loop.setToolRegistry(&registry);
+        loop.setResourceScope(workspace.path());
+        loop.setObservationIntentPolicy(policy);
+        AgentContextInput::WorkspaceContext context;
+        context.rootPath = workspace.path();
+        loop.setWorkspaceContext(context);
+        const auto state = loop.run("Are there no hidden entries in this exact directory?");
+        QCOMPARE(state.phase == AgentLoopPhase::Completed, accepted);
+        QVERIFY(!state.evidence.isEmpty());
+        if (accepted) {
+            QCOMPARE(state.finalClaims.size(), 1);
+            QCOMPARE(state.finalClaims.first().value, false);
+            QVERIFY(state.finalAnswer.contains("not found"));
+        }
+    }
     void runsToolThenFinalAnswer() {
         ScriptedPlanner planner;
         planner.decisions = {toolDecision(QStringLiteral("run-command")),
@@ -189,7 +324,15 @@ private slots:
         ScriptedPlanner planner;
         auto list = toolDecision(QStringLiteral("list-directory"), QStringLiteral("."));
         list.arguments.first().id = QStringLiteral("path");
-        planner.decisions = {list, finalDecision(QStringLiteral("done"))};
+        EvidenceRecord observation;
+        observation.domain = ObservationDomain::FileSystem;
+        observation.toolId = QStringLiteral("list-directory");
+        observation.resource = QStringLiteral(".");
+        observation.outcome = EvidenceOutcome::Verified;
+        const auto representation = ClaimGroundingResolver::filesystemFinalAnswer(
+            {}, {observation}, QStringLiteral("done"));
+        QVERIFY(representation);
+        planner.decisions = {list, finalDecision(*representation)};
         RecordingExecutor executor;
         StaticApprovalPolicy approval;
         auto sandbox = permissiveSandbox();

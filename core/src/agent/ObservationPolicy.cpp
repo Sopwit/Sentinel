@@ -35,9 +35,9 @@ QString normalizedResource(QString resource, ObservationDomain domain) {
         else if (resource.startsWith(QLatin1String("~/")))
             resource = QDir::home().filePath(resource.mid(2));
         if (!QDir::isAbsolutePath(resource)) {
-            for (const auto location : {QStandardPaths::DesktopLocation,
-                                        QStandardPaths::DocumentsLocation,
-                                        QStandardPaths::DownloadLocation}) {
+            for (const auto location :
+                 {QStandardPaths::DesktopLocation, QStandardPaths::DocumentsLocation,
+                  QStandardPaths::DownloadLocation}) {
                 const auto locationPath = QStandardPaths::writableLocation(location);
                 const auto name = QFileInfo(locationPath).fileName();
                 if (!name.isEmpty() &&
@@ -73,8 +73,7 @@ std::optional<ObservationDomain> domainFromName(const QString& name) {
         {QStringLiteral("application"), ObservationDomain::Application},
         {QStringLiteral("execution"), ObservationDomain::ProcessExecution}};
     const auto found = domains.constFind(name.toLower().trimmed());
-    return found == domains.cend() ? std::nullopt
-                                   : std::optional<ObservationDomain>(*found);
+    return found == domains.cend() ? std::nullopt : std::optional<ObservationDomain>(*found);
 }
 
 QString strictJsonObject(const QString& text) {
@@ -101,8 +100,7 @@ QString strictJsonObject(const QString& text) {
 
 bool compatibleDomain(ObservationDomain required, ObservationDomain produced) {
     return required == produced ||
-           (required == ObservationDomain::Workspace &&
-            produced == ObservationDomain::FileSystem);
+           (required == ObservationDomain::Workspace && produced == ObservationDomain::FileSystem);
 }
 
 bool resourceMatches(const ObservationRequirement& requirement, const EvidenceRecord& evidence) {
@@ -178,34 +176,49 @@ QString normalizedObservationResource(const QString& resource, ObservationDomain
 
 QString observationDomainName(ObservationDomain domain) {
     switch (domain) {
-    case ObservationDomain::FileSystem: return QStringLiteral("filesystem");
-    case ObservationDomain::Workspace: return QStringLiteral("workspace");
-    case ObservationDomain::Process: return QStringLiteral("process");
-    case ObservationDomain::System: return QStringLiteral("system");
-    case ObservationDomain::Clipboard: return QStringLiteral("clipboard");
-    case ObservationDomain::Network: return QStringLiteral("network");
-    case ObservationDomain::Browser: return QStringLiteral("browser");
-    case ObservationDomain::Memory: return QStringLiteral("memory");
-    case ObservationDomain::ConversationHistory: return QStringLiteral("history");
-    case ObservationDomain::ExternalService: return QStringLiteral("external");
-    case ObservationDomain::Application: return QStringLiteral("application");
-    case ObservationDomain::ProcessExecution: return QStringLiteral("execution");
+    case ObservationDomain::FileSystem:
+        return QStringLiteral("filesystem");
+    case ObservationDomain::Workspace:
+        return QStringLiteral("workspace");
+    case ObservationDomain::Process:
+        return QStringLiteral("process");
+    case ObservationDomain::System:
+        return QStringLiteral("system");
+    case ObservationDomain::Clipboard:
+        return QStringLiteral("clipboard");
+    case ObservationDomain::Network:
+        return QStringLiteral("network");
+    case ObservationDomain::Browser:
+        return QStringLiteral("browser");
+    case ObservationDomain::Memory:
+        return QStringLiteral("memory");
+    case ObservationDomain::ConversationHistory:
+        return QStringLiteral("history");
+    case ObservationDomain::ExternalService:
+        return QStringLiteral("external");
+    case ObservationDomain::Application:
+        return QStringLiteral("application");
+    case ObservationDomain::ProcessExecution:
+        return QStringLiteral("execution");
     }
     return QStringLiteral("external");
 }
 
 QString groundingModeName(GroundingMode mode) {
     switch (mode) {
-    case GroundingMode::Context: return QStringLiteral("context");
-    case GroundingMode::Verified: return QStringLiteral("verified");
-    case GroundingMode::UnableToVerify: return QStringLiteral("unable_to_verify");
+    case GroundingMode::Context:
+        return QStringLiteral("context");
+    case GroundingMode::Verified:
+        return QStringLiteral("verified");
+    case GroundingMode::UnableToVerify:
+        return QStringLiteral("unable_to_verify");
     }
     return QStringLiteral("context");
 }
 
 ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
-                                                     const QString& conversationContext,
-                                                     const QList<ToolDescriptor>& tools) const {
+                                                    const QString& conversationContext,
+                                                    const QList<ToolDescriptor>& tools) const {
     ObservationIntent intent;
     if (!provider_) {
         intent.indeterminate = true;
@@ -219,19 +232,26 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
             if (!capabilities.contains(name))
                 capabilities.append(name);
         }
-    const auto prompt = QStringLiteral(
-        "Classify the USER GOAL, independently of any proposed answer. Does completing it "
-        "require observing current external state? Distinguish inspecting/verifying a resource "
-        "from merely mentioning it in a hypothetical or writing task. Conversation text "
-        "already visible is context; older history requires lookup. Return ONLY JSON: "
-        "{\"requirements\":[{\"domain\":\"filesystem|workspace|process|system|"
-        "clipboard|network|browser|memory|history|external|application|execution\","
-        "\"resource\":\"absolute path, ~/path, URL, or empty\","
-        "\"purpose\":\"inspect|operate\",\"operation\":\"exists|contains|search_matches|none\",\"query\":\"exact text or search pattern if applicable\"}]}. Use exists for concrete file existence questions and a full target path. Use an empty array for general knowledge, "
-        "rewriting, or conversation-only reasoning. Multiple domains are allowed. "
-        "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
-                            .arg(capabilities.join(QLatin1Char(',')),
-                                 conversationContext.left(1500), goal);
+    const auto prompt =
+        QStringLiteral(
+            "Classify the USER GOAL, independently of any proposed answer. Does completing it "
+            "require observing current external state? Distinguish inspecting/verifying a resource "
+            "from merely mentioning it in a hypothetical or writing task. Conversation text "
+            "already visible is context; older history requires lookup. Return ONLY JSON: "
+            "{\"requirements\":[{\"domain\":\"filesystem|workspace|process|system|"
+            "clipboard|network|browser|memory|history|external|application|execution\","
+            "\"resource\":\"absolute path, ~/path, URL, or empty\","
+            "\"purpose\":\"inspect|operate\",\"operation\":\"exists|contains|search_matches|hidden_"
+            "entries|path_pattern|none\",\"query\":\"exact text or search pattern if "
+            "applicable\",\"recursive\":true|false}]}. Use hidden_entries for questions about "
+            "hidden files, dotfiles or hidden directories; use path_pattern for workspace-wide "
+            "named-file absence/search questions (e.g. .env). Set recursive:true for "
+            "workspace-wide or anywhere-under scope. The resource must be the absolute workspace "
+            "root from context; never guess cwd/home. Use exists for concrete file existence "
+            "questions and a full target path. Use an empty array for general knowledge, "
+            "rewriting, or conversation-only reasoning. Multiple domains are allowed. "
+            "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
+            .arg(capabilities.join(QLatin1Char(',')), conversationContext.left(1500), goal);
     ChatRequestOptions options;
     options.cancellationToken = cancellationToken_;
     const auto reply = provider_->sendRequest(prompt, options);
@@ -246,7 +266,8 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         return intent;
     }
     const auto document = QJsonDocument::fromJson(candidate.toUtf8());
-    if (!document.isObject() || !document.object().value(QStringLiteral("requirements")).isArray()) {
+    if (!document.isObject() ||
+        !document.object().value(QStringLiteral("requirements")).isArray()) {
         intent.indeterminate = true;
         return intent;
     }
@@ -271,16 +292,17 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         ObservationRequirement requirement;
         requirement.domain = *domain;
         requirement.resourceHint = object.value(QStringLiteral("resource")).toString().left(512);
-        requirement.purpose = object.value(QStringLiteral("purpose")).toString() ==
-                                      QLatin1String("operate")
-                                  ? ObservationPurpose::Operate
-                                  : ObservationPurpose::Inspect;
+        requirement.purpose =
+            object.value(QStringLiteral("purpose")).toString() == QLatin1String("operate")
+                ? ObservationPurpose::Operate
+                : ObservationPurpose::Inspect;
         requirement.freshness = *domain == ObservationDomain::ConversationHistory
                                     ? EvidenceFreshness::SessionStable
                                     : EvidenceFreshness::TurnScoped;
         const auto operation = object.value(QStringLiteral("operation")).toString();
         if ((*domain == ObservationDomain::FileSystem || *domain == ObservationDomain::Workspace) &&
-            !requirement.resourceHint.isEmpty() && requirement.purpose == ObservationPurpose::Inspect) {
+            !requirement.resourceHint.isEmpty() &&
+            requirement.purpose == ObservationPurpose::Inspect) {
             if (operation == QLatin1String("exists") || operation == QLatin1String("file_exists"))
                 requirement.claimType = ClaimType::FileExists;
             else if (operation == QLatin1String("path_exists"))
@@ -289,13 +311,22 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
                 requirement.claimType = ClaimType::DirectoryExists;
             else if (operation == QLatin1String("contains"))
                 requirement.claimType = ClaimType::TextContains;
+            else if (operation == QLatin1String("hidden_entries"))
+                requirement.claimType = ClaimType::HiddenEntriesExist;
+            else if (operation == QLatin1String("path_pattern"))
+                requirement.claimType = ClaimType::PathPatternExists;
             else if (operation == QLatin1String("search_matches"))
                 requirement.claimType = ClaimType::SearchHasMatches;
             if (requirement.claimType != ClaimType::None) {
-                requirement.claimId = QStringLiteral("claim-%1").arg(intent.requirements.size() + 1);
+                requirement.claimId =
+                    QStringLiteral("claim-%1").arg(intent.requirements.size() + 1);
+                requirement.recursive = object.value(QStringLiteral("recursive")).toBool(false);
                 requirement.claimQuery = object.value(QStringLiteral("query")).toString().left(256);
-                if (requirement.claimType != ClaimType::FileExists && requirement.claimType != ClaimType::PathExists &&
-                    requirement.claimType != ClaimType::DirectoryExists && requirement.claimQuery.isEmpty())
+                if (requirement.claimType != ClaimType::FileExists &&
+                    requirement.claimType != ClaimType::PathExists &&
+                    requirement.claimType != ClaimType::DirectoryExists &&
+                    requirement.claimType != ClaimType::HiddenEntriesExist &&
+                    requirement.claimQuery.isEmpty())
                     requirement.claimType = ClaimType::None;
             }
         }
@@ -315,14 +346,14 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
 }
 
 QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
-                                              const PlannedToolInvocation& invocation,
-                                              ToolExecutionStatus status, const QString& summary,
-                                              int stepIndex, const QString& toolCallId, StructuredObservationPtr structuredObservation) {
+                                             const PlannedToolInvocation& invocation,
+                                             ToolExecutionStatus status, const QString& summary,
+                                             int stepIndex, const QString& toolCallId,
+                                             StructuredObservationPtr structuredObservation) {
     QList<EvidenceRecord> records;
     if (status == ToolExecutionStatus::InvalidArguments ||
         status == ToolExecutionStatus::InvalidToolContract ||
-        status == ToolExecutionStatus::EmptyPlan ||
-        status == ToolExecutionStatus::NotRequested)
+        status == ToolExecutionStatus::EmptyPlan || status == ToolExecutionStatus::NotRequested)
         return records;
     const bool succeeded = status == ToolExecutionStatus::Succeeded;
     const bool denied = status == ToolExecutionStatus::Blocked;
@@ -333,27 +364,39 @@ QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
         record.toolCallId = toolCallId;
         record.stepIndex = stepIndex;
         record.domain = produced.domain;
-        record.resource = produced.resourceArgument.isEmpty()
-                              ? (produced.scope == EvidenceScope::Provider
-                                     ? descriptor.providerId
-                                     : QString{})
-                              : argumentValue(invocation, produced.resourceArgument);
-        if (record.resource.isEmpty() && produced.scope == EvidenceScope::SearchScope)
-            record.resource = QDir::currentPath();
+        record.resource =
+            produced.resourceArgument.isEmpty()
+                ? (produced.scope == EvidenceScope::Provider ? descriptor.providerId : QString{})
+                : argumentValue(invocation, produced.resourceArgument);
+        if (record.resource.isEmpty() && structuredObservation) {
+            record.resource = structuredObservation->data.value(QStringLiteral("scope")).toString();
+            if (record.resource.isEmpty())
+                record.resource =
+                    structuredObservation->data.value(QStringLiteral("root")).toString();
+            if (record.resource.isEmpty())
+                record.resource =
+                    structuredObservation->data.value(QStringLiteral("path")).toString();
+        }
         record.qualifier = argumentValue(invocation, produced.qualifierArgument);
         record.freshness = produced.freshness;
         record.scope = produced.scope;
-        const bool partialObservation = structuredObservation &&
-            structuredObservation->data.value(QStringLiteral("partialEvidence")).toBool();
-        record.outcome = succeeded && partialObservation ? EvidenceOutcome::Partial
-                       : succeeded ? EvidenceOutcome::Verified
-                                 : status == ToolExecutionStatus::Cancelled ? EvidenceOutcome::Partial
-                                 : denied ? EvidenceOutcome::Denied
-                                 : unavailable ? EvidenceOutcome::Unavailable
-                                               : EvidenceOutcome::Failed;
+        const bool partialObservation =
+            structuredObservation &&
+            (structuredObservation->data.value(QStringLiteral("partialEvidence")).toBool() ||
+             (structuredObservation->data.contains(QStringLiteral("complete")) &&
+              (!structuredObservation->data.value(QStringLiteral("complete")).toBool() ||
+               structuredObservation->data.value(QStringLiteral("truncated")).toBool() ||
+               structuredObservation->data.value(QStringLiteral("cancelled")).toBool())));
+        record.outcome = succeeded && partialObservation            ? EvidenceOutcome::Partial
+                         : succeeded                                ? EvidenceOutcome::Verified
+                         : status == ToolExecutionStatus::Cancelled ? EvidenceOutcome::Partial
+                         : denied                                   ? EvidenceOutcome::Denied
+                         : unavailable                              ? EvidenceOutcome::Unavailable
+                                                                    : EvidenceOutcome::Failed;
         if (structuredObservation &&
             (descriptor.structuredObservationKind == structuredObservation->kind ||
-             ((descriptor.source == ToolSource::BuiltIn || descriptor.filesystemFailureSemanticContract) &&
+             ((descriptor.source == ToolSource::BuiltIn ||
+               descriptor.filesystemFailureSemanticContract) &&
               (structuredObservation->kind == StructuredObservationKind::FileSystemFailure ||
                structuredObservation->kind == StructuredObservationKind::DirectoryListing ||
                (descriptor.source == ToolSource::BuiltIn &&
@@ -367,8 +410,8 @@ QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
 }
 
 EvidenceGateResult EvidencePolicy::evaluate(const ObservationIntent& intent,
-                                             const QList<EvidenceRecord>& evidence,
-                                             GroundingMode mode, bool groundingDeclared) {
+                                            const QList<EvidenceRecord>& evidence,
+                                            GroundingMode mode, bool groundingDeclared) {
     EvidenceGateResult result;
     result.grounding.mode = mode;
     if (intent.indeterminate) {
@@ -414,11 +457,27 @@ EvidenceGateResult EvidencePolicy::evaluate(const ObservationIntent& intent,
             if (!latest || item.stepIndex >= latest->stepIndex)
                 latest = &item;
         }
-        const bool supportedPartial = latest && latest->outcome == EvidenceOutcome::Partial &&
+        const bool observedPartialEntries =
+            latest && latest->structuredObservation && requirement.claimType == ClaimType::None &&
+            ((latest->structuredObservation->kind == StructuredObservationKind::DirectoryListing &&
+              !latest->structuredObservation->data.value(QStringLiteral("entries"))
+                   .toArray()
+                   .isEmpty()) ||
+             (latest->structuredObservation->kind == StructuredObservationKind::PathMatches &&
+              !latest->structuredObservation->data.value(QStringLiteral("matches"))
+                   .toArray()
+                   .isEmpty()) ||
+             (latest->structuredObservation->kind == StructuredObservationKind::FileContent &&
+              !latest->structuredObservation->data.value(QStringLiteral("content"))
+                   .toString()
+                   .isEmpty()));
+        const bool supportedPartial =
+            latest && latest->outcome == EvidenceOutcome::Partial &&
             requirement.claimType != ClaimType::None &&
-            ClaimGroundingResolver::resolve(requirement, evidence,
-                {requirement.claimId, true}).verdict == ClaimVerdict::Supported;
-        if (latest && (latest->outcome == EvidenceOutcome::Verified || supportedPartial)) {
+            ClaimGroundingResolver::resolve(requirement, evidence, {requirement.claimId, true})
+                    .verdict == ClaimVerdict::Supported;
+        if (latest && (latest->outcome == EvidenceOutcome::Verified || supportedPartial ||
+                       (latest->outcome == EvidenceOutcome::Partial && observedPartialEntries))) {
             result.grounding.evidenceCallIds.append(latest->toolCallId);
             continue;
         }
@@ -447,14 +506,18 @@ EvidenceGateResult EvidencePolicy::evaluate(const ObservationIntent& intent,
             bool unresolvedClaim = false;
             for (const auto& requirement : intent.requirements)
                 if (requirement.claimType != ClaimType::None &&
-                    ClaimGroundingResolver::resolve(requirement, evidence, {requirement.claimId, true}).verdict == ClaimVerdict::Unknown)
+                    ClaimGroundingResolver::resolve(requirement, evidence,
+                                                    {requirement.claimId, true})
+                            .verdict == ClaimVerdict::Unknown)
                     unresolvedClaim = true;
             if (!unresolvedClaim) {
-                result.repair = QStringLiteral("All required observations succeeded; provide a verified answer.");
+                result.repair = QStringLiteral(
+                    "All required observations succeeded; provide a verified answer.");
                 return result;
             }
             result.accepted = true;
-            result.answerOverride = QStringLiteral("I could not verify the requested fact from the available observation.");
+            result.answerOverride = QStringLiteral(
+                "I could not verify the requested fact from the available observation.");
             result.grounding.evidenceCallIds.removeDuplicates();
             return result;
         }

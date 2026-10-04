@@ -21,14 +21,14 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMetaObject>
+#include <QPointer>
 #include <QProcess>
 #include <QProcessEnvironment>
-#include <QPointer>
 #include <QRegularExpression>
 #include <QStorageInfo>
 #include <QSysInfo>
-#include <QThread>
 #include <QTemporaryDir>
+#include <QThread>
 #include <QTimer>
 #include <QUrl>
 
@@ -48,10 +48,11 @@ namespace sentinel::core {
 namespace {
 template <typename T>
 ToolExecutionResult fileToolFailure(const QString& tool, const FileSystemResult<T>& result);
-FileSystemResult<AuthorizedPath> authorizedFilePath(
-    const IFileSystemService& service, const PlannedToolInvocation& invocation,
-    const QString& argument, AccessMode access, const QString& cwd);
-}
+FileSystemResult<AuthorizedPath> authorizedFilePath(const IFileSystemService& service,
+                                                    const PlannedToolInvocation& invocation,
+                                                    const QString& argument, AccessMode access,
+                                                    const QString& cwd);
+} // namespace
 
 RealToolExecutor::RealToolExecutor() = default;
 
@@ -254,16 +255,15 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         return QString{};
     };
     const QString toolId = invocation.toolId;
-    if (toolId == QLatin1String("voice-transcribe") ||
-        toolId == QLatin1String("voice-speak")) {
+    if (toolId == QLatin1String("voice-transcribe") || toolId == QLatin1String("voice-speak")) {
         const auto stt = sttRuntime_;
         const auto tts = ttsRuntime_;
-        const auto cwd = invocation.processSandbox
-            ? invocation.processSandbox->workingDirectory : QDir::currentPath();
+        const auto cwd = invocation.processSandbox ? invocation.processSandbox->workingDirectory
+                                                   : QDir::currentPath();
         std::optional<AuthorizedPath> audioPath;
         if (toolId == QLatin1String("voice-transcribe")) {
-            const auto authorized = authorizedFilePath(fileSystemService_, invocation,
-                QStringLiteral("path"), AccessMode::Read, cwd);
+            const auto authorized = authorizedFilePath(
+                fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
             if (!authorized.ok()) {
                 completion(fileToolFailure(toolId, authorized));
                 return {};
@@ -278,13 +278,14 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         }
         auto cancelled = std::make_shared<std::atomic_bool>(false);
         QPointer<QObject> context(request.callbackContext);
-        auto* worker = QThread::create([this, toolId, stt, tts, audioPath, cwd,
-                                        speechText, cancelled, context, completion] {
+        auto* worker = QThread::create([this, toolId, stt, tts, audioPath, cwd, speechText,
+                                        cancelled, context, completion] {
             ToolExecutionResult result;
             AudioFailure failure = AudioFailure::None;
             QString detail;
             if (toolId == QLatin1String("voice-transcribe")) {
-                if (!stt) failure = AudioFailure::RuntimeUnavailable;
+                if (!stt)
+                    failure = AudioFailure::RuntimeUnavailable;
                 else {
                     const auto verified = fileSystemService_.revalidateAuthorized(*audioPath, cwd);
                     const auto currentGrant = fileSystemService_.resolve(
@@ -299,49 +300,56 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                         if (!file.ok() || !file.value->regularFile)
                             failure = AudioFailure::UnsupportedFormat;
                         else {
-                            const auto transcript = stt->transcribeFile(
-                                verified.value->canonicalPath, {}, cancelled);
+                            const auto transcript =
+                                stt->transcribeFile(verified.value->canonicalPath, {}, cancelled);
                             failure = transcript.failure;
                             detail = transcript.detail;
                             if (failure == AudioFailure::None)
                                 result.summary = QStringLiteral("voice-transcribe: OK\n%1")
-                                    .arg(transcript.finalText);
+                                                     .arg(transcript.finalText);
                         }
                     }
                 }
-            } else if (!tts) failure = AudioFailure::RuntimeUnavailable;
+            } else if (!tts)
+                failure = AudioFailure::RuntimeUnavailable;
             else {
-                const auto audio = tts->synthesize(
-                    SpeechSynthesisRequest{speechText, {}, {}, 1.0}, cancelled);
+                const auto audio =
+                    tts->synthesize(SpeechSynthesisRequest{speechText, {}, {}, 1.0}, cancelled);
                 failure = audio.failure;
                 detail = audio.detail;
-                if (cancelled->load() && !audio.filePath.isEmpty()) QFile::remove(audio.filePath);
+                if (cancelled->load() && !audio.filePath.isEmpty())
+                    QFile::remove(audio.filePath);
                 if (failure == AudioFailure::None && !cancelled->load())
-                    result.summary = QStringLiteral("voice-speak: audio generated at %1")
-                        .arg(audio.filePath);
+                    result.summary =
+                        QStringLiteral("voice-speak: audio generated at %1").arg(audio.filePath);
             }
-            if (cancelled->load()) failure = AudioFailure::Cancelled;
-            result.status = failure == AudioFailure::None ? ToolExecutionStatus::Succeeded
-                : failure == AudioFailure::Cancelled ? ToolExecutionStatus::Cancelled
-                                                    : ToolExecutionStatus::Failed;
+            if (cancelled->load())
+                failure = AudioFailure::Cancelled;
+            result.status = failure == AudioFailure::None        ? ToolExecutionStatus::Succeeded
+                            : failure == AudioFailure::Cancelled ? ToolExecutionStatus::Cancelled
+                                                                 : ToolExecutionStatus::Failed;
             if (failure != AudioFailure::None) {
                 result.summary = QStringLiteral("%1: %2. %3")
-                    .arg(toolId, audioFailureName(failure), detail.left(300));
-                result.failureCategory = failure == AudioFailure::Timeout
-                    ? ToolFailureCategory::Timeout
+                                     .arg(toolId, audioFailureName(failure), detail.left(300));
+                result.failureCategory =
+                    failure == AudioFailure::Timeout     ? ToolFailureCategory::Timeout
                     : failure == AudioFailure::Cancelled ? ToolFailureCategory::Cancelled
                     : failure == AudioFailure::RuntimeUnavailable ||
-                      failure == AudioFailure::ModelUnavailable
+                            failure == AudioFailure::ModelUnavailable
                         ? ToolFailureCategory::RuntimeUnavailable
-                        : failure == AudioFailure::PermissionDenied
-                            ? ToolFailureCategory::PermissionDenied
-                            : ToolFailureCategory::InternalFailure;
+                    : failure == AudioFailure::PermissionDenied
+                        ? ToolFailureCategory::PermissionDenied
+                        : ToolFailureCategory::InternalFailure;
             }
             if (context)
-                QMetaObject::invokeMethod(context, [completion, result = std::move(result)]() mutable {
-                    completion(std::move(result));
-                }, Qt::QueuedConnection);
-            else completion(std::move(result));
+                QMetaObject::invokeMethod(
+                    context,
+                    [completion, result = std::move(result)]() mutable {
+                        completion(std::move(result));
+                    },
+                    Qt::QueuedConnection);
+            else
+                completion(std::move(result));
         });
         QObject::connect(worker, &QThread::finished, worker, &QObject::deleteLater);
         worker->start();
@@ -352,9 +360,12 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         QPointer<QObject> context(request.callbackContext);
         auto complete = [context, completion](ToolExecutionResult result) {
             if (context) {
-                QMetaObject::invokeMethod(context, [completion, result = std::move(result)]() mutable {
-                    completion(std::move(result));
-                }, Qt::QueuedConnection);
+                QMetaObject::invokeMethod(
+                    context,
+                    [completion, result = std::move(result)]() mutable {
+                        completion(std::move(result));
+                    },
+                    Qt::QueuedConnection);
             } else {
                 completion(std::move(result));
             }
@@ -389,8 +400,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         process.toolCallId = toolCallId;
         process.timeoutMs = 15000;
         if (!invocation.processSandbox) {
-            completion({ToolExecutionStatus::Blocked,
-                        QStringLiteral("Process sandbox plan is missing.")});
+            completion(
+                {ToolExecutionStatus::Blocked, QStringLiteral("Process sandbox plan is missing.")});
             return {};
         }
         process.sandbox = invocation.processSandbox;
@@ -461,8 +472,10 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 return {};
             }
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
-            completion({ToolExecutionStatus::Blocked,
-                        QStringLiteral("app-launch: detached desktop launch has no process sandbox guarantee.")});
+            completion(
+                {ToolExecutionStatus::Blocked,
+                 QStringLiteral(
+                     "app-launch: detached desktop launch has no process sandbox guarantee.")});
             return {};
 #else
             const QString extra = argument(QStringLiteral("args")).trimmed();
@@ -572,7 +585,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             QString path = argument(QStringLiteral("path")).trimmed();
             if (!path.isEmpty()) {
                 completion({ToolExecutionStatus::Blocked,
-                            QStringLiteral("browser-%1: explicit output path lacks filesystem authorization.")
+                            QStringLiteral(
+                                "browser-%1: explicit output path lacks filesystem authorization.")
                                 .arg(mode)});
                 return {};
             }
@@ -584,9 +598,9 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 return {};
             }
             process.sandbox->temporaryDirectory = outputDirectory->path();
-            path = QDir(outputDirectory->path()).filePath(
-                mode == QLatin1String("pdf") ? QStringLiteral("capture.pdf")
-                                               : QStringLiteral("capture.png"));
+            path = QDir(outputDirectory->path())
+                       .filePath(mode == QLatin1String("pdf") ? QStringLiteral("capture.pdf")
+                                                              : QStringLiteral("capture.png"));
             process.program = QStringLiteral("npx");
             process.arguments = {QStringLiteral("-y"), QStringLiteral("playwright"), mode};
             if (mode == QLatin1String("screenshot"))
@@ -639,7 +653,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 ToolExecutionResult result{
                     record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
                     : record.state == ProcessState::Exited && record.exitCode == 0
-                        ? ToolExecutionStatus::Succeeded : ToolExecutionStatus::Failed,
+                        ? ToolExecutionStatus::Succeeded
+                        : ToolExecutionStatus::Failed,
                     current->format(record, QString::fromUtf8(current->out).trimmed(),
                                     QString::fromUtf8(current->err).trimmed())};
                 if (record.timedOut)
@@ -657,14 +672,12 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                     result.summary = QStringLiteral("Expected output artifact was not produced.");
                 }
                 result.sandbox = record.sandbox;
-                if (record.exitCode != 0 &&
-                    (current->err.startsWith("bwrap:") ||
-                     current->err.startsWith("sandbox-exec:"))) {
+                if (record.exitCode != 0 && (current->err.startsWith("bwrap:") ||
+                                             current->err.startsWith("sandbox-exec:"))) {
                     result.sandbox.enforcement = SandboxEnforcement::Failed;
                     result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
                 }
-                if (result.status == ToolExecutionStatus::Succeeded &&
-                    current->outputDirectory &&
+                if (result.status == ToolExecutionStatus::Succeeded && current->outputDirectory &&
                     !QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty())
                     current->outputDirectory->setAutoRemove(false);
                 current->completion(std::move(result));
@@ -683,10 +696,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             active->executor->write(active->id, input);
             active->executor->closeWriteChannel(active->id);
         }
-        if (toolId == QLatin1String("app-quit") ||
-            toolId == QLatin1String("app-launch") ||
-            toolId == QLatin1String("open-url") ||
-            toolId == QLatin1String("system-notify"))
+        if (toolId == QLatin1String("app-quit") || toolId == QLatin1String("app-launch") ||
+            toolId == QLatin1String("open-url") || toolId == QLatin1String("system-notify"))
             return [active] {};
         return [active] {
             if (active->executor && !active->id.isEmpty())
@@ -851,22 +862,21 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             ToolExecutionResult result{
                 record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
                 : record.state == ProcessState::Exited && !record.timedOut && record.exitCode == 0
-                    ? ToolExecutionStatus::Succeeded : ToolExecutionStatus::Failed,
+                    ? ToolExecutionStatus::Succeeded
+                    : ToolExecutionStatus::Failed,
                 summary};
             result.sandbox = record.sandbox;
-            if (record.exitCode != 0 &&
-                (current->stderrBytes.startsWith("bwrap:") ||
-                 current->stderrBytes.startsWith("sandbox-exec:"))) {
+            if (record.exitCode != 0 && (current->stderrBytes.startsWith("bwrap:") ||
+                                         current->stderrBytes.startsWith("sandbox-exec:"))) {
                 result.sandbox.enforcement = SandboxEnforcement::Failed;
                 result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
             }
-            result.failureCategory = result.status == ToolExecutionStatus::Cancelled
-                ? ToolFailureCategory::Cancelled
-                : record.timedOut ? ToolFailureCategory::Timeout
+            result.failureCategory =
+                result.status == ToolExecutionStatus::Cancelled ? ToolFailureCategory::Cancelled
+                : record.timedOut                               ? ToolFailureCategory::Timeout
                 : result.sandbox.enforcement == SandboxEnforcement::Failed
                     ? ToolFailureCategory::SecurityDenied
-                : record.state == ProcessState::Failed
-                    ? ToolFailureCategory::RuntimeUnavailable
+                : record.state == ProcessState::Failed ? ToolFailureCategory::RuntimeUnavailable
                 : result.status == ToolExecutionStatus::Failed
                     ? ToolFailureCategory::InternalFailure
                     : ToolFailureCategory::None;
@@ -1158,8 +1168,8 @@ QString runPlaywrightCli(const QString& mode, const QString& url, const QString&
 // common language families. Ported concept from Cline's
 // list_code_definition_names tool.
 QStringList extractCodeDefinitions(const QString& path, const QByteArray& bytes,
-                                   const FileSystemOperationContext& context,
-                                   bool& cancelled, bool& truncated) {
+                                   const FileSystemOperationContext& context, bool& cancelled,
+                                   bool& truncated) {
     const QString content = QString::fromUtf8(bytes);
     const QStringList lines = content.split(QLatin1Char('\n'));
     const QString suffix = QFileInfo(path).suffix().toLower();
@@ -1190,7 +1200,10 @@ QStringList extractCodeDefinitions(const QString& path, const QByteArray& bytes,
 
     QStringList definitions;
     for (int i = 0; i < lines.size(); ++i) {
-        if ((i & 127) == 0 && context.isCancelled()) { cancelled = true; break; }
+        if ((i & 127) == 0 && context.isCancelled()) {
+            cancelled = true;
+            break;
+        }
         const QString& line = lines.at(i);
         auto add = [&](const QString& kind, const QString& name) {
             definitions.append(
@@ -1288,8 +1301,10 @@ RealToolExecutor::executeLocalPlanSummary(const PlannedToolInvocation& invocatio
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
 }
 
-QString RealToolExecutor::resolveToolPath(const QString& cwd, const QString& raw, bool write) const {
-    const auto result = fileSystemService_.resolve(raw, cwd, write ? FileSystemAccess::Write : FileSystemAccess::Read);
+QString RealToolExecutor::resolveToolPath(const QString& cwd, const QString& raw,
+                                          bool write) const {
+    const auto result = fileSystemService_.resolve(
+        raw, cwd, write ? FileSystemAccess::Write : FileSystemAccess::Read);
     return result.ok() ? result.value->canonicalPath : QString{};
 }
 namespace {
@@ -1303,33 +1318,59 @@ QJsonArray traversalIssues(const TraversalStatus& status) {
                                   {QStringLiteral("failure"), static_cast<int>(issue.failure)}});
     return issues;
 }
-template <typename T> ToolExecutionResult fileToolFailure(const QString& tool, const FileSystemResult<T>& result) {
+void addCoverage(QJsonObject& data, const TraversalStatus& status, const QString& scope,
+                 bool includeHidden, bool recursive, int resultLimit) {
+    data.insert(QStringLiteral("scope"), scope);
+    data.insert(QStringLiteral("hiddenEntriesPolicy"),
+                includeHidden ? QStringLiteral("included") : QStringLiteral("excluded"));
+    data.insert(QStringLiteral("permissionLimited"), !status.issues.isEmpty());
+    data.insert(QStringLiteral("recursive"), recursive);
+    data.insert(QStringLiteral("followSymlinks"), false);
+    data.insert(QStringLiteral("skippedSymlinks"), status.skippedSymlinks);
+    data.insert(QStringLiteral("maxDepth"), recursive ? 128 : 0);
+    data.insert(QStringLiteral("resultLimit"), resultLimit);
+    data.insert(QStringLiteral("enumerationLimit"), 20000);
+    data.insert(QStringLiteral("hiddenEntries"), QJsonArray::fromStringList(status.hiddenEntries));
+}
+template <typename T>
+ToolExecutionResult fileToolFailure(const QString& tool, const FileSystemResult<T>& result) {
     auto observation = std::make_shared<StructuredObservation>();
     observation->kind = StructuredObservationKind::FileSystemFailure;
     observation->fileSystemFailure = result.failure;
     observation->fileSystemOperation = result.operation;
-    if (tool == QLatin1String("grep")) observation->fileSystemOperation = FileSystemOperation::Grep;
-    else if (tool == QLatin1String("glob")) observation->fileSystemOperation = FileSystemOperation::Glob;
+    if (tool == QLatin1String("grep"))
+        observation->fileSystemOperation = FileSystemOperation::Grep;
+    else if (tool == QLatin1String("glob"))
+        observation->fileSystemOperation = FileSystemOperation::Glob;
     else if (result.operation == FileSystemOperation::Stat) {
-        if (tool == QLatin1String("list-directory")) observation->fileSystemOperation = FileSystemOperation::ListDirectory;
-        else if (tool == QLatin1String("read-file")) observation->fileSystemOperation = FileSystemOperation::ReadFile;
-        else if (tool == QLatin1String("write-file")) observation->fileSystemOperation = FileSystemOperation::WriteFile;
-        else if (tool == QLatin1String("edit-file")) observation->fileSystemOperation = FileSystemOperation::EditFile;
-        else if (tool == QLatin1String("delete-file")) observation->fileSystemOperation = FileSystemOperation::Delete;
-        else if (tool == QLatin1String("move-file")) observation->fileSystemOperation = FileSystemOperation::Move;
-        else if (tool == QLatin1String("glob")) observation->fileSystemOperation = FileSystemOperation::Glob;
-        else if (tool == QLatin1String("grep")) observation->fileSystemOperation = FileSystemOperation::Grep;
+        if (tool == QLatin1String("list-directory"))
+            observation->fileSystemOperation = FileSystemOperation::ListDirectory;
+        else if (tool == QLatin1String("read-file"))
+            observation->fileSystemOperation = FileSystemOperation::ReadFile;
+        else if (tool == QLatin1String("write-file"))
+            observation->fileSystemOperation = FileSystemOperation::WriteFile;
+        else if (tool == QLatin1String("edit-file"))
+            observation->fileSystemOperation = FileSystemOperation::EditFile;
+        else if (tool == QLatin1String("delete-file"))
+            observation->fileSystemOperation = FileSystemOperation::Delete;
+        else if (tool == QLatin1String("move-file"))
+            observation->fileSystemOperation = FileSystemOperation::Move;
+        else if (tool == QLatin1String("glob"))
+            observation->fileSystemOperation = FileSystemOperation::Glob;
+        else if (tool == QLatin1String("grep"))
+            observation->fileSystemOperation = FileSystemOperation::Grep;
     }
     observation->failureResource = result.resource;
     observation->data = {{QStringLiteral("resource"), result.resource}};
     const bool securityFailure = result.failure == FileSystemFailure::PermissionDenied ||
-        result.failure == FileSystemFailure::ResourceChanged ||
-        result.failure == FileSystemFailure::SymlinkEscape ||
-        result.failure == FileSystemFailure::UnsafeParent ||
-        result.failure == FileSystemFailure::SecurityBoundaryViolation;
+                                 result.failure == FileSystemFailure::ResourceChanged ||
+                                 result.failure == FileSystemFailure::SymlinkEscape ||
+                                 result.failure == FileSystemFailure::UnsafeParent ||
+                                 result.failure == FileSystemFailure::SecurityBoundaryViolation;
     const auto status = securityFailure ? ToolExecutionStatus::Blocked
-                      : result.failure == FileSystemFailure::InvalidPath ? ToolExecutionStatus::InvalidArguments
-                      : ToolExecutionStatus::Failed;
+                        : result.failure == FileSystemFailure::InvalidPath
+                            ? ToolExecutionStatus::InvalidArguments
+                            : ToolExecutionStatus::Failed;
     QString detail = result.diagnostic;
     if (detail.isEmpty()) {
         if (securityFailure)
@@ -1340,24 +1381,24 @@ template <typename T> ToolExecutionResult fileToolFailure(const QString& tool, c
             detail = QStringLiteral("Not found: %1").arg(result.resource);
         else if (result.failure == FileSystemFailure::AlreadyExists)
             detail = QStringLiteral("Already exists: %1").arg(result.resource);
-        else detail = QStringLiteral("Filesystem operation failed: %1").arg(result.resource);
+        else
+            detail = QStringLiteral("Filesystem operation failed: %1").arg(result.resource);
     }
     ToolExecutionResult failure{status, QStringLiteral("%1: %2").arg(tool, detail), observation};
-    failure.failureCategory = result.failure == FileSystemFailure::NotFound
-        ? ToolFailureCategory::NotFound
+    failure.failureCategory =
+        result.failure == FileSystemFailure::NotFound ? ToolFailureCategory::NotFound
         : result.failure == FileSystemFailure::PermissionDenied
             ? ToolFailureCategory::PermissionDenied
-        : securityFailure ? ToolFailureCategory::SecurityDenied
-        : result.failure == FileSystemFailure::InvalidPath
-            ? ToolFailureCategory::InvalidArguments
-        : result.failure == FileSystemFailure::Unavailable
-            ? ToolFailureCategory::RuntimeUnavailable
-        : ToolFailureCategory::InternalFailure;
+        : securityFailure                                  ? ToolFailureCategory::SecurityDenied
+        : result.failure == FileSystemFailure::InvalidPath ? ToolFailureCategory::InvalidArguments
+        : result.failure == FileSystemFailure::Unavailable ? ToolFailureCategory::RuntimeUnavailable
+                                                           : ToolFailureCategory::InternalFailure;
     return failure;
 }
-FileSystemResult<AuthorizedPath> authorizedFilePath(
-    const IFileSystemService& service, const PlannedToolInvocation& invocation,
-    const QString& argument, AccessMode access, const QString& cwd) {
+FileSystemResult<AuthorizedPath> authorizedFilePath(const IFileSystemService& service,
+                                                    const PlannedToolInvocation& invocation,
+                                                    const QString& argument, AccessMode access,
+                                                    const QString& cwd) {
     if (invocation.resourceSnapshot && invocation.resourceSnapshot->authorized &&
         invocation.resourceSnapshot->workingDirectory == PathGuard::canonicalPath(cwd)) {
         for (const auto& resource : invocation.resourceSnapshot->files) {
@@ -1372,37 +1413,58 @@ FileSystemResult<AuthorizedPath> authorizedFilePath(
     denied.diagnostic = QStringLiteral("Pre-execution filesystem authorization is missing.");
     return denied;
 }
-}
-ToolExecutionResult RealToolExecutor::executeListDirectory(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("list-directory"), path);
-    const auto listing = fileSystemService_.listDirectory(*path.value,
-        getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true"),
-        500, operationContext(invocation));
-    if (!listing.ok()) return fileToolFailure(QStringLiteral("list-directory"), listing);
+} // namespace
+ToolExecutionResult RealToolExecutor::executeListDirectory(const PlannedToolInvocation& invocation,
+                                                           QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("list-directory"), path);
+    const auto listing = fileSystemService_.listDirectory(
+        *path.value,
+        getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true"), 500,
+        operationContext(invocation));
+    if (!listing.ok())
+        return fileToolFailure(QStringLiteral("list-directory"), listing);
     QJsonArray entries;
     for (const auto& entry : listing.value->entries)
-        entries.append(QJsonObject{{QStringLiteral("name"), entry.name},
-            {QStringLiteral("type"), entry.directory ? QStringLiteral("directory")
-                : entry.regularFile ? QStringLiteral("file") : QStringLiteral("other")}});
-    const QJsonObject data{{QStringLiteral("path"), listing.resource}, {QStringLiteral("entries"), entries},
+        entries.append(
+            QJsonObject{{QStringLiteral("name"), entry.name},
+                        {QStringLiteral("type"), entry.directory     ? QStringLiteral("directory")
+                                                 : entry.regularFile ? QStringLiteral("file")
+                                                                     : QStringLiteral("other")}});
+    QJsonObject data{
+        {QStringLiteral("path"), listing.resource},
+        {QStringLiteral("entries"), entries},
         {QStringLiteral("recursive"), false},
-        {QStringLiteral("includeHidden"), getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true")},
+        {QStringLiteral("includeHidden"),
+         getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true")},
         {QStringLiteral("complete"), listing.value->status.complete},
         {QStringLiteral("truncated"), listing.value->status.truncated},
         {QStringLiteral("cancelled"), listing.value->status.cancelled},
         {QStringLiteral("issues"), traversalIssues(listing.value->status)}};
-    const QString summary = listing.value->status.cancelled
-        ? QStringLiteral("Directory listing stopped after %1 entries. Scope not fully inspected.\n%2")
-              .arg(entries.size()).arg(QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)))
-        : QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact));
-    return {listing.value->status.cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
+    addCoverage(data, listing.value->status, listing.resource,
+                getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true"),
+                false, 500);
+    const QString summary =
+        listing.value->status.cancelled
+            ? QStringLiteral(
+                  "Directory listing stopped after %1 entries. Scope not fully inspected.\n%2")
+                  .arg(entries.size())
+                  .arg(QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)))
+            : QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact));
+    return {listing.value->status.cancelled ? ToolExecutionStatus::Cancelled
+                                            : ToolExecutionStatus::Succeeded,
             summary,
-        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::DirectoryListing, data})};
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::DirectoryListing, data})};
 }
-ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("read-file"), path);
+ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocation& invocation,
+                                                      QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("read-file"), path);
     const auto read = fileSystemService_.readFile(*path.value, 64 * 1024);
     if (!read.ok()) {
         if (read.failure == FileSystemFailure::NotFile) {
@@ -1429,24 +1491,39 @@ ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocatio
     for (int i = qMax(0, offset - 1); i < lines.size() && output.size() < limit; ++i)
         output.append(QStringLiteral("%1: %2").arg(i + 1).arg(lines.at(i).left(kMaxLineLength)));
     const QJsonObject data{{QStringLiteral("path"), read.resource},
-        {QStringLiteral("content"), QString::fromUtf8(read.value->content)},
-        {QStringLiteral("complete"), read.value->complete && offset == 1},
-        {QStringLiteral("truncated"), read.value->truncated || offset != 1}};
+                           {QStringLiteral("content"), QString::fromUtf8(read.value->content)},
+                           {QStringLiteral("complete"), read.value->complete && offset == 1},
+                           {QStringLiteral("truncated"), read.value->truncated || offset != 1},
+                           {QStringLiteral("cancelled"), false},
+                           {QStringLiteral("permissionLimited"), false},
+                           {QStringLiteral("issues"), QJsonArray{}}};
     return {ToolExecutionStatus::Succeeded, output.join(QLatin1Char('\n')),
-        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::FileContent, data})};
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::FileContent, data})};
 }
-ToolExecutionResult RealToolExecutor::executeWriteFile(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Write, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("write-file"), path);
-    const auto written = fileSystemService_.writeFile(*path.value, getArgument(invocation, QStringLiteral("content")).toUtf8());
-    if (!written.ok()) return fileToolFailure(QStringLiteral("write-file"), written);
+ToolExecutionResult RealToolExecutor::executeWriteFile(const PlannedToolInvocation& invocation,
+                                                       QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Write, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("write-file"), path);
+    const auto written = fileSystemService_.writeFile(
+        *path.value, getArgument(invocation, QStringLiteral("content")).toUtf8());
+    if (!written.ok())
+        return fileToolFailure(QStringLiteral("write-file"), written);
     return {ToolExecutionStatus::Succeeded,
-        QStringLiteral("write-file: Wrote %1 bytes to '%2'.").arg(written.value->bytesWritten).arg(written.resource),
-        {}, written.mutations};
+            QStringLiteral("write-file: Wrote %1 bytes to '%2'.")
+                .arg(written.value->bytesWritten)
+                .arg(written.resource),
+            {},
+            written.mutations};
 }
-ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Write, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("edit-file"), path);
+ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocation& invocation,
+                                                      QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Write, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("edit-file"), path);
     const auto oldText = getArgument(invocation, QStringLiteral("oldString"));
     const auto newText = getArgument(invocation, QStringLiteral("newString"));
     const auto stat = fileSystemService_.stat(*path.value);
@@ -1460,14 +1537,19 @@ ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocatio
     }
     if (!stat.ok()) {
         const auto written = fileSystemService_.writeFile(*path.value, newText.toUtf8(), true);
-        if (!written.ok()) return fileToolFailure(QStringLiteral("edit-file"), written);
+        if (!written.ok())
+            return fileToolFailure(QStringLiteral("edit-file"), written);
         return {ToolExecutionStatus::Succeeded,
-            QStringLiteral("edit-file: Created '%1'.").arg(written.resource), {}, written.mutations};
+                QStringLiteral("edit-file: Created '%1'.").arg(written.resource),
+                {},
+                written.mutations};
     }
     if (oldText == newText)
-        return {ToolExecutionStatus::Failed, QStringLiteral("edit-file: oldString and newString are identical.")};
+        return {ToolExecutionStatus::Failed,
+                QStringLiteral("edit-file: oldString and newString are identical.")};
     const auto read = fileSystemService_.readFile(*path.value, 16 * 1024 * 1024);
-    if (!read.ok()) return fileToolFailure(QStringLiteral("edit-file"), read);
+    if (!read.ok())
+        return fileToolFailure(QStringLiteral("edit-file"), read);
     if (!read.value->complete) {
         FileSystemResult<bool> rejected;
         rejected.resource = path.value->canonicalPath;
@@ -1479,16 +1561,19 @@ ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocatio
         FileSystemResult<bool> rejected;
         rejected.resource = path.value->canonicalPath;
         rejected.failure = FileSystemFailure::ReadFailed;
-        rejected.diagnostic = QStringLiteral("Cannot edit an empty file with the current edit contract");
+        rejected.diagnostic =
+            QStringLiteral("Cannot edit an empty file with the current edit contract");
         return fileToolFailure(QStringLiteral("edit-file"), rejected);
     }
     FuzzyEditRequest request;
     request.filePath = path.value->canonicalPath;
     request.oldString = oldText;
     request.newString = newText;
-    request.replaceAll = getArgument(invocation, QStringLiteral("replaceAll")) == QLatin1String("true");
+    request.replaceAll =
+        getArgument(invocation, QStringLiteral("replaceAll")) == QLatin1String("true");
     QString output;
-    const auto edited = FuzzyEditor{}.transform(QString::fromUtf8(read.value->content), request, output);
+    const auto edited =
+        FuzzyEditor{}.transform(QString::fromUtf8(read.value->content), request, output);
     if (!edited.success) {
         FileSystemResult<bool> rejected;
         rejected.resource = path.value->canonicalPath;
@@ -1497,84 +1582,121 @@ ToolExecutionResult RealToolExecutor::executeEditFile(const PlannedToolInvocatio
         return fileToolFailure(QStringLiteral("edit-file"), rejected);
     }
     const auto written = fileSystemService_.writeFile(*path.value, output.toUtf8());
-    if (!written.ok()) return fileToolFailure(QStringLiteral("edit-file"), written);
+    if (!written.ok())
+        return fileToolFailure(QStringLiteral("edit-file"), written);
     return {ToolExecutionStatus::Succeeded,
-        QStringLiteral("edit-file: Edited %1 line(s) in '%2'.").arg(edited.linesChanged).arg(path.value->canonicalPath),
-        {}, written.mutations};
+            QStringLiteral("edit-file: Edited %1 line(s) in '%2'.")
+                .arg(edited.linesChanged)
+                .arg(path.value->canonicalPath),
+            {},
+            written.mutations};
 }
-ToolExecutionResult RealToolExecutor::executeDeleteFile(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Delete, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("delete-file"), path);
+ToolExecutionResult RealToolExecutor::executeDeleteFile(const PlannedToolInvocation& invocation,
+                                                        QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Delete, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("delete-file"), path);
     const auto stat = fileSystemService_.stat(*path.value);
     if (stat.ok() && stat.value->directory) {
-        return {ToolExecutionStatus::Failed,
-                QStringLiteral("delete-file: Refusing to delete a directory: %1")
-                    .arg(stat.resource)};
+        return {
+            ToolExecutionStatus::Failed,
+            QStringLiteral("delete-file: Refusing to delete a directory: %1").arg(stat.resource)};
     }
     const auto deleted = fileSystemService_.deleteFile(*path.value);
-    if (!deleted.ok()) return fileToolFailure(QStringLiteral("delete-file"), deleted);
-    return {ToolExecutionStatus::Succeeded, QStringLiteral("delete-file: Deleted '%1'.").arg(deleted.resource), {}, deleted.mutations};
+    if (!deleted.ok())
+        return fileToolFailure(QStringLiteral("delete-file"), deleted);
+    return {ToolExecutionStatus::Succeeded,
+            QStringLiteral("delete-file: Deleted '%1'.").arg(deleted.resource),
+            {},
+            deleted.mutations};
 }
-ToolExecutionResult RealToolExecutor::executeMoveFile(const PlannedToolInvocation& invocation, QString& cwd) const {
-    const auto source = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("source"), AccessMode::Delete, cwd);
-    if (!source.ok()) return fileToolFailure(QStringLiteral("move-file"), source);
-    const auto destination = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("destination"), AccessMode::Write, cwd);
-    if (!destination.ok()) return fileToolFailure(QStringLiteral("move-file"), destination);
+ToolExecutionResult RealToolExecutor::executeMoveFile(const PlannedToolInvocation& invocation,
+                                                      QString& cwd) const {
+    const auto source = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("source"),
+                                           AccessMode::Delete, cwd);
+    if (!source.ok())
+        return fileToolFailure(QStringLiteral("move-file"), source);
+    const auto destination = authorizedFilePath(
+        fileSystemService_, invocation, QStringLiteral("destination"), AccessMode::Write, cwd);
+    if (!destination.ok())
+        return fileToolFailure(QStringLiteral("move-file"), destination);
     const auto moved = fileSystemService_.moveFile(*source.value, *destination.value);
-    if (!moved.ok()) return fileToolFailure(QStringLiteral("move-file"), moved);
-    return {ToolExecutionStatus::Succeeded, QStringLiteral("move-file: Moved '%1' to '%2'.").arg(moved.value->source, moved.value->destination),
-        {}, moved.mutations};
+    if (!moved.ok())
+        return fileToolFailure(QStringLiteral("move-file"), moved);
+    return {ToolExecutionStatus::Succeeded,
+            QStringLiteral("move-file: Moved '%1' to '%2'.")
+                .arg(moved.value->source, moved.value->destination),
+            {},
+            moved.mutations};
 }
-ToolExecutionResult RealToolExecutor::executeApplyPatch(const PlannedToolInvocation& invocation, QString& cwd) const {
+ToolExecutionResult RealToolExecutor::executeApplyPatch(const PlannedToolInvocation& invocation,
+                                                        QString& cwd) const {
     const QString patch = getArgument(invocation, QStringLiteral("patch"));
     if (patch.trimmed().isEmpty())
-        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("apply-patch: No patch argument provided.")};
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("apply-patch: No patch argument provided.")};
     return applyPatchWithFileSystem(patch, cwd, fileSystemService_, operationContext(invocation),
                                     invocation.resourceSnapshot.get());
 }
 
-ToolExecutionResult RealToolExecutor::executeListCodeDefinitions(const PlannedToolInvocation& invocation,
-                                                                 QString& cwd) const {
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("list-code-definitions"), path);
+ToolExecutionResult
+RealToolExecutor::executeListCodeDefinitions(const PlannedToolInvocation& invocation,
+                                             QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("list-code-definitions"), path);
     const auto read = fileSystemService_.readFile(*path.value, 2 * 1024 * 1024);
-    if (!read.ok()) return fileToolFailure(QStringLiteral("list-code-definitions"), read);
+    if (!read.ok())
+        return fileToolFailure(QStringLiteral("list-code-definitions"), read);
     bool cancelled = false;
     bool truncated = read.value->truncated;
-    const auto definitions = extractCodeDefinitions(read.resource, read.value->content,
-                                                     operationContext(invocation), cancelled, truncated);
+    const auto definitions = extractCodeDefinitions(
+        read.resource, read.value->content, operationContext(invocation), cancelled, truncated);
     const bool complete = read.value->complete && !cancelled && !truncated;
     const QJsonObject data{{QStringLiteral("path"), read.resource},
-        {QStringLiteral("definitions"), QJsonArray::fromStringList(definitions)},
-        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
-        {QStringLiteral("cancelled"), cancelled}};
-    const QString summary = cancelled
-        ? QStringLiteral("Definition scan stopped after %1 result(s); file not fully inspected.\n%2")
-              .arg(definitions.size()).arg(definitions.join(QLatin1Char('\n')))
+                           {QStringLiteral("definitions"), QJsonArray::fromStringList(definitions)},
+                           {QStringLiteral("complete"), complete},
+                           {QStringLiteral("truncated"), truncated},
+                           {QStringLiteral("cancelled"), cancelled}};
+    const QString summary =
+        cancelled ? QStringLiteral(
+                        "Definition scan stopped after %1 result(s); file not fully inspected.\n%2")
+                        .arg(definitions.size())
+                        .arg(definitions.join(QLatin1Char('\n')))
         : truncated
             ? QStringLiteral("Definition scan returned %1 result(s); file not fully inspected.\n%2")
-                  .arg(definitions.size()).arg(definitions.join(QLatin1Char('\n')))
+                  .arg(definitions.size())
+                  .arg(definitions.join(QLatin1Char('\n')))
         : definitions.isEmpty()
-            ? QStringLiteral("list-code-definitions: No definitions found in '%1'.").arg(read.resource)
+            ? QStringLiteral("list-code-definitions: No definitions found in '%1'.")
+                  .arg(read.resource)
             : QStringLiteral("list-code-definitions: %1 definition(s) in '%2':\n%3")
-                  .arg(definitions.size()).arg(read.resource, definitions.join(QLatin1Char('\n')));
-    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
-            summary,
-            std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::CodeDefinitions, data})};
+                  .arg(definitions.size())
+                  .arg(read.resource, definitions.join(QLatin1Char('\n')));
+    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded, summary,
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::CodeDefinitions, data})};
 }
 
-ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& invocation, QString& cwd) const {
+ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& invocation,
+                                                  QString& cwd) const {
     const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
     if (pattern.trimmed().isEmpty())
-        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("grep: No pattern argument provided.")};
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("grep: No pattern argument provided.")};
     const QRegularExpression regex(pattern);
     if (!regex.isValid())
         return {ToolExecutionStatus::InvalidArguments,
                 QStringLiteral("grep: Invalid regular expression: %1").arg(regex.errorString())};
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("grep"), path);
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("grep"), path);
     const auto context = operationContext(invocation);
-    const bool includeHidden = getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
+    const bool includeHidden =
+        getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
     const QString include = getArgument(invocation, QStringLiteral("include")).trimmed();
     int count = 0;
     QStringList output;
@@ -1583,17 +1705,28 @@ ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& i
     bool outputCapped = false;
     bool cancelled = false;
     auto onFile = [&](const FileSystemEntry& entry) {
-        if (context.isCancelled()) { cancelled = true; return false; }
-        if (!include.isEmpty() && !QDir::match(include, entry.name)) return true;
+        if (context.isCancelled()) {
+            cancelled = true;
+            return false;
+        }
+        if (!include.isEmpty() && !QDir::match(include, entry.name))
+            return true;
         auto issue = [&](FileSystemFailure failure) {
             filesComplete = false;
             if (readIssues.size() < 16)
-                readIssues.append(QJsonObject{{QStringLiteral("resource"), entry.path},
-                    {QStringLiteral("failure"), static_cast<int>(failure)}});
+                readIssues.append(
+                    QJsonObject{{QStringLiteral("resource"), entry.path},
+                                {QStringLiteral("failure"), static_cast<int>(failure)}});
         };
-        if (entry.size > 2 * 1024 * 1024) { issue(FileSystemFailure::Unavailable); return true; }
+        if (entry.size > 2 * 1024 * 1024) {
+            issue(FileSystemFailure::Unavailable);
+            return true;
+        }
         const auto child = fileSystemService_.resolve(entry.path, cwd, FileSystemAccess::Read);
-        if (!child.ok()) { issue(child.failure); return true; }
+        if (!child.ok()) {
+            issue(child.failure);
+            return true;
+        }
         const auto read = fileSystemService_.readFile(*child.value, 2 * 1024 * 1024);
         if (!read.ok() || !read.value->complete || read.value->binary) {
             issue(read.ok() ? FileSystemFailure::Unavailable : read.failure);
@@ -1601,52 +1734,82 @@ ToolExecutionResult RealToolExecutor::executeGrep(const PlannedToolInvocation& i
         }
         const auto lines = QString::fromUtf8(read.value->content).split(QLatin1Char('\n'));
         for (int i = 0; i < lines.size(); ++i) {
-            if ((i & 127) == 0 && context.isCancelled()) { cancelled = true; return false; }
-            if (!regex.match(lines.at(i)).hasMatch()) continue;
-            if (count >= kGrepGlobLimit) { outputCapped = true; return false; }
-            output.append(QStringLiteral("%1:%2: %3").arg(entry.path).arg(i + 1)
-                          .arg(lines.at(i).left(kMaxLineLength)));
+            if ((i & 127) == 0 && context.isCancelled()) {
+                cancelled = true;
+                return false;
+            }
+            if (!regex.match(lines.at(i)).hasMatch())
+                continue;
+            if (count >= kGrepGlobLimit) {
+                outputCapped = true;
+                return false;
+            }
+            output.append(QStringLiteral("%1:%2: %3")
+                              .arg(entry.path)
+                              .arg(i + 1)
+                              .arg(lines.at(i).left(kMaxLineLength)));
             ++count;
         }
         return true;
     };
-    const auto tree = fileSystemService_.traverseFiles(*path.value, includeHidden, 5000,
+    const auto tree = fileSystemService_.traverseFiles(
+        *path.value, includeHidden, 5000,
         [this, &cwd](const QString& child) { return !resolveToolPath(cwd, child).isEmpty(); },
         context, onFile);
-    if (!tree.ok()) return fileToolFailure(QStringLiteral("grep"), tree);
+    if (!tree.ok())
+        return fileToolFailure(QStringLiteral("grep"), tree);
     cancelled = cancelled || tree.value->status.cancelled;
     const bool truncated = outputCapped || tree.value->status.truncated;
-    const bool complete = tree.value->status.complete && filesComplete && !cancelled && !outputCapped;
+    const bool complete =
+        tree.value->status.complete && filesComplete && !cancelled && !outputCapped;
     QJsonArray issues = traversalIssues(tree.value->status);
     for (const auto& issue : readIssues)
-        if (issues.size() < 16) issues.append(issue);
-    const QJsonObject data{{QStringLiteral("scope"), path.value->canonicalPath},
-        {QStringLiteral("query"), pattern}, {QStringLiteral("matchCount"), count},
-        {QStringLiteral("recursive"), true}, {QStringLiteral("includeHidden"), includeHidden},
-        {QStringLiteral("maxDepth"), 128}, {QStringLiteral("followSymlinks"), false},
-        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
-        {QStringLiteral("cancelled"), cancelled}, {QStringLiteral("issues"), issues}};
-    const QString summary = cancelled
-        ? QStringLiteral("Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
-              .arg(count).arg(output.join(QLatin1Char('\n')))
-        : output.isEmpty()
-            ? QStringLiteral("grep: No matches found for '%1' under '%2'.").arg(pattern, path.value->canonicalPath)
-            : output.join(QLatin1Char('\n'));
-    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
-            summary,
-            std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::TextSearch, data})};
+        if (issues.size() < 16)
+            issues.append(issue);
+    QJsonObject data{{QStringLiteral("scope"), path.value->canonicalPath},
+                     {QStringLiteral("query"), pattern},
+                     {QStringLiteral("matchCount"), count},
+                     {QStringLiteral("recursive"), true},
+                     {QStringLiteral("includeHidden"), includeHidden},
+                     {QStringLiteral("maxDepth"), 128},
+                     {QStringLiteral("followSymlinks"), false},
+                     {QStringLiteral("complete"), complete},
+                     {QStringLiteral("truncated"), truncated},
+                     {QStringLiteral("cancelled"), cancelled},
+                     {QStringLiteral("issues"), issues}};
+    addCoverage(data, tree.value->status, path.value->canonicalPath, includeHidden, true,
+                kGrepGlobLimit);
+    const QString summary =
+        cancelled
+            ? QStringLiteral(
+                  "Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
+                  .arg(count)
+                  .arg(output.join(QLatin1Char('\n')))
+        : output.isEmpty() ? QStringLiteral("grep: No matches found for '%1' under '%2'.")
+                                 .arg(pattern, path.value->canonicalPath)
+                           : output.join(QLatin1Char('\n'));
+    return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded, summary,
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::TextSearch, data})};
 }
-ToolExecutionResult RealToolExecutor::executeGlob(const PlannedToolInvocation& invocation, QString& cwd) const {
+ToolExecutionResult RealToolExecutor::executeGlob(const PlannedToolInvocation& invocation,
+                                                  QString& cwd) const {
     const QString pattern = getArgument(invocation, QStringLiteral("pattern"));
     if (pattern.trimmed().isEmpty())
-        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("glob: No pattern argument provided.")};
-    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read, cwd);
-    if (!path.ok()) return fileToolFailure(QStringLiteral("glob"), path);
-    const bool includeHidden = getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
-    const auto tree = fileSystemService_.traverseFiles(*path.value, includeHidden, 5000,
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("glob: No pattern argument provided.")};
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("glob"), path);
+    const bool includeHidden =
+        getArgument(invocation, QStringLiteral("includeHidden")) == QLatin1String("true");
+    const auto tree = fileSystemService_.traverseFiles(
+        *path.value, includeHidden, 5000,
         [this, &cwd](const QString& child) { return !resolveToolPath(cwd, child).isEmpty(); },
         operationContext(invocation));
-    if (!tree.ok()) return fileToolFailure(QStringLiteral("glob"), tree);
+    if (!tree.ok())
+        return fileToolFailure(QStringLiteral("glob"), tree);
     QJsonArray matches;
     QStringList output;
     bool truncated = tree.value->status.truncated;
@@ -1654,24 +1817,44 @@ ToolExecutionResult RealToolExecutor::executeGlob(const PlannedToolInvocation& i
     const auto context = operationContext(invocation);
     for (const auto& entry : tree.value->files) {
         // Matching already inspected paths is cheap and preserves positive partial evidence.
-        if (context.isCancelled() && !tree.value->status.cancelled) { cancelled = true; break; }
-        if (!QDir::match(pattern, entry.name) && !QDir::match(pattern, entry.path)) continue;
-        if (matches.size() >= kGrepGlobLimit) { truncated = true; break; }
+        if (context.isCancelled() && !tree.value->status.cancelled) {
+            cancelled = true;
+            break;
+        }
+        if (!QDir::match(pattern, entry.name) && !QDir::match(pattern, entry.path))
+            continue;
+        if (matches.size() >= kGrepGlobLimit) {
+            truncated = true;
+            break;
+        }
         matches.append(entry.path);
         output.append(entry.path);
     }
-    const bool complete = tree.value->status.complete && !cancelled;
-    const QJsonObject data{{QStringLiteral("root"), path.value->canonicalPath},
-        {QStringLiteral("pattern"), pattern}, {QStringLiteral("matches"), matches},
-        {QStringLiteral("recursive"), true}, {QStringLiteral("includeHidden"), includeHidden},
-        {QStringLiteral("maxDepth"), 128}, {QStringLiteral("followSymlinks"), false},
-        {QStringLiteral("complete"), complete}, {QStringLiteral("truncated"), truncated},
-        {QStringLiteral("cancelled"), cancelled}, {QStringLiteral("issues"), traversalIssues(tree.value->status)}};
+    const bool complete = tree.value->status.complete && !cancelled && !truncated;
+    QJsonObject data{{QStringLiteral("root"), path.value->canonicalPath},
+                     {QStringLiteral("pattern"), pattern},
+                     {QStringLiteral("matches"), matches},
+                     {QStringLiteral("recursive"), true},
+                     {QStringLiteral("includeHidden"), includeHidden},
+                     {QStringLiteral("maxDepth"), 128},
+                     {QStringLiteral("followSymlinks"), false},
+                     {QStringLiteral("complete"), complete},
+                     {QStringLiteral("truncated"), truncated},
+                     {QStringLiteral("cancelled"), cancelled},
+                     {QStringLiteral("issues"), traversalIssues(tree.value->status)}};
+    addCoverage(data, tree.value->status, path.value->canonicalPath, includeHidden, true,
+                kGrepGlobLimit);
     return {cancelled ? ToolExecutionStatus::Cancelled : ToolExecutionStatus::Succeeded,
-        cancelled ? QStringLiteral("Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
-                        .arg(matches.size()).arg(output.join(QLatin1Char('\n'))) : output.isEmpty() ? QStringLiteral("glob: No files matching '%1' under '%2'.").arg(pattern, path.value->canonicalPath)
-                         : output.join(QLatin1Char('\n')),
-        std::make_shared<StructuredObservation>(StructuredObservation{StructuredObservationKind::PathMatches, data})};
+            cancelled
+                ? QStringLiteral(
+                      "Search stopped before the full scope was inspected. %1 match(es) found.\n%2")
+                      .arg(matches.size())
+                      .arg(output.join(QLatin1Char('\n')))
+            : output.isEmpty() ? QStringLiteral("glob: No files matching '%1' under '%2'.")
+                                     .arg(pattern, path.value->canonicalPath)
+                               : output.join(QLatin1Char('\n')),
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::PathMatches, data})};
 }
 
 ToolExecutionResult RealToolExecutor::executeRunCommand(const PlannedToolInvocation& invocation,
@@ -1679,7 +1862,8 @@ ToolExecutionResult RealToolExecutor::executeRunCommand(const PlannedToolInvocat
     Q_UNUSED(invocation);
     Q_UNUSED(currentWorkingDirectory);
     return {ToolExecutionStatus::Blocked,
-            QStringLiteral("run-command requires gateway authorization and asynchronous sandbox execution.")};
+            QStringLiteral(
+                "run-command requires gateway authorization and asynchronous sandbox execution.")};
 }
 
 ToolExecutionResult RealToolExecutor::executeAppLaunch(const PlannedToolInvocation& invocation,
@@ -1751,8 +1935,9 @@ ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocat
                     QStringLiteral("spawn-agent: No task argument provided.")};
         }
         if (!subagentRunner_) {
-            return {ToolExecutionStatus::Blocked,
-                    QStringLiteral("spawn-agent: No subagent runner is configured in this session.")};
+            return {
+                ToolExecutionStatus::Blocked,
+                QStringLiteral("spawn-agent: No subagent runner is configured in this session.")};
         }
         SubagentAssignment assignment;
         assignment.goal = task;
@@ -1770,7 +1955,8 @@ ToolExecutionResult RealToolExecutor::executeSpawnAgent(const PlannedToolInvocat
             const auto document = QJsonDocument::fromJson(requestedTools.toUtf8());
             if (!document.isArray() || document.array().size() > 12) {
                 return {ToolExecutionStatus::InvalidArguments,
-                        QStringLiteral("spawn-agent: allowedTools must be an array of up to 12 tool ids.")};
+                        QStringLiteral(
+                            "spawn-agent: allowedTools must be an array of up to 12 tool ids.")};
             }
             for (const auto& value : document.array()) {
                 if (!value.isString() || value.toString().trimmed().isEmpty())
@@ -1918,7 +2104,8 @@ ToolExecutionResult RealToolExecutor::executeClipboardRead(const PlannedToolInvo
     do {
         QClipboard* clipboard = activeClipboard();
         if (!clipboard) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("clipboard-read: Clipboard is unavailable without a GUI session.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -1953,7 +2140,8 @@ RealToolExecutor::executeClipboardWrite(const PlannedToolInvocation& invocation,
         }
         QClipboard* clipboard = activeClipboard();
         if (!clipboard) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("clipboard-write: Clipboard is unavailable without a GUI session.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -1976,8 +2164,8 @@ ToolExecutionResult RealToolExecutor::executeSystemInfo(const PlannedToolInvocat
                            {QStringLiteral("truncated"), truncated},
                            {QStringLiteral("partialEvidence"), truncated}};
     return {ToolExecutionStatus::Succeeded, QStringLiteral("system-info:\n%1").arg(report),
-            std::make_shared<StructuredObservation>(StructuredObservation{
-                StructuredObservationKind::Generic, data})};
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::Generic, data})};
 }
 
 ToolExecutionResult RealToolExecutor::executeProcessList(const PlannedToolInvocation& invocation,
@@ -2010,7 +2198,7 @@ ToolExecutionResult RealToolExecutor::executeSetAlarm(const PlannedToolInvocatio
     do {
         if (!alarmStore_) {
             ToolExecutionResult failure{ToolExecutionStatus::Failed,
-                QStringLiteral("set-alarm: No alarm store is configured.")};
+                                        QStringLiteral("set-alarm: No alarm store is configured.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
         }
@@ -2018,7 +2206,8 @@ ToolExecutionResult RealToolExecutor::executeSetAlarm(const PlannedToolInvocatio
         const QString label = getArgument(invocation, QStringLiteral("label")).trimmed();
         const auto triggerAt = parseAlarmTime(rawTime);
         if (!triggerAt.isValid()) {
-            ToolExecutionResult failure{ToolExecutionStatus::InvalidArguments,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::InvalidArguments,
                 QStringLiteral("set-alarm: Could not parse time '%1'. Use HH:mm, HH:mm:ss, or an "
                                "ISO datetime (yyyy-MM-ddTHH:mm).")
                     .arg(rawTime)};
@@ -2040,7 +2229,8 @@ ToolExecutionResult RealToolExecutor::executeListAlarms(const PlannedToolInvocat
     QStringList logs;
     do {
         if (!alarmStore_) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("list-alarms: No alarm store is configured.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -2069,7 +2259,8 @@ ToolExecutionResult RealToolExecutor::executeCancelAlarm(const PlannedToolInvoca
     QStringList logs;
     do {
         if (!alarmStore_) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("cancel-alarm: No alarm store is configured.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -2077,12 +2268,13 @@ ToolExecutionResult RealToolExecutor::executeCancelAlarm(const PlannedToolInvoca
         const QString id = getArgument(invocation, QStringLiteral("id")).trimmed();
         if (id.isEmpty()) {
             ToolExecutionResult failure{ToolExecutionStatus::InvalidArguments,
-                QStringLiteral("cancel-alarm: No id argument provided.")};
+                                        QStringLiteral("cancel-alarm: No id argument provided.")};
             failure.failureCategory = ToolFailureCategory::InvalidArguments;
             return failure;
         }
         if (!alarmStore_->remove(id)) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("cancel-alarm: No active alarm with id %1.").arg(id)};
             failure.failureCategory = ToolFailureCategory::NotFound;
             return failure;
@@ -2170,7 +2362,8 @@ ToolExecutionResult RealToolExecutor::executeMemorySearch(const PlannedToolInvoc
                     QStringLiteral("memory-search: No query argument provided.")};
         }
         if (!memoryStore_ || !memoryStore_->isAvailable()) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("memory-search: Memory store is unavailable.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -2182,8 +2375,8 @@ ToolExecutionResult RealToolExecutor::executeMemorySearch(const PlannedToolInvoc
             QString value = entry.value.simplified();
             if (value.size() > 400)
                 value = value.left(400) + QStringLiteral("...");
-            matches.append(QStringLiteral("memory:%1 %2: %3")
-                               .arg(entry.id).arg(entry.key.left(120), value));
+            matches.append(
+                QStringLiteral("memory:%1 %2: %3").arg(entry.id).arg(entry.key.left(120), value));
         }
 
         if (matches.isEmpty()) {
@@ -2207,7 +2400,8 @@ ToolExecutionResult RealToolExecutor::executeHistorySearch(const PlannedToolInvo
                     QStringLiteral("history-search: No query argument provided.")};
         }
         if (!chatHistoryStore_ || !chatHistoryStore_->isAvailable()) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("history-search: Chat history store is unavailable.")};
             failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
             return failure;
@@ -2217,8 +2411,8 @@ ToolExecutionResult RealToolExecutor::executeHistorySearch(const PlannedToolInvo
         QStringList matches;
         for (const auto& message : messages) {
             QString preview = QStringLiteral("history:%1 [%2] %3")
-                                  .arg(message.id).arg(chatRoleName(message.role),
-                                                       message.content.simplified());
+                                  .arg(message.id)
+                                  .arg(chatRoleName(message.role), message.content.simplified());
             if (preview.size() > 400)
                 preview = preview.left(400) + QStringLiteral("...");
             matches.append(preview);
@@ -2255,7 +2449,8 @@ ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocatio
 
         const auto response = webFetchTool_.fetch(url, fetchFormat);
         if (!response.success) {
-            ToolExecutionResult failure{ToolExecutionStatus::Failed,
+            ToolExecutionResult failure{
+                ToolExecutionStatus::Failed,
                 QStringLiteral("web-fetch: Request failed: %1")
                     .arg(response.errorString.isEmpty()
                              ? QStringLiteral("HTTP %1").arg(response.statusCode)
@@ -2277,8 +2472,8 @@ ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocatio
                                {QStringLiteral("truncated"), truncated},
                                {QStringLiteral("partialEvidence"), truncated}};
         return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n")),
-                std::make_shared<StructuredObservation>(StructuredObservation{
-                    StructuredObservationKind::Generic, data})};
+                std::make_shared<StructuredObservation>(
+                    StructuredObservation{StructuredObservationKind::Generic, data})};
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
@@ -2287,27 +2482,33 @@ ToolExecutionResult RealToolExecutor::executeWebFetch(const PlannedToolInvocatio
 ToolExecutionResult
 RealToolExecutor::executeVoiceTranscribe(const PlannedToolInvocation& invocation,
                                          QString& currentWorkingDirectory) const {
-    const auto authorized = authorizedFilePath(fileSystemService_, invocation,
-        QStringLiteral("path"), AccessMode::Read, currentWorkingDirectory);
-    if (!authorized.ok()) return fileToolFailure(QStringLiteral("voice-transcribe"), authorized);
-    const auto currentGrant = fileSystemService_.resolve(authorized.value->canonicalPath,
-        currentWorkingDirectory, FileSystemAccess::Read);
-    if (!currentGrant.ok() || currentGrant.value->canonicalPath != authorized.value->canonicalPath ||
+    const auto authorized =
+        authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"), AccessMode::Read,
+                           currentWorkingDirectory);
+    if (!authorized.ok())
+        return fileToolFailure(QStringLiteral("voice-transcribe"), authorized);
+    const auto currentGrant = fileSystemService_.resolve(
+        authorized.value->canonicalPath, currentWorkingDirectory, FileSystemAccess::Read);
+    if (!currentGrant.ok() ||
+        currentGrant.value->canonicalPath != authorized.value->canonicalPath ||
         currentGrant.value->deviceId != authorized.value->deviceId ||
         currentGrant.value->fileId != authorized.value->fileId)
         return {ToolExecutionStatus::Blocked, QStringLiteral("voice-transcribe: PermissionDenied")};
     if (!sttRuntime_)
-        return {ToolExecutionStatus::Failed, QStringLiteral("voice-transcribe: RuntimeUnavailable")};
+        return {ToolExecutionStatus::Failed,
+                QStringLiteral("voice-transcribe: RuntimeUnavailable")};
     const auto file = fileSystemService_.stat(*authorized.value);
     if (!file.ok() || !file.value->regularFile)
         return {ToolExecutionStatus::Failed, QStringLiteral("voice-transcribe: UnsupportedFormat")};
     const auto transcript = sttRuntime_->transcribeFile(authorized.value->canonicalPath, {}, {});
     return transcript.failure == AudioFailure::None
-        ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
-                              QStringLiteral("voice-transcribe: OK\n%1").arg(transcript.finalText)}
-        : ToolExecutionResult{ToolExecutionStatus::Failed,
-                              QStringLiteral("voice-transcribe: %1. %2")
-                                  .arg(audioFailureName(transcript.failure), transcript.detail.left(300))};
+               ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
+                                     QStringLiteral("voice-transcribe: OK\n%1")
+                                         .arg(transcript.finalText)}
+               : ToolExecutionResult{
+                     ToolExecutionStatus::Failed,
+                     QStringLiteral("voice-transcribe: %1. %2")
+                         .arg(audioFailureName(transcript.failure), transcript.detail.left(300))};
 }
 
 ToolExecutionResult RealToolExecutor::executeVoiceSpeak(const PlannedToolInvocation& invocation,
@@ -2315,16 +2516,19 @@ ToolExecutionResult RealToolExecutor::executeVoiceSpeak(const PlannedToolInvocat
     Q_UNUSED(currentWorkingDirectory);
     const auto text = getArgument(invocation, QStringLiteral("text"));
     if (text.trimmed().isEmpty())
-        return {ToolExecutionStatus::InvalidArguments, QStringLiteral("voice-speak: Text is empty.")};
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("voice-speak: Text is empty.")};
     if (!ttsRuntime_)
         return {ToolExecutionStatus::Failed, QStringLiteral("voice-speak: RuntimeUnavailable")};
     const auto audio = ttsRuntime_->synthesize(SpeechSynthesisRequest{text, {}, {}, 1.0}, {});
     return audio.failure == AudioFailure::None
-        ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
-                              QStringLiteral("voice-speak: audio generated at %1").arg(audio.filePath)}
-        : ToolExecutionResult{ToolExecutionStatus::Failed,
-                              QStringLiteral("voice-speak: %1. %2")
-                                  .arg(audioFailureName(audio.failure), audio.detail.left(300))};
+               ? ToolExecutionResult{ToolExecutionStatus::Succeeded,
+                                     QStringLiteral("voice-speak: audio generated at %1")
+                                         .arg(audio.filePath)}
+               : ToolExecutionResult{
+                     ToolExecutionStatus::Failed,
+                     QStringLiteral("voice-speak: %1. %2")
+                         .arg(audioFailureName(audio.failure), audio.detail.left(300))};
 }
 
 ToolExecutionResult RealToolExecutor::executeWebSearch(const PlannedToolInvocation& invocation,
@@ -2340,7 +2544,8 @@ ToolExecutionResult RealToolExecutor::executeWebSearch(const PlannedToolInvocati
         const auto response = webSearchTool_.search(query.trimmed());
         if (!response.success) {
             ToolExecutionResult failure{ToolExecutionStatus::Failed,
-                QStringLiteral("web-search: Request failed: %1").arg(response.errorString.left(400))};
+                                        QStringLiteral("web-search: Request failed: %1")
+                                            .arg(response.errorString.left(400))};
             failure.failureCategory = ToolFailureCategory::NetworkFailure;
             return failure;
         }
@@ -2361,8 +2566,8 @@ ToolExecutionResult RealToolExecutor::executeWebSearch(const PlannedToolInvocati
                                {QStringLiteral("truncated"), response.results.size() > 20},
                                {QStringLiteral("partialEvidence"), response.results.isEmpty()}};
         return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n")),
-                std::make_shared<StructuredObservation>(StructuredObservation{
-                    StructuredObservationKind::Generic, data})};
+                std::make_shared<StructuredObservation>(
+                    StructuredObservation{StructuredObservationKind::Generic, data})};
 
     } while (false);
     return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};

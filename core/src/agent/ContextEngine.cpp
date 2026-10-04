@@ -58,18 +58,28 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
     };
 
     add({AgentContextKind::Goal, AgentContextPriority::Critical, QStringLiteral("active-run"),
-         input.goal, false}, budget);
+         input.goal, false},
+        budget);
 
     QStringList requirements;
     for (const auto& requirement : input.intent.requirements)
         requirements.append(requirement.claimId + QLatin1Char(' ') +
                             observationDomainName(requirement.domain) + QLatin1Char(' ') +
-                            requirement.resourceHint);
+                            requirement.resourceHint +
+                            (requirement.recursive ? QStringLiteral(" recursive scope")
+                                                   : QStringLiteral(" exact scope")) +
+                            (requirement.claimType == ClaimType::HiddenEntriesExist
+                                 ? QStringLiteral(" hidden_entries; use includeHidden:true")
+                             : requirement.claimType == ClaimType::PathPatternExists
+                                 ? QStringLiteral(" path_pattern ") + requirement.claimQuery +
+                                       QStringLiteral("; includeHidden:true")
+                                 : QString{}));
     if (input.intent.indeterminate)
         requirements.append(QStringLiteral("Live state is uncertain; obtain current evidence."));
     if (!requirements.isEmpty())
         add({AgentContextKind::Requirement, AgentContextPriority::Critical,
-             QStringLiteral("observation-policy"), requirements.join(QStringLiteral("; ")), false}, 400);
+             QStringLiteral("observation-policy"), requirements.join(QStringLiteral("; ")), false},
+            400);
 
     // Tools remain complete and session-visible; descriptions are expendable before IDs/contracts.
     int toolBudget = qMin(remaining / 2, 2600);
@@ -80,9 +90,11 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
                                  accessModeName(requirement.access));
         const QString contract = ToolArgumentValidator::compactContract(tool);
         AgentContextItem item{AgentContextKind::Tool, AgentContextPriority::High, tool.id,
-            QStringLiteral("%1 | risk=%2 | authorization=%3 | %4 | %5")
-                .arg(tool.id, QString::number(static_cast<int>(tool.riskLevel)),
-                     authorization.join(QLatin1Char(',')), bounded(tool.description, 160), contract), false};
+                              QStringLiteral("%1 | risk=%2 | authorization=%3 | %4 | %5")
+                                  .arg(tool.id, QString::number(static_cast<int>(tool.riskLevel)),
+                                       authorization.join(QLatin1Char(',')),
+                                       bounded(tool.description, 160), contract),
+                              false};
         if (add(std::move(item), toolBudget))
             toolBudget -= cost(result.items.last());
     }
@@ -112,18 +124,25 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
         add({AgentContextKind::Fact, AgentContextPriority::High,
              fact.evidenceCallIds.join(QLatin1Char(',')),
              bounded(fact.id + QLatin1Char(' ') + fact.resource + QStringLiteral(" = ") +
-                     (fact.value ? QStringLiteral("true") : QStringLiteral("false")), 360), false}, 1100);
+                         (fact.value ? QStringLiteral("true") : QStringLiteral("false")),
+                     360),
+             false},
+            1100);
 
     QSet<QString> seen;
     int observationBudget = qMin(remaining / 2, 1700);
     for (int i = input.steps.size() - 1; i >= 0; --i) {
         const auto& step = input.steps.at(i);
-        const auto evidence = std::find_if(input.evidence.crbegin(), input.evidence.crend(),
+        const auto evidence = std::find_if(
+            input.evidence.crbegin(), input.evidence.crend(),
             [&](const EvidenceRecord& record) { return record.stepIndex == step.index; });
         if (evidence != input.evidence.crend() && evidence->outcome == EvidenceOutcome::Stale)
             continue;
-        const QString resource = evidence != input.evidence.crend() ? evidence->resource :
-            (step.structuredObservation ? step.structuredObservation->failureResource : QString{});
+        const QString resource =
+            evidence != input.evidence.crend()
+                ? evidence->resource
+                : (step.structuredObservation ? step.structuredObservation->failureResource
+                                              : QString{});
         const QString key = step.toolId + QLatin1Char('|') + resource;
         const bool important = !step.succeeded || step.toolId.contains(QStringLiteral("write")) ||
                                step.toolId.contains(QStringLiteral("patch")) ||
@@ -135,27 +154,52 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
         }
         seen.insert(key);
         QString excerpt = step.observation;
-        if (step.structuredObservation && step.structuredObservation->data.contains(QStringLiteral("truncated")))
+        if (step.structuredObservation &&
+            step.structuredObservation->data.value(QStringLiteral("truncated")).toBool())
             excerpt += QStringLiteral(" [truncated]");
+        if (step.structuredObservation &&
+            (step.structuredObservation->kind == StructuredObservationKind::DirectoryListing ||
+             step.structuredObservation->kind == StructuredObservationKind::PathMatches ||
+             step.structuredObservation->kind == StructuredObservationKind::TextSearch)) {
+            const auto coverage = FileSystemCoverage::fromObservation(*step.structuredObservation);
+            excerpt.prepend(
+                QStringLiteral("scope=%1 hidden=%2 recursive=%3 complete=%4 truncated=%5 "
+                               "cancelled=%6 permissionLimited=%7 skippedSymlinks=%8; ")
+                    .arg(coverage.scope)
+                    .arg(static_cast<int>(coverage.hiddenEntriesPolicy))
+                    .arg(coverage.recursive)
+                    .arg(coverage.complete)
+                    .arg(coverage.truncated)
+                    .arg(coverage.cancelled)
+                    .arg(coverage.permissionLimited)
+                    .arg(coverage.skippedSymlinks));
+        }
         AgentContextItem item{AgentContextKind::Observation, AgentContextPriority::High,
-            evidence != input.evidence.crend() ? evidence->toolCallId : QString::number(step.index),
-            QStringLiteral("tool=%1 resource=%2 status=%3 result=%4")
-                .arg(step.toolId, resource, step.statusText, bounded(excerpt, important ? 320 : 500)), true};
+                              evidence != input.evidence.crend() ? evidence->toolCallId
+                                                                 : QString::number(step.index),
+                              QStringLiteral("tool=%1 resource=%2 status=%3 result=%4")
+                                  .arg(step.toolId, resource, step.statusText,
+                                       bounded(excerpt, important ? 320 : 500)),
+                              true};
         if (add(std::move(item), observationBudget))
             observationBudget -= cost(result.items.last());
     }
 
     if (!input.workspaceContext.id.isEmpty()) {
         const auto& workspace = input.workspaceContext;
-        const auto summary = QStringLiteral("id=%1 root=%2 include=%3 exclude=%4 retrieval=%5 memory=%6")
-            .arg(workspace.id, workspace.rootPath, workspace.includeHints.join(QLatin1Char(',')),
-                 workspace.excludeHints.join(QLatin1Char(',')), workspace.retrievalPreference,
-                 workspace.memoryScope);
+        const auto summary =
+            QStringLiteral("id=%1 root=%2 include=%3 exclude=%4 retrieval=%5 memory=%6")
+                .arg(workspace.id, workspace.rootPath,
+                     workspace.includeHints.join(QLatin1Char(',')),
+                     workspace.excludeHints.join(QLatin1Char(',')), workspace.retrievalPreference,
+                     workspace.memoryScope);
         add({AgentContextKind::Workspace, AgentContextPriority::Normal,
-             QStringLiteral("workspace-profile"), bounded(summary, 400), true}, 180);
+             QStringLiteral("workspace-profile"), bounded(summary, 400), true},
+            180);
     } else if (!input.workspace.isEmpty())
         add({AgentContextKind::Workspace, AgentContextPriority::Normal,
-             QStringLiteral("runtime-workspace"), input.workspace, false}, 120);
+             QStringLiteral("runtime-workspace"), input.workspace, false},
+            120);
 
     int conversationBudget = qMin(remaining / 2, 650);
     const int recentLimit = qBound(2, conversationBudget / 90, 6);
@@ -165,35 +209,37 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
     for (const auto& message : conversation) {
         if (message.role == ChatRole::System || message.status == ChatMessageStatus::Error)
             continue;
-        AgentContextItem item{AgentContextKind::Conversation, AgentContextPriority::High,
-            QString::number(message.id),
-            chatRoleName(message.role) + QStringLiteral(": ") + bounded(message.content, 420), true};
+        AgentContextItem item{
+            AgentContextKind::Conversation, AgentContextPriority::High, QString::number(message.id),
+            chatRoleName(message.role) + QStringLiteral(": ") + bounded(message.content, 420),
+            true};
         if (add(std::move(item), conversationBudget))
             conversationBudget -= cost(result.items.last());
     }
     int historyBudget = qMin(remaining / 3, 350);
     const int beforeId = conversation.isEmpty() ? 0 : conversation.first().id;
     const auto historical = input.chatHistoryStore && input.chatHistoryStore->isAvailable()
-                                ? input.chatHistoryStore->searchMessages(input.goal,
-                                      qBound(1, historyBudget / 100, 3), beforeId)
+                                ? input.chatHistoryStore->searchMessages(
+                                      input.goal, qBound(1, historyBudget / 100, 3), beforeId)
                                 : QList<ChatMessage>{};
     for (const auto& message : historical) {
-        AgentContextItem item{AgentContextKind::History, AgentContextPriority::Normal,
-            QString::number(message.id),
-            chatRoleName(message.role) + QStringLiteral(": ") + bounded(message.content, 300), true};
+        AgentContextItem item{
+            AgentContextKind::History, AgentContextPriority::Normal, QString::number(message.id),
+            chatRoleName(message.role) + QStringLiteral(": ") + bounded(message.content, 300),
+            true};
         if (add(std::move(item), historyBudget)) {
             historyBudget -= cost(result.items.last());
         }
     }
     int memoryBudget = qMin(remaining / 3, 350);
-    const auto memories = input.memoryStore && input.memoryStore->isAvailable()
-                              ? input.memoryStore->searchRelevantRecords(input.goal,
-                                    qBound(1, memoryBudget / 100, 3))
-                              : QList<MemoryRecord>{};
+    const auto memories =
+        input.memoryStore && input.memoryStore->isAvailable()
+            ? input.memoryStore->searchRelevantRecords(input.goal, qBound(1, memoryBudget / 100, 3))
+            : QList<MemoryRecord>{};
     for (const auto& entry : memories) {
         AgentContextItem item{AgentContextKind::Memory, AgentContextPriority::Normal,
-            QString::number(entry.id),
-            bounded(entry.key + QStringLiteral(": ") + entry.value, 350), true};
+                              QString::number(entry.id),
+                              bounded(entry.key + QStringLiteral(": ") + entry.value, 350), true};
         if (add(std::move(item), memoryBudget))
             memoryBudget -= cost(result.items.last());
     }
