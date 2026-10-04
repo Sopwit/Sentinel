@@ -7,6 +7,7 @@
 
 #include <QDir>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
@@ -20,6 +21,7 @@ class StandardPathProviderTest final : public QObject {
 private slots:
     void returnsExpectedFileNamesInStandardLocations();
     void returnsExpectedPathsInPortableMode();
+    void profileOverrideKeepsStoresTogetherAndCanBeCleared();
 };
 
 void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
@@ -74,6 +76,25 @@ void StandardPathProviderTest::returnsExpectedPathsInPortableMode() {
     QVERIFY(ragPath.endsWith(QStringLiteral("/local_rag.sqlite3")));
     QVERIFY(logPath.endsWith(QStringLiteral("/Logs")));
     QVERIFY(crashPath.endsWith(QStringLiteral("/Crashes")));
+}
+
+void StandardPathProviderTest::profileOverrideKeepsStoresTogetherAndCanBeCleared() {
+    QTemporaryDir profile;
+    QVERIFY(profile.isValid());
+    StandardPathProvider provider(false);
+    const auto originalSettings = provider.settingsFilePath();
+    const auto originalMemory = provider.memoryDatabasePath();
+    provider.setProfileDirectory(profile.path());
+    for (const auto& path :
+         {provider.settingsFilePath(), provider.memoryDatabasePath(),
+          provider.chatHistoryDatabasePath(), provider.conversationDatabasePath(),
+          provider.conversationExportDirectoryPath(), provider.localRagDatabasePath(),
+          provider.logDirectoryPath(), provider.crashDumpDirectoryPath()}) {
+        QVERIFY(path.startsWith(profile.path() + "/"));
+    }
+    provider.setProfileDirectory({});
+    QCOMPARE(provider.settingsFilePath(), originalSettings);
+    QCOMPARE(provider.memoryDatabasePath(), originalMemory);
 }
 
 QTEST_MAIN(StandardPathProviderTest)
