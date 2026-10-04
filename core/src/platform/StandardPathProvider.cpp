@@ -36,6 +36,10 @@ QString portableDirectoryPath() {
 StandardPathProvider::StandardPathProvider(bool portableOverride)
     : m_portableOverride(portableOverride), m_hasPortableOverride(true) {}
 
+void StandardPathProvider::setProfileDirectory(QString directory) {
+    m_profileDirectory = directory.isEmpty() ? QString{} : QDir(directory).absolutePath();
+}
+
 bool StandardPathProvider::detectPortableMode() const {
     if (m_hasPortableOverride) {
         return m_portableOverride;
@@ -69,6 +73,8 @@ void StandardPathProvider::setPortable(bool portable) {
 }
 
 QString StandardPathProvider::settingsFilePath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("settings.json"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("settings.json"));
     }
@@ -77,6 +83,8 @@ QString StandardPathProvider::settingsFilePath() const {
 }
 
 QString StandardPathProvider::memoryDatabasePath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("memory.sqlite3"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("memory.sqlite3"));
     }
@@ -84,6 +92,8 @@ QString StandardPathProvider::memoryDatabasePath() const {
 }
 
 QString StandardPathProvider::chatHistoryDatabasePath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("chat_history.sqlite3"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("chat_history.sqlite3"));
     }
@@ -91,6 +101,8 @@ QString StandardPathProvider::chatHistoryDatabasePath() const {
 }
 
 QString StandardPathProvider::conversationDatabasePath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("conversations.sqlite3"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("conversations.sqlite3"));
     }
@@ -98,6 +110,8 @@ QString StandardPathProvider::conversationDatabasePath() const {
 }
 
 QString StandardPathProvider::conversationExportDirectoryPath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("exports"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("exports"));
     }
@@ -105,6 +119,8 @@ QString StandardPathProvider::conversationExportDirectoryPath() const {
 }
 
 QString StandardPathProvider::localRagDatabasePath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("local_rag.sqlite3"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("local_rag.sqlite3"));
     }
@@ -112,6 +128,8 @@ QString StandardPathProvider::localRagDatabasePath() const {
 }
 
 QString StandardPathProvider::logDirectoryPath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("Logs"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("Logs"));
     }
@@ -120,6 +138,8 @@ QString StandardPathProvider::logDirectoryPath() const {
 }
 
 QString StandardPathProvider::crashDumpDirectoryPath() const {
+    if (!m_profileDirectory.isEmpty())
+        return QDir(m_profileDirectory).filePath(QStringLiteral("Crashes"));
     if (isPortable()) {
         return QDir(portableDirectoryPath()).filePath(QStringLiteral("Crashes"));
     }

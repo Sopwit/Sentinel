@@ -1080,7 +1080,24 @@ class ApplicationController final : public QObject {
         QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
 
 public:
-    const IAgentRunStore* agentRunStore() const { return agentRunStore_.get(); }
+    IAgentRuntime* agentRuntime() const {
+        return agentRuntime_.get();
+    }
+    ChatModeService* chatModeService() const {
+        return chatMode_.get();
+    }
+    QString activeAgentSessionId() const {
+        return activeAgentSessionId_;
+    }
+    bool respondToAgentApproval(bool allow) {
+        if (!agentAwaitingApproval())
+            return false;
+        resumeAgentLoopWithApproval(allow, false);
+        return true;
+    }
+    const IAgentRunStore* agentRunStore() const {
+        return agentRunStore_.get();
+    }
     IAgentRunStore* mutableAgentRunStore() const { return agentRunStore_.get(); }
     IConversationStore* conversationStore() const { return conversationStore_.get(); }
     IChatHistoryStore* chatHistoryStore() const { return chatHistoryStore_.get(); }

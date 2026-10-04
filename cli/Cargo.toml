@@ -1,0 +1,18 @@
+[workspace]
+members = ["crates/sentinel-ipc", "crates/sentinel-cli", "crates/sentinel-tui"]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0-rc.8"
+edition = "2024"
+rust-version = "1.94"
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sentinel-ipc = { path = "crates/sentinel-ipc" }
+sentinel-tui = { path = "crates/sentinel-tui" }
+ratatui = "0.29"
+crossterm = "0.28"
+ctrlc = "3"

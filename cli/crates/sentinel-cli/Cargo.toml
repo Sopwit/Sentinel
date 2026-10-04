@@ -1,0 +1,16 @@
+[package]
+name = "sentinel-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+sentinel-ipc.workspace = true
+sentinel-tui.workspace = true
+serde_json.workspace = true
+ctrlc.workspace = true
+
+[[bin]]
+name = "sentinel"
+path = "src/main.rs"

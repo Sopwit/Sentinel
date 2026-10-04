@@ -79,12 +79,22 @@ QString freshnessName(int freshness) {
 QString claimTypeName(int type) {
     using sentinel::core::ClaimType;
     switch (static_cast<ClaimType>(type)) {
-    case ClaimType::None: return QStringLiteral("Claim");
-    case ClaimType::PathExists: return QStringLiteral("Path exists");
-    case ClaimType::FileExists: return QStringLiteral("File exists");
-    case ClaimType::DirectoryExists: return QStringLiteral("Directory exists");
-    case ClaimType::TextContains: return QStringLiteral("Text contains");
-    case ClaimType::SearchHasMatches: return QStringLiteral("Search has matches");
+    case ClaimType::None:
+        return QStringLiteral("Claim");
+    case ClaimType::PathExists:
+        return QStringLiteral("Path exists");
+    case ClaimType::FileExists:
+        return QStringLiteral("File exists");
+    case ClaimType::DirectoryExists:
+        return QStringLiteral("Directory exists");
+    case ClaimType::TextContains:
+        return QStringLiteral("Text contains");
+    case ClaimType::SearchHasMatches:
+        return QStringLiteral("Search has matches");
+    case ClaimType::HiddenEntriesExist:
+        return QStringLiteral("Hidden entries exist");
+    case ClaimType::PathPatternExists:
+        return QStringLiteral("Path pattern exists");
     }
     return QStringLiteral("Claim");
 }
@@ -92,8 +102,10 @@ QString claimTypeName(int type) {
 QString verdictName(int verdict) {
     using sentinel::core::ClaimVerdict;
     switch (static_cast<ClaimVerdict>(verdict)) {
-    case ClaimVerdict::Supported: return QStringLiteral("Supported");
-    case ClaimVerdict::Contradicted: return QStringLiteral("Contradicted");
+    case ClaimVerdict::Supported:
+        return QStringLiteral("Supported");
+    case ClaimVerdict::Contradicted:
+        return QStringLiteral("Contradicted");
     case ClaimVerdict::Unknown: return QStringLiteral("Unknown");
     }
     return QStringLiteral("Unknown");

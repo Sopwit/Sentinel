@@ -240,3 +240,10 @@ if(Qt6QuickTest_FOUND AND TARGET Qt6::QuickTest)
     )
     add_test(NAME test_gui_components COMMAND $<TARGET_FILE:test_gui_components> -input "${CMAKE_CURRENT_SOURCE_DIR}/gui")
 endif()
+
+# Canonical IPC models are checked in so normal C++ builds need no generator runtime.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME test_ipc_generated_contract
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/ipc/generate.py --check)
+endif()
