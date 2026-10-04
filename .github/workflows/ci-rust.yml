@@ -1,0 +1,23 @@
+name: Rust IPC clients
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  rust:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: rustup toolchain install 1.94.0 --profile minimal --component rustfmt --component clippy
+      - run: python3 ../tools/ipc/generate.py --check
+      - run: cargo +1.94.0 fmt --all --check
+      - run: cargo +1.94.0 clippy --locked --all-targets -- -D warnings
+      - run: cargo +1.94.0 test --locked

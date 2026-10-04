@@ -1,0 +1,162 @@
+{
+  "major": 1,
+  "minor": 0,
+  "max_frame_bytes": 262144,
+  "max_pending_bytes": 1048576,
+  "commands": {
+    "hello": {
+      "client_id": "string",
+      "major": "integer",
+      "minor": "integer",
+      "capabilities": "array"
+    },
+    "daemon.status": {},
+    "daemon.shutdown": {},
+    "model.list": {},
+    "model.current": {},
+    "session.list": {},
+    "session.create": {
+      "title": "string"
+    },
+    "session.attach": {
+      "session_id": "string"
+    },
+    "chat.send": {
+      "session_id": "string",
+      "text": "string"
+    },
+    "agent.start": {
+      "session_id": "string",
+      "text": "string"
+    },
+    "run.cancel": {
+      "run_id": "string"
+    },
+    "approval.respond": {
+      "run_id": "string",
+      "approval_id": "string",
+      "allow": "boolean"
+    }
+  },
+  "events": {
+    "run.started": {
+      "run_id": "string",
+      "session_id": "string"
+    },
+    "output.delta": {
+      "run_id": "string",
+      "session_id": "string",
+      "text": "string"
+    },
+    "tool.requested": {
+      "run_id": "string",
+      "session_id": "string",
+      "tool": "string",
+      "detail": "string",
+      "risk": "integer",
+      "resources": "array"
+    },
+    "approval.requested": {
+      "run_id": "string",
+      "session_id": "string",
+      "approval_id": "string",
+      "tool": "string",
+      "detail": "string",
+      "risk": "integer",
+      "resources": "array"
+    },
+    "tool.result": {
+      "run_id": "string",
+      "session_id": "string",
+      "tool": "string",
+      "detail": "string",
+      "risk": "integer",
+      "resources": "array"
+    },
+    "run.completed": {
+      "run_id": "string",
+      "session_id": "string",
+      "text": "string",
+      "state": "string"
+    },
+    "run.failed": {
+      "run_id": "string",
+      "session_id": "string",
+      "text": "string",
+      "state": "string"
+    },
+    "run.cancelled": {
+      "run_id": "string",
+      "session_id": "string",
+      "text": "string",
+      "state": "string"
+    }
+  },
+  "envelope": {
+    "version": "object",
+    "type": "request|response|event|error",
+    "id": "string",
+    "name": "string",
+    "payload": "object"
+  },
+  "responses": {
+    "hello": {
+      "major": "integer",
+      "minor": "integer",
+      "daemon_version": "string",
+      "capabilities": "array"
+    },
+    "daemon.status": {
+      "running": "boolean",
+      "daemon_version": "string",
+      "uptime_ms": "integer",
+      "active_runs": "integer",
+      "sessions": "integer"
+    },
+    "daemon.shutdown": {
+      "shutting_down": "boolean"
+    },
+    "model.list": {
+      "models": "array"
+    },
+    "model.current": {
+      "provider_id": "string",
+      "model_id": "string"
+    },
+    "session.list": {
+      "sessions": "array"
+    },
+    "session.create": {
+      "session_id": "string",
+      "type": "string",
+      "created_at": "string"
+    },
+    "session.attach": {
+      "session_id": "string",
+      "state": "string",
+      "output": "string",
+      "run_id": "string"
+    },
+    "chat.send": {
+      "session_id": "string",
+      "run_id": "string"
+    },
+    "agent.start": {
+      "session_id": "string",
+      "run_id": "string"
+    },
+    "run.cancel": {
+      "accepted": "boolean"
+    },
+    "approval.respond": {
+      "accepted": "boolean"
+    }
+  },
+  "capabilities": [
+    "chat",
+    "agent",
+    "approval",
+    "sessions",
+    "events"
+  ]
+}

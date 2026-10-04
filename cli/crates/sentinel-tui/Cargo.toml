@@ -1,0 +1,12 @@
+[package]
+name = "sentinel-tui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+sentinel-ipc.workspace = true
+serde_json.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true

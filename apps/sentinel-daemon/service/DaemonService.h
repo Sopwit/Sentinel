@@ -23,7 +23,7 @@ public:
     explicit DaemonService(QObject* parent = nullptr);
     ~DaemonService() override;
 
-    bool initialize();
+    bool initialize(const QString& socketPath = {});
 
 private slots:
     void performHealthCheck();

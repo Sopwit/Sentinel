@@ -13,6 +13,8 @@ public:
     StandardPathProvider() = default;
     explicit StandardPathProvider(bool portableOverride);
 
+    // Composition roots can isolate existing stores without changing their contracts.
+    void setProfileDirectory(QString directory);
     bool isPortable() const;
     void setPortable(bool portable);
 
@@ -28,6 +30,7 @@ public:
 private:
     bool detectPortableMode() const;
 
+    QString m_profileDirectory;
     bool m_portableOverride{false};
     bool m_hasPortableOverride{false};
 };
