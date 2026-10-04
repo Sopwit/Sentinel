@@ -8,10 +8,10 @@
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QSet>
-#include <QTimer>
 #include <QPointer>
+#include <QSet>
 #include <QThreadPool>
+#include <QTimer>
 namespace sentinel::core {
 namespace {
 QJsonObject builtInSchema(const ToolDescriptor& tool) {
@@ -71,8 +71,7 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                           {QStringLiteral("priority"),
                            QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
                                        {QStringLiteral("enum"),
-                                        QJsonArray{QStringLiteral("low"),
-                                                   QStringLiteral("medium"),
+                                        QJsonArray{QStringLiteral("low"), QStringLiteral("medium"),
                                                    QStringLiteral("high")}},
                                        {QStringLiteral("default"), QStringLiteral("medium")}}}}},
                      {QStringLiteral("required"),
@@ -80,10 +79,9 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                      {QStringLiteral("additionalProperties"), false}}}};
         } else if (tool.id == QLatin1String("spawn-agent") &&
                    parameter.id == QLatin1String("purpose")) {
-            field.insert(QStringLiteral("enum"),
-                         QJsonArray{QStringLiteral("independent_research"),
-                                    QStringLiteral("parallel_verification"),
-                                    QStringLiteral("specialist_review")});
+            field.insert(QStringLiteral("enum"), QJsonArray{QStringLiteral("independent_research"),
+                                                            QStringLiteral("parallel_verification"),
+                                                            QStringLiteral("specialist_review")});
         } else if (tool.id == QLatin1String("spawn-agent") &&
                    parameter.id == QLatin1String("allowedTools")) {
             field = QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
@@ -93,8 +91,8 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
         } else if (tool.id == QLatin1String("web-fetch") &&
                    parameter.id == QLatin1String("format")) {
             field.insert(QStringLiteral("enum"),
-                         QJsonArray{QStringLiteral("markdown"),
-                                    QStringLiteral("text"), QStringLiteral("html")});
+                         QJsonArray{QStringLiteral("markdown"), QStringLiteral("text"),
+                                    QStringLiteral("html")});
             field.insert(QStringLiteral("default"), QStringLiteral("markdown"));
         } else if (tool.id == QLatin1String("run-command") &&
                    parameter.id == QLatin1String("sandbox")) {
@@ -113,10 +111,9 @@ QList<ToolEvidenceDescriptor> builtInEvidence(const QString& id) {
     using D = ObservationDomain;
     using F = EvidenceFreshness;
     using S = EvidenceScope;
-    auto one = [](D domain, F freshness, S scope, QString argument = {},
-                  QString qualifier = {}) {
-        return QList<ToolEvidenceDescriptor>{{domain, freshness, scope, std::move(argument),
-                                              std::move(qualifier)}};
+    auto one = [](D domain, F freshness, S scope, QString argument = {}, QString qualifier = {}) {
+        return QList<ToolEvidenceDescriptor>{
+            {domain, freshness, scope, std::move(argument), std::move(qualifier)}};
     };
     if (id == QLatin1String("list-directory"))
         return one(D::FileSystem, F::Live, S::DirectoryEntries, QStringLiteral("path"));
@@ -174,7 +171,10 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
         ToolDescriptor{
             QStringLiteral("list-directory"),
             QStringLiteral("List Directory"),
-            QStringLiteral("Lists files and folders at a path. Use for directory contents."),
+            QStringLiteral("Lists root entries only (non-recursive, max 500). Hidden entries "
+                           "excluded by default; includeHidden:true includes them. "
+                           "Completeness/truncation/permission metadata describes only this root. "
+                           "Use glob with includeHidden:true for recursive scope."),
             ToolRiskLevel::Low,
             ToolExecutionMode::Local,
             {ToolParameterDescriptor{QStringLiteral("path"),
@@ -253,14 +253,20 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                 ToolParameterDescriptor{QStringLiteral("include"),
                                         QStringLiteral("Glob filter like *.cpp or *.{ts,tsx}."),
                                         false},
-                ToolParameterDescriptor{QStringLiteral("includeHidden"),
-                                        QStringLiteral("Include hidden files for a complete search."), false},
+                ToolParameterDescriptor{
+                    QStringLiteral("includeHidden"),
+                    QStringLiteral("Request hidden inclusion (default false); does not by itself "
+                                   "guarantee complete traversal."),
+                    false},
             }},
         ToolDescriptor{
             QStringLiteral("glob"),
             QStringLiteral("Glob"),
             QStringLiteral("Finds files by glob pattern (e.g. *.cpp, src/**/*.h) under a "
-                           "directory. Returns up to 100 absolute paths."),
+                           "directory recursively, depth max 128, no symlink targets; traversal "
+                           "max 5000 files and result max 100 paths. Hidden entries excluded by "
+                           "default. includeHidden:true includes hidden entries; typed coverage "
+                           "controls absence claims."),
             ToolRiskLevel::Low,
             ToolExecutionMode::Local,
             {
@@ -269,8 +275,11 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                 ToolParameterDescriptor{QStringLiteral("path"),
                                         QStringLiteral("Directory to search (default: workspace)."),
                                         false},
-                ToolParameterDescriptor{QStringLiteral("includeHidden"),
-                                        QStringLiteral("Include hidden files for a complete search."), false},
+                ToolParameterDescriptor{
+                    QStringLiteral("includeHidden"),
+                    QStringLiteral("Request hidden inclusion (default false); does not by itself "
+                                   "guarantee complete traversal."),
+                    false},
             }},
         ToolDescriptor{
             QStringLiteral("delete-file"),
@@ -537,15 +546,20 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                     QStringLiteral("The complete, self-contained task description."), true},
                 ToolParameterDescriptor{
                     QStringLiteral("purpose"),
-                    QStringLiteral("independent_research, parallel_verification, or specialist_review."), true},
+                    QStringLiteral(
+                        "independent_research, parallel_verification, or specialist_review."),
+                    true},
                 ToolParameterDescriptor{QStringLiteral("role"),
                                         QStringLiteral("Optional short role label."), false},
                 ToolParameterDescriptor{QStringLiteral("allowedTools"),
-                                        QStringLiteral("Optional subset of read-only tool ids."), false},
+                                        QStringLiteral("Optional subset of read-only tool ids."),
+                                        false},
                 ToolParameterDescriptor{QStringLiteral("workspace"),
-                                        QStringLiteral("Optional workspace subdirectory scope."), false},
-                ToolParameterDescriptor{QStringLiteral("modelId"),
-                                        QStringLiteral("Optional current model id; other models are refused."), false},
+                                        QStringLiteral("Optional workspace subdirectory scope."),
+                                        false},
+                ToolParameterDescriptor{
+                    QStringLiteral("modelId"),
+                    QStringLiteral("Optional current model id; other models are refused."), false},
             }},
         ToolDescriptor{
             QStringLiteral("browser-screenshot"),
@@ -615,7 +629,7 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                            ToolParameterDescriptor{QStringLiteral("text"),
                                                    QStringLiteral("The text to speak."), true},
                        }},
-        };
+    };
     const QSet<QString> filesystem{
         QStringLiteral("list-directory"), QStringLiteral("read-file"),
         QStringLiteral("write-file"),     QStringLiteral("edit-file"),
@@ -627,83 +641,128 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
     const QSet<QString> system{QStringLiteral("run-command"),  QStringLiteral("app-launch"),
                                QStringLiteral("app-quit"),     QStringLiteral("system-info"),
                                QStringLiteral("process-list"), QStringLiteral("current-time")};
-    const QSet<QString> portableReady{
-        QStringLiteral("list-directory"), QStringLiteral("read-file"),
-        QStringLiteral("write-file"), QStringLiteral("edit-file"),
-        QStringLiteral("delete-file"), QStringLiteral("move-file"),
-        QStringLiteral("grep"), QStringLiteral("glob"),
-        QStringLiteral("list-code-definitions"), QStringLiteral("current-time"),
-        QStringLiteral("apply-patch"), QStringLiteral("system-info")};
+    const QSet<QString> portableReady{QStringLiteral("list-directory"),
+                                      QStringLiteral("read-file"),
+                                      QStringLiteral("write-file"),
+                                      QStringLiteral("edit-file"),
+                                      QStringLiteral("delete-file"),
+                                      QStringLiteral("move-file"),
+                                      QStringLiteral("grep"),
+                                      QStringLiteral("glob"),
+                                      QStringLiteral("list-code-definitions"),
+                                      QStringLiteral("current-time"),
+                                      QStringLiteral("apply-patch"),
+                                      QStringLiteral("system-info")};
     const QHash<QString, QString> experimentalReasons{
-        {QStringLiteral("run-command"), QStringLiteral("Sandbox backend availability and command effects are platform-dependent.")},
-        {QStringLiteral("app-launch"), QStringLiteral("Detached desktop launch cannot be sandboxed on Linux; launch acknowledgement does not prove the app opened.")},
-        {QStringLiteral("app-quit"), QStringLiteral("Process-name matching and graceful quit semantics differ by platform.")},
-        {QStringLiteral("open-url"), QStringLiteral("Desktop opener acknowledgement does not prove browser navigation.")},
-        {QStringLiteral("system-notify"), QStringLiteral("Desktop notification delivery is not observable across platforms.")},
-        {QStringLiteral("clipboard-read"), QStringLiteral("GUI clipboard availability and observation completeness are not represented structurally.")},
-        {QStringLiteral("clipboard-write"), QStringLiteral("GUI clipboard availability and write confirmation are not represented structurally.")},
-        {QStringLiteral("process-list"), QStringLiteral("Platform process listings are truncated and lack structured completeness metadata.")},
-        {QStringLiteral("set-alarm"), QStringLiteral("Alarm scheduling acknowledgement has no structured persistence/delivery receipt.")},
-        {QStringLiteral("list-alarms"), QStringLiteral("Alarm listing has no bounded structured completeness observation.")},
-        {QStringLiteral("cancel-alarm"), QStringLiteral("Alarm removal has no structured persistence confirmation.")},
-        {QStringLiteral("todo-write"), QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
-        {QStringLiteral("todo-read"), QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
-        {QStringLiteral("memory-search"), QStringLiteral("Search has no structured completeness contract; absence is not authoritative.")},
-        {QStringLiteral("history-search"), QStringLiteral("Search has no structured completeness contract; absence is not authoritative.")},
-        {QStringLiteral("spawn-agent"), QStringLiteral("Child completion and cancellation depend on parent runtime wiring.")},
-        {QStringLiteral("browser-screenshot"), QStringLiteral("Requires externally installed Playwright/Chromium; output is a private artifact.")},
-        {QStringLiteral("browser-pdf"), QStringLiteral("Requires externally installed Playwright/Chromium; output is a private artifact.")},
-        {QStringLiteral("web-fetch"), QStringLiteral("Synchronous network client cannot cancel an in-flight request.")},
-        {QStringLiteral("web-search"), QStringLiteral("Synchronous network client cannot cancel an in-flight request or prove search completeness.")},
-        {QStringLiteral("voice-transcribe"), QStringLiteral("Requires configured Whisper binary and audio input support.")},
-        {QStringLiteral("voice-speak"), QStringLiteral("Requires Piper binary and model; synthesis does not imply playback.")}};
-    const QSet<QString> cancellable{
-        QStringLiteral("list-directory"), QStringLiteral("glob"),
-        QStringLiteral("grep"), QStringLiteral("list-code-definitions"),
-        QStringLiteral("run-command"), QStringLiteral("process-list"),
-        QStringLiteral("browser-screenshot"), QStringLiteral("browser-pdf"),
-        QStringLiteral("voice-transcribe"), QStringLiteral("voice-speak"),
-        QStringLiteral("spawn-agent")};
+        {QStringLiteral("run-command"),
+         QStringLiteral(
+             "Sandbox backend availability and command effects are platform-dependent.")},
+        {QStringLiteral("app-launch"),
+         QStringLiteral("Detached desktop launch cannot be sandboxed on Linux; launch "
+                        "acknowledgement does not prove the app opened.")},
+        {QStringLiteral("app-quit"),
+         QStringLiteral("Process-name matching and graceful quit semantics differ by platform.")},
+        {QStringLiteral("open-url"),
+         QStringLiteral("Desktop opener acknowledgement does not prove browser navigation.")},
+        {QStringLiteral("system-notify"),
+         QStringLiteral("Desktop notification delivery is not observable across platforms.")},
+        {QStringLiteral("clipboard-read"),
+         QStringLiteral("GUI clipboard availability and observation completeness are not "
+                        "represented structurally.")},
+        {QStringLiteral("clipboard-write"),
+         QStringLiteral("GUI clipboard availability and write confirmation are not represented "
+                        "structurally.")},
+        {QStringLiteral("process-list"),
+         QStringLiteral(
+             "Platform process listings are truncated and lack structured completeness metadata.")},
+        {QStringLiteral("set-alarm"),
+         QStringLiteral(
+             "Alarm scheduling acknowledgement has no structured persistence/delivery receipt.")},
+        {QStringLiteral("list-alarms"),
+         QStringLiteral("Alarm listing has no bounded structured completeness observation.")},
+        {QStringLiteral("cancel-alarm"),
+         QStringLiteral("Alarm removal has no structured persistence confirmation.")},
+        {QStringLiteral("todo-write"),
+         QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
+        {QStringLiteral("todo-read"),
+         QStringLiteral("Checklist state is executor-wide rather than session-scoped.")},
+        {QStringLiteral("memory-search"),
+         QStringLiteral(
+             "Search has no structured completeness contract; absence is not authoritative.")},
+        {QStringLiteral("history-search"),
+         QStringLiteral(
+             "Search has no structured completeness contract; absence is not authoritative.")},
+        {QStringLiteral("spawn-agent"),
+         QStringLiteral("Child completion and cancellation depend on parent runtime wiring.")},
+        {QStringLiteral("browser-screenshot"),
+         QStringLiteral(
+             "Requires externally installed Playwright/Chromium; output is a private artifact.")},
+        {QStringLiteral("browser-pdf"),
+         QStringLiteral(
+             "Requires externally installed Playwright/Chromium; output is a private artifact.")},
+        {QStringLiteral("web-fetch"),
+         QStringLiteral("Synchronous network client cannot cancel an in-flight request.")},
+        {QStringLiteral("web-search"),
+         QStringLiteral("Synchronous network client cannot cancel an in-flight request or prove "
+                        "search completeness.")},
+        {QStringLiteral("voice-transcribe"),
+         QStringLiteral("Requires configured Whisper binary and audio input support.")},
+        {QStringLiteral("voice-speak"),
+         QStringLiteral("Requires Piper binary and model; synthesis does not imply playback.")}};
+    const QSet<QString> cancellable{QStringLiteral("list-directory"),
+                                    QStringLiteral("glob"),
+                                    QStringLiteral("grep"),
+                                    QStringLiteral("list-code-definitions"),
+                                    QStringLiteral("run-command"),
+                                    QStringLiteral("process-list"),
+                                    QStringLiteral("browser-screenshot"),
+                                    QStringLiteral("browser-pdf"),
+                                    QStringLiteral("voice-transcribe"),
+                                    QStringLiteral("voice-speak"),
+                                    QStringLiteral("spawn-agent")};
     for (auto& tool : tools) {
-        tool.maturity = portableReady.contains(tool.id)
-            ? ToolMaturity::ProductionReady : ToolMaturity::Experimental;
+        tool.maturity = portableReady.contains(tool.id) ? ToolMaturity::ProductionReady
+                                                        : ToolMaturity::Experimental;
         tool.maturityReason = experimentalReasons.value(tool.id);
         if (portableReady.contains(tool.id))
-            tool.platforms = {ToolPlatformSupport::Supported,
-                              ToolPlatformSupport::Supported,
+            tool.platforms = {ToolPlatformSupport::Supported, ToolPlatformSupport::Supported,
                               ToolPlatformSupport::Supported};
         if (tool.id == QLatin1String("app-launch"))
             tool.platforms.linux = ToolPlatformSupport::Unsupported;
         if (tool.id == QLatin1String("app-quit"))
             tool.platforms.linux = ToolPlatformSupport::PartiallySupported;
-        tool.cancellationSupport = cancellable.contains(tool.id)
-            ? ToolCancellationSupport::Cancellable
-            : tool.id == QLatin1String("apply-patch")
-                ? ToolCancellationSupport::SafeBoundary
-                : ToolCancellationSupport::Atomic;
+        tool.cancellationSupport =
+            cancellable.contains(tool.id)             ? ToolCancellationSupport::Cancellable
+            : tool.id == QLatin1String("apply-patch") ? ToolCancellationSupport::SafeBoundary
+                                                      : ToolCancellationSupport::Atomic;
         if (filesystem.contains(tool.id))
             tool.errorSemantics = ToolErrorSemantics::Typed;
-        if (tool.id == QLatin1String("run-command") ||
-            tool.id == QLatin1String("web-fetch") || tool.id == QLatin1String("web-search") ||
+        if (tool.id == QLatin1String("run-command") || tool.id == QLatin1String("web-fetch") ||
+            tool.id == QLatin1String("web-search") ||
             tool.id == QLatin1String("voice-transcribe") || tool.id == QLatin1String("voice-speak"))
             tool.errorSemantics = ToolErrorSemantics::Typed;
         if (tool.id == QLatin1String("local-plan-summary")) {
             tool.exposedToModel = false;
             tool.enabled = false;
             tool.maturity = ToolMaturity::Internal;
-            tool.maturityReason = QStringLiteral("Internal planning metadata; never model-visible.");
+            tool.maturityReason =
+                QStringLiteral("Internal planning metadata; never model-visible.");
         }
         if (tool.id == QLatin1String("todo-write") || tool.id == QLatin1String("todo-read")) {
             tool.enabled = false;
             tool.exposedToModel = false;
         }
-        static const QSet<QString> parallelBuiltIns{
-            QStringLiteral("list-directory"), QStringLiteral("read-file"),
-            QStringLiteral("grep"), QStringLiteral("glob"),
-            QStringLiteral("list-code-definitions"), QStringLiteral("write-file"),
-            QStringLiteral("edit-file"), QStringLiteral("delete-file"),
-            QStringLiteral("move-file"), QStringLiteral("web-search"),
-            QStringLiteral("web-fetch")};
+        static const QSet<QString> parallelBuiltIns{QStringLiteral("list-directory"),
+                                                    QStringLiteral("read-file"),
+                                                    QStringLiteral("grep"),
+                                                    QStringLiteral("glob"),
+                                                    QStringLiteral("list-code-definitions"),
+                                                    QStringLiteral("write-file"),
+                                                    QStringLiteral("edit-file"),
+                                                    QStringLiteral("delete-file"),
+                                                    QStringLiteral("move-file"),
+                                                    QStringLiteral("web-search"),
+                                                    QStringLiteral("web-fetch")};
         tool.parallelSafe = parallelBuiltIns.contains(tool.id);
         tool.inputSchema = builtInSchema(tool);
         tool.evidenceProduced = builtInEvidence(tool.id);
@@ -719,8 +778,7 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             tool.structuredObservationKind = StructuredObservationKind::CodeDefinitions;
         else if (tool.id == QLatin1String("system-info"))
             tool.structuredObservationKind = StructuredObservationKind::Generic;
-        else if (tool.id == QLatin1String("web-fetch") ||
-                 tool.id == QLatin1String("web-search"))
+        else if (tool.id == QLatin1String("web-fetch") || tool.id == QLatin1String("web-search"))
             tool.structuredObservationKind = StructuredObservationKind::Generic;
         tool.source = ToolSource::BuiltIn;
         tool.providerId = QStringLiteral("builtin");
@@ -749,10 +807,10 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
         using D = SecurityDomain;
         using A = AccessMode;
         using R = AuthorizationResourceKind;
-        const auto add = [&tool](D domain, A access, R kind = R::None,
-                                 QString argument = {}, QString fixed = {}) {
-            tool.authorizationRequirements.append({domain, access, kind, std::move(argument),
-                                                   std::move(fixed)});
+        const auto add = [&tool](D domain, A access, R kind = R::None, QString argument = {},
+                                 QString fixed = {}) {
+            tool.authorizationRequirements.append(
+                {domain, access, kind, std::move(argument), std::move(fixed)});
         };
         if (tool.id == QLatin1String("list-directory") || tool.id == QLatin1String("read-file") ||
             tool.id == QLatin1String("grep") || tool.id == QLatin1String("glob") ||
@@ -863,7 +921,7 @@ const QHash<QString, BuiltInOperation> kMethods = {
     {QStringLiteral("web-search"), {&RealToolExecutor::executeWebSearch, false}},
     {QStringLiteral("voice-transcribe"), {&RealToolExecutor::executeVoiceTranscribe, true}},
     {QStringLiteral("voice-speak"), {&RealToolExecutor::executeVoiceSpeak, true}},
-    };
+};
 class BuiltInHandler final : public IToolHandler,
                              public std::enable_shared_from_this<BuiltInHandler> {
 public:
@@ -899,16 +957,19 @@ public:
                          completion = std::move(completion)]() mutable {
                 ToolExecutionResult result;
                 if (token->load() || (invocation.cancellation && invocation.cancellation->load()))
-                    result = {ToolExecutionStatus::Cancelled, QStringLiteral("Tool cancelled before execution.")};
+                    result = {ToolExecutionStatus::Cancelled,
+                              QStringLiteral("Tool cancelled before execution.")};
                 else {
                     QString workingDirectory = cwd;
                     result = (self->executor_.*self->method_)(invocation, workingDirectory);
                 }
                 if (context)
-                    QMetaObject::invokeMethod(context.data(), [completion = std::move(completion),
-                                                         result = std::move(result)]() mutable {
-                        completion(std::move(result));
-                    }, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(
+                        context.data(),
+                        [completion = std::move(completion), result = std::move(result)]() mutable {
+                            completion(std::move(result));
+                        },
+                        Qt::QueuedConnection);
             });
             return [token] { token->store(true); };
         }
@@ -921,18 +982,21 @@ public:
                                    executionDirectory, completion = std::move(completion),
                                    token]() mutable {
                 if (token->load() || (invocation.cancellation && invocation.cancellation->load())) {
-                    completion({ToolExecutionStatus::Cancelled,
-                                QStringLiteral("Filesystem operation cancelled before inspection.")});
+                    completion(
+                        {ToolExecutionStatus::Cancelled,
+                         QStringLiteral("Filesystem operation cancelled before inspection.")});
                     return;
                 }
                 QString cwd = executionDirectory;
                 auto result = (self->executor_.*self->method_)(invocation, cwd);
                 if (cancellable && invocation.toolId != QLatin1String("apply-patch") &&
-                    (token->load() || (invocation.cancellation && invocation.cancellation->load())) &&
+                    (token->load() ||
+                     (invocation.cancellation && invocation.cancellation->load())) &&
                     result.status == ToolExecutionStatus::Succeeded) {
                     result.status = ToolExecutionStatus::Cancelled;
                     if (result.structuredObservation) {
-                        auto partial = std::make_shared<StructuredObservation>(*result.structuredObservation);
+                        auto partial =
+                            std::make_shared<StructuredObservation>(*result.structuredObservation);
                         partial->data.insert(QStringLiteral("complete"), false);
                         partial->data.insert(QStringLiteral("cancelled"), true);
                         result.structuredObservation = partial;

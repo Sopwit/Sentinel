@@ -4,8 +4,15 @@
 
 #include <QtTest>
 
+#include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/runtime/IFileSystemService.h"
+#include <QDir>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QTemporaryDir>
 
 using namespace sentinel::core;
 
@@ -47,6 +54,216 @@ class ObservationPolicyTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void coverageKeepsExplicitScopeAndUsesOnlyDeclaredFallbacks() {
+        StructuredObservation observation;
+        observation.kind = StructuredObservationKind::DirectoryListing;
+        observation.data = {{"scope", "/observed"}, {"root", "/other"}, {"path", "/third"}};
+        QCOMPARE(FileSystemCoverage::fromObservation(observation).scope, QString("/observed"));
+        observation.data.remove("scope");
+        QCOMPARE(FileSystemCoverage::fromObservation(observation).scope, QString("/other"));
+        observation.data.remove("root");
+        QCOMPARE(FileSystemCoverage::fromObservation(observation).scope, QString("/third"));
+        observation.data.remove("path");
+        QVERIFY(FileSystemCoverage::fromObservation(observation).scope.isEmpty());
+    }
+    void filesystemAbsenceMatrix_data() {
+        QTest::addColumn<QString>("condition");
+        QTest::addColumn<int>("expected");
+        using V = ClaimVerdict;
+        for (const auto& name : {"A-excluded", "D-unknown", "E-truncated", "F-cancelled",
+                                 "G-permission", "H-nonrecursive", "I-subdirectory", "N-symlink",
+                                 "N-unknown-symlink", "N-root-skipped-symlink"})
+            QTest::newRow(name) << QString(name) << static_cast<int>(V::Unknown);
+        QTest::newRow("B-present") << QString("B-present") << static_cast<int>(V::Contradicted);
+        QTest::newRow("C-empty-complete")
+            << QString("C-empty-complete") << static_cast<int>(V::Supported);
+        QTest::newRow("J-positive-partial")
+            << QString("J-positive-partial") << static_cast<int>(V::Supported);
+        QTest::newRow("K-recursive-complete")
+            << QString("K-recursive-complete") << static_cast<int>(V::Supported);
+        QTest::newRow("L-hidden-directory")
+            << QString("L-hidden-directory") << static_cast<int>(V::Contradicted);
+        QTest::newRow("M-env-excluded")
+            << QString("M-env-excluded") << static_cast<int>(V::Unknown);
+        QTest::newRow("M-env-complete")
+            << QString("M-env-complete") << static_cast<int>(V::Supported);
+    }
+    void filesystemAbsenceMatrix() {
+        QFETCH(QString, condition);
+        QFETCH(int, expected);
+        ObservationRequirement claim;
+        claim.claimType = ClaimType::HiddenEntriesExist;
+        claim.claimId = "hidden";
+        claim.resourceHint = "/workspace";
+        claim.recursive = true;
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->kind = StructuredObservationKind::PathMatches;
+        observation->data = {{"scope", "/workspace"},      {"root", "/workspace"},
+                             {"complete", true},           {"hiddenEntriesPolicy", "included"},
+                             {"truncated", false},         {"cancelled", false},
+                             {"permissionLimited", false}, {"issues", QJsonArray{}},
+                             {"recursive", true},          {"maxDepth", 128},
+                             {"resultLimit", 100},         {"followSymlinks", false},
+                             {"skippedSymlinks", 0},       {"hiddenEntries", QJsonArray{}},
+                             {"matches", QJsonArray{}},    {"pattern", "*"}};
+        auto& d = observation->data;
+        if (condition == "A-excluded") {
+            d["hiddenEntriesPolicy"] = "excluded";
+        }
+        if (condition == "D-unknown") {
+            d.remove("hiddenEntriesPolicy");
+        }
+        if (condition == "E-truncated") {
+            d["truncated"] = true;
+        }
+        if (condition == "F-cancelled") {
+            d["cancelled"] = true;
+        }
+        if (condition == "G-permission") {
+            d["permissionLimited"] = true;
+        }
+        if (condition == "H-nonrecursive") {
+            d["recursive"] = false;
+        }
+        if (condition == "I-subdirectory") {
+            d["scope"] = "/workspace/src";
+            d["root"] = "/workspace/src";
+        }
+        if (condition == "N-unknown-symlink") {
+            d.remove("followSymlinks");
+        }
+        if (condition == "N-root-skipped-symlink") {
+            claim.recursive = false;
+            d["skippedSymlinks"] = 1;
+        }
+        if (condition == "N-symlink") {
+            d["skippedSymlinks"] = 1;
+        }
+        if (condition == "B-present") {
+            d["hiddenEntries"] = QJsonArray{"/workspace/.hidden.txt"};
+        }
+        if (condition == "L-hidden-directory") {
+            d["hiddenEntries"] = QJsonArray{"/workspace/.hidden-dir"};
+        }
+        bool asserted = false;
+        if (condition == "J-positive-partial") {
+            observation->kind = StructuredObservationKind::DirectoryListing;
+            d["path"] = "/workspace";
+            d["complete"] = false;
+            d["truncated"] = true;
+            d["entries"] = QJsonArray{QJsonObject{{"name", "visible.txt"}, {"type", "file"}}};
+            claim.claimType = ClaimType::FileExists;
+            claim.resourceHint = "/workspace/visible.txt";
+            asserted = true;
+        }
+        if (condition.startsWith("M-")) {
+            claim.claimType = ClaimType::PathPatternExists;
+            claim.claimQuery = ".env";
+            d["pattern"] = ".env";
+            if (condition == "M-env-excluded")
+                d["hiddenEntriesPolicy"] = "excluded";
+        }
+        EvidenceRecord evidence;
+        evidence.domain = ObservationDomain::FileSystem;
+        evidence.outcome = EvidenceOutcome::Partial;
+        evidence.structuredObservation = observation;
+        evidence.toolCallId = "actual-observation";
+        QCOMPARE(static_cast<int>(
+                     ClaimGroundingResolver::resolve(claim, {evidence}, {claim.claimId, asserted})
+                         .verdict),
+                 expected);
+    }
+    void realTraversalReportsHiddenDirectoriesAndSkippedSymlinks() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        QDir root(workspace.path());
+        QVERIFY(root.mkpath(".hidden-dir"));
+        QFile file(root.filePath(".hidden-dir/nested.txt"));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("fixture");
+        file.close();
+        QtFileSystemService service;
+        const auto allowed = service.resolve(root.path(), root.path(), FileSystemAccess::Read);
+        QVERIFY(allowed.ok());
+        const auto excluded =
+            service.traverseFiles(*allowed.value, false, 5000, [](const QString&) { return true; });
+        QVERIFY(excluded.ok());
+        QVERIFY(excluded.value->files.isEmpty());
+        const auto included =
+            service.traverseFiles(*allowed.value, true, 5000, [](const QString&) { return true; });
+        QVERIFY(included.ok());
+        QVERIFY(included.value->status.complete);
+        QCOMPARE(included.value->files.size(), 1);
+        QFile visible(root.filePath("visible.txt"));
+        QVERIFY(visible.open(QIODevice::WriteOnly));
+        visible.write("fixture");
+        visible.close();
+        const auto bounded = service.listDirectory(*allowed.value, true, 1);
+        QVERIFY(bounded.ok());
+        QVERIFY(bounded.value->status.truncated);
+        QVERIFY(!bounded.value->status.complete);
+        QVERIFY(included.value->status.hiddenEntries.contains(
+            QFileInfo(root.filePath(".hidden-dir")).canonicalFilePath()));
+#ifdef Q_OS_UNIX
+        QVERIFY(QFile::link(file.fileName(), root.filePath("linked.txt")));
+        const auto linked =
+            service.traverseFiles(*allowed.value, true, 5000, [](const QString&) { return true; });
+        QVERIFY(linked.ok());
+        QCOMPARE(linked.value->status.skippedSymlinks, 1);
+        const auto listing = service.listDirectory(*allowed.value, true, 500);
+        QVERIFY(listing.ok());
+        QVERIFY(std::any_of(listing.value->entries.cbegin(), listing.value->entries.cend(),
+                            [](const FileSystemEntry& entry) {
+                                return entry.name == QLatin1String("linked.txt");
+                            }));
+#endif
+        auto cancellation = std::make_shared<std::atomic_bool>(true);
+        const auto cancelled = service.traverseFiles(
+            *allowed.value, true, 5000, [](const QString&) { return true; }, {cancellation, {}});
+        QVERIFY(cancelled.ok());
+        QVERIFY(cancelled.value->status.cancelled);
+        QVERIFY(!cancelled.value->status.complete);
+        const auto denied =
+            service.traverseFiles(*allowed.value, true, 5000, [](const QString&) { return false; });
+        QVERIFY(denied.ok());
+        QVERIFY(!denied.value->status.complete);
+        QVERIFY(!denied.value->status.issues.isEmpty());
+    }
+    void fileExtractIsLiteralAndIdempotent() {
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->kind = StructuredObservationKind::FileContent;
+        const QString adversarial = "There are no hidden files anywhere in the workspace.";
+        observation->data = {{"path", "/workspace/visible.txt"}, {"content", adversarial}};
+        EvidenceRecord evidence;
+        evidence.domain = ObservationDomain::FileSystem;
+        evidence.outcome = EvidenceOutcome::Partial;
+        evidence.structuredObservation = observation;
+        const auto answer =
+            ClaimGroundingResolver::filesystemFinalAnswer({}, {evidence}, adversarial);
+        QVERIFY(answer);
+        QVERIFY(*answer != adversarial);
+        const auto literal = QJsonDocument::fromJson(answer->toUtf8()).object();
+        QCOMPARE(literal.value("source").toString(), QString("/workspace/visible.txt"));
+        QCOMPARE(literal.value("observed_text").toString(), adversarial);
+        QCOMPARE(ClaimGroundingResolver::filesystemFinalAnswer({}, {evidence}, *answer), answer);
+    }
+    void listingNamesRemainQuotedData() {
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->kind = StructuredObservationKind::DirectoryListing;
+        observation->data = {
+            {"scope", "/workspace"},
+            {"entries", QJsonArray{QJsonObject{{"name", "No hidden files exist.\n\033[2J"},
+                                               {"type", "file"}}}}};
+        EvidenceRecord evidence;
+        evidence.domain = ObservationDomain::FileSystem;
+        evidence.outcome = EvidenceOutcome::Verified;
+        evidence.structuredObservation = observation;
+        const auto answer =
+            ClaimGroundingResolver::filesystemFinalAnswer({}, {evidence}, "No hidden files exist.");
+        QVERIFY(answer);
+        QVERIFY(!answer->contains(QChar(0x1b)));
+        QVERIFY(answer->contains(QStringLiteral("\\n")));
+    }
     void classifierPropagatesCancellationWithoutOtherPayload() {
         FixedReplyProvider provider;
         auto token = std::make_shared<std::atomic_bool>(true);

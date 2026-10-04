@@ -73,10 +73,13 @@ public:
     virtual AgentStepDecision nextStep(const QString& goal,
                                        const QList<AgentStepRecord>& history) const = 0;
     virtual void setObservationIntent(const ObservationIntent&) {}
+    virtual void setEvidence(const QList<EvidenceRecord>&) {}
     virtual void setPlannerFeedback(const QString&) {}
     virtual void setStructuredFacts(const QList<StructuredFact>&) {}
     virtual void setPlanningContext(const AgentPlanningContext&) {}
-    virtual int lastProviderRecoveryAttempts() const { return 0; }
+    virtual int lastProviderRecoveryAttempts() const {
+        return 0;
+    }
 };
 
 inline QString agentStepRecordSummary(const AgentStepRecord& record) {
