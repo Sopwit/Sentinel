@@ -24,6 +24,9 @@ public:
     bool tryLockAndSetupIpc();
     void bindShellViewModel(DesktopShellViewModel* shellViewModel);
 
+signals:
+    void deepLinkReceived(const QString& url);
+
 private:
     std::unique_ptr<QLockFile> m_lockFile;
     QLocalServer m_ipcServer;

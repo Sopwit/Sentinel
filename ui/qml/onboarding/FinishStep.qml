@@ -34,21 +34,12 @@ Item {
                 anchors.margins: SentinelTheme.spaceLg
                 spacing: SentinelTheme.spaceMd
 
-                Rectangle {
+                Image {
+                    Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 44
                     Layout.preferredHeight: 44
-                    radius: 22
-                    color: SentinelTheme.withAlpha(root.brandAccent, 0.12)
-                    border.color: SentinelTheme.withAlpha(root.brandAccent, 0.35)
-                    border.width: 1
-
-                    Label {
-                        anchors.centerIn: parent
-                        text: qsTr("S")
-                        color: root.brandAccent
-                        font.pixelSize: 21
-                        font.bold: true
-                    }
+                    source: "qrc:/icons/dev.sentinel.Sentinel.png"
+                    fillMode: Image.PreserveAspectFit
                 }
 
                 ColumnLayout {

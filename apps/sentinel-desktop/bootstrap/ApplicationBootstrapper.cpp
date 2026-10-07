@@ -9,20 +9,24 @@
 #include "PlatformInitializer.h"
 
 #include "sentinel/core/app/AppMetadata.h"
-#include "sentinel/core/app/ApplicationControllerBuilder.h"
+
 #include "sentinel/core/app/ModeManager.h"
-#include "sentinel/core/memory/JsonSettingsStore.h"
-#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/app/RecoveryService.h"
 #include "sentinel/core/app/SettingsService.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/platform/WinProtocolHandler.h"
 #include "sentinel/core/platform/WinTaskbarIntegration.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/desktop/DaemonClient.h"
+#include "sentinel/desktop/DesktopModelHelper.h"
+#include "sentinel/desktop/DesktopSettingsStore.h"
 #include "sentinel/desktop/NativeCompanionAdapter.h"
+#include "sentinel/desktop/QuickPanelController.h"
 
 #include <QCommandLineOption>
 #include <QCoreApplication>
+#include <QDir>
 #include <QFileInfo>
 #include <QIcon>
 #include <QNetworkProxy>
@@ -49,6 +53,15 @@ QString discoverDaemonBinary() {
         return siblingExe;
     }
 #endif
+    const QString buildSibling = QDir(appDir).absoluteFilePath(
+#ifdef Q_OS_MACOS
+        QStringLiteral("../../../../sentinel-daemon/sentinel-daemon")
+#else
+        QStringLiteral("../sentinel-daemon/sentinel-daemon")
+#endif
+    );
+    if (QFileInfo(buildSibling).isExecutable())
+        return buildSibling;
     const QString byPath = QStandardPaths::findExecutable(QStringLiteral("sentinel-daemon"));
     if (!byPath.isEmpty()) {
         return byPath;
@@ -59,8 +72,8 @@ QString discoverDaemonBinary() {
 } // namespace
 
 void ApplicationBootstrapper::ensureBackgroundDaemon() {
-    if (m_safeMode) {
-        qInfo().noquote() << "Safe mode active: skipping background daemon launch.";
+    if (m_safeMode || m_daemonProcess) {
+        qInfo().noquote() << "Background daemon launch already attempted or disabled.";
         return;
     }
 
@@ -71,17 +84,13 @@ void ApplicationBootstrapper::ensureBackgroundDaemon() {
     }
 
     m_daemonProcess = std::make_unique<QProcess>(this);
-    m_daemonProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-    QObject::connect(m_daemonProcess.get(), &QProcess::started, this,
-                     []() { qInfo().noquote() << "sentinel-daemon background process started."; });
-    QObject::connect(m_daemonProcess.get(), &QProcess::finished, this,
-                     [this](int exitCode, QProcess::ExitStatus exitStatus) {
-                         qInfo().noquote()
-                             << "sentinel-daemon exited:" << exitCode
-                             << (exitStatus == QProcess::NormalExit ? "normal" : "crash");
-                         m_daemonProcess.release()->deleteLater();
-                     });
-    m_daemonProcess->start(daemonBinary, QStringList());
+    QStringList arguments;
+    const auto endpoint = m_parser.value(QStringLiteral("daemon-socket"));
+    if (!endpoint.isEmpty())
+        arguments << QStringLiteral("--socket") << endpoint;
+    // The background service outlives the UI and is protected by its own socket lock.
+    if (!m_daemonProcess->startDetached(daemonBinary, arguments))
+        qWarning() << "Cannot start sentinel-daemon";
 }
 
 ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject* parent)
@@ -112,11 +121,23 @@ ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject
                                     "Start with all extensions disabled and factory defaults."));
     m_parser.addOption(safeModeOption);
 
+    m_parser.addOption(QCommandLineOption(
+        QStringLiteral("preferences-directory"),
+        QStringLiteral("Store UI preferences in an explicit directory."), QStringLiteral("path")));
+    m_parser.addOption(QCommandLineOption(QStringLiteral("daemon-socket"),
+                                          QStringLiteral("Connect to a specific daemon socket."),
+                                          QStringLiteral("path")));
+    m_parser.addOption(
+        QCommandLineOption(QStringLiteral("no-daemon-start"),
+                           QStringLiteral("Connect without launching a background daemon.")));
     if (QCoreApplication::instance()) {
         m_parser.process(*QCoreApplication::instance());
         m_verbose = m_parser.isSet(verboseOption);
         m_quiet = m_parser.isSet(quietOption);
         m_safeMode = m_parser.isSet(safeModeOption);
+        if (m_parser.isSet(QStringLiteral("preferences-directory")))
+            m_pathProvider.setProfileDirectory(
+                m_parser.value(QStringLiteral("preferences-directory")));
     }
 }
 
@@ -146,19 +167,26 @@ void ApplicationBootstrapper::initializePlatformIntegrations() {
 
 bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     app.setQuitOnLastWindowClosed(false);
+    m_daemonClient =
+        std::make_unique<DaemonClient>(m_parser.value(QStringLiteral("daemon-socket")).isEmpty()
+                                           ? DaemonClient::defaultSocketPath()
+                                           : m_parser.value(QStringLiteral("daemon-socket")),
+                                       10000, 1000, this);
+    m_runtimeClient = std::make_unique<DesktopRuntimeClient>(*m_daemonClient, this);
     m_settings = std::make_unique<sentinel::core::AppSettings>(
-        std::make_unique<sentinel::core::DpapiEncryptedSettingsStore>(
-            std::make_unique<sentinel::core::JsonSettingsStore>(
-                m_pathProvider.settingsFilePath())));
+        std::make_unique<DesktopSettingsStore>(*m_runtimeClient, m_pathProvider.settingsFilePath() +
+                                                                     QStringLiteral(".desktop")),
+        sentinel::core::CredentialStore(std::shared_ptr<sentinel::core::ICredentialBackend>{}));
     const auto settingsError = m_settings->storageErrorCode();
     if (settingsError == QLatin1String("CorruptState") ||
         settingsError == QLatin1String("UnsupportedSettingsVersion") ||
         settingsError == QLatin1String("StoreUnavailable"))
         sentinel::core::RecoveryService::recordCondition(QStringLiteral("settings"),
-            QStringLiteral("settings"), settingsError, QStringLiteral("repair-settings"));
+                                                         QStringLiteral("settings"), settingsError,
+                                                         QStringLiteral("repair-settings"));
     else if (settingsError.isEmpty())
         sentinel::core::RecoveryService::clearCondition(QStringLiteral("settings"),
-            QStringLiteral("settings"));
+                                                        QStringLiteral("settings"));
 
     installStartupTranslator(app, *m_settings, m_translator);
 
@@ -169,47 +197,16 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                          m_engine.retranslate();
                      });
 
-    if (m_settings->proxyEnabled()) {
-        QNetworkProxy proxy;
-        const QString type = m_settings->proxyType().toLower();
-        if (type == QStringLiteral("socks5")) {
-            proxy.setType(QNetworkProxy::Socks5Proxy);
-        } else {
-            proxy.setType(QNetworkProxy::HttpProxy);
-        }
-        proxy.setHostName(m_settings->proxyHost());
-        proxy.setPort(m_settings->proxyPort());
-        if (!m_settings->proxyUser().isEmpty()) {
-            proxy.setUser(m_settings->proxyUser());
-            proxy.setPassword(m_settings->proxyPassword());
-        }
-        QNetworkProxy::setApplicationProxy(proxy);
-        qInfo().noquote() << "Proxy enabled:" << type << m_settings->proxyHost()
-                          << QString::number(m_settings->proxyPort());
-    }
-
-    // Clean dependency injection using ApplicationControllerBuilder
-    sentinel::core::ApplicationControllerBuilder builder;
-    m_controller = builder.withStandardDefaults(m_pathProvider, *m_settings).build();
-    sentinel::core::SettingsService(*m_settings, m_controller->modelService(),
-        m_controller->extensionService(), m_controller->audioSession(),
-        m_controller->permissionService(), m_controller->conversationStore(),
-        m_controller->memoryStore(), m_controller->mutableAgentRunStore(),
-        m_controller->chatHistoryStore(), m_controller->modelOperations())
-        .runRetentionMaintenance();
-    m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(
-        m_controller->agentRunStore());
+    // Runtime authority is exclusively provided by the daemon.
+    m_runtimeClient->setPreferredSession(m_settings->activeConversationId());
+    QObject::connect(m_runtimeClient.get(), &DesktopRuntimeClient::sessionChanged, m_settings.get(),
+                     [this](const QString& id) { m_settings->setActiveConversationId(id); });
+    m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(nullptr);
     m_inspectorViewModel = std::make_unique<AgentInspectorViewModel>(*m_inspectorService);
-    m_inspectorViewModel->setProviderStatusSource(m_controller.get());
-    m_controller->setConversationExportDirectory(m_pathProvider.conversationExportDirectoryPath());
-
     m_modeManager = std::make_unique<sentinel::core::ModeManager>();
-    m_controller->setRoutingModeByName(m_settings->routingModeName());
-
     m_taskbarIntegration = std::make_unique<sentinel::core::WinTaskbarIntegration>();
-
     m_shellViewModel = std::make_unique<DesktopShellViewModel>(
-        *m_controller, *m_modeManager, *m_settings, m_taskbarIntegration.get());
+        *m_runtimeClient, *m_modeManager, *m_settings, m_taskbarIntegration.get());
 
     m_singleInstanceGuard.bindShellViewModel(m_shellViewModel.get());
 
@@ -218,60 +215,29 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
         qInfo().noquote() << "Deep link from command line:" << ownUrl;
     }
 
-    auto* ollamaPuller = new OllamaModelPuller(this);
-    ollamaPuller->setEndpoint(m_settings->ollamaEndpoint());
-    QObject::connect(ollamaPuller, &OllamaModelPuller::activeModelChanged, m_shellViewModel.get(),
-                     [ollamaPuller, this]() {
-                         const QString active = ollamaPuller->activeModel();
-                         if (ollamaPuller->pulling() && !active.isEmpty()) {
-                             m_shellViewModel->addNotification(
-                                 tr("Models"), tr("Downloading Model"),
-                                 tr("Retrieving '%1' from registry. You can monitor "
-                                    "progress in the modelfiles panel.")
-                                     .arg(active));
-                         }
-                     });
-    QObject::connect(
-        ollamaPuller, &OllamaModelPuller::pullFinished, m_controller.get(),
-        [this](const QString& modelId, bool success) {
-            if (success) {
-                m_controller->refreshOllamaStatus();
-                m_shellViewModel->addNotification(
-                    tr("Models"), tr("Model Installed"),
-                    tr("'%1' has been successfully downloaded and is ready for local inference.")
-                        .arg(modelId));
-            } else {
-                m_shellViewModel->addNotification(
-                    tr("Models"), tr("Installation Failed"),
-                    tr("Could not retrieve '%1'. Please ensure your server is active "
-                       "and try again.")
-                        .arg(modelId));
-            }
-        });
-    QObject::connect(
-        ollamaPuller, &OllamaModelPuller::removeFinished, m_controller.get(),
-        [this](const QString& modelId, bool success) {
-            if (success) {
-                m_controller->refreshOllamaStatus();
-                m_shellViewModel->addNotification(
-                    tr("Models"), tr("Model Removed"),
-                    tr("'%1' has been deleted. Disk space has been reclaimed.").arg(modelId));
-            } else {
-                m_shellViewModel->addNotification(
-                    tr("Models"), tr("Model Removal Failed"),
-                    tr("Could not delete '%1'. Please ensure the Ollama server is active and "
-                       "try again.")
-                        .arg(modelId));
-            }
-        });
+    auto* ollamaPuller =
+        new DesktopModelHelper(*m_daemonClient, QStringLiteral("ollamaPuller"), this);
+    auto* ollamaLibraryFetcher =
+        new DesktopModelHelper(*m_daemonClient, QStringLiteral("ollamaLibraryFetcher"), this);
+    auto* ollamaModelDetailFetcher =
+        new DesktopModelHelper(*m_daemonClient, QStringLiteral("ollamaModelDetailFetcher"), this);
+    auto* lmStudioLibraryFetcher =
+        new DesktopModelHelper(*m_daemonClient, QStringLiteral("lmStudioLibraryFetcher"), this);
 
-    auto* ollamaLibraryFetcher = new OllamaLibraryFetcher(this);
-    auto* ollamaModelDetailFetcher = new OllamaModelDetailFetcher(this);
-    auto* lmStudioLibraryFetcher = new LMStudioLibraryFetcher(this);
+    QObject::connect(m_daemonClient.get(), &DaemonClient::connectionStateChanged, this, [this] {
+        if (m_daemonClient->connectionState() == DaemonClient::ConnectionState::Unavailable &&
+            !m_parser.isSet(QStringLiteral("no-daemon-start")))
+            ensureBackgroundDaemon();
+    });
+    auto* daemonClient = m_daemonClient.get();
 
-    ensureBackgroundDaemon();
-    auto* daemonClient = new DaemonClient(this);
-
+    auto* quickPanel = new QuickPanelController(*m_runtimeClient, this);
+    auto* native = new NativeCompanionAdapter(*m_shellViewModel, *m_settings, nullptr, this);
+    native->bindQuickPanel(quickPanel);
+    connect(&m_singleInstanceGuard, &SingleInstanceGuard::deepLinkReceived, quickPanel,
+            &QuickPanelController::openLink);
+    m_engine.rootContext()->setContextProperty(QStringLiteral("nativeDesktop"), native);
+    m_engine.rootContext()->setContextProperty(QStringLiteral("quickPanelController"), quickPanel);
     m_engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"),
                                                m_shellViewModel.get());
     m_engine.rootContext()->setContextProperty(QStringLiteral("agentInspectorViewModel"),
@@ -289,8 +255,6 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
         &m_engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
 
-    // Populate the local runtime cache before QML evaluates readiness bindings.
-    (void)m_controller->selectedLocalModelSummary();
     m_engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
     QObject* rootWindow =
@@ -302,7 +266,9 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
             << "Sentinel graphics diagnostics unavailable: root object is not a QQuickWindow";
     }
 
-    new NativeCompanionAdapter(*m_shellViewModel, *m_settings, rootWindow, this);
+    native->setWindow(rootWindow);
+    if (!ownUrl.isEmpty())
+        quickPanel->openLink(ownUrl);
 
     return true;
 }

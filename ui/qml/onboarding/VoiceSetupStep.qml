@@ -43,7 +43,7 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            visible: root.speech.inputDeviceIds && root.speech.inputDeviceIds.length > 0
+            visible: !!root.speech.inputDeviceIds && root.speech.inputDeviceIds.length > 0
             Label {
                 text: qsTr("Microphone")
                 color: SentinelTheme.textMuted

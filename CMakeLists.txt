@@ -18,6 +18,11 @@ project(Sentinel
     LANGUAGES CXX
 )
 
+if(APPLE)
+    enable_language(OBJCXX)
+    set(CMAKE_OBJCXX_STANDARD 20)
+endif()
+
 set(SENTINEL_APP_ID "dev.sentinel.Sentinel" CACHE STRING "Reverse-DNS application id")
 set(SENTINEL_DISPLAY_NAME "Sentinel Desktop" CACHE STRING "User-visible application name")
 set(SENTINEL_ORGANIZATION_NAME "Sopwit" CACHE STRING "Application organization name")

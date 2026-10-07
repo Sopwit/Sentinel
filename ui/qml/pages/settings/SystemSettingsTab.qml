@@ -106,6 +106,34 @@ Item {
             }
 
             SettingToggleRow {
+                title: qsTr("Start Sentinel at login")
+                subtitle: nativeDesktop.startupStatus
+                checked: nativeDesktop.startAtLogin
+                accent: root.modeAccent
+                compact: root.compact
+                onToggled: (checked) => nativeDesktop.startAtLogin = checked
+            }
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("Quick Panel shortcut: %1").arg(nativeDesktop.shortcutStatus)
+                color: SentinelTheme.textMuted
+                wrapMode: Text.Wrap
+            }
+            Label {
+                visible: nativeDesktop.notificationStatus.length > 0
+                Layout.fillWidth: true
+                text: qsTr("macOS notifications: %1").arg(nativeDesktop.notificationStatus)
+                color: SentinelTheme.textMuted
+                wrapMode: Text.Wrap
+            }
+            ComboBox {
+                model: ["Ctrl+Alt+Space", "Ctrl+Alt+S", "Disabled"]
+                currentIndex: nativeDesktop.shortcut === "" ? 2 : (nativeDesktop.shortcut === "Ctrl+Alt+S" ? 1 : 0)
+                Accessible.name: qsTr("Global Quick Panel shortcut")
+                onActivated: nativeDesktop.shortcut = currentIndex === 2 ? "" : currentText
+            }
+
+            SettingToggleRow {
                 title: qsTr("Developer Diagnostics Mode")
                 subtitle: qsTr("Show read-only permission, tool, agent, notification, and task diagnostics. This does not change execution permissions.")
                 checked: root.viewModel.developerModeEnabled

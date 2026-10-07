@@ -16,6 +16,7 @@
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
 #include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
+#include "sentinel/desktop/DesktopControllerBridge.h"
 
 #include <QElapsedTimer>
 #include <QHash>
@@ -43,8 +44,14 @@ namespace sentinel::desktop {
 
 class DesktopShellViewModel final : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QVariantList persistentPermissionGrants READ persistentPermissionGrants NOTIFY persistentPermissionGrantsChanged)
-    Q_PROPERTY(QString providerName READ providerName CONSTANT)
+    Q_PROPERTY(
+        QString daemonConnectionStatus READ daemonConnectionStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool daemonConnected READ daemonConnected NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QVariantMap pendingDaemonApproval READ pendingDaemonApproval NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QVariantList persistentPermissionGrants READ persistentPermissionGrants NOTIFY
+                   persistentPermissionGrantsChanged)
+    Q_PROPERTY(QString providerName READ providerName NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString providerStatus READ providerStatus NOTIFY providerStatusChanged)
     Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
     Q_PROPERTY(bool agentLoopActive READ agentLoopActive NOTIFY agentLoopChanged)
@@ -106,22 +113,26 @@ class DesktopShellViewModel final : public QObject {
                    agentActivityChanged)
     Q_PROPERTY(QString currentRoutingMode READ currentRoutingMode WRITE setRoutingModeByName NOTIFY
                    modelRoutingChanged)
-    Q_PROPERTY(QStringList availableRoutingModes READ availableRoutingModes CONSTANT)
+    Q_PROPERTY(QStringList availableRoutingModes READ availableRoutingModes NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString modelRoutingStatus READ modelRoutingStatus NOTIFY modelRoutingChanged)
     Q_PROPERTY(QString selectedModelProviderSummary READ selectedModelProviderSummary NOTIFY
                    modelRoutingChanged)
     Q_PROPERTY(QString latestTaskPlanStatus READ latestTaskPlanStatus NOTIFY taskPlanChanged)
     Q_PROPERTY(QString latestTaskPlanSummary READ latestTaskPlanSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(int plannedTaskStepCount READ plannedTaskStepCount NOTIFY taskPlanChanged)
-    Q_PROPERTY(int registeredAgentCount READ registeredAgentCount CONSTANT)
-    Q_PROPERTY(QStringList activeAgentSummaries READ activeAgentSummaries CONSTANT)
+    Q_PROPERTY(int registeredAgentCount READ registeredAgentCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QStringList activeAgentSummaries READ activeAgentSummaries NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString currentAgentSummary READ currentAgentSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(QString currentMemoryAffinitySummary READ currentMemoryAffinitySummary NOTIFY
                    taskPlanChanged)
-    Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
-    Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
-    Q_PROPERTY(int memoryCatalogCount READ memoryCatalogCount CONSTANT)
-    Q_PROPERTY(QStringList memoryCatalogSummaries READ memoryCatalogSummaries CONSTANT)
+    Q_PROPERTY(int providerCatalogCount READ providerCatalogCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int memoryCatalogCount READ memoryCatalogCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList memoryCatalogSummaries READ memoryCatalogSummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString orchestrationSnapshotStatus READ orchestrationSnapshotStatus NOTIFY
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QString orchestrationSnapshotSummary READ orchestrationSnapshotSummary NOTIFY
@@ -134,113 +145,173 @@ class DesktopShellViewModel final : public QObject {
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
-    Q_PROPERTY(QString agentTaskRuntimeStatus READ agentTaskRuntimeStatus CONSTANT)
-    Q_PROPERTY(QString agentTaskRuntimeSummary READ agentTaskRuntimeSummary CONSTANT)
-    Q_PROPERTY(int agentTaskRuntimeTaskCount READ agentTaskRuntimeTaskCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueueCount READ agentTaskQueueCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueueActiveCount READ agentTaskQueueActiveCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueuePlannedCount READ agentTaskQueuePlannedCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueueBlockedCount READ agentTaskQueueBlockedCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueueCompletedCount READ agentTaskQueueCompletedCount CONSTANT)
-    Q_PROPERTY(int agentTaskQueueRefusedCount READ agentTaskQueueRefusedCount CONSTANT)
-    Q_PROPERTY(QString latestAgentTaskSummary READ latestAgentTaskSummary CONSTANT)
     Q_PROPERTY(
-        QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary CONSTANT)
-    Q_PROPERTY(QStringList agentTaskQueueSummaries READ agentTaskQueueSummaries CONSTANT)
-    Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
-    Q_PROPERTY(QString agentPlanningSessionStatus READ agentPlanningSessionStatus CONSTANT)
-    Q_PROPERTY(QString agentPlanningSessionSummary READ agentPlanningSessionSummary CONSTANT)
-    Q_PROPERTY(int agentPlanningCandidateCount READ agentPlanningCandidateCount CONSTANT)
-    Q_PROPERTY(int agentPlanningRefusedCount READ agentPlanningRefusedCount CONSTANT)
+        QString agentTaskRuntimeStatus READ agentTaskRuntimeStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString agentTaskRuntimeSummary READ agentTaskRuntimeSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskRuntimeTaskCount READ agentTaskRuntimeTaskCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueueCount READ agentTaskQueueCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueueActiveCount READ agentTaskQueueActiveCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueuePlannedCount READ agentTaskQueuePlannedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueueBlockedCount READ agentTaskQueueBlockedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueueCompletedCount READ agentTaskQueueCompletedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentTaskQueueRefusedCount READ agentTaskQueueRefusedCount NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList agentPlanningCandidateSummaries READ agentPlanningCandidateSummaries CONSTANT)
+        QString latestAgentTaskSummary READ latestAgentTaskSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentTaskQueueSummaries READ agentTaskQueueSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString agentPlanningSessionStatus READ agentPlanningSessionStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString agentPlanningSessionSummary READ agentPlanningSessionSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentPlanningCandidateCount READ agentPlanningCandidateCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentPlanningRefusedCount READ agentPlanningRefusedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentPlanningCandidateSummaries READ agentPlanningCandidateSummaries
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList agentPlanningArbitrationSummaries READ agentPlanningArbitrationSummaries
-                   CONSTANT)
-    Q_PROPERTY(
-        QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries CONSTANT)
-    Q_PROPERTY(QString agentPlanningFallbackSummary READ agentPlanningFallbackSummary CONSTANT)
-    Q_PROPERTY(QString agentCapabilityRegistryStatus READ agentCapabilityRegistryStatus CONSTANT)
-    Q_PROPERTY(QString agentCapabilityRegistrySummary READ agentCapabilityRegistrySummary CONSTANT)
-    Q_PROPERTY(int agentCapabilityCount READ agentCapabilityCount CONSTANT)
-    Q_PROPERTY(int agentCapabilityEnabledCount READ agentCapabilityEnabledCount CONSTANT)
-    Q_PROPERTY(int agentCapabilityDisabledCount READ agentCapabilityDisabledCount CONSTANT)
-    Q_PROPERTY(int agentCapabilityRestrictedCount READ agentCapabilityRestrictedCount CONSTANT)
-    Q_PROPERTY(QStringList agentCapabilitySummaries READ agentCapabilitySummaries CONSTANT)
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString agentPlanningFallbackSummary READ agentPlanningFallbackSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString agentCapabilityRegistryStatus READ agentCapabilityRegistryStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString agentCapabilityRegistrySummary READ agentCapabilityRegistrySummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentCapabilityCount READ agentCapabilityCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(int agentCapabilityEnabledCount READ agentCapabilityEnabledCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentCapabilityDisabledCount READ agentCapabilityDisabledCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int agentCapabilityRestrictedCount READ agentCapabilityRestrictedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentCapabilitySummaries READ agentCapabilitySummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList agentCapabilityReadinessSummaries READ agentCapabilityReadinessSummaries
-                   CONSTANT)
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString toolContractRegistryStatus READ toolContractRegistryStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString toolContractRegistrySummary READ toolContractRegistrySummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int toolContractCount READ toolContractCount NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries CONSTANT)
-    Q_PROPERTY(QString toolContractRegistryStatus READ toolContractRegistryStatus CONSTANT)
-    Q_PROPERTY(QString toolContractRegistrySummary READ toolContractRegistrySummary CONSTANT)
-    Q_PROPERTY(int toolContractCount READ toolContractCount CONSTANT)
-    Q_PROPERTY(int toolContractEnabledCount READ toolContractEnabledCount CONSTANT)
-    Q_PROPERTY(int toolContractDisabledCount READ toolContractDisabledCount CONSTANT)
-    Q_PROPERTY(int toolContractRestrictedCount READ toolContractRestrictedCount CONSTANT)
-    Q_PROPERTY(QStringList toolContractSummaries READ toolContractSummaries CONSTANT)
+        int toolContractEnabledCount READ toolContractEnabledCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(int toolContractDisabledCount READ toolContractDisabledCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(int toolContractRestrictedCount READ toolContractRestrictedCount NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList toolContractSummaries READ toolContractSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList toolContractPermissionSummaries READ toolContractPermissionSummaries
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList toolContractSandboxSummaries READ toolContractSandboxSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList toolContractReadinessSummaries READ toolContractReadinessSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList toolContractSafetySummaries READ toolContractSafetySummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList localRuntimeCapabilities READ localRuntimeCapabilities NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeResponseStatus READ localRuntimeResponseStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeResponseSummary READ localRuntimeResponseSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList toolContractPermissionSummaries READ toolContractPermissionSummaries CONSTANT)
-    Q_PROPERTY(QStringList toolContractSandboxSummaries READ toolContractSandboxSummaries CONSTANT)
+        int localRuntimeSessionCount READ localRuntimeSessionCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeSessionStatus READ localRuntimeSessionStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeSessionHealth READ localRuntimeSessionHealth NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeSessionSummary READ localRuntimeSessionSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList toolContractReadinessSummaries READ toolContractReadinessSummaries CONSTANT)
-    Q_PROPERTY(QStringList toolContractSafetySummaries READ toolContractSafetySummaries CONSTANT)
-    Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
-    Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
-    Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
-    Q_PROPERTY(QStringList localRuntimeCapabilities READ localRuntimeCapabilities CONSTANT)
-    Q_PROPERTY(QString localRuntimeResponseStatus READ localRuntimeResponseStatus CONSTANT)
-    Q_PROPERTY(QString localRuntimeResponseSummary READ localRuntimeResponseSummary CONSTANT)
-    Q_PROPERTY(int localRuntimeSessionCount READ localRuntimeSessionCount CONSTANT)
-    Q_PROPERTY(QString localRuntimeSessionStatus READ localRuntimeSessionStatus CONSTANT)
-    Q_PROPERTY(QString localRuntimeSessionHealth READ localRuntimeSessionHealth CONSTANT)
-    Q_PROPERTY(QString localRuntimeSessionSummary READ localRuntimeSessionSummary CONSTANT)
-    Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary CONSTANT)
-    Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary CONSTANT)
-    Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries CONSTANT)
-    Q_PROPERTY(int runtimeCapabilityCount READ runtimeCapabilityCount CONSTANT)
+        int runtimeCapabilityCount READ runtimeCapabilityCount NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList enabledRuntimeCapabilitySummaries READ enabledRuntimeCapabilitySummaries
-                   CONSTANT)
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList disabledRuntimeCapabilitySummaries READ
-                   disabledRuntimeCapabilitySummaries CONSTANT)
+                   disabledRuntimeCapabilitySummaries NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimeNegotiationProfileSummary READ runtimeNegotiationProfileSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimePermissionDecision READ runtimePermissionDecision NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimePermissionSummary READ runtimePermissionSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
-        QString runtimeNegotiationProfileSummary READ runtimeNegotiationProfileSummary CONSTANT)
-    Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary CONSTANT)
+        QString runtimeSafetyDecision READ runtimeSafetyDecision NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
-        QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary CONSTANT)
-    Q_PROPERTY(QString runtimePermissionDecision READ runtimePermissionDecision CONSTANT)
-    Q_PROPERTY(QString runtimePermissionSummary READ runtimePermissionSummary CONSTANT)
-    Q_PROPERTY(QString runtimeSafetyDecision READ runtimeSafetyDecision CONSTANT)
-    Q_PROPERTY(QString runtimeSafetySummary READ runtimeSafetySummary CONSTANT)
-    Q_PROPERTY(QString runtimePipelineStatus READ runtimePipelineStatus CONSTANT)
-    Q_PROPERTY(QString runtimePipelineSummary READ runtimePipelineSummary CONSTANT)
+        QString runtimeSafetySummary READ runtimeSafetySummary NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList runtimePipelineTraceSummaries READ runtimePipelineTraceSummaries CONSTANT)
-    Q_PROPERTY(QString executionLifecycleState READ executionLifecycleState CONSTANT)
-    Q_PROPERTY(QString executionLifecycleStatus READ executionLifecycleStatus CONSTANT)
-    Q_PROPERTY(QString executionLifecycleSummary READ executionLifecycleSummary CONSTANT)
+        QString runtimePipelineStatus READ runtimePipelineStatus NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
-        QStringList executionLifecycleTraceSummaries READ executionLifecycleTraceSummaries CONSTANT)
-    Q_PROPERTY(QString executionSessionId READ executionSessionId CONSTANT)
-    Q_PROPERTY(QString executionSessionStatus READ executionSessionStatus CONSTANT)
-    Q_PROPERTY(QString executionSessionOwnership READ executionSessionOwnership CONSTANT)
-    Q_PROPERTY(QString executionCoordinationMode READ executionCoordinationMode CONSTANT)
-    Q_PROPERTY(QString executionSessionSummary READ executionSessionSummary CONSTANT)
+        QString runtimePipelineSummary READ runtimePipelineSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList runtimePipelineTraceSummaries READ runtimePipelineTraceSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString executionLifecycleState READ executionLifecycleState NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString executionLifecycleStatus READ executionLifecycleStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString executionLifecycleSummary READ executionLifecycleSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList executionLifecycleTraceSummaries READ executionLifecycleTraceSummaries
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString executionSessionId READ executionSessionId NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString executionSessionStatus READ executionSessionStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString executionSessionOwnership READ executionSessionOwnership NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString executionCoordinationMode READ executionCoordinationMode NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString executionSessionSummary READ executionSessionSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString executionCoordinationSnapshotSummary READ
-                   executionCoordinationSnapshotSummary CONSTANT)
-    Q_PROPERTY(QString localRuntimeAdapterStatus READ localRuntimeAdapterStatus CONSTANT)
-    Q_PROPERTY(QString localRuntimeAdapterHealth READ localRuntimeAdapterHealth CONSTANT)
-    Q_PROPERTY(QString localRuntimeAdapterSummary READ localRuntimeAdapterSummary CONSTANT)
+                   executionCoordinationSnapshotSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeAdapterStatus READ localRuntimeAdapterStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeAdapterHealth READ localRuntimeAdapterHealth NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString localRuntimeAdapterSummary READ localRuntimeAdapterSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList localRuntimeAdapterCapabilitySummaries READ
-                   localRuntimeAdapterCapabilitySummaries CONSTANT)
-    Q_PROPERTY(QString providerRuntimeBridgeStatus READ providerRuntimeBridgeStatus CONSTANT)
-    Q_PROPERTY(QString providerRuntimeBridgeSummary READ providerRuntimeBridgeSummary CONSTANT)
+                   localRuntimeAdapterCapabilitySummaries NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString providerRuntimeBridgeStatus READ providerRuntimeBridgeStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString providerRuntimeBridgeSummary READ providerRuntimeBridgeSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString providerRuntimeBridgeResponseSummary READ
-                   providerRuntimeBridgeResponseSummary CONSTANT)
-    Q_PROPERTY(
-        QString runtimeIntegrationReadinessStatus READ runtimeIntegrationReadinessStatus CONSTANT)
-    Q_PROPERTY(
-        QString runtimeIntegrationReadinessSummary READ runtimeIntegrationReadinessSummary CONSTANT)
+                   providerRuntimeBridgeResponseSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimeIntegrationReadinessStatus READ runtimeIntegrationReadinessStatus
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString runtimeIntegrationReadinessSummary READ runtimeIntegrationReadinessSummary
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList runtimeIntegrationReadinessChecks READ runtimeIntegrationReadinessChecks
-                   CONSTANT)
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
                    setSelectedRuntimeProvider NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QString activeRuntimeProviderId READ activeRuntimeProviderId NOTIFY
@@ -334,7 +405,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString proxyUser READ proxyUser WRITE setProxyUser NOTIFY proxySettingsChanged)
     Q_PROPERTY(
         QString proxyPassword READ proxyPassword WRITE setProxyPassword NOTIFY proxySettingsChanged)
-    Q_PROPERTY(bool proxyPasswordConfigured READ proxyPasswordConfigured NOTIFY proxySettingsChanged)
+    Q_PROPERTY(
+        bool proxyPasswordConfigured READ proxyPasswordConfigured NOTIFY proxySettingsChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelSummary READ selectedLocalModelSummary NOTIFY
@@ -359,12 +431,13 @@ class DesktopShellViewModel final : public QObject {
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList providerDiscoverySummaries READ providerDiscoverySummaries NOTIFY
                    runtimeProviderRegistryChanged)
-    Q_PROPERTY(QStringList modelRoleIds READ modelRoleIds CONSTANT)
+    Q_PROPERTY(QStringList modelRoleIds READ modelRoleIds NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList modelRoleAssignmentSummaries READ modelRoleAssignmentSummaries NOTIFY
                    modelRoleChanged)
     Q_PROPERTY(QStringList modelAdvisorRecommendationSummaries READ
                    modelAdvisorRecommendationSummaries NOTIFY localModelSelectionChanged)
-    Q_PROPERTY(QStringList modelAdvisorAvoidSummaries READ modelAdvisorAvoidSummaries CONSTANT)
+    Q_PROPERTY(QStringList modelAdvisorAvoidSummaries READ modelAdvisorAvoidSummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList downloadsCenterSummaries READ downloadsCenterSummaries NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList benchmarkHubSummaries READ benchmarkHubSummaries NOTIFY
@@ -373,32 +446,40 @@ class DesktopShellViewModel final : public QObject {
                    localModelSelectionChanged)
     Q_PROPERTY(QVariantList modelCapabilitySettings READ modelCapabilitySettings NOTIFY
                    modelCapabilitySettingsChanged)
-    Q_PROPERTY(QString modelCapabilityCompatibilitySummary READ
-                   modelCapabilityCompatibilitySummary NOTIFY modelCapabilitySettingsChanged)
+    Q_PROPERTY(QString modelCapabilityCompatibilitySummary READ modelCapabilityCompatibilitySummary
+                   NOTIFY modelCapabilitySettingsChanged)
     Q_PROPERTY(
         QString modelManagementStatus READ modelManagementStatus NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString modelManagementSummary READ modelManagementSummary NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QString modelManagementActionAvailability READ modelManagementActionAvailability
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList modelRecommendationSummaries READ modelRecommendationSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList modelRequirementSummaries READ modelRequirementSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceRuntimeMode READ voiceRuntimeMode NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceEnabled READ voiceEnabled NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
-        QString modelManagementActionAvailability READ modelManagementActionAvailability CONSTANT)
-    Q_PROPERTY(QStringList modelRecommendationSummaries READ modelRecommendationSummaries CONSTANT)
-    Q_PROPERTY(QStringList modelRequirementSummaries READ modelRequirementSummaries CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeMode READ voiceRuntimeMode CONSTANT)
-    Q_PROPERTY(bool voiceEnabled READ voiceEnabled CONSTANT)
-    Q_PROPERTY(QString voiceReadinessStatus READ voiceReadinessStatus CONSTANT)
-    Q_PROPERTY(QString voiceReadinessSummary READ voiceReadinessSummary CONSTANT)
-    Q_PROPERTY(QStringList voiceReadinessChecks READ voiceReadinessChecks CONSTANT)
-    Q_PROPERTY(QStringList voiceCapabilitySummaries READ voiceCapabilitySummaries CONSTANT)
-    Q_PROPERTY(QString textToSpeechStatus READ textToSpeechStatus CONSTANT)
-    Q_PROPERTY(QString textToSpeechSummary READ textToSpeechSummary CONSTANT)
-    Q_PROPERTY(QString speechToTextStatus READ speechToTextStatus CONSTANT)
-    Q_PROPERTY(QString speechToTextSummary READ speechToTextSummary CONSTANT)
-    Q_PROPERTY(QString voiceSessionId READ voiceSessionId CONSTANT)
-    Q_PROPERTY(QString voiceSessionStatus READ voiceSessionStatus CONSTANT)
-    Q_PROPERTY(QString voiceSessionSummary READ voiceSessionSummary CONSTANT)
-    Q_PROPERTY(QString voicePipelineStatus READ voicePipelineStatus CONSTANT)
-    Q_PROPERTY(QString voicePipelineSummary READ voicePipelineSummary CONSTANT)
-    Q_PROPERTY(QStringList voicePipelineTraceSummaries READ voicePipelineTraceSummaries CONSTANT)
+        QString voiceReadinessStatus READ voiceReadinessStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString voiceReadinessSummary READ voiceReadinessSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QStringList voiceReadinessChecks READ voiceReadinessChecks NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList voiceCapabilitySummaries READ voiceCapabilitySummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString textToSpeechStatus READ textToSpeechStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString textToSpeechSummary READ textToSpeechSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString speechToTextStatus READ speechToTextStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString speechToTextSummary READ speechToTextSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceSessionId READ voiceSessionId NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceSessionStatus READ voiceSessionStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceSessionSummary READ voiceSessionSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voicePipelineStatus READ voicePipelineStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString voicePipelineSummary READ voicePipelineSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList voicePipelineTraceSummaries READ voicePipelineTraceSummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString voicePipelineSessionStatus READ voicePipelineSessionStatus NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString voicePipelineSessionSummary READ voicePipelineSessionSummary NOTIFY
@@ -426,7 +507,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList audioFileValidationSummaries READ audioFileValidationSummaries NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileSupportedExtensionSummaries READ
-                   audioFileSupportedExtensionSummaries CONSTANT)
+                   audioFileSupportedExtensionSummaries NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString audioFileSessionFallbackSummary READ audioFileSessionFallbackSummary NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString audioFileSessionSafetySummary READ audioFileSessionSafetySummary NOTIFY
@@ -437,16 +518,22 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileTraceSummaries READ audioFileTraceSummaries NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeSummary READ voiceRuntimeSummary CONSTANT)
-    Q_PROPERTY(QStringList voiceRuntimeCheckSummaries READ voiceRuntimeCheckSummaries CONSTANT)
-    Q_PROPERTY(bool voiceRuntimeAvailable READ voiceRuntimeAvailable CONSTANT)
-    Q_PROPERTY(bool voiceTextToSpeechAvailable READ voiceTextToSpeechAvailable CONSTANT)
-    Q_PROPERTY(bool voiceSpeechToTextAvailable READ voiceSpeechToTextAvailable CONSTANT)
-    Q_PROPERTY(bool voiceMicrophoneEnabled READ voiceMicrophoneEnabled CONSTANT)
-    Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled CONSTANT)
-    Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy CONSTANT)
-    Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceRuntimeSummary READ voiceRuntimeSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList voiceRuntimeCheckSummaries READ voiceRuntimeCheckSummaries NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(
+        bool voiceRuntimeAvailable READ voiceRuntimeAvailable NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceTextToSpeechAvailable READ voiceTextToSpeechAvailable NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceSpeechToTextAvailable READ voiceSpeechToTextAvailable NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(
+        bool voiceMicrophoneEnabled READ voiceMicrophoneEnabled NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString voiceRuntimeEnvironmentStatus READ voiceRuntimeEnvironmentStatus NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeEnvironmentSummary READ voiceRuntimeEnvironmentSummary NOTIFY
@@ -455,12 +542,16 @@ class DesktopShellViewModel final : public QObject {
         QStringList voiceBinarySummaries READ voiceBinarySummaries NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(
         QStringList voiceModelSummaries READ voiceModelSummaries NOTIFY voiceConfigurationChanged)
-    Q_PROPERTY(
-        QStringList voiceRuntimePermissionSummaries READ voiceRuntimePermissionSummaries CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeSafetyStatus READ voiceRuntimeSafetyStatus CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeSafetySummary READ voiceRuntimeSafetySummary CONSTANT)
-    Q_PROPERTY(QStringList voiceRuntimeSafetyChecks READ voiceRuntimeSafetyChecks CONSTANT)
-    Q_PROPERTY(bool voiceRuntimeExecutionAllowed READ voiceRuntimeExecutionAllowed CONSTANT)
+    Q_PROPERTY(QStringList voiceRuntimePermissionSummaries READ voiceRuntimePermissionSummaries
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceRuntimeSafetyStatus READ voiceRuntimeSafetyStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString voiceRuntimeSafetySummary READ voiceRuntimeSafetySummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList voiceRuntimeSafetyChecks READ voiceRuntimeSafetyChecks NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(bool voiceRuntimeExecutionAllowed READ voiceRuntimeExecutionAllowed NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString piperTtsStatus READ piperTtsStatus NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperTtsSummary READ piperTtsSummary NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList piperTtsReadinessChecks READ piperTtsReadinessChecks NOTIFY
@@ -586,8 +677,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString chatErrorCategory READ chatErrorCategory NOTIFY chatMessagesChanged)
     Q_PROPERTY(QString chatCatalogState READ chatCatalogState NOTIFY chatMessagesChanged)
     Q_PROPERTY(QString chatProviderKind READ chatProviderKind NOTIFY chatMessagesChanged)
-    Q_PROPERTY(QVariantMap chatInputCapabilities READ chatInputCapabilities NOTIFY
-                   chatMessagesChanged)
+    Q_PROPERTY(
+        QVariantMap chatInputCapabilities READ chatInputCapabilities NOTIFY chatMessagesChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -770,28 +861,42 @@ class DesktopShellViewModel final : public QObject {
                    conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
                    conversationSummaryGenerationTraceSummaries NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
-    Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
-    Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
-    Q_PROPERTY(QString semanticReadiness READ semanticReadiness CONSTANT)
-    Q_PROPERTY(QString embeddingProviderReadiness READ embeddingProviderReadiness CONSTANT)
-    Q_PROPERTY(QString embeddingProviderSummary READ embeddingProviderSummary CONSTANT)
-    Q_PROPERTY(QString vectorIndexReadiness READ vectorIndexReadiness CONSTANT)
-    Q_PROPERTY(QString vectorIndexSummary READ vectorIndexSummary CONSTANT)
-    Q_PROPERTY(int vectorIndexedItemCount READ vectorIndexedItemCount CONSTANT)
-    Q_PROPERTY(QString semanticProviderMode READ semanticProviderMode CONSTANT)
-    Q_PROPERTY(QString selectedSemanticProviderName READ selectedSemanticProviderName CONSTANT)
-    Q_PROPERTY(QString semanticProviderReadiness READ semanticProviderReadiness CONSTANT)
-    Q_PROPERTY(QString semanticProviderHealth READ semanticProviderHealth CONSTANT)
-    Q_PROPERTY(QString semanticProviderStatusSummary READ semanticProviderStatusSummary CONSTANT)
-    Q_PROPERTY(QString semanticActivationReadiness READ semanticActivationReadiness CONSTANT)
-    Q_PROPERTY(QString semanticActivationSummary READ semanticActivationSummary CONSTANT)
+    Q_PROPERTY(
+        bool semanticRetrievalEnabled READ semanticRetrievalEnabled NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticReadiness READ semanticReadiness NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString embeddingProviderReadiness READ embeddingProviderReadiness NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString embeddingProviderSummary READ embeddingProviderSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString vectorIndexReadiness READ vectorIndexReadiness NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString vectorIndexSummary READ vectorIndexSummary NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        int vectorIndexedItemCount READ vectorIndexedItemCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString semanticProviderMode READ semanticProviderMode NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString selectedSemanticProviderName READ selectedSemanticProviderName NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticProviderReadiness READ semanticProviderReadiness NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(
+        QString semanticProviderHealth READ semanticProviderHealth NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticProviderStatusSummary READ semanticProviderStatusSummary NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticActivationReadiness READ semanticActivationReadiness NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString semanticActivationSummary READ semanticActivationSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList semanticProviderCapabilitySummaries READ
-                   semanticProviderCapabilitySummaries CONSTANT)
-    Q_PROPERTY(
-        QStringList semanticActivationRequiredSteps READ semanticActivationRequiredSteps CONSTANT)
-    Q_PROPERTY(
-        QStringList semanticRetrievalReadinessChecks READ semanticRetrievalReadinessChecks CONSTANT)
+                   semanticProviderCapabilitySummaries NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList semanticActivationRequiredSteps READ semanticActivationRequiredSteps
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList semanticRetrievalReadinessChecks READ semanticRetrievalReadinessChecks
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
         QString semanticCandidateStatus READ semanticCandidateStatus NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString semanticCandidateSummary READ semanticCandidateSummary NOTIFY
@@ -1004,10 +1109,10 @@ class DesktopShellViewModel final : public QObject {
                    localInferenceChanged)
     Q_PROPERTY(QString localInferenceStreamingText READ localInferenceStreamingText NOTIFY
                    localInferenceChanged)
-    Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
-    Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
-    Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
-    Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus CONSTANT)
+    Q_PROPERTY(int availableToolCount READ availableToolCount NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList availableToolIds READ availableToolIds NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString memoryStatus READ memoryStatus NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(
         QString conversationStoreStatus READ conversationStoreStatus NOTIFY chatMessagesChanged)
     Q_PROPERTY(int conversationStoreConversationCount READ conversationStoreConversationCount NOTIFY
@@ -1076,13 +1181,16 @@ class DesktopShellViewModel final : public QObject {
             conversationListCurrentExportAvailabilitySummary NOTIFY conversationExportChanged)
     Q_PROPERTY(QString conversationListCurrentSummary READ conversationListCurrentSummary NOTIFY
                    chatMessagesChanged)
-    Q_PROPERTY(QString conversationCurrentStorageMode READ conversationCurrentStorageMode CONSTANT)
-    Q_PROPERTY(QString conversationFutureStorageMode READ conversationFutureStorageMode CONSTANT)
-    Q_PROPERTY(QString conversationMigrationReadiness READ conversationMigrationReadiness CONSTANT)
-    Q_PROPERTY(
-        QString conversationMigrationStatusSummary READ conversationMigrationStatusSummary CONSTANT)
-    Q_PROPERTY(
-        QString conversationSchemaStatusSummary READ conversationSchemaStatusSummary CONSTANT)
+    Q_PROPERTY(QString conversationCurrentStorageMode READ conversationCurrentStorageMode NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationFutureStorageMode READ conversationFutureStorageMode NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationMigrationReadiness READ conversationMigrationReadiness NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationMigrationStatusSummary READ conversationMigrationStatusSummary
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationSchemaStatusSummary READ conversationSchemaStatusSummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString conversationSearchQueryText READ conversationSearchQueryText NOTIFY
                    conversationSearchChanged)
     Q_PROPERTY(QString conversationSearchStatus READ conversationSearchStatus NOTIFY
@@ -1093,13 +1201,14 @@ class DesktopShellViewModel final : public QObject {
                    conversationSearchChanged)
     Q_PROPERTY(QStringList conversationSearchResultSummaries READ conversationSearchResultSummaries
                    NOTIFY conversationSearchChanged)
-    Q_PROPERTY(bool conversationExportAvailable READ conversationExportAvailable CONSTANT)
-    Q_PROPERTY(
-        QString conversationExportReadinessStatus READ conversationExportReadinessStatus CONSTANT)
-    Q_PROPERTY(
-        QString conversationExportReadinessSummary READ conversationExportReadinessSummary CONSTANT)
+    Q_PROPERTY(bool conversationExportAvailable READ conversationExportAvailable NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationExportReadinessStatus READ conversationExportReadinessStatus
+                   NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QString conversationExportReadinessSummary READ conversationExportReadinessSummary
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList conversationExportReadinessChecks READ conversationExportReadinessChecks
-                   CONSTANT)
+                   NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString conversationExportLastResultSummary READ conversationExportLastResultSummary
                    NOTIFY conversationExportChanged)
     Q_PROPERTY(QString conversationExportLastStatus READ conversationExportLastStatus NOTIFY
@@ -1178,8 +1287,10 @@ class DesktopShellViewModel final : public QObject {
         QString lastMemoryCommitStatus READ lastMemoryCommitStatus NOTIFY memoryCandidatesChanged)
     Q_PROPERTY(QString lastMemoryCommitResultSummary READ lastMemoryCommitResultSummary NOTIFY
                    memoryCandidatesChanged)
-    Q_PROPERTY(QString memoryRecallPolicyStatus READ memoryRecallPolicyStatus CONSTANT)
-    Q_PROPERTY(QString memoryRecallPolicySummary READ memoryRecallPolicySummary CONSTANT)
+    Q_PROPERTY(QString memoryRecallPolicyStatus READ memoryRecallPolicyStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString memoryRecallPolicySummary READ memoryRecallPolicySummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QString memoryRecallQueryText READ memoryRecallQueryText NOTIFY memoryRecallChanged)
     Q_PROPERTY(QString memoryRecallStatus READ memoryRecallStatus NOTIFY memoryRecallChanged)
     Q_PROPERTY(
@@ -1187,8 +1298,10 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(int memoryRecallResultCount READ memoryRecallResultCount NOTIFY memoryRecallChanged)
     Q_PROPERTY(QStringList memoryRecallResultSummaries READ memoryRecallResultSummaries NOTIFY
                    memoryRecallChanged)
-    Q_PROPERTY(QString contextAssemblyPolicyStatus READ contextAssemblyPolicyStatus CONSTANT)
-    Q_PROPERTY(QString contextAssemblyPolicySummary READ contextAssemblyPolicySummary CONSTANT)
+    Q_PROPERTY(QString contextAssemblyPolicyStatus READ contextAssemblyPolicyStatus NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QString contextAssemblyPolicySummary READ contextAssemblyPolicySummary NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
         QString contextAssemblyStatus READ contextAssemblyStatus NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString contextAssemblySummaryText READ contextAssemblySummaryText NOTIFY
@@ -1220,16 +1333,17 @@ class DesktopShellViewModel final : public QObject {
         QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
     Q_PROPERTY(QString currentModeName READ currentModeName WRITE setCurrentModeName NOTIFY
                    currentModeChanged)
-    Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
+    Q_PROPERTY(QStringList availableModes READ availableModes NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
-    Q_PROPERTY(QStringList availablePages READ availablePages CONSTANT)
-    Q_PROPERTY(ChatMessageListModel* chatMessages READ chatMessages CONSTANT)
+    Q_PROPERTY(QStringList availablePages READ availablePages NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(ChatMessageListModel* chatMessages READ chatMessages NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
     Q_PROPERTY(QString configurationProfile READ configurationProfile WRITE setConfigurationProfile
                    NOTIFY configurationProfileChanged)
     Q_PROPERTY(QString appLanguage READ appLanguage WRITE setAppLanguage NOTIFY appLanguageChanged)
-    Q_PROPERTY(QStringList availableLanguages READ availableLanguages CONSTANT)
+    Q_PROPERTY(
+        QStringList availableLanguages READ availableLanguages NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(bool companionEnabled READ companionEnabled WRITE setCompanionEnabled NOTIFY
                    companionChanged)
     Q_PROPERTY(bool companionAvailable READ companionAvailable NOTIFY companionChanged)
@@ -1360,9 +1474,10 @@ class DesktopShellViewModel final : public QObject {
                    skillProfileChanged)
     Q_PROPERTY(QString selectedSkillProfilePolicyPosture READ selectedSkillProfilePolicyPosture
                    NOTIFY skillProfileChanged)
-    Q_PROPERTY(QStringList skillProfileIds READ skillProfileIds CONSTANT)
-    Q_PROPERTY(QStringList skillProfileNames READ skillProfileNames CONSTANT)
-    Q_PROPERTY(QStringList skillProfileSummaries READ skillProfileSummaries CONSTANT)
+    Q_PROPERTY(QStringList skillProfileIds READ skillProfileIds NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList skillProfileNames READ skillProfileNames NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList skillProfileSummaries READ skillProfileSummaries NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList skillProfileCapabilitySummaries READ skillProfileCapabilitySummaries
                    NOTIFY skillProfileChanged)
     Q_PROPERTY(QStringList skillProfileReadinessChecks READ skillProfileReadinessChecks NOTIFY
@@ -1386,16 +1501,20 @@ class DesktopShellViewModel final : public QObject {
         QString workspaceReadinessSummary READ workspaceReadinessSummary NOTIFY workspaceChanged)
     Q_PROPERTY(
         QString workspacePermissionSummary READ workspacePermissionSummary NOTIFY workspaceChanged)
-    Q_PROPERTY(QStringList workspaceIds READ workspaceIds CONSTANT)
-    Q_PROPERTY(QStringList workspaceNames READ workspaceNames CONSTANT)
-    Q_PROPERTY(QStringList workspaceSummaries READ workspaceSummaries CONSTANT)
-    Q_PROPERTY(QStringList workspacePermissionPostures READ workspacePermissionPostures CONSTANT)
-    Q_PROPERTY(QStringList workspaceActionPlaceholders READ workspaceActionPlaceholders CONSTANT)
+    Q_PROPERTY(QStringList workspaceIds READ workspaceIds NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList workspaceNames READ workspaceNames NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(
+        QStringList workspaceSummaries READ workspaceSummaries NOTIFY runtimeProjectionChanged)
+    Q_PROPERTY(QStringList workspacePermissionPostures READ workspacePermissionPostures NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList workspaceActionPlaceholders READ workspaceActionPlaceholders NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
         QStringList workspaceReadinessChecks READ workspaceReadinessChecks NOTIFY workspaceChanged)
     Q_PROPERTY(QStringList workspaceBoundaryDiagnostics READ workspaceBoundaryDiagnostics NOTIFY
                    workspaceChanged)
-    Q_PROPERTY(QStringList workspaceTemplateNames READ workspaceTemplateNames CONSTANT)
+    Q_PROPERTY(QStringList workspaceTemplateNames READ workspaceTemplateNames NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(
         QString workspaceLastActionStatus READ workspaceLastActionStatus NOTIFY workspaceChanged)
     Q_PROPERTY(
@@ -1439,9 +1558,12 @@ class DesktopShellViewModel final : public QObject {
         QString permissionPolicyStatus READ permissionPolicyStatus NOTIFY permissionPolicyChanged)
     Q_PROPERTY(
         QString permissionPolicySummary READ permissionPolicySummary NOTIFY permissionPolicyChanged)
-    Q_PROPERTY(QStringList permissionPolicyStateLabels READ permissionPolicyStateLabels CONSTANT)
-    Q_PROPERTY(QStringList permissionPolicyDomainIds READ permissionPolicyDomainIds CONSTANT)
-    Q_PROPERTY(QStringList permissionPolicyDomainNames READ permissionPolicyDomainNames CONSTANT)
+    Q_PROPERTY(QStringList permissionPolicyStateLabels READ permissionPolicyStateLabels NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList permissionPolicyDomainIds READ permissionPolicyDomainIds NOTIFY
+                   runtimeProjectionChanged)
+    Q_PROPERTY(QStringList permissionPolicyDomainNames READ permissionPolicyDomainNames NOTIFY
+                   runtimeProjectionChanged)
     Q_PROPERTY(QStringList permissionPolicyDomainSummaries READ permissionPolicyDomainSummaries
                    NOTIFY permissionPolicyChanged)
     Q_PROPERTY(QStringList permissionPolicyDeveloperDiagnostics READ
@@ -1510,13 +1632,13 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList controlledTaskPermissionSummaries READ controlledTaskPermissionSummaries
                    NOTIFY controlledAgentTasksChanged)
     Q_PROPERTY(QStringList controlledTaskNotificationCategories READ
-                   controlledTaskNotificationCategories CONSTANT)
+                   controlledTaskNotificationCategories NOTIFY runtimeProjectionChanged)
     Q_PROPERTY(QStringList controlledTaskExportSummaries READ controlledTaskExportSummaries NOTIFY
                    controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledTaskDiagnosticsSummary READ controlledTaskDiagnosticsSummary NOTIFY
                    controlledAgentTasksChanged)
-    Q_PROPERTY(
-        QStringList controlledTaskSafetyGuarantees READ controlledTaskSafetyGuarantees CONSTANT)
+    Q_PROPERTY(QStringList controlledTaskSafetyGuarantees READ controlledTaskSafetyGuarantees NOTIFY
+                   runtimeProjectionChanged)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -1524,6 +1646,15 @@ public:
                           core::WinTaskbarIntegration* taskbar = nullptr,
                           QObject* parent = nullptr);
 
+    DesktopShellViewModel(DesktopRuntimeClient& client, core::ModeManager& modeManager,
+                          core::AppSettings& settings,
+                          core::WinTaskbarIntegration* taskbar = nullptr,
+                          QObject* parent = nullptr);
+    Q_INVOKABLE bool respondToDaemonApproval(bool allow);
+    Q_INVOKABLE bool cancelDaemonRun();
+    QVariantMap pendingDaemonApproval() const;
+    QString daemonConnectionStatus() const;
+    bool daemonConnected() const;
     QString providerName() const;
     QString providerStatus() const;
     QString agentStatus() const;
@@ -1760,8 +1891,7 @@ public:
     QStringList selectedModelCapabilityLabels() const;
     QVariantList modelCapabilitySettings() const;
     QString modelCapabilityCompatibilitySummary() const;
-    Q_INVOKABLE bool setModelCapabilityOverride(const QString& capabilityId,
-                                                const QString& value);
+    Q_INVOKABLE bool setModelCapabilityOverride(const QString& capabilityId, const QString& value);
     Q_INVOKABLE bool setModelCapabilityNumberOverride(const QString& capabilityId, int value);
     Q_INVOKABLE void resetModelCapabilityOverrides();
     QString modelManagementStatus() const;
@@ -2325,7 +2455,7 @@ public:
     Q_INVOKABLE QVariantMap resetProductSetting(const QString& id);
     Q_INVOKABLE QVariantList resetProductSettingsSection(int section);
     Q_INVOKABLE QVariantMap clearWorkspaceSettingOverride(const QString& workspaceId,
-                                                           const QString& key);
+                                                          const QString& key);
     Q_INVOKABLE QVariantMap providerSettingsState(const QString& providerId) const;
     Q_INVOKABLE QVariantMap extensionSettingsState(const QString& extensionId) const;
     Q_INVOKABLE QVariantMap performExtensionSettingsAction(const QString& extensionId, int action);
@@ -2335,8 +2465,8 @@ public:
     Q_INVOKABLE QVariantMap productRecoveryState() const;
     Q_INVOKABLE QVariantMap productBackupAvailability() const;
     Q_INVOKABLE QVariantMap exportProductBackup(const QStringList& domains) const;
-    Q_INVOKABLE QVariantMap importProductBackup(const QByteArray& data,
-                                                const QStringList& domains, bool replace);
+    Q_INVOKABLE QVariantMap importProductBackup(const QByteArray& data, const QStringList& domains,
+                                                bool replace);
     Q_INVOKABLE QVariantMap clearProductData(const QString& domain);
     Q_INVOKABLE QVariantMap runProductMaintenance();
     Q_INVOKABLE QVariantMap resolveInterruptedModelOperation(const QString& operationId);
@@ -2409,8 +2539,7 @@ public:
     Q_INVOKABLE QVariantMap currentWorkspaceProfile() const;
     Q_INVOKABLE QStringList presetIds() const;
     Q_INVOKABLE QStringList presetNames() const;
-    Q_INVOKABLE bool setWorkspaceProfile(const QString& workspaceId,
-                                         const QString& presetId,
+    Q_INVOKABLE bool setWorkspaceProfile(const QString& workspaceId, const QString& presetId,
                                          const QVariantMap& overrides);
     Q_INVOKABLE QString createPreset(const QString& name, const QVariantMap& preferences);
     Q_INVOKABLE bool renamePreset(const QString& presetId, const QString& name);
@@ -2645,6 +2774,7 @@ public:
     void setSemanticEmbeddingModel(const QString& model);
 
 signals:
+    void runtimeProjectionChanged();
     void providerStatusChanged();
     void persistentPermissionGrantsChanged();
     void currentModeChanged();
@@ -2665,6 +2795,8 @@ signals:
     void recoveryDraftTextChanged();
     void nativeExperienceChanged();
     void onboardingStateChanged();
+    void nativeNotificationRequested(const QString& title, const QString& body,
+                                     const QString& category);
     void requestWindowActive(const QString& pageName);
     void maintenanceStatusChanged();
     void agentStatusChanged();
@@ -2724,10 +2856,13 @@ signals:
     void globalErrorChanged();
 
 private:
+    DesktopShellViewModel(DesktopControllerBridge::Source source, core::ModeManager& modeManager,
+                          core::AppSettings& settings, core::WinTaskbarIntegration* taskbar,
+                          QObject* parent);
     QString onboardingErrorCode_;
     static QString normalizedPageOrDefault(const QString& page);
 
-    core::ApplicationController& controller_;
+    DesktopControllerBridge controller_;
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
     core::AgentRuntimeService agentRuntimeService_;

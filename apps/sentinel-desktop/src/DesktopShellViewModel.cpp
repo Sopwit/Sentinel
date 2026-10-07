@@ -7,11 +7,11 @@
 
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/app/OnboardingService.h"
 #include "sentinel/core/app/ProductMessages.h"
 #include "sentinel/core/app/SettingsService.h"
-#include "sentinel/core/app/ApplicationController.h"
-#include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/model/ModelRegistry.h"
 
 #include <QCryptographicHash>
@@ -219,15 +219,38 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                                              core::ModeManager& modeManager,
                                              core::AppSettings& settings,
                                              core::WinTaskbarIntegration* taskbar, QObject* parent)
-    : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
-      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())), chatMessages_(this),
-      taskbar_(taskbar) {
-    controller_.attachControlledTaskSettings(settings_);
+    : DesktopShellViewModel(DesktopControllerBridge::Source{&controller, nullptr}, modeManager,
+                            settings, taskbar, parent) {}
+
+DesktopShellViewModel::DesktopShellViewModel(DesktopRuntimeClient& client,
+                                             core::ModeManager& modeManager,
+                                             core::AppSettings& settings,
+                                             core::WinTaskbarIntegration* taskbar, QObject* parent)
+    : DesktopShellViewModel(DesktopControllerBridge::Source{nullptr, &client}, modeManager,
+                            settings, taskbar, parent) {
+    connect(&client, &DesktopRuntimeClient::changed, this,
+            &DesktopShellViewModel::runtimeProjectionChanged);
+    connect(&client, &DesktopRuntimeClient::operationFailed, this, [this](const QString& code) {
+        addNotification(tr("System"), tr("Daemon request failed"), code);
+    });
+}
+
+DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source source,
+                                             core::ModeManager& modeManager,
+                                             core::AppSettings& settings,
+                                             core::WinTaskbarIntegration* taskbar, QObject* parent)
+    : QObject(parent), controller_(source, this), modeManager_(modeManager), settings_(settings),
+      localRagStore_(source.local ? std::make_unique<core::LocalRagStore>(localRagPath())
+                                  : nullptr),
+      chatMessages_(this), taskbar_(taskbar) {
+    if (!controller_.isRemote())
+        controller_.attachControlledTaskSettings(settings_);
     if (auto* session = controller_.audioSession()) {
         connect(session, &core::VoiceSessionService::stateChanged, this,
                 [this](core::VoiceInteractionState state) {
                     const bool listening = state == core::VoiceInteractionState::Listening;
-                    if (voiceRecordingActive_ == listening) return;
+                    if (voiceRecordingActive_ == listening)
+                        return;
                     voiceRecordingActive_ = listening;
                     emit voiceRecordingActiveChanged();
                 });
@@ -239,7 +262,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                         QStringLiteral("%1: %2").arg(core::audioFailureName(failure), detail));
                 });
     }
-    controller_.setToolPermissionPolicyState(settings_.defaultPermissionPolicyState());
+    if (!controller_.isRemote())
+        controller_.setToolPermissionPolicyState(settings_.defaultPermissionPolicyState());
     if (auto* controlledTasks = controller_.controlledTasks())
         connect(controlledTasks, &core::ControlledTaskService::tasksChanged, this,
                 &DesktopShellViewModel::controlledAgentTasksChanged);
@@ -257,18 +281,19 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     if (!savedMode.isEmpty()) {
         modeManager_.setModeByName(savedMode);
     }
-    controller_.setRoutingModeByName(settings_.routingModeName());
+    if (!controller_.isRemote())
+        controller_.setRoutingModeByName(settings_.routingModeName());
     chatMessages_.setMessages(controller_.chatHistory());
-    connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
+    connect(&controller_, &DesktopControllerBridge::chatMessagesChanged, this, [this]() {
         chatMessages_.setMessages(controller_.chatHistory());
         emit chatMessagesChanged();
         emit providerStatusChanged();
     });
-    connect(&controller_, &core::ApplicationController::memoryEntriesChanged, this,
+    connect(&controller_, &DesktopControllerBridge::memoryEntriesChanged, this,
             &DesktopShellViewModel::memoryEntriesChanged);
-    connect(&controller_, &core::ApplicationController::maintenanceStatusChanged, this,
+    connect(&controller_, &DesktopControllerBridge::maintenanceStatusChanged, this,
             &DesktopShellViewModel::maintenanceStatusChanged);
-    connect(&controller_, &core::ApplicationController::agentStatusChanged, this, [this]() {
+    connect(&controller_, &DesktopControllerBridge::agentStatusChanged, this, [this]() {
         emit agentStatusChanged();
         emit agentLoopChanged();
         emit providerStatusChanged();
@@ -285,67 +310,67 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         }
         lastAgentStatus_ = currentStatus;
     });
-    connect(&controller_, &core::ApplicationController::agentResponseChanged, this,
+    connect(&controller_, &DesktopControllerBridge::agentResponseChanged, this,
             &DesktopShellViewModel::agentResponseChanged);
-    connect(&controller_, &core::ApplicationController::toolPlanChanged, this,
+    connect(&controller_, &DesktopControllerBridge::toolPlanChanged, this,
             &DesktopShellViewModel::toolPlanChanged);
-    connect(&controller_, &core::ApplicationController::approvalChanged, this,
+    connect(&controller_, &DesktopControllerBridge::approvalChanged, this,
             &DesktopShellViewModel::approvalChanged);
-    connect(&controller_, &core::ApplicationController::sandboxChanged, this,
+    connect(&controller_, &DesktopControllerBridge::sandboxChanged, this,
             &DesktopShellViewModel::sandboxChanged);
-    connect(&controller_, &core::ApplicationController::toolExecutionChanged, this,
+    connect(&controller_, &DesktopControllerBridge::toolExecutionChanged, this,
             &DesktopShellViewModel::toolExecutionChanged);
-    connect(&controller_, &core::ApplicationController::agentPipelineChanged, this,
+    connect(&controller_, &DesktopControllerBridge::agentPipelineChanged, this,
             &DesktopShellViewModel::agentPipelineChanged);
-    connect(&controller_, &core::ApplicationController::runtimeContextChanged, this,
+    connect(&controller_, &DesktopControllerBridge::runtimeContextChanged, this,
             &DesktopShellViewModel::runtimeContextChanged);
-    connect(&controller_, &core::ApplicationController::conversationSessionChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationSessionChanged, this,
             &DesktopShellViewModel::conversationSessionChanged);
-    connect(&controller_, &core::ApplicationController::conversationStateChanged, this, [this]() {
+    connect(&controller_, &DesktopControllerBridge::conversationStateChanged, this, [this]() {
         emit conversationStateChanged();
         emit agentLoopChanged();
     });
-    connect(&controller_, &core::ApplicationController::agentLoopStateChanged, this,
+    connect(&controller_, &DesktopControllerBridge::agentLoopStateChanged, this,
             &DesktopShellViewModel::agentLoopChanged);
-    connect(&controller_, &core::ApplicationController::conversationRuntimeChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationRuntimeChanged, this,
             &DesktopShellViewModel::conversationRuntimeChanged);
-    connect(&controller_, &core::ApplicationController::conversationSearchChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationSearchChanged, this,
             &DesktopShellViewModel::conversationSearchChanged);
-    connect(&controller_, &core::ApplicationController::conversationExportChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationExportChanged, this,
             &DesktopShellViewModel::conversationExportChanged);
-    connect(&controller_, &core::ApplicationController::conversationDuplicateChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationDuplicateChanged, this,
             &DesktopShellViewModel::conversationDuplicateChanged);
-    connect(&controller_, &core::ApplicationController::conversationDeleteChanged, this,
+    connect(&controller_, &DesktopControllerBridge::conversationDeleteChanged, this,
             &DesktopShellViewModel::conversationDeleteChanged);
-    connect(&controller_, &core::ApplicationController::memoryCandidatesChanged, this,
+    connect(&controller_, &DesktopControllerBridge::memoryCandidatesChanged, this,
             &DesktopShellViewModel::memoryCandidatesChanged);
-    connect(&controller_, &core::ApplicationController::memoryRecallChanged, this,
+    connect(&controller_, &DesktopControllerBridge::memoryRecallChanged, this,
             &DesktopShellViewModel::memoryRecallChanged);
-    connect(&controller_, &core::ApplicationController::contextAssemblyChanged, this,
+    connect(&controller_, &DesktopControllerBridge::contextAssemblyChanged, this,
             &DesktopShellViewModel::contextAssemblyChanged);
-    connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
+    connect(&controller_, &DesktopControllerBridge::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
-    connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
+    connect(&controller_, &DesktopControllerBridge::modelRoutingChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
-    connect(&controller_, &core::ApplicationController::taskPlanChanged, this,
+    connect(&controller_, &DesktopControllerBridge::taskPlanChanged, this,
             &DesktopShellViewModel::taskPlanChanged);
-    connect(&controller_, &core::ApplicationController::orchestrationSnapshotChanged, this,
+    connect(&controller_, &DesktopControllerBridge::orchestrationSnapshotChanged, this,
             &DesktopShellViewModel::orchestrationSnapshotChanged);
-    connect(&controller_, &core::ApplicationController::runtimeProviderRegistryChanged, this,
+    connect(&controller_, &DesktopControllerBridge::runtimeProviderRegistryChanged, this,
             &DesktopShellViewModel::runtimeProviderRegistryChanged);
-    connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
+    connect(&controller_, &DesktopControllerBridge::localModelSelectionChanged, this,
             &DesktopShellViewModel::localModelSelectionChanged);
-    connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
+    connect(&controller_, &DesktopControllerBridge::localModelSelectionChanged, this,
             &DesktopShellViewModel::modelCapabilitySettingsChanged);
-    connect(&controller_, &core::ApplicationController::modelCapabilitiesChanged, this,
+    connect(&controller_, &DesktopControllerBridge::modelCapabilitiesChanged, this,
             &DesktopShellViewModel::modelCapabilitySettingsChanged);
-    connect(&controller_, &core::ApplicationController::ollamaStatusChanged, this,
+    connect(&controller_, &DesktopControllerBridge::ollamaStatusChanged, this,
             &DesktopShellViewModel::ollamaStatusChanged);
-    connect(&controller_, &core::ApplicationController::ollamaStatusChanged, this,
+    connect(&controller_, &DesktopControllerBridge::ollamaStatusChanged, this,
             &DesktopShellViewModel::providerStatusChanged);
-    connect(&controller_, &core::ApplicationController::localChatInferenceRoutingChanged, this,
+    connect(&controller_, &DesktopControllerBridge::localChatInferenceRoutingChanged, this,
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
-    connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
+    connect(&controller_, &DesktopControllerBridge::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
     connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this, [this]() {
         // Refresh cloud model discovery immediately when credentials change
@@ -375,9 +400,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         emit semanticSettingsChanged();
         emit contextAssemblyChanged();
     });
-    connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
+    connect(&controller_, &DesktopControllerBridge::promptContextInjectionChanged, this,
             &DesktopShellViewModel::promptContextInjectionChanged);
-    connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
+    connect(&controller_, &DesktopControllerBridge::voiceConfigurationChanged, this,
             &DesktopShellViewModel::voiceConfigurationChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
@@ -429,10 +454,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
             &DesktopShellViewModel::permissionPolicyChanged);
-    connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
-            [this]() {
-                controller_.setToolPermissionPolicyState(settings_.defaultPermissionPolicyState());
-            });
+    connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this, [this]() {
+        controller_.setToolPermissionPolicyState(settings_.defaultPermissionPolicyState());
+    });
     connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
             &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
@@ -488,8 +512,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
             [this]() { controller_.setPiperModelPath(settings_.piperModelPath()); });
     auto refreshSpeechTts = [this] {
-        controller_.configureSpeechTts(settings_.selectedTtsEngine(),
-                                       settings_.kokoroModelPath(), settings_.kokoroVoice());
+        controller_.configureSpeechTts(settings_.selectedTtsEngine(), settings_.kokoroModelPath(),
+                                       settings_.kokoroVoice());
         emit voiceConfigurationChanged();
     };
     connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this, refreshSpeechTts);
@@ -511,37 +535,40 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::soundEffectsEnabledChanged);
     connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this,
             [this]() { controller_.setAgentAutonomousMode(settings_.agentAutonomousMode()); });
-    if (controller_.lmStudioEndpoint() != settings_.lmStudioEndpoint())
-        controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
-    if (controller_.llamaCppEndpoint() != settings_.llamaCppEndpoint())
-        controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
-    controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
-    controller_.setSelectedLocalModel(
-        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
-    controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
-    controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
-    controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
-    controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
-    controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
-    controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
-    controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
-    controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
-    controller_.setPiperBinaryPath(settings_.piperBinaryPath());
-    controller_.setPiperModelPath(settings_.piperModelPath());
-    controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
-    controller_.setWhisperModelPath(settings_.whisperModelPath());
-    controller_.configureSpeechTts(settings_.selectedTtsEngine(),
-                                   settings_.kokoroModelPath(), settings_.kokoroVoice());
-    controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
-    controller_.setWhisperTranscriptionExecutionEnabled(
-        settings_.whisperTranscriptionExecutionEnabled());
-    controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
-    controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
-                                   settings_.webSearchMaxResults());
-    controller_.configureMcpServers(settings_.mcpServersJson());
-    controller_.setSemanticProvider(settings_.semanticProvider(),
-                                    settings_.semanticEmbeddingModel());
-    if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
+    if (!controller_.isRemote()) {
+        if (controller_.lmStudioEndpoint() != settings_.lmStudioEndpoint())
+            controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
+        if (controller_.llamaCppEndpoint() != settings_.llamaCppEndpoint())
+            controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
+        controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
+        controller_.setSelectedLocalModel(
+            settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
+        controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
+        controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+        controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
+        controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
+        controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
+        controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
+        controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
+        controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
+        controller_.setPiperBinaryPath(settings_.piperBinaryPath());
+        controller_.setPiperModelPath(settings_.piperModelPath());
+        controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
+        controller_.setWhisperModelPath(settings_.whisperModelPath());
+        controller_.configureSpeechTts(settings_.selectedTtsEngine(), settings_.kokoroModelPath(),
+                                       settings_.kokoroVoice());
+        controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
+        controller_.setWhisperTranscriptionExecutionEnabled(
+            settings_.whisperTranscriptionExecutionEnabled());
+        controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
+        controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
+                                       settings_.webSearchMaxResults());
+        controller_.configureMcpServers(settings_.mcpServersJson());
+        controller_.setSemanticProvider(settings_.semanticProvider(),
+                                        settings_.semanticEmbeddingModel());
+    }
+    if (!controller_.isRemote() &&
+        controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
     }
 
@@ -610,11 +637,16 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                     lastNotifiedCategory_ = category;
                     lastNotificationTime_ = now;
 
+                    if (controller_.isRemote()) {
+                        emit nativeNotificationRequested(title, body, category);
+                        continue;
+                    }
                     if (!trayIcon_) {
                         trayIcon_ = new QSystemTrayIcon(this);
-                        QIcon appIcon = QIcon::fromTheme(
-                            QStringLiteral("preferences-desktop-notification"),
-                            QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
+                        QIcon appIcon(QStringLiteral(":/branding/tray.png"));
+#if defined(Q_OS_MACOS)
+                        appIcon.setIsMask(true);
+#endif
                         trayIcon_->setIcon(appIcon);
                         trayIcon_->show();
 
@@ -1252,12 +1284,17 @@ QStringList DesktopShellViewModel::runtimeIntegrationReadinessChecks() const {
 }
 
 QString DesktopShellViewModel::selectedRuntimeProvider() const {
+    if (controller_.isRemote())
+        return controller_.selectedRuntimeProvider();
     return settings_.selectedRuntimeProvider();
 }
 
 void DesktopShellViewModel::setSelectedRuntimeProvider(const QString& providerId) {
     controller_.setSelectedRuntimeProvider(providerId);
-    const auto providerModel = settings_.selectedModelForProvider(controller_.selectedRuntimeProvider());
+    if (controller_.isRemote())
+        return;
+    const auto providerModel =
+        settings_.selectedModelForProvider(controller_.selectedRuntimeProvider());
     if (controller_.selectedLocalModel() != providerModel)
         controller_.setSelectedLocalModel(providerModel);
 }
@@ -1367,9 +1404,9 @@ QString DesktopShellViewModel::ollamaEndpoint() const {
 }
 
 void DesktopShellViewModel::setOllamaEndpoint(const QString& endpoint) {
-    const auto result = core::SettingsService(settings_, controller_.modelService())
-                            .set(QStringLiteral("models.ollama-endpoint"), endpoint);
-    if (result.accepted && controller_.ollamaEndpoint() != settings_.ollamaEndpoint())
+    const auto result = setProductSetting(QStringLiteral("models.ollama-endpoint"), endpoint);
+    if (result.value("accepted").toBool() &&
+        controller_.ollamaEndpoint() != settings_.ollamaEndpoint())
         controller_.setOllamaEndpoint(settings_.ollamaEndpoint());
 }
 
@@ -1378,9 +1415,9 @@ QString DesktopShellViewModel::lmStudioEndpoint() const {
 }
 
 void DesktopShellViewModel::setLmStudioEndpoint(const QString& endpoint) {
-    const auto result = core::SettingsService(settings_, controller_.modelService())
-                            .set(QStringLiteral("models.lm-studio-endpoint"), endpoint);
-    if (result.accepted) controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
+    const auto result = setProductSetting(QStringLiteral("models.lm-studio-endpoint"), endpoint);
+    if (result.value("accepted").toBool())
+        controller_.setLmStudioEndpoint(settings_.lmStudioEndpoint());
 }
 
 QString DesktopShellViewModel::llamaCppEndpoint() const {
@@ -1388,9 +1425,9 @@ QString DesktopShellViewModel::llamaCppEndpoint() const {
 }
 
 void DesktopShellViewModel::setLlamaCppEndpoint(const QString& endpoint) {
-    const auto result = core::SettingsService(settings_, controller_.modelService())
-                            .set(QStringLiteral("models.llama-cpp-endpoint"), endpoint);
-    if (result.accepted) controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
+    const auto result = setProductSetting(QStringLiteral("models.llama-cpp-endpoint"), endpoint);
+    if (result.value("accepted").toBool())
+        controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
 }
 
 QString DesktopShellViewModel::cloudApiEndpoint() const {
@@ -2206,11 +2243,13 @@ void DesktopShellViewModel::startVoiceCapture() {
 }
 
 void DesktopShellViewModel::stopVoiceCapture() {
-    if (auto* session = controller_.audioSession()) session->stopPushToTalk();
+    if (auto* session = controller_.audioSession())
+        session->stopPushToTalk();
 }
 
 void DesktopShellViewModel::transcribeAudioFile(const QString& path) {
-    if (auto* session = controller_.audioSession()) session->transcribeAudioFile(path);
+    if (auto* session = controller_.audioSession())
+        session->transcribeAudioFile(path);
 }
 
 bool DesktopShellViewModel::generatePiperTtsFile(const QString& text) {
@@ -3718,7 +3757,12 @@ QString DesktopShellViewModel::webSearchApiKey() const {
 }
 
 void DesktopShellViewModel::setWebSearchApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("web-search"), key);
+        return;
+    }
     settings_.setWebSearchApiKey(key);
 }
 
@@ -3785,8 +3829,7 @@ QString DesktopShellViewModel::themeName() const {
 }
 
 void DesktopShellViewModel::setThemeName(const QString& themeName) {
-    core::SettingsService(settings_, controller_.modelService()).set(
-        QStringLiteral("appearance.theme"), themeName);
+    setProductSetting(QStringLiteral("appearance.theme"), themeName);
 }
 
 QString DesktopShellViewModel::configurationProfile() const {
@@ -3802,8 +3845,7 @@ QString DesktopShellViewModel::appLanguage() const {
 }
 
 void DesktopShellViewModel::setAppLanguage(const QString& language) {
-    core::SettingsService(settings_, controller_.modelService()).set(
-        QStringLiteral("general.language"), language);
+    setProductSetting(QStringLiteral("general.language"), language);
 }
 
 QStringList DesktopShellViewModel::availableLanguages() const {
@@ -4037,8 +4079,7 @@ QString DesktopShellViewModel::updateCheckPolicy() const {
 }
 
 void DesktopShellViewModel::setUpdateCheckPolicy(const QString& policy) {
-    core::SettingsService(settings_, controller_.modelService()).set(
-        QStringLiteral("network.update-check"), policy);
+    setProductSetting(QStringLiteral("network.update-check"), policy);
 }
 
 QString DesktopShellViewModel::updateCheckUrl() const {
@@ -4073,8 +4114,7 @@ QString DesktopShellViewModel::notificationPolicy() const {
 }
 
 void DesktopShellViewModel::setNotificationPolicy(const QString& policy) {
-    core::SettingsService(settings_, controller_.modelService()).set(
-        QStringLiteral("notifications.policy"), policy);
+    setProductSetting(QStringLiteral("notifications.policy"), policy);
 }
 
 bool DesktopShellViewModel::onboardingComplete() const {
@@ -4089,29 +4129,30 @@ void DesktopShellViewModel::setOnboardingComplete(bool complete) {
 }
 
 int DesktopShellViewModel::onboardingStepIndex() const {
-    return static_cast<int>(core::OnboardingService(settings_, controller_.modelService())
-                                .snapshot().step);
+    return static_cast<int>(
+        core::OnboardingService(settings_, controller_.modelService()).snapshot().step);
 }
 
 QString DesktopShellViewModel::onboardingProcessingMode() const {
-    return core::OnboardingService(settings_, controller_.modelService())
-        .snapshot().processingMode;
+    return core::OnboardingService(settings_, controller_.modelService()).snapshot().processingMode;
 }
 
 void DesktopShellViewModel::setOnboardingProcessingMode(const QString& mode) {
-    const auto result = core::OnboardingService(settings_, controller_.modelService())
-                            .chooseProcessingMode(mode);
+    const auto result =
+        core::OnboardingService(settings_, controller_.modelService()).chooseProcessingMode(mode);
     onboardingErrorCode_ = result.errorCode;
     emit onboardingStateChanged();
 }
 
 QString DesktopShellViewModel::onboardingErrorText() const {
-    return onboardingErrorCode_.isEmpty() ? QString{}
-        : core::ProductMessages::present({onboardingErrorCode_, {}, {}});
+    return onboardingErrorCode_.isEmpty()
+               ? QString{}
+               : core::ProductMessages::present({onboardingErrorCode_, {}, {}});
 }
 
 bool DesktopShellViewModel::advanceOnboarding(bool skip) {
-    const auto result = core::OnboardingService(settings_, controller_.modelService()).advance(skip);
+    const auto result =
+        core::OnboardingService(settings_, controller_.modelService()).advance(skip);
     onboardingErrorCode_ = result.errorCode;
     emit onboardingStateChanged();
     return result.accepted;
@@ -4144,38 +4185,56 @@ QVariantMap DesktopShellViewModel::onboardingState() const {
 }
 
 static core::SettingsService composedSettingsService(core::AppSettings& settings,
-                                                     core::ApplicationController& controller) {
-    return core::SettingsService(settings, controller.modelService(),
-        controller.extensionService(), controller.audioSession(), controller.permissionService(),
-        controller.conversationStore(), controller.memoryStore(),
-        controller.mutableAgentRunStore(), controller.chatHistoryStore(),
-        controller.modelOperations());
+                                                     const DesktopControllerBridge& controller) {
+    return core::SettingsService(settings, controller.modelService(), controller.extensionService(),
+                                 controller.audioSession(), controller.permissionService(),
+                                 controller.conversationStore(), controller.memoryStore(),
+                                 controller.mutableAgentRunStore(), controller.chatHistoryStore(),
+                                 controller.modelOperations());
 }
 
 QVariantList DesktopShellViewModel::productSettings() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("productSettings"), {}, true)
+            .toMap()
+            .value("value")
+            .toList();
     auto service = composedSettingsService(settings_, controller_);
     QVariantList result;
     for (const auto& row : service.snapshots())
         result.append(QVariantMap{{QStringLiteral("id"), row.id},
-            {QStringLiteral("section"), static_cast<int>(row.section)},
-            {QStringLiteral("value"), row.value},
-            {QStringLiteral("defaultValue"), row.defaultValue},
-            {QStringLiteral("source"), row.source},
-            {QStringLiteral("allowedValues"), row.allowedValues},
-            {QStringLiteral("keywords"), row.keywords},
-            {QStringLiteral("scope"), static_cast<int>(row.scope)},
-            {QStringLiteral("enabled"), row.enabled},
-            {QStringLiteral("restartRequired"), row.restartRequired},
-            {QStringLiteral("sensitive"), row.sensitive},
-            {QStringLiteral("unavailableReason"), row.unavailableReason}});
+                                  {QStringLiteral("section"), static_cast<int>(row.section)},
+                                  {QStringLiteral("value"), row.value},
+                                  {QStringLiteral("defaultValue"), row.defaultValue},
+                                  {QStringLiteral("source"), row.source},
+                                  {QStringLiteral("allowedValues"), row.allowedValues},
+                                  {QStringLiteral("keywords"), row.keywords},
+                                  {QStringLiteral("scope"), static_cast<int>(row.scope)},
+                                  {QStringLiteral("enabled"), row.enabled},
+                                  {QStringLiteral("restartRequired"), row.restartRequired},
+                                  {QStringLiteral("sensitive"), row.sensitive},
+                                  {QStringLiteral("unavailableReason"), row.unavailableReason}});
     return result;
 }
 
 QStringList DesktopShellViewModel::productSettingsSections() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("productSettingsSections"), {}, true)
+            .toMap()
+            .value("value")
+            .toStringList();
     return composedSettingsService(settings_, controller_).sectionIds();
 }
 
 QVariantMap DesktopShellViewModel::setProductSetting(const QString& id, const QVariant& value) {
+    if (controller_.isRemote() && id != QStringLiteral("appearance.theme") &&
+        id != QStringLiteral("general.language") && id != QStringLiteral("notifications.policy") &&
+        id != QStringLiteral("network.update-check"))
+        return controller_.remote()
+            ->settingsService(QStringLiteral("setProductSetting"), {id, value}, false)
+            .toMap();
     auto result = composedSettingsService(settings_, controller_).set(id, value);
     if (result.accepted) {
         if (id == QLatin1String("models.ollama-endpoint"))
@@ -4186,11 +4245,18 @@ QVariantMap DesktopShellViewModel::setProductSetting(const QString& id, const QV
             controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
     }
     return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field},
+            {QStringLiteral("code"), result.code},
+            {QStringLiteral("field"), result.field},
             {QStringLiteral("parameters"), result.parameters.toVariantMap()}};
 }
 
 QVariantMap DesktopShellViewModel::resetProductSetting(const QString& id) {
+    if (controller_.isRemote() && id != QStringLiteral("appearance.theme") &&
+        id != QStringLiteral("general.language") && id != QStringLiteral("notifications.policy") &&
+        id != QStringLiteral("network.update-check"))
+        return controller_.remote()
+            ->settingsService(QStringLiteral("resetProductSetting"), {id}, false)
+            .toMap();
     auto result = composedSettingsService(settings_, controller_).reset(id);
     if (result.accepted) {
         if (id == QLatin1String("models.ollama-endpoint"))
@@ -4201,14 +4267,22 @@ QVariantMap DesktopShellViewModel::resetProductSetting(const QString& id) {
             controller_.setLlamaCppEndpoint(settings_.llamaCppEndpoint());
     }
     return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+            {QStringLiteral("code"), result.code},
+            {QStringLiteral("field"), result.field}};
 }
 
 QVariantList DesktopShellViewModel::resetProductSettingsSection(int section) {
-    if (section < 0 || section > static_cast<int>(core::SettingSection::Advanced)) return {};
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("resetProductSettingsSection"), {section}, false)
+            .toMap()
+            .value("value")
+            .toList();
+    if (section < 0 || section > static_cast<int>(core::SettingSection::Advanced))
+        return {};
     QVariantList result;
     for (const auto& item : composedSettingsService(settings_, controller_)
-            .resetSection(static_cast<core::SettingSection>(section)))
+                                .resetSection(static_cast<core::SettingSection>(section)))
         result.append(QVariantMap{{QStringLiteral("accepted"), item.accepted},
                                   {QStringLiteral("code"), item.code},
                                   {QStringLiteral("field"), item.field}});
@@ -4221,37 +4295,64 @@ QVariantList DesktopShellViewModel::resetProductSettingsSection(int section) {
 }
 
 QVariantMap DesktopShellViewModel::clearWorkspaceSettingOverride(const QString& workspaceId,
-                                                                  const QString& key) {
-    const auto result = composedSettingsService(settings_, controller_)
-        .clearWorkspaceOverride(workspaceId, key);
+                                                                 const QString& key) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("clearWorkspaceSettingOverride"), {workspaceId, key},
+                              false)
+            .toMap();
+    const auto result =
+        composedSettingsService(settings_, controller_).clearWorkspaceOverride(workspaceId, key);
     return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+            {QStringLiteral("code"), result.code},
+            {QStringLiteral("field"), result.field}};
 }
 
 QVariantMap DesktopShellViewModel::providerSettingsState(const QString& providerId) const {
-    return composedSettingsService(settings_, controller_)
-        .providerState(providerId).toVariantMap();
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("providerSettingsState"), {providerId}, true)
+            .toMap();
+    return composedSettingsService(settings_, controller_).providerState(providerId).toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::extensionSettingsState(const QString& extensionId) const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("extensionSettingsState"), {extensionId}, true)
+            .toMap();
     return composedSettingsService(settings_, controller_)
-        .extensionState(extensionId).toVariantMap();
+        .extensionState(extensionId)
+        .toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::performExtensionSettingsAction(const QString& extensionId,
-                                                                   int action) {
-    const auto result = composedSettingsService(settings_, controller_)
-        .performExtensionAction(extensionId, action);
+                                                                  int action) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("performExtensionSettingsAction"),
+                              {extensionId, action}, false)
+            .toMap();
+    const auto result =
+        composedSettingsService(settings_, controller_).performExtensionAction(extensionId, action);
     return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}, {QStringLiteral("field"), result.field}};
+            {QStringLiteral("code"), result.code},
+            {QStringLiteral("field"), result.field}};
 }
 
 QVariantMap DesktopShellViewModel::speechSettingsState() const {
-    return composedSettingsService(settings_, controller_)
-        .speechState().toVariantMap();
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("speechSettingsState"), {}, true)
+            .toMap();
+    return composedSettingsService(settings_, controller_).speechState().toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::securitySettingsState() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("securitySettingsState"), {}, true)
+            .toMap();
     auto state = composedSettingsService(settings_, controller_).securityState().toVariantMap();
     state.insert(QStringLiteral("latestSandboxStatus"), controller_.latestSandboxStatus());
     state.insert(QStringLiteral("latestSandboxSummary"), controller_.latestSandboxSummary());
@@ -4259,94 +4360,149 @@ QVariantMap DesktopShellViewModel::securitySettingsState() const {
 }
 
 QVariantMap DesktopShellViewModel::productPrivacyState() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("productPrivacyState"), {}, true)
+            .toMap();
     return composedSettingsService(settings_, controller_).privacyState().toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::productRecoveryState() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("productRecoveryState"), {}, true)
+            .toMap();
     return composedSettingsService(settings_, controller_).recoveryState().toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::productBackupAvailability() const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("productBackupAvailability"), {}, true)
+            .toMap();
     return composedSettingsService(settings_, controller_).backupAvailability().toVariantMap();
 }
 
 QVariantMap DesktopShellViewModel::exportProductBackup(const QStringList& domains) const {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("exportProductBackup"), {domains}, false)
+            .toMap();
     const auto result = composedSettingsService(settings_, controller_).exportBackupJson(domains);
     return {{QStringLiteral("succeeded"), result.succeeded()},
             {QStringLiteral("error"), static_cast<int>(result.error)},
-            {QStringLiteral("data"), result.data}, {QStringLiteral("detail"), result.detail}};
+            {QStringLiteral("data"), result.data},
+            {QStringLiteral("detail"), result.detail}};
 }
 
 QVariantMap DesktopShellViewModel::importProductBackup(const QByteArray& data,
-                                                        const QStringList& domains, bool replace) {
-    const auto result = composedSettingsService(settings_, controller_).importBackupJson(
-        data, domains, replace ? core::ImportMode::ReplaceSelectedDomains : core::ImportMode::Merge);
+                                                       const QStringList& domains, bool replace) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("importProductBackup"),
+                              {data.toBase64(), domains, replace}, false)
+            .toMap();
+    const auto result = composedSettingsService(settings_, controller_)
+                            .importBackupJson(data, domains,
+                                              replace ? core::ImportMode::ReplaceSelectedDomains
+                                                      : core::ImportMode::Merge);
     return {{QStringLiteral("succeeded"), result.succeeded()},
             {QStringLiteral("error"), static_cast<int>(result.error)},
             {QStringLiteral("detail"), result.detail}};
 }
 
 QVariantMap DesktopShellViewModel::clearProductData(const QString& domain) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("clearProductData"), {domain}, false)
+            .toMap();
     auto service = composedSettingsService(settings_, controller_);
     core::SettingActionResult result;
-    if (domain == QLatin1String("chat")) result = service.clearChatHistory();
-    else if (domain == QLatin1String("memory")) result = service.clearMemory();
-    else if (domain == QLatin1String("agentRuns")) result = service.clearAgentHistory();
-    else if (domain == QLatin1String("temporaryData")) result = service.clearStaleTemporaryArtifacts();
+    if (domain == QLatin1String("chat"))
+        result = service.clearChatHistory();
+    else if (domain == QLatin1String("memory"))
+        result = service.clearMemory();
+    else if (domain == QLatin1String("agentRuns"))
+        result = service.clearAgentHistory();
+    else if (domain == QLatin1String("temporaryData"))
+        result = service.clearStaleTemporaryArtifacts();
     else if (domain == QLatin1String("cacheAndTemporaryData")) {
         const auto cleanup = service.clearCacheAndTemporaryData();
-        return {{QStringLiteral("accepted"), !cleanup.value(QStringLiteral("partialFailure")).toBool()},
-                {QStringLiteral("parameters"), cleanup.toVariantMap()}};
-    }
-    else return {{QStringLiteral("accepted"), false},
-                 {QStringLiteral("code"), QStringLiteral("UnknownDataDomain")}};
+        return {
+            {QStringLiteral("accepted"), !cleanup.value(QStringLiteral("partialFailure")).toBool()},
+            {QStringLiteral("parameters"), cleanup.toVariantMap()}};
+    } else
+        return {{QStringLiteral("accepted"), false},
+                {QStringLiteral("code"), QStringLiteral("UnknownDataDomain")}};
     return {{QStringLiteral("accepted"), result.accepted},
             {QStringLiteral("code"), result.code},
             {QStringLiteral("parameters"), result.parameters.toVariantMap()}};
 }
 
 QVariantMap DesktopShellViewModel::runProductMaintenance() {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("runProductMaintenance"), {}, false)
+            .toMap();
     auto service = composedSettingsService(settings_, controller_);
     return service.runRetentionMaintenance().toVariantMap();
 }
 
-QVariantMap DesktopShellViewModel::resolveInterruptedModelOperation(
-    const QString& operationId) {
+QVariantMap DesktopShellViewModel::resolveInterruptedModelOperation(const QString& operationId) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("resolveInterruptedModelOperation"), {operationId},
+                              false)
+            .toMap();
     const auto result = composedSettingsService(settings_, controller_)
-        .resolveInterruptedModelOperation(operationId);
-    return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}};
+                            .resolveInterruptedModelOperation(operationId);
+    return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 
 QVariantMap DesktopShellViewModel::clearProductCredential(const QString& id) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("clearProductCredential"), {id}, false)
+            .toMap();
     const auto result = composedSettingsService(settings_, controller_).clearCredential(id);
-    return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}};
+    return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 
 QVariantMap DesktopShellViewModel::setProductProviderCredential(const QString& providerId,
-                                                                 const QString& value) {
-    const auto result = composedSettingsService(settings_, controller_)
-        .setProviderCredential(providerId, value);
-    return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}};
+                                                                const QString& value) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("setProductProviderCredential"), {providerId, value},
+                              false)
+            .toMap();
+    const auto result =
+        composedSettingsService(settings_, controller_).setProviderCredential(providerId, value);
+    return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 
 QVariantMap DesktopShellViewModel::setProductPluginCredential(const QString& pluginId,
-                                                               const QString& credentialId,
-                                                               const QString& value) {
+                                                              const QString& credentialId,
+                                                              const QString& value) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("setProductPluginCredential"),
+                              {pluginId, credentialId, value}, false)
+            .toMap();
     const auto result = composedSettingsService(settings_, controller_)
-        .setPluginCredential(pluginId, credentialId, value);
-    return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}};
+                            .setPluginCredential(pluginId, credentialId, value);
+    return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 
 QVariantMap DesktopShellViewModel::clearProductPluginCredential(const QString& pluginId,
-                                                                 const QString& credentialId) {
+                                                                const QString& credentialId) {
+    if (controller_.isRemote())
+        return controller_.remote()
+            ->settingsService(QStringLiteral("clearProductPluginCredential"),
+                              {pluginId, credentialId}, false)
+            .toMap();
     const auto result = composedSettingsService(settings_, controller_)
-        .clearPluginCredential(pluginId, credentialId);
-    return {{QStringLiteral("accepted"), result.accepted},
-            {QStringLiteral("code"), result.code}};
+                            .clearPluginCredential(pluginId, credentialId);
+    return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 
 QString DesktopShellViewModel::onboardingUseCase() const {
@@ -4679,8 +4835,9 @@ QString DesktopShellViewModel::selectedWorkspaceId() const {
 }
 
 QString DesktopShellViewModel::selectedWorkspaceRootPath() const {
-    return workspaceService_.selectedWorkspace(selectedWorkspaceId(),
-                                               settings_.workspaceCatalogJson()).rootPath;
+    return workspaceService_
+        .selectedWorkspace(selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .rootPath;
 }
 
 bool DesktopShellViewModel::workspaceRequiresLocalProvider() const {
@@ -4713,68 +4870,78 @@ QStringList DesktopShellViewModel::presetNames() const {
     return names;
 }
 
-bool DesktopShellViewModel::setWorkspaceProfile(const QString& workspaceId,
-                                                const QString& presetId,
+bool DesktopShellViewModel::setWorkspaceProfile(const QString& workspaceId, const QString& presetId,
                                                 const QVariantMap& overrides) {
     if (workspaceService_.normalizedWorkspaceId(workspaceId, settings_.workspaceCatalogJson()) !=
-        workspaceId) return false;
-    const auto json = workspaceService_.updateProfile(settings_.workspaceProfilesJson(),
-                                                     workspaceId, presetId,
-                                                     QJsonObject::fromVariantMap(overrides));
-    if (json.isEmpty()) return false;
+        workspaceId)
+        return false;
+    const auto json =
+        workspaceService_.updateProfile(settings_.workspaceProfilesJson(), workspaceId, presetId,
+                                        QJsonObject::fromVariantMap(overrides));
+    if (json.isEmpty())
+        return false;
     settings_.setWorkspaceProfilesJson(json);
     return true;
 }
 
-QString DesktopShellViewModel::createPreset(const QString& name,
-                                             const QVariantMap& preferences) {
+QString DesktopShellViewModel::createPreset(const QString& name, const QVariantMap& preferences) {
     const auto before = workspaceService_.presets(settings_.workspaceProfilesJson());
     const auto json = workspaceService_.createPreset(settings_.workspaceProfilesJson(), name,
                                                      QJsonObject::fromVariantMap(preferences));
-    if (json.isEmpty()) return {};
+    if (json.isEmpty())
+        return {};
     settings_.setWorkspaceProfilesJson(json);
     const auto after = workspaceService_.presets(json);
     for (const auto& preset : after) {
-        const auto existing = std::find_if(before.cbegin(), before.cend(),
+        const auto existing = std::find_if(
+            before.cbegin(), before.cend(),
             [&preset](const core::WorkspacePreset& item) { return item.id == preset.id; });
-        if (existing == before.cend()) return preset.id;
+        if (existing == before.cend())
+            return preset.id;
     }
     return {};
 }
 
 bool DesktopShellViewModel::renamePreset(const QString& presetId, const QString& name) {
-    const auto json = workspaceService_.renamePreset(settings_.workspaceProfilesJson(), presetId, name);
-    if (json.isEmpty()) return false;
+    const auto json =
+        workspaceService_.renamePreset(settings_.workspaceProfilesJson(), presetId, name);
+    if (json.isEmpty())
+        return false;
     settings_.setWorkspaceProfilesJson(json);
     return true;
 }
 
-bool DesktopShellViewModel::updatePreset(const QString& presetId,
-                                          const QVariantMap& preferences) {
+bool DesktopShellViewModel::updatePreset(const QString& presetId, const QVariantMap& preferences) {
     const auto json = workspaceService_.updatePreset(settings_.workspaceProfilesJson(), presetId,
-                                                      QJsonObject::fromVariantMap(preferences));
-    if (json.isEmpty()) return false;
+                                                     QJsonObject::fromVariantMap(preferences));
+    if (json.isEmpty())
+        return false;
     settings_.setWorkspaceProfilesJson(json);
     return true;
 }
 
 QString DesktopShellViewModel::duplicatePreset(const QString& presetId) {
     const auto before = workspaceService_.presets(settings_.workspaceProfilesJson());
-    const auto json = workspaceService_.duplicatePreset(settings_.workspaceProfilesJson(), presetId);
-    if (json.isEmpty()) return {};
+    const auto json =
+        workspaceService_.duplicatePreset(settings_.workspaceProfilesJson(), presetId);
+    if (json.isEmpty())
+        return {};
     settings_.setWorkspaceProfilesJson(json);
     const auto after = workspaceService_.presets(json);
     for (const auto& preset : after) {
-        const auto existing = std::find_if(before.cbegin(), before.cend(),
+        const auto existing = std::find_if(
+            before.cbegin(), before.cend(),
             [&preset](const core::WorkspacePreset& item) { return item.id == preset.id; });
-        if (existing == before.cend()) return preset.id;
+        if (existing == before.cend())
+            return preset.id;
     }
     return {};
 }
 
 bool DesktopShellViewModel::deletePreset(const QString& presetId) {
     const auto json = workspaceService_.deletePreset(settings_.workspaceProfilesJson(), presetId);
-    if (json.isEmpty()) return false;
+    if (json.isEmpty())
+        return false;
     settings_.setWorkspaceProfilesJson(json);
     return true;
 }
@@ -4785,8 +4952,8 @@ void DesktopShellViewModel::setSelectedWorkspaceId(const QString& workspaceId) {
 }
 
 bool DesktopShellViewModel::setWorkspaceRoot(const QString& workspaceId, const QString& rootPath) {
-    const auto result = workspaceService_.setWorkspaceRoot(settings_.workspaceCatalogJson(),
-                                                           workspaceId, rootPath);
+    const auto result =
+        workspaceService_.setWorkspaceRoot(settings_.workspaceCatalogJson(), workspaceId, rootPath);
     workspaceLastActionStatus_ = result.status;
     workspaceLastActionSummary_ = result.summary;
     if (result.success)
@@ -5076,10 +5243,11 @@ QStringList DesktopShellViewModel::retrievalExplainabilitySummaries() const {
 QStringList DesktopShellViewModel::brainWorkspaceSummaries() const {
     const auto* controlled = controller_.controlledTasks();
     const auto taskCount = [controlled, this](const QString& state) {
-        return controlled ? controlled->presentation()
-                                .timelineSummaries(controlled->tasks(), selectedWorkspaceId(), state)
-                                .size()
-                          : 0;
+        return controlled
+                   ? controlled->presentation()
+                         .timelineSummaries(controlled->tasks(), selectedWorkspaceId(), state)
+                         .size()
+                   : 0;
     };
     return {
         QStringLiteral("Workspace Timeline - %1 / %2")
@@ -5089,14 +5257,10 @@ QStringList DesktopShellViewModel::brainWorkspaceSummaries() const {
             .arg(localKnowledgeBaseStatus())
             .arg(knowledgeBaseDocumentSummaries().size()),
         QStringLiteral("Recent Retrievals - %1 record(s)").arg(recentRetrievalSummaries().size()),
-        QStringLiteral("Planned Tasks - %1")
-            .arg(taskCount(QStringLiteral("pending approval"))),
-        QStringLiteral("Completed Tasks - %1")
-            .arg(taskCount(QStringLiteral("completed"))),
-        QStringLiteral("Failed Tasks - %1")
-            .arg(taskCount(QStringLiteral("failed"))),
-        QStringLiteral("Cancelled Tasks - %1")
-            .arg(taskCount(QStringLiteral("cancelled"))),
+        QStringLiteral("Planned Tasks - %1").arg(taskCount(QStringLiteral("pending approval"))),
+        QStringLiteral("Completed Tasks - %1").arg(taskCount(QStringLiteral("completed"))),
+        QStringLiteral("Failed Tasks - %1").arg(taskCount(QStringLiteral("failed"))),
+        QStringLiteral("Cancelled Tasks - %1").arg(taskCount(QStringLiteral("cancelled"))),
     };
 }
 
@@ -5343,8 +5507,7 @@ QString DesktopShellViewModel::defaultPermissionPolicyState() const {
 }
 
 void DesktopShellViewModel::setDefaultPermissionPolicyState(const QString& state) {
-    core::SettingsService(settings_, controller_.modelService()).set(
-        QStringLiteral("privacy.permission-policy"), state);
+    setProductSetting(QStringLiteral("privacy.permission-policy"), state);
 }
 
 QString DesktopShellViewModel::permissionPolicyStatus() const {
@@ -5651,7 +5814,8 @@ QString DesktopShellViewModel::controlledTaskProgressSummary() const {
                 step.state == core::ControlledTaskState::Failed)
                 ++completed;
         return QStringLiteral("%1 of %2 step(s) resolved. Remaining: %3.")
-            .arg(completed).arg(task.steps.size())
+            .arg(completed)
+            .arg(task.steps.size())
             .arg(std::max(0, static_cast<int>(task.steps.size()) - completed));
     }
     return QStringLiteral("No running task progress.");
@@ -5697,8 +5861,8 @@ QStringList DesktopShellViewModel::controlledTaskExplainabilitySummaries() const
 
 QStringList DesktopShellViewModel::controlledTaskPermissionSummaries() const {
     const auto* service = controller_.controlledTasks();
-    return service ? service->presentation().permissionSummaries(
-                         service->permissions(), selectedWorkspaceId())
+    return service ? service->presentation().permissionSummaries(service->permissions(),
+                                                                 selectedWorkspaceId())
                    : QStringList{};
 }
 
@@ -5718,8 +5882,8 @@ QString DesktopShellViewModel::controlledTaskDiagnosticsSummary() const {
         return {};
     const auto diagnostics = service->presentation().diagnostics(service->tasks());
     return QStringLiteral("%1 / Last completed: %2 / Approvals: %3 / Failures: %4")
-        .arg(diagnostics.activeTask, diagnostics.lastCompletedTask,
-             diagnostics.approvalStatistics, diagnostics.failureStatistics);
+        .arg(diagnostics.activeTask, diagnostics.lastCompletedTask, diagnostics.approvalStatistics,
+             diagnostics.failureStatistics);
 }
 
 QStringList DesktopShellViewModel::controlledTaskSafetyGuarantees() const {
@@ -5788,8 +5952,8 @@ bool DesktopShellViewModel::reorderControlledAgentTask(const QString& taskId, in
 bool DesktopShellViewModel::setControlledToolPermission(const QString& category,
                                                         const QString& choice) {
     auto* service = controller_.controlledTasks();
-    return service && service->setPermission(selectedWorkspaceId(), category.trimmed(),
-                                             choice.trimmed());
+    return service &&
+           service->setPermission(selectedWorkspaceId(), category.trimmed(), choice.trimmed());
 }
 
 bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
@@ -5839,7 +6003,8 @@ bool DesktopShellViewModel::regenerateChatResponse(int userMessageId) {
 bool DesktopShellViewModel::regenerateLatestChatResponse() {
     int latestUserId = 0;
     for (const auto& message : controller_.chatHistory())
-        if (message.role == core::ChatRole::User) latestUserId = message.id;
+        if (message.role == core::ChatRole::User)
+            latestUserId = message.id;
     return latestUserId > 0 && controller_.regenerateChatResponse(latestUserId);
 }
 
@@ -5847,8 +6012,7 @@ bool DesktopShellViewModel::retryChatResponse(int assistantMessageId) {
     return controller_.retryChatResponse(assistantMessageId);
 }
 
-QString DesktopShellViewModel::editAndResendChatMessage(int userMessageId,
-                                                        const QString& text) {
+QString DesktopShellViewModel::editAndResendChatMessage(int userMessageId, const QString& text) {
     return controller_.editAndResendChatMessage(userMessageId, text);
 }
 
@@ -6609,7 +6773,7 @@ bool DesktopShellViewModel::requestConversationExport(const QString& format) {
 
 QString DesktopShellViewModel::createConversation(const QString& title) {
     const auto conversationId = controller_.createConversation(title);
-    if (!conversationId.isEmpty()) {
+    if (!controller_.isRemote() && !conversationId.isEmpty()) {
         settings_.setActiveConversationId(conversationId);
     }
     return conversationId;
@@ -6757,7 +6921,12 @@ QString DesktopShellViewModel::openAiApiKey() const {
 }
 
 void DesktopShellViewModel::setOpenAiApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("openai"), key);
+        return;
+    }
     settings_.setOpenAiApiKey(key);
 }
 
@@ -6766,7 +6935,12 @@ QString DesktopShellViewModel::claudeApiKey() const {
 }
 
 void DesktopShellViewModel::setClaudeApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("claude"), key);
+        return;
+    }
     settings_.setClaudeApiKey(key);
 }
 
@@ -6775,7 +6949,12 @@ QString DesktopShellViewModel::geminiApiKey() const {
 }
 
 void DesktopShellViewModel::setGeminiApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("gemini"), key);
+        return;
+    }
     settings_.setGeminiApiKey(key);
 }
 
@@ -6784,7 +6963,12 @@ QString DesktopShellViewModel::deepseekApiKey() const {
 }
 
 void DesktopShellViewModel::setDeepseekApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("deepseek"), key);
+        return;
+    }
     settings_.setDeepseekApiKey(key);
 }
 
@@ -6793,7 +6977,12 @@ QString DesktopShellViewModel::groqApiKey() const {
 }
 
 void DesktopShellViewModel::setGroqApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("groq"), key);
+        return;
+    }
     settings_.setGroqApiKey(key);
 }
 
@@ -6802,7 +6991,12 @@ QString DesktopShellViewModel::mistralApiKey() const {
 }
 
 void DesktopShellViewModel::setMistralApiKey(const QString& key) {
-    if (key.trimmed().isEmpty()) return;
+    if (key.trimmed().isEmpty())
+        return;
+    if (controller_.isRemote()) {
+        setProductProviderCredential(QStringLiteral("mistral"), key);
+        return;
+    }
     settings_.setMistralApiKey(key);
 }
 
@@ -6832,4 +7026,24 @@ QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
     return pages.contains(trimmed) ? trimmed : QStringLiteral("Dashboard");
 }
 
+} // namespace sentinel::desktop
+
+namespace sentinel::desktop {
+bool DesktopShellViewModel::respondToDaemonApproval(bool allow) {
+    return controller_.remote() && controller_.remote()->respondToApproval(allow);
+}
+bool DesktopShellViewModel::cancelDaemonRun() {
+    return controller_.remote() && controller_.remote()->cancelRun();
+}
+QVariantMap DesktopShellViewModel::pendingDaemonApproval() const {
+    return controller_.remote() ? controller_.remote()->pendingApproval().toVariantMap()
+                                : QVariantMap{};
+}
+QString DesktopShellViewModel::daemonConnectionStatus() const {
+    return controller_.remote() ? controller_.remote()->transport().statusSummary()
+                                : QStringLiteral("Legacy test fixture");
+}
+bool DesktopShellViewModel::daemonConnected() const {
+    return controller_.remote() && controller_.remote()->transport().daemonReachable();
+}
 } // namespace sentinel::desktop

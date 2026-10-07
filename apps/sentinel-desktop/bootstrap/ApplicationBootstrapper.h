@@ -7,10 +7,10 @@
 
 #include "SingleInstanceGuard.h"
 
-#include "sentinel/core/app/AppSettings.h"
-#include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/app/AgentInspectorService.h"
+#include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
+#include "sentinel/desktop/DesktopRuntimeClient.h"
 #include "sentinel/desktop/DesktopShellViewModel.h"
 #include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
 
@@ -50,7 +50,8 @@ private:
     sentinel::core::StandardPathProvider m_pathProvider;
     SingleInstanceGuard m_singleInstanceGuard;
     std::unique_ptr<sentinel::core::AppSettings> m_settings;
-    std::unique_ptr<sentinel::core::ApplicationController> m_controller;
+    std::unique_ptr<DaemonClient> m_daemonClient;
+    std::unique_ptr<DesktopRuntimeClient> m_runtimeClient;
     std::unique_ptr<sentinel::core::AgentInspectorService> m_inspectorService;
     std::unique_ptr<AgentInspectorViewModel> m_inspectorViewModel;
     std::unique_ptr<sentinel::core::ModeManager> m_modeManager;

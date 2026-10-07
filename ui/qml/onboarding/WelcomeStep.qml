@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Sentinel.Desktop
@@ -29,21 +30,16 @@ Item {
             Layout.minimumHeight: 0
         }
 
-        Rectangle {
+        Image {
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 64
-            Layout.preferredHeight: 64
-            radius: 32
-            color: SentinelTheme.withAlpha(root.brandAccent, 0.12)
-            border.color: SentinelTheme.withAlpha(root.brandAccent, 0.35)
-            border.width: 1
-
-            Label {
-                anchors.centerIn: parent
-                text: qsTr("S")
-                color: root.brandAccent
-                font.pixelSize: 30
-                font.bold: true
+            Layout.preferredWidth: 220
+            Layout.preferredHeight: 48
+            source: "qrc:/branding/sentinel-lockup.svg"
+            fillMode: Image.PreserveAspectFit
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                colorization: 1.0
+                colorizationColor: SentinelTheme.textPrimary
             }
         }
 

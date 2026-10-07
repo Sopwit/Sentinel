@@ -1,4 +1,23 @@
+add_library(sentinel_desktop_ipc STATIC
+    include/sentinel/desktop/DaemonClient.h
+    src/DaemonClient.cpp
+)
+target_include_directories(sentinel_desktop_ipc PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/protocol
+)
+target_link_libraries(sentinel_desktop_ipc PUBLIC Qt6::Core Qt6::Network)
+sentinel_apply_compiler_flags(sentinel_desktop_ipc)
+
 add_library(sentinel_desktop_viewmodels STATIC
+    include/sentinel/desktop/QuickPanelController.h
+    src/QuickPanelController.cpp
+    include/sentinel/desktop/DesktopModelHelper.h
+    src/DesktopModelHelper.cpp
+    include/sentinel/desktop/DesktopRuntimeClient.h
+    include/sentinel/desktop/DesktopControllerBridge.h
+    src/DesktopRuntimeClient.cpp
+    src/DesktopControllerBridge.cpp
     include/sentinel/desktop/ChatMessageListModel.h
     include/sentinel/desktop/DesktopShellViewModel.h
     include/sentinel/desktop/viewmodels/ChatViewModel.h
@@ -33,6 +52,7 @@ target_include_directories(sentinel_desktop_viewmodels
 target_link_libraries(sentinel_desktop_viewmodels
     PUBLIC
         sentinel_core
+        sentinel_desktop_ipc
         Qt6::Core
         Qt6::Widgets
         Qt6::Network
@@ -40,7 +60,6 @@ target_link_libraries(sentinel_desktop_viewmodels
 
 qt_add_executable(sentinel-desktop
     include/sentinel/desktop/NativeCompanionAdapter.h
-    include/sentinel/desktop/DaemonClient.h
     bootstrap/ApplicationBootstrapper.h
     bootstrap/ApplicationBootstrapper.cpp
     bootstrap/GraphicsInitializer.h
@@ -53,7 +72,6 @@ qt_add_executable(sentinel-desktop
     bootstrap/SingleInstanceGuard.cpp
     main.cpp
     src/NativeCompanionAdapter.cpp
-    src/DaemonClient.cpp
 )
 
 set(SENTINEL_TRANSLATION_SOURCES
@@ -77,10 +95,33 @@ add_custom_target(update_translations
     COMMENT "Updating translation .ts files with Qt lupdate"
 )
 
-set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.png)
-set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.svg)
-set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.icns)
-set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.ico)
+set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/branding/app-icon/linux/512x512/apps/sentinel.png)
+set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/branding/app-icon/linux/scalable/apps/sentinel.svg)
+set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/branding/app-icon/macos/sentinel.icns)
+set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/branding/app-icon/windows/sentinel.ico)
+if(APPLE)
+    set(SENTINEL_TRAY_ICON ${CMAKE_SOURCE_DIR}/resources/branding/tray/macos/sentinel-tray-22-template@2x.png)
+elseif(WIN32)
+    set(SENTINEL_TRAY_ICON ${CMAKE_SOURCE_DIR}/resources/branding/tray/windows/sentinel-tray-32-black.png)
+else()
+    set(SENTINEL_TRAY_ICON ${CMAKE_SOURCE_DIR}/resources/branding/tray/linux/sentinel-tray-32-black.png)
+endif()
+set_source_files_properties(${SENTINEL_TRAY_ICON}
+    PROPERTIES QT_RESOURCE_ALIAS branding/tray.png)
+set(SENTINEL_WORDMARK ${CMAKE_SOURCE_DIR}/resources/branding/wordmark/sentinel-lockup.svg)
+set_source_files_properties(${SENTINEL_WORDMARK}
+    PROPERTIES QT_RESOURCE_ALIAS branding/sentinel-lockup.svg)
+
+# Branding inputs are required; never substitute a stale or system icon.
+foreach(SENTINEL_REQUIRED_BRAND_ASSET IN ITEMS
+        "${SENTINEL_APP_ICON_PNG}" "${SENTINEL_APP_ICON_SVG}"
+        "${SENTINEL_APP_ICON_ICNS}" "${SENTINEL_APP_ICON_ICO}"
+        "${SENTINEL_TRAY_ICON}" "${SENTINEL_WORDMARK}")
+    if(NOT EXISTS "${SENTINEL_REQUIRED_BRAND_ASSET}")
+        message(FATAL_ERROR "Missing authoritative branding asset: ${SENTINEL_REQUIRED_BRAND_ASSET}")
+    endif()
+endforeach()
+
 set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/packaging/windows/sentinel-desktop.exe.manifest)
 set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
 set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/macos/bundle/Info.plist.in)
@@ -132,6 +173,8 @@ qt_add_resources(sentinel-desktop sentinel_desktop_assets
     PREFIX /
     FILES
         ${SENTINEL_APP_ICON_PNG}
+        ${SENTINEL_TRAY_ICON}
+        ${SENTINEL_WORDMARK}
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/paperclip.svg
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/image.svg
         ${CMAKE_SOURCE_DIR}/resources/icons/lucide/file-text.svg
@@ -146,11 +189,16 @@ qt_add_resources(sentinel-desktop sentinel_desktop_assets
 )
 
 if(APPLE)
+    target_sources(sentinel-desktop PRIVATE src/MacNativeActivation.mm src/MacNativeNotifications.mm include/sentinel/desktop/MacNativeNotifications.h)
+    set_source_files_properties(src/MacNativeActivation.mm src/MacNativeNotifications.mm PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+    target_link_libraries(sentinel-desktop PRIVATE "-framework Carbon" "-framework AppKit" "-framework UserNotifications")
     target_sources(sentinel-desktop PRIVATE ${SENTINEL_APP_ICON_ICNS})
     set_source_files_properties(${SENTINEL_APP_ICON_ICNS}
         PROPERTIES
             MACOSX_PACKAGE_LOCATION Resources
     )
+elseif(WIN32)
+    target_link_libraries(sentinel-desktop PRIVATE user32)
 endif()
 
 if(WIN32)
@@ -264,6 +312,7 @@ target_link_libraries(sentinel-desktop
     PRIVATE
         sentinel_desktop_viewmodels
         sentinel_desktop_startup
+        sentinel_desktop_ipc
         sentinel_core
         Qt6::Core
         Qt6::Gui
@@ -277,7 +326,7 @@ set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE TRUE
     MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Desktop"
     MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.Sentinel"
-    MACOSX_BUNDLE_ICON_FILE "dev.sentinel.Sentinel.icns"
+    MACOSX_BUNDLE_ICON_FILE "sentinel.icns"
     MACOSX_BUNDLE_INFO_PLIST ${SENTINEL_MACOS_INFO_PLIST}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -308,6 +357,17 @@ if(APPLE)
     set_target_properties(sentinel-desktop PROPERTIES
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/packaging/macos/bundle/sentinel.entitlements"
     )
+    # Ninja/Make builds otherwise retain only the linker's executable signature,
+    # which does not bind Info.plist and cannot establish notification identity.
+    # Release packaging may replace this local signature with Developer ID signing.
+    if(NOT CMAKE_GENERATOR MATCHES "Xcode")
+        find_program(SENTINEL_CODESIGN_EXECUTABLE codesign REQUIRED)
+        add_custom_command(TARGET sentinel-desktop POST_BUILD
+            COMMAND ${SENTINEL_CODESIGN_EXECUTABLE} --force --sign -
+                --identifier ${SENTINEL_APP_ID} $<TARGET_BUNDLE_DIR:sentinel-desktop>
+            VERBATIM
+        )
+    endif()
 endif()
 
 if(MINGW)
@@ -375,11 +435,14 @@ if(UNIX AND NOT APPLE)
 
     install(FILES ${SENTINEL_APP_ICON_SVG}
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+        RENAME dev.sentinel.Sentinel.svg
     )
-
-    install(FILES ${SENTINEL_APP_ICON_PNG}
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/1024x1024/apps
-    )
+    foreach(SENTINEL_ICON_SIZE 16 22 24 32 48 64 128 256 512)
+        install(FILES ${CMAKE_SOURCE_DIR}/resources/branding/app-icon/linux/${SENTINEL_ICON_SIZE}x${SENTINEL_ICON_SIZE}/apps/sentinel.png
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SENTINEL_ICON_SIZE}x${SENTINEL_ICON_SIZE}/apps
+            RENAME dev.sentinel.Sentinel.png
+        )
+    endforeach()
 
     install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
