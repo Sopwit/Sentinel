@@ -9,7 +9,7 @@
     <key>CFBundleExecutable</key>
     <string>sentinel-desktop</string>
     <key>CFBundleIconFile</key>
-    <string>dev.sentinel.Sentinel.icns</string>
+    <string>sentinel.icns</string>
     <key>CFBundleIdentifier</key>
     <string>@SENTINEL_APP_ID@</string>
     <key>CFBundleInfoDictionaryVersion</key>

@@ -60,6 +60,7 @@ ApplicationWindow {
             MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         }
         function onRequestWindowActive(pageName) {
+            root.show()
             root.raise()
             root.requestActivate()
             if (pageName.length > 0) {
@@ -130,6 +131,13 @@ ApplicationWindow {
                 duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
                 easing.type: MotionTokens.enter
             }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            text: root.viewModel.daemonConnectionStatus
+            color: root.viewModel.daemonConnected ? SentinelTheme.textMuted : SentinelTheme.warning
+            Accessible.name: text
         }
 
         RowLayout {
@@ -353,6 +361,7 @@ ApplicationWindow {
     TrayCompanionWindow {
         id: trayCompanionWindow
         viewModel: root.viewModel
+        controller: quickPanelController
     }
 
     OnboardingScreen {
@@ -514,6 +523,58 @@ ApplicationWindow {
             } else {
                 updateModal.updateState = "error"
                 updateModal.errorMessage = qsTr("Download failed. Please check your network connection and try again.")
+            }
+        }
+    }
+
+    SentinelOverlayModal {
+        id: daemonApprovalModal
+        preferredWidth: 620
+        preferredHeight: 380
+        closePolicy: Popup.NoAutoClose
+        onOpened: daemonApprovalDeny.forceActiveFocus()
+        readonly property var approval: root.viewModel.pendingDaemonApproval
+        visible: root.viewModel.daemonConnected && !!approval.approval_id
+        contentItem: ColumnLayout {
+            spacing: SentinelTheme.spaceMd
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                text: qsTr("Tool approval required")
+                font.bold: true
+                color: SentinelTheme.textPrimary
+            }
+            Label {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceLg
+                Layout.rightMargin: SentinelTheme.spaceLg
+                text: (daemonApprovalModal.approval.tool || "") + "\n"
+                    + (daemonApprovalModal.approval.detail || "") + "\n"
+                    + qsTr("Risk: %1").arg(daemonApprovalModal.approval.risk || 0) + "\n"
+                    + (daemonApprovalModal.approval.resources || []).map(function(resource) {
+                        return qsTr("Resource: %1 (domain %2, access %3)").arg(resource.resource || "").arg(resource.domain).arg(resource.access)
+                    }).join("\n")
+                wrapMode: Text.WrapAnywhere
+                color: SentinelTheme.textPrimary
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                SentinelButton {
+                    text: qsTr("Cancel run")
+                    onClicked: root.viewModel.cancelDaemonRun()
+                }
+                Item { Layout.fillWidth: true }
+                SentinelButton {
+                    id: daemonApprovalDeny
+                    text: qsTr("Deny")
+                    onClicked: root.viewModel.respondToDaemonApproval(false)
+                }
+                SentinelButton {
+                    text: qsTr("Allow once")
+                    onClicked: root.viewModel.respondToDaemonApproval(true)
+                }
             }
         }
     }

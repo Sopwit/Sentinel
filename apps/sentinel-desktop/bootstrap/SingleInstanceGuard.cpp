@@ -41,6 +41,7 @@ bool SingleInstanceGuard::tryLockAndSetupIpc() {
 
     // Start IPC server for protocol handler URL forwarding
     QLocalServer::removeServer(sentinel::core::sentinelIpcServerName);
+    m_ipcServer.setSocketOptions(QLocalServer::UserAccessOption);
     m_ipcServer.listen(sentinel::core::sentinelIpcServerName);
 
     return true;
@@ -54,14 +55,20 @@ void SingleInstanceGuard::bindShellViewModel(DesktopShellViewModel* shellViewMod
 
     QObject::connect(&m_ipcServer, &QLocalServer::newConnection, this, [this]() {
         while (auto* socket = m_ipcServer.nextPendingConnection()) {
-            socket->waitForReadyRead(1000);
-            const QString url = QString::fromUtf8(socket->readAll());
-            if (!url.isEmpty() && m_shellViewModel) {
-                qInfo().noquote() << "Deep link received:" << url;
-                m_shellViewModel->addNotification(tr("System"), tr("Deep Link"),
-                                                  tr("Received: %1").arg(url));
-            }
-            socket->deleteLater();
+            auto buffer = std::make_shared<QByteArray>();
+            connect(socket, &QLocalSocket::readyRead, this, [this, socket, buffer] {
+                buffer->append(socket->readAll());
+                if (buffer->size() > 512) {
+                    socket->abort();
+                    return;
+                }
+            });
+            connect(socket, &QLocalSocket::disconnected, this, [this, socket, buffer] {
+                buffer->append(socket->readAll());
+                if (!buffer->isEmpty() && buffer->size() <= 512)
+                    emit deepLinkReceived(QString::fromUtf8(*buffer));
+                socket->deleteLater();
+            });
         }
     });
 }

@@ -1,310 +1,442 @@
-// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
-//
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "sentinel/desktop/NativeCompanionAdapter.h"
-
-#include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/desktop/DesktopShellViewModel.h"
-
-#include <QAction>
+#include "sentinel/desktop/QuickPanelController.h"
 #include <QApplication>
-#include <QGuiApplication>
+#include <QCloseEvent>
+#include <QCursor>
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QFileOpenEvent>
 #include <QIcon>
-#include <QKeySequence>
+#include <QKeyEvent>
 #include <QMenu>
+#include <QQuickWindow>
+#include <QSaveFile>
+#include <QScreen>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QSystemTrayIcon>
 #include <QWindow>
-
-namespace sentinel::desktop {
-
-namespace {
-
-bool headlessQtPlatform() {
-    const QString platformName = QGuiApplication::platformName().toLower();
-    return platformName == QStringLiteral("offscreen") || platformName == QStringLiteral("minimal");
-}
-
-} // namespace
-
-NativeCompanionAdapter::NativeCompanionAdapter(DesktopShellViewModel& viewModel,
-                                               sentinel::core::AppSettings& settings,
-                                               QObject* rootWindow, QObject* parent)
-    : QObject(parent), viewModel_(viewModel), settings_(settings),
-      window_(qobject_cast<QWindow*>(rootWindow)) {
-    initialize();
-}
-
-NativeCompanionAdapter::~NativeCompanionAdapter() = default;
-
-void NativeCompanionAdapter::applyMenuStylesheet() {
-    if (!menu_)
-        return;
-
-    const QString theme = settings_.themeName();
-    const bool isLight = theme.contains(QStringLiteral("Light"), Qt::CaseInsensitive);
-
-    if (isLight) {
-        menu_->setStyleSheet(QStringLiteral(R"(
-            QMenu {
-                background-color: #ffffff;
-                color: #1f2937;
-                border: 1px solid rgba(79, 142, 247, 0.35);
-                border-radius: 10px;
-                padding: 6px;
-            }
-            QMenu::item {
-                padding: 7px 28px 7px 12px;
-                border-radius: 6px;
-                font-size: 13px;
-                font-weight: 500;
-            }
-            QMenu::item:disabled {
-                color: #9ca3af;
-                background-color: transparent;
-                font-weight: 600;
-            }
-            QMenu::item:selected:enabled {
-                background-color: rgba(79, 142, 247, 0.15);
-                color: #2563eb;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: rgba(0, 0, 0, 0.08);
-                margin: 4px 8px;
-            }
-        )"));
-    } else {
-        menu_->setStyleSheet(QStringLiteral(R"(
-            QMenu {
-                background-color: #111827;
-                color: #f3f4f6;
-                border: 1px solid rgba(56, 189, 248, 0.30);
-                border-radius: 10px;
-                padding: 6px;
-            }
-            QMenu::item {
-                padding: 7px 28px 7px 12px;
-                border-radius: 6px;
-                font-size: 13px;
-                font-weight: 500;
-            }
-            QMenu::item:disabled {
-                color: #9ca3af;
-                background-color: transparent;
-                font-weight: 600;
-            }
-            QMenu::item:selected:enabled {
-                background-color: rgba(56, 189, 248, 0.20);
-                color: #38bdf8;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: rgba(255, 255, 255, 0.10);
-                margin: 4px 8px;
-            }
-        )"));
-    }
-}
-
-void NativeCompanionAdapter::initialize() {
-    if (headlessQtPlatform()) {
-        viewModel_.setCompanionNativeAvailable(false);
-        return;
-    }
-
-    menu_ = std::make_unique<QMenu>();
-    applyMenuStylesheet();
-
-    // ── Header / Status Section ──────────────────────────────
-    headerAction_ = menu_->addAction(QStringLiteral("Sentinel AI • Ready (Local Ollama)"));
-    headerAction_->setEnabled(false);
-    menu_->addSeparator();
-
-    // ── Core Assistant Actions ───────────────────────────────
-    quickChatAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/message-circle.svg")),
-                                     QStringLiteral("Quick Prompt (Tray Chat)"));
-    quickChatAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
-
-    newConversationAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/sparkles.svg")),
-                                     QStringLiteral("New Conversation"));
-    newConversationAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
-
-    openAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/device-desktop.svg")),
-                                     QStringLiteral("Open Main Window"));
-    openAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_1));
-
-    menu_->addSeparator();
-
-    // ── Utility & Capture Actions ─────────────────────────────
-    quickNoteAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/notes.svg")),
-                                     QStringLiteral("Quick Capture / Note"));
-    quickNoteAction_->setEnabled(true);
-
-    clearChatAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/trash.svg")),
-                                     QStringLiteral("Clear Companion Session"));
-
-    pauseAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/player-pause.svg")),
-                                     QStringLiteral("Pause Companion"));
-
-    menu_->addSeparator();
-
-    // ── Settings & Updates ────────────────────────────────────
-    settingsAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/settings.svg")),
-                                     QStringLiteral("Settings & Preferences..."));
-    settingsAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
-
-    updateAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/refresh.svg")),
-                                     QStringLiteral("Check for Updates..."));
-
-    menu_->addSeparator();
-
-    // ── App Lifecycle ─────────────────────────────────────────
-    quitAction_ = menu_->addAction(QIcon(QStringLiteral(":/icons/tabler/logout.svg")),
-                                     QStringLiteral("Quit Sentinel"));
-    quitAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
-
-    QIcon trayIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png"));
-#if defined(Q_OS_MACOS)
-    trayIcon.setIsMask(true);
+#ifdef Q_OS_MACOS
+#include "sentinel/desktop/MacNativeNotifications.h"
+#include <Carbon/Carbon.h>
+#elif defined(Q_OS_WIN)
+#include <windows.h>
 #endif
-    trayIcon_ = std::make_unique<QSystemTrayIcon>(trayIcon);
-    trayIcon_->setContextMenu(menu_.get());
-    trayIcon_->setToolTip(sentinel::core::AppMetadata::displayName() +
-                          QStringLiteral(" Companion"));
-
-    connect(openAction_, &QAction::triggered, this, &NativeCompanionAdapter::openSentinel);
-    connect(quickChatAction_, &QAction::triggered, this,
-            [this]() { viewModel_.toggleCompanionChat(); });
-    connect(newConversationAction_, &QAction::triggered, this,
-            &NativeCompanionAdapter::newConversation);
-    connect(quickNoteAction_, &QAction::triggered, this,
-            [this]() { viewModel_.toggleCompanionChat(); });
-    connect(clearChatAction_, &QAction::triggered, this, [this]() { viewModel_.clearChat(); });
-    connect(pauseAction_, &QAction::triggered, this, &NativeCompanionAdapter::togglePaused);
-    connect(settingsAction_, &QAction::triggered, this, &NativeCompanionAdapter::openSettings);
-    connect(updateAction_, &QAction::triggered, this, &NativeCompanionAdapter::checkUpdates);
-    connect(quitAction_, &QAction::triggered, qApp, &QApplication::quit);
-
-    connect(trayIcon_.get(), &QSystemTrayIcon::activated, this,
-            [this](QSystemTrayIcon::ActivationReason reason) {
-                if (reason == QSystemTrayIcon::DoubleClick) {
+namespace sentinel::desktop {
+#ifdef Q_OS_MACOS
+void activateMacQuickPanelApplication();
+#endif
+namespace {
+bool headless() {
+    return QGuiApplication::platformName() == "offscreen" ||
+           QGuiApplication::platformName() == "minimal";
+}
+} // namespace
+NativeCompanionAdapter::NativeCompanionAdapter(DesktopShellViewModel& vm,
+                                               core::AppSettings& settings, QObject* root,
+                                               QObject* parent)
+    : QObject(parent), viewModel_(vm), settings_(settings) {
+    startupStatus_ = settings_.quickPanelStartAtLogin()
+                         ? "Enabled preference; OS registration has not been checked"
+                         : "Disabled";
+    setWindow(root);
+    qApp->installEventFilter(this);
+#ifdef Q_OS_WIN
+    qApp->installNativeEventFilter(this);
+#endif
+    if (headless()) {
+        viewModel_.setCompanionNativeAvailable(false);
+        shortcutStatus_ = "Unavailable on headless platform";
+        return;
+    }
+#ifdef Q_OS_MACOS
+    notifications_ = std::make_unique<MacNativeNotifications>();
+    connect(notifications_.get(), &MacNativeNotifications::statusChanged, this,
+            [this](const QString& status) {
+                notificationStatus_ = status;
+                emit notificationStatusChanged();
+                qDebug() << "macOS notification authorization:" << status;
+            });
+    connect(notifications_.get(), &MacNativeNotifications::clicked, this,
+            [this](const QString& session, const QString& page) {
+                activateMacQuickPanelApplication();
+                if (quickPanel_ && !session.isEmpty())
+                    quickPanel_->openLink("sentinel://session/" + session);
+                else {
                     openSentinel();
+                    emit viewModel_.requestWindowActive(page);
                 }
             });
-    connect(&settings_, &sentinel::core::AppSettings::companionEnabledChanged, this,
+#endif
+    menu_ = std::make_unique<QMenu>();
+    connect(menu_->addAction(tr("Quick Panel")), &QAction::triggered, this,
+            &NativeCompanionAdapter::togglePanel);
+    connect(menu_->addAction(tr("Open Sentinel")), &QAction::triggered, this,
+            &NativeCompanionAdapter::openSentinel);
+    connect(menu_->addAction(tr("Settings")), &QAction::triggered, this,
+            &NativeCompanionAdapter::openSettings);
+    menu_->addSeparator();
+    connect(menu_->addAction(tr("Quit Sentinel")), &QAction::triggered, qApp, &QApplication::quit);
+    QIcon icon(QStringLiteral(":/branding/tray.png"));
+#ifdef Q_OS_MACOS
+    icon.setIsMask(true);
+#endif
+    trayIcon_ = std::make_unique<QSystemTrayIcon>(icon);
+#ifndef Q_OS_MACOS
+    trayIcon_->setContextMenu(menu_.get());
+#endif
+    connect(trayIcon_.get(), &QSystemTrayIcon::activated, this,
+            [this](QSystemTrayIcon::ActivationReason reason) {
+                if (reason == QSystemTrayIcon::Trigger)
+                    togglePanel();
+#ifdef Q_OS_MACOS
+                else if (reason == QSystemTrayIcon::Context)
+                    menu_->popup(QCursor::pos());
+#endif
+            });
+    connect(trayIcon_.get(), &QSystemTrayIcon::messageClicked, this, [this] {
+        if (quickPanel_ && !notificationSession_.isEmpty())
+            quickPanel_->openLink("sentinel://session/" + notificationSession_);
+        else {
+            openSentinel();
+            emit viewModel_.requestWindowActive(notificationPage_);
+        }
+    });
+    connect(&settings_, &core::AppSettings::companionEnabledChanged, this,
             &NativeCompanionAdapter::refreshVisibility);
-    connect(&settings_, &sentinel::core::AppSettings::themeNameChanged, this,
-            &NativeCompanionAdapter::applyMenuStylesheet);
-    connect(&viewModel_, &DesktopShellViewModel::companionChanged, this,
-            &NativeCompanionAdapter::refreshActions);
-
+    connect(&settings_, &core::AppSettings::quickPanelShortcutChanged, this,
+            &NativeCompanionAdapter::registerShortcut);
     refreshVisibility();
 }
-
+NativeCompanionAdapter::~NativeCompanionAdapter() {
+    unregisterShortcut();
+#ifdef Q_OS_MACOS
+    notifications_.reset();
+#endif
+    if (trayIcon_)
+        trayIcon_->hide();
+#ifdef Q_OS_WIN
+    qApp->removeNativeEventFilter(this);
+#endif
+}
+void NativeCompanionAdapter::setWindow(QObject* root) {
+    window_ = qobject_cast<QWindow*>(root);
+    if (window_)
+        window_->installEventFilter(this);
+}
+void NativeCompanionAdapter::bindQuickPanel(QuickPanelController* controller) {
+    quickPanel_ = controller;
+    connect(controller, &QuickPanelController::openRequested, this,
+            [this](const QString& page, const QString&) {
+                openSentinel();
+                emit viewModel_.requestWindowActive(page);
+            });
+    connect(controller, &QuickPanelController::changed, this, [this] {
+        if (trayIcon_)
+            trayIcon_->setToolTip("Sentinel — " +
+                                  quickPanel_->state().value("connection").toString());
+    });
+    connect(&viewModel_, &DesktopShellViewModel::nativeNotificationRequested, this,
+            [this](const QString& title, const QString& body, const QString& category) {
+                if (!trayIcon_ || !trayIcon_->isVisible())
+                    return;
+#ifdef Q_OS_MACOS
+                // Agent terminal notifications are owned by QuickPanelController.
+                if (category == "Agent")
+                    return;
+#endif
+                notificationSession_.clear();
+                notificationPage_ = category == "Models"    ? "Models"
+                                    : category == "Updates" ? "Settings"
+                                                            : "Dashboard";
+#ifdef Q_OS_MACOS
+                notifications_->deliver(title, tr("Open Sentinel to review this notification."), {},
+                                        notificationPage_);
+#else
+                trayIcon_->showMessage(title, body, QSystemTrayIcon::NoIcon, 8000);
+#endif
+            });
+    connect(controller, &QuickPanelController::notificationRequested, this,
+            [this](const QString& title, const QString& body, const QString& session) {
+                const auto policy = settings_.notificationPolicy();
+                if (!trayIcon_ || !trayIcon_->isVisible() || policy == "None" ||
+                    policy == "Disabled" ||
+                    (policy == "Custom" && !settings_.notifyAgentResponses()))
+                    return;
+                notificationSession_ = session;
+                notificationPage_ = "Dashboard";
+#ifdef Q_OS_MACOS
+                notifications_->deliver(title, tr("Open Sentinel to review this run or approval."),
+                                        session, notificationPage_);
+#else
+                trayIcon_->showMessage(title, body, QSystemTrayIcon::NoIcon, 8000);
+#endif
+            });
+}
 void NativeCompanionAdapter::refreshVisibility() {
-    if (headlessQtPlatform()) {
-        viewModel_.setCompanionNativeAvailable(false);
-        return;
-    }
-
-    const bool trayAvailable = QSystemTrayIcon::isSystemTrayAvailable();
-    viewModel_.setCompanionNativeAvailable(trayAvailable);
-
-    if (!trayIcon_) {
-        return;
-    }
-
-    if (trayAvailable) {
-        refreshActions();
-        trayIcon_->show();
-        return;
-    }
-
-    trayIcon_->hide();
+    const bool available = !headless() && QSystemTrayIcon::isSystemTrayAvailable();
+    viewModel_.setCompanionNativeAvailable(available);
+    const bool background = settings_.companionEnabled() && available;
+    qApp->setQuitOnLastWindowClosed(!background);
+    if (trayIcon_)
+        trayIcon_->setVisible(background);
+    registerShortcut();
+    if (!background && window_ && !window_->isVisible())
+        openSentinel();
 }
-
-void NativeCompanionAdapter::refreshActions() {
-    const bool enabled = QSystemTrayIcon::isSystemTrayAvailable();
-    const bool paused = viewModel_.companionPaused();
-
-    if (headerAction_) {
-        headerAction_->setText(paused ? QStringLiteral("Sentinel AI • Paused")
-                                      : QStringLiteral("Sentinel AI • Active (Local Ollama)"));
-    }
-    if (openAction_) {
-        openAction_->setEnabled(enabled);
-    }
-    if (quickChatAction_) {
-        quickChatAction_->setEnabled(enabled && !paused);
-    }
-    if (newConversationAction_) {
-        newConversationAction_->setEnabled(enabled);
-    }
-    if (quickNoteAction_) {
-        quickNoteAction_->setEnabled(enabled && !paused);
-    }
-    if (clearChatAction_) {
-        clearChatAction_->setEnabled(enabled && !paused);
-    }
-    if (pauseAction_) {
-        pauseAction_->setEnabled(enabled);
-        pauseAction_->setText(paused ? QStringLiteral("▶ Resume Companion")
-                                     : QStringLiteral("⏸ Pause Companion"));
-    }
-    if (updateAction_) {
-        updateAction_->setEnabled(enabled);
-    }
-    if (settingsAction_) {
-        settingsAction_->setEnabled(enabled);
-    }
-    if (quitAction_) {
-        quitAction_->setEnabled(enabled);
-    }
-    if (trayIcon_) {
-        trayIcon_->setToolTip(paused
-                                  ? QStringLiteral("Sentinel Companion (Paused)")
-                                  : QStringLiteral("Sentinel Companion (Active • Local Ollama)"));
-    }
-}
-
-void NativeCompanionAdapter::activateMainWindow() {
-    if (!window_) {
+void NativeCompanionAdapter::togglePanel() {
+    if (!settings_.companionEnabled())
+        return;
+    QWindow* panel = nullptr;
+    for (auto* candidate : QGuiApplication::allWindows())
+        if (candidate->objectName() == "sentinelQuickPanel") {
+            panel = candidate;
+            break;
+        }
+    if (!panel)
+        return;
+    panel->installEventFilter(this);
+    if (panel->isVisible()) {
+        panelOpenTimer_.invalidate();
+        panel->hide();
         return;
     }
-
-    window_->show();
-    window_->raise();
-    window_->requestActivate();
+    if (observedPanel_ != panel) {
+        disconnect(frameConnection_);
+        observedPanel_ = panel;
+        if (auto* quick = qobject_cast<QQuickWindow*>(panel))
+            frameConnection_ = connect(
+                quick, &QQuickWindow::frameSwapped, this,
+                [this] {
+                    if (panelOpenTimer_.isValid()) {
+                        qDebug() << "Quick Panel open to first frame (ms):"
+                                 << panelOpenTimer_.nsecsElapsed() / 1000000.0;
+                        panelOpenTimer_.invalidate();
+                    }
+                },
+                Qt::QueuedConnection);
+    }
+    panelOpenTimer_.start();
+    QRect anchor = trayIcon_ ? trayIcon_->geometry() : QRect{};
+    QScreen* screen =
+        QGuiApplication::screenAt(anchor.isEmpty() ? QCursor::pos() : anchor.center());
+    if (!screen)
+        screen = QGuiApplication::primaryScreen();
+    if (!screen)
+        return;
+    const QRect area = screen->availableGeometry();
+    panel->setScreen(screen);
+    panel->resize(qMin(380, area.width() - 24), qMin(650, area.height() - 24));
+    int x = anchor.isEmpty() ? area.right() - panel->width() - 12
+                             : anchor.center().x() - panel->width() / 2;
+    int y = anchor.isEmpty() || anchor.center().y() < area.center().y()
+                ? qMax(area.top() + 8, anchor.bottom() + 8)
+                : anchor.top() - panel->height() - 8;
+    panel->setPosition(qBound(area.left() + 8, x, area.right() - panel->width() - 8),
+                       qBound(area.top() + 8, y, area.bottom() - panel->height() - 8));
+    panel->show();
+    panel->raise();
+#ifdef Q_OS_MACOS
+    if (!headless())
+        activateMacQuickPanelApplication();
+#endif
+    panel->requestActivate();
+    QMetaObject::invokeMethod(panel, "focusPrompt", Qt::QueuedConnection);
 }
-
 void NativeCompanionAdapter::openSentinel() {
-    activateMainWindow();
-}
-
-void NativeCompanionAdapter::newConversation() {
-    const QString conversationId =
-        viewModel_.createConversation(QStringLiteral("New Conversation"));
-    if (!conversationId.isEmpty()) {
-        viewModel_.setCurrentPage(QStringLiteral("Dashboard"));
+    if (window_) {
+        window_->show();
+        window_->raise();
+        window_->requestActivate();
     }
-    activateMainWindow();
 }
-
 void NativeCompanionAdapter::openSettings() {
-    viewModel_.setCurrentPage(QStringLiteral("Settings"));
-    activateMainWindow();
+#ifdef Q_OS_MACOS
+    if (notifications_)
+        notifications_->refreshAuthorization();
+#endif
+    openSentinel();
+    emit viewModel_.requestWindowActive("Settings");
 }
-
-void NativeCompanionAdapter::togglePaused() {
-    viewModel_.setCompanionPaused(!viewModel_.companionPaused());
-    refreshActions();
+bool NativeCompanionAdapter::eventFilter(QObject* object, QEvent* event) {
+    if (event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride) {
+        auto* panel = qobject_cast<QWindow*>(object);
+        if (!panel || panel->objectName() != "sentinelQuickPanel")
+            panel = QGuiApplication::focusWindow();
+        if (panel && panel->objectName() == "sentinelQuickPanel" && panel->isVisible() &&
+            static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
+            event->accept();
+            if (event->type() == QEvent::KeyPress)
+                panel->hide();
+            return true;
+        }
+    }
+    if (object == window_ && event->type() == QEvent::Close && settings_.companionEnabled() &&
+        trayIcon_ && trayIcon_->isVisible()) {
+        static_cast<QCloseEvent*>(event)->ignore();
+        window_->hide();
+        return true;
+    }
+    if (event->type() == QEvent::FileOpen && quickPanel_) {
+        auto* file = static_cast<QFileOpenEvent*>(event);
+        if (file->url().scheme() == "sentinel")
+            return quickPanel_->openLink(file->url().toString());
+        // File attachment execution is deliberately unavailable; reveal the main surface.
+        openSentinel();
+        return true;
+    }
+    return QObject::eventFilter(object, event);
 }
-
-void NativeCompanionAdapter::checkUpdates() {
-    viewModel_.checkForUpdates();
-    activateMainWindow();
+bool NativeCompanionAdapter::startAtLogin() const {
+    return settings_.quickPanelStartAtLogin();
 }
-
+void NativeCompanionAdapter::setStartAtLogin(bool enabled) {
+    if (headless()) {
+        startupStatus_ = "Unavailable on headless platform";
+        emit startupChanged();
+        return;
+    }
+    bool success = false;
+    const auto executable = QCoreApplication::applicationFilePath();
+#ifdef Q_OS_WIN
+    QSettings registry(
+        QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
+        QSettings::NativeFormat);
+    if (enabled)
+        registry.setValue("Sentinel",
+                          QStringLiteral("\"%1\"").arg(QDir::toNativeSeparators(executable)));
+    else
+        registry.remove("Sentinel");
+    registry.sync();
+    success = registry.status() == QSettings::NoError;
+#else
+#ifdef Q_OS_MACOS
+    const QString directory = QDir::homePath() + "/Library/LaunchAgents";
+    const QString path = directory + "/dev.sentinel.desktop.plist";
+    const QByteArray content =
+        QStringLiteral("<?xml version=\"1.0\"?><plist "
+                       "version=\"1.0\"><dict><key>Label</key><string>dev.sentinel.desktop</"
+                       "string><key>ProgramArguments</key><array><string>%1</string></"
+                       "array><key>RunAtLoad</key><true/></dict></plist>")
+            .arg(executable.toHtmlEscaped())
+            .toUtf8();
+#else
+    const QString directory =
+        QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + "/autostart";
+    const QString path = directory + "/dev.sentinel.Sentinel.desktop";
+    QString escaped = executable;
+    escaped.replace("\\", "\\\\").replace("\"", "\\\"").replace("`", "\\`").replace("$", "\\$");
+    const QByteArray content =
+        QStringLiteral(
+            "[Desktop Entry]\nType=Application\nName=Sentinel\nExec=\"%1\"\nTerminal=false\n")
+            .arg(escaped)
+            .toUtf8();
+#endif
+    if (!enabled)
+        success = !QFile::exists(path) || QFile::remove(path);
+    else if (QDir{}.mkpath(directory)) {
+        QSaveFile file(path);
+        success = file.open(QIODevice::WriteOnly) && file.write(content) == content.size() &&
+                  file.commit();
+    }
+#endif
+    if (success)
+        settings_.setQuickPanelStartAtLogin(enabled);
+    startupStatus_ = success ? (enabled ? "Enabled for next login" : "Disabled")
+                             : "Login startup registration failed";
+    qInfo().noquote() << startupStatus_;
+    emit startupChanged();
+}
+QString NativeCompanionAdapter::shortcut() const {
+    return settings_.quickPanelShortcut();
+}
+void NativeCompanionAdapter::setShortcut(const QString& sequence) {
+    settings_.setQuickPanelShortcut(sequence);
+}
+void NativeCompanionAdapter::unregisterShortcut() {
+#ifdef Q_OS_MACOS
+    if (hotKey_)
+        UnregisterEventHotKey(static_cast<EventHotKeyRef>(hotKey_));
+    if (hotKeyHandler_)
+        RemoveEventHandler(static_cast<EventHandlerRef>(hotKeyHandler_));
+#elif defined(Q_OS_WIN)
+    if (hotKey_)
+        UnregisterHotKey(nullptr, 0x534e);
+#endif
+    hotKey_ = hotKeyHandler_ = nullptr;
+}
+void NativeCompanionAdapter::registerShortcut() {
+    unregisterShortcut();
+    shortcutStatus_ = "Disabled";
+    if (settings_.companionEnabled() && !headless() && !shortcut().isEmpty() &&
+        shortcut() != "Disabled") {
+#ifdef Q_OS_MACOS
+        UInt32 key = 0, modifiers = 0;
+        const QString sequence = shortcut();
+        if (sequence == "Ctrl+Alt+Space") {
+            key = kVK_Space;
+            modifiers = controlKey | optionKey;
+        } else if (sequence == "Ctrl+Alt+S") {
+            key = kVK_ANSI_S;
+            modifiers = controlKey | optionKey;
+        }
+        if (!modifiers)
+            shortcutStatus_ = "Unsupported shortcut; use Ctrl+Alt+Space or Ctrl+Alt+S";
+        else {
+            EventTypeSpec eventType{kEventClassKeyboard, kEventHotKeyPressed};
+            EventHandlerRef handler = nullptr;
+            auto callback = [](EventHandlerCallRef, EventRef, void* user) -> OSStatus {
+                QMetaObject::invokeMethod(static_cast<NativeCompanionAdapter*>(user), "togglePanel",
+                                          Qt::QueuedConnection);
+                return noErr;
+            };
+            OSStatus status =
+                InstallApplicationEventHandler(callback, 1, &eventType, this, &handler);
+            EventHotKeyRef hotkey = nullptr;
+            if (status == noErr)
+                status = RegisterEventHotKey(key, modifiers, EventHotKeyID{0x534e544c, 1},
+                                             GetApplicationEventTarget(), kEventHotKeyExclusive,
+                                             &hotkey);
+            hotKeyHandler_ = handler;
+            hotKey_ = hotkey;
+            shortcutStatus_ =
+                status == noErr ? "Registered"
+                                : QStringLiteral("Registration failed (%1); shortcut may be in use")
+                                      .arg(status);
+        }
+#elif defined(Q_OS_WIN)
+        const auto sequence = shortcut();
+        const UINT key = sequence == "Ctrl+Alt+Space" ? VK_SPACE
+                         : sequence == "Ctrl+Alt+S"   ? 'S'
+                                                      : 0;
+        if (!key)
+            shortcutStatus_ = "Unsupported shortcut";
+        else if (RegisterHotKey(nullptr, 0x534e, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, key)) {
+            hotKey_ = this;
+            shortcutStatus_ = "Registered";
+        } else
+            shortcutStatus_ = QStringLiteral("Registration failed (%1); shortcut may be in use")
+                                  .arg(GetLastError());
+#else
+        shortcutStatus_ = "Global shortcut unavailable on this platform";
+#endif
+    }
+    qInfo().noquote() << "Quick Panel shortcut:" << shortcutStatus_;
+    emit shortcutChanged();
+}
+#ifdef Q_OS_WIN
+bool NativeCompanionAdapter::nativeEventFilter(const QByteArray&, void* message, qintptr* result) {
+    const auto* event = static_cast<MSG*>(message);
+    if (event->message == WM_HOTKEY && event->wParam == 0x534e) {
+        togglePanel();
+        *result = 0;
+        return true;
+    }
+    return false;
+}
+#endif
 } // namespace sentinel::desktop

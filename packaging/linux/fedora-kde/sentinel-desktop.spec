@@ -74,7 +74,15 @@ fi
 %{_bindir}/sentinel-cli
 %{_datadir}/applications/dev.sentinel.Sentinel.desktop
 %{_datadir}/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg
-%{_datadir}/icons/hicolor/1024x1024/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/16x16/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/22x22/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/24x24/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/32x32/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/48x48/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/64x64/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/128x128/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/256x256/apps/dev.sentinel.Sentinel.png
+%{_datadir}/icons/hicolor/512x512/apps/dev.sentinel.Sentinel.png
 %{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
 %{_datadir}/dbus-1/services/dev.sentinel.Sentinel.service
 %{_prefix}/lib/systemd/user/sentinel-desktop.service

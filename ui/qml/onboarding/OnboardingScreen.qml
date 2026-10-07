@@ -122,30 +122,11 @@ Item {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceMd
 
-            Rectangle {
+            Image {
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 44
-                radius: 22
-                color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
-                border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.35)
-                border.width: 1
-
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowColor: SentinelTheme.withAlpha(onboarding.brandAccent, 0.30)
-                    shadowBlur: 0.35
-                    shadowVerticalOffset: 1
-                    shadowOpacity: 1.0
-                }
-
-                Label {
-                    anchors.centerIn: parent
-                    text: qsTr("S")
-                    color: onboarding.brandAccent
-                    font.pixelSize: 21
-                    font.bold: true
-                }
+                source: "qrc:/icons/dev.sentinel.Sentinel.png"
+                fillMode: Image.PreserveAspectFit
             }
 
             ColumnLayout {

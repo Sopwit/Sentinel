@@ -244,8 +244,29 @@ endif()
 # Canonical IPC models are checked in so normal C++ builds need no generator runtime.
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
+    add_test(NAME test_branding_sources
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/branding/check.py)
     add_test(NAME test_desktop_generated_contract
         COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/ipc/generate_desktop.py --check)
     add_test(NAME test_ipc_generated_contract
         COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/ipc/generate.py --check)
 endif()
+
+qt_add_executable(test_desktop_ipc desktop/test_desktop_ipc.cpp)
+target_link_libraries(test_desktop_ipc PRIVATE sentinel_desktop_viewmodels sentinel_desktop_ipc sentinel_daemon_service sentinel_core Qt6::Test)
+add_test(NAME test_desktop_ipc COMMAND $<TARGET_FILE:test_desktop_ipc>)
+
+qt_add_executable(test_native_integration
+    desktop/test_native_integration.cpp
+    ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/NativeCompanionAdapter.cpp
+    ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/include/sentinel/desktop/NativeCompanionAdapter.h
+)
+target_link_libraries(test_native_integration PRIVATE sentinel_desktop_viewmodels sentinel_core Qt6::Test Qt6::Widgets Qt6::Quick)
+if(APPLE)
+    target_sources(test_native_integration PRIVATE ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/MacNativeActivation.mm ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/MacNativeNotifications.mm ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/include/sentinel/desktop/MacNativeNotifications.h)
+    target_link_libraries(test_native_integration PRIVATE "-framework Carbon" "-framework AppKit" "-framework UserNotifications")
+elseif(WIN32)
+    target_link_libraries(test_native_integration PRIVATE user32)
+endif()
+add_test(NAME test_native_integration COMMAND $<TARGET_FILE:test_native_integration>)
+set_tests_properties(test_native_integration PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

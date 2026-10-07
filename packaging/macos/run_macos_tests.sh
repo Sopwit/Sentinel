@@ -15,7 +15,7 @@ if [ -d "${APP_BUNDLE}" ]; then
     echo "[2/6] Verifying macOS App Bundle Layout..."
     test -f "${APP_BUNDLE}/Contents/Info.plist"
     test -f "${APP_BUNDLE}/Contents/MacOS/sentinel-desktop"
-    test -f "${APP_BUNDLE}/Contents/Resources/dev.sentinel.Sentinel.icns"
+    test -f "${APP_BUNDLE}/Contents/Resources/sentinel.icns"
     test -f "${APP_BUNDLE}/Contents/Resources/PrivacyInfo.xcprivacy"
     test -f "${APP_BUNDLE}/Contents/Resources/Sentinel.sdef"
     test -f "${APP_BUNDLE}/Contents/Resources/en.lproj/InfoPlist.strings"

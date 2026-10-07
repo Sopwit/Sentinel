@@ -1,0 +1,590 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "sentinel/desktop/DesktopRuntimeClient.h"
+#include <QDateTime>
+#include <QDebug>
+#include <QJsonDocument>
+#include <cmath>
+
+namespace sentinel::desktop {
+namespace {
+core::ChatMessageStatus messageStatus(const QString& state) {
+    if (state == "streaming" || state == "running")
+        return core::ChatMessageStatus::Streaming;
+    if (state == "cancelled")
+        return core::ChatMessageStatus::Cancelled;
+    if (state == "failed" || state == "error")
+        return core::ChatMessageStatus::Failed;
+    if (state == "interrupted")
+        return core::ChatMessageStatus::Interrupted;
+    if (state == "queued")
+        return core::ChatMessageStatus::Queued;
+    if (state == "sent")
+        return core::ChatMessageStatus::Sent;
+    return core::ChatMessageStatus::Completed;
+}
+bool active(const QString& state) {
+    return state == "running" || state == "approval";
+}
+bool validProperties(const QJsonObject& properties) {
+    const auto fields = ipc::desktopProjectionFields();
+    for (auto it = properties.begin(); it != properties.end(); ++it) {
+        if (!fields.contains(it.key()))
+            return false;
+        const auto field = fields.value(it.key()).toObject();
+        const auto type = field.value("type").toString();
+        const auto value = it.value();
+        if ((type == "string" && !value.isString()) || (type == "boolean" && !value.isBool()) ||
+            (type == "array" && !value.isArray()) || (type == "object" && !value.isObject()) ||
+            ((type == "integer" || type == "number") &&
+             (!value.isDouble() || !std::isfinite(value.toDouble()))) ||
+            (type == "integer" && std::floor(value.toDouble()) != value.toDouble()))
+            return false;
+        if (field.value("cpp") == "QStringList")
+            for (const auto& item : value.toArray())
+                if (!item.isString())
+                    return false;
+    }
+    return true;
+}
+} // namespace
+DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* parent)
+    : QObject(parent), m_transport(transport) {
+    connect(&transport, &DaemonClient::responseReceived, this, &DesktopRuntimeClient::onResponse);
+    connect(&transport, &DaemonClient::eventReceived, this, &DesktopRuntimeClient::onEvent);
+    connect(&transport, &DaemonClient::requestFailed, this,
+            [this](const QString& id, DaemonClient::Error, const QString& code) {
+                if (!m_requests.contains(id))
+                    return;
+                const auto failed = m_requests.take(id);
+                if (failed.name == "desktop.projection")
+                    m_projectionRemaining = 0;
+                if (failed.name == "desktop.settings_service")
+                    m_settingsQueries.remove(failed.target);
+                m_submissionPending = false;
+                if (failed.name == "approval.respond")
+                    m_approvalResponsePending = false;
+                m_attaching = false;
+                m_values["chatErrorCategory"] = code;
+                m_values["chatSendLifecycleSummary"] = code;
+                emit operationFailed(code);
+                projectRun();
+                emit changed();
+            });
+    connect(&transport, &DaemonClient::connectionStateChanged, this, [this] {
+        if (!m_transport.daemonReachable()) {
+            m_loaded = false;
+            m_requests.clear();
+            m_submissionPending = false;
+            m_attaching = false;
+            m_projectionRemaining = 0;
+            m_approval = {};
+            m_approvalResponsePending = false;
+            m_activeAssistantId = 0;
+            projectRun();
+            emit changed();
+            return;
+        }
+        m_startupProjectionTimer.start();
+        if (m_generation != m_transport.serverGeneration()) {
+            m_sequence = 0;
+            m_runId.clear();
+            m_state.clear();
+            m_kind.clear();
+            m_values.clear();
+            m_settingsStates.clear();
+            m_settingsQueries.clear();
+            m_settings = {};
+            m_generation = m_transport.serverGeneration();
+        }
+        refresh();
+    });
+    m_refreshTimer.setInterval(2000);
+    connect(&m_refreshTimer, &QTimer::timeout, this, [this] {
+        if (m_transport.daemonReachable() && m_projectionRemaining == 0) {
+            m_projectionRemaining = -1;
+            send(DaemonClient::Command::desktop_projection, {{"page", 0}});
+            send(DaemonClient::Command::session_list);
+            send(DaemonClient::Command::desktop_settings);
+            m_settingsQueries.clear();
+        }
+    });
+    m_refreshTimer.start();
+}
+QString DesktopRuntimeClient::send(DaemonClient::Command command, const QJsonObject& payload,
+                                   const QString& target) {
+    const auto id = m_transport.request(command, payload);
+    m_requests.insert(id, {ipc::commandName(command), target, m_runId});
+    return id;
+}
+void DesktopRuntimeClient::refresh() {
+    if (!m_transport.daemonReachable())
+        return;
+    if (m_projectionRemaining == 0) {
+        m_projectionRemaining = -1;
+        send(DaemonClient::Command::desktop_projection, {{"page", 0}});
+    }
+    send(DaemonClient::Command::session_list);
+    send(DaemonClient::Command::desktop_settings);
+    if (!m_sessionId.isEmpty())
+        attach(m_sessionId);
+}
+QVariant DesktopRuntimeClient::settingsService(const QString& action, const QVariantList& arguments,
+                                               bool query) {
+    if (!ipc::desktopSettingsActions().contains(action))
+        return QVariantMap{{"accepted", false}, {"code", "UnknownSettingsAction"}};
+    const auto serialized =
+        QJsonDocument(QJsonArray::fromVariantList(arguments)).toJson(QJsonDocument::Compact);
+    const auto key = action + (query ? QString::fromUtf8(serialized) : QStringLiteral("[]"));
+    if (!ready())
+        return QVariantMap{{"accepted", false}, {"code", "DaemonUnavailable"}};
+    if (query) {
+        if (!m_settingsQueries.contains(key)) {
+            m_settingsQueries.insert(key);
+            send(DaemonClient::Command::desktop_settings_service,
+                 {{"action", action}, {"arguments", QJsonArray::fromVariantList(arguments)}}, key);
+        }
+        return m_settingsStates.value(key);
+    }
+    const auto id =
+        send(DaemonClient::Command::desktop_settings_service,
+             {{"action", action}, {"arguments", QJsonArray::fromVariantList(arguments)}}, key);
+    return QVariantMap{{"accepted", false}, {"code", "Pending"}, {"requestId", id}};
+}
+void DesktopRuntimeClient::setSetting(const QString& key, const QString& value) {
+    if (!ready()) {
+        emit operationFailed(QStringLiteral("daemon-unavailable"));
+        return;
+    }
+    send(DaemonClient::Command::desktop_setting, {{"key", key}, {"value", value}});
+}
+QVariant DesktopRuntimeClient::value(const QString& name) const {
+    if (name == "localChatSendAvailable")
+        return ready() && !m_sessionId.isEmpty() && !active(m_state) && !m_submissionPending &&
+               m_values.value(name).toBool();
+    if (name == "providerStatus" && !m_transport.daemonReachable())
+        return m_transport.statusSummary();
+    if (name == "localChatSendAvailabilitySummary" && !ready())
+        return m_transport.statusSummary();
+    return m_values.value(name);
+}
+QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList& args) {
+    if (args.isEmpty() && m_values.contains(name))
+        return value(name);
+    // Snapshot readers are allowed before the first projection arrives.
+    if (args.isEmpty() && ipc::desktopProjectionFields().contains(name))
+        return value(name);
+    if (name == "attachControlledTaskSettings")
+        return {};
+    if (!ready())
+        return false;
+    const auto text = args.isEmpty() ? QString{} : args.first().toString();
+    if (name == "createConversation") {
+        return send(DaemonClient::Command::session_create, {{"title", text}});
+    }
+    if (name == "switchConversation") {
+        attach(text);
+        return true;
+    }
+    if (name == "sendMessage" || name == "runAgentRequest" || name == "runLocalInference") {
+        if (m_sessionId.isEmpty() || active(m_state) || m_submissionPending ||
+            text.trimmed().isEmpty())
+            return false;
+        if (name == "runLocalInference" && args.size() > 1 && !args.at(1).toString().isEmpty() &&
+            args.at(1).toString() != value("selectedLocalModel").toString())
+            return false;
+        m_submissionPending = true;
+        m_output.clear();
+        m_approval = {};
+        m_values.remove("latestToolExecutionSummary");
+        m_values.remove("latestAgentActivitySummary");
+        m_activeAssistantId = 0;
+        m_kind = name == "runAgentRequest" ? "agent" : "chat";
+        send(m_kind == "agent" ? DaemonClient::Command::agent_start
+                               : DaemonClient::Command::chat_send,
+             {{"session_id", m_sessionId}, {"text", text}}, m_sessionId);
+        projectRun();
+        emit changed();
+        return true;
+    }
+    if (name == "stopChatGeneration" || name == "cancelAgentRun" || name == "cancelLocalInference")
+        return cancelRun();
+    if (name == "respondToAgentApproval")
+        return respondToApproval(args.first().toBool());
+    if (name == "regenerateChatResponse" || name == "retryChatResponse" ||
+        name == "editAndResendChatMessage") {
+        if (active(m_state) || m_submissionPending || args.isEmpty())
+            return false;
+        QJsonObject payload{{"session_id", m_sessionId}, {"message_id", args.first().toInt()}};
+        auto command = name == "retryChatResponse" ? DaemonClient::Command::chat_retry
+                                                   : DaemonClient::Command::chat_regenerate;
+        if (name == "editAndResendChatMessage") {
+            command = DaemonClient::Command::chat_edit;
+            payload.insert("text", args.at(1).toString());
+        }
+        m_submissionPending = true;
+        m_kind = "chat";
+        m_output.clear();
+        m_activeAssistantId = 0;
+        const auto id = send(command, payload, m_sessionId);
+        projectRun();
+        emit changed();
+        return name == "editAndResendChatMessage" ? QVariant(id) : QVariant(true);
+    }
+    if (!ipc::desktopActions().contains(name)) {
+        emit operationFailed(QStringLiteral("unsupported-desktop-action"));
+        return false;
+    }
+    const auto id = send(DaemonClient::Command::desktop_action,
+                         {{"action", name},
+                          {"arguments", QJsonArray::fromVariantList(args)},
+                          {"session_id", m_sessionId}},
+                         name);
+    return name == "duplicateConversation" ? QVariant(id) : QVariant(true);
+}
+void DesktopRuntimeClient::attach(const QString& id) {
+    if (id.isEmpty() || m_attaching)
+        return;
+    m_attaching = true;
+    send(DaemonClient::Command::session_attach, {{"session_id", id}}, id);
+}
+void DesktopRuntimeClient::requestMessages() {
+    if (!m_sessionId.isEmpty())
+        send(DaemonClient::Command::session_messages, {{"session_id", m_sessionId}}, m_sessionId);
+}
+void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
+                                      const QJsonObject& payload) {
+    if (!m_requests.contains(id))
+        return;
+    const auto request = m_requests.take(id);
+    if (name == "desktop.settings_service") {
+        const auto result = payload.value("result").toObject();
+        const auto action = request.target.left(request.target.indexOf('['));
+        if (ipc::desktopSettingsActions().value(action).toObject().value("query").toBool()) {
+            m_settingsStates[request.target] = result.toVariantMap();
+        } else {
+            if (result.contains("accepted") && !result.value("accepted").toBool())
+                emit operationFailed(result.value("code").toString("daemon-settings-rejected"));
+            m_settingsQueries.clear();
+            m_settingsStates.clear();
+            refresh();
+        }
+    } else if (name == "desktop.projection") {
+        const int page = payload.value("page").toInt(-1), pages = payload.value("pages").toInt();
+        if (page < 0 || pages < 1 || pages > 128 || page >= pages) {
+            m_projectionRemaining = 0;
+            emit operationFailed("malformed-projection");
+            return;
+        }
+        if (page == 0)
+            m_projection.clear();
+        const auto properties = payload.value("properties").toObject();
+        if (!validProperties(properties)) {
+            m_projectionRemaining = 0;
+            emit operationFailed("malformed-projection");
+            return;
+        }
+        for (auto it = properties.begin(); it != properties.end(); ++it) {
+            if (!ipc::desktopProjectionFields().contains(it.key())) {
+                emit operationFailed("unknown-projection-field");
+                return;
+            }
+            m_projection[it.key()] = it.value().toVariant();
+        }
+        if (page == 0) {
+            m_projectionRemaining = pages;
+            for (int next = 1; next < pages; ++next)
+                send(DaemonClient::Command::desktop_projection, {{"page", next}});
+        }
+        if (--m_projectionRemaining != 0)
+            return;
+        for (auto it = m_projection.begin(); it != m_projection.end(); ++it)
+            m_values[it.key()] = it.value();
+        m_loaded = true;
+    } else if (name == "desktop.settings") {
+        m_settings = payload.value("values").toObject();
+    } else if (name == "desktop.setting") {
+        if (!payload.value("accepted").toBool())
+            emit operationFailed("daemon-setting-rejected");
+        send(DaemonClient::Command::desktop_settings);
+    } else if (name == "session.list") {
+        m_sessions = payload.value("sessions").toArray();
+        QStringList ids, titles, summaries;
+        for (const auto& item : m_sessions) {
+            const auto session = item.toObject();
+            ids.append(session.value("session_id").toString());
+            titles.append(session.value("title").toString());
+            summaries.append(session.value("summary").toString());
+            if (session.value("session_id").toString() == m_sessionId && !m_submissionPending)
+                applySnapshot(session);
+        }
+        m_values["conversationIds"] = ids;
+        m_values["conversationTitles"] = titles;
+        m_values["conversationSummaries"] = summaries;
+        QStringList pinned, archived;
+        for (const auto& item : m_sessions) {
+            const auto session = item.toObject();
+            pinned.append(session.value("pinned").toBool() ? "Pinned" : "Unpinned");
+            archived.append(session.value("archived").toBool() ? "Archived" : "Active");
+        }
+        m_values["conversationPinnedSummaries"] = pinned;
+        m_values["conversationArchivedSummaries"] = archived;
+        m_values["conversationStoreConversationCount"] = ids.size();
+        if (m_sessionId.isEmpty() && !m_attaching) {
+            if (ids.contains(m_preferredSession))
+                attach(m_preferredSession);
+            else if (!ids.isEmpty())
+                attach(ids.first());
+            else
+                send(DaemonClient::Command::session_create, {{"title", "New Chat"}});
+        }
+    } else if (name == "session.create") {
+        attach(payload.value("session_id").toString());
+        send(DaemonClient::Command::session_list);
+    } else if (name == "session.attach") {
+        m_attaching = false;
+        if (payload.value("session_id").toString() != request.target)
+            return;
+        if (m_sessionId != request.target) {
+            const auto fields = ipc::desktopProjectionFields();
+            for (auto it = fields.begin(); it != fields.end(); ++it)
+                if (it.value().toObject().value("scope") == "session")
+                    m_values.remove(it.key());
+            m_messages.clear();
+        }
+        m_sessionId = request.target;
+        m_preferredSession = m_sessionId;
+        applySnapshot(payload);
+        requestMessages();
+        emit sessionChanged(m_sessionId);
+    } else if (name == "session.messages") {
+        if (request.target != m_sessionId || request.runId != m_runId)
+            return;
+        QList<core::ChatMessage> messages;
+        for (const auto& item : payload.value("messages").toArray()) {
+            const auto row = item.toObject();
+            core::ChatMessage message;
+            message.id = row.value("id").toInt();
+            const auto role = row.value("role").toString();
+            message.role = role == "user"        ? core::ChatRole::User
+                           : role == "assistant" ? core::ChatRole::Assistant
+                                                 : core::ChatRole::System;
+            message.content = row.value("content").toString();
+            message.status = messageStatus(row.value("status").toString());
+            message.timestamp =
+                QDateTime::fromString(row.value("timestamp").toString(), Qt::ISODateWithMs);
+            message.providerUsed = row.value("provider_id").toString();
+            message.modelUsed = row.value("model_id").toString();
+            message.partial = row.value("partial").toBool();
+            message.replyToMessageId = row.value("reply_to").toInt();
+            message.replacesMessageId = row.value("replaces").toInt();
+            messages.append(message);
+        }
+        m_messages = messages;
+        m_activeAssistantId = m_kind == "chat" && !m_messages.isEmpty() &&
+                                      m_messages.last().role == core::ChatRole::Assistant
+                                  ? m_messages.last().id
+                                  : 0;
+    } else if (name == "chat.send" || name == "agent.start" || name == "chat.retry" ||
+               name == "chat.regenerate" || name == "chat.edit") {
+        m_submissionPending = false;
+        if (payload.value("session_id").toString() != m_sessionId)
+            return;
+        m_runId = payload.value("run_id").toString();
+        m_output.clear();
+        m_approval = {};
+        m_activeAssistantId = 0;
+        m_state = "running";
+        requestMessages();
+    } else if (name == "approval.respond") {
+        m_approvalResponsePending = false;
+        attach(m_sessionId);
+        send(DaemonClient::Command::session_list);
+    } else if (name == "desktop.action" || name == "model.select") {
+        if (!payload.value("accepted").toBool(true))
+            emit operationFailed("daemon-action-rejected");
+        if (request.target == "duplicateConversation" && payload.value("accepted").toBool())
+            attach(payload.value("result").toObject().value("value").toString());
+        refresh();
+    }
+    if (ready() && !m_sessionId.isEmpty() && m_startupProjectionTimer.isValid()) {
+        qDebug() << "Desktop handshake to authoritative projection/session (ms):"
+                 << m_startupProjectionTimer.nsecsElapsed() / 1000000.0;
+        m_startupProjectionTimer.invalidate();
+    }
+    projectRun();
+    emit changed();
+}
+void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
+    const auto generation = snapshot.value("server_generation").toString();
+    const auto sequence = static_cast<quint64>(snapshot.value("event_sequence").toDouble());
+    if ((!generation.isEmpty() && generation != m_generation) ||
+        (sequence && sequence < m_sequence))
+        return;
+    const auto properties = snapshot.value("properties").toObject();
+    if (!validProperties(properties)) {
+        emit operationFailed("malformed-session-projection");
+        return;
+    }
+    for (auto it = properties.begin(); it != properties.end(); ++it)
+        if (ipc::desktopProjectionFields().contains(it.key()))
+            m_values[it.key()] = it.value().toVariant();
+    m_values["activeConversationTitle"] = snapshot.value("title").toString();
+    m_values["activeConversationSummary"] = snapshot.value("summary").toString();
+    m_values["activeConversationPinned"] = snapshot.value("pinned").toBool();
+    m_values["activeConversationArchived"] = snapshot.value("archived").toBool();
+    m_runId = snapshot.value("run_id").toString();
+    m_kind = snapshot.value("run_type").toString();
+    m_state = snapshot.value("state").toString();
+    m_output = snapshot.value("output").toString();
+    m_approval = snapshot.value("approval").toObject();
+    if (m_state != "approval" || snapshot.value("approval_id").toString().isEmpty())
+        m_approval = {};
+    else
+        m_approval.insert("approval_id", snapshot.value("approval_id"));
+    if (sequence)
+        m_sequence = sequence;
+    m_values["activeChatProviderId"] = snapshot.value("provider_id").toString();
+    m_values["activeChatModelId"] = snapshot.value("model_id").toString();
+    m_values["conversationRuntimeActiveModel"] = snapshot.value("model_id").toString();
+}
+void DesktopRuntimeClient::onEvent(const QString& name, const QJsonObject& payload) {
+    if (payload.value("session_id").toString() != m_sessionId ||
+        payload.value("run_id").toString() != m_runId)
+        return;
+    // Closed runs cannot advance the cursor used by the next run or revive its state.
+    if (!active(m_state))
+        return;
+    const auto generation = payload.value("server_generation").toString();
+    if (!generation.isEmpty() && generation != m_generation)
+        return;
+    const auto sequence = static_cast<quint64>(payload.value("event_sequence").toDouble());
+    if (sequence && sequence <= m_sequence)
+        return;
+    if (sequence)
+        m_sequence = sequence;
+    if (name == "agent.activity") {
+        m_values["latestAgentActivitySummary"] = payload.value("activity").toString();
+    } else if (name == "output.delta") {
+        if (!active(m_state))
+            return;
+        m_output += payload.value("text").toString();
+    } else if (name == "approval.requested") {
+        m_approval = payload;
+        m_state = "approval";
+    } else if (name == "tool.requested" || name == "tool.result") {
+        m_values["latestToolExecutionSummary"] =
+            payload.value("tool").toString() + ": " + payload.value("detail").toString();
+        m_values["latestAgentActivitySummary"] = m_values["latestToolExecutionSummary"];
+    } else if (name == "run.started") {
+        applySnapshot(payload);
+    } else if (name == "run.completed" || name == "run.failed" || name == "run.cancelled") {
+        if (!active(m_state))
+            return;
+        m_state = payload.value("state").toString();
+        m_output = payload.value("text").toString();
+        m_approval = {};
+        m_approvalResponsePending = false;
+        requestMessages();
+        send(DaemonClient::Command::session_list);
+    }
+    projectRun();
+    emit changed();
+}
+QVariantMap DesktopRuntimeClient::quickPanelSnapshot() const {
+    QJsonObject approval = m_approval;
+    QString approvalSession = m_sessionId, approvalRun = m_runId;
+    int count = m_approval.isEmpty() ? 0 : 1;
+    for (const auto& row : m_sessions) {
+        const auto session = row.toObject();
+        const auto pending = session.value("approval").toObject();
+        if (session.value("session_id").toString() == m_sessionId) {
+            continue;
+        }
+        if (session.value("state").toString() != "approval" || pending.isEmpty())
+            continue;
+        ++count;
+        if (approval.isEmpty()) {
+            approval = pending;
+            approval.insert("approval_id", session.value("approval_id"));
+            approvalSession = session.value("session_id").toString();
+            approvalRun = session.value("run_id").toString();
+        }
+    }
+    return {{"sessionId", m_sessionId},
+            {"runId", m_runId},
+            {"kind", m_kind},
+            {"state", m_submissionPending ? QStringLiteral("starting") : m_state},
+            {"preview", m_kind == "agent" && (active(m_state) || m_submissionPending)
+                            ? QString{}
+                            : m_output.right(2000)},
+            {"approval", approval.toVariantMap()},
+            {"approvalSession", approvalSession},
+            {"approvalRun", approvalRun},
+            {"approvalCount", m_transport.daemonReachable() ? count : 0},
+            {"approvalPending", m_approvalResponsePending},
+            {"busy", active(m_state) || m_submissionPending},
+            {"activity", m_values.value("latestToolExecutionSummary")}};
+}
+bool DesktopRuntimeClient::respondToQuickApproval(bool allow) {
+    const auto snapshot = quickPanelSnapshot();
+    const auto approval = snapshot.value("approval").toMap();
+    if (!ready() || m_approvalResponsePending || approval.value("approval_id").toString().isEmpty())
+        return false;
+    m_approvalResponsePending = true;
+    send(DaemonClient::Command::approval_respond,
+         {{"run_id", snapshot.value("approvalRun").toString()},
+          {"approval_id", approval.value("approval_id").toString()},
+          {"allow", allow}},
+         snapshot.value("approvalSession").toString());
+    emit changed();
+    return true;
+}
+void DesktopRuntimeClient::projectRun() {
+    const bool connected = m_transport.daemonReachable();
+    const bool busy = connected && (active(m_state) || m_submissionPending);
+    m_values["agentLoopActive"] = busy && m_kind == "agent";
+    m_values["agentAwaitingApproval"] = connected && m_state == "approval" && !m_approval.isEmpty();
+    m_values["agentStatus"] =
+        !connected ? m_transport.statusSummary() : (busy && m_kind == "agent" ? "Busy" : "Ready");
+    m_values["lastAgentResponse"] =
+        m_kind == "agent" ? m_output : m_values.value("lastAgentResponse");
+    m_values["chatGenerationActive"] = busy && m_kind == "chat";
+    m_values["localInferenceStreaming"] = busy && m_kind == "chat";
+    m_values["conversationRuntimeStreaming"] = busy && m_kind == "chat";
+    m_values["conversationRuntimeRequestId"] = m_runId;
+    m_values["activeConversationId"] = m_sessionId;
+    m_values["conversationSessionId"] = m_sessionId;
+    m_values["conversationState"] = !connected ? "Disconnected" : m_state;
+    m_values["chatSendLifecycleState"] = m_submissionPending ? "queued"
+                                         : busy && m_kind == "chat"
+                                             ? (m_output.isEmpty() ? "sending" : "streaming")
+                                             : m_state;
+    m_values["conversationHistoryMessageCount"] = m_messages.size();
+    m_values["latestApprovalSummary"] = m_approval.value("detail").toString();
+    if (m_kind == "chat" && !m_submissionPending && !m_messages.isEmpty() &&
+        m_messages.last().role == core::ChatRole::Assistant && !m_runId.isEmpty() &&
+        m_messages.last().id == m_activeAssistantId) {
+        auto& message = m_messages.last();
+        if (busy)
+            message.content = m_output;
+        message.partial = busy;
+        message.status = messageStatus(m_state);
+    }
+}
+bool DesktopRuntimeClient::respondToApproval(bool allow) {
+    if (!ready() || m_approvalResponsePending || m_state != "approval" ||
+        m_approval.value("approval_id").toString().isEmpty())
+        return false;
+    m_approvalResponsePending = true;
+    send(DaemonClient::Command::approval_respond,
+         {{"run_id", m_runId}, {"approval_id", m_approval.value("approval_id")}, {"allow", allow}},
+         m_sessionId);
+    return true;
+}
+bool DesktopRuntimeClient::cancelRun() {
+    if (!ready() || !active(m_state) || m_runId.isEmpty())
+        return false;
+    send(DaemonClient::Command::run_cancel, {{"run_id", m_runId}}, m_sessionId);
+    return true;
+}
+} // namespace sentinel::desktop
