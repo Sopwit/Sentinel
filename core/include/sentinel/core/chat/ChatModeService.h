@@ -9,6 +9,7 @@
 #include "sentinel/core/model/ModelService.h"
 
 #include <QObject>
+#include <QSet>
 #include <QThread>
 #include <atomic>
 #include <memory>
@@ -30,19 +31,18 @@ struct ChatAttachment {
 class ChatModeService final : public QObject {
     Q_OBJECT
 public:
-    ChatModeService(ModelService& models, ChatSession& session,
-                    IConversationStore& store, QObject* parent = nullptr);
+    ChatModeService(ModelService& models, ChatSession& session, IConversationStore& store,
+                    QObject* parent = nullptr);
     ~ChatModeService() override;
     bool send(const QString& conversationId, const QString& text,
-              const QList<ChatAttachment>& attachments = {},
-              const ModelSelection& selection = {}, bool requireLocal = false);
+              const QList<ChatAttachment>& attachments = {}, const ModelSelection& selection = {},
+              bool requireLocal = false);
     bool regenerate(const QString& conversationId, int userMessageId,
                     const ModelSelection& selection = {}, bool requireLocal = false);
     bool retry(const QString& conversationId, int assistantMessageId,
                const ModelSelection& selection = {}, bool requireLocal = false);
-    bool sendExisting(const QString& conversationId, int userMessageId,
-                      int replacesMessageId = 0, const ModelSelection& selection = {},
-                      bool requireLocal = false);
+    bool sendExisting(const QString& conversationId, int userMessageId, int replacesMessageId = 0,
+                      const ModelSelection& selection = {}, bool requireLocal = false);
     bool stop();
     bool busy() const;
     ChatMessage activeMessage() const;
@@ -56,8 +56,7 @@ private:
     bool runTurn(const QString& conversationId, int userMessageId, int replacesMessageId,
                  const ModelSelection& selection = {}, bool requireLocal = false);
     void acceptDelta(const QString& conversationId, int messageId, const QString& delta);
-    void acceptResult(const QString& conversationId, int messageId,
-                      const ChatProviderReply& reply);
+    void acceptResult(const QString& conversationId, int messageId, const ChatProviderReply& reply);
     bool persist(const QString& conversationId, const ChatMessage& message);
     QString contextFor(const QString& conversationId, int userMessageId) const;
     static ChatProviderErrorCategory bindingError(ModelBindingError error);
@@ -66,6 +65,7 @@ private:
     ChatSession& session_;
     IConversationStore& store_;
     QThread* worker_ = nullptr;
+    QSet<QThread*> workers_;
     std::shared_ptr<std::atomic_bool> cancellation_;
     QString activeConversationId_;
     int activeMessageId_ = 0;

@@ -23,16 +23,25 @@ class FixtureProvider final : public IChatProvider {
 public:
     enum class ReplyMode { FinalOnly, StreamWithEmptyFinal, Failure, IgnoresCancellation };
 
-    explicit FixtureProvider(ReplyMode mode) : mode_(mode) {}
+    explicit FixtureProvider(ReplyMode mode, std::shared_ptr<std::atomic_int> finished = {})
+        : mode_(mode), finished_(std::move(finished)) {}
 
-    QString name() const override { return QStringLiteral("chat-fixture"); }
-    ChatProviderStatus status() const override { return ChatProviderStatus::Ready; }
+    QString name() const override {
+        return QStringLiteral("chat-fixture");
+    }
+    ChatProviderStatus status() const override {
+        return ChatProviderStatus::Ready;
+    }
     ChatProviderConcurrency concurrency() const override {
         return ChatProviderConcurrency::Supported;
     }
-    bool supportsStreaming() const override { return mode_ == ReplyMode::StreamWithEmptyFinal; }
+    bool supportsStreaming() const override {
+        return mode_ == ReplyMode::StreamWithEmptyFinal;
+    }
 
-    ChatProviderReply sendMessage(const QString&) override { return {}; }
+    ChatProviderReply sendMessage(const QString&) override {
+        return {};
+    }
     ChatProviderReply sendRequest(const QString&, const ChatRequestOptions&) override {
         if (mode_ == ReplyMode::Failure) {
             ChatProviderReply result;
@@ -47,11 +56,13 @@ public:
         result.success = true;
         result.message = QStringLiteral("SENTINEL_CHAT_PIPELINE_OK");
         result.lifecycle = ChatRequestLifecycle::Completed;
+        if (finished_)
+            ++*finished_;
         return result;
     }
-    ChatProviderReply sendMessageStreaming(
-        const QString&, const std::function<void(const QString&)>& onDelta,
-        const std::shared_ptr<std::atomic_bool>&) override {
+    ChatProviderReply sendMessageStreaming(const QString&,
+                                           const std::function<void(const QString&)>& onDelta,
+                                           const std::shared_ptr<std::atomic_bool>&) override {
         onDelta(QStringLiteral("SENTINEL_"));
         onDelta(QStringLiteral("CHAT_PIPELINE_OK"));
         ChatProviderReply result;
@@ -62,11 +73,11 @@ public:
 
 private:
     ReplyMode mode_;
+    std::shared_ptr<std::atomic_int> finished_;
 };
 
 struct Harness {
-    explicit Harness(FixtureProvider::ReplyMode mode)
-        : session(std::make_unique<SystemClock>()) {
+    explicit Harness(FixtureProvider::ReplyMode mode) : session(std::make_unique<SystemClock>()) {
         models.registerProvider(QStringLiteral("ollama"), [mode](const ModelBinding&) {
             return std::make_shared<FixtureProvider>(mode);
         });
@@ -90,6 +101,7 @@ private slots:
     void providerFailureDoesNotLeaveEmptyAssistantMessage();
     void bindingFailureDoesNotLeaveEmptyAssistantMessage();
     void lateSuccessfulCallbackAfterCancellationStaysCancelled();
+    void shutdownJoinsCancelledAndReplacementWorkers();
     void sqliteStoreAcceptsInitiallyEmptyAssistantPlaceholder();
     void geminiPreservesAuthoritativeJsonSchema();
 };
@@ -117,9 +129,10 @@ void ChatModeServiceTest::finalOnlyReplyUpdatesPersistedPlaceholder() {
     QSignalSpy changed(&service, &ChatModeService::messagesChanged);
 
     QVERIFY(service.send(harness.conversationId, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
     QTRY_VERIFY_WITH_TIMEOUT(!service.busy(), 3000);
-    QCOMPARE(harness.session.messages().last().content, QStringLiteral("SENTINEL_CHAT_PIPELINE_OK"));
+    QCOMPARE(harness.session.messages().last().content,
+             QStringLiteral("SENTINEL_CHAT_PIPELINE_OK"));
     QCOMPARE(harness.session.messages().last().status, ChatMessageStatus::Completed);
     QCOMPARE(harness.store.loadMessages(harness.conversationId).last().content,
              QStringLiteral("SENTINEL_CHAT_PIPELINE_OK"));
@@ -131,9 +144,10 @@ void ChatModeServiceTest::emptyStreamingFinalDoesNotEraseDeltas() {
     ChatModeService service(harness.models, harness.session, harness.store);
 
     QVERIFY(service.send(harness.conversationId, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
     QTRY_VERIFY_WITH_TIMEOUT(!service.busy(), 3000);
-    QCOMPARE(harness.session.messages().last().content, QStringLiteral("SENTINEL_CHAT_PIPELINE_OK"));
+    QCOMPARE(harness.session.messages().last().content,
+             QStringLiteral("SENTINEL_CHAT_PIPELINE_OK"));
     QCOMPARE(harness.session.messages().last().status, ChatMessageStatus::Completed);
     QVERIFY(!harness.session.messages().last().partial);
 }
@@ -143,7 +157,7 @@ void ChatModeServiceTest::providerFailureDoesNotLeaveEmptyAssistantMessage() {
     ChatModeService service(harness.models, harness.session, harness.store);
 
     QVERIFY(service.send(harness.conversationId, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
     QTRY_VERIFY_WITH_TIMEOUT(!service.busy(), 3000);
     const auto& message = harness.session.messages().last();
     QCOMPARE(message.status, ChatMessageStatus::Failed);
@@ -156,7 +170,7 @@ void ChatModeServiceTest::bindingFailureDoesNotLeaveEmptyAssistantMessage() {
     ChatModeService service(harness.models, harness.session, harness.store);
 
     QVERIFY(service.send(harness.conversationId, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("unknown-provider"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("unknown-provider"), QStringLiteral("fixture")}, false));
     QVERIFY(!service.busy());
     const auto& message = harness.session.messages().last();
     QCOMPARE(message.status, ChatMessageStatus::Failed);
@@ -169,7 +183,7 @@ void ChatModeServiceTest::lateSuccessfulCallbackAfterCancellationStaysCancelled(
     ChatModeService service(harness.models, harness.session, harness.store);
 
     QVERIFY(service.send(harness.conversationId, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
     QVERIFY(service.stop());
     // A provider may return late even after it receives cancellation.  The service
     // must close the visible request immediately, then ignore that late success.
@@ -179,6 +193,24 @@ void ChatModeServiceTest::lateSuccessfulCallbackAfterCancellationStaysCancelled(
     QCOMPARE(message.status, ChatMessageStatus::Cancelled);
     QCOMPARE(message.errorCategory, ChatProviderErrorCategory::Cancelled);
     QVERIFY(!message.content.trimmed().isEmpty());
+}
+
+void ChatModeServiceTest::shutdownJoinsCancelledAndReplacementWorkers() {
+    Harness harness(FixtureProvider::ReplyMode::IgnoresCancellation);
+    auto finished = std::make_shared<std::atomic_int>(0);
+    harness.models.registerProvider(QStringLiteral("ollama"), [finished](const ModelBinding&) {
+        return std::make_shared<FixtureProvider>(FixtureProvider::ReplyMode::IgnoresCancellation,
+                                                 finished);
+    });
+    auto service =
+        std::make_unique<ChatModeService>(harness.models, harness.session, harness.store);
+    QVERIFY(service->send(harness.conversationId, QStringLiteral("First cancelled turn"), {},
+                          {QStringLiteral("ollama"), QStringLiteral("fixture")}));
+    QVERIFY(service->stop());
+    QVERIFY(service->send(harness.conversationId, QStringLiteral("Replacement turn"), {},
+                          {QStringLiteral("ollama"), QStringLiteral("fixture")}));
+    service.reset();
+    QCOMPARE(finished->load(), 2);
 }
 
 void ChatModeServiceTest::sqliteStoreAcceptsInitiallyEmptyAssistantPlaceholder() {
@@ -197,7 +229,7 @@ void ChatModeServiceTest::sqliteStoreAcceptsInitiallyEmptyAssistantPlaceholder()
     ChatModeService service(models, session, store);
 
     QVERIFY(service.send(conversation.id, QStringLiteral("fixture prompt"), {},
-                          {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
+                         {QStringLiteral("ollama"), QStringLiteral("fixture")}, false));
     QTRY_VERIFY_WITH_TIMEOUT(!service.busy(), 3000);
     const auto persisted = store.loadMessages(conversation.id);
     QCOMPARE(persisted.size(), 2);
