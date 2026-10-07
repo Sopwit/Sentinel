@@ -109,7 +109,12 @@ fn stdin_task() {
 #[test]
 fn cancelled_exit_is_distinct() {
     let r = cli(&["run", "task"], None, "run.cancelled");
-    assert_eq!(r.status.code(), Some(2));
+    assert_eq!(
+        r.status.code(),
+        Some(130),
+        "{}",
+        String::from_utf8_lossy(&r.stderr)
+    );
 }
 #[test]
 fn unavailable_exit_is_distinct() {
@@ -124,7 +129,12 @@ fn unavailable_exit_is_distinct() {
 #[test]
 fn failed_exit_is_nonzero() {
     let r = cli(&["run", "task"], None, "run.failed");
-    assert_eq!(r.status.code(), Some(1));
+    assert_eq!(
+        r.status.code(),
+        Some(1),
+        "{}",
+        String::from_utf8_lossy(&r.stderr)
+    );
 }
 
 #[test]
@@ -155,4 +165,99 @@ fn incompatible_exit_is_distinct() {
     std::fs::remove_dir_all(root).unwrap();
     assert_eq!(result.status.code(), Some(4));
     assert!(result.stdout.is_empty());
+}
+
+#[test]
+fn help_is_offline_and_successful() {
+    for command in [
+        "",
+        "status",
+        "models",
+        "sessions",
+        "chat",
+        "agent",
+        "run",
+        "attach",
+        "tui",
+        "doctor",
+        "model",
+        "completions",
+        "shutdown",
+    ] {
+        let mut invocation = Command::new(env!("CARGO_BIN_EXE_sentinel"));
+        if !command.is_empty() {
+            invocation.arg(command);
+        }
+        let result = invocation.arg("--help").output().unwrap();
+        assert!(result.status.success(), "{command}: {:?}", result.stderr);
+        let text = String::from_utf8(result.stdout).unwrap();
+        assert!(text.contains("Usage:"));
+        assert!(!text.contains("Protocol("));
+    }
+}
+#[test]
+fn usage_validation_precedes_daemon_connection() {
+    for args in [
+        vec!["invented"],
+        vec!["--output", "wrong", "status"],
+        vec!["attach"],
+        vec!["model", "select", "ollama"],
+    ] {
+        let result = Command::new(env!("CARGO_BIN_EXE_sentinel"))
+            .args(args)
+            .output()
+            .unwrap();
+        assert_eq!(result.status.code(), Some(2));
+    }
+}
+#[test]
+fn missing_task_is_usage_error() {
+    let result = Command::new(env!("CARGO_BIN_EXE_sentinel"))
+        .args(["run", "--output", "json"])
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(2));
+    let json: Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(json["error"]["code"], "cli-usage");
+}
+#[test]
+fn machine_error_is_typed() {
+    let result = Command::new(env!("CARGO_BIN_EXE_sentinel"))
+        .args([
+            "status",
+            "--socket",
+            "/nonexistent/sentinel.sock",
+            "--output",
+            "json",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(3));
+    let json: Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(json["error"]["code"], "daemon-unavailable");
+    assert!(!result.stderr.is_empty());
+}
+#[test]
+fn completions_are_offline() {
+    for shell in ["bash", "zsh", "fish"] {
+        let result = Command::new(env!("CARGO_BIN_EXE_sentinel"))
+            .args(["completions", shell])
+            .output()
+            .unwrap();
+        assert!(result.status.success());
+        assert!(!result.stdout.is_empty());
+    }
+}
+
+#[test]
+fn global_output_after_task_is_parsed() {
+    let r = cli(
+        &["chat", "hello", "--output", "json"],
+        None,
+        "run.completed",
+    );
+    assert!(r.status.success());
+    let value: Value = serde_json::from_slice(&r.stdout).unwrap();
+    assert_eq!(value["text"], "MAVI");
 }
