@@ -16,16 +16,25 @@ ChatModeService::ChatModeService(ModelService& models, ChatSession& session,
     : QObject(parent), models_(models), session_(session), store_(store) {}
 
 ChatModeService::~ChatModeService() {
-    if (cancellation_) cancellation_->store(true);
-    if (worker_) worker_->wait();
+    if (cancellation_)
+        cancellation_->store(true);
+    // Cancellation releases the active turn before its provider worker necessarily exits.
+    // A subsequent turn can replace worker_, so shutdown must join every live worker.
+    for (auto* worker : workers_)
+        worker->wait();
 }
 
-bool ChatModeService::busy() const { return activeMessageId_ != 0; }
-ChatProviderErrorCategory ChatModeService::lastError() const { return lastError_; }
+bool ChatModeService::busy() const {
+    return activeMessageId_ != 0;
+}
+ChatProviderErrorCategory ChatModeService::lastError() const {
+    return lastError_;
+}
 
 ChatMessage ChatModeService::activeMessage() const {
     for (const auto& message : session_.messages())
-        if (message.id == activeMessageId_) return message;
+        if (message.id == activeMessageId_)
+            return message;
     return {};
 }
 
@@ -34,10 +43,10 @@ bool ChatModeService::persist(const QString& conversationId, const ChatMessage& 
     // null value must be stored as an empty string, not bound as SQL NULL against the durable
     // conversation schema's NOT NULL content column.
     const auto content = message.content.isNull() ? QStringLiteral("") : message.content;
-    return store_.appendMessage({conversationId, message.id, message.role, content,
-        message.timestamp, message.status, message.providerUsed, message.modelUsed,
-        message.replyToMessageId, message.replacesMessageId, message.partial,
-        message.errorCategory});
+    return store_.appendMessage(
+        {conversationId, message.id, message.role, content, message.timestamp, message.status,
+         message.providerUsed, message.modelUsed, message.replyToMessageId,
+         message.replacesMessageId, message.partial, message.errorCategory});
 }
 
 ChatProviderErrorCategory ChatModeService::bindingError(ModelBindingError error) {
@@ -50,14 +59,16 @@ ChatProviderErrorCategory ChatModeService::bindingError(ModelBindingError error)
         return ChatProviderErrorCategory::ProviderUnavailable;
     case ModelBindingError::ConfigurationInvalid:
         return ChatProviderErrorCategory::RequestRejected;
-    default: return ChatProviderErrorCategory::ProviderUnavailable;
+    default:
+        return ChatProviderErrorCategory::ProviderUnavailable;
     }
 }
 
 bool ChatModeService::send(const QString& conversationId, const QString& text,
                            const QList<ChatAttachment>& attachments,
                            const ModelSelection& selection, bool requireLocal) {
-    if (busy() || conversationId.isEmpty() || text.trimmed().isEmpty()) return false;
+    if (busy() || conversationId.isEmpty() || text.trimmed().isEmpty())
+        return false;
     if (text.size() > 12000) {
         lastError_ = ChatProviderErrorCategory::RequestRejected;
         emit requestStateChanged();
@@ -84,7 +95,8 @@ bool ChatModeService::send(const QString& conversationId, const QString& text,
 bool ChatModeService::sendExisting(const QString& conversationId, int userMessageId,
                                    int replacesMessageId, const ModelSelection& selection,
                                    bool requireLocal) {
-    if (busy() || conversationId.isEmpty()) return false;
+    if (busy() || conversationId.isEmpty())
+        return false;
     return runTurn(conversationId, userMessageId, replacesMessageId, selection, requireLocal);
 }
 
@@ -103,9 +115,10 @@ bool ChatModeService::retry(const QString& conversationId, int assistantMessageI
         if (message.id != assistantMessageId || message.role != ChatRole::Assistant ||
             (message.status != ChatMessageStatus::Failed &&
              message.status != ChatMessageStatus::Interrupted &&
-             message.status != ChatMessageStatus::Error)) continue;
-        return sendExisting(conversationId, message.replyToMessageId, message.id,
-                            selection, requireLocal);
+             message.status != ChatMessageStatus::Error))
+            continue;
+        return sendExisting(conversationId, message.replyToMessageId, message.id, selection,
+                            requireLocal);
     }
     return false;
 }
@@ -114,40 +127,45 @@ QString ChatModeService::contextFor(const QString& conversationId, int userMessa
     QList<ChatMessage> accepted;
     const auto summary = store_.loadSummaryMetadata(conversationId);
     const bool useSummary = !summary.summaryText.isEmpty() &&
-        (summary.readinessState == QLatin1String("Ready") ||
-         summary.readinessState == QLatin1String("Truncated")) &&
-        summary.coveredFirstMessageId > 0 && summary.coveredLastMessageId < userMessageId;
+                            (summary.readinessState == QLatin1String("Ready") ||
+                             summary.readinessState == QLatin1String("Truncated")) &&
+                            summary.coveredFirstMessageId > 0 &&
+                            summary.coveredLastMessageId < userMessageId;
     QSet<int> replaced;
     for (const auto& message : session_.messages())
-        if (message.replacesMessageId > 0 &&
-            (message.status == ChatMessageStatus::Completed ||
-             message.status == ChatMessageStatus::Received))
+        if (message.replacesMessageId > 0 && (message.status == ChatMessageStatus::Completed ||
+                                              message.status == ChatMessageStatus::Received))
             replaced.insert(message.replacesMessageId);
     for (const auto& message : session_.messages()) {
-        if (message.id > userMessageId) break;
-        if (useSummary && message.id <= summary.coveredLastMessageId) continue;
+        if (message.id > userMessageId)
+            break;
+        if (useSummary && message.id <= summary.coveredLastMessageId)
+            continue;
         if (message.role == ChatRole::Assistant &&
-            (replaced.contains(message.id) ||
-             (message.status != ChatMessageStatus::Completed &&
-              message.status != ChatMessageStatus::Received))) continue;
-        if (message.role == ChatRole::System) continue;
+            (replaced.contains(message.id) || (message.status != ChatMessageStatus::Completed &&
+                                               message.status != ChatMessageStatus::Received)))
+            continue;
+        if (message.role == ChatRole::System)
+            continue;
         accepted.append(message);
     }
     QStringList lines;
     int budget = 10000;
     for (int i = accepted.size() - 1; i >= 0 && lines.size() < 24 && budget > 0; --i) {
         const auto& message = accepted.at(i);
-        const auto content = message.id == userMessageId ? message.content
-            : message.content.right(qMin(budget, 3000));
+        const auto content = message.id == userMessageId
+                                 ? message.content
+                                 : message.content.right(qMin(budget, 3000));
         budget -= content.size();
-        lines.prepend(QStringLiteral("%1: %2")
-            .arg(message.role == ChatRole::User ? QStringLiteral("User")
-               : message.role == ChatRole::Assistant ? QStringLiteral("Assistant")
-                                                      : QStringLiteral("System"), content));
+        lines.prepend(QStringLiteral("%1: %2").arg(
+            message.role == ChatRole::User        ? QStringLiteral("User")
+            : message.role == ChatRole::Assistant ? QStringLiteral("Assistant")
+                                                  : QStringLiteral("System"),
+            content));
     }
     if (useSummary)
-        lines.prepend(QStringLiteral("Earlier conversation summary: %1")
-                          .arg(summary.summaryText.left(2000)));
+        lines.prepend(
+            QStringLiteral("Earlier conversation summary: %1").arg(summary.summaryText.left(2000)));
     return lines.join(QStringLiteral("\n\n"));
 }
 
@@ -156,10 +174,14 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
                               bool requireLocal) {
     ChatMessage user;
     for (const auto& message : session_.messages())
-        if (message.id == userMessageId && message.role == ChatRole::User) user = message;
-    if (user.id == 0) return false;
-    const auto selection = preferredSelection.isValid() ? preferredSelection : models_.selectedModel();
-    const bool blockedByLocalPolicy = requireLocal &&
+        if (message.id == userMessageId && message.role == ChatRole::User)
+            user = message;
+    if (user.id == 0)
+        return false;
+    const auto selection =
+        preferredSelection.isValid() ? preferredSelection : models_.selectedModel();
+    const bool blockedByLocalPolicy =
+        requireLocal &&
         models_.currentModelMetadata(selection.providerId, selection.modelId).providerKind ==
             ProviderKind::Cloud;
     auto resolved = blockedByLocalPolicy ? ModelBindingResolution{} : models_.resolve(selection);
@@ -172,7 +194,8 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
     if (!persist(conversationId, assistant)) {
         assistant.status = ChatMessageStatus::Failed;
         assistant.errorCategory = ChatProviderErrorCategory::ProviderUnavailable;
-        assistant.content = QStringLiteral("Unable to save the assistant response placeholder. Please retry this message.");
+        assistant.content = QStringLiteral(
+            "Unable to save the assistant response placeholder. Please retry this message.");
         qWarning().noquote() << "Chat assistant placeholder persistence failed:"
                              << store_.lastError().summary.left(512);
         session_.updateMessage(assistant);
@@ -189,20 +212,23 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
         resolved.provider->status() != ChatProviderStatus::Ready) {
         assistant.status = ChatMessageStatus::Failed;
         if (blockedByLocalPolicy) {
-            assistant.content = QStringLiteral("Local Only requires a local provider and model. The configured selection is cloud-based.");
+            assistant.content = QStringLiteral("Local Only requires a local provider and model. "
+                                               "The configured selection is cloud-based.");
         } else if (!resolved.reason.trimmed().isEmpty()) {
             // Binding resolution happens after the placeholder has been persisted.  Surface the
             // provider-neutral reason on that exact entry so a rejected turn cannot appear as a
             // successful-but-empty assistant bubble.
             assistant.content = resolved.reason.trimmed();
         } else if (!resolved.ok()) {
-            assistant.content = QStringLiteral("The selected provider or model could not be prepared for this request.");
+            assistant.content = QStringLiteral(
+                "The selected provider or model could not be prepared for this request.");
         } else {
-            assistant.content = QStringLiteral("The selected provider is not ready to accept requests.");
+            assistant.content =
+                QStringLiteral("The selected provider is not ready to accept requests.");
         }
-        assistant.errorCategory = blockedByLocalPolicy
-            ? ChatProviderErrorCategory::RequestRejected : resolved.ok()
-            ? ChatProviderErrorCategory::ProviderUnavailable : bindingError(resolved.error);
+        assistant.errorCategory = blockedByLocalPolicy ? ChatProviderErrorCategory::RequestRejected
+                                  : resolved.ok() ? ChatProviderErrorCategory::ProviderUnavailable
+                                                  : bindingError(resolved.error);
         lastError_ = assistant.errorCategory;
         session_.updateMessage(assistant);
         persist(conversationId, assistant);
@@ -231,9 +257,12 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
     const auto messageId = assistant.id;
     worker_ = QThread::create([this, provider, prompt, cancellation, conversationId, messageId]() {
         auto delta = [this, conversationId, messageId](const QString& text) {
-            QMetaObject::invokeMethod(this, [this, conversationId, messageId, text]() {
-                acceptDelta(conversationId, messageId, text);
-            }, Qt::QueuedConnection);
+            QMetaObject::invokeMethod(
+                this,
+                [this, conversationId, messageId, text]() {
+                    acceptDelta(conversationId, messageId, text);
+                },
+                Qt::QueuedConnection);
         };
         ChatProviderReply reply;
         if (provider->supportsStreaming())
@@ -243,13 +272,19 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
             options.cancellationToken = cancellation;
             reply = provider->sendRequest(prompt, options);
         }
-        QMetaObject::invokeMethod(this, [this, conversationId, messageId, reply]() {
-            acceptResult(conversationId, messageId, reply);
-        }, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(
+            this,
+            [this, conversationId, messageId, reply]() {
+                acceptResult(conversationId, messageId, reply);
+            },
+            Qt::QueuedConnection);
     });
     auto* worker = worker_;
+    workers_.insert(worker);
     connect(worker, &QThread::finished, this, [this, worker]() {
-        if (worker_ == worker) worker_ = nullptr;
+        workers_.remove(worker);
+        if (worker_ == worker)
+            worker_ = nullptr;
     });
     connect(worker_, &QThread::finished, worker_, &QObject::deleteLater);
     worker_->start();
@@ -260,7 +295,8 @@ bool ChatModeService::runTurn(const QString& conversationId, int userMessageId,
 void ChatModeService::acceptDelta(const QString& conversationId, int messageId,
                                   const QString& delta) {
     if (activeConversationId_ != conversationId || activeMessageId_ != messageId ||
-        !cancellation_ || cancellation_->load() || delta.isEmpty()) return;
+        !cancellation_ || cancellation_->load() || delta.isEmpty())
+        return;
     auto message = activeMessage();
     message.content += delta;
     message.status = ChatMessageStatus::Streaming;
@@ -277,42 +313,46 @@ void ChatModeService::acceptDelta(const QString& conversationId, int messageId,
 
 void ChatModeService::acceptResult(const QString& conversationId, int messageId,
                                    const ChatProviderReply& reply) {
-    if (activeConversationId_ != conversationId || activeMessageId_ != messageId) return;
+    if (activeConversationId_ != conversationId || activeMessageId_ != messageId)
+        return;
     auto message = activeMessage();
     const bool cancellationRequested = cancellation_ && cancellation_->load();
     if (!cancellationRequested && reply.success &&
         (reply.lifecycle == ChatRequestLifecycle::Completed ||
          reply.lifecycle == ChatRequestLifecycle::Pending) &&
         (!reply.message.isEmpty() || !message.content.isEmpty())) {
-        if (!reply.message.isEmpty()) message.content = reply.message;
+        if (!reply.message.isEmpty())
+            message.content = reply.message;
         message.status = ChatMessageStatus::Completed;
         message.partial = false;
         message.errorCategory = ChatProviderErrorCategory::None;
     } else {
         const bool cancelled = reply.lifecycle == ChatRequestLifecycle::Cancelled ||
-            reply.category == ChatProviderErrorCategory::Cancelled ||
-            cancellationRequested;
+                               reply.category == ChatProviderErrorCategory::Cancelled ||
+                               cancellationRequested;
         message.status = cancelled ? ChatMessageStatus::Cancelled : ChatMessageStatus::Failed;
         message.partial = !message.content.isEmpty();
-        message.errorCategory = cancelled ? ChatProviderErrorCategory::Cancelled
-            : reply.success ? ChatProviderErrorCategory::MalformedResponse
-            : reply.category != ChatProviderErrorCategory::None ? reply.category
-            : reply.lifecycle == ChatRequestLifecycle::TimedOut
-                ? ChatProviderErrorCategory::Timeout
-            : reply.lifecycle == ChatRequestLifecycle::RateLimited
-                ? ChatProviderErrorCategory::RateLimited
-                : ChatProviderErrorCategory::ProviderFailure;
+        message.errorCategory = cancelled       ? ChatProviderErrorCategory::Cancelled
+                                : reply.success ? ChatProviderErrorCategory::MalformedResponse
+                                : reply.category != ChatProviderErrorCategory::None ? reply.category
+                                : reply.lifecycle == ChatRequestLifecycle::TimedOut
+                                    ? ChatProviderErrorCategory::Timeout
+                                : reply.lifecycle == ChatRequestLifecycle::RateLimited
+                                    ? ChatProviderErrorCategory::RateLimited
+                                    : ChatProviderErrorCategory::ProviderFailure;
         // A queued placeholder must never become a visually empty terminal
         // assistant message.  Keep any partial streamed content, but make a
         // zero-content cancellation/failure truthful and actionable in every
         // presentation layer, including QML delegates that only render text.
         if (message.content.trimmed().isEmpty()) {
             if (cancelled) {
-                message.content = QStringLiteral("Generation was cancelled before any response was received.");
+                message.content =
+                    QStringLiteral("Generation was cancelled before any response was received.");
             } else if (!reply.message.trimmed().isEmpty()) {
                 message.content = reply.message.trimmed();
             } else {
-                message.content = QStringLiteral("Generation failed before the provider returned usable assistant text.");
+                message.content = QStringLiteral(
+                    "Generation failed before the provider returned usable assistant text.");
             }
         }
         lastError_ = message.errorCategory;
@@ -332,7 +372,8 @@ void ChatModeService::acceptResult(const QString& conversationId, int messageId,
 }
 
 bool ChatModeService::stop() {
-    if (!busy() || !cancellation_) return false;
+    if (!busy() || !cancellation_)
+        return false;
     cancellation_->store(true);
 
     // Cancellation is a terminal UI action.  Do not wait for a provider worker to
@@ -344,7 +385,8 @@ bool ChatModeService::stop() {
     message.partial = !message.content.isEmpty();
     message.errorCategory = ChatProviderErrorCategory::Cancelled;
     if (message.content.trimmed().isEmpty()) {
-        message.content = QStringLiteral("Generation was cancelled before any response was received.");
+        message.content =
+            QStringLiteral("Generation was cancelled before any response was received.");
     }
     session_.updateMessage(message);
     if (!persist(activeConversationId_, message)) {
