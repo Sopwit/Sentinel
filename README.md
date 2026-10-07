@@ -1,5 +1,7 @@
 # Sentinel
 
+![Sentinel](resources/branding/docs/readme-header.svg)
+
 Sentinel is a cross-platform AI agent platform built with C++20, Qt 6, and QML. Desktop and CLI are interfaces over shared application and core services; agent execution, tools, providers, memory, permissions, plugins, and MCP live behind those shared boundaries.
 
 The Desktop is the primary user surface and Fedora KDE Plasma is the primary platform target. Linux, macOS, and Windows are built in CI. Sentinel can use a local Ollama runtime and includes provider/model, tool, plugin, MCP, local persistence, and controlled agent-execution infrastructure. Cloud use requires user-supplied credentials and an allowed network policy.

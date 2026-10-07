@@ -1,0 +1,415 @@
+{
+  "verdict": "PASS — FILE/GEOMETRY VALIDATION ONLY",
+  "svgCount": 12,
+  "pngCount": 50,
+  "monochromePngCount": 26,
+  "icoRepresentations": [
+    16,
+    20,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ],
+  "icnsRepresentations": [
+    "icp4",
+    "icp5",
+    "icp6",
+    "ic07",
+    "ic08",
+    "ic09",
+    "ic10",
+    "ic11",
+    "ic12",
+    "ic13",
+    "ic14"
+  ],
+  "contrast": [
+    {
+      "pair": "Black / white",
+      "ratio": 21
+    },
+    {
+      "pair": "Porcelain / Obsidian",
+      "ratio": 15.53
+    },
+    {
+      "pair": "Porcelain / Graphite",
+      "ratio": 10.84
+    }
+  ],
+  "checks": [
+    "XML parsing",
+    "exact FA-3 path",
+    "flat Quiet Field: only Obsidian + Porcelain FA-3",
+    "all app-icon PNGs and container entries match the exact two-shape reference; no secondary plane",
+    "no embedded fonts/raster/filter/gradient",
+    "raster dimensions and transparent corners",
+    "monochrome tray/favicons",
+    "matching light/dark alpha",
+    "foreground/background contrast",
+    "ICO directory/offsets/decoded PNG entries",
+    "ICNS header/chunks/decoded PNG entries",
+    "manifest SHA-256 inventory"
+  ],
+  "limitations": [
+    "Native OS shell integration not executed.",
+    "Small-size recognition and external similarity risk remain unresolved.",
+    "Live-text SVG typography requires Inter/IBM Plex Mono or uses fallbacks.",
+    "No legal or trademark clearance."
+  ],
+  "rasters": [
+    {
+      "file": "app-icon/linux/128x128/apps/sentinel.png",
+      "width": 128,
+      "height": 128,
+      "monochrome": false,
+      "transparentPixels": 1172
+    },
+    {
+      "file": "app-icon/linux/16x16/apps/sentinel.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": false,
+      "transparentPixels": 4
+    },
+    {
+      "file": "app-icon/linux/22x22/apps/sentinel.png",
+      "width": 22,
+      "height": 22,
+      "monochrome": false,
+      "transparentPixels": 12
+    },
+    {
+      "file": "app-icon/linux/24x24/apps/sentinel.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": false,
+      "transparentPixels": 12
+    },
+    {
+      "file": "app-icon/linux/256x256/apps/sentinel.png",
+      "width": 256,
+      "height": 256,
+      "monochrome": false,
+      "transparentPixels": 5476
+    },
+    {
+      "file": "app-icon/linux/32x32/apps/sentinel.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": false,
+      "transparentPixels": 32
+    },
+    {
+      "file": "app-icon/linux/48x48/apps/sentinel.png",
+      "width": 48,
+      "height": 48,
+      "monochrome": false,
+      "transparentPixels": 100
+    },
+    {
+      "file": "app-icon/linux/512x512/apps/sentinel.png",
+      "width": 512,
+      "height": 512,
+      "monochrome": false,
+      "transparentPixels": 22221
+    },
+    {
+      "file": "app-icon/linux/64x64/apps/sentinel.png",
+      "width": 64,
+      "height": 64,
+      "monochrome": false,
+      "transparentPixels": 192
+    },
+    {
+      "file": "app-icon/macos/sentinel-1024.png",
+      "width": 1024,
+      "height": 1024,
+      "monochrome": false,
+      "transparentPixels": 89792
+    },
+    {
+      "file": "app-icon/macos/sentinel-128.png",
+      "width": 128,
+      "height": 128,
+      "monochrome": false,
+      "transparentPixels": 1172
+    },
+    {
+      "file": "app-icon/macos/sentinel-16.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": false,
+      "transparentPixels": 4
+    },
+    {
+      "file": "app-icon/macos/sentinel-256.png",
+      "width": 256,
+      "height": 256,
+      "monochrome": false,
+      "transparentPixels": 5476
+    },
+    {
+      "file": "app-icon/macos/sentinel-32.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": false,
+      "transparentPixels": 32
+    },
+    {
+      "file": "app-icon/macos/sentinel-512.png",
+      "width": 512,
+      "height": 512,
+      "monochrome": false,
+      "transparentPixels": 22221
+    },
+    {
+      "file": "app-icon/macos/sentinel-64.png",
+      "width": 64,
+      "height": 64,
+      "monochrome": false,
+      "transparentPixels": 192
+    },
+    {
+      "file": "app-icon/windows/sentinel-128.png",
+      "width": 128,
+      "height": 128,
+      "monochrome": false,
+      "transparentPixels": 1172
+    },
+    {
+      "file": "app-icon/windows/sentinel-16.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": false,
+      "transparentPixels": 4
+    },
+    {
+      "file": "app-icon/windows/sentinel-20.png",
+      "width": 20,
+      "height": 20,
+      "monochrome": false,
+      "transparentPixels": 12
+    },
+    {
+      "file": "app-icon/windows/sentinel-24.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": false,
+      "transparentPixels": 12
+    },
+    {
+      "file": "app-icon/windows/sentinel-256.png",
+      "width": 256,
+      "height": 256,
+      "monochrome": false,
+      "transparentPixels": 5476
+    },
+    {
+      "file": "app-icon/windows/sentinel-32.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": false,
+      "transparentPixels": 32
+    },
+    {
+      "file": "app-icon/windows/sentinel-48.png",
+      "width": 48,
+      "height": 48,
+      "monochrome": false,
+      "transparentPixels": 100
+    },
+    {
+      "file": "app-icon/windows/sentinel-64.png",
+      "width": 64,
+      "height": 64,
+      "monochrome": false,
+      "transparentPixels": 192
+    },
+    {
+      "file": "favicon-16.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "favicon-32.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    },
+    {
+      "file": "tray/linux/sentinel-tray-16-black.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "tray/linux/sentinel-tray-16-white.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "tray/linux/sentinel-tray-22-black.png",
+      "width": 22,
+      "height": 22,
+      "monochrome": true,
+      "transparentPixels": 296
+    },
+    {
+      "file": "tray/linux/sentinel-tray-22-white.png",
+      "width": 22,
+      "height": 22,
+      "monochrome": true,
+      "transparentPixels": 296
+    },
+    {
+      "file": "tray/linux/sentinel-tray-24-black.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": true,
+      "transparentPixels": 346
+    },
+    {
+      "file": "tray/linux/sentinel-tray-24-white.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": true,
+      "transparentPixels": 346
+    },
+    {
+      "file": "tray/linux/sentinel-tray-32-black.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    },
+    {
+      "file": "tray/linux/sentinel-tray-32-white.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    },
+    {
+      "file": "tray/macos/sentinel-tray-16-template.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "tray/macos/sentinel-tray-16-template@2x.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    },
+    {
+      "file": "tray/macos/sentinel-tray-18-template.png",
+      "width": 18,
+      "height": 18,
+      "monochrome": true,
+      "transparentPixels": 186
+    },
+    {
+      "file": "tray/macos/sentinel-tray-18-template@2x.png",
+      "width": 36,
+      "height": 36,
+      "monochrome": true,
+      "transparentPixels": 820
+    },
+    {
+      "file": "tray/macos/sentinel-tray-20-template.png",
+      "width": 20,
+      "height": 20,
+      "monochrome": true,
+      "transparentPixels": 244
+    },
+    {
+      "file": "tray/macos/sentinel-tray-20-template@2x.png",
+      "width": 40,
+      "height": 40,
+      "monochrome": true,
+      "transparentPixels": 1035
+    },
+    {
+      "file": "tray/macos/sentinel-tray-22-template.png",
+      "width": 22,
+      "height": 22,
+      "monochrome": true,
+      "transparentPixels": 296
+    },
+    {
+      "file": "tray/macos/sentinel-tray-22-template@2x.png",
+      "width": 44,
+      "height": 44,
+      "monochrome": true,
+      "transparentPixels": 1263
+    },
+    {
+      "file": "tray/windows/sentinel-tray-16-black.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "tray/windows/sentinel-tray-16-white.png",
+      "width": 16,
+      "height": 16,
+      "monochrome": true,
+      "transparentPixels": 144
+    },
+    {
+      "file": "tray/windows/sentinel-tray-20-black.png",
+      "width": 20,
+      "height": 20,
+      "monochrome": true,
+      "transparentPixels": 244
+    },
+    {
+      "file": "tray/windows/sentinel-tray-20-white.png",
+      "width": 20,
+      "height": 20,
+      "monochrome": true,
+      "transparentPixels": 244
+    },
+    {
+      "file": "tray/windows/sentinel-tray-24-black.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": true,
+      "transparentPixels": 346
+    },
+    {
+      "file": "tray/windows/sentinel-tray-24-white.png",
+      "width": 24,
+      "height": 24,
+      "monochrome": true,
+      "transparentPixels": 346
+    },
+    {
+      "file": "tray/windows/sentinel-tray-32-black.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    },
+    {
+      "file": "tray/windows/sentinel-tray-32-white.png",
+      "width": 32,
+      "height": 32,
+      "monochrome": true,
+      "transparentPixels": 653
+    }
+  ]
+}

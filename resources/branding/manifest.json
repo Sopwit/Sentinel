@@ -1,0 +1,422 @@
+{
+  "assetVersion": "0.2.0-production-candidate",
+  "assetStatus": "production-candidate",
+  "identityStatus": "PROVISIONAL LOCK",
+  "status": "PROVISIONAL LOCK / EXTERNAL EVIDENCE WAIVED",
+  "symbol": "FA-3",
+  "geometry": "M16 16H44V32L68 20L84 40L68 52L80 76L56 88L40 64L16 72V52L28 44L16 36Z",
+  "authoritativePath": "M16 16H44V32L68 20L84 40L68 52L80 76L56 88L40 64L16 72V52L28 44L16 36Z",
+  "palette": {
+    "Obsidian": "#151719",
+    "Graphite": "#303438",
+    "Fog": "#929A9F",
+    "Porcelain": "#ECEFEE",
+    "Glacier": "#A9CAD3"
+  },
+  "appIcon": "Quiet Field",
+  "appIconComposition": {
+    "definition": "A solid Obsidian application field containing the Porcelain FA-3 symbol. No secondary plane or structural accent is used.",
+    "viewBox": "0 0 160 160",
+    "container": {
+      "x": 2,
+      "y": 2,
+      "width": 156,
+      "height": 156,
+      "rx": 34,
+      "fill": "#151719"
+    },
+    "symbolFill": "#ECEFEE",
+    "symbolTransform": "translate(8.5 5) scale(1.5)",
+    "retired": [
+      "original full-height side plane",
+      "Narrow Plane",
+      "Inset Plane",
+      "Minimal Edge"
+    ]
+  },
+  "generationDate": "2026-10-04T14:40:28.575Z",
+  "validation": {
+    "status": "PASS",
+    "scope": "asset file formats and frozen geometry only",
+    "report": "validation-report.json",
+    "legalClearance": "NOT CLAIMED",
+    "externalRecognition": "DEFERRED / EVIDENCE WAIVED",
+    "externalSimilarity": "DEFERRED / EVIDENCE WAIVED",
+    "nativeOsTray": "PENDING REAL OS VALIDATION"
+  },
+  "deferredValidationItems": [
+    "external blind-recognition review",
+    "external similarity/trademark review",
+    "native macOS menu-bar validation",
+    "native Windows tray validation",
+    "native Linux tray validation"
+  ],
+  "renderer": {
+    "sharp": "0.35.5",
+    "librsvg": "2.63.2"
+  },
+  "evidenceWaiver": "External blind-recognition and similarity clearance was deferred. These assets are production-candidate identity assets, not trademark/legal clearance.",
+  "generatedAssetCount": 64,
+  "package": {
+    "filename": "sentinel-brand-production-candidate.zip",
+    "brandingFileCount": 69,
+    "archiveFileCount": 72,
+    "rootAliases": [
+      {
+        "path": "favicon-16.png",
+        "source": "resources/branding/favicon-16.png",
+        "bytes": 240,
+        "sha256": "e6434f52a715810e3c6c94ee37f6fdf69e64f6b4cde241f4f5f8e1155e4b01e5"
+      },
+      {
+        "path": "favicon-32.png",
+        "source": "resources/branding/favicon-32.png",
+        "bytes": 338,
+        "sha256": "66eb1f45df19e56f463038054b4f51e378554c1b6a668ef531c2486257712cbb"
+      },
+      {
+        "path": "favicon.svg",
+        "source": "resources/branding/favicon.svg",
+        "bytes": 282,
+        "sha256": "ce4d36c209ad62fb9425fecf5a0a98613eb9ba955aed07263fd1a5cc9aa602c2"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "app-icon/linux/128x128/apps/sentinel.png",
+      "bytes": 1921,
+      "sha256": "c22967820c50553c9835235d62d3acfe8b715cbf6b99955455ad81ea027f8845"
+    },
+    {
+      "path": "app-icon/linux/16x16/apps/sentinel.png",
+      "bytes": 419,
+      "sha256": "fed9849f4a4886acc91a9fb40b487928d4ae2fceee4cb42f3e73f5b960b6e88a"
+    },
+    {
+      "path": "app-icon/linux/22x22/apps/sentinel.png",
+      "bytes": 495,
+      "sha256": "fdbc7c4978cf573b871915941c13c943427be1dbe83ea491f4586d74e0800617"
+    },
+    {
+      "path": "app-icon/linux/24x24/apps/sentinel.png",
+      "bytes": 537,
+      "sha256": "28828dbd7fb7e4465bdb9f2f08b6e8654a2d9a258b7d5c0d16f0a0efb7f9e296"
+    },
+    {
+      "path": "app-icon/linux/256x256/apps/sentinel.png",
+      "bytes": 3601,
+      "sha256": "ce59e3a38b4cfb2d0e70d72e8244058c3ad312e6bdd42f782d4a786d4f632967"
+    },
+    {
+      "path": "app-icon/linux/32x32/apps/sentinel.png",
+      "bytes": 644,
+      "sha256": "2cda2f7045c8122e3e4defd2a4ae9dffa5d605da8d8c459ce960eb210c07bad7"
+    },
+    {
+      "path": "app-icon/linux/48x48/apps/sentinel.png",
+      "bytes": 894,
+      "sha256": "e804b64757846e6a6f19ee7088606b713fc58a872c037e3ab2969c148c89cd9d"
+    },
+    {
+      "path": "app-icon/linux/512x512/apps/sentinel.png",
+      "bytes": 7581,
+      "sha256": "e9a3212f56abe121a02b2b90d987b16e774337523253d4245dce805dfc56ac34"
+    },
+    {
+      "path": "app-icon/linux/64x64/apps/sentinel.png",
+      "bytes": 1065,
+      "sha256": "6ae262eb0da81fd9252087570c7e8a8105c8df9dace36df6ebc1b35106dfe888"
+    },
+    {
+      "path": "app-icon/linux/scalable/apps/sentinel.svg",
+      "bytes": 300,
+      "sha256": "53d90085658a635c64c3f116d2ab0b1f559774f32703005f144821b31dc28e05"
+    },
+    {
+      "path": "app-icon/macos/sentinel-1024.png",
+      "bytes": 17555,
+      "sha256": "9726543c0ffdb4971597e3c7d71ab2c2f339c0f43b3c8fe74c7df6cfdfae4d80"
+    },
+    {
+      "path": "app-icon/macos/sentinel-128.png",
+      "bytes": 1921,
+      "sha256": "c22967820c50553c9835235d62d3acfe8b715cbf6b99955455ad81ea027f8845"
+    },
+    {
+      "path": "app-icon/macos/sentinel-16.png",
+      "bytes": 419,
+      "sha256": "fed9849f4a4886acc91a9fb40b487928d4ae2fceee4cb42f3e73f5b960b6e88a"
+    },
+    {
+      "path": "app-icon/macos/sentinel-256.png",
+      "bytes": 3601,
+      "sha256": "ce59e3a38b4cfb2d0e70d72e8244058c3ad312e6bdd42f782d4a786d4f632967"
+    },
+    {
+      "path": "app-icon/macos/sentinel-32.png",
+      "bytes": 644,
+      "sha256": "2cda2f7045c8122e3e4defd2a4ae9dffa5d605da8d8c459ce960eb210c07bad7"
+    },
+    {
+      "path": "app-icon/macos/sentinel-512.png",
+      "bytes": 7581,
+      "sha256": "e9a3212f56abe121a02b2b90d987b16e774337523253d4245dce805dfc56ac34"
+    },
+    {
+      "path": "app-icon/macos/sentinel-64.png",
+      "bytes": 1065,
+      "sha256": "6ae262eb0da81fd9252087570c7e8a8105c8df9dace36df6ebc1b35106dfe888"
+    },
+    {
+      "path": "app-icon/macos/sentinel.icns",
+      "bytes": 45773,
+      "sha256": "fc7804aa5725dca5e26d32ee381120e299e9ba3c99cfbd3a37e49b8eb4347f67"
+    },
+    {
+      "path": "app-icon/master.svg",
+      "bytes": 300,
+      "sha256": "53d90085658a635c64c3f116d2ab0b1f559774f32703005f144821b31dc28e05"
+    },
+    {
+      "path": "app-icon/windows/sentinel-128.png",
+      "bytes": 1921,
+      "sha256": "c22967820c50553c9835235d62d3acfe8b715cbf6b99955455ad81ea027f8845"
+    },
+    {
+      "path": "app-icon/windows/sentinel-16.png",
+      "bytes": 419,
+      "sha256": "fed9849f4a4886acc91a9fb40b487928d4ae2fceee4cb42f3e73f5b960b6e88a"
+    },
+    {
+      "path": "app-icon/windows/sentinel-20.png",
+      "bytes": 480,
+      "sha256": "c0474c562eb37927360415045658dfff8449257c9f91785f03262fed36c91bf1"
+    },
+    {
+      "path": "app-icon/windows/sentinel-24.png",
+      "bytes": 537,
+      "sha256": "28828dbd7fb7e4465bdb9f2f08b6e8654a2d9a258b7d5c0d16f0a0efb7f9e296"
+    },
+    {
+      "path": "app-icon/windows/sentinel-256.png",
+      "bytes": 3601,
+      "sha256": "ce59e3a38b4cfb2d0e70d72e8244058c3ad312e6bdd42f782d4a786d4f632967"
+    },
+    {
+      "path": "app-icon/windows/sentinel-32.png",
+      "bytes": 644,
+      "sha256": "2cda2f7045c8122e3e4defd2a4ae9dffa5d605da8d8c459ce960eb210c07bad7"
+    },
+    {
+      "path": "app-icon/windows/sentinel-48.png",
+      "bytes": 894,
+      "sha256": "e804b64757846e6a6f19ee7088606b713fc58a872c037e3ab2969c148c89cd9d"
+    },
+    {
+      "path": "app-icon/windows/sentinel-64.png",
+      "bytes": 1065,
+      "sha256": "6ae262eb0da81fd9252087570c7e8a8105c8df9dace36df6ebc1b35106dfe888"
+    },
+    {
+      "path": "app-icon/windows/sentinel.ico",
+      "bytes": 9695,
+      "sha256": "570ce7143569331b5b3fbe2bbb53272f4f27a2e4d6bd4f17bf84c7d3e75bd74a"
+    },
+    {
+      "path": "BRAND_GUIDELINES.md",
+      "bytes": 11978,
+      "sha256": "3bcaae987e22ff8440985429eb361dc436c6958ab92c420b0727317f5cdf9b4b"
+    },
+    {
+      "path": "docs/github-avatar.svg",
+      "bytes": 300,
+      "sha256": "53d90085658a635c64c3f116d2ab0b1f559774f32703005f144821b31dc28e05"
+    },
+    {
+      "path": "docs/github-social-preview.svg",
+      "bytes": 749,
+      "sha256": "3662114c20337aad95fb5806998da55fb5484e10d24b456335fc02a19db7267f"
+    },
+    {
+      "path": "docs/readme-header.svg",
+      "bytes": 598,
+      "sha256": "aa89e1426338d2290108be17133baee6b5def9c3c351bb23a2aa0ac8e48d2ddb"
+    },
+    {
+      "path": "favicon-16.png",
+      "bytes": 240,
+      "sha256": "e6434f52a715810e3c6c94ee37f6fdf69e64f6b4cde241f4f5f8e1155e4b01e5"
+    },
+    {
+      "path": "favicon-32.png",
+      "bytes": 338,
+      "sha256": "66eb1f45df19e56f463038054b4f51e378554c1b6a668ef531c2486257712cbb"
+    },
+    {
+      "path": "favicon.svg",
+      "bytes": 282,
+      "sha256": "ce4d36c209ad62fb9425fecf5a0a98613eb9ba955aed07263fd1a5cc9aa602c2"
+    },
+    {
+      "path": "symbol/sentinel-symbol-black.svg",
+      "bytes": 191,
+      "sha256": "54eb462ec61d5b3350bc956c5b9383f9917d15331404665ca700e1ba27dffffa"
+    },
+    {
+      "path": "symbol/sentinel-symbol-white.svg",
+      "bytes": 191,
+      "sha256": "43ab9beee2cf80c3882307f93ac16ee5c23cc9f54b6aab0fbe7bb69454f8b5bd"
+    },
+    {
+      "path": "symbol/sentinel-symbol.svg",
+      "bytes": 196,
+      "sha256": "99cafaae6ec5f4ec867f5783e9706240d304ff2b2b3590d45cc1fe831d2e1349"
+    },
+    {
+      "path": "tools/export.mjs",
+      "bytes": 8799,
+      "sha256": "9e57025c4a16c352137444dca165c86f50c675912e1d73fac2257233585c2574"
+    },
+    {
+      "path": "tools/validate.mjs",
+      "bytes": 12842,
+      "sha256": "f64c52e432c118111f8890eb32cfebaa12fd55634e388fd4a6a37e8e2653bd7e"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-16-black.png",
+      "bytes": 240,
+      "sha256": "e6434f52a715810e3c6c94ee37f6fdf69e64f6b4cde241f4f5f8e1155e4b01e5"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-16-white.png",
+      "bytes": 243,
+      "sha256": "ef20f3b01fca9ddcf67a7ae3f4af144267a642f905fce53173baace7309a25eb"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-22-black.png",
+      "bytes": 271,
+      "sha256": "366f78f8ccf2e5918d3925ef81ce3df149973b366a7c0e3d77031b1dcc00e782"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-22-white.png",
+      "bytes": 275,
+      "sha256": "61a4c0c92ecbeab61edaba8fded7ed2ccf421eb68b6bd35aa91cbdadbad99ef4"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-24-black.png",
+      "bytes": 293,
+      "sha256": "8125353216b9082558924a7c8513bd8f58657a667b3250755593ebbb46d619ec"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-24-white.png",
+      "bytes": 300,
+      "sha256": "404f7a6278c21d44b31ea7ef861905a351da384b359e06caa5f4809304e63f39"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-32-black.png",
+      "bytes": 338,
+      "sha256": "66eb1f45df19e56f463038054b4f51e378554c1b6a668ef531c2486257712cbb"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-32-white.png",
+      "bytes": 347,
+      "sha256": "0a746ca02aabf8dc65d0d86071cf5d36f5849caf9ebc05075c53a5fd6d507607"
+    },
+    {
+      "path": "tray/linux/sentinel-tray-symbolic.svg",
+      "bytes": 196,
+      "sha256": "99cafaae6ec5f4ec867f5783e9706240d304ff2b2b3590d45cc1fe831d2e1349"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-16-template.png",
+      "bytes": 240,
+      "sha256": "e6434f52a715810e3c6c94ee37f6fdf69e64f6b4cde241f4f5f8e1155e4b01e5"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-16-template@2x.png",
+      "bytes": 338,
+      "sha256": "66eb1f45df19e56f463038054b4f51e378554c1b6a668ef531c2486257712cbb"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-18-template.png",
+      "bytes": 250,
+      "sha256": "ce4478dd71cd8d356eaeb6f49fa973550ba7e88394278cb8df4a2a2bcc02e8f3"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-18-template@2x.png",
+      "bytes": 369,
+      "sha256": "fc92153207a45da3c5b1e29eaca149eb625ad81ec6cc0d78dd03751ebcb9ccad"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-20-template.png",
+      "bytes": 262,
+      "sha256": "72dbed04fcbf7f3a1df4494d614bf710202e3a6cddd6a350fc3ab2ae343baba5"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-20-template@2x.png",
+      "bytes": 386,
+      "sha256": "3e61810b3dea9865637c2f0b2e1014ba9f5c780c1906414093f0bfc48f9ce1f1"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-22-template.png",
+      "bytes": 271,
+      "sha256": "366f78f8ccf2e5918d3925ef81ce3df149973b366a7c0e3d77031b1dcc00e782"
+    },
+    {
+      "path": "tray/macos/sentinel-tray-22-template@2x.png",
+      "bytes": 418,
+      "sha256": "a91ec4222adb299e8b4a2eba1ee173fe614e53400a7bca8ba28c0fee9c346e7c"
+    },
+    {
+      "path": "tray/sentinel-tray.svg",
+      "bytes": 196,
+      "sha256": "99cafaae6ec5f4ec867f5783e9706240d304ff2b2b3590d45cc1fe831d2e1349"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-16-black.png",
+      "bytes": 240,
+      "sha256": "e6434f52a715810e3c6c94ee37f6fdf69e64f6b4cde241f4f5f8e1155e4b01e5"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-16-white.png",
+      "bytes": 243,
+      "sha256": "ef20f3b01fca9ddcf67a7ae3f4af144267a642f905fce53173baace7309a25eb"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-20-black.png",
+      "bytes": 262,
+      "sha256": "72dbed04fcbf7f3a1df4494d614bf710202e3a6cddd6a350fc3ab2ae343baba5"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-20-white.png",
+      "bytes": 269,
+      "sha256": "5390709a265e7d671b0a0292ebfaeda2bd6136e7ef8582b73dfe8b1a2e1e5e9a"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-24-black.png",
+      "bytes": 293,
+      "sha256": "8125353216b9082558924a7c8513bd8f58657a667b3250755593ebbb46d619ec"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-24-white.png",
+      "bytes": 300,
+      "sha256": "404f7a6278c21d44b31ea7ef861905a351da384b359e06caa5f4809304e63f39"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-32-black.png",
+      "bytes": 338,
+      "sha256": "66eb1f45df19e56f463038054b4f51e378554c1b6a668ef531c2486257712cbb"
+    },
+    {
+      "path": "tray/windows/sentinel-tray-32-white.png",
+      "bytes": 347,
+      "sha256": "0a746ca02aabf8dc65d0d86071cf5d36f5849caf9ebc05075c53a5fd6d507607"
+    },
+    {
+      "path": "wordmark/sentinel-lockup.svg",
+      "bytes": 339,
+      "sha256": "b5efecdfa1ba3cdeae757bfe9ed583126d3818bc50629c5497566391403ade6b"
+    }
+  ]
+}
