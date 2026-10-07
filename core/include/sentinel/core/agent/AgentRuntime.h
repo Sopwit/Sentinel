@@ -6,14 +6,14 @@
 
 #include "sentinel/core/agent/AgentExecutionScheduler.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
-#include "sentinel/core/plugin/PluginManager.h"
-#include "sentinel/core/skill/SkillService.h"
 #include "sentinel/core/extension/ExtensionService.h"
+#include "sentinel/core/plugin/PluginManager.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolHookService.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 #include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/core/security/PermissionService.h"
+#include "sentinel/core/skill/SkillService.h"
 
 #include <QHash>
 #include <QPointer>
@@ -92,9 +92,19 @@ public:
     plugin::PluginManager& pluginManager() {
         return pluginManager_;
     }
-    SkillService& skillService() { return skillService_; }
-    ExtensionService& extensionService() { return extensionService_; }
-    const PermissionService& permissionService() const { return permissionService_; }
+    SkillService& skillService() {
+        return skillService_;
+    }
+    ExtensionService& extensionService() {
+        return extensionService_;
+    }
+    const PermissionService& permissionService() const {
+        return permissionService_;
+    }
+    // Bounded read-only terminal inspection uses the same descriptor, resource,
+    // approval, permission and sandbox gates as Agent execution.
+    ToolExecutionResult inspectWorkspace(const QString& sessionId, const QString& root,
+                                         const QString& toolId, const QString& path);
     void setToolPermissionState(QString state) override;
     void setMcpService(std::shared_ptr<IMcpService> service);
 

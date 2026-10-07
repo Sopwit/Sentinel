@@ -973,7 +973,10 @@ public:
             });
             return [token] { token->store(true); };
         }
-        if (cancellable && !sessionId.isEmpty()) {
+        const bool inlineInspection =
+            request.synchronousReadOnly &&
+            (id == QLatin1String("glob") || id == QLatin1String("read-file"));
+        if (cancellable && !sessionId.isEmpty() && !inlineInspection) {
             auto invocation = request.plan.invocations.first();
             auto token = std::make_shared<std::atomic_bool>(false);
             invocation.toolCancellation = token;

@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonIpcServer.h"
+#include "DaemonDesktopSettings.h"
+#include "DaemonModelHelpers.h"
+#include "DesktopProjection.generated.h"
 #include "IpcContract.generated.h"
+#include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
 #include "sentinel/core/app/AppMetadata.h"
+#include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/chat/ChatModeService.h"
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QTimer>
 #include <QUuid>
 #ifdef Q_OS_UNIX
@@ -67,7 +75,214 @@ DaemonIpcServer::~DaemonIpcServer() {
     if (m_controller && !m_agentSubscription.isEmpty()) {
         m_controller->agentRuntime()->unsubscribe(m_agentSubscription);
     }
+    if (!m_projectionConnection.isEmpty())
+        QSqlDatabase::removeDatabase(m_projectionConnection);
 }
+bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
+    if (!m_projectionConnection.isEmpty())
+        return false;
+    m_projectionConnection = "sentinel-ipc-projection-" + uuid();
+    auto db = QSqlDatabase::addDatabase("QSQLITE", m_projectionConnection);
+    db.setDatabaseName(path);
+    if (!db.open())
+        return false;
+    if (!QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
+        return false;
+    QSqlQuery query(db);
+    if (!query.exec("CREATE TABLE IF NOT EXISTS session_projection "
+                    "(session_id TEXT PRIMARY KEY, payload TEXT NOT NULL)"))
+        return false;
+    if (!query.exec("SELECT session_id, payload FROM session_projection"))
+        return false;
+    while (query.next()) {
+        auto value = QJsonDocument::fromJson(query.value(1).toByteArray()).object();
+        if (value.value("state") == "running" || value.value("state") == "approval") {
+            // A new daemon never replays an interrupted mutation or revives a grant.
+            value.insert("state", "failed");
+            value.insert("output", QString{});
+            value.insert("detail", "daemon-restarted");
+        }
+        m_lastRuns.insert(query.value(0).toString(), value);
+    }
+    return true;
+}
+void DaemonIpcServer::rememberRun() {
+    if (m_sessionId.isEmpty())
+        return;
+    const QJsonObject value{{"run_id", m_runId},
+                            {"run_type", m_kind},
+                            {"state", m_state},
+                            {"output", m_output},
+                            {"output_truncated", m_outputTruncated},
+                            {"provider_id", m_providerId},
+                            {"model_id", m_modelId}};
+    m_lastRuns.insert(m_sessionId, value);
+    if (m_projectionConnection.isEmpty())
+        return;
+    QSqlQuery query(QSqlDatabase::database(m_projectionConnection));
+    query.prepare("INSERT OR REPLACE INTO session_projection (session_id, payload) VALUES (?, ?)");
+    query.addBindValue(m_sessionId);
+    auto metadata = value;
+    // Transcript retention remains exclusively owned by the conversation/history stores.
+    metadata.remove("output");
+    query.addBindValue(QString::fromUtf8(QJsonDocument(metadata).toJson(QJsonDocument::Compact)));
+    if (!query.exec())
+        qWarning("IPC session projection persistence failed");
+}
+core::ToolExecutionResult DaemonIpcServer::inspectFile(const QString& sessionId,
+                                                       const QString& root, const QString& tool,
+                                                       const QString& path) {
+    const auto preferences =
+        m_controller->currentWorkspaceProfile().configured.value("tools").toObject();
+    if (preferences.value(tool).isBool() && !preferences.value(tool).toBool())
+        return {core::ToolExecutionStatus::Blocked, "Tool disabled by workspace profile."};
+    auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
+    if (!runtime)
+        return {core::ToolExecutionStatus::Blocked, "Runtime unavailable."};
+    return runtime->inspectWorkspace(sessionId, root, tool, path);
+}
+void DaemonIpcServer::captureChangeBaseline(const QString& sessionId) {
+    auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
+    if (!runtime || !m_settings)
+        return;
+    const auto workspace = core::WorkspaceService{}.selectedWorkspace(
+        m_settings->selectedWorkspaceId(), m_settings->workspaceCatalogJson());
+    ChangeBaseline baseline;
+    baseline.root = workspace.rootPath;
+    baseline.workspaceId = workspace.id;
+    const auto listing = inspectFile(sessionId, baseline.root, "glob", baseline.root);
+    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation)
+        return;
+    const auto data = listing.structuredObservation->data;
+    baseline.complete = data.value("complete").toBool();
+    baseline.truncated = !baseline.complete;
+    int budget = 32768;
+    for (const auto& item : data.value("matches").toArray())
+        baseline.listed.insert(item.toString());
+    auto paths = baseline.listed.values();
+    std::sort(paths.begin(), paths.end());
+    for (const auto& path : paths) {
+        if (baseline.contents.size() >= 32 || budget <= 0) {
+            baseline.truncated = true;
+            break;
+        }
+        const auto read = inspectFile(sessionId, baseline.root, "read-file", path);
+        if (read.status != core::ToolExecutionStatus::Succeeded || !read.structuredObservation) {
+            baseline.truncated = true;
+            continue;
+        }
+        const auto value = read.structuredObservation->data;
+        const auto text = value.value("content").toString();
+        if (!value.value("complete").toBool() || value.value("truncated").toBool() ||
+            text.size() > 8192 || text.size() > budget) {
+            baseline.truncated = true;
+            continue;
+        }
+        baseline.contents.insert(path, text);
+        budget -= text.size();
+    }
+    if (m_changeBaselines.size() >= 8 && !m_changeBaselines.contains(sessionId))
+        m_changeBaselines.erase(m_changeBaselines.begin());
+    m_changeBaselines.insert(sessionId, baseline);
+}
+QJsonObject DaemonIpcServer::reviewChanges(const QString& sessionId) {
+    if (!m_changeBaselines.contains(sessionId))
+        return {{"available", false},
+                {"reason",
+                 "No in-memory baseline for this run; snapshots do not survive daemon restart."},
+                {"files", QJsonArray{}},
+                {"truncated", false}};
+    auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
+    if (!runtime || !m_settings)
+        return {{"available", false}, {"files", QJsonArray{}}, {"truncated", false}};
+    const auto& baseline = m_changeBaselines[sessionId];
+    const auto workspace = core::WorkspaceService{}.selectedWorkspace(
+        m_settings->selectedWorkspaceId(), m_settings->workspaceCatalogJson());
+    if (workspace.id != baseline.workspaceId || workspace.rootPath != baseline.root)
+        return {{"available", false},
+                {"reason", "Select the original workspace to review its changes."},
+                {"files", QJsonArray{}},
+                {"truncated", false}};
+    const auto listing = inspectFile(sessionId, baseline.root, "glob", baseline.root);
+    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation)
+        return {{"available", false},
+                {"reason", "Current filesystem observation is not authorized."},
+                {"files", QJsonArray{}},
+                {"truncated", false}};
+    QSet<QString> paths;
+    for (const auto& value : listing.structuredObservation->data.value("matches").toArray())
+        paths.insert(value.toString());
+    for (auto it = baseline.contents.begin(); it != baseline.contents.end(); ++it)
+        paths.insert(it.key());
+    auto ordered = paths.values();
+    std::sort(ordered.begin(), ordered.end());
+    QJsonArray files;
+    bool truncated =
+        baseline.truncated || listing.structuredObservation->data.value("truncated").toBool();
+    int budget = 50000;
+    for (const auto& path : ordered) {
+        const bool known = baseline.contents.contains(path);
+        if (!known && (baseline.listed.contains(path) || !baseline.complete)) {
+            truncated = true;
+            continue;
+        }
+        const auto read = inspectFile(sessionId, baseline.root, "read-file", path);
+        // No deletion inference from an unreadable resource: omitted with explicit truncation.
+        if (read.status != core::ToolExecutionStatus::Succeeded || !read.structuredObservation) {
+            truncated = true;
+            continue;
+        }
+        const auto value = read.structuredObservation->data;
+        const auto after = value.value("content").toString();
+        if (!value.value("complete").toBool() || value.value("truncated").toBool() ||
+            after.size() > 8192) {
+            truncated = true;
+            continue;
+        }
+        const auto before = baseline.contents.value(path);
+        if (known && before == after)
+            continue;
+        auto lines = [](QString text) {
+            auto result = text.split('\n');
+            if (text.endsWith('\n') || text.isEmpty())
+                result.removeLast();
+            return result;
+        };
+        const auto oldLines = lines(before), newLines = lines(after);
+        const auto relative = QDir(baseline.root).relativeFilePath(path);
+        QString diff = QString("--- %1\n+++ b/%2\n@@ -%3,%4 +%5,%6 @@\n")
+                           .arg(known ? "a/" + relative : "/dev/null", relative)
+                           .arg(oldLines.isEmpty() ? 0 : 1)
+                           .arg(oldLines.size())
+                           .arg(newLines.isEmpty() ? 0 : 1)
+                           .arg(newLines.size());
+        for (const auto& line : oldLines)
+            diff += "-" + line + "\n";
+        if (!before.isEmpty() && !before.endsWith('\n'))
+            diff += "\\ No newline at end of file\n";
+        for (const auto& line : newLines)
+            diff += "+" + line + "\n";
+        if (!after.isEmpty() && !after.endsWith('\n'))
+            diff += "\\ No newline at end of file\n";
+        if (diff.size() > budget || files.size() >= 32) {
+            truncated = true;
+            break;
+        }
+        budget -= diff.size();
+        files.append(QJsonObject{{"path", relative},
+                                 {"state", "Applied"},
+                                 {"kind", known ? "modified" : "created"},
+                                 {"diff", diff}});
+    }
+    return {{"available", true},
+            {"files", files},
+            {"truncated", truncated},
+            {"root", baseline.root},
+            {"reason", "Observed changes since this run began. Concurrent external edits may be "
+                       "included; this is not a rollback or Git snapshot. Deleted, binary, hidden, "
+                       "oversized and unreadable files may be omitted."}};
+}
+
 QString DaemonIpcServer::defaultSocketPath() {
 #ifdef Q_OS_UNIX
     return QDir::homePath() + QStringLiteral("/.sentinel/run/daemon.sock");
@@ -173,6 +388,8 @@ bool DaemonIpcServer::startServer(const QString& requested) {
         m_lock.reset();
         return false;
     }
+    m_generation = uuid();
+    m_eventSequence = 0;
     m_uptime.start();
     qInfo("Daemon IPC listening");
     return true;
@@ -276,7 +493,7 @@ void DaemonIpcServer::handleNewConnection() {
         });
     }
 }
-QJsonObject DaemonIpcServer::session(const QString& id) const {
+QJsonObject DaemonIpcServer::session(const QString& id, bool presentation) const {
     if (!m_controller || !m_controller->conversationStore()) {
         return {};
     }
@@ -294,10 +511,34 @@ QJsonObject DaemonIpcServer::session(const QString& id) const {
                 selected = {it->providerId, it->modelId};
                 break;
             }
-            return {
+            QJsonObject properties;
+            // ModelService catalog/health is cached authority; presentation registry getters
+            // may probe endpoints and must not run during terminal diagnostics.
+            const auto selectedModel = m_controller->currentWorkspaceModelSelection();
+            const auto selectedStatus = m_controller->modelService()->providerStatusSnapshot(
+                selectedModel.providerId, selectedModel.modelId);
+            properties.insert("activeRuntimeProviderLabel", selectedModel.providerId);
+            properties.insert("activeRuntimeModelLabel", selectedModel.modelId);
+            properties.insert("activeRuntimeReadinessState",
+                              core::providerHealthName(selectedStatus.health));
+            properties.insert("activeRuntimeReadinessSummary", selectedStatus.safeDetail);
+            if (presentation && id == m_controller->activeConversationId()) {
+                for (int page = 0; page < desktop_contract::pages; ++page) {
+                    const auto values = desktop_contract::projection(m_controller, page, true);
+                    for (auto it = values.begin(); it != values.end(); ++it)
+                        properties.insert(it.key(), it.value());
+                }
+            }
+            QJsonObject snapshot{
+                {"properties", properties},
                 {"session_id", id},
+                {"server_generation", m_generation},
+                {"event_sequence", static_cast<qint64>(m_eventSequence)},
                 {"conversation_id", id},
                 {"title", record.title},
+                {"summary", record.summary},
+                {"pinned", record.pinned},
+                {"archived", record.archived},
                 {"created_at", record.createdAtUtc.toString(Qt::ISODateWithMs)},
                 {"type", "conversation"},
                 {"run_type", id == m_sessionId ? m_kind : QString()},
@@ -309,6 +550,12 @@ QJsonObject DaemonIpcServer::session(const QString& id) const {
                 {"provider_id", id == m_sessionId ? m_providerId : selected.providerId},
                 {"model_id", id == m_sessionId ? m_modelId : selected.modelId},
                 {"approval", id == m_sessionId ? m_approvalPayload : QJsonObject{}}};
+            if (id != m_sessionId) {
+                const auto remembered = m_lastRuns.value(id);
+                for (auto it = remembered.begin(); it != remembered.end(); ++it)
+                    snapshot.insert(it.key(), it.value());
+            }
+            return snapshot;
         }
     }
     return {};
@@ -363,6 +610,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         reply({{"major", protocol::major},
                {"minor", protocol::minor},
                {"daemon_version", core::AppMetadata::version()},
+               {"server_generation", m_generation},
                {"capabilities", protocol::capabilities()}});
         return;
     }
@@ -376,6 +624,10 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     }
     if (name == "daemon.status") {
         reply({{"running", true},
+               {"protocol_major", protocol::major},
+               {"protocol_minor", protocol::minor},
+               {"endpoint", m_path},
+               {"server_generation", m_generation},
                {"daemon_version", core::AppMetadata::version()},
                {"uptime_ms", m_uptime.elapsed()},
                {"active_runs", m_state == "running" || m_state == "approval" ? 1 : 0},
@@ -399,6 +651,427 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         error(socket, id, "runtime-unavailable");
         return;
     }
+    if (name == "model.helper_state" || name == "model.helper_action") {
+        const auto component = payload.value("component").toString();
+        if (!m_modelHelpers) {
+            m_modelHelpers = std::make_unique<DaemonModelHelpers>();
+            connect(&m_modelHelpers->puller, &OllamaModelPuller::pullFinished, this,
+                    [this](const QString&, bool success) {
+                        if (success && m_controller)
+                            m_controller->refreshOllamaStatus();
+                    });
+            connect(&m_modelHelpers->puller, &OllamaModelPuller::removeFinished, this,
+                    [this](const QString&, bool success) {
+                        if (success && m_controller)
+                            m_controller->refreshOllamaStatus();
+                    });
+        }
+        const auto state = m_modelHelpers->state(component);
+        if (state.isEmpty()) {
+            error(socket, id, "unknown-model-component");
+            return;
+        }
+        if (name == "model.helper_state") {
+            reply({{"component", component}, {"properties", state}});
+            return;
+        }
+        if (m_state == "running" || m_state == "approval") {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        reply({{"accepted", m_modelHelpers->action(component, payload.value("action").toString(),
+                                                   payload.value("value").toString(),
+                                                   m_settings ? m_settings->ollamaEndpoint()
+                                                              : m_controller->ollamaEndpoint())}});
+        return;
+    }
+    if (name == "desktop.settings_service") {
+        const auto action = payload.value("action").toString();
+        const auto args = payload.value("arguments").toArray();
+        const auto actions = desktop_contract::settingsServiceActions();
+        if (!m_settings || !actions.contains(action)) {
+            error(socket, id, "invalid-settings-action");
+            return;
+        }
+        const auto definition = actions.value(action).toObject();
+        const auto types = definition.value("arguments").toArray();
+        if (types.size() != args.size()) {
+            error(socket, id, "invalid-settings-arguments");
+            return;
+        }
+        for (int i = 0; i < types.size(); ++i) {
+            const auto type = types.at(i).toString();
+            const auto argument = args.at(i);
+            bool valid = type == "value"     ? !argument.isNull()
+                         : type == "string"  ? argument.isString()
+                         : type == "boolean" ? argument.isBool()
+                         : type == "integer"
+                             ? argument.isDouble() && argument.toDouble() == argument.toInt() &&
+                                   argument.toInt() >= 0
+                         : type == "array" ? argument.isArray()
+                                           : false;
+            if (type == "array")
+                for (const auto& item : argument.toArray())
+                    valid = valid && item.isString();
+            if (!valid) {
+                error(socket, id, "invalid-settings-arguments");
+                return;
+            }
+        }
+        if (!definition.value("query").toBool() &&
+            (m_state == "running" || m_state == "approval")) {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        DaemonDesktopSettings service(*m_settings, *m_controller);
+        reply({{"result", service.dispatch(action, args)}});
+        return;
+    }
+    if (name == "desktop.settings") {
+        reply({{"values", desktop_contract::settings(m_settings)}});
+        return;
+    }
+    if (name == "desktop.setting") {
+        if (m_state == "running" || m_state == "approval") {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        const auto key = payload.value("key").toString();
+        const bool accepted =
+            desktop_contract::setting(m_settings, key, payload.value("value").toString());
+        if (accepted) {
+            m_controller->setLmStudioEndpoint(m_settings->lmStudioEndpoint());
+            m_controller->setLlamaCppEndpoint(m_settings->llamaCppEndpoint());
+            m_controller->setOllamaEndpoint(m_settings->ollamaEndpoint());
+            m_controller->setToolPermissionPolicyState(m_settings->defaultPermissionPolicyState());
+            m_controller->setSelectedRuntimeProvider(m_settings->selectedRuntimeProvider());
+            m_controller->setSelectedLocalModel(
+                m_settings->selectedModelForProvider(m_settings->selectedRuntimeProvider()));
+            m_controller->configureMcpServers(m_settings->mcpServersJson());
+        }
+        reply({{"accepted", accepted}});
+        return;
+    }
+    if (name == "desktop.projection") {
+        const int page = payload.value("page").toInt(-1);
+        if (page < 0 || page >= desktop_contract::pages) {
+            error(socket, id, "invalid-page");
+            return;
+        }
+        reply({{"page", page},
+               {"pages", desktop_contract::pages},
+               {"properties", desktop_contract::projection(m_controller, page)}});
+        return;
+    }
+    if (name == "desktop.action") {
+        const auto action = payload.value("action").toString();
+        const auto sid = payload.value("session_id").toString();
+        const auto arguments = payload.value("arguments").toArray();
+        if (!desktop_contract::validAction(action, arguments)) {
+            error(socket, id, "invalid-desktop-action");
+            return;
+        }
+        if (action == "setSelectedRuntimeProvider" &&
+            !m_controller->modelService()->isKnownProvider(arguments.at(0).toString())) {
+            error(socket, id, "provider-unavailable");
+            return;
+        }
+        if (action == "setSelectedLocalModel" &&
+            !m_controller->modelService()
+                 ->providerStatus(m_controller->selectedRuntimeProvider())
+                 .modelIds.contains(arguments.at(0).toString())) {
+            error(socket, id, "model-unavailable");
+            return;
+        }
+        const bool global = desktop_contract::globalAction(action);
+        if (m_state == "running" || m_state == "approval") {
+            // Selector changes affect future work only; core keeps its frozen ModelBinding.
+            if (action != "setSelectedRuntimeProvider" && action != "setSelectedLocalModel") {
+                error(socket, id, "runtime-busy");
+                return;
+            }
+        } else if (!global) {
+            if (session(sid).isEmpty() || !m_controller->switchConversation(sid)) {
+                error(socket, id, "unknown-session");
+                return;
+            }
+        }
+        QVariant result;
+        if (!desktop_contract::action(m_controller, action, payload.value("arguments").toArray(),
+                                      &result)) {
+            error(socket, id, "invalid-desktop-action");
+            return;
+        }
+        reply({{"accepted",
+                !result.isValid() || result.metaType().id() != QMetaType::Bool || result.toBool()},
+               {"result", QJsonObject{{"value", QJsonValue::fromVariant(result)}}}});
+        return;
+    }
+    if (name == "session.messages") {
+        const auto sid = payload.value("session_id").toString();
+        if (session(sid).isEmpty()) {
+            error(socket, id, "unknown-session");
+            return;
+        }
+        QJsonArray messages;
+        if (sid == m_controller->activeConversationId()) {
+            for (const auto& row : m_controller->chatHistory()) {
+                messages.append(
+                    QJsonObject{{"id", row.id},
+                                {"role", core::chatRoleName(row.role)},
+                                {"content", row.content},
+                                {"status", core::chatMessageStatusName(row.status)},
+                                {"timestamp", row.timestamp.toString(Qt::ISODateWithMs)},
+                                {"partial", row.partial},
+                                {"provider_id", row.providerUsed},
+                                {"model_id", row.modelUsed},
+                                {"reply_to", row.replyToMessageId},
+                                {"replaces", row.replacesMessageId}});
+            }
+        } else {
+            for (const auto& row : m_controller->conversationStore()->loadMessages(sid)) {
+                messages.append(
+                    QJsonObject{{"id", row.messageId},
+                                {"role", core::chatRoleName(row.role)},
+                                {"content", row.content},
+                                {"status", core::chatMessageStatusName(row.status)},
+                                {"timestamp", row.timestampUtc.toString(Qt::ISODateWithMs)},
+                                {"partial", row.partial},
+                                {"provider_id", row.providerId},
+                                {"model_id", row.modelId},
+                                {"reply_to", row.replyToMessageId},
+                                {"replaces", row.replacesMessageId}});
+            }
+        }
+        reply({{"session_id", sid}, {"messages", messages}});
+        return;
+    }
+    if (name == "workspace.changes") {
+        const auto sid = payload.value("session_id").toString();
+        if (session(sid).isEmpty()) {
+            error(socket, id, "unknown-session");
+            return;
+        }
+        if (m_state == "running" || m_state == "approval") {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        reply(reviewChanges(sid));
+        return;
+    }
+    if (name == "workspace.create") {
+        if (!m_settings) {
+            error(socket, id, "runtime-unavailable");
+            return;
+        }
+        if (m_state == "running" || m_state == "approval") {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        core::WorkspaceService service;
+        const auto templateName = payload.value("template").toString();
+        if (!service.builtInTemplateNames().contains(templateName)) {
+            error(socket, id, "invalid-payload");
+            return;
+        }
+        const auto result = service.createWorkspace(m_settings->workspaceCatalogJson(),
+                                                    payload.value("name").toString(), templateName);
+        if (!result.success) {
+            error(socket, id, "workspace-create-rejected");
+            return;
+        }
+        m_settings->setWorkspaceCatalogJson(result.catalogJson);
+        reply({{"workspace_id", result.selectedWorkspaceId}});
+        return;
+    }
+    if (name == "workspace.select" || name == "workspace.root") {
+        if (!m_settings) {
+            error(socket, id, "runtime-unavailable");
+            return;
+        }
+        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+            m_controller->chatModeService()->busy()) {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        core::WorkspaceService service;
+        const auto workspaceId = payload.value("workspace_id").toString();
+        const auto catalog = m_settings->workspaceCatalogJson();
+        bool exists = false;
+        for (const auto& workspace : service.availableWorkspaces(catalog))
+            exists = exists || (workspace.id == workspaceId && !workspace.archived);
+        if (!exists) {
+            error(socket, id, "unknown-workspace");
+            return;
+        }
+        if (name == "workspace.select") {
+            m_settings->setSelectedWorkspaceId(workspaceId);
+            reply({{"workspace_id", m_settings->selectedWorkspaceId()}});
+        } else {
+            const auto result =
+                service.setWorkspaceRoot(catalog, workspaceId, payload.value("path").toString());
+            if (!result.success) {
+                error(socket, id, "workspace-root-rejected");
+                return;
+            }
+            m_settings->setWorkspaceCatalogJson(result.catalogJson);
+            reply({{"workspace_id", workspaceId},
+                   {"root", service.selectedWorkspace(workspaceId, result.catalogJson).rootPath}});
+        }
+        return;
+    }
+    if (name == "workspace.files") {
+        const auto sid = payload.value("session_id").toString();
+        if (session(sid).isEmpty()) {
+            error(socket, id, "unknown-session");
+            return;
+        }
+        auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
+        if (!runtime || !m_settings) {
+            error(socket, id, "runtime-unavailable");
+            return;
+        }
+        const auto workspace = core::WorkspaceService{}.selectedWorkspace(
+            m_settings->selectedWorkspaceId(), m_settings->workspaceCatalogJson());
+        const auto result = inspectFile(sid, workspace.rootPath, "glob", workspace.rootPath);
+        if (result.status != core::ToolExecutionStatus::Succeeded ||
+            !result.structuredObservation) {
+            error(socket, id, "permission-denied");
+            return;
+        }
+        const auto data = result.structuredObservation->data;
+        reply({{"files", data.value("matches")},
+               {"truncated", data.value("truncated").toBool()},
+               {"root", data.value("root")}});
+        return;
+    }
+    if (name == "terminal.state") {
+        // Explicit safe presentation allowlist: no credentials, raw arguments, or reasoning traces.
+        QJsonObject properties;
+        properties.insert("currentWorkspaceName", QJsonValue::fromVariant(QVariant::fromValue(
+                                                      m_controller->currentWorkspaceName())));
+        properties.insert("availableToolIds", QJsonValue::fromVariant(QVariant::fromValue(
+                                                  m_controller->availableToolIds())));
+        properties.insert("availableToolCount", QJsonValue::fromVariant(QVariant::fromValue(
+                                                    m_controller->availableToolCount())));
+        properties.insert("runtimeContextSummary", QJsonValue::fromVariant(QVariant::fromValue(
+                                                       m_controller->runtimeContextSummary())));
+        properties.insert("runtimeContextStatus", QJsonValue::fromVariant(QVariant::fromValue(
+                                                      m_controller->runtimeContextStatus())));
+        properties.insert("memoryStatus", QJsonValue::fromVariant(
+                                              QVariant::fromValue(m_controller->memoryStatus())));
+        properties.insert("memoryEntryCount", QJsonValue::fromVariant(QVariant::fromValue(
+                                                  m_controller->memoryEntryCount())));
+        properties.insert("agentTaskQueueSummaries", QJsonValue::fromVariant(QVariant::fromValue(
+                                                         m_controller->agentTaskQueueSummaries())));
+        properties.insert("agentTaskRuntimeSummary", QJsonValue::fromVariant(QVariant::fromValue(
+                                                         m_controller->agentTaskRuntimeSummary())));
+        properties.insert("contextWindowSummary", QJsonValue::fromVariant(QVariant::fromValue(
+                                                      m_controller->contextWindowSummary())));
+        properties.insert("promptContextInjectionSummary",
+                          QJsonValue::fromVariant(
+                              QVariant::fromValue(m_controller->promptContextInjectionSummary())));
+        properties.insert("activeAgentSummaries", QJsonValue::fromVariant(QVariant::fromValue(
+                                                      m_controller->activeAgentSummaries())));
+        properties.insert("permission_service_available",
+                          m_controller->permissionService() != nullptr);
+        properties.insert("network_mode", m_settings ? m_settings->networkMode() : "unavailable");
+        properties.insert("permission_policy",
+                          m_settings ? m_settings->defaultPermissionPolicyState() : "unavailable");
+        properties.insert("active_binding", QJsonObject{{"provider_id", m_providerId},
+                                                        {"model_id", m_modelId},
+                                                        {"run_id", m_runId},
+                                                        {"state", m_state}});
+        const auto effectiveModel = m_controller->currentWorkspaceModelSelection();
+        properties.insert("effective_selection",
+                          QJsonObject{{"provider_id", effectiveModel.providerId},
+                                      {"model_id", effectiveModel.modelId}});
+        const auto readiness = m_controller->modelService()->providerStatusSnapshot(
+            effectiveModel.providerId, effectiveModel.modelId);
+        properties.insert("activeRuntimeProviderLabel", effectiveModel.providerId);
+        properties.insert("activeRuntimeModelLabel", effectiveModel.modelId);
+        properties.insert("activeRuntimeReadinessState",
+                          core::providerHealthName(readiness.health));
+        properties.insert("activeRuntimeReadinessSummary", readiness.safeDetail);
+        properties.insert("active_runs", m_state == "running" || m_state == "approval" ? 1 : 0);
+        QJsonArray mcp;
+        if (auto* extensions = m_controller->extensionService())
+            for (const auto& extension : extensions->filter(core::ExtensionType::MCP))
+                mcp.append(QJsonObject{{"id", extension.id},
+                                       {"name", extension.displayName},
+                                       {"enabled", extension.effectiveEnabled},
+                                       {"available", extension.available},
+                                       {"connection", extension.connectionState},
+                                       {"failure", extension.failureCategory}});
+        properties.insert("mcp_servers", mcp);
+        QJsonArray providers;
+        for (const auto& providerId : m_controller->modelService()->knownProviderIds()) {
+            const auto status = m_controller->modelService()->providerStatusSnapshot(providerId);
+            providers.append(
+                QJsonObject{{"provider_id", providerId},
+                            {"health", core::providerHealthName(status.health)},
+                            {"catalog", core::providerCatalogStateName(status.catalog)},
+                            {"reason", status.safeDetail},
+                            {"models", QJsonArray::fromStringList(status.modelIds)}});
+        }
+        core::WorkspaceService service;
+        const auto catalog = m_settings ? m_settings->workspaceCatalogJson() : QString{};
+        auto describe = [](const core::WorkspaceMetadata& workspace) {
+            return QJsonObject{{"id", workspace.id},
+                               {"name", workspace.name},
+                               {"root", workspace.rootPath},
+                               {"access", workspace.accessState},
+                               {"permission", workspace.permissionSummary},
+                               {"archived", workspace.archived}};
+        };
+        QJsonArray workspaces;
+        for (const auto& workspace : service.availableWorkspaces(catalog))
+            workspaces.append(describe(workspace));
+        reply({{"properties", properties},
+               {"providers", providers},
+               {"workspaces", workspaces},
+               {"workspace",
+                describe(service.selectedWorkspace(
+                    m_settings ? m_settings->selectedWorkspaceId() : QString{}, catalog))}});
+        return;
+    }
+    if (name == "provider.select") {
+        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+            m_controller->chatModeService()->busy()) {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        const auto provider = payload.value("provider_id").toString();
+        if (!m_controller->modelService()->isKnownProvider(provider)) {
+            error(socket, id, "provider-unavailable");
+            return;
+        }
+        m_controller->modelService()->setSelectedProviderId(provider);
+        const auto selection = m_controller->modelService()->selectedModel();
+        reply({{"provider_id", selection.providerId}, {"model_id", selection.modelId}});
+        return;
+    }
+    if (name == "model.select") {
+        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+            m_controller->chatModeService()->busy()) {
+            error(socket, id, "runtime-busy");
+            return;
+        }
+        const auto provider = payload.value("provider_id").toString();
+        const auto model = payload.value("model_id").toString();
+        if (!m_controller->modelService()->knownProviderIds().contains(provider)) {
+            error(socket, id, "provider-unavailable");
+            return;
+        }
+        if (!m_controller->modelService()->providerStatus(provider).modelIds.contains(model)) {
+            error(socket, id, "model-unavailable");
+            return;
+        }
+        m_controller->modelService()->setSelectedModel({provider, model});
+        reply({{"provider_id", m_controller->modelService()->selectedModel().providerId},
+               {"model_id", m_controller->modelService()->selectedModel().modelId}});
+        return;
+    }
     if (name == "model.current") {
         const auto model = m_controller->modelService()->selectedModel();
         reply({{"provider_id", model.providerId}, {"model_id", model.modelId}});
@@ -409,7 +1082,15 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         for (const auto& provider : m_controller->modelService()->knownProviderIds()) {
             for (const auto& model :
                  m_controller->modelService()->providerDiscoveredModels(provider)) {
-                models.append(QJsonObject{{"provider_id", provider}, {"model_id", model.name}});
+                const auto status =
+                    m_controller->modelService()->providerStatusSnapshot(provider, model.name);
+                models.append(QJsonObject{
+                    {"provider_id", provider},
+                    {"model_id", model.name},
+                    {"health", core::providerHealthName(status.health)},
+                    {"catalog", core::providerCatalogStateName(status.catalog)},
+                    {"reason", status.safeDetail},
+                    {"capabilities", core::capabilitySnapshotSummary(status.capabilities)}});
             }
         }
         reply({{"models", models}});
@@ -439,9 +1120,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         reply(session(created));
         return;
     }
-    if (name == "session.attach") {
+    if (name == "session.attach" || name == "terminal.attach") {
         const auto sid = payload.value("session_id").toString();
-        const auto current = session(sid);
+        const auto current = session(sid, name == "session.attach");
         if (current.isEmpty()) {
             error(socket, id, "unknown-session");
             return;
@@ -470,12 +1151,13 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             error(socket, id, "invalid-approval");
             return;
         }
-        m_approvalId.clear();
-        m_state = "running";
         if (!m_controller->respondToAgentApproval(payload.value("allow").toBool())) {
             error(socket, id, "invalid-state");
             return;
         }
+        m_approvalId.clear();
+        m_approvalPayload = {};
+        m_state = "running";
         reply({{"accepted", true}});
         return;
     }
@@ -489,7 +1171,8 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         error(socket, id, "unknown-session");
         return;
     }
-    if (payload.value("text").toString().trimmed().isEmpty()) {
+    if ((name == "chat.send" || name == "agent.start" || name == "chat.edit") &&
+        payload.value("text").toString().trimmed().isEmpty()) {
         error(socket, id, "invalid-payload");
         return;
     }
@@ -498,12 +1181,24 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         return;
     }
     const auto selection = m_controller->currentWorkspaceModelSelection();
+    const auto resolution = m_controller->modelService()->resolve(selection);
+    if (!resolution.ok()) {
+        error(socket, id,
+              resolution.error == core::ModelBindingError::ModelNotFound ? "model-unavailable"
+                                                                         : "provider-unavailable");
+        return;
+    }
     m_providerId = selection.providerId;
     m_modelId = selection.modelId;
     m_sessionId = sid;
     m_runId = uuid();
     m_kind = name == "agent.start" ? "agent" : "chat";
+    if (m_kind == "agent")
+        captureChangeBaseline(sid);
     m_output.clear();
+    m_agentTurnId.clear();
+    m_subagentSessions.clear();
+    m_toolStarts.clear();
     m_outputTruncated = false;
     m_chatCursor = 0;
     m_approvalId.clear();
@@ -511,9 +1206,20 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     m_state = "running";
     m_starting = true;
     m_clients[socket].sessions.insert(sid);
-    const bool accepted = m_kind == "agent"
-                              ? m_controller->runAgentRequest(payload.value("text").toString())
-                              : m_controller->sendMessage(payload.value("text").toString());
+    bool accepted = false;
+    if (name == "chat.retry")
+        accepted = m_controller->retryChatResponse(payload.value("message_id").toInt());
+    else if (name == "chat.regenerate")
+        accepted = m_controller->regenerateChatResponse(payload.value("message_id").toInt());
+    else if (name == "chat.edit")
+        accepted = !m_controller
+                        ->editAndResendChatMessage(payload.value("message_id").toInt(),
+                                                   payload.value("text").toString())
+                        .isEmpty();
+    else
+        accepted = m_kind == "agent"
+                       ? m_controller->runAgentRequest(payload.value("text").toString())
+                       : m_controller->sendMessage(payload.value("text").toString());
     m_starting = false;
     if (!accepted) {
         m_state = "failed";
@@ -527,12 +1233,17 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     }
 }
 void DaemonIpcServer::publishEvent(const QString& name, const QJsonObject& data) {
+    if (name == "run.started" || name == "run.completed" || name == "run.cancelled" ||
+        name == "run.failed")
+        rememberRun();
     auto payload = data;
     if (name == "run.completed" || name == "run.failed" || name == "run.cancelled") {
         payload.insert("state", m_state);
     }
     payload.insert("run_id", m_runId);
     payload.insert("session_id", m_sessionId);
+    payload.insert("server_generation", m_generation);
+    payload.insert("event_sequence", static_cast<qint64>(++m_eventSequence));
     const auto message = envelope("event", {}, name, payload);
     const auto sockets = m_clients.keys();
     for (auto* socket : sockets) {
@@ -571,11 +1282,57 @@ void DaemonIpcServer::onChatChanged() {
     }
 }
 void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
+    using core::AgentEventType;
+    if (m_kind == "agent" && e.sessionId != m_controller->activeAgentSessionId() &&
+        (m_state == "running" || m_state == "approval")) {
+        if (e.type == AgentEventType::RunStarted)
+            if (const auto* started = std::get_if<core::AgentRunStartedEvent>(&e.payload))
+                if (started->parentRunId == m_agentTurnId) {
+                    m_subagentSessions.insert(e.sessionId);
+                    publishEvent("subagent.activity", {{"subagent_id", e.sessionId},
+                                                       {"parent_run_id", m_runId},
+                                                       {"role", started->role},
+                                                       {"state", "running"}});
+                }
+        if (m_subagentSessions.contains(e.sessionId) &&
+            (e.type == AgentEventType::AgentCompleted || e.type == AgentEventType::AgentFailed ||
+             e.type == AgentEventType::AgentCancelled)) {
+            publishEvent("subagent.activity",
+                         {{"subagent_id", e.sessionId},
+                          {"parent_run_id", m_runId},
+                          {"role", ""},
+                          {"state", e.type == AgentEventType::AgentCompleted   ? "completed"
+                                    : e.type == AgentEventType::AgentCancelled ? "cancelled"
+                                                                               : "failed"}});
+            m_subagentSessions.remove(e.sessionId);
+        }
+        return;
+    }
     if (m_kind != "agent" || e.sessionId != m_controller->activeAgentSessionId() ||
         (m_state != "running" && m_state != "approval")) {
         return;
     }
-    using core::AgentEventType;
+    if (e.type == AgentEventType::RunStarted)
+        m_agentTurnId = e.turnId;
+    if (e.type != AgentEventType::ModelOutputDelta) {
+        static const QStringList names{
+            "SessionCreated",       "RunStarted",           "ContextSnapshot",
+            "ModelRequestStarted",  "ModelOutputDelta",     "ModelRequestCompleted",
+            "ToolRequested",        "ToolApprovalRequired", "ToolApprovalResolved",
+            "ToolExecutionStarted", "ToolOutput",           "ToolExecutionCompleted",
+            "ToolExecutionFailed",  "AgentStepCompleted",   "AgentCompleted",
+            "AgentFailed",          "AgentCancelled",       "RuntimeStateChanged"};
+        const int index = static_cast<int>(e.type);
+        if (index >= 0 && index < names.size()) {
+            QJsonObject activity{{"activity", names.at(index)}, {"step", qMax(0, e.stepIndex)}};
+            if (e.type == AgentEventType::ToolApprovalResolved)
+                if (const auto* decision = std::get_if<core::AgentTextEvent>(&e.payload))
+                    if (decision->text == QLatin1String("Approved") ||
+                        decision->text == QLatin1String("Denied"))
+                        activity.insert("decision", decision->text);
+            publishEvent("agent.activity", activity);
+        }
+    }
     if (e.type == AgentEventType::ModelOutputDelta) {
         if (const auto* text = std::get_if<core::AgentTextEvent>(&e.payload)) {
             m_outputTruncated = m_outputTruncated || m_output.size() + text->text.size() > 65536;
@@ -584,12 +1341,32 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
         }
     } else if (e.type == AgentEventType::ToolRequested ||
                e.type == AgentEventType::ToolApprovalRequired ||
+               e.type == AgentEventType::ToolExecutionStarted ||
                e.type == AgentEventType::ToolExecutionCompleted ||
                e.type == AgentEventType::ToolExecutionFailed) {
         QJsonObject data;
         if (const auto* tool = std::get_if<core::AgentToolEvent>(&e.payload)) {
             data.insert("tool", tool->toolId);
-            data.insert("detail", tool->output);
+            data.insert("detail", e.type == AgentEventType::ToolRequested ? "Tool requested"
+                                  : e.type == AgentEventType::ToolExecutionFailed
+                                      ? "Tool failed; inspect authoritative run outcome"
+                                  : e.type == AgentEventType::ToolExecutionStarted
+                                      ? "Tool running"
+                                      : "Tool completed");
+            data.insert("tool_call_id", e.toolCallId);
+            data.insert("timestamp", e.timestamp.toString(Qt::ISODateWithMs));
+            if (e.type == AgentEventType::ToolExecutionStarted)
+                m_toolStarts.insert(e.toolCallId, e.timestamp);
+            if ((e.type == AgentEventType::ToolExecutionCompleted ||
+                 e.type == AgentEventType::ToolExecutionFailed) &&
+                m_toolStarts.contains(e.toolCallId)) {
+                data.insert("duration_ms",
+                            qMax<qint64>(0, m_toolStarts.take(e.toolCallId).msecsTo(e.timestamp)));
+            }
+            data.insert("state", e.type == AgentEventType::ToolExecutionFailed    ? "failed"
+                                 : e.type == AgentEventType::ToolExecutionStarted ? "running"
+                                 : e.type == AgentEventType::ToolRequested        ? "requested"
+                                                                                  : "completed");
             data.insert("risk", static_cast<int>(tool->risk));
             QJsonArray resources;
             for (const auto& request : tool->authorizationRequests) {
@@ -603,12 +1380,15 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
             m_approvalId = uuid();
             m_state = "approval";
             data.insert("approval_id", m_approvalId);
+            data.insert("state", "approval");
             data.insert("detail",
                         QStringLiteral("Tool authorization requires an explicit user decision."));
             m_approvalPayload = data;
             publishEvent("approval.requested", data);
         } else {
-            publishEvent(e.type == AgentEventType::ToolRequested ? "tool.requested" : "tool.result",
+            publishEvent(e.type == AgentEventType::ToolRequested          ? "tool.requested"
+                         : e.type == AgentEventType::ToolExecutionStarted ? "tool.running"
+                                                                          : "tool.result",
                          data);
         }
     } else if (e.type == AgentEventType::AgentCompleted || e.type == AgentEventType::AgentFailed ||

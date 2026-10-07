@@ -1,0 +1,4155 @@
+{
+  "activeAgentSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "activeChatModelId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeChatProviderId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeConversationArchived": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "activeConversationCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "activeConversationId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeConversationStateSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeConversationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeLocalRuntimeBadge": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeLocalOnlySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeModelLabel": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeProviderId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeProviderLabel": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeReadinessState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "activeRuntimeReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentActivityCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentAwaitingApproval": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityDisabledCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityEnabledCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityReadinessSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityRegistryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityRegistrySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilityRestrictedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilitySafetySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentLoopActive": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningArbitrationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningRefusalSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningRefusedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentPlanningSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueActiveCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueBlockedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueCompletedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueuePlannedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueRefusedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskQueueSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskRuntimeTaskCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "agentTaskTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "approveMemoryCandidate": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "candidateId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "approvedMemoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "approvedMemoryCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "archiveConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "archiveMemoryCandidate": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "candidateId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "archivedConversationCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "archivedMemoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "archivedMemoryCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "attachControlledTaskSettings": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "settings",
+        "cpp": "AppSettings&",
+        "type": null
+      }
+    ],
+    "const": false
+  },
+  "attentionState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionRefusalSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionSafetyChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileSupportedExtensionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "audioFileValidationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "audioSession": {
+    "return": "VoiceSessionService*",
+    "arguments": [],
+    "const": true
+  },
+  "availableLocalRuntimeSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "availableToolCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "availableToolIds": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "benchmarkHubSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "cancelAgentRun": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "cancelLocalInference": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "chatCatalogState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatErrorCategory": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatGenerationActive": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "chatHistory": {
+    "return": "const QList<ChatMessage>&",
+    "arguments": [],
+    "const": true
+  },
+  "chatHistoryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatHistoryStore": {
+    "return": "IChatHistoryStore*",
+    "arguments": [],
+    "const": true
+  },
+  "chatInputCapabilities": {
+    "return": "QVariantMap",
+    "arguments": [],
+    "const": true
+  },
+  "chatMaintenanceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatProviderKind": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatSendLifecycleState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "chatSendLifecycleSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "clearChat": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "clearConversationSearch": {
+    "return": "void",
+    "arguments": [],
+    "const": false
+  },
+  "clearLocalMemoryRecall": {
+    "return": "void",
+    "arguments": [],
+    "const": false
+  },
+  "clearMemory": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "clearPersistentPermissions": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "cloudModelDiscoveryError": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "committedMemoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "committedMemoryContextAvailability": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "configureMcpServers": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "serversJson",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "configureSpeechTts": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "engine",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "kokoroModelPath",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "kokoroVoice",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "configureWebSearch": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "provider",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "apiKey",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "maxResults",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "configuredRuntimeProviderSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyAvailableSourceCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyCandidateBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyEstimatedSize": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyPolicyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyPolicySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblySourceCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblySourceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblySummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextAssemblyTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextBudgetUsageSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextExcludedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextIncludedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningContributionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningDeveloperTraces": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningExclusionHints": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningInclusionHints": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningOrderingSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextReasoningSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "contextWindowSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "controlledTasks": {
+    "return": "ControlledTaskService*",
+    "arguments": [],
+    "const": true
+  },
+  "conversationActiveSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationArchivedSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationBrowserEmptyStateSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationBrowserEmptyStateVisible": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "conversationBrowserStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationBrowserSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionFallbackReason": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionPressureSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionSelectedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCompressionTraceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationContextAvailability": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationCurrentStorageMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteLastResultSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteLastStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeletePolicyRequirements": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeletePolicyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeletePolicySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDeleteReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDuplicateLastResultSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationDuplicateLastStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportLastFileName": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportLastMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportLastResultSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportLastStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportLastTimestamp": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationExportReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationFutureStorageMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationHistoryMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationHistorySummaryLines": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationHistorySummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationIds": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationLastRestoredStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationLastSavedStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationLastUpdatedSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentExportAvailabilitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentLastUpdatedSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentPersistenceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentSearchAvailabilitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListCurrentTitle": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationListEntryCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationMessageCountSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationMigrationReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationMigrationStatusSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationPersistenceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationPinnedSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeActiveModel": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeActiveRoute": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeLastErrorSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeLastLatencySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeLastSuccessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeRequestId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeStreaming": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationRuntimeSummaryLines": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceAllocationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceExcludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceExclusionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceIncludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSalienceTruncatedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSchemaStatusSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSearchQueryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSearchResultCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSearchResultSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSearchStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSearchSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSessionId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationStore": {
+    "return": "IConversationStore*",
+    "arguments": [],
+    "const": true
+  },
+  "conversationStoreConversationCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationStoreStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationStoreSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryBlockSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryBlockedReason": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryBudgetCharacters": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryCandidateSegments": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryEstimatedCompressionGain": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryGenerationStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryGenerationTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryInjectionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryOmittedMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryPersistenceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryPreviewSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationSummaryTruncatedBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationTitles": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "conversationTransitionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationTransitionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowBudgetCharacters": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowIncludedMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowOmittedMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "conversationWindowTruncatedMessageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "createConversation": {
+    "return": "QString",
+    "arguments": [
+      {
+        "name": "title",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "createMemoryCandidateFromConversationText": {
+    "return": "QString",
+    "arguments": [
+      {
+        "name": "text",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "credentialActionReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "credentialExecutionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "credentialStoreBackendSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "credentialStoreSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "credentialStoreSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "credentialStoreTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "currentAgentSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "currentMemoryAffinitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "currentOllamaModels": {
+    "return": "QList<OllamaModelSummary>",
+    "arguments": [],
+    "const": true
+  },
+  "currentRoutingMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "currentWorkspaceProfile": {
+    "return": "WorkspaceProfileSnapshot",
+    "arguments": [],
+    "const": true
+  },
+  "currentWorkspaceRequiresLocal": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "disabledRuntimeCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "downloadsCenterSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "duplicateConversation": {
+    "return": "QString",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "editAndResendChatMessage": {
+    "return": "QString",
+    "arguments": [
+      {
+        "name": "userMessageId",
+        "cpp": "int",
+        "type": "integer"
+      },
+      {
+        "name": "text",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "embeddingProviderReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingProviderSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingRuntimeBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingRuntimeConstraintSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingRuntimeReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingRuntimeRequirementSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "embeddingRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "enabledRuntimeCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "executionCoordinationMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionCoordinationSnapshotSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionLifecycleState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionLifecycleStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionLifecycleSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionLifecycleTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "executionSessionId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionSessionOwnership": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "executionSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "exportTranscript": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "format",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "extensionService": {
+    "return": "ExtensionService*",
+    "arguments": [],
+    "const": true
+  },
+  "generatePiperTtsFile": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "text",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "hybridBridgeArbitrationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeSemanticFillCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeSourceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridBridgeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridRetrievalReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridRetrievalReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "hybridRetrievalStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "hybridRetrievalSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "installedOllamaModelNames": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "installedRuntimeProviderSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "interactionMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeBoundedState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "isolatedEmbeddingRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lastAgentResponse": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lastMemoryCandidateReviewStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lastMemoryCandidateReviewSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lastMemoryCommitResultSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lastMemoryCommitStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestAgentActivitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestAgentPipelineStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestAgentPipelineSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestAgentTaskLifecycleSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestAgentTaskSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestApprovalStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestApprovalSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestSandboxStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestSandboxSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestTaskPlanStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestTaskPlanSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestToolExecutionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestToolExecutionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestToolPlanStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "latestToolPlanSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "llamaCppEndpoint": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "lmStudioEndpoint": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "loadedLMStudioModelNames": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "localChatInferenceEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "localChatInferenceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localChatInferenceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localChatSendAvailabilitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localChatSendAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceBusy": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceLastResponseSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceLatencySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceMaxTokens": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceRuntimeState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStreamStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStreamSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStreamingAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStreamingEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceStreamingText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceTemperature": {
+    "return": "double",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceTimeoutMs": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceTopP": {
+    "return": "double",
+    "arguments": [],
+    "const": true
+  },
+  "localInferenceTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "localOnlyRuntimeEnforcementSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeAdapterCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeAdapterHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeAdapterStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeAdapterSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeAllocationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeCapabilities": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeReservationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeResponseStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeResponseSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSessionCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSessionHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSessionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "localRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCandidateCommitStatuses": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCandidateIds": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCandidateReviewStates": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCatalogCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCatalogSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitPlanCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryCommitTargetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryEntries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryEntryCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryMaintenanceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallPolicyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallPolicySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallQueryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallResultCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallResultSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRecallSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceExcludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceExclusionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceIncludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceSummaryText": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryRelevanceTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "memoryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "memoryStore": {
+    "return": "IMemoryStore*",
+    "arguments": [],
+    "const": true
+  },
+  "modelAdvisorAvoidSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelAdvisorRecommendationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelCapabilityCompatibilitySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelCapabilitySettings": {
+    "return": "QVariantList",
+    "arguments": [],
+    "const": true
+  },
+  "modelLibraryAvailableSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelLibraryDetailSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelLibraryInstalledSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelLibraryRecommendedSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelManagementActionAvailability": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelManagementStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelManagementSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelOperations": {
+    "return": "ModelOperationService*",
+    "arguments": [],
+    "const": true
+  },
+  "modelRecommendationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelRegistryModelSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelRegistryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelRegistrySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelRequirementSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "modelRoutingStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "modelService": {
+    "return": "ModelService*",
+    "arguments": [],
+    "const": true
+  },
+  "mutableAgentRunStore": {
+    "return": "IAgentRunStore*",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaConnectionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaDiscoveryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaEndpoint": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaHealthStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaHealthSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaModelCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaModelNames": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "ollamaModelSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationContextAvailability": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationDiagnostics": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationSignals": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationSnapshotStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "orchestrationSnapshotSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "pendingMemoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "pendingMemoryCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "permissionService": {
+    "return": "PermissionService*",
+    "arguments": [],
+    "const": true
+  },
+  "persistentPermissionGrants": {
+    "return": "QVariantList",
+    "arguments": [],
+    "const": true
+  },
+  "pinConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "piperBinaryPath": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputAudioPathSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputExecutionEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputExecutionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputExecutionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperFileOutputReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperModelPath": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperRuntimePathSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperRuntimeReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisLastSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperSynthesisTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsFileOutputStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsFileOutputSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsReady": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "piperTtsSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "plannedTaskStepCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextBlockSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextInjectedBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextInjectionEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextInjectionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextInjectionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextSizeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextSourceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextUsedMemoryCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "promptContextUsedSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerCatalogCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "providerCatalogSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "providerCredentialReadinessSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "providerCredentialRegistryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerCredentialRegistrySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerCredentialSafetySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "providerCredentialSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "providerDiscoverySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "providerName": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerRuntimeBridgeResponseSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerRuntimeBridgeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerRuntimeBridgeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "providerStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "recallLocalMemory": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "query",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "refreshModelDiscovery": {
+    "return": "void",
+    "arguments": [],
+    "const": false
+  },
+  "refreshOllamaStatus": {
+    "return": "void",
+    "arguments": [],
+    "const": false
+  },
+  "regenerateChatResponse": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "userMessageId",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "registeredAgentCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "rejectMemoryCandidate": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "candidateId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "rejectedMemoryCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "rejectedMemoryCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "remember": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "key",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "value",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "renameConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "requestConversationSummaryGeneration": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "requestMemoryCandidateCommit": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "candidateId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "requestPermanentDeleteConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "resetMemoryCandidate": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "candidateId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "resetModelCapabilityOverrides": {
+    "return": "void",
+    "arguments": [],
+    "const": false
+  },
+  "respondToAgentApproval": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "allow",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "retrievalPlanningBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningExcludedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningExcludedSourceCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningSelectedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningSelectedSourceCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningSourceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningSourceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "retrievalPlanningTruncatedCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "retryChatResponse": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "assistantMessageId",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "revokePersistentPermission": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "id",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "runAgentRequest": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "request",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "runLocalInference": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "prompt",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "model",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "runtimeCapabilityCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeContextActiveToolIds": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeContextStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeContextSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeIntegrationReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeIntegrationReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeIntegrationReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeMetadataContextAvailability": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeNegotiationProfileSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeNegotiationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimePermissionDecision": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimePermissionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimePipelineStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimePipelineSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimePipelineTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeProviderCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeProviderCardSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeProviderValidationTraces": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeSafetyDecision": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "runtimeSessionId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "searchChats": {
+    "return": "QVariantList",
+    "arguments": [
+      {
+        "name": "query",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": true
+  },
+  "searchConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "query",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "selectableRuntimeProviderIds": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "selectableRuntimeProviderLabels": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "selectedLocalModel": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedLocalModelMetadataSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedLocalModelStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedLocalModelSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedModelCapabilityLabels": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "selectedModelProviderSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedRuntimeProvider": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "selectedSemanticProviderName": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceAcceptedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceArbitrationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceBudgetCharacters": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceSourceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticAcceptanceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticActivationReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticActivationRequiredSteps": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticActivationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationSelectionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticArbitrationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateArbitrationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateExcludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateParticipationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateSelectedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticCandidateTruncatedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityAuditSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityDecisionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthoritySafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptAuthorityWouldIncludeBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionAuditSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionDeterministicAuthorityPreserved": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionIncludedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticPromptInclusionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticProviderCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticProviderHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticProviderMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticProviderReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticProviderStatusSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticRetrievalEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "semanticRetrievalPolicy": {
+    "return": "SemanticRetrievalPolicy",
+    "arguments": [],
+    "const": true
+  },
+  "semanticRetrievalReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticRetrievalStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticRetrievalSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchArbitrationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchCandidateCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchCandidateSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchRuntimeState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSearchSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyBlockCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyBudgetCharacters": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyBudgetSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblySafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "semanticSupplementAssemblySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "sendMessage": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "message",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setAgentAutonomousMode": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setLlamaCppEndpoint": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "endpoint",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setLmStudioEndpoint": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "endpoint",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setLocalChatInferenceEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setLocalInferenceMaxTokens": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "maxTokens",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "setLocalInferenceStreamingEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setLocalInferenceTemperature": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "temperature",
+        "cpp": "double",
+        "type": "number"
+      }
+    ],
+    "const": false
+  },
+  "setLocalInferenceTimeoutMs": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "timeoutMs",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "setLocalInferenceTopP": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "topP",
+        "cpp": "double",
+        "type": "number"
+      }
+    ],
+    "const": false
+  },
+  "setModelCapabilityNumberOverride": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "capabilityId",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "value",
+        "cpp": "int",
+        "type": "integer"
+      }
+    ],
+    "const": false
+  },
+  "setModelCapabilityOverride": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "capabilityId",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "value",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setOllamaEndpoint": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "endpoint",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setPiperBinaryPath": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "path",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setPiperFileOutputExecutionEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setPiperModelPath": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "path",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setPromptContextInjectionEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setRoutingModeByName": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "routingModeName",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setSelectedLocalModel": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "model",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setSelectedRuntimeProvider": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "providerId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setSemanticPromptInclusionEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "setSemanticProvider": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "provider",
+        "cpp": "const QString&",
+        "type": "string"
+      },
+      {
+        "name": "embeddingModel",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setToolPermissionPolicyState": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "state",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setWhisperBinaryPath": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "path",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setWhisperModelPath": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "path",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "setWhisperTranscriptionExecutionEnabled": {
+    "return": "void",
+    "arguments": [
+      {
+        "name": "enabled",
+        "cpp": "bool",
+        "type": "boolean"
+      }
+    ],
+    "const": false
+  },
+  "speechToTextStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "speechToTextSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "stopChatGeneration": {
+    "return": "bool",
+    "arguments": [],
+    "const": false
+  },
+  "summaryContinuityBudgetTrace": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityContributionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityCoverageSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityFreshnessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityOrderingSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "summaryContinuityStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "switchConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "textToSpeechStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "textToSpeechSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractDisabledCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractEnabledCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractPermissionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractReadinessSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractRegistryStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractRegistrySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractRestrictedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractSafetySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractSandboxSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "toolContractSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "unarchiveConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "unpinConversation": {
+    "return": "bool",
+    "arguments": [
+      {
+        "name": "conversationId",
+        "cpp": "const QString&",
+        "type": "string"
+      }
+    ],
+    "const": false
+  },
+  "userCreatedConversationCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "vectorIndexReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorIndexSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorIndexedItemCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceBoundedState": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceIndexedItemCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceReadiness": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "vectorPersistenceSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceBinarySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceCapabilitySummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceConfigurationHintSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceConfigurationReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceConfigurationStatusBadges": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceConfigurationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceConfigurationValidationSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceLocalOnlyPolicy": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceMicrophoneEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceModelSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionBlockedStageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionReadyStageCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionSafetyChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionStageReadinessSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSessionTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voicePipelineTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voicePlaybackEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceProcessExecutionEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeCheckSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeConfiguredCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeEnvironmentStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeEnvironmentSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeExecutionAllowed": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeHealth": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeMissingCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeMode": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimePermissionFoundationSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimePermissionSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeReadinessChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeRefusedCount": {
+    "return": "int",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSafetyChecks": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSafetyReportSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSafetyStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSandboxSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceRuntimeSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceSessionId": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceSessionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceSessionSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "voiceSpeechToTextAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "voiceTextToSpeechAvailable": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "whisperBinaryPath": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperModelPath": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperPreparationReadinessStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperPreparationReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperRuntimePathSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperRuntimeReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperRuntimeStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionExecutionEnabled": {
+    "return": "bool",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionFallbackSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionLastSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionReadinessSummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionSafetySummary": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionStatus": {
+    "return": "QString",
+    "arguments": [],
+    "const": true
+  },
+  "whisperTranscriptionTraceSummaries": {
+    "return": "QStringList",
+    "arguments": [],
+    "const": true
+  }
+}

@@ -1,6 +1,6 @@
 {
   "major": 1,
-  "minor": 0,
+  "minor": 1,
   "max_frame_bytes": 262144,
   "max_pending_bytes": 1048576,
   "commands": {
@@ -36,6 +36,75 @@
       "run_id": "string",
       "approval_id": "string",
       "allow": "boolean"
+    },
+    "desktop.projection": {
+      "page": "integer"
+    },
+    "desktop.action": {
+      "action": "string",
+      "arguments": "array",
+      "session_id": "string"
+    },
+    "session.messages": {
+      "session_id": "string"
+    },
+    "model.select": {
+      "provider_id": "string",
+      "model_id": "string"
+    },
+    "chat.regenerate": {
+      "session_id": "string",
+      "message_id": "integer"
+    },
+    "chat.retry": {
+      "session_id": "string",
+      "message_id": "integer"
+    },
+    "chat.edit": {
+      "session_id": "string",
+      "message_id": "integer",
+      "text": "string"
+    },
+    "desktop.settings": {},
+    "desktop.setting": {
+      "key": "string",
+      "value": "string"
+    },
+    "model.helper_state": {
+      "component": "string"
+    },
+    "model.helper_action": {
+      "component": "string",
+      "action": "string",
+      "value": "string"
+    },
+    "desktop.settings_service": {
+      "action": "string",
+      "arguments": "array"
+    },
+    "terminal.state": {},
+    "workspace.files": {
+      "session_id": "string"
+    },
+    "workspace.select": {
+      "workspace_id": "string"
+    },
+    "workspace.root": {
+      "workspace_id": "string",
+      "path": "string"
+    },
+    "workspace.changes": {
+      "session_id": "string"
+    },
+    "workspace.create": {
+      "name": "string",
+      "template": "string"
+    },
+    "provider.select": {
+      "provider_id": "string"
+    },
+    "terminal.attach": {
+      "session_id": "string"
     }
   },
   "events": {
@@ -89,6 +158,28 @@
       "run_id": "string",
       "session_id": "string",
       "text": "string",
+      "state": "string"
+    },
+    "agent.activity": {
+      "run_id": "string",
+      "session_id": "string",
+      "activity": "string",
+      "step": "integer"
+    },
+    "tool.running": {
+      "run_id": "string",
+      "session_id": "string",
+      "tool": "string",
+      "detail": "string",
+      "risk": "integer",
+      "resources": "array"
+    },
+    "subagent.activity": {
+      "run_id": "string",
+      "session_id": "string",
+      "subagent_id": "string",
+      "parent_run_id": "string",
+      "role": "string",
       "state": "string"
     }
   },
@@ -150,6 +241,87 @@
     },
     "approval.respond": {
       "accepted": "boolean"
+    },
+    "desktop.projection": {
+      "page": "integer",
+      "pages": "integer",
+      "properties": "object"
+    },
+    "desktop.action": {
+      "accepted": "boolean",
+      "result": "object"
+    },
+    "session.messages": {
+      "session_id": "string",
+      "messages": "array"
+    },
+    "model.select": {
+      "provider_id": "string",
+      "model_id": "string"
+    },
+    "chat.regenerate": {
+      "session_id": "string",
+      "run_id": "string"
+    },
+    "chat.retry": {
+      "session_id": "string",
+      "run_id": "string"
+    },
+    "chat.edit": {
+      "session_id": "string",
+      "run_id": "string"
+    },
+    "desktop.settings": {
+      "values": "object"
+    },
+    "desktop.setting": {
+      "accepted": "boolean"
+    },
+    "model.helper_state": {
+      "component": "string",
+      "properties": "object"
+    },
+    "model.helper_action": {
+      "accepted": "boolean"
+    },
+    "desktop.settings_service": {
+      "result": "object"
+    },
+    "terminal.state": {
+      "properties": "object",
+      "providers": "array",
+      "workspace": "object",
+      "workspaces": "array"
+    },
+    "workspace.files": {
+      "files": "array",
+      "truncated": "boolean",
+      "root": "string"
+    },
+    "workspace.select": {
+      "workspace_id": "string"
+    },
+    "workspace.root": {
+      "workspace_id": "string",
+      "root": "string"
+    },
+    "workspace.changes": {
+      "available": "boolean",
+      "files": "array",
+      "truncated": "boolean"
+    },
+    "workspace.create": {
+      "workspace_id": "string"
+    },
+    "provider.select": {
+      "provider_id": "string",
+      "model_id": "string"
+    },
+    "terminal.attach": {
+      "session_id": "string",
+      "state": "string",
+      "output": "string",
+      "run_id": "string"
     }
   },
   "capabilities": [
@@ -157,6 +329,5244 @@
     "agent",
     "approval",
     "sessions",
-    "events"
-  ]
+    "events",
+    "desktop-projection",
+    "model-selection",
+    "session-messages",
+    "terminal-state",
+    "workspace-files",
+    "workspace-changes"
+  ],
+  "optional_responses": {
+    "hello": {
+      "server_generation": "string"
+    },
+    "session.attach": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "properties": "object",
+      "run_type": "string",
+      "provider_id": "string",
+      "model_id": "string",
+      "output_truncated": "boolean",
+      "approval_id": "string",
+      "approval": "object",
+      "title": "string",
+      "summary": "string",
+      "pinned": "boolean",
+      "archived": "boolean",
+      "conversation_id": "string",
+      "created_at": "string",
+      "type": "string",
+      "detail": "string"
+    },
+    "session.create": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "properties": "object",
+      "run_id": "string",
+      "run_type": "string",
+      "provider_id": "string",
+      "model_id": "string",
+      "state": "string",
+      "output": "string",
+      "output_truncated": "boolean",
+      "approval_id": "string",
+      "approval": "object",
+      "title": "string",
+      "summary": "string",
+      "pinned": "boolean",
+      "archived": "boolean",
+      "conversation_id": "string",
+      "detail": "string"
+    },
+    "daemon.status": {
+      "protocol_major": "integer",
+      "protocol_minor": "integer",
+      "endpoint": "string",
+      "server_generation": "string"
+    },
+    "workspace.changes": {
+      "root": "string",
+      "reason": "string"
+    },
+    "terminal.attach": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "properties": "object",
+      "run_type": "string",
+      "provider_id": "string",
+      "model_id": "string",
+      "output_truncated": "boolean",
+      "approval_id": "string",
+      "approval": "object",
+      "title": "string",
+      "summary": "string",
+      "pinned": "boolean",
+      "archived": "boolean",
+      "conversation_id": "string",
+      "created_at": "string",
+      "type": "string",
+      "detail": "string"
+    }
+  },
+  "desktop_projection": {
+    "activeAgentSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "activeChatModelId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "activeChatProviderId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "activeConversationArchived": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": true
+    },
+    "activeConversationCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "activeConversationId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "activeConversationStateSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "activeConversationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "activeLocalRuntimeBadge": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "activeRuntimeLocalOnlySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "activeRuntimeModelLabel": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "activeRuntimeProviderId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "activeRuntimeProviderLabel": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "activeRuntimeReadinessState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "activeRuntimeReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "agentActivityCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentAwaitingApproval": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": true
+    },
+    "agentCapabilityCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityDisabledCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityEnabledCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityReadinessSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityRegistryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityRegistrySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilityRestrictedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilitySafetySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentLoopActive": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": true
+    },
+    "agentPlanningArbitrationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningRefusalSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningRefusedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentPlanningSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "agentTaskQueueActiveCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueueBlockedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueueCompletedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueueCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueuePlannedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueueRefusedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskQueueSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskRuntimeTaskCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "agentTaskTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "approvedMemoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "approvedMemoryCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "archivedConversationCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "archivedMemoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "archivedMemoryCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "attentionState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionRefusalSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionSafetyChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileSupportedExtensionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "audioFileValidationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "availableLocalRuntimeSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "availableToolCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "availableToolIds": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "benchmarkHubSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "chatCatalogState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatErrorCategory": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatGenerationActive": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "chatHistoryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatInputCapabilities": {
+      "cpp": "QVariantMap",
+      "type": "object",
+      "scope": "session",
+      "eager": true
+    },
+    "chatMaintenanceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatProviderKind": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatSendLifecycleState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "chatSendLifecycleSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "cloudModelDiscoveryError": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "committedMemoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "committedMemoryContextAvailability": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "configuredRuntimeProviderSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyAvailableSourceCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyCandidateBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyEstimatedSize": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyPolicyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyPolicySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblySourceCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblySourceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblySummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextAssemblyTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextBudgetUsageSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextExcludedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextIncludedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningContributionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningDeveloperTraces": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningExclusionHints": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningInclusionHints": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningOrderingSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextReasoningSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "contextWindowSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "conversationActiveSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationArchivedSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationBrowserEmptyStateSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationBrowserEmptyStateVisible": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationBrowserStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationBrowserSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionFallbackReason": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionPressureSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionSelectedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCompressionTraceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationContextAvailability": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationCurrentStorageMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteLastResultSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteLastStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeletePolicyRequirements": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeletePolicyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeletePolicySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDeleteReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDuplicateLastResultSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationDuplicateLastStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportLastFileName": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportLastMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportLastResultSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportLastStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportLastTimestamp": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationExportReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationFutureStorageMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationHistoryMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": true
+    },
+    "conversationHistorySummaryLines": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationHistorySummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationIds": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationLastRestoredStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "conversationLastSavedStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationLastUpdatedSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentExportAvailabilitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentLastUpdatedSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentPersistenceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentSearchAvailabilitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationListCurrentTitle": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "conversationListEntryCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationMessageCountSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationMigrationReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationMigrationStatusSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationPersistenceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationPinnedSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeActiveModel": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeActiveRoute": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeLastErrorSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeLastLatencySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeLastSuccessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeRequestId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeStreaming": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationRuntimeSummaryLines": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceAllocationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceExcludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceExclusionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceIncludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSalienceTruncatedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSchemaStatusSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSearchQueryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSearchResultCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSearchResultSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSearchStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSearchSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSessionId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationStoreConversationCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationStoreStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationStoreSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryBlockSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryBlockedReason": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryBudgetCharacters": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryCandidateSegments": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryEstimatedCompressionGain": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryGenerationStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "conversationSummaryGenerationTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryInjectionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryOmittedMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryPersistenceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryPreviewSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationSummaryTruncatedBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationTitles": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationTransitionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationTransitionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowBudgetCharacters": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowIncludedMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowOmittedMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "conversationWindowTruncatedMessageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "credentialActionReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "credentialExecutionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "credentialStoreBackendSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "credentialStoreSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "credentialStoreSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "credentialStoreTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "currentAgentSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "currentMemoryAffinitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "currentRoutingMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "currentWorkspaceRequiresLocal": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "disabledRuntimeCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "downloadsCenterSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingProviderReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingProviderSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingRuntimeBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingRuntimeConstraintSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingRuntimeReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingRuntimeRequirementSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "embeddingRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "enabledRuntimeCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "executionCoordinationMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionCoordinationSnapshotSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionLifecycleState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionLifecycleStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionLifecycleSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionLifecycleTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "executionSessionId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionSessionOwnership": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "executionSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeArbitrationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeSemanticFillCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeSourceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridBridgeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridRetrievalReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridRetrievalReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridRetrievalStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "hybridRetrievalSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "installedOllamaModelNames": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "installedRuntimeProviderSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "interactionMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeBoundedState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "isolatedEmbeddingRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "lastAgentResponse": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "lastMemoryCandidateReviewStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "lastMemoryCandidateReviewSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "lastMemoryCommitResultSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "lastMemoryCommitStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "latestAgentActivitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "latestAgentPipelineStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestAgentPipelineSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestAgentTaskLifecycleSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestAgentTaskSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestApprovalStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestApprovalSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "latestSandboxStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "latestSandboxSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "latestTaskPlanStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "latestTaskPlanSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "latestToolExecutionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestToolExecutionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "latestToolPlanStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "latestToolPlanSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "llamaCppEndpoint": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "lmStudioEndpoint": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "loadedLMStudioModelNames": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "localChatInferenceEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": true
+    },
+    "localChatInferenceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "localChatInferenceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localChatSendAvailabilitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "localChatSendAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": true
+    },
+    "localInferenceBusy": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceLastResponseSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceLatencySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceMaxTokens": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceRuntimeState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "localInferenceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "localInferenceStreamStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceStreamSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceStreamingAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceStreamingEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceStreamingText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": true
+    },
+    "localInferenceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceTemperature": {
+      "cpp": "double",
+      "type": "number",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceTimeoutMs": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceTopP": {
+      "cpp": "double",
+      "type": "number",
+      "scope": "session",
+      "eager": false
+    },
+    "localInferenceTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "session",
+      "eager": false
+    },
+    "localOnlyRuntimeEnforcementSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeAdapterCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeAdapterHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeAdapterStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeAdapterSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeAllocationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeCapabilities": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeReservationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeResponseStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeResponseSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSessionCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSessionHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSessionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "localRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCandidateCommitStatuses": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCandidateIds": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCandidateReviewStates": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCatalogCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCatalogSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitPlanCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryCommitTargetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryEntries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryEntryCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryMaintenanceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallPolicyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallPolicySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallQueryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallResultCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallResultSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRecallSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceExcludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceExclusionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceIncludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceSummaryText": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryRelevanceTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "memoryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelAdvisorAvoidSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelAdvisorRecommendationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelCapabilityCompatibilitySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "modelCapabilitySettings": {
+      "cpp": "QVariantList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "modelLibraryAvailableSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelLibraryDetailSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelLibraryInstalledSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelLibraryRecommendedSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelManagementActionAvailability": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelManagementStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelManagementSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRecommendationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRegistryModelSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRegistryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRegistrySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRequirementSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "modelRoutingStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "ollamaConnectionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "ollamaDiscoveryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "ollamaEndpoint": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "ollamaHealthStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "ollamaHealthSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "ollamaModelCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": true
+    },
+    "ollamaModelNames": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "ollamaModelSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationContextAvailability": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationDiagnostics": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationSignals": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationSnapshotStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "orchestrationSnapshotSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "pendingMemoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "pendingMemoryCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "persistentPermissionGrants": {
+      "cpp": "QVariantList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "piperBinaryPath": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputAudioPathSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputExecutionEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputExecutionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputExecutionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperFileOutputReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperModelPath": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperRuntimePathSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperRuntimeReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisLastSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperSynthesisTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsFileOutputStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsFileOutputSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsReady": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "piperTtsSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "plannedTaskStepCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextBlockSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextInjectedBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextInjectionEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": true
+    },
+    "promptContextInjectionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextInjectionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextSizeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextSourceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextUsedMemoryCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "promptContextUsedSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCatalogCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCatalogSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCredentialReadinessSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCredentialRegistryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCredentialRegistrySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCredentialSafetySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "providerCredentialSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "providerDiscoverySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "providerName": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerRuntimeBridgeResponseSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerRuntimeBridgeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerRuntimeBridgeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "providerStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "registeredAgentCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "rejectedMemoryCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "rejectedMemoryCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningExcludedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningExcludedSourceCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningSelectedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningSelectedSourceCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningSourceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningSourceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "retrievalPlanningTruncatedCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeCapabilityCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeContextActiveToolIds": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeContextStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeContextSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeIntegrationReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeIntegrationReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeIntegrationReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeMetadataContextAvailability": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeNegotiationProfileSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeNegotiationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimePermissionDecision": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimePermissionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimePipelineStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimePipelineSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimePipelineTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeProviderCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "runtimeProviderCardSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "runtimeProviderValidationTraces": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeSafetyDecision": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "runtimeSessionId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "selectableRuntimeProviderIds": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "selectableRuntimeProviderLabels": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedLocalModel": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedLocalModelMetadataSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedLocalModelStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedLocalModelSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedModelCapabilityLabels": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedModelProviderSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "selectedRuntimeProvider": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    },
+    "selectedSemanticProviderName": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceAcceptedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceArbitrationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceBudgetCharacters": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceSourceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticAcceptanceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticActivationReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticActivationRequiredSteps": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticActivationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationSelectionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticArbitrationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateArbitrationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateExcludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateParticipationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateSelectedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticCandidateTruncatedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityAuditSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityDecisionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthoritySafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptAuthorityWouldIncludeBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionAuditSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionDeterministicAuthorityPreserved": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": true
+    },
+    "semanticPromptInclusionFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionIncludedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticPromptInclusionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticProviderCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticProviderHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticProviderMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticProviderReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticProviderStatusSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticRetrievalEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticRetrievalReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticRetrievalStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticRetrievalSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchArbitrationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchCandidateCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchCandidateSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchRuntimeState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSearchSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyBlockCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyBudgetCharacters": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyBudgetSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblySafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "semanticSupplementAssemblySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "speechToTextStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "speechToTextSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityBudgetTrace": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityContributionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityCoverageSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityFreshnessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityOrderingSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "summaryContinuityStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "textToSpeechStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "textToSpeechSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractDisabledCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractEnabledCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractPermissionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractReadinessSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractRegistryStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractRegistrySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractRestrictedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractSafetySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractSandboxSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "toolContractSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "userCreatedConversationCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorIndexReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorIndexSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorIndexedItemCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceBoundedState": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceIndexedItemCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceReadiness": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "vectorPersistenceSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceBinarySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceCapabilitySummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceConfigurationHintSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceConfigurationReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceConfigurationStatusBadges": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceConfigurationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceConfigurationValidationSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceLocalOnlyPolicy": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceMicrophoneEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceModelSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionBlockedStageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionReadyStageCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionSafetyChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionStageReadinessSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSessionTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePipelineTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voicePlaybackEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceProcessExecutionEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeCheckSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeConfiguredCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeEnvironmentStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeEnvironmentSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeExecutionAllowed": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeHealth": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeMissingCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeMode": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimePermissionFoundationSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimePermissionSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeReadinessChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeRefusedCount": {
+      "cpp": "int",
+      "type": "integer",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSafetyChecks": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSafetyReportSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSafetyStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSandboxSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceRuntimeSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceSessionId": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceSessionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceSessionSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceSpeechToTextAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "voiceTextToSpeechAvailable": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperBinaryPath": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperModelPath": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperPreparationReadinessStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperPreparationReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperRuntimePathSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperRuntimeReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperRuntimeStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionExecutionEnabled": {
+      "cpp": "bool",
+      "type": "boolean",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionFallbackSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionLastSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionReadinessSummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionSafetySummary": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionStatus": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": false
+    },
+    "whisperTranscriptionTraceSummaries": {
+      "cpp": "QStringList",
+      "type": "array",
+      "scope": "global",
+      "eager": false
+    },
+    "currentWorkspaceName": {
+      "cpp": "QString",
+      "type": "string",
+      "scope": "global",
+      "eager": true
+    }
+  },
+  "desktop_actions": {
+    "approveMemoryCandidate": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "candidateId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "archiveConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "archiveMemoryCandidate": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "candidateId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "clearChat": {
+      "return": "bool",
+      "arguments": [],
+      "scope": "session"
+    },
+    "clearConversationSearch": {
+      "return": "void",
+      "arguments": [],
+      "scope": "session"
+    },
+    "clearLocalMemoryRecall": {
+      "return": "void",
+      "arguments": [],
+      "scope": "session"
+    },
+    "clearMemory": {
+      "return": "bool",
+      "arguments": [],
+      "scope": "session"
+    },
+    "clearPersistentPermissions": {
+      "return": "bool",
+      "arguments": [],
+      "scope": "session"
+    },
+    "configureMcpServers": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "serversJson",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "configureSpeechTts": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "engine",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "kokoroModelPath",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "kokoroVoice",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "configureWebSearch": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "provider",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "apiKey",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "maxResults",
+          "cpp": "int",
+          "type": "integer"
+        }
+      ],
+      "scope": "global"
+    },
+    "createMemoryCandidateFromConversationText": {
+      "return": "QString",
+      "arguments": [
+        {
+          "name": "text",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "duplicateConversation": {
+      "return": "QString",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "exportTranscript": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "format",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "generatePiperTtsFile": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "text",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "pinConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "recallLocalMemory": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "query",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "refreshModelDiscovery": {
+      "return": "void",
+      "arguments": [],
+      "scope": "global"
+    },
+    "refreshOllamaStatus": {
+      "return": "void",
+      "arguments": [],
+      "scope": "global"
+    },
+    "rejectMemoryCandidate": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "candidateId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "remember": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "key",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "renameConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "requestMemoryCandidateCommit": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "candidateId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "requestPermanentDeleteConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "resetMemoryCandidate": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "candidateId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "resetModelCapabilityOverrides": {
+      "return": "void",
+      "arguments": [],
+      "scope": "session"
+    },
+    "revokePersistentPermission": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "id",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "searchConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "query",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "setAgentAutonomousMode": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLlamaCppEndpoint": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "endpoint",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLmStudioEndpoint": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "endpoint",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalChatInferenceEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalInferenceMaxTokens": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "maxTokens",
+          "cpp": "int",
+          "type": "integer"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalInferenceStreamingEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalInferenceTemperature": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "temperature",
+          "cpp": "double",
+          "type": "number"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalInferenceTimeoutMs": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "timeoutMs",
+          "cpp": "int",
+          "type": "integer"
+        }
+      ],
+      "scope": "global"
+    },
+    "setLocalInferenceTopP": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "topP",
+          "cpp": "double",
+          "type": "number"
+        }
+      ],
+      "scope": "global"
+    },
+    "setModelCapabilityNumberOverride": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "capabilityId",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "cpp": "int",
+          "type": "integer"
+        }
+      ],
+      "scope": "global"
+    },
+    "setModelCapabilityOverride": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "capabilityId",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setOllamaEndpoint": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "endpoint",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setPiperBinaryPath": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "path",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setPiperFileOutputExecutionEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setPiperModelPath": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "path",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setPromptContextInjectionEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setRoutingModeByName": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "routingModeName",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setSelectedLocalModel": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "model",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setSelectedRuntimeProvider": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "providerId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setSemanticPromptInclusionEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "setSemanticProvider": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "provider",
+          "cpp": "const QString&",
+          "type": "string"
+        },
+        {
+          "name": "embeddingModel",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setToolPermissionPolicyState": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "state",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setWhisperBinaryPath": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "path",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setWhisperModelPath": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "path",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "global"
+    },
+    "setWhisperTranscriptionExecutionEnabled": {
+      "return": "void",
+      "arguments": [
+        {
+          "name": "enabled",
+          "cpp": "bool",
+          "type": "boolean"
+        }
+      ],
+      "scope": "global"
+    },
+    "unarchiveConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    },
+    "unpinConversation": {
+      "return": "bool",
+      "arguments": [
+        {
+          "name": "conversationId",
+          "cpp": "const QString&",
+          "type": "string"
+        }
+      ],
+      "scope": "session"
+    }
+  },
+  "optional_events": {
+    "run.started": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    },
+    "output.delta": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    },
+    "tool.requested": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "tool_call_id": "string",
+      "timestamp": "string",
+      "state": "string"
+    },
+    "approval.requested": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "state": "string"
+    },
+    "tool.result": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "tool_call_id": "string",
+      "timestamp": "string",
+      "state": "string",
+      "duration_ms": "integer"
+    },
+    "run.completed": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    },
+    "run.failed": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    },
+    "run.cancelled": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    },
+    "agent.activity": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "decision": "string"
+    },
+    "tool.running": {
+      "server_generation": "string",
+      "event_sequence": "integer",
+      "tool_call_id": "string",
+      "timestamp": "string",
+      "state": "string"
+    },
+    "subagent.activity": {
+      "server_generation": "string",
+      "event_sequence": "integer"
+    }
+  },
+  "desktop_settings": {
+    "themeName": {
+      "cpp": "QString",
+      "read": "themeName",
+      "write": "setThemeName"
+    },
+    "configurationProfile": {
+      "cpp": "QString",
+      "read": "configurationProfile",
+      "write": "setConfigurationProfile"
+    },
+    "appLanguage": {
+      "cpp": "QString",
+      "read": "appLanguage",
+      "write": "setAppLanguage"
+    },
+    "routingMode": {
+      "cpp": "QString",
+      "read": "routingModeName",
+      "write": "setRoutingModeName"
+    },
+    "ollamaEndpoint": {
+      "cpp": "QString",
+      "read": "ollamaEndpoint",
+      "write": "setOllamaEndpoint"
+    },
+    "lmStudioEndpoint": {
+      "cpp": "QString",
+      "read": "lmStudioEndpoint",
+      "write": "setLmStudioEndpoint"
+    },
+    "llamaCppEndpoint": {
+      "cpp": "QString",
+      "read": "llamaCppEndpoint",
+      "write": "setLlamaCppEndpoint"
+    },
+    "cloudApiEndpoint": {
+      "cpp": "QString",
+      "read": "cloudApiEndpoint",
+      "write": "setCloudApiEndpoint"
+    },
+    "webSearchProvider": {
+      "cpp": "QString",
+      "read": "webSearchProvider",
+      "write": "setWebSearchProvider"
+    },
+    "webSearchMaxResults": {
+      "cpp": "int",
+      "read": "webSearchMaxResults",
+      "write": "setWebSearchMaxResults"
+    },
+    "mcpServersJson": {
+      "cpp": "QString",
+      "read": "mcpServersJson",
+      "write": "setMcpServersJson"
+    },
+    "semanticProvider": {
+      "cpp": "QString",
+      "read": "semanticProvider",
+      "write": "setSemanticProvider"
+    },
+    "semanticEmbeddingModel": {
+      "cpp": "QString",
+      "read": "semanticEmbeddingModel",
+      "write": "setSemanticEmbeddingModel"
+    },
+    "selectedRuntimeProvider": {
+      "cpp": "QString",
+      "read": "selectedRuntimeProvider",
+      "write": "setSelectedRuntimeProvider"
+    },
+    "selectedCloudProvider": {
+      "cpp": "QString",
+      "read": "selectedCloudProvider",
+      "write": "setSelectedCloudProvider"
+    },
+    "localInferenceTimeoutMs": {
+      "cpp": "int",
+      "read": "localInferenceTimeoutMs",
+      "write": "setLocalInferenceTimeoutMs"
+    },
+    "localInferenceTemperature": {
+      "cpp": "double",
+      "read": "localInferenceTemperature",
+      "write": "setLocalInferenceTemperature"
+    },
+    "localInferenceTopP": {
+      "cpp": "double",
+      "read": "localInferenceTopP",
+      "write": "setLocalInferenceTopP"
+    },
+    "localInferenceMaxTokens": {
+      "cpp": "int",
+      "read": "localInferenceMaxTokens",
+      "write": "setLocalInferenceMaxTokens"
+    },
+    "promptContextInjectionEnabled": {
+      "cpp": "bool",
+      "read": "promptContextInjectionEnabled",
+      "write": "setPromptContextInjectionEnabled"
+    },
+    "semanticPromptInclusionEnabled": {
+      "cpp": "bool",
+      "read": "semanticPromptInclusionEnabled",
+      "write": "setSemanticPromptInclusionEnabled"
+    },
+    "contextExplainabilityVisible": {
+      "cpp": "bool",
+      "read": "contextExplainabilityVisible",
+      "write": "setContextExplainabilityVisible"
+    },
+    "companionEnabled": {
+      "cpp": "bool",
+      "read": "companionEnabled",
+      "write": "setCompanionEnabled"
+    },
+    "developerModeEnabled": {
+      "cpp": "bool",
+      "read": "developerModeEnabled",
+      "write": "setDeveloperModeEnabled"
+    },
+    "agentAutonomousMode": {
+      "cpp": "bool",
+      "read": "agentAutonomousMode",
+      "write": "setAgentAutonomousMode"
+    },
+    "piperBinaryPath": {
+      "cpp": "QString",
+      "read": "piperBinaryPath",
+      "write": "setPiperBinaryPath"
+    },
+    "piperModelPath": {
+      "cpp": "QString",
+      "read": "piperModelPath",
+      "write": "setPiperModelPath"
+    },
+    "whisperBinaryPath": {
+      "cpp": "QString",
+      "read": "whisperBinaryPath",
+      "write": "setWhisperBinaryPath"
+    },
+    "whisperModelPath": {
+      "cpp": "QString",
+      "read": "whisperModelPath",
+      "write": "setWhisperModelPath"
+    },
+    "piperFileOutputExecutionEnabled": {
+      "cpp": "bool",
+      "read": "piperFileOutputExecutionEnabled",
+      "write": "setPiperFileOutputExecutionEnabled"
+    },
+    "selectedTtsEngine": {
+      "cpp": "QString",
+      "read": "selectedTtsEngine",
+      "write": "setSelectedTtsEngine"
+    },
+    "kokoroModelPath": {
+      "cpp": "QString",
+      "read": "kokoroModelPath",
+      "write": "setKokoroModelPath"
+    },
+    "kokoroVoice": {
+      "cpp": "QString",
+      "read": "kokoroVoice",
+      "write": "setKokoroVoice"
+    },
+    "activeConversationId": {
+      "cpp": "QString",
+      "read": "activeConversationId",
+      "write": "setActiveConversationId"
+    },
+    "selectedWorkspaceId": {
+      "cpp": "QString",
+      "read": "selectedWorkspaceId",
+      "write": "setSelectedWorkspaceId"
+    },
+    "defaultWorkspaceId": {
+      "cpp": "QString",
+      "read": "defaultWorkspaceId",
+      "write": "setDefaultWorkspaceId"
+    },
+    "workspaceCatalogJson": {
+      "cpp": "QString",
+      "read": "workspaceCatalogJson",
+      "write": "setWorkspaceCatalogJson"
+    },
+    "localKnowledgeBaseEnabled": {
+      "cpp": "bool",
+      "read": "localKnowledgeBaseEnabled",
+      "write": "setLocalKnowledgeBaseEnabled"
+    },
+    "retrievalExplainabilityEnabled": {
+      "cpp": "bool",
+      "read": "retrievalExplainabilityEnabled",
+      "write": "setRetrievalExplainabilityEnabled"
+    },
+    "attachmentBehavior": {
+      "cpp": "QString",
+      "read": "attachmentBehavior",
+      "write": "setAttachmentBehavior"
+    },
+    "exportDefaultFormat": {
+      "cpp": "QString",
+      "read": "exportDefaultFormat",
+      "write": "setExportDefaultFormat"
+    },
+    "exportIncludeTimestamps": {
+      "cpp": "bool",
+      "read": "exportIncludeTimestamps",
+      "write": "setExportIncludeTimestamps"
+    },
+    "exportIncludeCitations": {
+      "cpp": "bool",
+      "read": "exportIncludeCitations",
+      "write": "setExportIncludeCitations"
+    },
+    "exportAnonymizeNames": {
+      "cpp": "bool",
+      "read": "exportAnonymizeNames",
+      "write": "setExportAnonymizeNames"
+    },
+    "exportIncludeModelMetadata": {
+      "cpp": "bool",
+      "read": "exportIncludeModelMetadata",
+      "write": "setExportIncludeModelMetadata"
+    },
+    "selectedSkillProfile": {
+      "cpp": "QString",
+      "read": "selectedSkillProfile",
+      "write": "setSelectedSkillProfile"
+    },
+    "defaultPermissionPolicyState": {
+      "cpp": "QString",
+      "read": "defaultPermissionPolicyState",
+      "write": "setDefaultPermissionPolicyState"
+    },
+    "updateCheckPolicy": {
+      "cpp": "QString",
+      "read": "updateCheckPolicy",
+      "write": "setUpdateCheckPolicy"
+    },
+    "updateCheckUrl": {
+      "cpp": "QString",
+      "read": "updateCheckUrl",
+      "write": "setUpdateCheckUrl"
+    },
+    "notificationPolicy": {
+      "cpp": "QString",
+      "read": "notificationPolicy",
+      "write": "setNotificationPolicy"
+    },
+    "onboardingComplete": {
+      "cpp": "bool",
+      "read": "onboardingComplete",
+      "write": "setOnboardingComplete"
+    },
+    "onboardingUseCase": {
+      "cpp": "QString",
+      "read": "onboardingUseCase",
+      "write": "setOnboardingUseCase"
+    },
+    "selectedSystemMode": {
+      "cpp": "QString",
+      "read": "selectedSystemMode",
+      "write": "setSelectedSystemMode"
+    },
+    "onboardingAiProvider": {
+      "cpp": "QString",
+      "read": "onboardingAiProvider",
+      "write": "setOnboardingAiProvider"
+    },
+    "recoveryDraftText": {
+      "cpp": "QString",
+      "read": "recoveryDraftText",
+      "write": "setRecoveryDraftText"
+    },
+    "reducedMotionEnabled": {
+      "cpp": "bool",
+      "read": "reducedMotionEnabled",
+      "write": "setReducedMotionEnabled"
+    },
+    "highContrastEnabled": {
+      "cpp": "bool",
+      "read": "highContrastEnabled",
+      "write": "setHighContrastEnabled"
+    },
+    "uiDensity": {
+      "cpp": "QString",
+      "read": "uiDensity",
+      "write": "setUiDensity"
+    },
+    "notificationCenterJson": {
+      "cpp": "QString",
+      "read": "notificationCenterJson",
+      "write": "setNotificationCenterJson"
+    },
+    "updateWorkflowState": {
+      "cpp": "QString",
+      "read": "updateWorkflowState",
+      "write": "setUpdateWorkflowState"
+    },
+    "controlledAgentTasksJson": {
+      "cpp": "QString",
+      "read": "controlledAgentTasksJson",
+      "write": "setControlledAgentTasksJson"
+    },
+    "controlledAgentPermissionsJson": {
+      "cpp": "QString",
+      "read": "controlledAgentPermissionsJson",
+      "write": "setControlledAgentPermissionsJson"
+    },
+    "notifyModelDownloads": {
+      "cpp": "bool",
+      "read": "notifyModelDownloads",
+      "write": "setNotifyModelDownloads"
+    },
+    "notifyModelRemovals": {
+      "cpp": "bool",
+      "read": "notifyModelRemovals",
+      "write": "setNotifyModelRemovals"
+    },
+    "notifyAgentResponses": {
+      "cpp": "bool",
+      "read": "notifyAgentResponses",
+      "write": "setNotifyAgentResponses"
+    },
+    "notifySystemUpdates": {
+      "cpp": "bool",
+      "read": "notifySystemUpdates",
+      "write": "setNotifySystemUpdates"
+    },
+    "soundEffectsEnabled": {
+      "cpp": "bool",
+      "read": "soundEffectsEnabled",
+      "write": "setSoundEffectsEnabled"
+    },
+    "networkMode": {
+      "cpp": "QString",
+      "read": "networkMode"
+    }
+  },
+  "model_helpers": {
+    "ollamaPuller": [
+      "pull",
+      "cancel",
+      "removeModel"
+    ],
+    "ollamaLibraryFetcher": [
+      "fetch",
+      "cancel"
+    ],
+    "ollamaModelDetailFetcher": [
+      "fetchDetails",
+      "cancel"
+    ],
+    "lmStudioLibraryFetcher": [
+      "fetch",
+      "cancel"
+    ]
+  },
+  "desktop_settings_service": {
+    "productSettings": {
+      "query": true,
+      "arguments": []
+    },
+    "productSettingsSections": {
+      "query": true,
+      "arguments": []
+    },
+    "setProductSetting": {
+      "query": false,
+      "arguments": [
+        "string",
+        "value"
+      ]
+    },
+    "resetProductSetting": {
+      "query": false,
+      "arguments": [
+        "string"
+      ]
+    },
+    "resetProductSettingsSection": {
+      "query": false,
+      "arguments": [
+        "integer"
+      ]
+    },
+    "clearWorkspaceSettingOverride": {
+      "query": false,
+      "arguments": [
+        "string",
+        "string"
+      ]
+    },
+    "providerSettingsState": {
+      "query": true,
+      "arguments": [
+        "string"
+      ]
+    },
+    "extensionSettingsState": {
+      "query": true,
+      "arguments": [
+        "string"
+      ]
+    },
+    "performExtensionSettingsAction": {
+      "query": false,
+      "arguments": [
+        "string",
+        "integer"
+      ]
+    },
+    "speechSettingsState": {
+      "query": true,
+      "arguments": []
+    },
+    "securitySettingsState": {
+      "query": true,
+      "arguments": []
+    },
+    "productPrivacyState": {
+      "query": true,
+      "arguments": []
+    },
+    "productRecoveryState": {
+      "query": true,
+      "arguments": []
+    },
+    "productBackupAvailability": {
+      "query": true,
+      "arguments": []
+    },
+    "exportProductBackup": {
+      "query": false,
+      "arguments": [
+        "array"
+      ]
+    },
+    "importProductBackup": {
+      "query": false,
+      "arguments": [
+        "string",
+        "array",
+        "boolean"
+      ]
+    },
+    "clearProductData": {
+      "query": false,
+      "arguments": [
+        "string"
+      ]
+    },
+    "runProductMaintenance": {
+      "query": false,
+      "arguments": []
+    },
+    "resolveInterruptedModelOperation": {
+      "query": false,
+      "arguments": [
+        "string"
+      ]
+    },
+    "clearProductCredential": {
+      "query": false,
+      "arguments": [
+        "string"
+      ]
+    },
+    "setProductProviderCredential": {
+      "query": false,
+      "arguments": [
+        "string",
+        "string"
+      ]
+    },
+    "setProductPluginCredential": {
+      "query": false,
+      "arguments": [
+        "string",
+        "string",
+        "string"
+      ]
+    },
+    "clearProductPluginCredential": {
+      "query": false,
+      "arguments": [
+        "string",
+        "string"
+      ]
+    }
+  }
 }

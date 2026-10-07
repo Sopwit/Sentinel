@@ -16,12 +16,14 @@
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/security/ISandboxPolicy.h"
 #include "sentinel/core/security/PathGuard.h"
+#include "sentinel/core/security/ResourceAuthorizationResolver.h"
 
+#include <QDebug>
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QUuid>
-#include <QDir>
-#include <QDebug>
-#include <QStandardPaths>
 
 namespace sentinel::core {
 
@@ -29,8 +31,10 @@ namespace {
 AgentTerminalReason terminalReasonFor(const AgentLoopState& state) {
     if (state.terminalReason != AgentTerminalReason::None)
         return state.terminalReason;
-    if (state.phase == AgentLoopPhase::Completed) return AgentTerminalReason::Completed;
-    if (state.phase == AgentLoopPhase::Cancelled) return AgentTerminalReason::Cancelled;
+    if (state.phase == AgentLoopPhase::Completed)
+        return AgentTerminalReason::Completed;
+    if (state.phase == AgentLoopPhase::Cancelled)
+        return AgentTerminalReason::Cancelled;
     if (state.phase == AgentLoopPhase::Failed || state.phase == AgentLoopPhase::Stuck)
         return state.providerFailure ? AgentTerminalReason::ProviderFailure
                                      : AgentTerminalReason::UnableToComplete;
@@ -39,20 +43,32 @@ AgentTerminalReason terminalReasonFor(const AgentLoopState& state) {
 
 AgentRuntimeErrorCode errorCodeFor(const AgentLoopState& state) {
     switch (state.terminalReason) {
-    case AgentTerminalReason::ApprovalDenied: return AgentRuntimeErrorCode::ApprovalDenied;
-    case AgentTerminalReason::ProviderFailure: return AgentRuntimeErrorCode::ProviderFailure;
-    case AgentTerminalReason::ToolFailure: return AgentRuntimeErrorCode::ToolFailure;
-    case AgentTerminalReason::CapabilityUnavailable: return AgentRuntimeErrorCode::CapabilityUnavailable;
-    case AgentTerminalReason::SecurityDenied: return AgentRuntimeErrorCode::SecurityDenied;
-    case AgentTerminalReason::IterationLimit: return AgentRuntimeErrorCode::IterationLimit;
-    case AgentTerminalReason::Cancelled: return AgentRuntimeErrorCode::Cancelled;
-    case AgentTerminalReason::UnableToComplete: return AgentRuntimeErrorCode::ExecutionFailed;
+    case AgentTerminalReason::ApprovalDenied:
+        return AgentRuntimeErrorCode::ApprovalDenied;
+    case AgentTerminalReason::ProviderFailure:
+        return AgentRuntimeErrorCode::ProviderFailure;
+    case AgentTerminalReason::ToolFailure:
+        return AgentRuntimeErrorCode::ToolFailure;
+    case AgentTerminalReason::CapabilityUnavailable:
+        return AgentRuntimeErrorCode::CapabilityUnavailable;
+    case AgentTerminalReason::SecurityDenied:
+        return AgentRuntimeErrorCode::SecurityDenied;
+    case AgentTerminalReason::IterationLimit:
+        return AgentRuntimeErrorCode::IterationLimit;
+    case AgentTerminalReason::Cancelled:
+        return AgentRuntimeErrorCode::Cancelled;
+    case AgentTerminalReason::UnableToComplete:
+        return AgentRuntimeErrorCode::ExecutionFailed;
     case AgentTerminalReason::Completed:
-    case AgentTerminalReason::None: break;
+    case AgentTerminalReason::None:
+        break;
     }
-    if (state.phase == AgentLoopPhase::Cancelled) return AgentRuntimeErrorCode::Cancelled;
-    if (state.phase == AgentLoopPhase::Stuck) return AgentRuntimeErrorCode::Stuck;
-    if (state.phase == AgentLoopPhase::Failed) return AgentRuntimeErrorCode::ExecutionFailed;
+    if (state.phase == AgentLoopPhase::Cancelled)
+        return AgentRuntimeErrorCode::Cancelled;
+    if (state.phase == AgentLoopPhase::Stuck)
+        return AgentRuntimeErrorCode::Stuck;
+    if (state.phase == AgentLoopPhase::Failed)
+        return AgentRuntimeErrorCode::ExecutionFailed;
     return AgentRuntimeErrorCode::None;
 }
 
@@ -74,19 +90,17 @@ private:
 AgentRuntime::AgentRuntime(std::unique_ptr<IAgentRuntime> metadata, IAgentStepPlanner* planner,
                            IToolExecutor& executor, const IApprovalPolicy& approval,
                            const ISandboxPolicy& sandbox, const IMemoryStore* memoryStore,
-                           const IChatHistoryStore* chatHistoryStore,
-                           IAgentRunStore* runStore,
+                           const IChatHistoryStore* chatHistoryStore, IAgentRunStore* runStore,
                            std::shared_ptr<IPermissionGrantStore> permissionGrantStore)
     : metadata_(std::move(metadata)),
       extensionService_(nullptr, &pluginManager_, &skillService_, &toolRegistry_),
-      permissionService_(std::move(permissionGrantStore)),
-      planner_(planner), executor_(executor),
+      permissionService_(std::move(permissionGrantStore)), planner_(planner), executor_(executor),
       approval_(approval), sandbox_(sandbox), memoryStore_(memoryStore),
       chatHistoryStore_(chatHistoryStore), runStore_(runStore) {
-    externalDirectoryGate_.setAuthorizationCheck([this](const QString& path, bool write,
-                                                        const QString& sessionId) {
-        const QList<AccessMode> modes = write
-            ? QList<AccessMode>{AccessMode::Write, AccessMode::Delete}
+    externalDirectoryGate_.setAuthorizationCheck(
+        [this](const QString& path, bool write, const QString& sessionId) {
+            const QList<AccessMode> modes =
+                write ? QList<AccessMode>{AccessMode::Write, AccessMode::Delete}
             : QList<AccessMode>{AccessMode::Read};
         for (const auto mode : modes) {
             const AuthorizationRequest request{SecurityDomain::FileSystem, mode, path,
@@ -137,6 +151,84 @@ AgentRuntime::~AgentRuntime() {
 void AgentRuntime::setToolPermissionState(QString state) {
     std::lock_guard lock(mutex_);
     toolPermissionState_ = std::move(state);
+}
+
+ToolExecutionResult AgentRuntime::inspectWorkspace(const QString& sessionId, const QString& root,
+                                                   const QString& toolId, const QString& path) {
+    if (toolId != QLatin1String("glob") && toolId != QLatin1String("read-file"))
+        return {ToolExecutionStatus::Blocked, QStringLiteral("Terminal inspection is read-only.")};
+    const auto canonicalRoot = PathGuard::canonicalPath(root);
+    if (root.isEmpty() || !QFileInfo(canonicalRoot).isDir())
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Select a workspace with an existing root.")};
+    ExternalDirectoryGate gate;
+    gate.setWorkingDirectory(canonicalRoot);
+    gate.setSecuritySessionId(sessionId);
+    const auto canonicalPath =
+        gate.resolvePath(path.isEmpty() ? canonicalRoot : path, canonicalRoot);
+    if (!PathGuard::contains(canonicalRoot, canonicalPath))
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Terminal inspection cannot leave the workspace.")};
+    const auto descriptor = toolRegistry_.findToolById(toolId);
+    if (!descriptor || descriptor->source != ToolSource::BuiltIn)
+        return {ToolExecutionStatus::Blocked, QStringLiteral("Built-in file tool is unavailable.")};
+    PlannedToolInvocation invocation;
+    invocation.toolId = toolId;
+    invocation.arguments = {{QStringLiteral("path"), canonicalPath}};
+    if (toolId == QLatin1String("glob"))
+        invocation.arguments.append({QStringLiteral("pattern"), QStringLiteral("*")});
+    ToolInvocationPlan plan;
+    plan.status = ToolInvocationPlanStatus::Planned;
+    plan.invocations = {invocation};
+    ToolExecutionGateway gateway(&toolRegistry_);
+    gateway.setResourceGate(&gate);
+    gateway.setHookService(&toolHooks_);
+    gateway.setPermissionService(&permissionService_);
+    gateway.setPermissionPolicy(&toolPermissionPolicy_, toolPermissionState_);
+    const auto validated = gateway.validatePlan(plan);
+    if (validated.status != ToolExecutionStatus::Succeeded)
+        return validated;
+    auto resources = ResourceAuthorizationResolver::resolve(*descriptor, plan.invocations.first(),
+                                                            canonicalRoot, &gate);
+    if (!resources.ok())
+        return {ToolExecutionStatus::Blocked, resources.reason};
+    for (const auto& request : resources.snapshot.requests)
+        if (permissionService_.evaluateAuthorization(request, sessionId) ==
+                PermissionEffect::Deny ||
+            !toolPermissionPolicy_.allowsAuthorization(request, toolPermissionState_, false))
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("File inspection is denied by authorization policy.")};
+    resources = ResourceAuthorizationResolver::authorize(resources.snapshot, &gate,
+                                                         &permissionService_, sessionId);
+    if (!resources.ok())
+        return {ToolExecutionStatus::Blocked, resources.reason};
+    plan.invocations.first().resourceSnapshot =
+        std::make_shared<ResourceAuthorizationSnapshot>(resources.snapshot);
+    const auto approval = approval_.evaluate(plan);
+    if (approval.status != ApprovalStatus::NotRequired)
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("File inspection requires approval through an Agent request.")};
+    const auto sandbox = sandbox_.evaluate(plan, approval);
+    struct Inspection {
+        ToolExecutionResult result;
+        std::atomic_bool completed{false};
+    };
+    auto inspection = std::make_shared<Inspection>();
+    ToolExecutionRequest inspectionRequest{plan, approval, sandbox, {toolId}};
+    inspectionRequest.synchronousReadOnly = true;
+    auto cancel = gateway.executeAsync(inspectionRequest, executor_, sessionId,
+                                       QUuid::createUuid().toString(QUuid::WithoutBraces), {},
+                                       [inspection](ToolExecutionResult value) {
+                                           inspection->result = std::move(value);
+                                           inspection->completed.store(true, std::memory_order_release);
+                                       });
+    if (!inspection->completed.load(std::memory_order_acquire)) {
+        if (cancel)
+            cancel();
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("File inspection requires the asynchronous Agent path.")};
+    }
+    return inspection->result;
 }
 
 QString AgentRuntime::name() const {
@@ -202,8 +294,7 @@ void AgentRuntime::publish(const QString& sessionId, AgentEventType type, AgentE
     if (cancelRequested_ &&
         (type == AgentEventType::ModelRequestStarted || type == AgentEventType::ModelOutputDelta ||
          type == AgentEventType::ModelRequestCompleted || type == AgentEventType::ToolRequested ||
-         type == AgentEventType::ContextSnapshot ||
-         type == AgentEventType::ToolApprovalRequired ||
+         type == AgentEventType::ContextSnapshot || type == AgentEventType::ToolApprovalRequired ||
          type == AgentEventType::ToolApprovalResolved ||
          type == AgentEventType::ToolExecutionStarted || type == AgentEventType::ToolOutput ||
          type == AgentEventType::ToolExecutionCompleted ||
@@ -295,7 +386,8 @@ void AgentRuntime::publish(const QString& sessionId, AgentEventType type, AgentE
 }
 
 void AgentRuntime::beginTurn(const QString& sessionId, bool child) {
-    if (!child) subagentsThisRun_ = 0;
+    if (!child)
+        subagentsThisRun_ = 0;
     std::lock_guard lock(eventMutex_);
     turns_[sessionId] =
         TurnContext{QUuid::createUuid().toString(QUuid::WithoutBraces), {}, {}, false};
@@ -318,8 +410,8 @@ void AgentRuntime::finishTurn(const QString& sessionId, const AgentLoopState& st
     run.finalClaims = state.finalClaims;
     if (!state.pendingApprovalPlan.invocations.isEmpty()) {
         const auto& invocation = state.pendingApprovalPlan.invocations.first();
-        run.pendingTool = {invocation.toolId, invocation.riskLevel, {},
-                           state.pendingAuthorizationRequests};
+        run.pendingTool = {
+            invocation.toolId, invocation.riskLevel, {}, state.pendingAuthorizationRequests};
         run.pendingTool.displayName = invocation.toolName;
     }
     if (state.phase == AgentLoopPhase::AwaitingApproval) {
@@ -566,9 +658,16 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
                 index, true);
     } else {
         publish(sessionId, AgentEventType::RunStarted,
-                AgentRunStartedEvent{goal, runType, {}, {}, {}, {},
-                                     runOptions.workspaceContext.id, runOptions.workspaceName,
-                                     runOptions.presetId, runOptions.profileVersion});
+                AgentRunStartedEvent{goal,
+                                     runType,
+                                     {},
+                                     {},
+                                     {},
+                                     {},
+                                     runOptions.workspaceContext.id,
+                                     runOptions.workspaceName,
+                                     runOptions.presetId,
+                                     runOptions.profileVersion});
     }
     publish(sessionId, AgentEventType::RuntimeStateChanged,
             AgentStateEvent{AgentLoopPhase::Running});
@@ -640,9 +739,11 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
     }
     executor->setSearchStores(memoryStore_, chatHistoryStore_);
 
-    executor->setSubagentRunnerWithContext(
-        [this, availableToolIds](const RealToolExecutor::SubagentAssignment& assignment,
-                                 const QString& invokingToolCallId) -> ToolExecutionResult {
+    executor->setSubagentRunnerWithContext([this, availableToolIds](
+                                               const RealToolExecutor::SubagentAssignment&
+                                                   assignment,
+                                               const QString& invokingToolCallId)
+                                               -> ToolExecutionResult {
         if (cancelRequested_.load() || modelCancellationToken_->load())
             return {ToolExecutionStatus::Cancelled, QStringLiteral("Subagent run was cancelled.")};
         QString parentSessionId;
@@ -688,7 +789,8 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             }
         }
         if (readOnlyToolIds.isEmpty())
-            return {ToolExecutionStatus::Blocked, QStringLiteral("Subagent has no permitted read-only tools.")};
+            return {ToolExecutionStatus::Blocked,
+                    QStringLiteral("Subagent has no permitted read-only tools.")};
         if (readOnlyToolIds.size() == 1)
             return {ToolExecutionStatus::Blocked,
                     QStringLiteral("A one-tool task should be handled by the parent agent.")};
@@ -700,17 +802,20 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             return {ToolExecutionStatus::Blocked,
                     QStringLiteral("Subagent model differs from the active model binding.")};
         const QString root = PathGuard::canonicalPath(QDir::currentPath());
-        const QString childScope = assignment.workspace.isEmpty()
-            ? root : PathGuard::canonicalPath(QDir(root).absoluteFilePath(assignment.workspace));
+        const QString childScope =
+            assignment.workspace.isEmpty()
+                ? root
+                : PathGuard::canonicalPath(QDir(root).absoluteFilePath(assignment.workspace));
         if (!PathGuard::contains(root, childScope))
             return {ToolExecutionStatus::Blocked,
                     QStringLiteral("Subagent workspace is outside the parent workspace.")};
         QStringList sortedTools = readOnlyToolIds;
         sortedTools.sort();
         const QString normalizedGoal = assignment.goal.simplified().toCaseFolded();
-        const QString delegationKey = parentSessionId + QLatin1Char('|') +
-            assignment.purpose + QLatin1Char('|') + childScope + QLatin1Char('|') +
-            sortedTools.join(QLatin1Char(',')) + QLatin1Char('|') + normalizedGoal;
+        const QString delegationKey = parentSessionId + QLatin1Char('|') + assignment.purpose +
+                                      QLatin1Char('|') + childScope + QLatin1Char('|') +
+                                      sortedTools.join(QLatin1Char(',')) + QLatin1Char('|') +
+                                      normalizedGoal;
         int evidenceRevision = 0;
         {
             std::lock_guard lock(eventMutex_);
@@ -728,23 +833,28 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
                         QStringLiteral("The parent goal must not be delegated unchanged.")};
             if (delegatedEvidenceRevision_.contains(delegationKey) &&
                 delegatedEvidenceRevision_.value(delegationKey) >= evidenceRevision)
-                return {ToolExecutionStatus::Blocked,
+                return {
+                    ToolExecutionStatus::Blocked,
                         QStringLiteral("Equivalent subagent work already ran without new evidence.")};
             if (subagentsThisRun_.fetch_add(1) >= 3)
                 return {ToolExecutionStatus::Blocked,
                         QStringLiteral("Subagent limit reached for this run.")};
             delegatedEvidenceRevision_.insert(delegationKey, evidenceRevision);
         }
-        auto childPlanner = parentPlanner
-            ? parentPlanner->forkForSubagent(readOnlyToolIds) : std::unique_ptr<LlmAgentRuntime>{};
+        auto childPlanner = parentPlanner ? parentPlanner->forkForSubagent(readOnlyToolIds)
+                                          : std::unique_ptr<LlmAgentRuntime>{};
         auto* subagentPlanner = childPlanner.get();
         AgentLoop loop(childPlanner ? static_cast<IAgentStepPlanner&>(*childPlanner) : *planner_,
                        executor_, approval_, sandbox_, readOnlyToolIds, config);
         loop.setResourceScope(childScope);
         loop.setToolRegistry(&toolRegistry_);
-        loop.setContextSources(memoryStore_, nullptr,
-            subagentPlanner ? subagentPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
-            subagentPlanner ? subagentPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0) : 0);
+        loop.setContextSources(
+            memoryStore_, nullptr,
+            subagentPlanner ? subagentPlanner->modelBinding().capabilities.contextWindow.value_or(0)
+                            : 0,
+            subagentPlanner
+                ? subagentPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0)
+                : 0);
         if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_))
             loop.setObservationIntentPolicy(std::make_shared<ObservationIntentPolicy>(
                 llm->modelProvider(), modelCancellationToken_));
@@ -759,8 +869,8 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         loop.setPermissionPolicy(&toolPermissionPolicy_, permissionState);
         loop.setCancelQuery([this] { return cancelRequested_.load(); });
         loop.setCancellationToken(modelCancellationToken_);
-        const auto subagentSessionId = QStringLiteral("subagent-%1").arg(
-            QUuid::createUuid().toString(QUuid::WithoutBraces));
+        const auto subagentSessionId =
+            QStringLiteral("subagent-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
         beginTurn(subagentSessionId, true);
         publish(subagentSessionId, AgentEventType::RunStarted,
                 AgentRunStartedEvent{assignment.goal, QStringLiteral("subagent"), parentRunId,
@@ -768,18 +878,20 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         loop.setPlanningCallback([this, subagentSessionId](int index, bool started) {
             publish(subagentSessionId,
                     started ? AgentEventType::ModelRequestStarted
-                            : AgentEventType::ModelRequestCompleted, {}, index);
+                            : AgentEventType::ModelRequestCompleted,
+                    {}, index);
         });
-        loop.setContextCallback([this, subagentSessionId](int index,
-                                                           const AgentPlanningContext& context) {
+        loop.setContextCallback(
+            [this, subagentSessionId](int index, const AgentPlanningContext& context) {
             publish(subagentSessionId, AgentEventType::ContextSnapshot,
                     AgentContextEvent{context.estimatedTokens,
                                       static_cast<int>(context.items.size()),
-                                      context.omittedItems, context.compacted}, index);
+                                          context.omittedItems, context.compacted},
+                        index);
         });
         loop.setStepCallback([this, subagentSessionId](const AgentStepRecord& step) {
-            publish(subagentSessionId, AgentEventType::AgentStepCompleted,
-                    AgentStepEvent{step}, step.index, !step.toolId.isEmpty());
+            publish(subagentSessionId, AgentEventType::AgentStepCompleted, AgentStepEvent{step},
+                    step.index, !step.toolId.isEmpty());
         });
         loop.setToolCallIdProvider([this, subagentSessionId](int index) {
             std::lock_guard lock(eventMutex_);
@@ -788,28 +900,39 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
         loop.setToolCallback([this, subagentSessionId](AgentLoop::ToolTransition transition,
                                                        int index, const ToolInvocationPlan& plan,
                                                        const AgentStepRecord* record) {
-            if (plan.invocations.isEmpty()) return;
+            if (plan.invocations.isEmpty())
+                return;
             const auto& tool = plan.invocations.first();
             AgentToolEvent payload{tool.toolId, tool.riskLevel, {}, {}, tool.toolName};
             payload.batchId = plan.batchId;
             if (tool.descriptorSnapshot) {
                 switch (tool.descriptorSnapshot->source) {
-                case ToolSource::BuiltIn: payload.source = QStringLiteral("built-in"); break;
-                case ToolSource::MCP: payload.source = QStringLiteral("mcp"); break;
-                case ToolSource::Plugin: payload.source = QStringLiteral("plugin"); break;
-                case ToolSource::Internal: payload.source = QStringLiteral("internal"); break;
+                case ToolSource::BuiltIn:
+                    payload.source = QStringLiteral("built-in");
+                    break;
+                case ToolSource::MCP:
+                    payload.source = QStringLiteral("mcp");
+                    break;
+                case ToolSource::Plugin:
+                    payload.source = QStringLiteral("plugin");
+                    break;
+                case ToolSource::Internal:
+                    payload.source = QStringLiteral("internal");
+                    break;
                 }
             }
             AgentEventType type = AgentEventType::ToolRequested;
             switch (transition) {
-            case AgentLoop::ToolTransition::Requested: break;
+            case AgentLoop::ToolTransition::Requested:
+                break;
             case AgentLoop::ToolTransition::ApprovalRequired:
-                type = AgentEventType::ToolApprovalRequired; break;
+                type = AgentEventType::ToolApprovalRequired;
+                break;
             case AgentLoop::ToolTransition::ExecutionStarted:
-                type = AgentEventType::ToolExecutionStarted; break;
+                type = AgentEventType::ToolExecutionStarted;
+                break;
             case AgentLoop::ToolTransition::ExecutionFinished:
-                type = record && record->succeeded
-                           ? AgentEventType::ToolExecutionCompleted
+                type = record && record->succeeded ? AgentEventType::ToolExecutionCompleted
                            : AgentEventType::ToolExecutionFailed;
                 break;
             }
@@ -830,8 +953,7 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
             return {ToolExecutionStatus::Succeeded, state.finalAnswer};
         }
         if (state.phase == AgentLoopPhase::Cancelled) {
-            return {ToolExecutionStatus::Cancelled,
-                    QStringLiteral("Subagent run was cancelled.")};
+            return {ToolExecutionStatus::Cancelled, QStringLiteral("Subagent run was cancelled.")};
         }
         return {ToolExecutionStatus::Failed,
                 QStringLiteral("Subagent could not finish: %1")
@@ -850,13 +972,16 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
     if (!workspaceRoot.isEmpty())
         loop.setResourceScope(workspaceRoot);
     if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_)) {
-        llm->setAllowedToolIds((options.restrictAvailableTools || !options.availableToolIds.isEmpty()) ? options.availableToolIds
+        llm->setAllowedToolIds(
+            (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
+                ? options.availableToolIds
                                                                : toolIds());
         loop.setObservationIntentPolicy(std::make_shared<ObservationIntentPolicy>(
             llm->modelProvider(), modelCancellationToken_));
     }
     const auto* boundPlanner = dynamic_cast<LlmAgentRuntime*>(planner_);
-    loop.setContextSources(memoryStore_, chatHistoryStore_,
+    loop.setContextSources(
+        memoryStore_, chatHistoryStore_,
         boundPlanner ? boundPlanner->modelBinding().capabilities.contextWindow.value_or(0) : 0,
         boundPlanner ? boundPlanner->modelBinding().capabilities.maxOutputTokens.value_or(0) : 0);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
@@ -899,9 +1024,9 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
     });
     loop.setContextCallback([this, sessionId](int index, const AgentPlanningContext& context) {
         publish(sessionId, AgentEventType::ContextSnapshot,
-                AgentContextEvent{context.estimatedTokens,
-                                  static_cast<int>(context.items.size()),
-                                  context.omittedItems, context.compacted}, index);
+                AgentContextEvent{context.estimatedTokens, static_cast<int>(context.items.size()),
+                                  context.omittedItems, context.compacted},
+                index);
     });
     loop.setToolCallback([this, sessionId, workspaceRoot](AgentLoop::ToolTransition transition,
                                                           int index, const ToolInvocationPlan& plan,
@@ -919,8 +1044,8 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
             }
         }
         AgentToolEvent payload{invocation.toolId, invocation.riskLevel,
-                               record ? record->observation : QString{},
-                               authorizationRequests, invocation.toolName};
+                               record ? record->observation : QString{}, authorizationRequests,
+                               invocation.toolName};
         payload.batchId = plan.batchId;
         const auto registration = toolRegistry_.findRegistration(invocation.toolId);
         const auto* descriptor = invocation.descriptorSnapshot
@@ -1006,8 +1131,10 @@ void AgentRuntime::advanceAsync(const QString& sessionId, bool isResume, bool ap
         permissionState = toolPermissionState_;
         errors_.remove(sessionId);
     }
-    const auto availableToolIds = (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
-                                      ? options.availableToolIds : toolIds();
+    const auto availableToolIds =
+        (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
+            ? options.availableToolIds
+            : toolIds();
     prepareExecution(availableToolIds);
     auto executionLock = std::make_shared<std::unique_lock<std::mutex>>(executionMutex_);
     AgentLoop::Config config;
@@ -1115,15 +1242,24 @@ AgentLoopState AgentRuntime::advance(const QString& sessionId, bool isResume, bo
                 index, true);
         } else
             publish(sessionId, AgentEventType::RunStarted,
-                    AgentRunStartedEvent{goal, options.runType, {}, {}, {}, {},
-                                         options.workspaceContext.id, options.workspaceName,
-                                         options.presetId, options.profileVersion});
+                    AgentRunStartedEvent{goal,
+                                         options.runType,
+                                         {},
+                                         {},
+                                         {},
+                                         {},
+                                         options.workspaceContext.id,
+                                         options.workspaceName,
+                                         options.presetId,
+                                         options.profileVersion});
         publish(sessionId, AgentEventType::RuntimeStateChanged,
                 AgentStateEvent{AgentLoopPhase::Running});
     }
 
-    const auto availableToolIds = (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
-                                      ? options.availableToolIds : toolIds();
+    const auto availableToolIds =
+        (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
+            ? options.availableToolIds
+            : toolIds();
     AgentLoop::Config config;
     config.autonomousMode = options.autonomousMode;
     config.maxParallelTools = qBound(1, options.maxParallelTools, 4);

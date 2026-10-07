@@ -68,6 +68,10 @@ class AppSettings final : public QObject {
                    setSemanticPromptInclusionEnabled NOTIFY semanticPromptInclusionEnabledChanged)
     Q_PROPERTY(bool contextExplainabilityVisible READ contextExplainabilityVisible WRITE
                    setContextExplainabilityVisible NOTIFY contextExplainabilityVisibleChanged)
+    Q_PROPERTY(bool quickPanelStartAtLogin READ quickPanelStartAtLogin WRITE
+                   setQuickPanelStartAtLogin NOTIFY quickPanelStartAtLoginChanged)
+    Q_PROPERTY(QString quickPanelShortcut READ quickPanelShortcut WRITE setQuickPanelShortcut NOTIFY
+                   quickPanelShortcutChanged)
     Q_PROPERTY(bool companionEnabled READ companionEnabled WRITE setCompanionEnabled NOTIFY
                    companionEnabledChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
@@ -246,6 +250,10 @@ public:
     void setSemanticPromptInclusionEnabled(bool enabled);
     bool contextExplainabilityVisible() const;
     void setContextExplainabilityVisible(bool visible);
+    bool quickPanelStartAtLogin() const;
+    void setQuickPanelStartAtLogin(bool enabled);
+    QString quickPanelShortcut() const;
+    void setQuickPanelShortcut(const QString& sequence);
     bool companionEnabled() const;
     void setCompanionEnabled(bool enabled);
     bool developerModeEnabled() const;
@@ -408,6 +416,8 @@ signals:
     void promptContextInjectionEnabledChanged();
     void semanticPromptInclusionEnabledChanged();
     void contextExplainabilityVisibleChanged();
+    void quickPanelStartAtLoginChanged();
+    void quickPanelShortcutChanged();
     void companionEnabledChanged();
     void developerModeEnabledChanged();
     void agentAutonomousModeChanged();

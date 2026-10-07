@@ -9551,8 +9551,18 @@ bool ApplicationController::currentWorkspaceRequiresLocal() const {
            QLatin1String("local-only");
 }
 
+QString ApplicationController::currentWorkspaceName() const {
+    if (!workspaceSettings_)
+        return {};
+    return WorkspaceService{}
+        .selectedWorkspace(workspaceSettings_->selectedWorkspaceId(),
+                           workspaceSettings_->workspaceCatalogJson())
+        .name;
+}
+
 WorkspaceProfileSnapshot ApplicationController::currentWorkspaceProfile() const {
-    if (!workspaceSettings_) return {};
+    if (!workspaceSettings_)
+        return {};
     const WorkspaceService workspaces;
     const auto workspaceId = workspaces.normalizedWorkspaceId(
         workspaceSettings_->selectedWorkspaceId(), workspaceSettings_->workspaceCatalogJson());

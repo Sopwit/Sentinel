@@ -27,23 +27,45 @@ rust += "];\n"
 for section, model in [("commands", "RequestPayload"), ("responses", "ResponsePayload"), ("events", "EventPayload")]:
     rust += '#[derive(Debug, serde::Serialize, serde::Deserialize)]\n#[serde(tag = "name", content = "payload")]\npub enum ' + model + ' {\n'
     for name, fields in spec[section].items():
-        variant = "".join(part.capitalize() for part in name.split("."))
+        variant = "".join(part.capitalize() for part in re.split(r"[._]", name))
         rust += f'#[serde(rename = "{name}")]\n{variant} {{'
-        rust += ", ".join(("r#type" if key == "type" else key) + ": " + {"string":"String", "integer":"u64", "boolean":"bool", "array":"Vec<serde_json::Value>", "object":"serde_json::Value"}[kind] for key, kind in fields.items())
+        rust += ", ".join(("r#type" if key == "type" else key) + ": " + {"string":"String", "integer":"u64", "boolean":"bool", "array":"Vec<serde_json::Value>", "object":"serde_json::Value", "number":"f64"}[kind] for key, kind in fields.items())
+        for key, kind in spec.get("optional_" + section, {}).get(name, {}).items():
+            rust += ", #[serde(default)] " + ("r#type" if key == "type" else key) + ": Option<" + {"string": "String", "integer": "u64", "object": "serde_json::Value", "boolean": "bool", "array": "Vec<serde_json::Value>"}[kind] + ">"
         rust += "},\n"
     rust += "}\n"
 rust += "pub const CAPABILITIES: &[&str] = &[" + ",".join(json.dumps(cap) for cap in spec["capabilities"]) + "];\n"
 rust += "pub const EVENTS: &[&str] = &[" + ",".join(json.dumps(e) for e in spec["events"]) + "];\n"
+cpp = cpp.replace("#include <QJsonArray>", "#include <QJsonArray>\n#include <QJsonDocument>")
+qt = cpp.replace("namespace sentinel::daemon::protocol", "namespace sentinel::ipc")
+# Desktop consumes the same canonical response/event field types as Rust.
+qt = qt.replace("}; }\n}\n// clang-format on\n", "}; }\n")
+qt += "inline QString commandName(Command command) { switch (command) {\n"
+for name in spec["commands"]:
+    qt += 'case Command::%s: return QStringLiteral("%s");\n' % (name.replace(".", "_"), name)
+qt += "} return {}; }\n"
+for section in ("responses", "events", "optional_responses", "optional_events"):
+    qt += "inline QJsonObject " + section + "() { return {\n"
+    for name, fields in spec[section].items():
+        values = ", ".join('{QStringLiteral("%s"), QStringLiteral("%s")}' % item for item in fields.items())
+        qt += '{QStringLiteral("%s"), QJsonObject{%s}},\n' % (name, values)
+    qt += "}; }\n"
+for section, function in (("desktop_projection", "desktopProjectionFields"), ("desktop_actions", "desktopActions"), ("desktop_settings_service", "desktopSettingsActions")):
+    qt += "inline QJsonObject " + function + "() { return {\n"
+    for name, field in spec[section].items():
+        qt += '{QStringLiteral("%s"), QJsonDocument::fromJson(R"json(%s)json").object()},\n' % (name, json.dumps(field, separators=(',', ':')))
+    qt += "}; }\n"
+qt += "}\n// clang-format on\n"
 version = re.search(r'set\(SENTINEL_APP_VERSION "([^"]+)"', (ROOT / "CMakeLists.txt").read_text()).group(1)
 manifest_path = ROOT / "cli/Cargo.toml"
 manifest = re.sub(r'^version = "[^"]+"$', f'version = "{version}"', manifest_path.read_text(), flags=re.MULTILINE)
 parser = argparse.ArgumentParser()
 parser.add_argument("--check", action="store_true")
 args = parser.parse_args()
-for relative, content in [("apps/sentinel-daemon/service/IpcContract.generated.h", cpp), ("cli/crates/sentinel-ipc/src/contract.rs", rust), ("cli/Cargo.toml", manifest)]:
+for relative, content in [("protocol/QtIpcContract.generated.h", qt), ("apps/sentinel-daemon/service/IpcContract.generated.h", cpp), ("cli/crates/sentinel-ipc/src/contract.rs", rust), ("cli/Cargo.toml", manifest)]:
     target = ROOT / relative
     if args.check:
         if not target.exists() or target.read_text() != content:
             raise SystemExit(f"Stale generated contract: {relative}")
-    else:
+    elif not target.exists() or target.read_text() != content:
         target.write_text(content)

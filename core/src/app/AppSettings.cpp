@@ -992,6 +992,28 @@ void AppSettings::setContextExplainabilityVisible(bool visible) {
     emit contextExplainabilityVisibleChanged();
 }
 
+bool AppSettings::quickPanelStartAtLogin() const {
+    return store_ && store_->value(QStringLiteral("quickPanelStartAtLogin"),
+                                   QStringLiteral("false")) == QLatin1String("true");
+}
+void AppSettings::setQuickPanelStartAtLogin(bool enabled) {
+    if (!store_ || enabled == quickPanelStartAtLogin())
+        return;
+    store_->setValue(QStringLiteral("quickPanelStartAtLogin"),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit quickPanelStartAtLoginChanged();
+}
+QString AppSettings::quickPanelShortcut() const {
+    return store_ ? store_->value(QStringLiteral("quickPanelShortcut"),
+                                  QStringLiteral("Disabled"))
+                  : QStringLiteral("Disabled");
+}
+void AppSettings::setQuickPanelShortcut(const QString& sequence) {
+    if (!store_ || sequence == quickPanelShortcut() || sequence.size() > 64)
+        return;
+    store_->setValue(QStringLiteral("quickPanelShortcut"), sequence);
+    emit quickPanelShortcutChanged();
+}
 bool AppSettings::companionEnabled() const {
     return store_ ? store_->value(QString::fromLatin1(companionEnabledKey),
                                   QStringLiteral("true")) == QStringLiteral("true")

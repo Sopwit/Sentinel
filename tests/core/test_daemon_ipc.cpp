@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "../support/DeterministicChatFixture.h"
+#include "sentinel/core/agent/AgentRuntime.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
+#include "sentinel/core/memory/InMemorySettingsStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
+#include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 #include "service/DaemonIpcServer.h"
 #include <QDir>
@@ -31,19 +34,19 @@ QJsonObject message(const QString& name, const QJsonObject& payload = {}, int ma
             {"name", name},
             {"payload", payload}};
 }
-QJsonObject receive(QLocalSocket& socket) {
+QJsonObject receive(QLocalSocket& socket, int timeoutMs = 2000) {
     QElapsedTimer timer;
     timer.start();
-    while (!socket.canReadLine() && timer.elapsed() < 2000)
+    while (!socket.canReadLine() && timer.elapsed() < timeoutMs)
         QTest::qWait(1);
     return QJsonDocument::fromJson(socket.readLine()).object();
 }
 QJsonObject request(QLocalSocket& socket, const QString& name, QJsonObject payload = {},
-                    int major = 1) {
+                    int major = 1, int timeoutMs = 2000) {
     socket.write(QJsonDocument(message(name, payload, major)).toJson(QJsonDocument::Compact) +
                  '\n');
     socket.flush();
-    return receive(socket);
+    return receive(socket, timeoutMs);
 }
 void hello(QLocalSocket& socket, const QString& path) {
     socket.connectToServer(path);
@@ -86,15 +89,19 @@ struct Harness {
     std::unique_ptr<daemon::DaemonIpcServer> server;
     QString path;
     explicit Harness(test::DeterministicChatReply reply = test::DeterministicChatReply::Final,
-                     bool agent = false)
-        : models(reply) {
+                     bool agent = false, core::AppSettings* settings = nullptr,
+                     bool realFiles = false)
+        : models(reply, settings) {
         core::ApplicationControllerBuilder builder;
-        if (agent) {
+        if (agent || realFiles) {
             builder
                 .withAgentRuntime(std::make_unique<core::NullAgentRuntime>(
                     core::NullAgentRuntime::standardTools()))
                 .withAgentStepPlanner(std::make_unique<ApprovalPlanner>())
-                .withToolExecutor(std::make_unique<FixtureExecutor>())
+                .withToolExecutor(realFiles ? std::unique_ptr<core::IToolExecutor>(
+                                                  std::make_unique<core::RealToolExecutor>())
+                                            : std::unique_ptr<core::IToolExecutor>(
+                                                  std::make_unique<FixtureExecutor>()))
                 .withSandboxPolicy(std::make_unique<core::StaticSandboxPolicy>());
         }
         controller = builder.withModelService(models.takeModelService())
@@ -135,6 +142,158 @@ private slots:
         hello(s, h.path);
         QCOMPARE(request(s, "model.current")["payload"].toObject()["model_id"].toString(),
                  QString("sentinel-test-model"));
+    }
+    void terminalDiagnosticsAreSafeAndAuthoritative() {
+        core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
+                                   core::inMemoryTestCredentialStore());
+        Harness h(test::DeterministicChatReply::Final, false, &settings);
+        settings.setOpenAiApiKey("fixture-secret-never-print");
+        const auto cached = h.controller->modelService()->providerStatusSnapshot("openai");
+        QCOMPARE(cached.catalog, core::ProviderCatalogState::Unverified);
+        h.server->setSettings(&settings);
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket socket;
+        hello(socket, h.path);
+        const auto reply = request(socket, "terminal.state", {}, 1, 10000);
+        QCOMPARE(reply["type"].toString(), QString("response"));
+        const auto properties = reply["payload"].toObject()["properties"].toObject();
+        QVERIFY(properties.contains("permission_service_available"));
+        QVERIFY(properties.contains("availableToolIds"));
+        QVERIFY(!properties.contains("contextReasoningDeveloperTraces"));
+        QVERIFY(!properties.contains("apiKey"));
+        QVERIFY(reply["payload"].toObject()["providers"].isArray());
+        QVERIFY(!QJsonDocument(reply).toJson().contains("fixture-secret-never-print"));
+        const QJsonValue sid =
+            request(socket, "session.create", {{"title", "safe attach"}})["payload"]
+                .toObject()
+                .value("session_id");
+        const auto attached = request(socket, "terminal.attach", {{"session_id", sid}});
+        QCOMPARE(attached["type"].toString(), QString("response"));
+        QVERIFY(!attached["payload"].toObject()["properties"].toObject().contains(
+            "contextReasoningDeveloperTraces"));
+        QVERIFY(!QJsonDocument(attached).toJson().contains("fixture-secret-never-print"));
+        QCOMPARE(properties["activeRuntimeModelLabel"].toString(), QString("sentinel-test-model"));
+    }
+    void workspaceSelectionAndRootAreValidated() {
+        core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
+                                   core::inMemoryTestCredentialStore());
+        Harness h(test::DeterministicChatReply::Final, false, &settings);
+        h.server->setSettings(&settings);
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket socket;
+        hello(socket, h.path);
+        QCOMPARE(request(socket, "workspace.select", {{"workspace_id", "missing"}})["payload"]
+                     .toObject()["code"]
+                     .toString(),
+                 QString("unknown-workspace"));
+        QCOMPARE(request(socket, "workspace.select", {{"workspace_id", "coding"}})["payload"]
+                     .toObject()["workspace_id"]
+                     .toString(),
+                 QString("coding"));
+        QCOMPARE(settings.selectedWorkspaceId(), QString("coding"));
+        QCOMPARE(request(socket, "workspace.root",
+                         {{"workspace_id", "coding"}, {"path", h.directory.path()}})["payload"]
+                     .toObject()["code"]
+                     .toString(),
+                 QString("workspace-root-rejected"));
+        const QJsonValue created =
+            request(socket, "workspace.create",
+                    {{"name", "Terminal fixture"}, {"template", "Coding"}})["payload"]
+                .toObject()
+                .value("workspace_id");
+        QVERIFY(!created.toString().isEmpty());
+        QCOMPARE(request(socket, "workspace.root",
+                         {{"workspace_id", created}, {"path", h.directory.path()}})["type"]
+                     .toString(),
+                 QString("response"));
+        QCOMPARE(
+            request(socket, "workspace.root",
+                    {{"workspace_id", "coding"}, {"path", "/nonexistent/sentinel-test"}})["payload"]
+                .toObject()["code"]
+                .toString(),
+            QString("workspace-root-rejected"));
+    }
+    void terminalFilesRespectWorkspaceAndToolBoundaries() {
+        core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
+                                   core::inMemoryTestCredentialStore());
+        Harness h(test::DeterministicChatReply::Final, false, &settings, true);
+        core::WorkspaceService workspaces;
+        const auto created = workspaces.createWorkspace({}, "File fixture", "Coding");
+        const auto rooted = workspaces.setWorkspaceRoot(
+            created.catalogJson, created.selectedWorkspaceId, h.directory.path());
+        QVERIFY(rooted.success);
+        settings.setWorkspaceCatalogJson(rooted.catalogJson);
+        settings.setSelectedWorkspaceId(created.selectedWorkspaceId);
+        h.controller->attachControlledTaskSettings(settings);
+        h.server->setSettings(&settings);
+        QFile greeting(h.directory.filePath("greeting.txt"));
+        QVERIFY(greeting.open(QIODevice::WriteOnly));
+        greeting.write("hello\n");
+        greeting.close();
+        QFile secret(h.directory.filePath(".env"));
+        QVERIFY(secret.open(QIODevice::WriteOnly));
+        secret.write("PRIVATE_FIXTURE=hidden\n");
+        secret.close();
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket socket;
+        hello(socket, h.path);
+        const QJsonValue sid =
+            request(socket, "session.create", {{"title", "files"}})["payload"].toObject().value(
+                "session_id");
+        auto* runtime = dynamic_cast<core::AgentRuntime*>(h.controller->agentRuntime());
+        QVERIFY(runtime);
+        const auto inspected = runtime->inspectWorkspace(sid.toString(), h.directory.path(), "glob",
+                                                         h.directory.path());
+        QVERIFY2(inspected.status == core::ToolExecutionStatus::Succeeded,
+                 qPrintable(inspected.summary));
+        const auto listing = request(socket, "workspace.files", {{"session_id", sid}}, 1, 10000);
+        QCOMPARE(listing["type"].toString(), QString("response"));
+        const auto files = listing["payload"].toObject()["files"].toArray();
+        QVERIFY(files.contains(QFileInfo(greeting).canonicalFilePath()));
+        QVERIFY(!files.contains(QFileInfo(secret).canonicalFilePath()));
+        QCOMPARE(runtime
+                     ->inspectWorkspace(sid.toString(), h.directory.path(), "read-file",
+                                        secret.fileName())
+                     .status,
+                 core::ToolExecutionStatus::Blocked);
+        QCOMPARE(runtime
+                     ->inspectWorkspace(sid.toString(), h.directory.path(), "write-file",
+                                        greeting.fileName())
+                     .status,
+                 core::ToolExecutionStatus::Blocked);
+        QTemporaryDir outside;
+        QVERIFY(outside.isValid());
+        QCOMPARE(
+            runtime->inspectWorkspace(sid.toString(), h.directory.path(), "glob", outside.path())
+                .status,
+            core::ToolExecutionStatus::Blocked);
+        settings.setWorkspaceProfilesJson(workspaces.updateProfile(
+            {}, created.selectedWorkspaceId, {}, {{"tools", QJsonObject{{"glob", false}}}}));
+        QCOMPARE(request(socket, "workspace.files", {{"session_id", sid}})["payload"]
+                     .toObject()["code"]
+                     .toString(),
+                 QString("permission-denied"));
+    }
+    void activeBindingCannotBeSwitched() {
+        Harness h(test::DeterministicChatReply::Delayed);
+        h.models.state->delayMs = 300;
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket stream, control;
+        hello(stream, h.path);
+        hello(control, h.path);
+        const QJsonValue sid =
+            request(stream, "session.create", {{"title", "binding"}})["payload"].toObject().value(
+                "session_id");
+        QCOMPARE(request(stream, "chat.send", {{"session_id", sid}, {"text", "hello"}})["type"]
+                     .toString(),
+                 QString("response"));
+        QCOMPARE(request(control, "model.select",
+                         {{"provider_id", "anything"}, {"model_id", "anything"}})["payload"]
+                     .toObject()["code"]
+                     .toString(),
+                 QString("runtime-busy"));
+        h.controller->stopChatGeneration();
+        QTest::qWait(350);
     }
     void rejectsUnknownCommand() {
         Harness h;
@@ -307,6 +466,7 @@ private slots:
                 approval = e["payload"].toObject();
         }
         QVERIFY(!approval.isEmpty());
+        QCOMPARE(approval["state"].toString(), QString("approval"));
         QCOMPARE(request(control, "approval.respond",
                          {{"run_id", approval["run_id"]},
                           {"approval_id", approval["approval_id"]},
@@ -321,8 +481,10 @@ private slots:
                      .toString(),
                  QString("invalid-approval"));
         bool completed = false;
-        for (int i = 0; i < 10 && !completed; ++i) {
-            const auto e = receive(s);
+        QElapsedTimer completionTimer;
+        completionTimer.start();
+        while (!completed && completionTimer.elapsed() < 5000) {
+            const auto e = receive(s, 100);
             completed = e["name"] == "run.completed";
             if (completed)
                 QCOMPARE(e["payload"].toObject()["text"].toString(), QString("Fixture finished"));
@@ -366,6 +528,7 @@ private slots:
                 approval = e["payload"].toObject();
         }
         QVERIFY(!approval.isEmpty());
+        QCOMPARE(approval["state"].toString(), QString("approval"));
         QCOMPARE(
             request(control, "run.cancel", {{"run_id", approval["run_id"]}})["type"].toString(),
             QString("response"));
