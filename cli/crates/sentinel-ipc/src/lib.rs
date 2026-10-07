@@ -36,23 +36,126 @@ pub struct Envelope {
 }
 #[derive(Debug)]
 pub enum Error {
+    Usage(String),
+    Failed(String),
+    Cancelled,
     Unavailable(String),
     Disconnected,
+    Timeout,
     Protocol(String),
     Incompatible,
     Remote(String),
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
+        match self {
+            Self::Failed(detail) => write!(f, "Task failed: {detail}"),
+            Self::Usage(detail) => write!(f, "{detail}"),
+            Self::Cancelled => write!(f, "Run cancelled."),
+            Self::Unavailable(detail) => write!(
+                f,
+                "Cannot connect to the Sentinel daemon: {detail}. Start sentinel-daemon externally; use --socket for a custom endpoint."
+            ),
+            Self::Timeout => write!(f, "Daemon response timed out."),
+            Self::Disconnected => write!(
+                f,
+                "Daemon connection lost. Use sentinel attach <session-id> to restore the authoritative session; disconnect does not cancel a run."
+            ),
+            Self::Protocol(detail) => write!(f, "Invalid daemon protocol data: {detail}"),
+            Self::Incompatible => write!(
+                f,
+                "Incompatible IPC version. Install matching Sentinel CLI and daemon versions."
+            ),
+            Self::Remote(code) => write!(
+                f,
+                "{} [{code}]",
+                match code.as_str() {
+                    "provider-unavailable" | "ProviderUnavailable" =>
+                        "Selected provider is unavailable. Run sentinel doctor and check the provider configuration",
+                    "model-unavailable" | "ModelNotFound" =>
+                        "Selected model is unavailable. Use sentinel models and sentinel model select <provider> <model>",
+                    "permission-denied" | "PermissionDenied" => "Permission denied by the daemon",
+                    "runtime-busy" =>
+                        "An active run prevents this change. Wait for completion or cancel the run",
+                    "runtime-rejected" =>
+                        "Runtime rejected this request. Run sentinel doctor to inspect model, workspace and tool readiness",
+                    "runtime-unavailable" => "The daemon runtime is unavailable",
+                    "invalid-approval" =>
+                        "Approval is stale or has already been answered. Reattach the session",
+                    "unknown-session" =>
+                        "Session does not exist. Run sentinel sessions to find its identifier",
+                    _ => "The daemon rejected the operation",
+                }
+            ),
+        }
     }
 }
 impl std::error::Error for Error {}
 impl Error {
+    pub fn from_run_detail(detail: &str) -> Self {
+        if [
+            "ProviderUnavailable",
+            "ModelNotFound",
+            "AuthenticationRequired",
+            "PermissionDenied",
+            "provider-unavailable",
+            "model-unavailable",
+            "permission-denied",
+            "runtime-rejected",
+        ]
+        .contains(&detail)
+        {
+            Self::Remote(detail.into())
+        } else {
+            Self::Failed(if detail.is_empty() {
+                "Runtime did not provide a final answer".into()
+            } else {
+                detail.into()
+            })
+        }
+    }
+    pub fn code(&self) -> &str {
+        match self {
+            Self::Failed(_) => "task-failed",
+            Self::Usage(_) => "cli-usage",
+            Self::Cancelled => "cancelled",
+            Self::Unavailable(_) => "daemon-unavailable",
+            Self::Disconnected => "disconnected",
+            Self::Timeout => "timeout",
+            Self::Protocol(_) => "protocol-invalid",
+            Self::Incompatible => "protocol-mismatch",
+            Self::Remote(code) => code,
+        }
+    }
     pub fn exit_code(&self) -> i32 {
         match self {
-            Self::Unavailable(_) | Self::Disconnected => 3,
-            Self::Incompatible => 4,
+            Self::Unavailable(_) | Self::Disconnected | Self::Timeout => 3,
+            Self::Usage(_) => 2,
+            Self::Cancelled => 130,
+            Self::Incompatible | Self::Protocol(_) => 4,
+            Self::Remote(code)
+                if [
+                    "provider-unavailable",
+                    "model-unavailable",
+                    "ProviderUnavailable",
+                    "ModelNotFound",
+                    "AuthenticationRequired",
+                ]
+                .contains(&code.as_str()) =>
+            {
+                5
+            }
+            Self::Remote(code)
+                if ["permission-denied", "PermissionDenied"].contains(&code.as_str()) =>
+            {
+                6
+            }
+            Self::Remote(code)
+                if ["runtime-rejected", "runtime-busy", "runtime-unavailable"]
+                    .contains(&code.as_str()) =>
+            {
+                7
+            }
             _ => 1,
         }
     }
@@ -91,6 +194,7 @@ pub fn decode(bytes: &[u8]) -> Result<Envelope, Error> {
 pub struct Client {
     reader: BufReader<UnixStream>,
     writer: UnixStream,
+    incoming: Vec<u8>,
     sequence: u64,
     events: VecDeque<Envelope>,
 }
@@ -98,12 +202,16 @@ pub struct Client {
 impl Client {
     pub fn connect(path: &Path, identity: &str) -> Result<Self, Error> {
         let stream = UnixStream::connect(path).map_err(|e| Error::Unavailable(e.to_string()))?;
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(10)))
+            .map_err(|e| Error::Unavailable(e.to_string()))?;
         let writer = stream
             .try_clone()
             .map_err(|e| Error::Unavailable(e.to_string()))?;
         let mut client = Self {
             reader: BufReader::new(stream),
             writer,
+            incoming: Vec::new(),
             sequence: 0,
             events: VecDeque::new(),
         };
@@ -170,21 +278,28 @@ impl Client {
         }
     }
     fn read(&mut self) -> Result<Envelope, Error> {
-        let mut bytes = Vec::new();
         loop {
-            let available = self.reader.fill_buf().map_err(|_| Error::Disconnected)?;
+            let available = self.reader.fill_buf().map_err(|e| {
+                if [std::io::ErrorKind::WouldBlock, std::io::ErrorKind::TimedOut]
+                    .contains(&e.kind())
+                {
+                    Error::Timeout
+                } else {
+                    Error::Disconnected
+                }
+            })?;
             if available.is_empty() {
                 return Err(Error::Disconnected);
             }
             let end = available.iter().position(|b| *b == b'\n');
             let count = end.map_or(available.len(), |n| n + 1);
-            if bytes.len() + count > contract::MAX_FRAME_BYTES {
+            if self.incoming.len() + count > contract::MAX_FRAME_BYTES {
                 return Err(Error::Protocol("oversized frame".into()));
             }
-            bytes.extend_from_slice(&available[..count]);
+            self.incoming.extend_from_slice(&available[..count]);
             self.reader.consume(count);
             if end.is_some() {
-                return decode(&bytes);
+                return decode(&std::mem::take(&mut self.incoming));
             }
         }
     }
@@ -234,6 +349,44 @@ mod tests {
     }
     #[cfg(unix)]
     #[test]
+    fn partial_frame_survives_poll_timeout() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_millis(20)))
+            .unwrap();
+        let mut client = Client {
+            writer: stream.try_clone().unwrap(),
+            reader: BufReader::new(stream),
+            incoming: Vec::new(),
+            sequence: 0,
+            events: VecDeque::new(),
+        };
+        let frame = br#"{"version":{"major":1,"minor":1},"type":"event","id":"","name":"run.cancelled","payload":{"run_id":"r","session_id":"s","text":"","state":"cancelled"}}"#;
+        peer.write_all(&frame[..30]).unwrap();
+        assert!(matches!(client.read(), Err(Error::Timeout)));
+        peer.write_all(&frame[30..]).unwrap();
+        peer.write_all(b"\n").unwrap();
+        assert_eq!(client.read().unwrap().name, "run.cancelled");
+    }
+    #[test]
+    fn stable_error_categories() {
+        for (error, code) in [
+            (Error::Usage("bad".into()), 2),
+            (Error::Remote("model-unavailable".into()), 5),
+            (Error::Remote("permission-denied".into()), 6),
+            (Error::Remote("runtime-rejected".into()), 7),
+            (Error::Cancelled, 130),
+            (Error::Failed("arbitrary detail".into()), 1),
+        ] {
+            assert_eq!(error.exit_code(), code);
+        }
+        assert_eq!(
+            Error::from_run_detail("arbitrary planner error").code(),
+            "task-failed"
+        );
+    }
+    #[cfg(unix)]
+    #[test]
     fn missing_daemon() {
         assert!(matches!(
             Client::connect(Path::new("/nonexistent/sentinel.sock"), "test"),
@@ -246,6 +399,9 @@ mod tests {
 pub struct Client;
 #[cfg(not(unix))]
 impl Client {
+    pub fn set_read_timeout(&self, _: Option<std::time::Duration>) -> Result<(), Error> {
+        Ok(())
+    }
     pub fn connect(_: &Path, _: &str) -> Result<Self, Error> {
         Err(Error::Unavailable(
             "Windows named-pipe transport is not implemented yet".into(),
@@ -302,5 +458,32 @@ mod transport_tests {
             .is_err()
         );
         assert!(serde_json::from_value::<contract::RequestPayload>(json!({"name":"approval.respond","payload":{"run_id":"x","approval_id":"y","allow":"yes"}})).is_err());
+    }
+}
+
+#[cfg(test)]
+mod generation_compatibility_tests {
+    use super::contract::ResponsePayload;
+    use serde_json::json;
+
+    #[test]
+    fn hello_generation_is_additive() {
+        for generation in [None, Some("daemon-generation")] {
+            let mut value = json!({
+                "name": "hello",
+                "payload": {"major": 1, "minor": 0, "daemon_version": "fixture", "capabilities": []}
+            });
+            if let Some(generation) = generation {
+                value["payload"]["server_generation"] = json!(generation);
+            }
+            match serde_json::from_value::<ResponsePayload>(value).unwrap() {
+                ResponsePayload::Hello {
+                    server_generation, ..
+                } => {
+                    assert_eq!(server_generation.as_deref(), generation);
+                }
+                _ => panic!("Expected typed hello response"),
+            }
+        }
     }
 }

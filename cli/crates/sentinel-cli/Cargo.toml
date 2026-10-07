@@ -10,6 +10,8 @@ sentinel-ipc.workspace = true
 sentinel-tui.workspace = true
 serde_json.workspace = true
 ctrlc.workspace = true
+clap = { version = "4.5", features = ["derive"] }
+clap_complete = "4.5"
 
 [[bin]]
 name = "sentinel"
