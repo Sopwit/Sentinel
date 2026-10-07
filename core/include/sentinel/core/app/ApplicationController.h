@@ -1961,8 +1961,11 @@ public:
     void attachControlledTaskSettings(AppSettings& settings);
     ModelSelection currentWorkspaceModelSelection() const;
     bool currentWorkspaceRequiresLocal() const;
+    QString currentWorkspaceName() const;
     WorkspaceProfileSnapshot currentWorkspaceProfile() const;
-    ModelService* modelService() const { return modelService_.get(); }
+    ModelService* modelService() const {
+        return modelService_.get();
+    }
     ExtensionService* extensionService() const;
     const PermissionService* permissionService() const;
     void refreshWorkspaceExtensions();

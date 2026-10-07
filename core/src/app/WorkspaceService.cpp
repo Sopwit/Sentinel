@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/app/WorkspaceService.h"
+#include "sentinel/core/extension/ExtensionService.h"
 #include "sentinel/core/model/ModelService.h"
 #include "sentinel/core/runtime/IToolRegistry.h"
-#include "sentinel/core/extension/ExtensionService.h"
 #include "sentinel/core/voice/UnifiedAudioService.h"
 
+#include <QDateTime>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSet>
 #include <QUuid>
-#include <QDateTime>
-#include <QFileInfo>
 #include <algorithm>
 #include <optional>
 
@@ -92,8 +92,8 @@ WorkspaceMetadata fromJson(const QJsonObject& object) {
         object.value(QStringLiteral("archived")).toBool(false));
     workspace.rootPath = object.value(QStringLiteral("rootPath")).toString();
     if (!workspace.rootPath.isEmpty())
-        workspace.rootSummary = QStringLiteral("Context root: %1 (no access granted)")
-                                    .arg(workspace.rootPath);
+        workspace.rootSummary =
+            QStringLiteral("Context root: %1 (no access granted)").arg(workspace.rootPath);
     workspace.description = object.value(QStringLiteral("description")).toString();
     workspace.createdAt = object.value(QStringLiteral("createdAt")).toString();
     workspace.updatedAt = object.value(QStringLiteral("updatedAt")).toString();
@@ -139,7 +139,8 @@ QString encodeCustomWorkspaces(const QList<WorkspaceMetadata>& workspaces) {
 
 QJsonObject profileDocument(const QString& json) {
     if (json.trimmed().isEmpty())
-        return {{QStringLiteral("version"), 1}, {QStringLiteral("workspaces"), QJsonObject{}},
+        return {{QStringLiteral("version"), 1},
+                {QStringLiteral("workspaces"), QJsonObject{}},
                 {QStringLiteral("presets"), QJsonObject{}}};
     const auto document = QJsonDocument::fromJson(json.toUtf8());
     if (document.isObject() && document.object().value(QStringLiteral("version")).toInt() == 1)
@@ -155,13 +156,16 @@ QList<WorkspacePreset> builtInPresets() {
     return {{QStringLiteral("general"), QStringLiteral("General"), true, {}},
             {QStringLiteral("coding"), QStringLiteral("Coding"), true, {}},
             {QStringLiteral("research"), QStringLiteral("Research"), true, {}},
-            {QStringLiteral("local-only"), QStringLiteral("Local Only"), true,
+            {QStringLiteral("local-only"),
+             QStringLiteral("Local Only"),
+             true,
              {{QStringLiteral("privacy"), QStringLiteral("local-only")}}}};
 }
 
 bool presetExists(const QList<WorkspacePreset>& presets, const QString& id) {
     for (const auto& preset : presets)
-        if (preset.id == id) return true;
+        if (preset.id == id)
+            return true;
     return false;
 }
 
@@ -180,21 +184,24 @@ QList<WorkspacePreset> WorkspaceService::presets(const QString& profilesJson) co
     auto result = builtInPresets();
     const auto custom = profileDocument(profilesJson).value(QStringLiteral("presets")).toObject();
     for (auto it = custom.begin(); it != custom.end(); ++it) {
-        if (!it.value().isObject() || presetExists(result, it.key())) continue;
+        if (!it.value().isObject() || presetExists(result, it.key()))
+            continue;
         const auto object = it.value().toObject();
         const auto name = object.value(QStringLiteral("name")).toString().trimmed();
         if (!name.isEmpty())
-            result.append({it.key(), name, false,
-                           object.value(QStringLiteral("preferences")).toObject()});
+            result.append(
+                {it.key(), name, false, object.value(QStringLiteral("preferences")).toObject()});
     }
     return result;
 }
 
 QString WorkspaceService::createPreset(const QString& profilesJson, const QString& name,
                                        const QJsonObject& preferences) const {
-    if (name.trimmed().isEmpty()) return {};
+    if (name.trimmed().isEmpty())
+        return {};
     auto root = profileDocument(profilesJson);
-    if (root.isEmpty()) return {};
+    if (root.isEmpty())
+        return {};
     auto custom = root.value(QStringLiteral("presets")).toObject();
     const auto id = QStringLiteral("preset-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
     custom.insert(id, QJsonObject{{QStringLiteral("name"), name.trimmed()},
@@ -205,11 +212,14 @@ QString WorkspaceService::createPreset(const QString& profilesJson, const QStrin
 
 QString WorkspaceService::renamePreset(const QString& profilesJson, const QString& presetId,
                                        const QString& name) const {
-    if (name.trimmed().isEmpty()) return {};
+    if (name.trimmed().isEmpty())
+        return {};
     auto root = profileDocument(profilesJson);
-    if (root.isEmpty()) return {};
+    if (root.isEmpty())
+        return {};
     auto custom = root.value(QStringLiteral("presets")).toObject();
-    if (!custom.value(presetId).isObject()) return {};
+    if (!custom.value(presetId).isObject())
+        return {};
     auto entry = custom.value(presetId).toObject();
     entry.insert(QStringLiteral("name"), name.trimmed());
     custom.insert(presetId, entry);
@@ -220,9 +230,11 @@ QString WorkspaceService::renamePreset(const QString& profilesJson, const QStrin
 QString WorkspaceService::updatePreset(const QString& profilesJson, const QString& presetId,
                                        const QJsonObject& preferences) const {
     auto root = profileDocument(profilesJson);
-    if (root.isEmpty()) return {};
+    if (root.isEmpty())
+        return {};
     auto custom = root.value(QStringLiteral("presets")).toObject();
-    if (!custom.value(presetId).isObject()) return {};
+    if (!custom.value(presetId).isObject())
+        return {};
     auto entry = custom.value(presetId).toObject();
     entry.insert(QStringLiteral("preferences"), preferences);
     custom.insert(presetId, entry);
@@ -239,23 +251,26 @@ QString WorkspaceService::duplicatePreset(const QString& profilesJson,
     return {};
 }
 
-QString WorkspaceService::deletePreset(const QString& profilesJson,
-                                       const QString& presetId) const {
+QString WorkspaceService::deletePreset(const QString& profilesJson, const QString& presetId) const {
     auto root = profileDocument(profilesJson);
-    if (root.isEmpty()) return {};
+    if (root.isEmpty())
+        return {};
     auto custom = root.value(QStringLiteral("presets")).toObject();
-    if (!custom.contains(presetId)) return {};
+    if (!custom.contains(presetId))
+        return {};
     custom.remove(presetId);
     root.insert(QStringLiteral("presets"), custom);
     return encodeProfileDocument(root);
 }
 
-QString WorkspaceService::updateProfile(const QString& profilesJson,
-                                        const QString& workspaceId, const QString& presetId,
+QString WorkspaceService::updateProfile(const QString& profilesJson, const QString& workspaceId,
+                                        const QString& presetId,
                                         const QJsonObject& overrides) const {
-    if (workspaceId.trimmed().isEmpty()) return {};
+    if (workspaceId.trimmed().isEmpty())
+        return {};
     auto root = profileDocument(profilesJson);
-    if (root.isEmpty()) return {};
+    if (root.isEmpty())
+        return {};
     auto workspaces = root.value(QStringLiteral("workspaces")).toObject();
     auto entry = workspaces.value(workspaceId).toObject();
     entry.insert(QStringLiteral("presetId"), presetId);
@@ -268,9 +283,8 @@ QString WorkspaceService::updateProfile(const QString& profilesJson,
 }
 
 WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
-    const QString& profilesJson, const QString& workspaceId,
-    const QJsonObject& globalDefaults, const QJsonObject& sessionOverrides,
-    const ModelService* models, const IToolRegistry* tools,
+    const QString& profilesJson, const QString& workspaceId, const QJsonObject& globalDefaults,
+    const QJsonObject& sessionOverrides, const ModelService* models, const IToolRegistry* tools,
     const ExtensionService* extensions, const SpeechProviderInfo* stt,
     const SpeechProviderInfo* tts) const {
     WorkspaceProfileSnapshot snapshot;
@@ -281,8 +295,8 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
         snapshot.reasons.insert(QStringLiteral("profile"), QStringLiteral("CorruptState"));
         return snapshot;
     }
-    const auto entry = root.value(QStringLiteral("workspaces")).toObject()
-                           .value(workspaceId).toObject();
+    const auto entry =
+        root.value(QStringLiteral("workspaces")).toObject().value(workspaceId).toObject();
     snapshot.presetId = entry.value(QStringLiteral("presetId")).toString();
     auto merge = [&snapshot](const QJsonObject& values, const QString& source) {
         for (auto it = values.begin(); it != values.end(); ++it) {
@@ -304,19 +318,22 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
                     for (auto field = nested.begin(); field != nested.end(); ++field)
                         origins.insert(field.key(), source);
                     snapshot.sources.insert(it.key(), origins);
-                } else snapshot.sources.insert(it.key(), source);
+                } else
+                    snapshot.sources.insert(it.key(), source);
             }
         }
     };
     merge(globalDefaults, QStringLiteral("global"));
     bool foundPreset = snapshot.presetId.isEmpty();
     for (const auto& preset : presets(profilesJson)) {
-        if (preset.id != snapshot.presetId) continue;
+        if (preset.id != snapshot.presetId)
+            continue;
         merge(preset.preferences, QStringLiteral("preset"));
         foundPreset = true;
         break;
     }
-    if (!foundPreset) snapshot.unavailableReferences.append(snapshot.presetId);
+    if (!foundPreset)
+        snapshot.unavailableReferences.append(snapshot.presetId);
     merge(entry.value(QStringLiteral("overrides")).toObject(), QStringLiteral("workspace"));
     merge(sessionOverrides, QStringLiteral("session"));
     snapshot.effective = snapshot.configured;
@@ -324,15 +341,17 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
     const auto modelId = snapshot.configured.value(QStringLiteral("modelId")).toString();
     if (models && !providerId.isEmpty()) {
         const bool known = models->isKnownProvider(providerId);
-        const auto health = known ? models->providerHealth(providerId) : ProviderHealth::Unavailable;
-        snapshot.statuses.insert(QStringLiteral("providerId"),
-                                 !known || health == ProviderHealth::Unavailable
-                                     ? QStringLiteral("unavailable")
-                                     : health == ProviderHealth::Available
-                                         ? QStringLiteral("available")
+        const auto health =
+            known ? models->providerHealth(providerId) : ProviderHealth::Unavailable;
+        snapshot.statuses.insert(
+            QStringLiteral("providerId"),
+            !known || health == ProviderHealth::Unavailable ? QStringLiteral("unavailable")
+            : health == ProviderHealth::Available           ? QStringLiteral("available")
                                          : QStringLiteral("unverified"));
-        if (!known) snapshot.unavailableReferences.append(providerId);
-        if (!known) snapshot.reasons.insert(QStringLiteral("providerId"),
+        if (!known)
+            snapshot.unavailableReferences.append(providerId);
+        if (!known)
+            snapshot.reasons.insert(QStringLiteral("providerId"),
                                             QStringLiteral("Provider is not registered"));
         else if (health == ProviderHealth::Unavailable) {
             snapshot.unavailableReferences.append(providerId);
@@ -340,16 +359,18 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
                                     QStringLiteral("Provider runtime is unavailable"));
         }
         if (known && !modelId.isEmpty()) {
-            const auto status = models->providerStatus(providerId);
+            const auto status = models->providerStatusSnapshot(providerId);
             const bool found = status.modelIds.contains(modelId);
-            const bool catalogUnknown = status.modelIds.isEmpty() &&
-                status.catalog != ProviderCatalogState::Empty;
+            const bool catalogUnknown =
+                status.modelIds.isEmpty() && status.catalog != ProviderCatalogState::Empty;
             snapshot.statuses.insert(QStringLiteral("modelId"),
                                      found ? QStringLiteral("available")
                                      : catalogUnknown ? QStringLiteral("unverified")
                                                       : QStringLiteral("unavailable"));
-            if (!found && !catalogUnknown) snapshot.unavailableReferences.append(modelId);
-            if (!found && !catalogUnknown) snapshot.reasons.insert(QStringLiteral("modelId"),
+            if (!found && !catalogUnknown)
+                snapshot.unavailableReferences.append(modelId);
+            if (!found && !catalogUnknown)
+                snapshot.reasons.insert(QStringLiteral("modelId"),
                                                 QStringLiteral("Model is absent from provider inventory"));
         }
     }
@@ -367,31 +388,36 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
     const auto configuredTools = snapshot.configured.value(QStringLiteral("tools")).toObject();
     QJsonObject toolStatus;
     for (auto it = configuredTools.begin(); it != configuredTools.end(); ++it) {
-        const auto descriptor = tools ? tools->findToolById(it.key())
-                                      : std::optional<ToolDescriptor>{};
+        const auto descriptor =
+            tools ? tools->findToolById(it.key()) : std::optional<ToolDescriptor>{};
         const bool present = descriptor.has_value();
         toolStatus.insert(it.key(), !tools ? QStringLiteral("unverified")
                                   : present && descriptor->enabled ? QStringLiteral("registered")
                                   : present ? QStringLiteral("inactive")
                                             : QStringLiteral("unavailable"));
-        if (tools && !present) snapshot.unavailableReferences.append(it.key());
-        if (tools && !present) snapshot.reasons.insert(it.key(), QStringLiteral("Tool is not registered"));
+        if (tools && !present)
+            snapshot.unavailableReferences.append(it.key());
+        if (tools && !present)
+            snapshot.reasons.insert(it.key(), QStringLiteral("Tool is not registered"));
         else if (present && !descriptor->enabled)
             snapshot.reasons.insert(it.key(), QStringLiteral("Tool is globally disabled"));
     }
     snapshot.statuses.insert(QStringLiteral("tools"), toolStatus);
     QJsonObject extensionStatus;
-    const auto configuredExtensions = snapshot.configured.value(QStringLiteral("extensions")).toObject();
+    const auto configuredExtensions =
+        snapshot.configured.value(QStringLiteral("extensions")).toObject();
     const auto inventory = extensions ? extensions->extensions() : QList<ExtensionSnapshot>{};
     for (auto it = configuredExtensions.begin(); it != configuredExtensions.end(); ++it) {
-        auto found = std::find_if(inventory.cbegin(), inventory.cend(),
+        auto found =
+            std::find_if(inventory.cbegin(), inventory.cend(),
                                   [&it](const ExtensionSnapshot& entry) { return entry.id == it.key(); });
         const auto status = !extensions ? QStringLiteral("unverified")
                           : found == inventory.cend() ? QStringLiteral("unavailable")
                           : found->available ? QStringLiteral("available")
                                              : QStringLiteral("inactive");
         extensionStatus.insert(it.key(), status);
-        if (status == QLatin1String("unavailable")) snapshot.unavailableReferences.append(it.key());
+        if (status == QLatin1String("unavailable"))
+            snapshot.unavailableReferences.append(it.key());
         if (status == QLatin1String("unavailable"))
             snapshot.reasons.insert(it.key(), QStringLiteral("Extension is not discovered"));
         else if (status == QLatin1String("inactive"))
@@ -400,10 +426,12 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
     snapshot.statuses.insert(QStringLiteral("extensions"), extensionStatus);
     auto speechStatus = [&snapshot](const QString& key, const QString& configured,
                                      const QString& actual, const SpeechProviderInfo* info) {
-        if (configured.isEmpty()) return;
+        if (configured.isEmpty())
+            return;
         const auto status = !info ? QStringLiteral("unverified")
             : configured != actual ? QStringLiteral("unavailable")
-            : info->runtimeAvailable && info->modelAvailable ? QStringLiteral("available")
+                            : info->runtimeAvailable && info->modelAvailable
+                                ? QStringLiteral("available")
                                                               : QStringLiteral("unavailable");
         snapshot.statuses.insert(key, status);
         if (status == QLatin1String("unavailable")) {
@@ -437,7 +465,8 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
     if (!voice.isEmpty()) {
         const auto status = !tts ? QStringLiteral("unverified")
             : tts->voices.contains(voice) && tts->runtimeAvailable
-                ? QStringLiteral("available") : QStringLiteral("unavailable");
+                                ? QStringLiteral("available")
+                                : QStringLiteral("unavailable");
         snapshot.statuses.insert(QStringLiteral("ttsVoiceId"), status);
         if (status == QLatin1String("unavailable")) {
             snapshot.unavailableReferences.append(voice);
@@ -561,8 +590,8 @@ WorkspaceMutationResult WorkspaceService::createWorkspace(const QString& catalog
 
     auto custom = customWorkspaces(catalogJson);
     const auto id = stableWorkspaceId(normalizedName, normalizedTemplate, catalogJson);
-    auto workspace = makeWorkspace(id, normalizedName, QStringLiteral("Custom workspace"),
-                                   normalizedTemplate);
+    auto workspace =
+        makeWorkspace(id, normalizedName, QStringLiteral("Custom workspace"), normalizedTemplate);
     workspace.createdAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
     workspace.updatedAt = workspace.createdAt;
     custom.append(workspace);
@@ -617,7 +646,8 @@ WorkspaceMutationResult WorkspaceService::setWorkspaceRoot(const QString& catalo
     }
     auto custom = customWorkspaces(catalogJson);
     for (auto& workspace : custom) {
-        if (workspace.id != workspaceId) continue;
+        if (workspace.id != workspaceId)
+            continue;
         workspace.rootPath = canonical;
         workspace.updatedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
         return {true, workspaceId, encodeCustomWorkspaces(custom), QStringLiteral("Updated"),

@@ -1,10 +1,10 @@
 # Local IPC v1
 
-Sentinel's headless daemon composes the existing C++ services with `ApplicationControllerBuilder`. Rust clients never link or reimplement the runtime. Desktop remains an in-process client during Stage A.
+Sentinel's headless daemon composes the existing C++ services with `ApplicationControllerBuilder`. Rust clients never link or reimplement the runtime. Production Qt Desktop uses `DaemonClient` and `DesktopRuntimeClient` for Chat, Agent, model selection and session state. Its bootstrap does not construct an ApplicationController or a local execution fallback.
 
 ## Canonical contract
 
-[`protocol/ipc-v1.json`](../../protocol/ipc-v1.json) is the canonical versioned field/enum definition. Run `python3 tools/ipc/generate.py` after changes; `--check` fails on drift. It generates the C++ request validator/command enum and Rust request, response and event payload enums. Generation is checked by CTest and Rust CI, and does not add a generator dependency to ordinary CMake builds. The Cargo package version is derived from `SENTINEL_APP_VERSION`; protocol version is independent: **1.0**.
+[`protocol/ipc-v1.json`](../../protocol/ipc-v1.json) is the canonical versioned field/enum definition. Run `python3 tools/ipc/generate.py` after changes; `--check` fails on drift. It generates the daemon C++ request validator/command enum, the shared Qt client command/response/event field contracts, and Rust request, response and event payload enums. Generation is checked by CTest and Rust CI, and does not add a generator dependency to ordinary CMake builds. The Cargo package version is derived from `SENTINEL_APP_VERSION`; protocol version is independent: **1.1**.
 
 Transport is local Unix-domain sockets on macOS/Linux through Qt `QLocalServer` and Rust `UnixStream`. Windows Rust transport currently reports unsupported/unavailable; no Windows runtime certification is claimed.
 
@@ -31,13 +31,15 @@ The daemon replies with `type: response`, the same `id` and `name`, and a typed 
 | run.cancel | run_id | cancellation acknowledgement |
 | approval.respond | run_id, approval_id, allow | acknowledgement |
 
-Consult the canonical file for exact response and event fields. Capabilities advertise the implemented surface. There is no IPC provider/model mutation command. Active binding is captured once and core `ModelBinding` remains authoritative.
+Consult the canonical file for exact response and event fields. Capabilities advertise the implemented surface. `model.select` validates provider/model identities against daemon ModelService. Selector changes affect future work; active binding is captured once and core `ModelBinding` remains authoritative.
 
 Events are `run.started`, `output.delta`, `tool.requested`, `approval.requested`, `tool.result`, `run.completed`, `run.failed`, and `run.cancelled`. They map existing Chat/Agent events. Tool success does not produce Agent completion; only core accepted final-answer completion does. Final events include canonical terminal text/state. Clients replace incremental output with terminal text, avoiding duplicate finals.
 
+`hello` may also return optional `server_generation`, a UUID assigned each time the daemon successfully claims/listens on its endpoint. This remains compatible with the original 1.0 surface: old clients ignore this additive field and new Qt/Rust clients accept older responses without it. The Qt client separately tracks a local connection epoch, generates fresh UUID request IDs, fails pending requests on disconnect and never automatically replays mutations. An epoch change alone does not imply a daemon restart. Major mismatch stops automatic reconnect; explicit disconnect/connect retries after repair. Unknown events are ignored only for a future compatible minor version; malformed known payloads disconnect the client.
+
 ## Sessions, approvals and lifecycle
 
-Session IDs are existing conversation IDs. There is no IPC-only session database. This foundation exposes one foreground active run, reflecting the existing controller, with multiple connected clients. A connection subscribes by starting a run or attaching a session. Disconnect does **not** cancel work. Reconnect and attach return a current snapshot, bounded output, frozen binding and pending approval, then future events. There is no new event log or historical replay service. After daemon restart the existing stores recover persisted records; active runs are not resumed and ephemeral run IDs are not durable. Historical model binding is empty when the existing persisted record does not contain it.
+Session IDs are existing conversation IDs. Conversation and transcript storage remain authoritative. A separate owner-only Qt SQL `ipc-sessions.sqlite3` stores the latest acknowledged IPC run identity, kind, frozen binding and terminal state per conversation; it stores neither transcripts nor permission grants. This foundation exposes one foreground active run, reflecting the existing controller, with multiple connected clients. A connection subscribes by starting a run or attaching a session. Disconnect does **not** cancel work. Reconnect and attach return a current snapshot, bounded output, frozen binding and pending approval, then future events. There is no new event log or historical replay service. After daemon restart the existing stores recover persisted records; active runs are never replayed or resumed. Persisted interrupted run projections become failed with `daemon-restarted`; pending grants are invalidated. A completed/cancelled/failed IPC run identity and binding remain available across daemon restarts. Historical model binding is empty when the existing persisted record does not contain it.
 
 Approval events include a one-use approval ID, run ID, tool, risk, resources and runtime detail. Clients submit an explicit allow/deny decision. The daemon validates active state and IDs before calling the existing approval boundary. Replayed IDs, unknown sessions/runs and approval after cancellation fail. IPC clients cannot grant permanent permissions or bypass the tool gateway.
 
@@ -47,6 +49,46 @@ Default endpoint is `~/.sentinel/run/daemon.sock`. The runtime directory is owne
 
 A `QLockFile` claims the endpoint before stores open. Existing regular files and foreign/live sockets are never blindly removed. Same-owner socket artifacts are probed and recovered only after refused/not-found connection; crash-stale locks use Qt's process identity checks. Normal shutdown removes the owned endpoint and lock.
 
-Frames are limited to 262144 bytes; request text/string fields to 65536 characters; identifiers to 128 characters; connected clients to 32. Server pending output is limited to 1048576 bytes per client. A slow/oversized-output client's connection is closed without cancelling or changing the core run state. Rust event buffering is bounded (256 pending events, 64 TUI channel entries). Attach output retains at most 65536 UTF-16 characters with `output_truncated`; full terminal output is subject to frame limits. Large results can therefore disconnect a client truthfully rather than allocate unbounded queues.
+Frames are limited to 262144 bytes; request text/string fields to 65536 characters; identifiers to 128 characters; connected clients to 32. Server pending output is limited to 1048576 bytes per client. A slow/oversized-output client's connection is closed without cancelling or changing the core run state. Rust event buffering is bounded (256 pending events, 256 TUI channel entries). Attach output retains at most 65536 UTF-16 characters with `output_truncated`; full terminal output is subject to frame limits. Large results can therefore disconnect a client truthfully rather than allocate unbounded queues.
 
 Logs contain lifecycle and error codes, not credentials or full tool/request payloads. Same-user clients are trusted to act as the user's UI, including shutdown/cancel decisions; this is not a remote security boundary.
+
+## Additive Desktop surface
+
+The original additive Desktop surface used protocol 1.0; the terminal extensions use 1.1. Canonical optional session snapshots declare generation, sequence,
+run kind, binding, approval context and conversation metadata. `agent.activity` projects
+existing runtime activity without a client-side Agent state machine. Every run event
+carries daemon generation and monotonic sequence; clients discard foreign session/run,
+old generation, duplicate sequence and closed-run events.
+
+`session.messages` returns canonical persisted/live message rows; `chat.retry`,
+`chat.regenerate` and `chat.edit` enter the same core Chat path. `desktop.projection`
+returns paged, QML-safe primary runtime properties. Non-primary diagnostic fields in
+its allowlist are reserved and are not advertised as available runtime features.
+`desktop.action` uses a generated finite action/argument/scope allowlist; it never
+invokes arbitrary QObject methods. Runtime-busy mutation restrictions preserve frozen
+workspace and binding. Generate this allowlist with `tools/ipc/generate_desktop.py`.
+
+`desktop.settings`, `desktop.setting` and `desktop.settings_service` forward runtime
+configuration, product settings and maintenance to the daemon. Visual preferences
+persist separately in Desktop's `.desktop` store. Secret setters operate only through
+the daemon credential boundary; secrets are excluded from Desktop settings projection.
+Settings mutation submission returns Pending and a request UUID until daemon reply;
+submission is not represented as completed success. `model.helper_state/action`
+projects daemon-owned model acquisition helpers without Desktop network clients.
+
+The current v1 bounded-history response can reject oversized transcripts rather than
+truncate them silently. Historical event replay and transcript pagination are outside
+this version. Unsupported legacy service-pointer operations return unavailable; they
+never fall back to local execution. The local-controller Shell constructor is retained
+for existing unit tests only.
+
+## Terminal surface (1.1)
+
+`terminal.state` exposes safe cached provider/model, workspace and service diagnostics.
+`terminal.attach` returns a bounded session snapshot without the full Desktop projection.
+Provider and workspace selection/configuration remain daemon-owned. `workspace.files`
+uses authorized registered read-only tools; `workspace.changes` returns bounded Applied
+diffs from an in-memory Agent baseline, without rollback or durable Git attribution.
+`tool.running`, tool timing metadata, approval decisions and subagent state project
+existing runtime events. See the [CLI](../user/CLI.md) and [TUI](../user/TUI.md) guides.

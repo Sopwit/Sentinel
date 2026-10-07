@@ -161,9 +161,11 @@ public:
     ProviderHealth providerHealth(const QString& providerId) const;
     ProviderCompletenessStatus providerStatus(const QString& providerId,
                                               const QString& modelId = {}) const;
+    // Safe observed status; never reads cloud credentials or performs discovery.
+    ProviderCompletenessStatus providerStatusSnapshot(const QString& providerId,
+                                                      const QString& modelId = {}) const;
     QList<OllamaModelSummary> providerDiscoveredModels(const QString& providerId) const;
-    void acceptProviderDiscovery(const QString& providerId,
-                                 const QList<OllamaModelSummary>& models,
+    void acceptProviderDiscovery(const QString& providerId, const QList<OllamaModelSummary>& models,
                                  const ProviderDiscoveryOutcome& outcome, quint64 sequence,
                                  bool nativeCatalog = false);
     void acceptOllamaDiscovery(const OllamaModelDiscoveryResult& result, quint64 sequence);
@@ -171,11 +173,10 @@ public:
     QList<OllamaModelSummary> discoveredOllamaModels() const;
     void applyOllamaModelMutation(const QString& modelId, bool installed);
     quint64 beginProviderHealthObservation() const;
-    void reportProviderDiscovery(const QString& providerId, quint64 sequence,
-                                 bool completed, ChatProviderErrorCategory category);
-    void reportProviderRequest(const QString& providerId, quint64 sequence,
-                               bool completed, ChatProviderErrorCategory category,
-                               const QString& source);
+    void reportProviderDiscovery(const QString& providerId, quint64 sequence, bool completed,
+                                 ChatProviderErrorCategory category);
+    void reportProviderRequest(const QString& providerId, quint64 sequence, bool completed,
+                               ChatProviderErrorCategory category, const QString& source);
 
     // Construction inputs pushed by the application composition. Endpoint and
     // timeout settings are applied here so provider construction never reaches

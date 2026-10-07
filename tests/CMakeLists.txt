@@ -244,6 +244,8 @@ endif()
 # Canonical IPC models are checked in so normal C++ builds need no generator runtime.
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
+    add_test(NAME test_desktop_generated_contract
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/ipc/generate_desktop.py --check)
     add_test(NAME test_ipc_generated_contract
         COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/ipc/generate.py --check)
 endif()

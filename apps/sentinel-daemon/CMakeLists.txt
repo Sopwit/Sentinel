@@ -1,4 +1,8 @@
 add_library(sentinel_daemon_service STATIC
+    service/DaemonDesktopSettings.h
+    service/DaemonDesktopSettings.cpp
+    service/DaemonModelHelpers.h
+    service/DaemonModelHelpers.cpp
     service/DaemonIpcServer.h
     service/DaemonIpcServer.cpp
     service/DaemonService.h
@@ -10,6 +14,7 @@ target_link_libraries(sentinel_daemon_service
         sentinel_core
         Qt6::Core
         Qt6::Network
+        Qt6::Sql
 )
 
 target_include_directories(sentinel_daemon_service
