@@ -219,10 +219,8 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
     InMemoryToolRegistry registry;
     QVERIFY(sentinel::core::BuiltInToolProvider::registerTools(registry, executor));
     QCOMPARE(registry.enabledTools().size(), 32);
-    for (const auto& id :
-         {QStringLiteral("read-file"), QStringLiteral("write-file"), QStringLiteral("grep"),
-          QStringLiteral("run-command"), QStringLiteral("web-search"),
-          QStringLiteral("memory-search"), QStringLiteral("spawn-agent")}) {
+    for (const auto& descriptor : registry.listTools()) {
+        const auto& id = descriptor.id;
         const auto registration = registry.findRegistration(id);
         QVERIFY(registration && registration->handler);
         QCOMPARE(registration->descriptor.source, sentinel::core::ToolSource::BuiltIn);
