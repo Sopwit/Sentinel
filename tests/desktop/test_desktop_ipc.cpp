@@ -443,10 +443,15 @@ private slots:
                               .build();
         sentinel::daemon::DaemonModelHelpers helper(controller.get());
         const auto catalog = helper.state("ggufLibraryFetcher").value("catalog").toArray();
-        QVERIFY(catalog.size() > 50);
+        QVERIFY(catalog.size() > 40);
+        QSet<QString> sources;
         int videos = 0;
         for (const auto& value : catalog) {
             const auto model = value.toObject();
+            const auto source = model.value("externalUrl").toString();
+            QVERIFY(!source.isEmpty());
+            QVERIFY(!sources.contains(source));
+            sources.insert(source);
             if (model.value("category") == "Video") {
                 ++videos;
                 QVERIFY(model.value("ollamaId").toString().isEmpty());

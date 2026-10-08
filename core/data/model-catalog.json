@@ -21,7 +21,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Llama-3.3-70B-Instruct"
+    "repositoryId": "meta-llama/Llama-3.3-70B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "llama3.2-3b",
@@ -44,7 +45,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Llama-3.2-3B-Instruct"
+    "repositoryId": "meta-llama/Llama-3.2-3B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "llama3.2-1b",
@@ -67,7 +69,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Llama-3.2-1B-Instruct"
+    "repositoryId": "meta-llama/Llama-3.2-1B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "llama3.1-8b",
@@ -91,7 +94,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Llama-3.1-8B-Instruct"
+    "repositoryId": "meta-llama/Llama-3.1-8B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "qwen2.5-14b",
@@ -115,7 +119,8 @@
     "externalUrl": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct",
     "sourceUrl": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct",
     "format": "Ollama",
-    "repositoryId": "Qwen/Qwen2.5-14B-Instruct"
+    "repositoryId": "Qwen/Qwen2.5-14B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "qwen2.5-32b",
@@ -139,7 +144,8 @@
     "externalUrl": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct",
     "sourceUrl": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct",
     "format": "Ollama",
-    "repositoryId": "Qwen/Qwen2.5-32B-Instruct"
+    "repositoryId": "Qwen/Qwen2.5-32B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "qwen2.5-coder-7b",
@@ -163,7 +169,8 @@
     "externalUrl": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct",
     "sourceUrl": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct",
     "format": "Ollama",
-    "repositoryId": "Qwen/Qwen2.5-Coder-7B-Instruct"
+    "repositoryId": "Qwen/Qwen2.5-Coder-7B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "gemma2-9b",
@@ -187,7 +194,8 @@
     "externalUrl": "https://huggingface.co/google/gemma-2-9b-it",
     "sourceUrl": "https://huggingface.co/google/gemma-2-9b-it",
     "format": "Ollama",
-    "repositoryId": "google/gemma-2-9b-it"
+    "repositoryId": "google/gemma-2-9b-it",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mistral-7b",
@@ -210,7 +218,8 @@
     "externalUrl": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
     "sourceUrl": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
     "format": "Ollama",
-    "repositoryId": "mistralai/Mistral-7B-Instruct-v0.3"
+    "repositoryId": "mistralai/Mistral-7B-Instruct-v0.3",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mistral-nemo",
@@ -234,7 +243,8 @@
     "externalUrl": "https://huggingface.co/mistralai/Mistral-Nemo-Instruct-2407",
     "sourceUrl": "https://huggingface.co/mistralai/Mistral-Nemo-Instruct-2407",
     "format": "Ollama",
-    "repositoryId": "mistralai/Mistral-Nemo-Instruct-2407"
+    "repositoryId": "mistralai/Mistral-Nemo-Instruct-2407",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "deepseek-r1-32b",
@@ -258,7 +268,8 @@
     "externalUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
     "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
     "format": "Ollama",
-    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "deepseek-r1-14b",
@@ -282,7 +293,8 @@
     "externalUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
     "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
     "format": "Ollama",
-    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "deepseek-r1-8b",
@@ -303,10 +315,11 @@
     "ollamaId": "deepseek-r1:8b",
     "context": "128K",
     "input": "Text",
-    "externalUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-8B",
-    "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-8B",
+    "externalUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+    "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
     "format": "Ollama",
-    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-8B"
+    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "deepseek-r1-1.5b",
@@ -330,11 +343,12 @@
     "externalUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
     "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
     "format": "Ollama",
-    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    "repositoryId": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "phi4",
-    "category": "Think",
+    "category": "LLM",
     "name": "Phi-4",
     "provider": "Microsoft",
     "size": "9.1 GB",
@@ -353,7 +367,8 @@
     "externalUrl": "https://huggingface.co/microsoft/phi-4",
     "sourceUrl": "https://huggingface.co/microsoft/phi-4",
     "format": "Ollama",
-    "repositoryId": "microsoft/phi-4"
+    "repositoryId": "microsoft/phi-4",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mlx-llama3.2-3b",
@@ -377,7 +392,8 @@
     "externalUrl": "https://huggingface.co/mlx-community/Llama-3.2-3B-Instruct-4bit",
     "sourceUrl": "https://huggingface.co/mlx-community/Llama-3.2-3B-Instruct-4bit",
     "format": "MLX",
-    "repositoryId": "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    "repositoryId": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mlx-deepseek-r1-8b",
@@ -398,10 +414,11 @@
     "ollamaId": "",
     "context": "128K",
     "input": "Text",
-    "externalUrl": "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-8B-4bit",
-    "sourceUrl": "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-8B-4bit",
+    "externalUrl": "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Llama-8B-4bit",
+    "sourceUrl": "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Llama-8B-4bit",
     "format": "MLX",
-    "repositoryId": "mlx-community/DeepSeek-R1-Distill-Qwen-8B-4bit"
+    "repositoryId": "mlx-community/DeepSeek-R1-Distill-Llama-8B-4bit",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mlx-qwen2.5-coder-7b",
@@ -425,7 +442,8 @@
     "externalUrl": "https://huggingface.co/mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
     "sourceUrl": "https://huggingface.co/mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
     "format": "MLX",
-    "repositoryId": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
+    "repositoryId": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mlx-gemma2-9b",
@@ -449,11 +467,12 @@
     "externalUrl": "https://huggingface.co/mlx-community/gemma-2-9b-it-4bit",
     "sourceUrl": "https://huggingface.co/mlx-community/gemma-2-9b-it-4bit",
     "format": "MLX",
-    "repositoryId": "mlx-community/gemma-2-9b-it-4bit"
+    "repositoryId": "mlx-community/gemma-2-9b-it-4bit",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "mlx-phi4",
-    "category": "Think",
+    "category": "LLM",
     "name": "MLX Phi-4",
     "provider": "MLX / Microsoft",
     "size": "8.7 GB",
@@ -473,7 +492,8 @@
     "externalUrl": "https://huggingface.co/mlx-community/phi-4-4bit",
     "sourceUrl": "https://huggingface.co/mlx-community/phi-4-4bit",
     "format": "MLX",
-    "repositoryId": "mlx-community/phi-4-4bit"
+    "repositoryId": "mlx-community/phi-4-4bit",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "hf-llama3-8b",
@@ -497,7 +517,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Meta-Llama-3-8B-Instruct"
+    "repositoryId": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "hf-gemma2-2b",
@@ -521,7 +542,8 @@
     "externalUrl": "https://huggingface.co/google/gemma-2-2b-it",
     "sourceUrl": "https://huggingface.co/google/gemma-2-2b-it",
     "format": "Ollama",
-    "repositoryId": "google/gemma-2-2b-it"
+    "repositoryId": "google/gemma-2-2b-it",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "hf-phi3.5",
@@ -545,7 +567,8 @@
     "externalUrl": "https://huggingface.co/microsoft/Phi-3.5-mini-instruct",
     "sourceUrl": "https://huggingface.co/microsoft/Phi-3.5-mini-instruct",
     "format": "Ollama",
-    "repositoryId": "microsoft/Phi-3.5-mini-instruct"
+    "repositoryId": "microsoft/Phi-3.5-mini-instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "stable-diff-3.5",
@@ -568,7 +591,8 @@
     "externalUrl": "https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
     "sourceUrl": "https://huggingface.co/stabilityai/stable-diffusion-3.5-large",
     "format": "External",
-    "repositoryId": "stabilityai/stable-diffusion-3.5-large"
+    "repositoryId": "stabilityai/stable-diffusion-3.5-large",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "stable-diff-xl",
@@ -592,7 +616,8 @@
     "externalUrl": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
     "sourceUrl": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
     "format": "External",
-    "repositoryId": "stabilityai/stable-diffusion-xl-base-1.0"
+    "repositoryId": "stabilityai/stable-diffusion-xl-base-1.0",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "flux-schnell",
@@ -615,31 +640,8 @@
     "externalUrl": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
     "sourceUrl": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
     "format": "External",
-    "repositoryId": "black-forest-labs/FLUX.1-schnell"
-  },
-  {
-    "id": "flux-schnell-mlx",
-    "category": "Image",
-    "name": "FLUX.1 Schnell MLX",
-    "provider": "MLX / BFL",
-    "size": "12.0 GB",
-    "description": "Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX.",
-    "bestFor": "Apple Silicon hardware-accelerated instant local text-to-image creation.",
-    "badge": "MLX / Image",
-    "badgeColor": "#ec4899",
-    "tags": [
-      "MLX",
-      "Text-to-Image",
-      "BFL"
-    ],
-    "downloadable": false,
-    "ollamaId": "",
-    "context": "—",
-    "input": "Text",
-    "externalUrl": "https://huggingface.co/mlx-community/flux1-schnell-mlx",
-    "sourceUrl": "https://huggingface.co/mlx-community/flux1-schnell-mlx",
-    "format": "External",
-    "repositoryId": "mlx-community/flux1-schnell-mlx"
+    "repositoryId": "black-forest-labs/FLUX.1-schnell",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "llava-1.6",
@@ -661,7 +663,8 @@
     "input": "Text / Image",
     "externalUrl": "https://github.com/haotian-liu/LLaVA",
     "sourceUrl": "https://github.com/haotian-liu/LLaVA",
-    "format": "Ollama"
+    "format": "Ollama",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "llama3.2-vision-11b",
@@ -685,7 +688,8 @@
     "externalUrl": "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct",
     "sourceUrl": "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct",
     "format": "Ollama",
-    "repositoryId": "meta-llama/Llama-3.2-11B-Vision-Instruct"
+    "repositoryId": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "whisper-large-v3",
@@ -705,9 +709,11 @@
     "ollamaId": "",
     "context": "30s",
     "input": "Audio",
-    "externalUrl": "https://github.com/openai/whisper",
-    "sourceUrl": "https://github.com/openai/whisper",
-    "format": "External"
+    "externalUrl": "https://huggingface.co/openai/whisper-large-v3",
+    "sourceUrl": "https://huggingface.co/openai/whisper-large-v3",
+    "format": "External",
+    "validatedAt": "2026-10-08",
+    "repositoryId": "openai/whisper-large-v3"
   },
   {
     "id": "whisper-base",
@@ -728,9 +734,11 @@
     "ollamaId": "",
     "context": "30s",
     "input": "Audio",
-    "externalUrl": "https://github.com/openai/whisper",
-    "sourceUrl": "https://github.com/openai/whisper",
-    "format": "External"
+    "externalUrl": "https://huggingface.co/openai/whisper-base",
+    "sourceUrl": "https://huggingface.co/openai/whisper-base",
+    "format": "External",
+    "validatedAt": "2026-10-08",
+    "repositoryId": "openai/whisper-base"
   },
   {
     "id": "kokoro-v1",
@@ -753,7 +761,8 @@
     "externalUrl": "https://huggingface.co/hexgrad/Kokoro-82M",
     "sourceUrl": "https://huggingface.co/hexgrad/Kokoro-82M",
     "format": "External",
-    "repositoryId": "hexgrad/Kokoro-82M"
+    "repositoryId": "hexgrad/Kokoro-82M",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "piper-en",
@@ -776,7 +785,8 @@
     "input": "Text",
     "externalUrl": "https://github.com/OHF-Voice/piper1-gpl",
     "sourceUrl": "https://github.com/OHF-Voice/piper1-gpl",
-    "format": "External"
+    "format": "External",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "ollama",
@@ -798,7 +808,8 @@
     "input": "—",
     "externalUrl": "https://ollama.com",
     "sourceUrl": "https://ollama.com",
-    "format": "Runtime"
+    "format": "Runtime",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "lmstudio",
@@ -820,7 +831,8 @@
     "input": "—",
     "externalUrl": "https://lmstudio.ai",
     "sourceUrl": "https://lmstudio.ai",
-    "format": "Runtime"
+    "format": "Runtime",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Wan-AI/Wan2.2-TI2V-5B",
@@ -843,7 +855,8 @@
     "sourceUrl": "https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Wan-AI/Wan2.2-TI2V-5B"
+    "repositoryId": "Wan-AI/Wan2.2-TI2V-5B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Wan-AI/Wan2.2-T2V-A14B",
@@ -866,7 +879,8 @@
     "sourceUrl": "https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Wan-AI/Wan2.2-T2V-A14B"
+    "repositoryId": "Wan-AI/Wan2.2-T2V-A14B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Wan-AI/Wan2.1-T2V-1.3B",
@@ -889,7 +903,8 @@
     "sourceUrl": "https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Wan-AI/Wan2.1-T2V-1.3B"
+    "repositoryId": "Wan-AI/Wan2.1-T2V-1.3B",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Wan-AI/Wan2.1-I2V-14B-720P",
@@ -912,7 +927,8 @@
     "sourceUrl": "https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-720P",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Wan-AI/Wan2.1-I2V-14B-720P"
+    "repositoryId": "Wan-AI/Wan2.1-I2V-14B-720P",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "tencent/HunyuanVideo",
@@ -935,7 +951,8 @@
     "sourceUrl": "https://huggingface.co/tencent/HunyuanVideo",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "tencent/HunyuanVideo"
+    "repositoryId": "tencent/HunyuanVideo",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "tencent/HunyuanVideo-I2V",
@@ -958,7 +975,8 @@
     "sourceUrl": "https://huggingface.co/tencent/HunyuanVideo-I2V",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "tencent/HunyuanVideo-I2V"
+    "repositoryId": "tencent/HunyuanVideo-I2V",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Lightricks/LTX-Video",
@@ -981,7 +999,8 @@
     "sourceUrl": "https://huggingface.co/Lightricks/LTX-Video",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Lightricks/LTX-Video"
+    "repositoryId": "Lightricks/LTX-Video",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "zai-org/CogVideoX-5b",
@@ -1004,7 +1023,8 @@
     "sourceUrl": "https://huggingface.co/zai-org/CogVideoX-5b",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "zai-org/CogVideoX-5b"
+    "repositoryId": "zai-org/CogVideoX-5b",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "zai-org/CogVideoX-2b",
@@ -1027,7 +1047,8 @@
     "sourceUrl": "https://huggingface.co/zai-org/CogVideoX-2b",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "zai-org/CogVideoX-2b"
+    "repositoryId": "zai-org/CogVideoX-2b",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "genmo/mochi-1-preview",
@@ -1050,7 +1071,8 @@
     "sourceUrl": "https://huggingface.co/genmo/mochi-1-preview",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "genmo/mochi-1-preview"
+    "repositoryId": "genmo/mochi-1-preview",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "ByteDance/AnimateDiff-Lightning",
@@ -1073,53 +1095,8 @@
     "sourceUrl": "https://huggingface.co/ByteDance/AnimateDiff-Lightning",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible video pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "ByteDance/AnimateDiff-Lightning"
-  },
-  {
-    "id": "black-forest-labs/FLUX.1-schnell",
-    "name": "FLUX.1 Schnell",
-    "provider": "black-forest-labs",
-    "category": "Image",
-    "input": "Text",
-    "description": "Fast text to image diffusion model.",
-    "bestFor": "Fast text to image diffusion model.",
-    "size": "—",
-    "context": "—",
-    "badge": "Open Weight",
-    "badgeColor": "#7c3aed",
-    "tags": [
-      "Image"
-    ],
-    "downloadable": false,
-    "ollamaId": "",
-    "externalUrl": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
-    "sourceUrl": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
-    "format": "External pipeline",
-    "runtimeNote": "Requires a compatible image pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "black-forest-labs/FLUX.1-schnell"
-  },
-  {
-    "id": "stabilityai/stable-diffusion-xl-base-1.0",
-    "name": "Stable Diffusion XL",
-    "provider": "stabilityai",
-    "category": "Image",
-    "input": "Text",
-    "description": "High-resolution image generation base model.",
-    "bestFor": "High-resolution image generation base model.",
-    "size": "—",
-    "context": "—",
-    "badge": "Open Weight",
-    "badgeColor": "#7c3aed",
-    "tags": [
-      "Image"
-    ],
-    "downloadable": false,
-    "ollamaId": "",
-    "externalUrl": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
-    "sourceUrl": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
-    "format": "External pipeline",
-    "runtimeNote": "Requires a compatible image pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "stabilityai/stable-diffusion-xl-base-1.0"
+    "repositoryId": "ByteDance/AnimateDiff-Lightning",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "Qwen/Qwen-Image",
@@ -1142,53 +1119,8 @@
     "sourceUrl": "https://huggingface.co/Qwen/Qwen-Image",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible image pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "Qwen/Qwen-Image"
-  },
-  {
-    "id": "hexgrad/Kokoro-82M",
-    "name": "Kokoro 82M",
-    "provider": "hexgrad",
-    "category": "TTS",
-    "input": "Text",
-    "description": "Compact open-weight text to speech model.",
-    "bestFor": "Compact open-weight text to speech model.",
-    "size": "—",
-    "context": "—",
-    "badge": "Open Weight",
-    "badgeColor": "#7c3aed",
-    "tags": [
-      "TTS"
-    ],
-    "downloadable": false,
-    "ollamaId": "",
-    "externalUrl": "https://huggingface.co/hexgrad/Kokoro-82M",
-    "sourceUrl": "https://huggingface.co/hexgrad/Kokoro-82M",
-    "format": "External pipeline",
-    "runtimeNote": "Requires a compatible tts pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "hexgrad/Kokoro-82M"
-  },
-  {
-    "id": "openai/whisper-large-v3",
-    "name": "Whisper Large v3",
-    "provider": "openai",
-    "category": "STT",
-    "input": "Audio",
-    "description": "Multilingual speech recognition model.",
-    "bestFor": "Multilingual speech recognition model.",
-    "size": "—",
-    "context": "—",
-    "badge": "Open Weight",
-    "badgeColor": "#7c3aed",
-    "tags": [
-      "STT"
-    ],
-    "downloadable": false,
-    "ollamaId": "",
-    "externalUrl": "https://huggingface.co/openai/whisper-large-v3",
-    "sourceUrl": "https://huggingface.co/openai/whisper-large-v3",
-    "format": "External pipeline",
-    "runtimeNote": "Requires a compatible stt pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "openai/whisper-large-v3"
+    "repositoryId": "Qwen/Qwen-Image",
+    "validatedAt": "2026-10-08"
   },
   {
     "id": "nomic-ai/nomic-embed-text-v1.5",
@@ -1211,6 +1143,7 @@
     "sourceUrl": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5",
     "format": "External pipeline",
     "runtimeNote": "Requires a compatible embedding pipeline; unavailable in Ollama/llama.cpp chat runtimes.",
-    "repositoryId": "nomic-ai/nomic-embed-text-v1.5"
+    "repositoryId": "nomic-ai/nomic-embed-text-v1.5",
+    "validatedAt": "2026-10-08"
   }
 ]
