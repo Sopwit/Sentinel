@@ -1,0 +1,1061 @@
+File	Line	Classification	Source
+apps/sentinel-cli/commands/ChatCommand.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/ChatCommand.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/ConfigCommand.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/ConfigCommand.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/ModelCommand.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/ModelCommand.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/StatusCommand.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/commands/StatusCommand.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-cli/main.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/main.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonDesktopSettings.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonDesktopSettings.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonIpcServer.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonIpcServer.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonModelHelpers.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonModelHelpers.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-daemon/service/DaemonService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/GraphicsInitializer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/GraphicsInitializer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/LoggingInitializer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/LoggingInitializer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/PlatformInitializer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/PlatformInitializer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/SingleInstanceGuard.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/bootstrap/SingleInstanceGuard.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/ChatMessageListModel.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DaemonClient.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DesktopControllerBridge.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DesktopModelHelper.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DesktopRuntimeClient.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DesktopSettingsStore.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/DesktopShellViewModel.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/GraphicsBackend.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/MacNativeNotifications.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/NativeCompanionAdapter.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/QuickPanelController.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/viewmodels/AgentInspectorViewModel.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/include/sentinel/desktop/viewmodels/ChatViewModel.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/main.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/ChatMessageListModel.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DaemonClient.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DesktopControllerBridge.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DesktopModelHelper.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DesktopRuntimeClient.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DesktopRuntimeClient.cpp	425	harmless note	emit operationFailed(QStringLiteral("unsupported-desktop-action"));
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	149	harmless note	return QStringLiteral("Unsupported");
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	153	harmless note	return type != QStringLiteral("Unsupported");
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	5375	harmless note	workspaceLastActionSummary_ = QStringLiteral("Unsupported attachment type.");
+apps/sentinel-desktop/src/GraphicsBackend.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/MacNativeActivation.mm	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/MacNativeNotifications.mm	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	388	harmless note	shortcutStatus_ = "Unsupported shortcut; use Ctrl+Alt+Space or Ctrl+Alt+S";
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	417	harmless note	shortcutStatus_ = "Unsupported shortcut";
+apps/sentinel-desktop/src/QuickPanelController.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-desktop/src/viewmodels/ChatViewModel.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+apps/sentinel-plugin-host/main.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+cli/Cargo.toml	9	harmless note	license = "GPL-3.0-or-later"
+cli/crates/sentinel-cli/src/main.rs	336	harmless note	json!({"schema_version":1,"connection":"connected","daemon":status,"terminal":state,"installation":{"executable":executable,"executable_directory_on_path":on_path},"unsupported":["context compaction","safe revert"]}),
+cli/crates/sentinel-ipc/src/lib.rs	427	test-only	let path = directory.join("mock.sock");
+cmake/SentinelCPack.cmake	40	harmless note	# Keep the upgrade GUID unchanged so later MSI releases upgrade this product.
+cmake/SentinelCPack.cmake	57	harmless note	set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
+core/include/sentinel/core/acp/AcpService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/acp/IAcpService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentActivityLog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentActivityLog.h	32	technical debt	return QStringLiteral("Placeholder Execution Evaluated");
+core/include/sentinel/core/agent/AgentEvent.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentLoop.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentLoopState.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentMetadata.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentPipelineResult.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentRuntimeContext.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentRuntimeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/AgentTaskRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ClaimGroundingResolver.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ContextEngine.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ControlledAgentTasks.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/DynamicAgentRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/IAgentRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/IAgentRunStore.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/IAgentRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/IAgentStepPlanner.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ISubagentService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/LlmAgentRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/NullAgentRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ObservationEvidence.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/ObservationPolicy.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/SQLiteAgentRunStore.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/StaticAgentRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/SubagentPermissionDeriver.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/agent/SubagentService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/AgentInspectorService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/AppMetadata.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/AppSettings.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ApplicationController.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ApplicationControllerBuilder.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/BackupService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/CompanionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ContextAssembly.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ControlledTaskService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/FileLogger.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/IClock.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/IContextEngine.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ITaskPlanner.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ModeManager.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/OnboardingService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/OrchestrationDiagnostics.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/OrchestrationSnapshot.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/ProductMessages.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/RecoveryService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/SettingsService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/SkillProfileService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/StaticTaskPlanner.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/TaskPlanning.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/app/WorkspaceService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/asyncqueue/AsyncQueue.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/auth/AccountService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/auth/AuthService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/auth/IAccountService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/auth/IAuthService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/auth/WellKnownAuthService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/bom/BomHandler.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/cache/IPromptCacheService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/cache/PromptCacheService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/AudioFileSession.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ChatContentRepresentation.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ChatMessage.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ChatModeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ChatSession.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ConversationHistoryMetadata.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ConversationHistoryMetadata.h	220	harmless note	Unsupported,
+core/include/sentinel/core/chat/ConversationHistoryMetadata.h	229	harmless note	case ConversationExportFormat::Unsupported:
+core/include/sentinel/core/chat/ConversationHistoryMetadata.h	230	harmless note	return QStringLiteral("Unsupported");
+core/include/sentinel/core/chat/ConversationSession.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/ConversationStateGraph.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/IChatHistoryStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/IConversationStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/IQuestionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/InMemoryConversationStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/LocalEchoProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/OllamaChatProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/QuestionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/SQLiteChatHistoryStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/chat/SQLiteConversationStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/codemode/CodeModeInterpreter.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/command/CommandService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/command/ICommandService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/compaction/StructuredCompactionSummary.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/config/ConfigVariableSubstitutor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/config/JsoncParser.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/copilot/CopilotProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/doomloop/DoomLoopDetector.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/editor/FuzzyEditor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/enterprise/EnterpriseConfigService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/enterprise/IEnterpriseConfigService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/enterprise/IRemoteConfigService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/enterprise/RemoteConfigService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/eventfence/EventSequenceFence.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/extension/ExtensionService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/flock/FlockFileLock.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/ide/IdeIntegrationService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/image/ImageProcessor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/interfaces/IChatProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/interfaces/IChatProvider.h	27	harmless note	Unsupported,
+core/include/sentinel/core/interfaces/IMemoryStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/interfaces/IRetryPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/interfaces/ISettingsStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/interfaces/TransientRetryPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/job/BackgroundJobService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/job/IJobService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/lifecycle/IInstanceStateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/lifecycle/InstanceStateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/lsp/ILspService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/lsp/LspClient.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/lsp/LspService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mcp/IMcpService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mcp/McpOAuthService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mcp/McpService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mcp/McpToolCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mcp/McpToolProvider.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/DeferredDisposable.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/FtsQuery.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/IMemoryCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/InMemoryMemoryCandidateStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/InMemorySettingsStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/InMemoryStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/JsonSettingsStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/LazyValue.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/LocalContext.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/LocalRagStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/MemoryCandidate.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/MemoryMetadata.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/MemoryRecall.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/SQLiteMemoryStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/SemanticRetrieval.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/SemanticRetrieval.h	258	technical debt	QString modelSummary = QStringLiteral("Deterministic fake embedding vector");
+core/include/sentinel/core/memory/SqlitePragmas.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/memory/StaticMemoryCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/mimetype/MimeSniffer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/HardwareCapabilityService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/HuggingFaceModelSource.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/IModelRouter.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/IProviderCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelLibrary.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelLibrary.h	28	harmless note	CloudNoInstall, ImportLocal, Unsupported
+core/include/sentinel/core/model/ModelLibrary.h	94	harmless note	ModelInstallationStrategy installation = ModelInstallationStrategy::Unsupported;
+core/include/sentinel/core/model/ModelLifecycleService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelManagement.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelOperationService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelRegistry.h	41	harmless note	Unsupported,
+core/include/sentinel/core/model/ModelRegistry.h	49	technical debt	Placeholder,
+core/include/sentinel/core/model/ModelRegistry.h	56	technical debt	Placeholder,
+core/include/sentinel/core/model/ModelRouting.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelRouting.h	46	harmless note	enum class CapabilitySupport { Unknown, Unsupported, Supported };
+core/include/sentinel/core/model/ModelRouting.h	87	harmless note	case CapabilitySupport::Unsupported: return QStringLiteral("no");
+core/include/sentinel/core/model/ModelService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ModelStorageManager.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/ProviderCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/StaticModelRouter.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/model/StaticProviderCatalog.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/network/NetworkPolicyService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/AttentionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/ClipboardService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/ExternalEditorService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/IAttentionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/IClipboardService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/IExternalEditorService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/IShortcutService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/IThemeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/ShortcutService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/notification/ThemeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/observability/IObservabilityService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/observability/ObservabilityService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/output/StructuredOutputTool.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/patch/PatchParser.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/DefaultPlatformService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/DpapiEncryptedSettingsStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/INotificationService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/IPathProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/IPlatformService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/ISystemIntegrationService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/StandardPathProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/WinCrashHandler.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/WinProtocolHandler.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/platform/WinTaskbarIntegration.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginConfigPatcher.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginDependencyResolver.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginHostProtocol.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginHostSession.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginHotReloader.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginManager.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginManifest.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginPermissions.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginSandbox.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/plugin/PluginState.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/privacy/PrivacyService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/privacy/RetentionPolicy.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/processstream/ProcessStreamCollector.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/provider/ProviderErrorClassifier.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/provider/ProviderMessageNormalizer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/proxy/ProxyResolver.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/reference/IReferenceService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/reference/Reference.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/reference/ReferenceService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/reminder/IReminderService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/reminder/ReminderService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/AlarmStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/BuiltInToolProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ExecutionLifecycle.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ExecutionLifecycle.h	28	technical debt	return QStringLiteral("Runtime Placeholder");
+core/include/sentinel/core/runtime/ExecutionLifecycle.h	31	technical debt	return QStringLiteral("Runtime Placeholder");
+core/include/sentinel/core/runtime/ExecutionLifecycle.h	79	technical debt	return QStringLiteral("Ready Placeholder");
+core/include/sentinel/core/runtime/ExecutionLifecycle.h	102	technical debt	return QStringLiteral("Ready Placeholder");
+core/include/sentinel/core/runtime/FileSystemPatch.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/FormatService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IFileChangeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IFileSystemService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IFormatService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IToolExecutor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IToolHandler.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IToolHookService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/IToolRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/InMemoryToolRegistry.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/LocalInference.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/LocalRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/LocalRuntimeSession.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/LocalRuntimeSession.h	55	technical debt	return QStringLiteral("Placeholder Only");
+core/include/sentinel/core/runtime/NullToolExecutor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/OllamaRuntime.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ProcessExecutor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ProcessSandbox.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ProcessSandbox.h	11	harmless note	enum class SandboxEnforcement { Enforced, PartiallyEnforced, Unsupported, Failed };
+core/include/sentinel/core/runtime/ProcessSandbox.h	25	harmless note	SandboxEnforcement enforcement = SandboxEnforcement::Unsupported;
+core/include/sentinel/core/runtime/ProviderRequestRuntime.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RealToolExecutor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimeCapabilities.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimeIntegration.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimeIntegration.h	18	technical debt	Placeholder,
+core/include/sentinel/core/runtime/RuntimeIntegration.h	26	technical debt	case LocalRuntimeAdapterStatus::Placeholder:
+core/include/sentinel/core/runtime/RuntimeIntegration.h	27	technical debt	return QStringLiteral("Placeholder");
+core/include/sentinel/core/runtime/RuntimeIntegration.h	70	technical debt	QString id = QStringLiteral("ollama-local-runtime-adapter-placeholder");
+core/include/sentinel/core/runtime/RuntimeIntegration.h	71	technical debt	QString name = QStringLiteral("Ollama Local Runtime Adapter Placeholder");
+core/include/sentinel/core/runtime/RuntimeIntegration.h	72	technical debt	LocalRuntimeAdapterStatus status = LocalRuntimeAdapterStatus::Placeholder;
+core/include/sentinel/core/runtime/RuntimeIntegration.h	131	technical debt	QString id = QStringLiteral("provider-runtime-bridge-placeholder");
+core/include/sentinel/core/runtime/RuntimeIntegration.h	142	technical debt	QString adapterId = QStringLiteral("ollama-local-runtime-adapter-placeholder");
+core/include/sentinel/core/runtime/RuntimeIntegration.h	198	technical debt	return QStringLiteral("Ready Placeholder");
+core/include/sentinel/core/runtime/RuntimePermissions.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimePipeline.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimeProvider.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/RuntimeSafety.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolApproval.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolArgumentValidator.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolDescriptor.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolDescriptor.h	66	harmless note	enum class ToolPlatformSupport { Supported, PartiallySupported, Unsupported };
+core/include/sentinel/core/runtime/ToolExecution.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolExecution.h	38	harmless note	Unsupported,
+core/include/sentinel/core/runtime/ToolExecution.h	69	harmless note	case ToolFailureCategory::Unsupported:
+core/include/sentinel/core/runtime/ToolExecution.h	70	harmless note	return QStringLiteral("Unsupported");
+core/include/sentinel/core/runtime/ToolExecution.h	112	technical debt	return QStringLiteral("Placeholder Succeeded");
+core/include/sentinel/core/runtime/ToolExecutionGateway.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolHookService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolInvocationPlan.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolOutputTruncator.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/ToolSandbox.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/tools/HtmlToMarkdown.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/tools/WebFetchTool.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/runtime/tools/WebSearchTool.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/schema/ToolJsonSchemaNormalizer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/AuthorizationResolver.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/CredentialStore.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/CredentialStore.h	33	technical debt	Placeholder,
+core/include/sentinel/core/security/ExternalDirectoryGate.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/IApprovalPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/IPermissionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/ISandboxPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/PermissionPolicyService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/PermissionService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/ProviderCredentials.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/ResourceAuthorizationResolver.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/StaticApprovalPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/security/StaticSandboxPolicy.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/AutoTitleGenerator.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/AutoUpdateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/CompactionPrompt.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/CompactionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IAutoUpdateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/ICompactionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IInstructionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IMdnsService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IPromptTemplateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/ISessionExportService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/ISessionStatusService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IStashService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/ITodoService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IUsageStatsService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/IWorktreeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/InstructionService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/MdnsServiceImpl.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/PromptTemplateService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/PtyTicketService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/SessionExportService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/SessionIdGenerator.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/SessionStatusService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/StashService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/TodoService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/UsageStatsService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/session/WorktreeService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/sharing/ISharingService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/sharing/SharingService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/shell/ShellAnalyzer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/skill/ISkillService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/skill/Skill.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/skill/SkillService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/snapshot/DiffViewerService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/snapshot/IDiffViewerService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/snapshot/ISnapshotService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/snapshot/SnapshotService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/surrogate/SurrogateSanitizer.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/voice/PiperTts.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/voice/SpeechAssetCatalogAdapter.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/voice/UnifiedAudioService.h	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/voice/Voice.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/voice/WhisperTranscription.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/webui/IWebUiService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/webui/WebUiService.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/include/sentinel/core/wildcard/WildcardMatcher.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/acp/AcpService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentActivityLog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentLoop.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentLoop.cpp	1173	harmless note	: statusText == QLatin1String("Unknown Tool")      ? ToolFailureCategory::Unsupported
+core/src/agent/AgentRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentRuntimeContext.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentRuntimeService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentTaskRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/AgentTaskRuntime.cpp	974	harmless note	"require a later explicit phase."),
+core/src/agent/AgentTaskRuntime.cpp	1091	harmless note	"contracts require a later explicit runtime phase."),
+core/src/agent/AgentTaskRuntime.cpp	1233	harmless note	: QStringLiteral("%1 remains unavailable until a later explicit runtime phase.")
+core/src/agent/AgentTaskRuntime.cpp	1289	harmless note	: QStringLiteral("%1 remains unavailable until a later explicit tool runtime phase.")
+core/src/agent/ClaimGroundingResolver.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/ContextEngine.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/ContextEngine.cpp	104	harmless note	// skills to this session's frozen workspace, not a later UI selection.
+core/src/agent/ControlledAgentTasks.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/DynamicAgentRegistry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/LlmAgentRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/LlmAgentRuntime.cpp	347	harmless note	// supplied to this planner; unsupported claims still make the loop
+core/src/agent/NullAgentRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/ObservationPolicy.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/SQLiteAgentRunStore.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/SQLiteAgentRunStore.cpp	169	harmless note	lastError_ = QStringLiteral("Unsupported Agent run schema version.");
+core/src/agent/StaticAgentRegistry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/SubagentPermissionDeriver.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/agent/SubagentService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/AgentInspectorService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/AppMetadata.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/AppSettings.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/AppSettings.cpp	728	harmless note	if (value.toString() == QLatin1String("unsupported"))
+core/src/app/AppSettings.cpp	729	harmless note	return CapabilitySupport::Unsupported;
+core/src/app/AppSettings.cpp	762	harmless note	else if (value == CapabilitySupport::Unsupported)
+core/src/app/AppSettings.cpp	763	harmless note	object.insert(key, QStringLiteral("unsupported"));
+core/src/app/ApplicationController.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/ApplicationController.cpp	225	harmless note	return ConversationExportFormat::Unsupported;
+core/src/app/ApplicationController.cpp	266	harmless note	case ConversationExportFormat::Unsupported:
+core/src/app/ApplicationController.cpp	2477	harmless note	"local endpoint activation requires a later explicit phase."));
+core/src/app/ApplicationController.cpp	2517	harmless note	case CapabilitySupport::Unsupported: return QStringLiteral("Unsupported");
+core/src/app/ApplicationController.cpp	2532	harmless note	: QStringLiteral("unsupported")}});
+core/src/app/ApplicationController.cpp	2580	harmless note	else if (value == QLatin1String("unsupported"))
+core/src/app/ApplicationController.cpp	2581	harmless note	state = CapabilitySupport::Unsupported;
+core/src/app/ApplicationController.cpp	3484	harmless note	return QStringLiteral("Ready for a later controlled file-output TTS phase: Piper binary "
+core/src/app/ApplicationController.cpp	3642	harmless note	return QStringLiteral("Ready for later STT preparation: Whisper binary is executable and "
+core/src/app/ApplicationController.cpp	4799	technical debt	QStringLiteral("Explicit local-only semantic readiness and a local/fake provider are not "
+core/src/app/ApplicationController.cpp	7569	harmless note	QStringLiteral("Unsupported transcript export format.");
+core/src/app/ApplicationController.cpp	7571	harmless note	QStringLiteral("Transcript export refused: unsupported format.");
+core/src/app/ApplicationControllerBuilder.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/BackupService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/BackupService.cpp	166	harmless note	return failed(BackupError::UnsupportedBackupVersion, QStringLiteral("Unsupported backup format"));
+core/src/app/BackupService.cpp	184	harmless note	return failed(BackupError::UnsupportedBackupVersion, QStringLiteral("Unsupported application schema"));
+core/src/app/BackupService.cpp	270	harmless note	return failed(BackupError::ImportConflict, QStringLiteral("Chat replacement is unsupported"));
+core/src/app/CompanionService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/ContextAssembly.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/ControlledTaskService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/FileLogger.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/IClock.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/IContextEngine.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/ModeManager.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/OnboardingService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/OrchestrationDiagnostics.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/ProductMessages.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/SettingsService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/SkillProfileService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/SkillProfileService.cpp	88	technical debt	QStringLiteral("User-defined profile placeholder."),
+core/src/app/SkillProfileService.cpp	91	technical debt	QStringLiteral("Placeholder"),
+core/src/app/SkillProfileService.cpp	92	technical debt	QStringLiteral("Custom metadata placeholder"),
+core/src/app/SkillProfileService.cpp	96	technical debt	QStringLiteral("Presentation: custom placeholder"),
+core/src/app/StaticTaskPlanner.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/app/WorkspaceService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/asyncqueue/AsyncQueue.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/auth/AccountService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/auth/AuthService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/auth/WellKnownAuthService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/bom/BomHandler.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/cache/PromptCacheService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/AudioFileSession.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/AudioFileSession.cpp	37	harmless note	return QStringLiteral("unsupported-extension");
+core/src/chat/AudioFileSession.cpp	212	harmless note	QStringLiteral("%1 metadata is unsupported; supported future extensions "
+core/src/chat/ChatContentRepresentation.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/ChatModeService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/ChatModeService.cpp	42	technical debt	// A newly created assistant placeholder intentionally has no text yet.  QString's default
+core/src/chat/ChatModeService.cpp	198	technical debt	"Unable to save the assistant response placeholder. Please retry this message.");
+core/src/chat/ChatModeService.cpp	199	technical debt	qWarning().noquote() << "Chat assistant placeholder persistence failed:"
+core/src/chat/ChatModeService.cpp	218	technical debt	// Binding resolution happens after the placeholder has been persisted.  Surface the
+core/src/chat/ChatModeService.cpp	343	technical debt	// A queued placeholder must never become a visually empty terminal
+core/src/chat/ChatSession.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/ConversationSession.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/ConversationStateGraph.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/InMemoryConversationStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/LocalEchoProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/OllamaChatProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/QuestionService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/SQLiteChatHistoryStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/chat/SQLiteChatHistoryStore.cpp	394	harmless note	setLastError(QStringLiteral("Unsupported chat history schema version."));
+core/src/chat/SQLiteConversationStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/codemode/CodeModeInterpreter.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/command/CommandService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/compaction/StructuredCompactionSummary.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/config/ConfigVariableSubstitutor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/config/JsoncParser.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/copilot/CopilotProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/doomloop/DoomLoopDetector.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/editor/FuzzyEditor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/editor/FuzzyEditor.cpp	276	harmless note	const int temp = dp[j];
+core/src/editor/FuzzyEditor.cpp	286	harmless note	prev = temp;
+core/src/enterprise/EnterpriseConfigService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/enterprise/RemoteConfigService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/eventfence/EventSequenceFence.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/extension/ExtensionService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/flock/FlockFileLock.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/ide/IdeIntegrationService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/image/ImageProcessor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/interfaces/RetryPolicy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/interfaces/TransientRetryPolicy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/job/BackgroundJobService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/lifecycle/InstanceStateService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/lsp/LspClient.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/lsp/LspService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/mcp/McpOAuthService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/mcp/McpService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/mcp/McpService.cpp	89	harmless note	QStringLiteral("Unsupported MCP result type"));
+core/src/mcp/McpService.cpp	631	harmless note	completion(failure(McpFailureCategory::ProtocolError, QStringLiteral("Unsupported MCP transport")));
+core/src/mcp/McpService.cpp	826	harmless note	QStringLiteral("Unsupported MCP interaction method")));
+core/src/mcp/McpService.cpp	848	harmless note	QStringLiteral("MCP credential collection is unsupported")));
+core/src/mcp/McpService.cpp	870	harmless note	QStringLiteral("Unsupported MCP input schema")));
+core/src/mcp/McpService.cpp	884	harmless note	QStringLiteral("Unsupported or sensitive MCP input field")));
+core/src/mcp/McpService.cpp	914	harmless note	QStringLiteral("Unsupported MCP interaction mode")));
+core/src/mcp/McpService.cpp	1135	harmless note	state.errorString = QStringLiteral("Endpoint may require legacy 2024 HTTP+SSE, which is unsupported");
+core/src/mcp/McpService.cpp	1142	harmless note	state.errorString = QStringLiteral("Unsupported remote MCP protocol version");
+core/src/mcp/McpService.cpp	1203	harmless note	QStringLiteral("MCP protocol version unsupported"));
+core/src/mcp/McpService.cpp	1246	harmless note	return failure(McpFailureCategory::ProtocolError, QStringLiteral("Unsupported MCP content type"));
+core/src/mcp/McpToolCatalog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/mcp/McpToolProvider.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/InMemoryMemoryCandidateStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/InMemorySettingsStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/InMemoryStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/JsonSettingsStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/LocalContext.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/LocalRagStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/MemoryCandidate.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/MemoryRecall.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/SQLiteMemoryStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/SQLiteMemoryStore.cpp	270	harmless note	setLastError(QStringLiteral("Unsupported memory schema version."));
+core/src/memory/SemanticRetrieval.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/SemanticRetrieval.cpp	193	technical debt	return QStringLiteral("Fake/InMemory");
+core/src/memory/SemanticRetrieval.cpp	236	technical debt	return QStringLiteral("Fake/InMemory test provider");
+core/src/memory/SemanticRetrieval.cpp	540	technical debt	policy_.status = QStringLiteral("Fake Ready");
+core/src/memory/SemanticRetrieval.cpp	542	technical debt	QStringLiteral("Deterministic local fake embeddings for tests only; no model/provider "
+core/src/memory/SemanticRetrieval.cpp	560	technical debt	vector.modelSummary = QStringLiteral("Fake deterministic hash/token vector, %1 dimensions")
+core/src/memory/SemanticRetrieval.cpp	595	technical debt	result.checks.append(QStringLiteral("Semantic inference: fake deterministic test layer only"));
+core/src/memory/SemanticRetrieval.cpp	606	technical debt	result.summary = QStringLiteral("Generated %1 deterministic fake %2 with %3 dimensions.")
+core/src/memory/SemanticRetrieval.cpp	775	technical debt	policy_.status = QStringLiteral("Fake Ready");
+core/src/memory/SemanticRetrieval.cpp	777	technical debt	"Deterministic in-memory fake vector index for tests only; no external database is used.");
+core/src/memory/SemanticRetrieval.cpp	2950	harmless note	QStringLiteral("Embedding runtime planning is blocked until a later local-only activation "
+core/src/memory/SemanticRetrieval.cpp	3142	harmless note	{QStringLiteral("Choose an explicit local semantic provider in a later phase."),
+core/src/memory/SemanticRetrieval.cpp	3145	technical debt	SemanticProviderMode::FakeInMemory, QStringLiteral("Fake/InMemory test provider"),
+core/src/memory/SemanticRetrieval.cpp	3146	technical debt	QStringLiteral("Deterministic fake embeddings and in-memory vector index for tests only."),
+core/src/memory/SemanticRetrieval.cpp	3154	technical debt	QStringLiteral("Do not feed fake semantic results into prompt assembly.")}));
+core/src/memory/SemanticRetrieval.cpp	3177	harmless note	{QStringLiteral("Define an app-owned semantic index path in a later phase."),
+core/src/memory/SemanticRetrieval.cpp	3272	technical debt	"Semantic provider metadata is ready for isolated fake tests only; "
+core/src/memory/SqlitePragmas.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/memory/StaticMemoryCatalog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/mimetype/MimeSniffer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/HardwareCapabilityService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/HuggingFaceModelSource.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelLibrary.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelLibrary.cpp	170	harmless note	? CapabilitySupport::Supported : CapabilitySupport::Unsupported;
+core/src/model/ModelLibrary.cpp	174	harmless note	? CapabilitySupport::Supported : CapabilitySupport::Unsupported;
+core/src/model/ModelLifecycleService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelManagement.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelOperationService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelOperationService.cpp	63	harmless note	case ModelOperationError::UnsupportedAction: return QStringLiteral("Action unsupported.");
+core/src/model/ModelRegistry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelRegistry.cpp	91	technical debt	return model.status == ModelStatus::Placeholder \|\| model.source == ModelSource::Placeholder;
+core/src/model/ModelRegistry.cpp	134	harmless note	case ModelReadiness::Unsupported:
+core/src/model/ModelRegistry.cpp	135	harmless note	return QStringLiteral("unsupported");
+core/src/model/ModelRegistry.cpp	150	technical debt	case ModelStatus::Placeholder:
+core/src/model/ModelRegistry.cpp	151	technical debt	return QStringLiteral("placeholder");
+core/src/model/ModelRegistry.cpp	164	technical debt	case ModelSource::Placeholder:
+core/src/model/ModelRegistry.cpp	165	technical debt	return QStringLiteral("placeholder");
+core/src/model/ModelRegistry.cpp	366	harmless note	"and context are unknown unless provided by a later explicit metadata "
+core/src/model/ModelRegistry.cpp	383	technical debt	QStringLiteral("%1/placeholder").arg(normalizedProvider),
+core/src/model/ModelRegistry.cpp	385	technical debt	QStringLiteral("placeholder"),
+core/src/model/ModelRegistry.cpp	392	technical debt	ModelStatus::Placeholder,
+core/src/model/ModelRegistry.cpp	393	technical debt	ModelSource::Placeholder,
+core/src/model/ModelRegistry.cpp	404	technical debt	QStringLiteral("%1 model metadata is a disabled placeholder. Sentinel will not call, "
+core/src/model/ModelRegistry.cpp	663	harmless note	"can be shown later from explicit/manual results."));
+core/src/model/ModelService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/ModelService.cpp	907	harmless note	ollamaCapabilities.structuredOutput = CapabilitySupport::Unsupported;
+core/src/model/ModelService.cpp	908	harmless note	ollamaCapabilities.nativeToolCalling = CapabilitySupport::Unsupported;
+core/src/model/ModelService.cpp	929	harmless note	endpointCapabilities.structuredOutput = CapabilitySupport::Unsupported;
+core/src/model/ModelService.cpp	930	harmless note	endpointCapabilities.nativeToolCalling = CapabilitySupport::Unsupported;
+core/src/model/ModelStorageManager.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/StaticModelRouter.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/StaticProviderCatalog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/model/StaticProviderCatalog.cpp	17	technical debt	QStringLiteral("sentinel-local-placeholder"),
+core/src/model/StaticProviderCatalog.cpp	93	technical debt	QStringLiteral("Metadata placeholder only. Not configured."),
+core/src/model/StaticProviderCatalog.cpp	121	technical debt	{unavailableModel(QStringLiteral("ollama-local-placeholder"),
+core/src/model/StaticProviderCatalog.cpp	122	technical debt	QStringLiteral("Ollama Local Placeholder"),
+core/src/model/StaticProviderCatalog.cpp	172	technical debt	QStringLiteral("anthropic-cloud-placeholder"),
+core/src/model/StaticProviderCatalog.cpp	173	technical debt	QStringLiteral("Anthropic Cloud Placeholder")),
+core/src/model/StaticProviderCatalog.cpp	175	technical debt	QStringLiteral("openai-cloud-placeholder"),
+core/src/model/StaticProviderCatalog.cpp	176	technical debt	QStringLiteral("OpenAI Cloud Placeholder")),
+core/src/notification/AttentionService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/notification/ClipboardService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/notification/ExternalEditorService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/notification/ShortcutService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/notification/ThemeService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/observability/ObservabilityService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/output/StructuredOutputTool.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/patch/PatchParser.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/DefaultPlatformService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/DpapiEncryptedSettingsStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/StandardPathProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/WinCrashHandler.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/WinProtocolHandler.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/WinTaskbarIntegration.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/platform/WinTaskbarIntegration.cpp	336	harmless note	// ── Stub implementation for non-Windows ──────────────────────────────────
+core/src/plugin/PluginConfigPatcher.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginDependencyResolver.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginHostSession.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginHotReloader.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginManager.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginManifest.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginManifest.cpp	188	harmless note	if (errorOut) *errorOut = QStringLiteral("Unsupported credential schema version");
+core/src/plugin/PluginManifest.cpp	203	harmless note	if (errorOut) *errorOut = QStringLiteral("Unsupported credential manifest field");
+core/src/plugin/PluginPermissions.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/plugin/PluginSandbox.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/processstream/ProcessStreamCollector.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/provider/ProviderErrorClassifier.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/provider/ProviderErrorClassifier.cpp	53	harmless note	return "Server error. Please try again later.";
+core/src/provider/ProviderMessageNormalizer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/proxy/ProxyResolver.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/reference/ReferenceService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/reminder/ReminderService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/AlarmStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/BuiltInToolProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/BuiltInToolProvider.cpp	53	harmless note	} else if (tool.id == QLatin1String("todo-write") &&
+core/src/runtime/BuiltInToolProvider.cpp	480	harmless note	QStringLiteral("todo-write"),
+core/src/runtime/BuiltInToolProvider.cpp	481	harmless note	QStringLiteral("Todo Write"),
+core/src/runtime/BuiltInToolProvider.cpp	497	harmless note	ToolDescriptor{QStringLiteral("todo-read"),
+core/src/runtime/BuiltInToolProvider.cpp	498	harmless note	QStringLiteral("Todo Read"),
+core/src/runtime/BuiltInToolProvider.cpp	685	harmless note	{QStringLiteral("todo-write"),
+core/src/runtime/BuiltInToolProvider.cpp	687	harmless note	{QStringLiteral("todo-read"),
+core/src/runtime/BuiltInToolProvider.cpp	731	harmless note	tool.platforms.linux = ToolPlatformSupport::Unsupported;
+core/src/runtime/BuiltInToolProvider.cpp	751	harmless note	if (tool.id == QLatin1String("todo-write") \|\| tool.id == QLatin1String("todo-read")) {
+core/src/runtime/BuiltInToolProvider.cpp	871	harmless note	} else if (tool.id == QLatin1String("todo-write")) {
+core/src/runtime/BuiltInToolProvider.cpp	873	harmless note	} else if (tool.id == QLatin1String("todo-read")) {
+core/src/runtime/BuiltInToolProvider.cpp	913	harmless note	{QStringLiteral("todo-write"), {&RealToolExecutor::executeTodoWrite, false}},
+core/src/runtime/BuiltInToolProvider.cpp	914	harmless note	{QStringLiteral("todo-read"), {&RealToolExecutor::executeTodoRead, false}},
+core/src/runtime/ExecutionLifecycle.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ExecutionLifecycle.cpp	85	technical debt	QStringLiteral("Ready placeholder is descriptive and not executable.")),
+core/src/runtime/FileSystemPatch.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/FileSystemPatch.cpp	127	harmless note	error = QStringLiteral("Patch contains an unsupported or unsafe target path.");
+core/src/runtime/FormatService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/InMemoryToolRegistry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/LocalInference.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/LocalRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/LocalRuntimeSession.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/LocalRuntimeSession.cpp	22	technical debt	.arg(allocation.profile.isEmpty() ? QStringLiteral("Placeholder") : allocation.profile,
+core/src/runtime/LocalRuntimeSession.cpp	118	technical debt	QStringLiteral("Reserve deterministic placeholder runtime ownership metadata."),
+core/src/runtime/LocalRuntimeSession.cpp	120	technical debt	QStringLiteral("Placeholder reservation is held for metadata visibility only."),
+core/src/runtime/LocalRuntimeSession.cpp	123	technical debt	QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime metadata.");
+core/src/runtime/NullToolExecutor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/OllamaRuntime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/OllamaRuntime.cpp	1552	harmless note	: CapabilitySupport::Unsupported)
+core/src/runtime/OllamaRuntime.cpp	1559	harmless note	: CapabilitySupport::Unsupported)
+core/src/runtime/OllamaRuntime.cpp	1611	harmless note	: CapabilitySupport::Unsupported;
+core/src/runtime/ProcessExecutor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ProcessSandbox.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ProcessSandbox.cpp	31	harmless note	for (const auto& key : {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TERM", "TMPDIR", "TMP", "TEMP"}) {
+core/src/runtime/ProcessSandbox.cpp	44	harmless note	result.insert(QStringLiteral("TEMP"), plan.temporaryDirectory);
+core/src/runtime/ProcessSandbox.cpp	340	harmless note	case SandboxEnforcement::Unsupported: return QStringLiteral("Unsupported");
+core/src/runtime/ProcessSandbox.cpp	343	harmless note	return QStringLiteral("Unsupported");
+core/src/runtime/ProviderRequestRuntime.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/QtFileSystemService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RealToolExecutor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RealToolExecutor.cpp	2296	harmless note	QStringLiteral("todo-write: The 'todos' argument must be a JSON array of "
+core/src/runtime/RealToolExecutor.cpp	2309	harmless note	"todo-write: Invalid status '%1'. Allowed: pending, in_progress, "
+core/src/runtime/RealToolExecutor.cpp	2333	harmless note	QStringLiteral("todo-write: %1 todo(s) saved (%2 pending). Current list:\n%3")
+core/src/runtime/RealToolExecutor.cpp	2346	harmless note	? QStringLiteral("todo-read: No todos recorded for this session yet.")
+core/src/runtime/RealToolExecutor.cpp	2347	harmless note	: QStringLiteral("todo-read: Current todos:\n%1")
+core/src/runtime/RuntimeCapabilities.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RuntimeIntegration.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RuntimeIntegration.cpp	43	technical debt	QStringLiteral("ollama-local-runtime-adapter-placeholder"),
+core/src/runtime/RuntimeIntegration.cpp	44	technical debt	QStringLiteral("Ollama Local Runtime Adapter Placeholder"),
+core/src/runtime/RuntimeIntegration.cpp	45	technical debt	LocalRuntimeAdapterStatus::Placeholder,
+core/src/runtime/RuntimeIntegration.cpp	131	technical debt	QStringLiteral("provider-runtime-bridge-placeholder"),
+core/src/runtime/RuntimePermissions.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RuntimePipeline.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RuntimeProvider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/RuntimeSafety.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ToolArgumentValidator.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ToolArgumentValidator.cpp	70	harmless note	QStringLiteral("Unsupported structural schema keyword."));
+core/src/runtime/ToolExecutionGateway.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ToolExecutionGateway.cpp	69	harmless note	return descriptor.platforms.macOS == ToolPlatformSupport::Unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	71	harmless note	return descriptor.platforms.windows == ToolPlatformSupport::Unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	73	harmless note	return descriptor.platforms.linux == ToolPlatformSupport::Unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	263	harmless note	ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
+core/src/runtime/ToolExecutionGateway.cpp	264	harmless note	QStringLiteral("Tool is unsupported on this platform: %1").arg(invocation.toolId)};
+core/src/runtime/ToolExecutionGateway.cpp	265	harmless note	unsupported.failureCategory = ToolFailureCategory::Unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	266	harmless note	return unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	483	harmless note	ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
+core/src/runtime/ToolExecutionGateway.cpp	484	harmless note	QStringLiteral("Tool is unsupported on this platform: %1")
+core/src/runtime/ToolExecutionGateway.cpp	486	harmless note	unsupported.failureCategory = ToolFailureCategory::Unsupported;
+core/src/runtime/ToolExecutionGateway.cpp	487	harmless note	completion(std::move(unsupported));
+core/src/runtime/ToolHookService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/ToolOutputTruncator.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/WindowsProcessSandbox.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/tools/HtmlToMarkdown.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/tools/WebFetchTool.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/runtime/tools/WebSearchTool.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/schema/ToolJsonSchemaNormalizer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/AuthorizationResolver.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/CredentialStore.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/CredentialStore.cpp	185	technical debt	case CredentialStoreReadiness::Placeholder:
+core/src/security/CredentialStore.cpp	186	technical debt	return QStringLiteral("placeholder");
+core/src/security/ExternalDirectoryGate.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/PermissionPolicyService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/PermissionService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/ProviderCredentials.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/ResourceAuthorizationResolver.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/StaticApprovalPolicy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/security/StaticSandboxPolicy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/AutoTitleGenerator.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/AutoUpdateService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/CompactionPrompt.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/CompactionService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/InstructionService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/MdnsServiceImpl.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/PromptTemplateService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/PtyTicketService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/SessionExportService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/SessionIdGenerator.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/SessionStatusService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/StashService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/TodoService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/UsageStatsService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/session/WorktreeService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/sharing/SharingService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/shell/ShellAnalyzer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/skill/SkillService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/skill/SkillService.cpp	134	harmless note	return 0; // Async, return count later
+core/src/skill/SkillService.cpp	234	harmless note	if (skill.lastError == QLatin1String("Unsupported skill scope") \|\|
+core/src/skill/SkillService.cpp	398	harmless note	skill.lastError = QStringLiteral("Unsupported skill scope");
+core/src/skill/SkillService.cpp	598	harmless note	skill.lastError = QStringLiteral("Unsupported skill scope");
+core/src/snapshot/DiffViewerService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/snapshot/SnapshotService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/surrogate/SurrogateSanitizer.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/voice/PiperTts.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/voice/SpeechAssetCatalogAdapter.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/voice/UnifiedAudioService.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/voice/UnifiedAudioService.cpp	385	harmless note	QStringLiteral("Requested Piper voice or speed is unsupported by this configuration");
+core/src/voice/UnifiedAudioService.cpp	531	harmless note	output.detail = QStringLiteral("Kokoro text, voice, language, or speed is unsupported");
+core/src/voice/Voice.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/voice/Voice.cpp	59	technical debt	return QStringLiteral("transcribing-placeholder");
+core/src/voice/Voice.cpp	61	technical debt	return QStringLiteral("inference-placeholder");
+core/src/voice/Voice.cpp	63	technical debt	return QStringLiteral("synthesis-placeholder");
+core/src/voice/Voice.cpp	84	technical debt	return QStringLiteral("transcribing-placeholder");
+core/src/voice/Voice.cpp	86	technical debt	return QStringLiteral("inference-placeholder");
+core/src/voice/Voice.cpp	88	technical debt	return QStringLiteral("synthesis-placeholder");
+core/src/voice/Voice.cpp	1021	technical debt	QStringLiteral("Text-to-speech is a disabled placeholder; no audio is generated or "
+core/src/voice/Voice.cpp	1049	technical debt	QStringLiteral("Speech-to-text is a disabled placeholder; no microphone or audio input is "
+core/src/voice/Voice.cpp	1130	technical debt	QStringLiteral("Awaiting-input is placeholder metadata; microphone remains "
+core/src/voice/Voice.cpp	1133	technical debt	QStringLiteral("Transcribing placeholder does not invoke Whisper or read audio."));
+core/src/voice/Voice.cpp	1135	technical debt	QStringLiteral("Inference placeholder does not call providers, models, tools, or "
+core/src/voice/Voice.cpp	1138	technical debt	QStringLiteral("Synthesis placeholder does not invoke Piper or play audio."));
+core/src/voice/WhisperTranscription.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/webui/WebUiService.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+core/src/wildcard/WildcardMatcher.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+plugins/samples/custom_agent_tool/CustomToolPlugin.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+plugins/samples/custom_agent_tool/CustomToolPlugin.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+plugins/samples/custom_llm_provider/CustomLlmPlugin.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+plugins/samples/custom_llm_provider/CustomLlmPlugin.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+plugins/sdk/include/SentinelPluginSdk.h	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/benchmarks/bench_context_compression.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/benchmarks/bench_semantic_search.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/benchmarks/bench_sqlite_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_activity_log.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_loop.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_loop.cpp	388	test-only	auto state = loop.run(QStringLiteral("clean temp"));
+tests/core/test_agent_pipeline_result.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_pipeline_result.cpp	84	test-only	QStringLiteral("Placeholder Succeeded"));
+tests/core/test_agent_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_runtime.cpp	369	test-only	QSKIP("The fake Docker shell fixture requires child creation; strict macOS plans deny "
+tests/core/test_agent_runtime_context.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_runtime_context.cpp	52	test-only	QStringLiteral("Placeholder tool execution completed without performing actions."),
+tests/core/test_agent_runtime_context.cpp	54	test-only	QStringLiteral("Placeholder tool execution completed without performing actions."),
+tests/core/test_agent_runtime_context.cpp	86	test-only	QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+tests/core/test_agent_runtime_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_agent_task_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_app_settings.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_app_settings.cpp	163	test-only	settings.setAppLanguage(QStringLiteral("unsupported"));
+tests/core/test_application_controller.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_application_controller.cpp	148	test-only	response.text = QStringLiteral("fake local completion");
+tests/core/test_application_controller.cpp	149	test-only	response.summary = QStringLiteral("Fake local inference completed.");
+tests/core/test_application_controller.cpp	153	test-only	QStringLiteral("Fake Client"),
+tests/core/test_application_controller.cpp	155	test-only	QStringLiteral("Injected fake local inference client was called."),
+tests/core/test_application_controller.cpp	162	test-only	return QStringLiteral("Fake local inference client is ready.");
+tests/core/test_application_controller.cpp	184	test-only	result.summary = QStringLiteral("Fake Ollama health metadata.");
+tests/core/test_application_controller.cpp	212	test-only	return QStringLiteral("Fake Piper TTS client is deterministic.");
+tests/core/test_application_controller.cpp	229	test-only	QStringLiteral("fake failure"),
+tests/core/test_application_controller.cpp	231	test-only	{QStringLiteral("Fake Piper failure path.")},
+tests/core/test_application_controller.cpp	242	test-only	QStringLiteral("fake timeout"),
+tests/core/test_application_controller.cpp	244	test-only	{QStringLiteral("Fake Piper timeout path.")},
+tests/core/test_application_controller.cpp	258	test-only	{QStringLiteral("Fake Piper wrote controlled output without playback.")},
+tests/core/test_application_controller.cpp	768	test-only	QCOMPARE(controller->localRuntimeSessionHealth(), QStringLiteral("Placeholder Only"));
+tests/core/test_application_controller.cpp	770	test-only	QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime "
+tests/core/test_application_controller.cpp	776	test-only	QStringLiteral("Placeholder reservation is held for metadata visibility only."));
+tests/core/test_application_controller.cpp	778	test-only	QStringList{QStringLiteral("local-runtime-session-1: Reserved placeholder local "
+tests/core/test_application_controller.cpp	824	test-only	QStringLiteral("6. Ready Placeholder [Warning]: Ready placeholder is descriptive and not "
+tests/core/test_application_controller.cpp	838	test-only	QCOMPARE(controller->localRuntimeAdapterStatus(), QStringLiteral("Placeholder"));
+tests/core/test_application_controller.cpp	1050	test-only	.contains(QStringLiteral("transcribing-placeholder")));
+tests/core/test_application_controller.cpp	1248	test-only	QStringLiteral("Ready for a later controlled file-output TTS phase")));
+tests/core/test_chat_application_controller.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_chat_mode_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_chat_session.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_companion_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_context_assembly.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_controlled_agent_tasks.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_conversation_session.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_conversation_state_graph.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_credential_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_daemon_ipc.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_flock_file_lock.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_fnv_hash.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_fuzzy_editor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_in_memory_conversation_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_in_memory_memory_candidate_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_in_memory_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_in_memory_tool_registry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_json_settings_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_keyed_mutex.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_lazy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_llm_agent_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_echo_provider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_inference.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_rag_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_runtime_session.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_local_runtime_session.cpp	40	test-only	QStringLiteral("Placeholder Only"));
+tests/core/test_local_runtime_session.cpp	59	test-only	QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime "
+tests/core/test_local_runtime_session.cpp	65	test-only	QStringLiteral("Placeholder reservation is held for metadata visibility only."));
+tests/core/test_local_runtime_session.cpp	73	test-only	QStringList{QStringLiteral("local-runtime-session-1: Reserved placeholder local "
+tests/core/test_mcp_integration.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_mcp_tool_provider.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_memo_map.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_mode_manager.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_model_registry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_model_registry.cpp	76	test-only	QStringLiteral("gpt-placeholder")};
+tests/core/test_model_registry.cpp	83	test-only	QStringLiteral("gpt-placeholder")));
+tests/core/test_model_registry.cpp	154	test-only	QStringLiteral("gpt-placeholder")};
+tests/core/test_model_registry.cpp	160	test-only	QStringLiteral("gpt-placeholder")};
+tests/core/test_model_registry.cpp	164	test-only	QStringLiteral("gpt-placeholder")));
+tests/core/test_model_registry.cpp	166	test-only	QStringLiteral("gpt-placeholder")));
+tests/core/test_null_agent_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_null_tool_executor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_observation_policy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_ollama_runtime.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_ollama_runtime.cpp	46	test-only	QTest::newRow("unsupported-template")
+tests/core/test_ollama_runtime.cpp	49	test-only	<< int(CapabilitySupport::Unsupported);
+tests/core/test_orchestration_snapshot.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_orchestration_snapshot.cpp	41	test-only	QStringLiteral("Local Metadata Provider / Sentinel Local Placeholder"),
+tests/core/test_permission_policy_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_persistence_startup_certification.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_plugin_manager.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_plugin_manager.cpp	155	test-only	// Create a mock plugin directory structure
+tests/core/test_plugin_manager.cpp	160	test-only	json[QStringLiteral("id")] = QStringLiteral("dev.sentinel.mock");
+tests/core/test_plugin_manager.cpp	161	test-only	json[QStringLiteral("name")] = QStringLiteral("Mock Plugin");
+tests/core/test_plugin_manager.cpp	174	test-only	QVERIFY(manager.registeredPluginIds().contains(QStringLiteral("dev.sentinel.mock")));
+tests/core/test_plugin_manager.cpp	176	test-only	const auto* desc = manager.descriptor(QStringLiteral("dev.sentinel.mock"));
+tests/core/test_plugin_manager.cpp	181	test-only	QVERIFY(!manager.loadPlugin(QStringLiteral("dev.sentinel.mock")));
+tests/core/test_plugin_manager.cpp	182	test-only	QCOMPARE(manager.pluginState(QStringLiteral("dev.sentinel.mock")), PluginState::Error);
+tests/core/test_plugin_tool_integration.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_process_executor.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_provider_credentials.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_real_tool_executor_tools.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_real_tool_executor_tools.cpp	400	test-only	runTool(executor, QStringLiteral("todo-write"),
+tests/core/test_real_tool_executor_tools.cpp	403	test-only	QVERIFY(writeResult.summary.contains(QStringLiteral("todo-write")));
+tests/core/test_real_tool_executor_tools.cpp	405	test-only	const auto readResult = runTool(executor, QStringLiteral("todo-read"), {}, QStringList{});
+tests/core/test_real_tool_executor_tools.cpp	407	test-only	QVERIFY(readResult.summary.contains(QStringLiteral("todo-read")));
+tests/core/test_runtime_integration.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_runtime_integration.cpp	38	test-only	QCOMPARE(localRuntimeAdapterStatusName(LocalRuntimeAdapterStatus::Placeholder),
+tests/core/test_runtime_integration.cpp	39	test-only	QStringLiteral("Placeholder"));
+tests/core/test_runtime_integration.cpp	52	test-only	QCOMPARE(descriptor.id, QStringLiteral("ollama-local-runtime-adapter-placeholder"));
+tests/core/test_runtime_integration.cpp	53	test-only	QCOMPARE(descriptor.status, LocalRuntimeAdapterStatus::Placeholder);
+tests/core/test_runtime_provider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_sampled_checksum.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_scoped_transform.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_semantic_retrieval.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_semantic_retrieval.cpp	1283	test-only	QVERIFY(selection.capabilitySummaries.contains(QStringLiteral("Fake/InMemory test provider")));
+tests/core/test_semantic_retrieval.cpp	1284	test-only	QVERIFY(readiness.summary.contains(QStringLiteral("isolated fake tests only")));
+tests/core/test_settings_recovery_runtime.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_settings_recovery_runtime.cpp	278	test-only	store.setValue("appLanguage", "unsupported");
+tests/core/test_settings_recovery_runtime.cpp	279	test-only	store.setValue("networkMode", "unsupported");
+tests/core/test_skill_extension_runtime.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_skill_profile_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_sqlite_chat_history_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_sqlite_conversation_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_sqlite_memory_store.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_standard_path_provider.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_agent_registry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_approval_policy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_execution_lifecycle.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_execution_lifecycle.cpp	40	test-only	QStringLiteral("Ready Placeholder"));
+tests/core/test_static_memory_catalog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_model_router.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_orchestration_diagnostics.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_orchestration_diagnostics.cpp	39	test-only	QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"),
+tests/core/test_static_provider_catalog.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_runtime_capability_registry.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_runtime_permission_policy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_runtime_pipeline.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_runtime_safety_policy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_sandbox_policy.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_sandbox_policy.cpp	101	test-only	QStringLiteral("Future unsupported capability.")}})}),
+tests/core/test_static_task_planner.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_static_task_planner.cpp	118	test-only	QCOMPARE(plan.steps.last().modelId, QStringLiteral("sentinel-local-placeholder"));
+tests/core/test_static_task_planner.cpp	201	test-only	QCOMPARE(plan.steps.at(1).id, QStringLiteral("step-2-sentinel-local-placeholder"));
+tests/core/test_token_estimator.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_tool_argument_validator.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_tool_execution_gateway.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_unified_audio_lifecycle.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_upgrade.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_voice.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_voice.cpp	122	test-only	return QStringLiteral("Fake Piper TTS client is deterministic and local-only.");
+tests/core/test_voice.cpp	135	test-only	QStringLiteral("fake failure"),
+tests/core/test_voice.cpp	136	test-only	QStringLiteral("Fake Piper failed while writing controlled output metadata."),
+tests/core/test_voice.cpp	137	test-only	{QStringLiteral("Fake Piper failure path.")},
+tests/core/test_voice.cpp	149	test-only	QStringLiteral("fake timeout"),
+tests/core/test_voice.cpp	150	test-only	QStringLiteral("Fake Piper timed out before writing controlled output."),
+tests/core/test_voice.cpp	151	test-only	{QStringLiteral("Fake Piper timeout path.")},
+tests/core/test_voice.cpp	166	test-only	QStringLiteral("Fake Piper could not write controlled output."),
+tests/core/test_voice.cpp	167	test-only	{QStringLiteral("Fake Piper write failed.")},
+tests/core/test_voice.cpp	170	test-only	file.write("FAKE-WAV");
+tests/core/test_voice.cpp	180	test-only	QStringLiteral("Fake Piper generated controlled local audio output. Playback was not "
+tests/core/test_voice.cpp	182	test-only	{QStringLiteral("Fake Piper wrote controlled output without playback.")},
+tests/core/test_voice.cpp	220	test-only	qFatal("Failed to write mock binary to %s", qPrintable(binaryPath));
+tests/core/test_voice.cpp	229	test-only	qFatal("Failed to write mock model to %s", qPrintable(modelPath));
+tests/core/test_voice.cpp	541	test-only	const auto unsupported = buildAudioFileSessionResult(
+tests/core/test_voice.cpp	544	test-only	QCOMPARE(unsupported.status, AudioFileSessionStatus::Refused);
+tests/core/test_voice.cpp	545	test-only	QVERIFY(audioFileSessionRefusalSummaries(unsupported)
+tests/core/test_voice.cpp	547	test-only	.contains(QStringLiteral("unsupported-extension")));
+tests/core/test_voice.cpp	995	test-only	QCOMPARE(writtenFile.readAll(), QByteArray("FAKE-WAV"));
+tests/core/test_voice.cpp	1014	test-only	QCOMPARE(failResult.error, QStringLiteral("fake failure"));
+tests/core/test_voice.cpp	1030	test-only	QCOMPARE(timeoutResult.error, QStringLiteral("fake timeout"));
+tests/core/test_web_search_tool.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_workspace_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/core/test_worktree_service.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_chat_message_recovery.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_chat_view_model.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_desktop_ipc.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_desktop_shell_view_model.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_desktop_shell_view_model.cpp	206	test-only	result.summary = QStringLiteral("Fake Ollama health metadata.");
+tests/desktop/test_desktop_shell_view_model.cpp	249	test-only	QStringLiteral("Fixed local agent placeholder processed: %1")
+tests/desktop/test_desktop_shell_view_model.cpp	539	test-only	QCOMPARE(fixture.viewModel.localRuntimeSessionHealth(), QStringLiteral("Placeholder Only"));
+tests/desktop/test_desktop_shell_view_model.cpp	541	test-only	QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime "
+tests/desktop/test_desktop_shell_view_model.cpp	547	test-only	QStringLiteral("Placeholder reservation is held for metadata visibility only."));
+tests/desktop/test_desktop_shell_view_model.cpp	600	test-only	QCOMPARE(fixture.viewModel.localRuntimeAdapterStatus(), QStringLiteral("Placeholder"));
+tests/desktop/test_desktop_shell_view_model.cpp	964	test-only	.contains(QStringLiteral("synthesis-placeholder")));
+tests/desktop/test_desktop_shell_view_model.cpp	1120	test-only	// Re-apply the mock non-executable path so subsequent isolation checks are deterministic
+tests/desktop/test_desktop_shell_view_model.cpp	1142	test-only	QStringLiteral("Ready for a later controlled file-output TTS phase")));
+tests/desktop/test_graphics_backend.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/desktop/test_native_integration.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/gui/tst_main.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/audio_certification_probe.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/audio_certification_probe.cpp	2	test-only	// Opt-in current-host probe. No fake runtime, downloads, or permission bypass.
+tests/helpers/audio_certification_probe.cpp	38	test-only	{"temp", QDir::tempPath()}});
+tests/helpers/broker_certification_plugin.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/observation_request_probe.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/provider_certification_probe.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/settings_ui_certification.qml	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/settings_ui_certification_probe.cpp	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/helpers/test_mcp_server.cpp	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/integration/test_rag_e2e_pipeline.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/performance/test_startup_time.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/support/DeterministicChatFixture.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/support/LocalInferenceWorkerFixture.h	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+tests/test_default_platform_services.cpp	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/Main.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/Atmosphere.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/EmptyState.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/ErrorBanner.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/GlowSurface.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/InfoRow.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/RuntimeBadge.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SectionTitle.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelButton.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelComboBox.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelOrb.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelSlider.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelSpinBox.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelSwitch.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelTelemetry.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SentinelTextField.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SettingCard.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SettingControlRow.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SettingToggleRow.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/ShimmerEffect.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/SoundManager.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/StatusChip.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/base/StatusPulse.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/chat/ActiveAgentsPanel.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/chat/CognitionStreamPanel.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/chat/HomeChatSurface.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/chat/HomeChatSurface.qml	947	harmless note	var temp = getAllSuggestions().slice();
+ui/qml/components/chat/HomeChatSurface.qml	950	harmless note	if (temp.length === 0) break;
+ui/qml/components/chat/HomeChatSurface.qml	951	harmless note	var randIdx = Math.floor(Math.random() * temp.length);
+ui/qml/components/chat/HomeChatSurface.qml	952	harmless note	result.push(temp[randIdx]);
+ui/qml/components/chat/HomeChatSurface.qml	953	harmless note	temp.splice(randIdx, 1);
+ui/qml/components/chat/RuntimeStateStrip.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/ModelDetailPopup.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/RuntimeDetailPopup.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/SentinelOverlayModal.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/SplashScreen.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/TrayCompanionWindow.qml	1	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/dialogs/UpdateProgressModal.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/BottomDock.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/CommandPalette.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/HeaderBar.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/ShellPanel.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/StatusBar.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/TitleBar.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/navigation/TitleBarButton.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/notifications/NotificationCenterPanel.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/notifications/NotificationItemDelegate.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/components/notifications/NotificationItemDelegate.qml	179	harmless note	Accessible.name: "Snoozed until " + (root.notifData.snoozeUntil ? new Date(root.notifData.snoozeUntil).toLocaleString() : "later")
+ui/qml/components/notifications/NotificationToast.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/FinishStep.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/FinishStep.qml	82	harmless note	value: root.viewModel.onboardingSnapshot.providerId \|\| qsTr("Set up later")
+ui/qml/onboarding/FinishStep.qml	89	harmless note	value: root.viewModel.onboardingSnapshot.modelId \|\| qsTr("Set up later")
+ui/qml/onboarding/ModelSetupStep.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/OnboardingScreen.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/PrivacyConsentStep.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/ProcessingModeStep.qml	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/ProcessingModeStep.qml	19	harmless note	subtitle: qsTr("Start locally or configure a cloud provider later. No account or API key is required to continue.")
+ui/qml/onboarding/ProcessingModeStep.qml	34	harmless note	? qsTr("Local mode uses configured local runtimes. If none is ready, you can finish setup and configure one later.")
+ui/qml/onboarding/ProviderSetupStep.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/ProviderSetupStep.qml	128	harmless note	text: qsTr("You can change the provider or endpoints later in Settings > Model Settings.")
+ui/qml/onboarding/VoiceSetupStep.qml	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/onboarding/VoiceSetupStep.qml	64	harmless note	text: qsTr("You can finish setup now and configure speech later in Settings.")
+ui/qml/onboarding/WelcomeStep.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/AgentInspectorPage.qml	2	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/ChatPanel.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/DashboardPage.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/models/LocalModelsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/models/ModelsPage.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/models/OnlineRegistryTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/AppearanceSettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/ModelSettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/ModelSettingsTab.qml	33	harmless note	{ "name": qsTr("Precise"), "temp": 0.20, "topP": 0.80 },
+ui/qml/pages/settings/ModelSettingsTab.qml	34	harmless note	{ "name": qsTr("Balanced"), "temp": 0.70, "topP": 0.90 },
+ui/qml/pages/settings/ModelSettingsTab.qml	35	harmless note	{ "name": qsTr("Creative"), "temp": 1.10, "topP": 0.95 }
+ui/qml/pages/settings/ModelSettingsTab.qml	66	harmless note	if (value === "unsupported") return qsTr("Unsupported")
+ui/qml/pages/settings/ModelSettingsTab.qml	76	harmless note	var distance = Math.abs(root.viewModel.localInferenceTemperature - preset.temp)
+ui/qml/pages/settings/ModelSettingsTab.qml	90	harmless note	root.viewModel.localInferenceTemperature = preset.temp
+ui/qml/pages/settings/ModelSettingsTab.qml	263	harmless note	model: [qsTr("Automatic"), qsTr("Supported"), qsTr("Unsupported")]
+ui/qml/pages/settings/ModelSettingsTab.qml	265	harmless note	: capabilityRow.modelData.override === "unsupported" ? 2 : 0
+ui/qml/pages/settings/ModelSettingsTab.qml	267	harmless note	var value = ["automatic", "supported", "unsupported"][choice]
+ui/qml/pages/settings/SecuritySettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/SettingsPage.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/SystemSettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/VoiceSettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/theme/InteractionTokens.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/theme/MotionTokens.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later
+ui/qml/theme/SentinelTheme.qml	3	harmless note	// SPDX-License-Identifier: GPL-3.0-or-later

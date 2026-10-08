@@ -1,0 +1,103 @@
+File	Line	Source
+apps/sentinel-cli/CMakeLists.txt	26	if(WIN32)
+apps/sentinel-daemon/CMakeLists.txt	45	if(WIN32)
+apps/sentinel-daemon/service/DaemonIpcServer.cpp	466	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/CMakeLists.txt	104	elseif(WIN32)
+apps/sentinel-desktop/CMakeLists.txt	200	elseif(WIN32)
+apps/sentinel-desktop/CMakeLists.txt	204	if(WIN32)
+apps/sentinel-desktop/CMakeLists.txt	333	WIN32_EXECUTABLE TRUE
+apps/sentinel-desktop/CMakeLists.txt	380	if(WIN32)
+apps/sentinel-desktop/CMakeLists.txt	390	if(WIN32)
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp	57	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/bootstrap/PlatformInitializer.cpp	20	#ifndef _WIN32_WINNT
+apps/sentinel-desktop/bootstrap/PlatformInitializer.cpp	21	#define _WIN32_WINNT 0x0601
+apps/sentinel-desktop/bootstrap/PlatformInitializer.cpp	36	#elif defined(Q_OS_MACOS)
+apps/sentinel-desktop/include/sentinel/desktop/NativeCompanionAdapter.h	19	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/include/sentinel/desktop/NativeCompanionAdapter.h	69	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	90	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	647	#if defined(Q_OS_MACOS)
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	3884	#if defined(Q_OS_MAC)
+apps/sentinel-desktop/src/DesktopShellViewModel.cpp	3903	#if defined(Q_OS_MAC)
+apps/sentinel-desktop/src/GraphicsBackend.cpp	48	#if defined(Q_OS_MACOS)
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	23	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	30	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	56	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	85	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	89	#ifndef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	96	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	117	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	147	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	156	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	172	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	243	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	258	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	317	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	361	#ifdef Q_OS_MACOS
+apps/sentinel-desktop/src/NativeCompanionAdapter.cpp	377	#ifdef Q_OS_MACOS
+apps/sentinel-plugin-host/CMakeLists.txt	16	if(WIN32)
+cli/crates/sentinel-cli/tests/commands.rs	1	#![cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	7	#[cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	193	#[cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	201	#[cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	325	#[cfg(test)]
+cli/crates/sentinel-ipc/src/lib.rs	350	#[cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	388	#[cfg(unix)]
+cli/crates/sentinel-ipc/src/lib.rs	398	#[cfg(not(unix))]
+cli/crates/sentinel-ipc/src/lib.rs	400	#[cfg(not(unix))]
+cli/crates/sentinel-ipc/src/lib.rs	418	#[cfg(all(test, unix))]
+cli/crates/sentinel-ipc/src/lib.rs	464	#[cfg(test)]
+cli/crates/sentinel-tui/src/editor.rs	133	#[cfg(test)]
+cli/crates/sentinel-tui/src/lib.rs	1180	#[cfg(test)]
+cli/crates/sentinel-tui/src/picker.rs	38	#[cfg(test)]
+cmake/SentinelCPack.cmake	13	if(WIN32)
+cmake/SentinelSigning.cmake	4	if(WIN32)
+core/CMakeLists.txt	552	if(WIN32)
+core/src/app/ApplicationController.cpp	9475	#if defined(Q_OS_MACOS)
+core/src/app/CompanionService.cpp	215	#if defined(Q_OS_MACOS)
+core/src/app/FileLogger.cpp	14	#if defined(Q_OS_MACOS) || defined(__APPLE__)
+core/src/app/FileLogger.cpp	134	#if defined(Q_OS_MACOS) || defined(__APPLE__)
+core/src/model/HardwareCapabilityService.cpp	13	#if defined(Q_OS_MACOS)
+core/src/model/HardwareCapabilityService.cpp	31	#if defined(Q_OS_MACOS)
+core/src/platform/DefaultPlatformService.cpp	14	#elif defined(Q_OS_MACOS)
+core/src/platform/DpapiEncryptedSettingsStore.cpp	15	#elif defined(Q_OS_MACOS) || defined(__APPLE__)
+core/src/platform/DpapiEncryptedSettingsStore.cpp	108	#elif defined(Q_OS_MACOS) || defined(__APPLE__)
+core/src/plugin/PluginManager.cpp	829	#elif defined(Q_OS_MACOS)
+core/src/runtime/ProcessSandbox.cpp	10	#if defined(Q_OS_MACOS)
+core/src/runtime/ProcessSandbox.cpp	52	#if defined(Q_OS_MACOS)
+core/src/runtime/ProcessSandbox.cpp	68	#if defined(Q_OS_MACOS)
+core/src/runtime/ProcessSandbox.cpp	180	#elif defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	443	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	474	#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+core/src/runtime/RealToolExecutor.cpp	482	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	511	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	534	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	758	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	1894	#if defined(Q_OS_MACOS)
+core/src/runtime/RealToolExecutor.cpp	2053	#if defined(Q_OS_MACOS)
+core/src/runtime/ToolExecutionGateway.cpp	68	#if defined(Q_OS_MACOS)
+core/src/runtime/WindowsSecureFileMutationBackend.cpp	6	#define WIN32_LEAN_AND_MEAN
+core/src/security/CredentialStore.cpp	11	#if defined(Q_OS_MACOS)
+core/src/security/CredentialStore.cpp	29	#if defined(Q_OS_MACOS)
+core/src/security/CredentialStore.cpp	124	#if defined(Q_OS_MACOS)
+core/src/security/CredentialStore.cpp	431	#if defined(Q_OS_MACOS)
+core/src/security/CredentialStore.cpp	492	#if defined(Q_OS_MACOS)
+core/src/security/CredentialStore.cpp	812	#if defined(Q_OS_MACOS)
+core/src/session/MdnsServiceImpl.cpp	25	#if defined(Q_OS_MACOS)
+tests/CMakeLists.txt	44	if(WIN32)
+tests/CMakeLists.txt	288	elseif(WIN32)
+tests/core/test_agent_runtime.cpp	201	#ifdef Q_OS_MACOS
+tests/core/test_agent_runtime.cpp	261	#ifdef Q_OS_MACOS
+tests/core/test_agent_runtime.cpp	368	#ifdef Q_OS_MACOS
+tests/core/test_agent_runtime.cpp	423	#ifdef Q_OS_MACOS
+tests/core/test_plugin_manager.cpp	210	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	294	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	412	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	421	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	564	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	600	#ifdef Q_OS_MACOS
+tests/core/test_plugin_tool_integration.cpp	677	#ifdef Q_OS_MACOS
+tests/core/test_process_executor.cpp	31	#ifndef Q_OS_MACOS
+tests/core/test_process_executor.cpp	75	#ifndef Q_OS_MACOS
+tests/helpers/broker_certification_plugin.cpp	7	#ifdef Q_OS_MACOS
+tests/helpers/broker_certification_plugin.cpp	23	#ifdef Q_OS_MACOS
+tests/helpers/broker_certification_plugin.cpp	78	#ifdef Q_OS_MACOS

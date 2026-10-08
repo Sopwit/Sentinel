@@ -1,0 +1,35 @@
+File	Line	Source
+tests/core/test_agent_runtime.cpp	202	QSKIP("This shell fixture requires child creation; strict macOS plans deny forks. Native "
+tests/core/test_agent_runtime.cpp	206	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_agent_runtime.cpp	262	QSKIP(
+tests/core/test_agent_runtime.cpp	267	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_agent_runtime.cpp	327	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_agent_runtime.cpp	369	QSKIP("The fake Docker shell fixture requires child creation; strict macOS plans deny "
+tests/core/test_agent_runtime.cpp	373	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_agent_runtime.cpp	424	QSKIP("This shell fixture requires child creation; strict macOS plans deny forks. Native "
+tests/core/test_agent_runtime.cpp	428	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_agent_runtime.cpp	465	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_credential_store.cpp	173	QSKIP("Native credential backend unavailable; no real smoke success claimed.");
+tests/core/test_credential_store.cpp	178	QSKIP("Native credential write refused; no real smoke success claimed.");
+tests/core/test_daemon_ipc.cpp	578	QSKIP("Stale Unix socket recovery is a Unix platform contract.");
+tests/core/test_local_inference.cpp	327	QSKIP("loopback TCP server is not available on this machine.");
+tests/core/test_plugin_manager.cpp	193	QSKIP(
+tests/core/test_plugin_manager.cpp	213	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_plugin_tool_integration.cpp	113	QSKIP("POSIX stopped-child timeout fixture.");
+tests/core/test_plugin_tool_integration.cpp	343	QSKIP("PID inspection fixture uses POSIX ps/kill.");
+tests/core/test_plugin_tool_integration.cpp	415	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_plugin_tool_integration.cpp	424	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_plugin_tool_integration.cpp	567	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_plugin_tool_integration.cpp	603	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_plugin_tool_integration.cpp	680	QSKIP("macOS cannot enforce the plugin host's detached-child restriction.");
+tests/core/test_process_executor.cpp	32	QSKIP("macOS containment probe.");
+tests/core/test_process_executor.cpp	76	QSKIP("macOS containment probe.");
+tests/core/test_process_executor.cpp	108	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_process_executor.cpp	155	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_process_executor.cpp	176	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_process_executor.cpp	201	QSKIP("The shell fixture is Unix-only.");
+tests/core/test_real_tool_executor_tools.cpp	178	QSKIP("pwd fixture is Unix-only.");
+tests/core/test_real_tool_executor_tools.cpp	189	QSKIP("Host cannot enforce the required process sandbox.");
+tests/core/test_real_tool_executor_tools.cpp	663	QSKIP("The active macOS test session does not provide a round-trippable clipboard.");
+tests/core/test_real_tool_executor_tools.cpp	982	QSKIP("docker is installed on this machine; the missing-docker branch cannot run.");
+tests/core/test_real_tool_executor_tools.cpp	1002	QSKIP("npx is installed on this machine; the missing-node branch cannot run.");
