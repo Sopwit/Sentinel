@@ -53,6 +53,55 @@ public:
 class UnifiedAudioLifecycleTest final : public QObject {
     Q_OBJECT
 private slots:
+    void capturedPcmRejectsUnavailableMalformedAndSilentInput() {
+        VoiceSessionService session;
+        QVERIFY(!session.transcribeCapturedPcm(QByteArray(2, '\0'), true));
+        QCOMPARE(session.failure(), AudioFailure::RuntimeUnavailable);
+        auto runtime = std::make_shared<GatedStt>();
+        session.setSttRuntime(runtime);
+        QVERIFY(!session.transcribeCapturedPcm(QByteArray(3, '\0'), true));
+        QCOMPARE(session.failure(), AudioFailure::UnsupportedFormat);
+        QVERIFY(!session.transcribeCapturedPcm(QByteArray(16000 * 2 * 60 + 2, '\0'), true));
+        QCOMPARE(session.failure(), AudioFailure::UnsupportedFormat);
+        QVERIFY(!session.transcribeCapturedPcm(QByteArray(2, '\0'), false));
+        QCOMPARE(session.failure(), AudioFailure::NoSpeechDetected);
+        QCOMPARE(runtime->entered.available(), 0);
+        QVERIFY(!session.devices()->isCapturing());
+        QVERIFY(!session.privacy().processingRawAudio);
+    }
+    void capturedPcmDictationDoesNotExecuteChatOrAgent() {
+        VoiceSessionService session;
+        auto runtime = std::make_shared<GatedStt>();
+        runtime->result.finalText = "Reviewed dictation";
+        session.setSttRuntime(runtime);
+        int bridges = 0;
+        session.setChatBridge([&](const QString&, auto) { ++bridges; });
+        session.setAgentBridge([&](const QString&, auto) { ++bridges; });
+        QVERIFY(session.transcribeCapturedPcm(QByteArray(32000, '\0'), true));
+        QVERIFY(runtime->entered.tryAcquire(1, 2000));
+        QVERIFY(!session.devices()->isCapturing());
+        QVERIFY(session.privacy().processingRawAudio);
+        runtime->release.release();
+        QTRY_COMPARE(session.state(), VoiceInteractionState::Completed);
+        QCOMPARE(session.transcript().finalText, QString("Reviewed dictation"));
+        QCOMPARE(bridges, 0);
+        QVERIFY(!session.privacy().retainRawRecordings);
+        QVERIFY(!session.privacy().processingRawAudio);
+    }
+    void capturedPcmCancellationDiscardsLateTranscript() {
+        VoiceSessionService session;
+        auto runtime = std::make_shared<GatedStt>();
+        session.setSttRuntime(runtime);
+        QSignalSpy transcripts(&session, &VoiceSessionService::finalTranscriptChanged);
+        QVERIFY(session.transcribeCapturedPcm(QByteArray(32000, '\0'), true));
+        QVERIFY(runtime->entered.tryAcquire(1, 2000));
+        session.cancel();
+        QVERIFY(runtime->cancellation->load());
+        runtime->release.release();
+        QTest::qWait(100);
+        QCOMPARE(session.state(), VoiceInteractionState::Cancelled);
+        QCOMPARE(transcripts.size(), 0);
+    }
     void unavailableAndEmptyRequests() {
         VoiceSessionService session;
         QVERIFY(!session.startPushToTalk(VoiceInteractionMode::VoiceChat));

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "../../protocol/QtIpcContract.generated.h"
 #include "../support/DeterministicChatFixture.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
@@ -6,6 +7,7 @@
 #include "sentinel/core/app/OnboardingService.h"
 #include "sentinel/core/memory/InMemorySettingsStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
+#include "sentinel/core/model/ModelLibrary.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 #include "sentinel/desktop/DaemonClient.h"
 #include "sentinel/desktop/DesktopControllerBridge.h"
@@ -13,12 +15,12 @@
 #include "sentinel/desktop/DesktopSettingsStore.h"
 #include "sentinel/desktop/QuickPanelController.h"
 #include "service/DaemonIpcServer.h"
-#include "../../protocol/QtIpcContract.generated.h"
 
 #include <QDir>
 #include <QJsonDocument>
 #include <QLocalServer>
 #include <QSignalSpy>
+#include <QScopeGuard>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
@@ -26,6 +28,35 @@
 
 using sentinel::desktop::DaemonClient;
 namespace {
+class CountingCredentials final : public sentinel::core::ICredentialBackend {
+public:
+    sentinel::core::CredentialStoreBackend backend() const override {
+        return delegate.backend();
+    }
+    sentinel::core::CredentialStoreSummary summary() const override {
+        return delegate.summary();
+    }
+    sentinel::core::CredentialBackendResult
+    storeCredential(const sentinel::core::CredentialKey& key, const QString& secret) override {
+        return delegate.storeCredential(key, secret);
+    }
+    sentinel::core::CredentialReadResult
+    readCredential(const sentinel::core::CredentialKey& key) const override {
+        ++reads;
+        return delegate.readCredential(key);
+    }
+    sentinel::core::CredentialBackendResult
+    deleteCredential(const sentinel::core::CredentialKey& key) override {
+        return delegate.deleteCredential(key);
+    }
+    sentinel::core::CredentialBackendResult
+    containsCredential(const sentinel::core::CredentialKey& key) const override {
+        ++reads;
+        return delegate.containsCredential(key);
+    }
+    mutable int reads = 0;
+    sentinel::core::InMemoryCredentialBackend delegate;
+};
 QJsonObject frame(const QString& type, const QString& id, const QString& name,
                   const QJsonObject& payload, int major = 1, int minor = 0) {
     return {{"version", QJsonObject{{"major", major}, {"minor", minor}}},
@@ -45,6 +76,18 @@ QJsonObject read(QLocalSocket* socket) {
     }
     return QJsonDocument::fromJson(socket->readLine()).object();
 }
+class DictationStt final : public sentinel::core::ISpeechToTextRuntime {
+public:
+    sentinel::core::SpeechProviderInfo info() const override {
+        sentinel::core::SpeechProviderInfo result;
+        result.readiness = sentinel::core::AudioRuntimeReadiness::Ready;
+        return result;
+    }
+    sentinel::core::SpeechTranscript transcribeFile(const QString&, const QString&,
+                                                    std::shared_ptr<std::atomic_bool>) override {
+        return {.finalText = "Private dictation"};
+    }
+};
 class MetadataClient final : public sentinel::core::IOllamaRuntimeClient {
 public:
     sentinel::core::OllamaConfig config() const override {
@@ -362,6 +405,166 @@ private slots:
         QFETCH(QString, url);
         QVERIFY(sentinel::desktop::QuickPanelController::parseLink(url).isEmpty());
     }
+    void modelLibraryProjectionDoesNotReadCloudCredentials() {
+        auto credentials = std::make_shared<CountingCredentials>();
+        sentinel::core::AppSettings settings(
+            std::make_unique<sentinel::core::InMemorySettingsStore>(),
+            sentinel::core::CredentialStore(credentials));
+        sentinel::core::ModelService models(&settings);
+        sentinel::core::ModelLibraryService library(models);
+        const auto before = credentials->reads;
+        QVERIFY(!library.providerStates().isEmpty());
+        library.entries();
+        QCOMPARE(credentials->reads, before);
+        // Real binding configuration still reads through the authorized credential backend.
+        models.providerConfig(sentinel::core::ModelBinding{"gemini", "test-model"});
+        QVERIFY(credentials->reads > before);
+    }
+    void connectedDoesNotMeanReadyUntilSettingsAndSessionArrive() {
+        Peer peer;
+        DaemonClient transport(peer.path, 5000, 1000);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QVERIFY(peer.connect(transport));
+        QTRY_COMPARE(transport.connectionState(), DaemonClient::ConnectionState::Connected);
+        QVERIFY(!adapter.ready());
+        QHash<QString, QJsonObject> pending;
+        for (int i = 0; i < 4; ++i) {
+            const auto request = read(peer.socket);
+            pending[request.value("name").toString()] = request;
+        }
+        const auto reply = [&](const QString& name, QJsonObject payload) {
+            send(peer.socket,
+                 frame("response", pending.value(name).value("id").toString(), name, payload));
+            QTest::qWait(2);
+        };
+        QJsonObject properties;
+        const auto fields = sentinel::ipc::desktopProjectionFields();
+        for (auto it = fields.begin(); it != fields.end(); ++it) {
+            const auto type = it.value().toObject().value("type").toString();
+            properties[it.key()] = type == "string"    ? QJsonValue(QString{})
+                                   : type == "boolean" ? QJsonValue(false)
+                                   : type == "array"   ? QJsonValue(QJsonArray{})
+                                   : type == "object"  ? QJsonValue(QJsonObject{})
+                                                       : QJsonValue(0);
+        }
+        reply("desktop.projection", {{"page", 0}, {"pages", 1}, {"properties", properties}});
+        QVERIFY(!adapter.ready());
+        reply("desktop.settings", {{"values", QJsonObject{}}});
+        QVERIFY(!adapter.ready());
+        reply("session.list",
+              {{"sessions", QJsonArray{QJsonObject{{"session_id", "readiness-session"}}}}});
+        QVERIFY(!adapter.ready());
+        auto attach = read(peer.socket);
+        QCOMPARE(attach.value("name").toString(), QString("session.attach"));
+        send(peer.socket, frame("response", attach.value("id").toString(), "session.attach",
+                                {{"session_id", "readiness-session"},
+                                 {"state", "idle"},
+                                 {"output", ""},
+                                 {"run_id", ""},
+                                 {"event_sequence", 0},
+                                 {"properties", QJsonObject{}}}));
+        QTRY_VERIFY(adapter.ready());
+        peer.socket->abort();
+        QTRY_VERIFY(!adapter.ready());
+        QVERIFY(adapter.messages().isEmpty());
+    }
+    void voicePcmLeaseBoundsPrivacyAndConfigurationChange() {
+        QTemporaryDir directory{QDir::tempPath() + "/sv-XXXXXX"};
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner |
+                                                            QFileDevice::WriteOwner |
+                                                            QFileDevice::ExeOwner));
+        sentinel::core::AppSettings settings(
+            std::make_unique<sentinel::core::InMemorySettingsStore>(),
+            sentinel::core::inMemoryTestCredentialStore());
+        sentinel::test::DeterministicModelServiceFixture models(
+            sentinel::test::DeterministicChatReply::Final, &settings);
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                              .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+                              .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                              .build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("voice.sock")));
+        QLocalSocket owner, other;
+        const auto connectClient = [&](QLocalSocket& socket) {
+            socket.connectToServer(directory.filePath("voice.sock"));
+            QVERIFY(socket.waitForConnected(2000));
+            send(&socket, frame("request", "hello", "hello",
+                                {{"client_id", "voice-test"},
+                                 {"major", 1},
+                                 {"minor", 1},
+                                 {"capabilities", QJsonArray{}}}));
+            QCOMPARE(read(&socket).value("type").toString(), QString("response"));
+        };
+        const auto request = [&](QLocalSocket& socket, const QString& name,
+                                 QJsonObject payload = {}) {
+            send(&socket, frame("request", name, name, payload));
+            return read(&socket);
+        };
+        connectClient(owner);
+        connectClient(other);
+        QCOMPARE(request(owner, "voice.action", {{"action", "start"}}).value("type").toString(),
+                 QString("error"));
+        controller->audioSession()->setSttRuntime(std::make_shared<DictationStt>());
+        QCOMPARE(request(owner, "voice.action", {{"action", "start"}}).value("type").toString(),
+                 QString("response"));
+        QCOMPARE(request(other, "voice.action", {{"action", "start"}})
+                     .value("payload")
+                     .toObject()
+                     .value("code")
+                     .toString(),
+                 QString("voice-busy"));
+        const QJsonObject chunk{{"pcm", "AAA="}, {"final", false}, {"speech", true}};
+        QCOMPARE(request(other, "voice.audio", chunk).value("type").toString(), QString("error"));
+        QCOMPARE(request(owner, "voice.audio",
+                         {{"pcm", "not base64!"}, {"final", true}, {"speech", true}})
+                     .value("type")
+                     .toString(),
+                 QString("error"));
+        request(owner, "voice.action", {{"action", "start"}});
+        controller->audioSession()->setSttRuntime(std::make_shared<DictationStt>());
+        QCOMPARE(request(owner, "voice.audio", chunk)
+                     .value("payload")
+                     .toObject()
+                     .value("code")
+                     .toString(),
+                 QString("voice-configuration-changed"));
+        request(owner, "voice.action", {{"action", "start"}});
+        QCOMPARE(request(owner, "voice.audio", {{"pcm", "AAA="}, {"final", true}, {"speech", true}})
+                     .value("payload")
+                     .toObject()
+                     .value("accepted")
+                     .toBool(),
+                 true);
+        QTRY_COMPARE(controller->audioSession()->state(),
+                     sentinel::core::VoiceInteractionState::Completed);
+        QCOMPARE(request(owner, "voice.state")
+                     .value("payload")
+                     .toObject()
+                     .value("transcript")
+                     .toString(),
+                 QString("Private dictation"));
+        QVERIFY(request(other, "voice.state")
+                    .value("payload")
+                    .toObject()
+                    .value("transcript")
+                    .toString()
+                    .isEmpty());
+        request(owner, "voice.action", {{"action", "start"}});
+        request(owner, "voice.audio", chunk);
+        owner.abort();
+        QTest::qWait(20);
+        QCOMPARE(request(other, "voice.action", {{"action", "start"}}).value("type").toString(),
+                 QString("response"));
+        QVERIFY(request(other, "voice.state")
+                    .value("payload")
+                    .toObject()
+                    .value("transcript")
+                    .toString()
+                    .isEmpty());
+        QVERIFY(!controller->audioSession()->devices()->isCapturing());
+        QVERIFY(!controller->audioSession()->privacy().retainRawRecordings);
+    }
     void quickPanelConnectionAndLinkProjection() {
         QTemporaryDir directory;
         DaemonClient transport(directory.filePath("absent.sock"), 500, 1000);
@@ -375,6 +578,8 @@ private slots:
         QVERIFY(!panel.ask("No fallback"));
         QVERIFY(!panel.agent("No fallback"));
         QVERIFY(!panel.error().isEmpty());
+        QVERIFY(!panel.voiceAction("start"));
+        QVERIFY(!panel.state().value("voiceAvailable").toBool());
         QVERIFY(!panel.cancel());
         QVERIFY(!panel.approve(true));
         QSignalSpy open(&panel, &sentinel::desktop::QuickPanelController::openRequested);
@@ -406,7 +611,9 @@ private slots:
             sentinel::core::inMemoryTestCredentialStore());
         sentinel::test::DeterministicModelServiceFixture models(
             sentinel::test::DeterministicChatReply::Delayed, &settings);
-        models.state->delayMs = 500;
+        auto completionGate = std::make_shared<QSemaphore>();
+        models.state->completionGate = completionGate;
+        auto releaseOnExit = qScopeGuard([completionGate] { completionGate->release(); });
         sentinel::core::ApplicationControllerBuilder builder;
         auto controller = builder.withModelService(models.takeModelService())
                               .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
@@ -430,6 +637,9 @@ private slots:
         QTRY_VERIFY(!adapter.sessionId().isEmpty());
         QCOMPARE(bridge.selectedLocalModel(), QString("sentinel-test-model"));
         QCOMPARE(bridge.selectedRuntimeProvider(), QString("ollama"));
+        QTRY_VERIFY(!adapter.voiceState().isEmpty());
+        QVERIFY(!adapter.voiceState().value("available").toBool());
+        QVERIFY(!panel.voiceAction("invalid"));
         const auto first = adapter.sessionId();
         QSignalSpy open(&panel, &sentinel::desktop::QuickPanelController::openRequested);
         panel.continueConversation();
@@ -446,6 +656,8 @@ private slots:
         QVERIFY(panel.cancel());
         QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("cancelled"));
         QVERIFY(!bridge.chatGenerationActive());
+        completionGate->release();
+        models.state->completionGate.reset();
         models.state->reply = sentinel::test::DeterministicChatReply::Streaming;
         QVERIFY(panel.ask(QStringLiteral("Recovery turn")));
         QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));

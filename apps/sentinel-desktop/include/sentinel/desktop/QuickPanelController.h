@@ -18,6 +18,9 @@ public:
     Q_INVOKABLE bool ask(const QString& text);
     Q_INVOKABLE bool agent(const QString& text);
     Q_INVOKABLE bool cancel();
+    Q_INVOKABLE bool voiceAction(const QString& action) {
+        return runtimeVoiceAction(action);
+    }
     Q_INVOKABLE bool approve(bool allow);
     Q_INVOKABLE void continueConversation();
     Q_INVOKABLE void openApproval();
@@ -29,6 +32,7 @@ signals:
     void notificationRequested(const QString& title, const QString& body, const QString& sessionId);
 
 private:
+    bool runtimeVoiceAction(const QString& action);
     bool submit(const QString& text, bool agent);
     void project();
     DesktopRuntimeClient& runtime_;

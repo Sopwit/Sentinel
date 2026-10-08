@@ -36,6 +36,9 @@ pub const COMMANDS: &[(&str, &[(&str, &str)])] = &[
 ("workspace.create", &[("name", "string"), ("template", "string")]),
 ("provider.select", &[("provider_id", "string")]),
 ("terminal.attach", &[("session_id", "string")]),
+("voice.state", &[]),
+("voice.action", &[("action", "string")]),
+("voice.audio", &[("pcm", "string"), ("final", "boolean"), ("speech", "boolean")]),
 ];
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -104,6 +107,12 @@ WorkspaceCreate {name: String, template: String},
 ProviderSelect {provider_id: String},
 #[serde(rename = "terminal.attach")]
 TerminalAttach {session_id: String},
+#[serde(rename = "voice.state")]
+VoiceState {},
+#[serde(rename = "voice.action")]
+VoiceAction {action: String},
+#[serde(rename = "voice.audio")]
+VoiceAudio {pcm: String, r#final: bool, speech: bool},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -172,6 +181,12 @@ WorkspaceCreate {workspace_id: String},
 ProviderSelect {provider_id: String, model_id: String},
 #[serde(rename = "terminal.attach")]
 TerminalAttach {session_id: String, state: String, output: String, run_id: String, #[serde(default)] server_generation: Option<String>, #[serde(default)] event_sequence: Option<u64>, #[serde(default)] properties: Option<serde_json::Value>, #[serde(default)] run_type: Option<String>, #[serde(default)] provider_id: Option<String>, #[serde(default)] model_id: Option<String>, #[serde(default)] output_truncated: Option<bool>, #[serde(default)] approval_id: Option<String>, #[serde(default)] approval: Option<serde_json::Value>, #[serde(default)] title: Option<String>, #[serde(default)] summary: Option<String>, #[serde(default)] pinned: Option<bool>, #[serde(default)] archived: Option<bool>, #[serde(default)] conversation_id: Option<String>, #[serde(default)] created_at: Option<String>, #[serde(default)] r#type: Option<String>, #[serde(default)] detail: Option<String>},
+#[serde(rename = "voice.state")]
+VoiceState {state: String, available: bool, owned: bool, transcript: String, failure: String, input_device_id: String, vad_enabled: bool},
+#[serde(rename = "voice.action")]
+VoiceAction {accepted: bool},
+#[serde(rename = "voice.audio")]
+VoiceAudio {accepted: bool},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]

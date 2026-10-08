@@ -43,26 +43,27 @@ QString discoverDaemonBinary() {
     // Prefer a sibling binary next to the running desktop app (dev/build layout),
     // then fall back to PATH lookup for packaged installs.
     const QString appDir = QCoreApplication::applicationDirPath();
-    const QString sibling = appDir + QStringLiteral("/sentinel-daemon");
+    QString sibling = appDir + QStringLiteral("/sentinel-daemon");
     if (QFileInfo::exists(sibling)) {
         return sibling;
     }
 #ifdef Q_OS_WIN
-    const QString siblingExe = appDir + QStringLiteral("/sentinel-daemon.exe");
+    QString siblingExe = appDir + QStringLiteral("/sentinel-daemon.exe");
     if (QFileInfo::exists(siblingExe)) {
         return siblingExe;
     }
 #endif
-    const QString buildSibling = QDir(appDir).absoluteFilePath(
+    QString buildSibling = QDir(appDir).absoluteFilePath(
 #ifdef Q_OS_MACOS
         QStringLiteral("../../../../sentinel-daemon/sentinel-daemon")
 #else
         QStringLiteral("../sentinel-daemon/sentinel-daemon")
 #endif
     );
-    if (QFileInfo(buildSibling).isExecutable())
+    if (QFileInfo(buildSibling).isExecutable()) {
         return buildSibling;
-    const QString byPath = QStandardPaths::findExecutable(QStringLiteral("sentinel-daemon"));
+    }
+    QString byPath = QStandardPaths::findExecutable(QStringLiteral("sentinel-daemon"));
     if (!byPath.isEmpty()) {
         return byPath;
     }
@@ -86,11 +87,13 @@ void ApplicationBootstrapper::ensureBackgroundDaemon() {
     m_daemonProcess = std::make_unique<QProcess>(this);
     QStringList arguments;
     const auto endpoint = m_parser.value(QStringLiteral("daemon-socket"));
-    if (!endpoint.isEmpty())
+    if (!endpoint.isEmpty()) {
         arguments << QStringLiteral("--socket") << endpoint;
+    }
     // The background service outlives the UI and is protected by its own socket lock.
-    if (!m_daemonProcess->startDetached(daemonBinary, arguments))
+    if (!m_daemonProcess->startDetached(daemonBinary, arguments)) {
         qWarning() << "Cannot start sentinel-daemon";
+    }
 }
 
 ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject* parent)
@@ -135,9 +138,10 @@ ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject
         m_verbose = m_parser.isSet(verboseOption);
         m_quiet = m_parser.isSet(quietOption);
         m_safeMode = m_parser.isSet(safeModeOption);
-        if (m_parser.isSet(QStringLiteral("preferences-directory")))
+        if (m_parser.isSet(QStringLiteral("preferences-directory"))) {
             m_pathProvider.setProfileDirectory(
                 m_parser.value(QStringLiteral("preferences-directory")));
+        }
     }
 }
 
@@ -180,13 +184,14 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     const auto settingsError = m_settings->storageErrorCode();
     if (settingsError == QLatin1String("CorruptState") ||
         settingsError == QLatin1String("UnsupportedSettingsVersion") ||
-        settingsError == QLatin1String("StoreUnavailable"))
+        settingsError == QLatin1String("StoreUnavailable")) {
         sentinel::core::RecoveryService::recordCondition(QStringLiteral("settings"),
                                                          QStringLiteral("settings"), settingsError,
                                                          QStringLiteral("repair-settings"));
-    else if (settingsError.isEmpty())
+    } else if (settingsError.isEmpty()) {
         sentinel::core::RecoveryService::clearCondition(QStringLiteral("settings"),
                                                         QStringLiteral("settings"));
+    }
 
     installStartupTranslator(app, *m_settings, m_translator);
 
@@ -226,8 +231,9 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
 
     QObject::connect(m_daemonClient.get(), &DaemonClient::connectionStateChanged, this, [this] {
         if (m_daemonClient->connectionState() == DaemonClient::ConnectionState::Unavailable &&
-            !m_parser.isSet(QStringLiteral("no-daemon-start")))
+            !m_parser.isSet(QStringLiteral("no-daemon-start"))) {
             ensureBackgroundDaemon();
+        }
     });
     auto* daemonClient = m_daemonClient.get();
 
@@ -267,8 +273,12 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     }
 
     native->setWindow(rootWindow);
-    if (!ownUrl.isEmpty())
+    if (auto* window = qobject_cast<QQuickWindow*>(rootWindow)) {
+        m_shellViewModel->registerMainWindow(window->winId());
+    }
+    if (!ownUrl.isEmpty()) {
         quickPanel->openLink(ownUrl);
+    }
 
     return true;
 }

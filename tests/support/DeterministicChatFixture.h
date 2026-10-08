@@ -8,6 +8,7 @@
 #include "sentinel/core/model/ModelService.h"
 
 #include <QThread>
+#include <QSemaphore>
 
 #include <atomic>
 #include <memory>
@@ -19,6 +20,7 @@ enum class DeterministicChatReply { Final, Streaming, Failure, Delayed, Unavaila
 struct DeterministicChatProviderState {
     DeterministicChatReply reply = DeterministicChatReply::Final;
     int delayMs = 100;
+    std::shared_ptr<QSemaphore> completionGate;
 };
 
 class DeterministicChatProvider final : public core::IChatProvider {
@@ -58,8 +60,18 @@ public:
 
 private:
     core::ChatProviderReply finalReply() const {
-        if (state_->reply == DeterministicChatReply::Delayed)
-            QThread::msleep(static_cast<unsigned long>(state_->delayMs));
+        if (state_->reply == DeterministicChatReply::Delayed) {
+            const auto gate = state_->completionGate;
+            if (gate) {
+                if (!gate->tryAcquire(1, 15000)) {
+                    core::ChatProviderReply reply;
+                    reply.lifecycle = core::ChatRequestLifecycle::Failed;
+                    reply.category = core::ChatProviderErrorCategory::ConnectionFailed;
+                    reply.errorMessage = QStringLiteral("Test completion gate timed out.");
+                    return reply;
+                }
+            } else { QThread::msleep(static_cast<unsigned long>(state_->delayMs)); }
+        }
         core::ChatProviderReply reply;
         if (state_->reply == DeterministicChatReply::Failure) {
             reply.errorMessage = QStringLiteral("Deterministic provider failure.");

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "sentinel/core/chat/ChatMessage.h"
+#include "sentinel/core/voice/UnifiedAudioService.h"
 #include "sentinel/desktop/DaemonClient.h"
 #include <QElapsedTimer>
 #include <QHash>
@@ -41,11 +42,14 @@ public:
     }
     QVariantMap quickPanelSnapshot() const;
     void refresh();
+    bool voiceAction(const QString& action);
+    QVariantMap voiceState() const;
     bool respondToApproval(bool allow);
     bool respondToQuickApproval(bool allow);
     bool cancelRun();
     bool ready() const {
-        return m_transport.daemonReachable() && m_loaded && !m_attaching;
+        return m_transport.daemonReachable() && m_loaded && m_settingsLoaded && m_sessionsLoaded &&
+               !m_sessionId.isEmpty() && !m_attaching;
     }
 signals:
     void changed();
@@ -66,6 +70,7 @@ private:
     void applySnapshot(const QJsonObject& snapshot);
     void requestMessages();
     void projectRun();
+    void sendVoiceChunk();
     DaemonClient& m_transport;
     QHash<QString, Request> m_requests;
     QHash<QString, QVariant> m_values;
@@ -79,6 +84,20 @@ private:
     QString m_sessionId, m_preferredSession, m_runId, m_state, m_kind, m_output, m_generation;
     quint64 m_sequence = 0;
     QTimer m_refreshTimer;
+    QTimer m_voiceTimer;
+    QTimer m_captureLimit;
+    core::AudioDeviceService m_voiceDevices;
+    QByteArray m_outboundVoicePcm;
+    QByteArray m_capturedVoiceSegments;
+    qsizetype m_voiceOffset = 0;
+    bool m_voiceSpeechDetected = false;
+    bool m_voiceStartPending = false;
+    bool m_microphonePermissionPending = false;
+    QString m_localVoiceFailure;
+    quint64 m_voiceGeneration = 0;
+    QVariantMap m_voiceState;
+    bool m_voiceQueryPending = false;
+    bool m_settingsLoaded = false, m_sessionsLoaded = false;
     bool m_loaded = false, m_attaching = false, m_submissionPending = false;
     QElapsedTimer m_startupProjectionTimer;
     int m_projectionRemaining = 0;

@@ -29,9 +29,9 @@ for section, model in [("commands", "RequestPayload"), ("responses", "ResponsePa
     for name, fields in spec[section].items():
         variant = "".join(part.capitalize() for part in re.split(r"[._]", name))
         rust += f'#[serde(rename = "{name}")]\n{variant} {{'
-        rust += ", ".join(("r#type" if key == "type" else key) + ": " + {"string":"String", "integer":"u64", "boolean":"bool", "array":"Vec<serde_json::Value>", "object":"serde_json::Value", "number":"f64"}[kind] for key, kind in fields.items())
+        rust += ", ".join(("r#" + key if key in {"type", "final"} else key) + ": " + {"string":"String", "integer":"u64", "boolean":"bool", "array":"Vec<serde_json::Value>", "object":"serde_json::Value", "number":"f64"}[kind] for key, kind in fields.items())
         for key, kind in spec.get("optional_" + section, {}).get(name, {}).items():
-            rust += ", #[serde(default)] " + ("r#type" if key == "type" else key) + ": Option<" + {"string": "String", "integer": "u64", "object": "serde_json::Value", "boolean": "bool", "array": "Vec<serde_json::Value>"}[kind] + ">"
+            rust += ", #[serde(default)] " + ("r#" + key if key in {"type", "final"} else key) + ": Option<" + {"string": "String", "integer": "u64", "object": "serde_json::Value", "boolean": "bool", "array": "Vec<serde_json::Value>"}[kind] + ">"
         rust += "},\n"
     rust += "}\n"
 rust += "pub const CAPABILITIES: &[&str] = &[" + ",".join(json.dumps(cap) for cap in spec["capabilities"]) + "];\n"

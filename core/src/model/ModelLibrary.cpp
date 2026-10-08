@@ -310,7 +310,7 @@ QString ModelLibraryService::entryId(const QString& providerId, const QString& r
 QList<ModelLibraryProviderState> ModelLibraryService::providerStates() const {
     QList<ModelLibraryProviderState> states;
     for (const auto& id : models_.knownProviderIds()) {
-        const auto status = models_.providerStatus(id);
+        const auto status = models_.providerStatusSnapshot(id);
         const auto cloud = isCloud(id);
         states.append({{id, label(id), cloud ? ProviderKind::Cloud : ProviderKind::Local},
                        {cloud ? QStringLiteral("cloud") : id,
@@ -370,7 +370,7 @@ QList<ModelLibraryEntry> ModelLibraryService::entries() const {
     QSet<QString> identities;
     const auto selection = models_.selectedModel();
     for (const auto& state : providerStates()) {
-        const auto status = models_.providerStatus(state.provider.id);
+        const auto status = models_.providerStatusSnapshot(state.provider.id);
         const auto discovered = models_.providerDiscoveredModels(state.provider.id);
         QHash<QString, OllamaModelSummary> details;
         for (const auto& model : discovered) details.insert(model.name, model);
@@ -496,7 +496,7 @@ QList<ModelLibraryEntry> ModelLibraryService::entries() const {
         if (file.isFile()) entry.sizeBytes = entry.diskBytes = file.size();
         entry.installed = file.isFile() ? ModelLibraryInstalledState::Installed
                                         : ModelLibraryInstalledState::Unknown;
-        const auto runtimeStatus = models_.providerStatus(entry.provider.id);
+        const auto runtimeStatus = models_.providerStatusSnapshot(entry.provider.id);
         entry.availability = !entry.nativeModelId.isEmpty() &&
                 runtimeStatus.modelIds.contains(entry.nativeModelId)
             ? ModelLibraryAvailability::Available : ModelLibraryAvailability::Unknown;
@@ -525,7 +525,7 @@ QList<ModelLibraryEntry> ModelLibraryService::entries() const {
                                entry.format.compare(QStringLiteral("GGUF"), Qt::CaseInsensitive) == 0
             ? QStringLiteral("llama-cpp-server") : entry.runtime.id;
         if (!runtimeId.isEmpty() && models_.isKnownProvider(runtimeId)) {
-            const auto status = models_.providerStatus(runtimeId);
+            const auto status = models_.providerStatusSnapshot(runtimeId);
             ModelRuntimeStatus runtime;
             runtime.runtimeId = runtimeId;
             if (status.catalog != ProviderCatalogState::Unverified)

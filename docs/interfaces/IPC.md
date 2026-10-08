@@ -92,3 +92,9 @@ uses authorized registered read-only tools; `workspace.changes` returns bounded 
 diffs from an in-memory Agent baseline, without rollback or durable Git attribution.
 `tool.running`, tool timing metadata, approval decisions and subagent state project
 existing runtime events. See the [CLI](../user/CLI.md) and [TUI](../user/TUI.md) guides.
+
+## Quick Panel dictation and readiness (2026-10-08)
+
+`voice.state` projects runtime readiness, state, owner-only completed transcript, failure, input-device identity and VAD setting. `voice.action` supports start/cancel. Platform microphone permission and capture stay in the GUI using the existing AudioDeviceService; the daemon reserves ownership and accepts normalized mono 16 kHz signed little-endian 16-bit PCM through `voice.audio {pcm, final, speech}`. The GUI sends acknowledged 49,152-byte chunks (at most 65,536 base64 characters), stopping at 59 seconds; daemon total bound is 1,920,000 bytes. Disconnect and cancellation release capture/STT; changed STT revision rejects the lease. Dictation is reviewed in the composer, never automatically executed. Unconfigured STT remains unavailable.
+
+Desktop Connected is transport status only. Ready requires complete required eager/global projection, settings, session list and successful attachment. Optional/session-only fields are not eagerly enumerated. Disconnect clears stale projections and reconnect follows the same path. Model-library presentation uses ModelService's credential-free cached status; actual provider binding still authorizes configuration normally.
