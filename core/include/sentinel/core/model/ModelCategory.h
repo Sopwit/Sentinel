@@ -10,7 +10,8 @@ inline QString modelCategory(const QString& name, const QStringList& capabilitie
     const auto tags = capabilities.join(' ').toLower();
     if (tags.contains("text-to-video") || tags.contains("image-to-video"))
         return "Video";
-    if (tags.contains("text-to-image") || tags.contains("image-generation"))
+    if (tags.contains("text-to-image") || tags.contains("image-to-image") ||
+        tags.contains("image-generation"))
         return "Image";
     if (tags.contains("automatic-speech-recognition") || id.contains("whisper"))
         return "STT";

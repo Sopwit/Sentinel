@@ -277,6 +277,9 @@ class OllamaLibraryFetcher : public QObject {
 public:
     explicit OllamaLibraryFetcher(QObject* parent = nullptr);
 
+    QString fetchedAt() const {
+        return fetchedAt_;
+    }
     bool fetching() const;
     QVariantList models() const;
     QString errorText() const;
@@ -296,6 +299,7 @@ private:
 
     bool fetching_ = false;
     QVariantList models_;
+    QString fetchedAt_;
     QString errorText_;
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
@@ -356,6 +360,9 @@ class LMStudioLibraryFetcher : public QObject {
 public:
     explicit LMStudioLibraryFetcher(QObject* parent = nullptr);
 
+    QString fetchedAt() const {
+        return fetchedAt_;
+    }
     bool fetching() const;
     QVariantList models() const;
     QString errorText() const;
@@ -375,6 +382,7 @@ private:
 
     bool fetching_ = false;
     QVariantList models_;
+    QString fetchedAt_;
     QString errorText_;
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
