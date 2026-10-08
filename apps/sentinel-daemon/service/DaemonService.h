@@ -6,6 +6,7 @@
 #define SENTINEL_DAEMON_DAEMONSERVICE_H
 
 #include "DaemonIpcServer.h"
+#include "LocalModelRuntime.h"
 
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ApplicationController.h"
@@ -33,6 +34,7 @@ private:
     std::unique_ptr<sentinel::core::AppSettings> m_settings;
     std::unique_ptr<sentinel::core::ApplicationController> m_controller;
     DaemonIpcServer m_ipcServer;
+    std::unique_ptr<LocalModelRuntime> m_localModelRuntime;
     QTimer m_healthTimer;
 };
 
