@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -35,7 +37,6 @@ ApplicationWindow {
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
         splashScreen.close()
-        root.viewModel.registerMainWindow(root.winId)
         if (!root.viewModel.onboardingComplete)
             onboardingScreen.active = true
         else if (root.viewModel.recoveryDraftText.length > 0)
@@ -257,6 +258,7 @@ ApplicationWindow {
 
     Button {
         id: settingsFab
+        Accessible.name: qsTr("Open settings")
         anchors.right: parent.right
         anchors.rightMargin: SentinelTheme.spaceXl
         anchors.verticalCenter: bottomDock.verticalCenter

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -128,9 +130,9 @@ Item {
             }
             ComboBox {
                 model: ["Ctrl+Alt+Space", "Ctrl+Alt+S", "Disabled"]
-                currentIndex: nativeDesktop.shortcut === "" ? 2 : (nativeDesktop.shortcut === "Ctrl+Alt+S" ? 1 : 0)
+                currentIndex: (nativeDesktop.shortcut === "" || nativeDesktop.shortcut === "Disabled") ? 2 : (nativeDesktop.shortcut === "Ctrl+Alt+S" ? 1 : 0)
                 Accessible.name: qsTr("Global Quick Panel shortcut")
-                onActivated: nativeDesktop.shortcut = currentIndex === 2 ? "" : currentText
+                onActivated: nativeDesktop.shortcut = currentIndex === 2 ? "Disabled" : currentText
             }
 
             SettingToggleRow {

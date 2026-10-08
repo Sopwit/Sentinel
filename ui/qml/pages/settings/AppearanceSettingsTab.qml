@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -173,12 +175,12 @@ Item {
                                     clip: true
 
                                     color: {
-                                        if (modelData === "Liquid Glass Light") return "#f4f6f9"
-                                        if (modelData === "Liquid Glass Dark") return "#0d1117"
-                                        if (modelData === "Sentinel Classic") return "#1b1f24"
-                                        if (modelData === "Midnight Blue") return "#0a0f1e"
-                                        if (modelData === "Aurora Teal") return "#0f1a1c"
-                                        if (modelData === "Graphite Grey") return "#121416"
+                                        if (themeCard.modelData === "Liquid Glass Light") return "#f4f6f9"
+                                        if (themeCard.modelData === "Liquid Glass Dark") return "#0d1117"
+                                        if (themeCard.modelData === "Sentinel Classic") return "#1b1f24"
+                                        if (themeCard.modelData === "Midnight Blue") return "#0a0f1e"
+                                        if (themeCard.modelData === "Aurora Teal") return "#0f1a1c"
+                                        if (themeCard.modelData === "Graphite Grey") return "#121416"
                                         return "#141721"
                                     }
 
@@ -190,12 +192,12 @@ Item {
                                         anchors.bottom: parent.bottom
                                         anchors.margins: 6
                                         color: {
-                                            if (modelData === "Liquid Glass Light") return "#4f8ef7"
-                                            if (modelData === "Liquid Glass Dark") return "#7eb8ff"
-                                            if (modelData === "Sentinel Classic") return "#2f81f7"
-                                            if (modelData === "Midnight Blue") return "#8fb4ff"
-                                            if (modelData === "Aurora Teal") return "#7de0b9"
-                                            if (modelData === "Graphite Grey") return "#d0d7dc"
+                                            if (themeCard.modelData === "Liquid Glass Light") return "#4f8ef7"
+                                            if (themeCard.modelData === "Liquid Glass Dark") return "#7eb8ff"
+                                            if (themeCard.modelData === "Sentinel Classic") return "#2f81f7"
+                                            if (themeCard.modelData === "Midnight Blue") return "#8fb4ff"
+                                            if (themeCard.modelData === "Aurora Teal") return "#7de0b9"
+                                            if (themeCard.modelData === "Graphite Grey") return "#d0d7dc"
                                             return root.modeAccent
                                         }
                                     }
@@ -205,8 +207,8 @@ Item {
                                         anchors.top: parent.top
                                         anchors.margins: 6
                                         spacing: 4
-                                        Rectangle { width: 16; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textMuted }
-                                        Rectangle { width: 8; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textPlaceholder }
+                                        Rectangle { Layout.preferredWidth: 16; Layout.preferredHeight: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textMuted }
+                                        Rectangle { Layout.preferredWidth: 8; Layout.preferredHeight: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textPlaceholder }
                                     }
                                 }
 
@@ -215,7 +217,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.margins: SentinelTheme.spaceSm
-                                    text: root.localizedThemeName(modelData)
+                                    text: root.localizedThemeName(themeCard.modelData)
                                     color: themeCard.isSelected ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                     font.pixelSize: SentinelTheme.fontSmall
                                     font.weight: themeCard.isSelected ? Font.DemiBold : Font.Normal

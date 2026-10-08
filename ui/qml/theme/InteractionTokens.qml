@@ -5,6 +5,7 @@
 pragma Singleton
 
 import QtQuick
+import Sentinel.Desktop
 
 QtObject {
     readonly property real hoverOpacity: 0.075

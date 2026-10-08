@@ -59,7 +59,7 @@ Rectangle {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.topMargin: SentinelTheme.spaceXs
-                height: 1
+                Layout.preferredHeight: 1
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
             }
         }

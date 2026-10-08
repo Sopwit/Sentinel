@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -198,8 +200,8 @@ Item {
                             source: "qrc:/icons/tabler/" + tabBtn.modelData.icon + ".svg"
                             sourceSize.width: 22
                             sourceSize.height: 22
-                            width: 22
-                            height: 22
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
                             fillMode: Image.PreserveAspectFit
                             readonly property color iconColor: tabBtn.active
                                 ? SentinelTheme.accent

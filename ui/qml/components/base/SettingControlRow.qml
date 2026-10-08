@@ -71,7 +71,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
             implicitWidth: root.controlWidth
             implicitHeight: Math.max(36, childrenRect.height)
-            height: implicitHeight
+            Layout.preferredHeight: implicitHeight
         }
     }
 

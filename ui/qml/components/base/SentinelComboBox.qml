@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -208,6 +210,8 @@ ComboBox {
     }
 
     delegate: ItemDelegate {
+        required property var model
+        id: delegateScope1
         required property var modelData
         required property int index
         width: popup.availableWidth
@@ -224,24 +228,24 @@ ComboBox {
             Text {
                 Layout.fillWidth: true
                 text: {
-                    var base = control.textRole ? model[control.textRole] : modelData
+                    var base = control.textRole ? delegateScope1.model[control.textRole] : delegateScope1.modelData
                     if (control.delegateTextResolver)
                         base = control.delegateTextResolver(base)
                     return base + control.delegateSuffix
                 }
-                color: (highlighted || control.currentIndex === index)
+                color: (delegateScope1.highlighted || control.currentIndex === delegateScope1.index)
                        ? SentinelTheme.textPrimary
                        : SentinelTheme.textMuted
                 font.family: control.font.family
                 font.pixelSize: control.font.pixelSize
-                font.bold: control.currentIndex === index
+                font.bold: control.currentIndex === delegateScope1.index
                 verticalAlignment: Text.AlignVCenter
                 maximumLineCount: 1
                 elide: Text.ElideRight
             }
 
             TablerGlyph {
-                visible: control.popupShowsCheckmark && control.currentIndex === index
+                visible: control.popupShowsCheckmark && control.currentIndex === delegateScope1.index
                 text: "check"
                 color: control.accent
                 font.pixelSize: SentinelTheme.fontSmall
@@ -251,11 +255,11 @@ ComboBox {
 
         background: Rectangle {
             radius: SentinelTheme.radiusSm
-            color: highlighted
+            color: delegateScope1.highlighted
                    ? SentinelTheme.withAlpha(control.accent, 0.12)
-                   : control.currentIndex === index
+                   : control.currentIndex === delegateScope1.index
                      ? SentinelTheme.withAlpha(control.accent, 0.07)
-                     : hovered
+                     : delegateScope1.hovered
                        ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
                        : "transparent"
 

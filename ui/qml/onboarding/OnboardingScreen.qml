@@ -2,14 +2,17 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
-Item {
+FocusScope {
     id: onboarding
+    objectName: "sentinelOnboarding"
     required property var viewModel
 
     readonly property int step: viewModel.onboardingStepIndex
@@ -20,9 +23,40 @@ Item {
 
     signal finished()
 
+    function focusNavigation() {
+        if (active) nextButton.forceActiveFocus(Qt.TabFocusReason)
+    }
+    onActiveChanged: if (active) Qt.callLater(focusNavigation)
+    onStepChanged: Qt.callLater(focusNavigation)
+    function moveFocus(reverse) {
+        const controls = []
+        function collect(item) {
+            if (!item.visible || !item.enabled) return
+            if (item !== onboarding && item.focusPolicy !== undefined && (item.focusPolicy & Qt.TabFocus)) controls.push(item)
+            for (let child of item.children) collect(child)
+        }
+        collect(onboarding)
+        const current = controls.indexOf(Window.window.activeFocusItem)
+        if (controls.length > 0) {
+            const target = (current + (reverse ? -1 : 1) + controls.length) % controls.length
+            controls[target].forceActiveFocus(reverse ? Qt.BacktabFocusReason : Qt.TabFocusReason)
+        } else {
+            nextButton.forceActiveFocus(Qt.TabFocusReason)
+        }
+    }
+    readonly property bool ownsFocus: {
+        let item = Window.window ? Window.window.activeFocusItem : null
+        while (item && item !== onboarding) item = item.parent
+        return item === onboarding
+    }
+    Shortcut { sequence: "Tab"; enabled: onboarding.active && onboarding.ownsFocus; context: Qt.WindowShortcut; onActivated: onboarding.moveFocus(false) }
+    Shortcut { sequence: "Shift+Tab"; enabled: onboarding.active && onboarding.ownsFocus; context: Qt.WindowShortcut; onActivated: onboarding.moveFocus(true) }
+
     opacity: active ? 1.0 : 0.0
     visible: opacity > 0.01
     enabled: active
+    focus: active
+    Component.onCompleted: Qt.callLater(focusNavigation)
     z: 300
 
     readonly property var stepMeta: [
@@ -52,22 +86,22 @@ Item {
 
     Rectangle {
         id: ambientGlowA
-        width: parent.width * 0.42
-        height: parent.height * 0.42
+        width: onboarding.width * 0.42
+        height: onboarding.height * 0.42
         radius: width / 2
         color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.035)
 
         SequentialAnimation on x {
             running: !onboarding.reducedMotion
             loops: Animation.Infinite
-            NumberAnimation { from: -parent.width * 0.12; to: parent.width * 0.55; duration: 18000; easing.type: Easing.InOutSine }
-            NumberAnimation { from: parent.width * 0.55; to: -parent.width * 0.12; duration: 18000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: -onboarding.width * 0.12; to: onboarding.width * 0.55; duration: 18000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.width * 0.55; to: -onboarding.width * 0.12; duration: 18000; easing.type: Easing.InOutSine }
         }
         SequentialAnimation on y {
             running: !onboarding.reducedMotion
             loops: Animation.Infinite
-            NumberAnimation { from: -parent.height * 0.12; to: parent.height * 0.45; duration: 24000; easing.type: Easing.InOutSine }
-            NumberAnimation { from: parent.height * 0.45; to: -parent.height * 0.12; duration: 24000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: -onboarding.height * 0.12; to: onboarding.height * 0.45; duration: 24000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.height * 0.45; to: -onboarding.height * 0.12; duration: 24000; easing.type: Easing.InOutSine }
         }
         SequentialAnimation on opacity {
             running: !onboarding.reducedMotion
@@ -81,22 +115,22 @@ Item {
 
     Rectangle {
         id: ambientGlowB
-        width: parent.width * 0.30
-        height: parent.height * 0.30
+        width: onboarding.width * 0.30
+        height: onboarding.height * 0.30
         radius: width / 2
         color: SentinelTheme.withAlpha(SentinelTheme.accentSecondary, 0.030)
 
         SequentialAnimation on x {
             running: !onboarding.reducedMotion
             loops: Animation.Infinite
-            NumberAnimation { from: parent.width * 0.6; to: parent.width * 0.05; duration: 21000; easing.type: Easing.InOutSine }
-            NumberAnimation { from: parent.width * 0.05; to: parent.width * 0.6; duration: 21000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.width * 0.6; to: onboarding.width * 0.05; duration: 21000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.width * 0.05; to: onboarding.width * 0.6; duration: 21000; easing.type: Easing.InOutSine }
         }
         SequentialAnimation on y {
             running: !onboarding.reducedMotion
             loops: Animation.Infinite
-            NumberAnimation { from: parent.height * 0.5; to: parent.height * 0.0; duration: 26000; easing.type: Easing.InOutSine }
-            NumberAnimation { from: parent.height * 0.0; to: parent.height * 0.5; duration: 26000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.height * 0.5; to: onboarding.height * 0.0; duration: 26000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: onboarding.height * 0.0; to: onboarding.height * 0.5; duration: 26000; easing.type: Easing.InOutSine }
         }
         SequentialAnimation on opacity {
             running: !onboarding.reducedMotion
@@ -261,6 +295,8 @@ Item {
             spacing: SentinelTheme.spaceMd
 
             SentinelButton {
+                id: backButton
+                objectName: "onboardingBack"
                 text: qsTr("Back")
                 enabled: onboarding.step > 0
                 onClicked: onboarding.viewModel.backOnboarding()
@@ -269,6 +305,8 @@ Item {
             Item { Layout.fillWidth: true }
 
             SentinelButton {
+                id: nextButton
+                objectName: "onboardingNext"
                 text: onboarding.step === onboarding.totalSteps - 1 ? qsTr("Finish") : qsTr("Next")
                 accent: onboarding.brandAccent
                 premium: true

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -143,8 +145,8 @@ Item {
                             spacing: SentinelTheme.spaceSm
 
                             Rectangle {
-                                width: 4
-                                height: 16
+                                Layout.preferredWidth: 4
+                                Layout.preferredHeight: 16
                                 radius: 2
                                 color: navItem.active ? settingsPage.modeAccent : "transparent"
                             }

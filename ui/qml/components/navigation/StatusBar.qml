@@ -38,7 +38,7 @@ ShellPanel {
 
         Rectangle {
             id: offlineDot
-            width: 8; height: 8
+            Layout.preferredWidth: 8; Layout.preferredHeight: 8
             radius: 4
             visible: !statusBar.viewModel.isOnline
             color: "#e74c3c"
