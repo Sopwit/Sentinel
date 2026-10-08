@@ -91,3 +91,7 @@ Authoritative compaction, robust authorized rollback, Git branch/dirty metadata,
 The terminal implementation is validated and reviewable. CLI/TUI user guides and the interface guide match the implemented keys, contracts and limitations. The shared checkout includes pre-existing Desktop/branding changes and should be reviewed by scope before committing. The initial validation did not create commits or pushes; commits were subsequently authorized by the user. The user’s previously running daemon was not restarted; restart it from the updated build before using the new TUI operations.
 
 FINAL VERDICT: FIXED + PASS
+
+## Current-host follow-up — 2026-10-08
+
+The historical pending daemon restart in section 22 is now resolved: the owned idle daemon was replaced with the current tests-built daemon on the original profile/socket. Status/doctor/models/sessions and a real existing Ollama Chat passed. Limited TUI pickers, slash palette, approval reconnect/Allow Once, cancellation and resume/reconnect were validated. Final terminal first frame was 109 ms; status 10–14 ms. No model was downloaded. [Deferred cleanup report](DEFERRED_TECHNICAL_CLEANUP_REPORT.md) records exact evidence and remaining native acceptance. The earlier clang-tidy PCH blocker is resolved for the documented five-source scope. This follow-up does not rewrite or elevate historical native PARTIAL results.
