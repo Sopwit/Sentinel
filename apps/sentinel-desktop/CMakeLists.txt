@@ -266,6 +266,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/AgentInspectorPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelsPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/LocalModelsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/OnlineRegistryTab.qml

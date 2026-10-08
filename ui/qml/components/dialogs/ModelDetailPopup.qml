@@ -19,11 +19,12 @@ SentinelOverlayModal {
     preferredHeight: 680
     // The download destination is independent of the active chat provider.
     property int downloadTarget: 0
+    readonly property bool runtimeModel: !!(modelInfo && modelInfo.category === "Runtime")
     readonly property bool chatModel: !!(modelInfo && !modelInfo.cloudOnly && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
-    readonly property bool targetAvailable: downloadTarget === 0 ? canPull
+    readonly property bool targetAvailable: runtimeModel ? !!modelInfo.externalUrl : downloadTarget === 0 ? canPull
         : downloadTarget === 1 ? (gguf ? modelInfo.chatCompatible !== false && modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
         : downloadTarget === 3 ? managerRepository.length > 0 : chatModel
-    readonly property string targetExplanation: downloadTarget === 3 ? qsTr("Hugging Face hosts model cards and files. Review formats, license and access requirements before choosing a compatible runtime.") : modelInfo && modelInfo.cloudOnly
+    readonly property string targetExplanation: runtimeModel ? root.info("integration") : downloadTarget === 3 ? qsTr("Hugging Face hosts model cards and files. Review formats, license and access requirements before choosing a compatible runtime.") : modelInfo && modelInfo.cloudOnly
         ? qsTr("This catalog entry is cloud-only. No local download is available; use the model source for cloud availability.")
         : downloadTarget === 0
         ? (canPull ? qsTr("Download the selected variant into Ollama, regardless of your chat provider.") : qsTr("No verified Ollama variant is available for this model."))
@@ -33,7 +34,7 @@ SentinelOverlayModal {
     readonly property string targetError: downloadTarget === 0
         ? (pullError || ollamaModelDetailFetcher.errorText || ollamaPuller.errorText)
         : downloadTarget === 1 ? ggufLibraryFetcher.errorText : ""
-    readonly property string targetAction: downloadTarget === 0 ? qsTr("Download with Ollama")
+    readonly property string targetAction: runtimeModel ? qsTr("Open runtime setup ↗") : downloadTarget === 0 ? qsTr("Download with Ollama")
         : downloadTarget === 1 ? (gguf ? (modelInfo.installed ? qsTr("Use with llama.cpp") : qsTr("Download for llama.cpp")) : qsTr("Choose GGUF for llama.cpp"))
         : downloadTarget === 3 ? qsTr("Open Hugging Face files ↗") : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
     property var selectedTagObj: null
@@ -96,7 +97,12 @@ SentinelOverlayModal {
                     columnSpacing: SentinelTheme.spaceLg
                     rowSpacing: SentinelTheme.spaceSm
                     Repeater {
-                        model: [
+                        model: root.runtimeModel ? [
+                            {label: qsTr("Supported platforms"), value: root.info("platforms")},
+                            {label: qsTr("Model formats"), value: root.info("modelFormats")},
+                            {label: qsTr("Sentinel integration"), value: root.info("integration")},
+                            {label: qsTr("Source checked"), value: root.info("validatedAt")}
+                        ] : [
                             {label: qsTr("Context window"), value: root.info("context")},
                             {label: qsTr("Input"), value: root.info("input")},
                             {label: qsTr("Format"), value: root.info("format")},
@@ -160,9 +166,10 @@ SentinelOverlayModal {
         }
         Label { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; text: root.activePull ? root.pullStatus : ggufLibraryFetcher.statusText; color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
         ProgressBar { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; value: root.activePull ? root.pullProgress : ggufLibraryFetcher.progress }
-        Label { text: qsTr("Download destination"); color: SentinelTheme.textPrimary; font.bold: true }
+        Label { visible: !root.runtimeModel; text: qsTr("Download destination"); color: SentinelTheme.textPrimary; font.bold: true }
         SentinelComboBox {
             id: destinationSelector
+            visible: !root.runtimeModel
             Layout.fillWidth: true
             model: ["Ollama", "llama.cpp", "LM Studio", "Hugging Face files"]
             currentIndex: root.downloadTarget
@@ -182,7 +189,8 @@ SentinelOverlayModal {
                 text: root.targetAction
                 enabled: root.targetAvailable && !ollamaPuller.pulling && !ggufLibraryFetcher.pulling
                 onClicked: {
-                    if (root.downloadTarget === 0) root.downloadRequested(root.effectiveOllamaId)
+                    if (root.runtimeModel) Qt.openUrlExternally(root.modelInfo.documentationUrl || root.modelInfo.externalUrl)
+                    else if (root.downloadTarget === 0) root.downloadRequested(root.effectiveOllamaId)
                     else if (root.downloadTarget === 3) Qt.openUrlExternally("https://huggingface.co/" + root.managerRepository + "/tree/main")
                     else if (root.downloadTarget === 2) Qt.openUrlExternally(root.managerUrl)
                     else if (!root.gguf) {
@@ -194,7 +202,7 @@ SentinelOverlayModal {
                     } else ggufLibraryFetcher.download(root.modelInfo.id)
                 }
             }
-            SentinelButton { visible: root.modelInfo && !!root.modelInfo.externalUrl; text: qsTr("Model source ↗"); onClicked: Qt.openUrlExternally(root.modelInfo.externalUrl) }
+            SentinelButton { visible: !root.runtimeModel && root.modelInfo && !!root.modelInfo.externalUrl; text: qsTr("Model source ↗"); onClicked: Qt.openUrlExternally(root.modelInfo.externalUrl) }
             SentinelButton { visible: root.activePull || ggufLibraryFetcher.pulling; text: qsTr("Cancel download"); onClicked: { if (ggufLibraryFetcher.pulling) ggufLibraryFetcher.cancel(); else root.cancelRequested() } }
         }
     }
