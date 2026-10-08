@@ -115,6 +115,14 @@ public:
         Q_UNUSED(title)
         return false;
     }
+    // Compare-and-set an automatic title without overwriting user edits or stale jobs.
+    virtual bool updateAutoTitleConversation(const QString& conversationId, const QString& title,
+                                             const QString& expectedTitle) {
+        Q_UNUSED(conversationId)
+        Q_UNUSED(title)
+        Q_UNUSED(expectedTitle)
+        return false;
+    }
     virtual bool archiveConversation(const QString& conversationId) = 0;
     virtual bool unarchiveConversation(const QString& conversationId) = 0;
     virtual bool pinConversation(const QString& conversationId) = 0;

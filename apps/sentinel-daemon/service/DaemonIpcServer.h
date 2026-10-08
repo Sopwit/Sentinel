@@ -10,6 +10,8 @@
 #include <QPointer>
 #include <QSet>
 #include <memory>
+#include <atomic>
+#include <QThread>
 namespace sentinel::core {
 class ApplicationController;
 class AppSettings;
@@ -49,6 +51,11 @@ private:
     void error(QLocalSocket* socket, const QString& id, const QString& code);
     void publishEvent(const QString& name, const QJsonObject& payload = {});
     void onChatChanged();
+    void scheduleConversationTitle();
+    QPointer<QThread> m_titleWorker;
+    std::shared_ptr<std::atomic_bool> m_titleCancellation;
+    QHash<QString, int> m_titleTurns;
+    QSet<QString> m_generatedTitles;
     void onAgentEvent(const core::AgentEvent& event);
     QJsonObject session(const QString& id, bool presentation = false) const;
     void rememberRun();

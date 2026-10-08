@@ -18,6 +18,7 @@ class InMemoryConversationStoreTest final : public QObject {
 
 private slots:
     void createsListsAndLoadsConversation();
+    void automaticTitlesPreserveManualAndStaleEdits();
     void appendsAndLoadsMessagesInDeterministicOrder();
     void pinsAndUnpinsConversationMetadata();
     void rejectsMissingConversation();
@@ -111,6 +112,24 @@ void InMemoryConversationStoreTest::archivesAndDeletesWithoutRemovingOtherConver
     const auto conversations = store.listConversations();
     QCOMPARE(conversations.size(), 1);
     QCOMPARE(conversations.first().id, second.id);
+}
+
+void InMemoryConversationStoreTest::automaticTitlesPreserveManualAndStaleEdits() {
+    InMemoryConversationStore store;
+    const auto record = store.createConversation(QStringLiteral("New Chat"));
+    QVERIFY(store.autoTitleConversation(record.id, QStringLiteral("First message")));
+    QVERIFY(store.updateAutoTitleConversation(record.id, QStringLiteral("Qt Interface Design"),
+                                              QStringLiteral("First message")));
+    QVERIFY(!store.updateAutoTitleConversation(record.id, QStringLiteral("Stale response"),
+                                               QStringLiteral("First message")));
+    QVERIFY(store.renameConversation(record.id, QStringLiteral("My chosen title")));
+    QVERIFY(!store.updateAutoTitleConversation(record.id, QStringLiteral("Overwrite"),
+                                               QStringLiteral("My chosen title")));
+    QCOMPARE(store.listConversations().first().title, QStringLiteral("My chosen title"));
+    const auto deleted = store.createConversation(QStringLiteral("New Chat"));
+    QVERIFY(store.deleteConversation(deleted.id));
+    QVERIFY(!store.updateAutoTitleConversation(deleted.id, QStringLiteral("Resurrected"),
+                                               QStringLiteral("New Chat")));
 }
 
 QTEST_MAIN(InMemoryConversationStoreTest)

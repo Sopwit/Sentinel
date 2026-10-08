@@ -168,7 +168,22 @@ bool InMemoryConversationStore::autoTitleConversation(const QString& conversatio
     auto* conversation = findConversation(conversationId);
     if (!conversation || conversation->deleted || conversation->userRenamed ||
         (conversation->title != QLatin1String("Current Transcript") &&
-         conversation->title != QLatin1String("Untitled Conversation"))) return false;
+         conversation->title != QLatin1String("Untitled Conversation") &&
+         conversation->title != QLatin1String("New Chat") &&
+         conversation->title != QLatin1String("New chat"))) return false;
+    conversation->title = normalizedTitle(title);
+    conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
+    conversation->summary = conversationRecordSummary(*conversation);
+    return true;
+}
+
+bool InMemoryConversationStore::updateAutoTitleConversation(const QString& conversationId,
+                                                             const QString& title,
+                                                             const QString& expectedTitle) {
+    auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted || conversation->userRenamed ||
+        conversation->title != expectedTitle || title.trimmed().isEmpty())
+        return false;
     conversation->title = normalizedTitle(title);
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
     conversation->summary = conversationRecordSummary(*conversation);
