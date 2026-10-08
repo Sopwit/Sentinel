@@ -19,21 +19,23 @@ SentinelOverlayModal {
     preferredHeight: 680
     // The download destination is independent of the active chat provider.
     property int downloadTarget: 0
-    readonly property bool chatModel: !!(modelInfo && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
+    readonly property bool chatModel: !!(modelInfo && !modelInfo.cloudOnly && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
     readonly property bool targetAvailable: downloadTarget === 0 ? canPull
         : downloadTarget === 1 ? (gguf ? modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
         : chatModel
-    readonly property string targetExplanation: downloadTarget === 0
+    readonly property string targetExplanation: modelInfo && modelInfo.cloudOnly
+        ? qsTr("This catalog entry is cloud-only. No local download is available; use the model source for cloud availability.")
+        : downloadTarget === 0
         ? (canPull ? qsTr("Download the selected variant into Ollama, regardless of your chat provider.") : qsTr("No verified Ollama variant is available for this model."))
         : downloadTarget === 1
           ? (gguf ? qsTr("Download or select this GGUF model for llama.cpp.") : chatModel ? qsTr("Find compatible GGUF files, then choose a quantization to download for llama.cpp.") : qsTr("This model requires a different runtime; no compatible llama.cpp download is available."))
-          : (chatModel ? qsTr("Open this model in LM Studio's download screen. LM Studio manages the download.") : qsTr("This model requires a different runtime; it is not supported by LM Studio chat inference."))
+          : (chatModel ? (managerRepository.length > 0 ? qsTr("Open this model in LM Studio's download screen. LM Studio manages the download.") : qsTr("Open the model catalog page to review available LM Studio downloads.")) : qsTr("This model requires a different runtime; it is not supported by LM Studio chat inference."))
     readonly property string targetError: downloadTarget === 0
         ? (pullError || ollamaModelDetailFetcher.errorText || ollamaPuller.errorText)
         : downloadTarget === 1 ? ggufLibraryFetcher.errorText : ""
     readonly property string targetAction: downloadTarget === 0 ? qsTr("Download with Ollama")
         : downloadTarget === 1 ? (gguf ? (modelInfo.installed ? qsTr("Use with llama.cpp") : qsTr("Download for llama.cpp")) : qsTr("Choose GGUF for llama.cpp"))
-        : qsTr("Open LM Studio downloads ↗")
+        : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
     property var selectedTagObj: null
     readonly property string effectiveOllamaId: selectedTagObj ? selectedTagObj.fullTag : (modelInfo && modelInfo.ollamaId ? modelInfo.ollamaId : "")
     readonly property bool gguf: !!(modelInfo && modelInfo.gguf)
@@ -42,7 +44,7 @@ SentinelOverlayModal {
         : modelInfo && modelInfo.externalUrl && modelInfo.externalUrl.indexOf("https://huggingface.co/") === 0
           ? modelInfo.externalUrl.substring(23).split('/').slice(0, 2).join('/') : ""
     readonly property string managerUrl: managerRepository.length > 0
-        ? "lmstudio://open_from_hf?model=" + encodeURIComponent(managerRepository) : "lmstudio://"
+        ? "lmstudio://open_from_hf?model=" + encodeURIComponent(managerRepository) : modelInfo && modelInfo.externalUrl && modelInfo.externalUrl.indexOf("https://lmstudio.ai/models/") === 0 ? modelInfo.externalUrl : "lmstudio://"
     function info(key) { return modelInfo && modelInfo[key] ? String(modelInfo[key]) : qsTr("Not reported") }
     onModelInfoChanged: {
         selectedTagObj = null

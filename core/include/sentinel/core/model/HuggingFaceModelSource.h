@@ -77,7 +77,7 @@ public:
     QDateTime fetchedAt() const;
     QString cachePath() const;
     bool clearMetadataCache(int olderThanDays = 0);
-    void search(const QString& text);
+    void search(const QString& text, bool forceRefresh = false);
     void fetchRepository(const QString& repositoryId);
     void setTokenProvider(std::function<QString()> provider);
     QString token() const;

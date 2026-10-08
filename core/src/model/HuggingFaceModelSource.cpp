@@ -93,6 +93,8 @@ HuggingFaceCatalogState HuggingFaceModelSource::catalogState() const {
     return state_;
 }
 QString HuggingFaceModelSource::catalogDetail() const {
+    if (detail_.isEmpty() && fetchedAt_.isValid())
+        return QStringLiteral("Cached Hugging Face metadata.");
     return catalogState() == HuggingFaceCatalogState::Stale &&
            state_ == HuggingFaceCatalogState::Current
         ? QStringLiteral("Cached Hugging Face metadata; refresh required.") : detail_;
@@ -219,6 +221,9 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
                                   .value(QStringLiteral("model_type")).toString();
     for (const auto& tag : object.value(QStringLiteral("tags")).toArray())
         if (tag.isString() && repository.tags.size() < 80) repository.tags.append(tag.toString());
+    const auto task = object.value(QStringLiteral("pipeline_tag")).toString();
+    if (!task.isEmpty() && !repository.tags.contains(task))
+        repository.tags.append(task);
     if (repository.license.isEmpty()) {
         for (const auto& tag : repository.tags) {
             if (tag.startsWith(QStringLiteral("license:"))) {
@@ -375,9 +380,9 @@ QList<ModelLibraryEntry> HuggingFaceModelSource::query(const HuggingFaceSearchQu
     return result;
 }
 
-void HuggingFaceModelSource::search(const QString& text) {
+void HuggingFaceModelSource::search(const QString& text, bool forceRefresh) {
     const auto query = text.trimmed();
-    if (query == cachedQuery_ && fetchedAt_.isValid() &&
+    if (!forceRefresh && query == cachedQuery_ && fetchedAt_.isValid() &&
         fetchedAt_.secsTo(QDateTime::currentDateTimeUtc()) < cacheMinutes * 60 &&
         (state_ == HuggingFaceCatalogState::Current || state_ == HuggingFaceCatalogState::Empty)) {
         emit requestFinished(true);

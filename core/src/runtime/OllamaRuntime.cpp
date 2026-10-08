@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/OllamaRuntime.h"
+#include "sentinel/core/model/ModelCategory.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
@@ -741,6 +742,19 @@ void OllamaModelPuller::setState(bool pulling, const QString& model, qreal progr
     Q_UNUSED(changed)
 }
 
+namespace {
+QString catalogPlainText(QString value) {
+    value.replace("&amp;", "&");
+    value.replace("&#39;", "'");
+    value.replace("&#x27;", "'");
+    value.replace("&quot;", "\"");
+    value.replace("&lt;", "<");
+    value.replace("&gt;", ">");
+    value.replace("&nbsp;", " ");
+    return value;
+}
+} // namespace
+
 // ── OllamaLibraryFetcher implementation ───────────────────────────────────────
 
 OllamaLibraryFetcher::OllamaLibraryFetcher(QObject* parent)
@@ -773,6 +787,7 @@ void OllamaLibraryFetcher::fetch(const QString& sort) {
 
     QUrl url(QStringLiteral("https://ollama.com/library?sort=") + sortParam);
     QNetworkRequest request(url);
+    request.setTransferTimeout(12000);
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -780,7 +795,14 @@ void OllamaLibraryFetcher::fetch(const QString& sort) {
 
     reply_ = nam_->get(request);
 
-    connect(reply_, &QNetworkReply::finished, this, &OllamaLibraryFetcher::handleReplyFinished);
+    auto* currentReply = reply_;
+    connect(currentReply, &QNetworkReply::finished, this, [this, currentReply] {
+        if (reply_ != currentReply) {
+            currentReply->deleteLater();
+            return;
+        }
+        handleReplyFinished();
+    });
 }
 
 void OllamaLibraryFetcher::cancel() {
@@ -813,7 +835,7 @@ void OllamaLibraryFetcher::handleReplyFinished() {
 
     const QString html = QString::fromUtf8(r->readAll());
     parseHtml(html);
-    emit fetchFinished(true);
+    emit fetchFinished(errorText_.isEmpty());
 }
 
 void OllamaLibraryFetcher::parseHtml(const QString& html) {
@@ -927,22 +949,7 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
             }
         }
 
-        QString category = QStringLiteral("LLM");
-        if (caps.contains(QStringLiteral("embedding")) ||
-            ollamaId.contains(QStringLiteral("embed"))) {
-            category = QStringLiteral("Embedding");
-        } else if (caps.contains(QStringLiteral("vision")) ||
-                   ollamaId.contains(QStringLiteral("llava")) ||
-                   ollamaId.contains(QStringLiteral("bakllava"))) {
-            category = QStringLiteral("Vision");
-        } else if (caps.contains(QStringLiteral("thinking")) ||
-                   ollamaId.contains(QStringLiteral("deepseek-r1")) ||
-                   ollamaId.contains(QStringLiteral("phi4"))) {
-            category = QStringLiteral("Think");
-        } else if (ollamaId.contains(QStringLiteral("stable-diffusion")) ||
-                   ollamaId.contains(QStringLiteral("flux"))) {
-            category = QStringLiteral("Image");
-        }
+        const auto category = sentinel::core::modelCategory(ollamaId, caps);
 
         QString provider = QStringLiteral("Ollama Library");
         QString idLower = ollamaId.toLower();
@@ -971,11 +978,11 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("id")] = ollamaId;
         modelObj[QStringLiteral("ollamaId")] = ollamaId;
         modelObj[QStringLiteral("category")] = category;
-        modelObj[QStringLiteral("name")] = name;
+        modelObj[QStringLiteral("name")] = catalogPlainText(name);
         modelObj[QStringLiteral("provider")] = provider;
         modelObj[QStringLiteral("size")] = QStringLiteral("—");
         modelObj[QStringLiteral("popularity")] = pulls + QStringLiteral(" pulls");
-        modelObj[QStringLiteral("description")] = description;
+        modelObj[QStringLiteral("description")] = catalogPlainText(description);
         modelObj[QStringLiteral("externalUrl")] =
             QStringLiteral("https://ollama.com/library/") + ollamaId;
 
@@ -1001,6 +1008,11 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         parsedList.append(modelObj);
     }
 
+    if (parsedList.isEmpty()) {
+        errorText_ = QStringLiteral("Catalog page could not be parsed; previous results retained.");
+        emit errorTextChanged();
+        return;
+    }
     models_ = parsedList;
     emit modelsChanged();
 }
@@ -1053,6 +1065,7 @@ void OllamaModelDetailFetcher::fetchDetails(const QString& modelId) {
 
     QUrl url(QStringLiteral("https://ollama.com/library/") + modelId_.toLower());
     QNetworkRequest request(url);
+    request.setTransferTimeout(12000);
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -1257,6 +1270,7 @@ void LMStudioLibraryFetcher::fetch() {
 
     QUrl url(QStringLiteral("https://lmstudio.ai/models?sort=updated"));
     QNetworkRequest request(url);
+    request.setTransferTimeout(12000);
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -1264,7 +1278,14 @@ void LMStudioLibraryFetcher::fetch() {
 
     reply_ = nam_->get(request);
 
-    connect(reply_, &QNetworkReply::finished, this, &LMStudioLibraryFetcher::handleReplyFinished);
+    auto* currentReply = reply_;
+    connect(currentReply, &QNetworkReply::finished, this, [this, currentReply] {
+        if (reply_ != currentReply) {
+            currentReply->deleteLater();
+            return;
+        }
+        handleReplyFinished();
+    });
 }
 
 void LMStudioLibraryFetcher::cancel() {
@@ -1298,7 +1319,7 @@ void LMStudioLibraryFetcher::handleReplyFinished() {
 
     const QString html = QString::fromUtf8(r->readAll());
     parseHtml(html);
-    emit fetchFinished(true);
+    emit fetchFinished(errorText_.isEmpty());
 }
 
 void LMStudioLibraryFetcher::parseHtml(const QString& html) {
@@ -1363,6 +1384,8 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
                 break;
 
             QString tagVal = block.mid(textStart, textEnd - textStart).trimmed();
+            tagVal.remove(QRegularExpression(QStringLiteral("<[^>]*>")));
+            tagVal = catalogPlainText(tagVal).simplified();
             if (!tagVal.isEmpty() && !tags.contains(tagVal)) {
                 tags.append(tagVal);
             }
@@ -1419,25 +1442,15 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
             }
         }
 
-        // 6. Category (Vision, Think, and Image check)
-        QString category = QStringLiteral("LLM");
-        if (block.contains(QStringLiteral("--lm-yellow")) ||
-            block.contains(QStringLiteral("rgb(var(--lm-yellow))")) ||
-            description.toLower().contains(QStringLiteral("vision")) ||
-            modelId.contains(QStringLiteral("llava")) ||
-            modelId.contains(QStringLiteral("bakllava"))) {
-            category = QStringLiteral("Vision");
-        } else if (description.toLower().contains(QStringLiteral("reasoning")) ||
-                   description.toLower().contains(QStringLiteral("thinking")) ||
-                   modelId.contains(QStringLiteral("r1")) ||
-                   modelId.contains(QStringLiteral("deepseek")) ||
-                   modelId.contains(QStringLiteral("phi-4"))) {
-            category = QStringLiteral("Think");
-        } else if (description.toLower().contains(QStringLiteral("image")) ||
-                   modelId.contains(QStringLiteral("stable-diffusion")) ||
-                   modelId.contains(QStringLiteral("flux"))) {
-            category = QStringLiteral("Image");
-        }
+        QStringList capabilities;
+        const auto lowerDescription = description.toLower();
+        if (lowerDescription.contains("vision") || lowerDescription.contains("multimodal"))
+            capabilities << "vision";
+        if (lowerDescription.contains("reasoning") || lowerDescription.contains("thinking"))
+            capabilities << "reasoning";
+        if (lowerDescription.contains("embedding"))
+            capabilities << "embedding";
+        const auto category = sentinel::core::modelCategory(modelId, capabilities);
 
         // Infer real provider from model ID slug
         QString lmsProvider = QStringLiteral("Community");
@@ -1476,14 +1489,21 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("id")] = QStringLiteral("lmstudio-") + modelId;
         modelObj[QStringLiteral("ollamaId")] = QStringLiteral("");
         modelObj[QStringLiteral("category")] = category;
-        modelObj[QStringLiteral("name")] = name;
+        modelObj[QStringLiteral("name")] = catalogPlainText(name);
         modelObj[QStringLiteral("provider")] = lmsProvider;
-        modelObj[QStringLiteral("size")] = downloads + QStringLiteral(" downloads");
-        modelObj[QStringLiteral("description")] = description;
+        modelObj[QStringLiteral("size")] = QStringLiteral("—");
+        modelObj[QStringLiteral("popularity")] = downloads + QStringLiteral(" downloads");
+        modelObj[QStringLiteral("cloudOnly")] =
+            !block.contains(QStringLiteral("Available to download")) &&
+            block.contains(QStringLiteral("Available in LM Studio Cloud"));
+        modelObj[QStringLiteral("description")] = catalogPlainText(description);
+        if (modelObj.value(QStringLiteral("cloudOnly")).toBool())
+            modelObj[QStringLiteral("runtimeNote")] =
+                QStringLiteral("Cloud-only catalog entry; no local download is advertised.");
         modelObj[QStringLiteral("badge")] = QStringLiteral("LM Studio");
         modelObj[QStringLiteral("badgeColor")] = QStringLiteral("#3b82f6");
 
-        QStringList tagsList = tags;
+        QStringList tagsList = tags + capabilities;
         if (updated != QStringLiteral("—")) {
             tagsList.append(updated);
         }
@@ -1498,6 +1518,11 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         parsedList.append(modelObj);
     }
 
+    if (parsedList.isEmpty()) {
+        errorText_ = QStringLiteral("Catalog page could not be parsed; previous results retained.");
+        emit errorTextChanged();
+        return;
+    }
     models_ = parsedList;
     emit modelsChanged();
 }

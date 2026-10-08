@@ -348,6 +348,7 @@ private:
 // ── LMStudioLibraryFetcher ───────────────────────────────────────────────────
 class LMStudioLibraryFetcher : public QObject {
     Q_OBJECT
+    friend class OllamaRuntimeTest;
     Q_PROPERTY(bool fetching READ fetching NOTIFY fetchingChanged)
     Q_PROPERTY(QVariantList models READ models NOTIFY modelsChanged)
     Q_PROPERTY(QString errorText READ errorText NOTIFY errorTextChanged)

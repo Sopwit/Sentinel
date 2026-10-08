@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/model/HuggingFaceModelSource.h"
+#include "sentinel/core/model/ModelCategory.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QJsonArray>
@@ -25,6 +28,9 @@ private slots:
     void acceptsLocalhostEndpointOnly();
     void nullClientIsDeterministicallyUnavailable();
     void parsesOllamaLibraryHtml();
+    void taskCategoriesAndMixedCapabilities();
+    void parsesLmStudioCloudAndDownloadMetadata();
+    void explicitRefreshBypassesFreshCache();
     void llamaCppLoadedTemplateCapabilities_data();
     void llamaCppLoadedTemplateCapabilities();
 };
@@ -190,7 +196,8 @@ void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
     QCOMPARE(model.value(QStringLiteral("category")).toString(), QStringLiteral("Think"));
     QCOMPARE(model.value(QStringLiteral("name")).toString(), QStringLiteral("test-model-1"));
     QCOMPARE(model.value(QStringLiteral("provider")).toString(), QStringLiteral("Ollama Library"));
-    QCOMPARE(model.value(QStringLiteral("size")).toString(), QStringLiteral("1,234 pulls"));
+    QCOMPARE(model.value(QStringLiteral("size")).toString(), QStringLiteral("—"));
+    QCOMPARE(model.value(QStringLiteral("popularity")).toString(), QStringLiteral("1,234 pulls"));
     QCOMPARE(model.value(QStringLiteral("description")).toString(),
              QStringLiteral("This is a description of test-model-1."));
     QCOMPARE(model.value(QStringLiteral("badge")).toString(), QStringLiteral("tools"));
@@ -200,6 +207,64 @@ void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
     QVERIFY(tags.contains(QStringLiteral("tools")));
     QVERIFY(tags.contains(QStringLiteral("thinking")));
     QVERIFY(tags.contains(QStringLiteral("2 days ago")));
+}
+
+void OllamaRuntimeTest::taskCategoriesAndMixedCapabilities() {
+    using sentinel::core::modelCategory;
+    QCOMPARE(modelCategory("phi4", {}), QString("LLM"));
+    QCOMPARE(modelCategory("encoder", {"feature-extraction", "vision"}), QString("Embedding"));
+    QCOMPARE(modelCategory("mixed", {"vision", "thinking"}), QString("Vision"));
+    QCOMPARE(modelCategory("video", {"image-to-video"}), QString("Video"));
+    QCOMPARE(modelCategory("speech", {"text-to-speech"}), QString("TTS"));
+    QCOMPARE(modelCategory("speech", {"automatic-speech-recognition"}), QString("STT"));
+}
+void OllamaRuntimeTest::parsesLmStudioCloudAndDownloadMetadata() {
+    LMStudioLibraryFetcher fetcher;
+    fetcher.parseHtml(QStringLiteral(
+        "<a href=\"/models/cloud-model\"><div class=\"text-lg font-medium\">Cloud model</div>"
+        "<div class=\"text-muted-foreground\">Multimodal vision and reasoning model&#39;s "
+        "card</div>"
+        "<div class=\"font-mono text-xs\"><svg><path d=\"M0 "
+        "0\"></path></svg><span>Cloud</span></div>"
+        "Available in LM Studio Cloud<span class=\"font-medium\">123</span></a>"));
+    QCOMPARE(fetcher.models().size(), 1);
+    const auto model = fetcher.models().first().toMap();
+    QCOMPARE(model.value("category").toString(), QString("Vision"));
+    QVERIFY(model.value("cloudOnly").toBool());
+    QVERIFY(model.value("description").toString().contains("model's card"));
+    QCOMPARE(model.value("size").toString(), QString("—"));
+    QVERIFY(model.value("tags").toStringList().contains("reasoning"));
+    QVERIFY(model.value("tags").toStringList().contains("Cloud"));
+    for (const auto& tag : model.value("tags").toStringList())
+        QVERIFY(!tag.contains('<'));
+    fetcher.parseHtml("<html>No model cards because markup changed</html>");
+    QCOMPARE(fetcher.models().size(), 1);
+    QVERIFY(!fetcher.errorText().isEmpty());
+}
+void OllamaRuntimeTest::explicitRefreshBypassesFreshCache() {
+    QTemporaryDir directory;
+    QFile file(directory.filePath("cache.json"));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(QJsonDocument(QJsonObject{{"query", "GGUF"},
+                                         {"fetchedAt", QDateTime::currentDateTimeUtc().toString(
+                                                           Qt::ISODateWithMs)},
+                                         {"models", QJsonArray{QJsonObject{{"id", "test/model"}}}}})
+                   .toJson());
+    file.close();
+    sentinel::core::HuggingFaceModelSource source(file.fileName());
+    auto& policy = sentinel::core::NetworkPolicyService::instance();
+    const auto previous = policy.mode();
+    policy.setMode(sentinel::core::NetworkMode::Offline);
+    QSignalSpy finished(&source, &sentinel::core::HuggingFaceModelSource::requestFinished);
+    source.search("GGUF");
+    const bool cacheHit = finished.takeFirst().first().toBool();
+    source.search("GGUF", true);
+    const bool refreshSucceeded = finished.takeFirst().first().toBool();
+    policy.setMode(previous);
+    QVERIFY(cacheHit);
+    QVERIFY(!refreshSucceeded);
+    QCOMPARE(source.catalogState(), sentinel::core::HuggingFaceCatalogState::Offline);
+    QVERIFY(!source.entries().isEmpty());
 }
 
 QTEST_MAIN(OllamaRuntimeTest)

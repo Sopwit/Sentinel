@@ -36,6 +36,20 @@ Item {
     onSearchQueryChanged: catalogSearchTimer.restart()
     Timer { id: catalogSearchTimer; interval: 700; onTriggered: ggufLibraryFetcher.fetch(modelsPage.searchQuery) }
 
+    readonly property bool catalogFetching: ollamaLibraryFetcher.fetching || lmStudioLibraryFetcher.fetching || ggufLibraryFetcher.fetching
+    function inferredLocalCategory(name) {
+        var lower = name.toLowerCase()
+        if (lower.indexOf("embed") >= 0) return "Embedding"
+        if (lower.indexOf("vision") >= 0 || lower.indexOf("llava") >= 0) return "Vision"
+        if (lower.indexOf("deepseek-r1") >= 0 || lower.indexOf("thinking") >= 0) return "Think"
+        if (lower.indexOf("whisper") >= 0) return "STT"
+        return "LLM"
+    }
+    function matchesCategory(model, category) {
+        if (model.category === category) return true
+        var tags = (model.tags || []).join(" ").toLowerCase()
+        return category === "Think" && (tags.indexOf("thinking") >= 0 || tags.indexOf("reasoning") >= 0)
+    }
     readonly property var allModels: {
         var liveModels = ollamaLibraryFetcher.models || []
         var lmModels = lmStudioLibraryFetcher.models || []
@@ -98,15 +112,8 @@ Item {
             var details = shellViewModel.getLocalModelDetails(localName)
             var sizeStr = (details && details.sizeFormatted) ? details.sizeFormatted : "—"
             
-            var category = "LLM"
-            if (localOid.indexOf("vision") !== -1 || localOid.indexOf("llava") !== -1) {
-                category = "Vision"
-            } else if (localOid.indexOf("think") !== -1 || localOid.indexOf("deepseek-r1") !== -1) {
-                category = "Think"
-            } else if (localOid.indexOf("whisper") !== -1) {
-                category = "STT"
-            }
-            
+            var category = inferredLocalCategory(localOid)
+
             var localModelObj = {
                 id: localName,
                 ollamaId: localName,
@@ -142,15 +149,8 @@ Item {
             var details = shellViewModel.getLocalModelDetails(localName)
             var sizeStr = (details && details.sizeFormatted) ? details.sizeFormatted : "—"
             
-            var category = "LLM"
-            if (localOid.indexOf("vision") !== -1 || localOid.indexOf("llava") !== -1) {
-                category = "Vision"
-            } else if (localOid.indexOf("think") !== -1 || localOid.indexOf("deepseek-r1") !== -1) {
-                category = "Think"
-            } else if (localOid.indexOf("whisper") !== -1) {
-                category = "STT"
-            }
-            
+            var category = inferredLocalCategory(localOid)
+
             var localModelObj = {
                 id: uniqueId,
                 ollamaId: localName,
@@ -203,14 +203,23 @@ Item {
 
     property string ollamaSort: "popular"
 
-    function fetchOllamaModels() {
+    function fetchOllamaModels(force) {
+        if (!daemonClient.daemonReachable) return
         ollamaLibraryFetcher.fetch(ollamaSort)
         lmStudioLibraryFetcher.fetch()
-        ggufLibraryFetcher.fetch()
+        if (force) ggufLibraryFetcher.refreshCatalog(searchQuery)
+        else ggufLibraryFetcher.fetch(searchQuery)
     }
 
-    Component.onCompleted: {
-        fetchOllamaModels()
+    Component.onCompleted: fetchOllamaModels()
+    onVisibleChanged: {
+        if (visible) fetchOllamaModels()
+    }
+    Connections {
+        target: daemonClient
+        function onDaemonReachableChanged() {
+            if (daemonClient.daemonReachable && modelsPage.visible) modelsPage.fetchOllamaModels()
+        }
     }
 
     onOllamaSortChanged: {
@@ -222,7 +231,7 @@ Item {
         if (activeCategory === "All" || categories.indexOf(activeCategory) === -1) {
             baseList = allModels
         } else {
-            baseList = allModels.filter(function(m) { return m.category === activeCategory })
+            baseList = allModels.filter(function(m) { return modelsPage.matchesCategory(m, activeCategory) })
         }
 
         var query = searchQuery.trim().toLowerCase()
@@ -259,7 +268,7 @@ Item {
         }
         var changed = false
         for (var i = 0; i < newModels.length; i++) {
-            if (currentModels[i].id !== newModels[i].id || currentModels[i].badge !== newModels[i].badge || currentModels[i].installed !== newModels[i].installed || currentModels[i].description !== newModels[i].description || currentModels[i].size !== newModels[i].size || currentModels[i].license !== newModels[i].license) {
+            if (JSON.stringify(currentModels[i]) !== JSON.stringify(newModels[i])) {
                 changed = true
                 break
             }
@@ -666,7 +675,7 @@ Item {
                                     checked: modelsPage.ollamaSort === "popular"
                                     onClicked: modelsPage.ollamaSort = "popular"
                                     contentItem: Label {
-                                        text: qsTr("Popular")
+                                        text: qsTr("Ollama: Popular")
                                         font.pixelSize: SentinelTheme.fontTiny
                                         font.weight: sortPopularBtn.checked ? Font.Medium : Font.Normal
                                         color: sortPopularBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
@@ -698,7 +707,7 @@ Item {
                                     checked: modelsPage.ollamaSort === "newest"
                                     onClicked: modelsPage.ollamaSort = "newest"
                                     contentItem: Label {
-                                        text: qsTr("Newest")
+                                        text: qsTr("Ollama: Newest")
                                         font.pixelSize: SentinelTheme.fontTiny
                                         font.weight: sortNewestBtn.checked ? Font.Medium : Font.Normal
                                         color: sortNewestBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
@@ -733,7 +742,7 @@ Item {
                                     implicitHeight: 22
                                     implicitWidth: 54
                                     flat: true
-                                    onClicked: modelsPage.fetchOllamaModels()
+                                    onClicked: modelsPage.fetchOllamaModels(true)
                                     contentItem: Label {
                                         text: qsTr("Refresh")
                                         font.pixelSize: SentinelTheme.fontTiny
@@ -854,7 +863,7 @@ Item {
                         implicitHeight: 24
                         implicitWidth: 60
                         flat: true
-                        onClicked: modelsPage.fetchOllamaModels()
+                        onClicked: modelsPage.fetchOllamaModels(true)
                         contentItem: Label {
                             text: qsTr("Retry")
                             font.pixelSize: SentinelTheme.fontTiny
@@ -885,7 +894,7 @@ Item {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: modelsPage.currentModels.length === 0 && !ollamaLibraryFetcher.fetching
+            visible: modelsPage.currentModels.length === 0 && !modelsPage.catalogFetching
             z: 1
 
             EmptyState {
@@ -906,7 +915,7 @@ Item {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: ollamaLibraryFetcher.fetching && modelsPage.currentModels.length === 0
+            visible: modelsPage.catalogFetching && modelsPage.currentModels.length === 0
             z: 1
 
             Flickable {
@@ -948,6 +957,19 @@ Item {
             visible: ggufLibraryFetcher.statusText.length > 0 || ggufLibraryFetcher.errorText.length > 0
             text: ggufLibraryFetcher.errorText || ggufLibraryFetcher.statusText
             color: ggufLibraryFetcher.errorText.length > 0 ? SentinelTheme.warning : SentinelTheme.textMuted
+            wrapMode: Text.WordWrap
+        }
+        Label {
+            Layout.fillWidth: true
+            text: ggufLibraryFetcher.catalogStatus
+            color: SentinelTheme.textMuted
+            wrapMode: Text.WordWrap
+        }
+        Label {
+            Layout.fillWidth: true
+            visible: text.length > 0
+            text: [ollamaLibraryFetcher.errorText ? "Ollama: " + ollamaLibraryFetcher.errorText : "", lmStudioLibraryFetcher.errorText ? "LM Studio: " + lmStudioLibraryFetcher.errorText : ""].filter(function(value) { return value.length > 0 }).join("\n")
+            color: SentinelTheme.warning
             wrapMode: Text.WordWrap
         }
         ProgressBar { Layout.fillWidth: true; visible: ggufLibraryFetcher.pulling; value: ggufLibraryFetcher.progress }
