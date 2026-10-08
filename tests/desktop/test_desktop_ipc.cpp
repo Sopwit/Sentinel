@@ -21,10 +21,11 @@
 #include "service/DaemonIpcServer.h"
 
 #include <QDir>
+#include <QJSEngine>
 #include <QJsonDocument>
 #include <QLocalServer>
-#include <QSignalSpy>
 #include <QScopeGuard>
+#include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
@@ -191,6 +192,45 @@ private slots:
                 QVERIFY(QDir(path).removeRecursively());
             }
         }
+    }
+    void modelCatalogFiltersAndSortsReportedMetadata() {
+        QFile script(":/catalog-test/ModelCatalog.js");
+        QVERIFY(script.open(QIODevice::ReadOnly));
+        QJSEngine engine;
+        const auto loaded = engine.evaluate(QString::fromUtf8(script.readAll()));
+        QVERIFY2(!loaded.isError(), qPrintable(loaded.toString()));
+        const auto check = [&](const QString& expression) {
+            const auto result = engine.evaluate(expression);
+            return !result.isError() && result.toBool();
+        };
+        QVERIFY(check("matchesSource({catalogSource:'lmstudio', provider:'Meta'}, 'lmstudio')"));
+        QVERIFY(check("!matchesSource({catalogSource:'lmstudio', provider:'Meta'}, 'ollama')"));
+        QVERIFY(check("matchesSource({gguf:true}, 'llamacpp') && "
+                      "!matchesSource({format:'safetensors'}, 'llamacpp')"));
+        QVERIFY(check("matchesCategory({category:'Vision',tags:['reasoning']}, 'Think')"));
+        QVERIFY(check("!matchesCategory({category:'Video',tags:['text-to-video']}, 'Image')"));
+        QVERIFY(
+            check("matchesSearch({name:'LocateAnything-Q4.gguf',gguf:true}, 'locate-anything')"));
+        QVERIFY(check("matchesSearch({repositoryId:'publisher/hidden-name'}, 'hidden-name')"));
+        QVERIFY(check("matchesSearch({tags:['multilingual']}, 'multilingual')"));
+        QVERIFY(check("!matchesSearch({name:'Alpha'}, 'missing')"));
+        engine.evaluate(
+            "var models = [{id:'unknown',name:'Alpha'}, "
+            "{id:'zero',name:'Beta',downloads:0,sizeBytes:100,lastUpdated:'2026-01-01'}, "
+            "{id:'largest',name:'Gamma',downloads:100,sizeBytes:200,lastUpdated:'2026-10-08'}, "
+            "{id:'bad',name:'Delta',downloads:'999',sizeBytes:-1,lastUpdated:'invalid'}]; var "
+            "flags = [false,true,false,false]; function ids(mode) { return "
+            "sortModels(models,mode,flags).map(function(m){return m.id}).join(','); }");
+        QCOMPARE(engine.evaluate("ids('installed')").toString(),
+                 QString("zero,unknown,largest,bad"));
+        QCOMPARE(engine.evaluate("ids('name')").toString(), QString("unknown,zero,bad,largest"));
+        QCOMPARE(engine.evaluate("ids('nameDesc')").toString(),
+                 QString("largest,bad,zero,unknown"));
+        QCOMPARE(engine.evaluate("ids('downloads')").toString(),
+                 QString("largest,zero,unknown,bad"));
+        QCOMPARE(engine.evaluate("ids('updated')").toString(), QString("largest,zero,unknown,bad"));
+        QCOMPARE(engine.evaluate("ids('size')").toString(), QString("zero,largest,unknown,bad"));
+        QCOMPARE(engine.evaluate("models[0].id").toString(), QString("unknown"));
     }
     void deletingConversationsRefreshesHistoryAndRebindsActiveSession() {
         QTemporaryDir directory{QDir::tempPath() + "/delete-XXXXXX"};
@@ -527,12 +567,21 @@ private slots:
         QVERIFY(catalog.size() > 40);
         QSet<QString> sources;
         int videos = 0;
+        QSet<QString> runtimes;
         for (const auto& value : catalog) {
             const auto model = value.toObject();
             const auto source = model.value("externalUrl").toString();
             QVERIFY(!source.isEmpty());
             QVERIFY(!sources.contains(source));
             sources.insert(source);
+            if (model.value("category") == "Runtime") {
+                runtimes.insert(model.value("id").toString());
+                QVERIFY(!model.value("platforms").toString().isEmpty());
+                QVERIFY(!model.value("modelFormats").toString().isEmpty());
+                QVERIFY(!model.value("integration").toString().isEmpty());
+                QVERIFY(!model.value("downloadable").toBool());
+                QCOMPARE(QUrl(source).scheme(), QString("https"));
+            }
             if (model.value("category") == "Video") {
                 ++videos;
                 QVERIFY(model.value("ollamaId").toString().isEmpty());
@@ -541,6 +590,9 @@ private slots:
                 QVERIFY(model.value("ollamaId").toString().isEmpty());
         }
         QVERIFY(videos >= 10);
+        for (const auto& id :
+             {"ollama", "lmstudio", "llama-cpp", "vllm", "mlx-lm", "whisper-cpp", "piper-runtime"})
+            QVERIFY(runtimes.contains(id));
         controller->setSelectedRuntimeProvider("llama-cpp-server");
         QCOMPARE(helper.state("ggufLibraryFetcher").value("catalog").toArray(), catalog);
         controller->setSelectedRuntimeProvider("lm-studio");

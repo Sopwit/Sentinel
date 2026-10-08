@@ -10,6 +10,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import Sentinel.Desktop
+import "ModelCatalog.js" as Catalog
 
 Item {
     id: modelsPage
@@ -40,12 +41,13 @@ Item {
     onCatalogSourceChanged: catalogSearchTimer.restart()
     property string discoveryTask: ""
     onDiscoveryTaskChanged: catalogSearchTimer.restart()
+    property string listSort: "installed"
     property string discoverySort: "downloads"
     function discoveryQuery() { return JSON.stringify({text: searchQuery, category: activeCategory, sort: discoverySort, task: discoveryTask, ggufOnly: catalogSource === "llamacpp"}) }
     onActiveCategoryChanged: { discoveryTask = ""; catalogSearchTimer.restart() }
     onDiscoverySortChanged: catalogSearchTimer.restart()
     onSearchQueryChanged: catalogSearchTimer.restart()
-    Timer { id: catalogSearchTimer; interval: 700; onTriggered: ggufLibraryFetcher.fetch(modelsPage.discoveryQuery()) }
+    Timer { id: catalogSearchTimer; interval: 700; onTriggered: { if (modelsPage.activeCategory !== "Runtime") ggufLibraryFetcher.fetch(modelsPage.discoveryQuery()) } }
 
     readonly property bool catalogFetching: ollamaLibraryFetcher.fetching || lmStudioLibraryFetcher.fetching || ggufLibraryFetcher.fetching
     function inferredLocalCategory(name) {
@@ -57,9 +59,7 @@ Item {
         return "LLM"
     }
     function matchesCategory(model, category) {
-        if (model.category === category) return true
-        var tags = (model.tags || []).join(" ").toLowerCase()
-        return category === "Think" && (tags.indexOf("thinking") >= 0 || tags.indexOf("reasoning") >= 0)
+        return Catalog.matchesCategory(model, category)
     }
     readonly property var allModels: {
         var liveModels = ollamaLibraryFetcher.models || []
@@ -187,7 +187,7 @@ Item {
 
     readonly property var categories: {
         var cats = ["All"]
-        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Embedding", "Runtime"]
+        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Embedding", "Other", "Runtime"]
         
         var presentCats = []
         for (var i = 0; i < allModels.length; i++) {
@@ -248,39 +248,10 @@ Item {
         }
 
         baseList = baseList.filter(function(m) {
-            if (modelsPage.catalogSource === "all") return true
-            if (modelsPage.catalogSource === "llamacpp") return !!m.gguf
-            if (m.catalogSource) return m.catalogSource === modelsPage.catalogSource
-            if (modelsPage.catalogSource === "huggingface") return !!m.repositoryId || !!(m.externalUrl && m.externalUrl.indexOf("https://huggingface.co/") === 0)
-            if (modelsPage.catalogSource === "lmstudio") return m.provider === "LM Studio"
-            return !!m.ollamaId && m.provider !== "LM Studio"
+            return (modelsPage.activeCategory === "Runtime" || Catalog.matchesSource(m, modelsPage.catalogSource)) && Catalog.matchesSearch(m, modelsPage.searchQuery)
         })
-        var query = searchQuery.trim().toLowerCase()
-        if (query !== "") {
-            baseList = baseList.filter(function(m) {
-                var nameMatch = m.name && m.name.toLowerCase().indexOf(query) !== -1
-                var idMatch = (m.id && m.id.toLowerCase().indexOf(query) !== -1) ||
-                              (m.ollamaId && m.ollamaId.toLowerCase().indexOf(query) !== -1)
-                var descMatch = m.description && m.description.toLowerCase().indexOf(query) !== -1
-                var repositoryMatch = m.repositoryId && m.repositoryId.toLowerCase().indexOf(query) !== -1
-                var normalizedQuery = query.replace(/[-_.\s]/g, "")
-                var artifactMatch = m.gguf && normalizedQuery.length > 0 &&
-                    ((m.name || "") + " " + (m.repositoryId || "")).toLowerCase().replace(/[-_.\s]/g, "").indexOf(normalizedQuery) !== -1
-                return nameMatch || idMatch || descMatch || repositoryMatch || artifactMatch
-            })
-        }
-
-        // Force dependency on model name changes
-        var names1 = installedOllamaNames
-        var names2 = loadedStudioNames
-
-        return baseList.slice().sort(function(a, b) {
-            var aInstalled = isInstalledOnDevice(a)
-            var bInstalled = isInstalledOnDevice(b)
-            if (aInstalled && !bInstalled) return -1
-            if (!aInstalled && bInstalled) return 1
-            return 0
-        })
+        var installed = baseList.map(function(m) { return modelsPage.isInstalledOnDevice(m) })
+        return Catalog.sortModels(baseList, listSort, installed)
     }
 
     property var currentModels: []
@@ -380,6 +351,7 @@ Item {
         if (cat === "STT") return qsTr("Speech to Text")
         if (cat === "TTS") return qsTr("Text to Speech")
         if (cat === "Embedding") return qsTr("Embedding Models")
+        if (cat === "Other") return qsTr("Other Tasks")
         if (cat === "Runtime") return qsTr("Local Runtimes")
         return cat
     }
@@ -659,6 +631,7 @@ Item {
                             spacing: SentinelTheme.spaceSm
 
                             SentinelComboBox {
+                                visible: modelsPage.activeCategory !== "Runtime"
                                 model: [qsTr("All sources"), "Hugging Face", "llama.cpp · GGUF", "Ollama", "LM Studio"]
                                 Accessible.name: qsTr("Model catalog source")
                                 currentIndex: ["all", "huggingface", "llamacpp", "ollama", "lmstudio"].indexOf(modelsPage.catalogSource)
@@ -765,6 +738,7 @@ Item {
 
                                 Button {
                                     id: refreshBtn
+                                    visible: modelsPage.activeCategory !== "Runtime"
                                     implicitHeight: 22
                                     implicitWidth: 54
                                     flat: true
@@ -838,10 +812,9 @@ Item {
                     }
 
                     Label {
-                        visible: modelsPage.activeCategory !== "Runtime"
                         Layout.fillWidth: true
                         Layout.topMargin: SentinelTheme.spaceMd
-                        text: qsTr("Browse Hugging Face repositories and files, Ollama and LM Studio catalogs, or GGUF models for llama.cpp. Select a card for variants and details.")
+                        text: modelsPage.activeCategory === "Runtime" ? qsTr("Review local inference and voice engines, platform requirements and Sentinel integration. Select a runtime to open its official setup documentation.") : qsTr("Browse Hugging Face repositories and files, Ollama and LM Studio catalogs, or GGUF models for llama.cpp. Select a card for variants and details.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -1004,8 +977,8 @@ Item {
         Flow {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
-            SentinelButton { text: qsTr("Previous discovery page"); enabled: ggufLibraryFetcher.hasPrevious && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.previousPage() }
-            SentinelButton { text: qsTr("More from Hugging Face"); enabled: ggufLibraryFetcher.hasMore && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.nextPage() }
+            SentinelButton { visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0; text: qsTr("Previous discovery page"); enabled: ggufLibraryFetcher.hasPrevious && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.previousPage() }
+            SentinelButton { visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0; text: qsTr("More from Hugging Face"); enabled: ggufLibraryFetcher.hasMore && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.nextPage() }
             SentinelComboBox {
                 visible: modelsPage.activeCategory === "Video" || modelsPage.activeCategory === "Image"
                 width: Math.min(parent.width, 260)
@@ -1013,7 +986,28 @@ Item {
                 currentIndex: modelsPage.discoveryTask.length > 0 ? 1 : 0
                 onActivated: modelsPage.discoveryTask = currentIndex === 1 ? (modelsPage.activeCategory === "Video" ? "image-to-video" : "image-to-image") : ""
             }
-            SentinelComboBox { width: Math.min(parent.width, 300); model: [qsTr("Discovery: Most downloaded"), qsTr("Discovery: Recently updated")]; onActivated: modelsPage.discoverySort = currentIndex === 1 ? "lastModified" : "downloads" }
+            SentinelComboBox {
+                visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0
+                width: Math.min(parent.width, 300)
+                model: [qsTr("Hugging Face: Most downloaded"), qsTr("Hugging Face: Recently updated")]
+                Accessible.name: qsTr("Hugging Face discovery order")
+                currentIndex: modelsPage.discoverySort === "lastModified" ? 1 : 0
+                onActivated: modelsPage.discoverySort = currentIndex === 1 ? "lastModified" : "downloads"
+            }
+            SentinelComboBox {
+                width: Math.min(parent.width, 300)
+                model: [qsTr("List: Installed first"), qsTr("List: Name A–Z"), qsTr("List: Name Z–A"), qsTr("List: Reported downloads"), qsTr("List: Last updated"), qsTr("List: Smallest file")]
+                Accessible.name: qsTr("Visible model list order")
+                currentIndex: ["installed", "name", "nameDesc", "downloads", "updated", "size"].indexOf(modelsPage.listSort)
+                onActivated: modelsPage.listSort = ["installed", "name", "nameDesc", "downloads", "updated", "size"][currentIndex]
+            }
+            Label {
+                width: parent.width
+                visible: ["downloads", "updated", "size"].indexOf(modelsPage.listSort) >= 0
+                text: qsTr("Entries without reported metadata appear last. Sorting applies to the loaded catalog entries; discovery order selects the next Hugging Face batch.")
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
         }
         // Model grid
         GridView {
@@ -1270,7 +1264,7 @@ Item {
 
                                     contentItem: Label {
                                         id: dlBtnLabel
-                                        text: qsTr("Details & downloads")
+                                        text: modelDelegate.modelData.category === "Runtime" ? qsTr("Setup & compatibility") : qsTr("Details & downloads")
                                         font.pixelSize: SentinelTheme.fontSmall
                                         font.weight: Font.Medium
                                         color: SentinelTheme.accent

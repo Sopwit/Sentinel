@@ -47,7 +47,7 @@ endif()
 target_link_libraries(settings_ui_certification_probe PRIVATE sentinel_desktop_viewmodels Qt6::Quick Qt6::Qml Qt6::Test)
 add_test(NAME test_onboarding_focus COMMAND $<TARGET_FILE:settings_ui_certification_probe> --focus-smoke)
 set_tests_properties(test_onboarding_focus PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-file(GLOB_RECURSE CERTIFICATION_QML_FILES "${CMAKE_SOURCE_DIR}/ui/qml/*.qml")
+file(GLOB_RECURSE CERTIFICATION_QML_FILES "${CMAKE_SOURCE_DIR}/ui/qml/*.qml" "${CMAKE_SOURCE_DIR}/ui/qml/*.js")
 foreach(qml_file IN LISTS CERTIFICATION_QML_FILES)
     get_filename_component(qml_name "${qml_file}" NAME)
     set_source_files_properties("${qml_file}" PROPERTIES QT_RESOURCE_ALIAS "${qml_name}")
@@ -273,7 +273,10 @@ if(Python3_Interpreter_FOUND)
 endif()
 
 qt_add_executable(test_desktop_ipc desktop/test_desktop_ipc.cpp)
-target_link_libraries(test_desktop_ipc PRIVATE sentinel_desktop_viewmodels sentinel_desktop_ipc sentinel_daemon_service sentinel_core Qt6::Test)
+qt_add_resources(test_desktop_ipc model_catalog_test PREFIX "/catalog-test"
+    BASE "${CMAKE_SOURCE_DIR}/ui/qml/pages/models"
+    FILES "${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js")
+target_link_libraries(test_desktop_ipc PRIVATE sentinel_desktop_viewmodels sentinel_desktop_ipc sentinel_daemon_service sentinel_core Qt6::Test Qt6::Qml)
 add_test(NAME test_desktop_ipc COMMAND $<TARGET_FILE:test_desktop_ipc>)
 
 qt_add_executable(test_native_integration
