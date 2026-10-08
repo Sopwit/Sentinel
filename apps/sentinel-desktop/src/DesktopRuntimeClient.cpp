@@ -307,7 +307,7 @@ bool DesktopRuntimeClient::voiceAction(const QString& action) {
 QString DesktopRuntimeClient::send(DaemonClient::Command command, const QJsonObject& payload,
                                    const QString& target) {
     const auto id = m_transport.request(command, payload);
-    m_requests.insert(id, {ipc::commandName(command), target, m_runId});
+    m_requests.insert(id, {ipc::commandName(command), target, m_runId, {}});
     return id;
 }
 void DesktopRuntimeClient::refresh() {
@@ -458,7 +458,25 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
                           {"arguments", QJsonArray::fromVariantList(args)},
                           {"session_id", m_sessionId}},
                          name);
+    if (name == "requestPermanentDeleteConversation")
+        m_requests[id].conversationId = text;
     return name == "duplicateConversation" ? QVariant(id) : QVariant(true);
+}
+void DesktopRuntimeClient::clearSession() {
+    m_sessionId.clear();
+    m_preferredSession.clear();
+    m_attaching = false;
+    m_messages.clear();
+    m_runId.clear();
+    m_state.clear();
+    m_output.clear();
+    m_approval = {};
+    m_activeAssistantId = 0;
+    const auto& fields = projectionFields();
+    for (auto it = fields.begin(); it != fields.end(); ++it) {
+        if (it.value().toObject().value("scope") == "session")
+            m_values.remove(it.key());
+    }
 }
 void DesktopRuntimeClient::attach(const QString& id) {
     if (id.isEmpty() || m_attaching) {
@@ -615,6 +633,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         m_values["conversationPinnedSummaries"] = pinned;
         m_values["conversationArchivedSummaries"] = archived;
         m_values["conversationStoreConversationCount"] = ids.size();
+        if (!m_sessionId.isEmpty() && !ids.contains(m_sessionId) &&
+            !active(m_state) && !m_submissionPending)
+            clearSession();
         if (m_sessionId.isEmpty() && !m_attaching) {
             if (ids.contains(m_preferredSession)) {
                 attach(m_preferredSession);
@@ -695,6 +716,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         if (!payload.value("accepted").toBool(true)) {
             emit operationFailed("daemon-action-rejected");
         }
+        if (request.target == "requestPermanentDeleteConversation" &&
+            payload.value("accepted").toBool() && request.conversationId == m_sessionId)
+            clearSession();
         if (request.target == "duplicateConversation" && payload.value("accepted").toBool()) {
             attach(payload.value("result").toObject().value("value").toString());
         }
