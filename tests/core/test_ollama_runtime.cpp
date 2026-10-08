@@ -271,9 +271,15 @@ void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
 void OllamaRuntimeTest::taskCategoriesAndMixedCapabilities() {
     using sentinel::core::modelCategory;
     QCOMPARE(modelCategory("phi4", {}), QString("LLM"));
+    QCOMPARE(modelCategory("encoder", {}, "sentence-similarity"), QString("Embedding"));
+    QCOMPARE(modelCategory("whisper", {"vision"}, "text-to-image"), QString("Image"));
+    QCOMPARE(modelCategory("llava", {"vision"}, "text-classification"), QString("Other"));
+    QCOMPARE(modelCategory("generator", {"reasoning"}, "text-generation"), QString("Think"));
     QCOMPARE(modelCategory("encoder", {"feature-extraction", "vision"}), QString("Embedding"));
     QCOMPARE(modelCategory("mixed", {"vision", "thinking"}), QString("Vision"));
     QCOMPARE(modelCategory("video", {"image-to-video"}), QString("Video"));
+    QCOMPARE(modelCategory("detector", {"object-detection"}), QString("Vision"));
+    QCOMPARE(modelCategory("video", {"video-to-video"}), QString("Video"));
     QCOMPARE(modelCategory("speech", {"text-to-speech"}), QString("TTS"));
     QCOMPARE(modelCategory("speech", {"automatic-speech-recognition"}), QString("STT"));
 }

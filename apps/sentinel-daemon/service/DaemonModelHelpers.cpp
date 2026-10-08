@@ -62,9 +62,9 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 represented.insert(entry.repositoryId);
             if (eligible++ < catalogPage_ * 40 || models.size() >= 40)
                 continue;
-            const auto category =
-                core::modelCategory(entry.repositoryId + " " + entry.displayName, entry.tags);
             const auto repository = repositories.value(entry.repositoryId);
+            const auto category = core::modelCategory(entry.repositoryId + " " + entry.displayName,
+                                                      entry.tags, repository.pipelineTask);
             const bool chatCompatible = category == "LLM" &&
                 (repository.pipelineTask.isEmpty() || repository.pipelineTask == "text-generation");
             models.append(QJsonObject{
@@ -88,6 +88,8 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"revision", entry.revision},
                 {"repositoryId", entry.repositoryId},
                 {"filename", gguf ? entry.artifactFilename : QString{}},
+                {"sizeBytes",
+                 gguf && entry.sizeBytes ? QJsonValue(*entry.sizeBytes) : QJsonValue{}},
                 {"size",
                  gguf && entry.sizeBytes
                      ? QString::number(double(*entry.sizeBytes) / 1073741824.0, 'f', 2) + " GB"
