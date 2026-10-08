@@ -57,6 +57,7 @@ ShellPanel {
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
     property string sidebarView: "recent"
+    property string deleteRequestError: ""
     property string pendingDeleteConversationId: ""
     property string pendingDeleteConversationTitle: ""   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
@@ -612,6 +613,13 @@ ShellPanel {
                     }
                 }
 
+                Label {
+                    Layout.fillWidth: true
+                    visible: homeChat.viewModel.conversationDeleteLastStatus === "Failed" || homeChat.viewModel.conversationDeleteLastStatus === "Refused"
+                    text: homeChat.viewModel.conversationDeleteLastResultSummary
+                    color: SentinelTheme.warning
+                    wrapMode: Text.WordWrap
+                }
                 // Unified conversation list (Recent / Pinned / Archived views)
                 ListView {
                     id: conversationList
@@ -632,10 +640,7 @@ ShellPanel {
                     // Force refresh when underlying data changes
                     Connections {
                         target: homeChat.viewModel
-                        function onConversationIdsChanged() { homeChat.refreshConversationList() }
-                        function onConversationTitlesChanged() { homeChat.refreshConversationList() }
-                        function onConversationPinnedSummariesChanged() { homeChat.refreshConversationList() }
-                        function onConversationArchivedSummariesChanged() { homeChat.refreshConversationList() }
+                        function onChatMessagesChanged() { homeChat.refreshConversationList() }
                     }
 
                     delegate: Item {
@@ -2341,6 +2346,7 @@ ShellPanel {
     // Permanent delete confirmation dialog
     Dialog {
         id: deleteConfirmDialog
+        onOpened: homeChat.deleteRequestError = ""
         anchors.centerIn: parent
         modal: true
         dim: true
@@ -2428,6 +2434,13 @@ ShellPanel {
                     wrapMode: Text.WordWrap
                 }
 
+                Label {
+                    Layout.fillWidth: true
+                    visible: homeChat.deleteRequestError.length > 0
+                    text: homeChat.deleteRequestError
+                    color: SentinelTheme.warning
+                    wrapMode: Text.WordWrap
+                }
                 // Buttons
                 RowLayout {
                     Layout.fillWidth: true
@@ -2464,9 +2477,11 @@ ShellPanel {
                         text: qsTr("Delete")
                         hoverEnabled: true
                         onClicked: {
+                            if (!homeChat.viewModel.requestPermanentDeleteConversation(homeChat.pendingDeleteConversationId)) {
+                                homeChat.deleteRequestError = qsTr("The conversation could not be deleted. Check the daemon connection and stop any active request before retrying.")
+                                return
+                            }
                             deleteConfirmDialog.close()
-                            homeChat.viewModel.requestPermanentDeleteConversation(
-                                homeChat.pendingDeleteConversationId)
                             homeChat.pendingDeleteConversationId = ""
                             homeChat.pendingDeleteConversationTitle = ""
                         }
