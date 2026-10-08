@@ -24,3 +24,9 @@ Validated on macOS on 2026-10-08. Linux and Windows remain build/platform target
 ## Limits
 
 Full multi-gigabyte downloads were not repeated for every model or provider. Remote availability, gating and resource requirements remain source/runtime dependent. Responsive popup sizing is implemented, but exhaustive native window-size and cross-platform visual verification remains outstanding.
+
+## Explicit download destination follow-up
+
+The model popup now exposes an independent Ollama / llama.cpp / LM Studio destination selector. The primary action, variant selector and error explanation follow this destination, independently of the active chat provider. Unsupported combinations remain visible with a disabled action and reason. Non-GGUF chat models can search for compatible GGUF variants before downloading; arbitrary GGUF artifacts are not presented as verified Ollama variants.
+
+Native validation changed Llama 3.2's destination through all three options, followed the llama.cpp action to live Hugging Face GGUF results, and opened an artifact with its download action. Themed controls preserve keyboard navigation. Desktop Release and tests builds and scoped GUI/IPC tests passed; QML lint reports context-property warnings without errors. Large downloads were not initiated in this follow-up.

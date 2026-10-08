@@ -17,6 +17,23 @@ SentinelOverlayModal {
     signal ggufSearchRequested(string query)
     preferredWidth: 760
     preferredHeight: 680
+    // The download destination is independent of the active chat provider.
+    property int downloadTarget: 0
+    readonly property bool chatModel: !!(modelInfo && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
+    readonly property bool targetAvailable: downloadTarget === 0 ? canPull
+        : downloadTarget === 1 ? (gguf ? modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
+        : chatModel
+    readonly property string targetExplanation: downloadTarget === 0
+        ? (canPull ? qsTr("Download the selected variant into Ollama, regardless of your chat provider.") : qsTr("No verified Ollama variant is available for this model."))
+        : downloadTarget === 1
+          ? (gguf ? qsTr("Download or select this GGUF model for llama.cpp.") : chatModel ? qsTr("Find compatible GGUF files, then choose a quantization to download for llama.cpp.") : qsTr("This model requires a different runtime; no compatible llama.cpp download is available."))
+          : (chatModel ? qsTr("Open this model in LM Studio's download screen. LM Studio manages the download.") : qsTr("This model requires a different runtime; it is not supported by LM Studio chat inference."))
+    readonly property string targetError: downloadTarget === 0
+        ? (pullError || ollamaModelDetailFetcher.errorText || ollamaPuller.errorText)
+        : downloadTarget === 1 ? ggufLibraryFetcher.errorText : ""
+    readonly property string targetAction: downloadTarget === 0 ? qsTr("Download with Ollama")
+        : downloadTarget === 1 ? (gguf ? (modelInfo.installed ? qsTr("Use with llama.cpp") : qsTr("Download for llama.cpp")) : qsTr("Choose GGUF for llama.cpp"))
+        : qsTr("Open LM Studio downloads ↗")
     property var selectedTagObj: null
     readonly property string effectiveOllamaId: selectedTagObj ? selectedTagObj.fullTag : (modelInfo && modelInfo.ollamaId ? modelInfo.ollamaId : "")
     readonly property bool gguf: !!(modelInfo && modelInfo.gguf)
@@ -33,6 +50,7 @@ SentinelOverlayModal {
         else ollamaModelDetailFetcher.cancel()
     }
     onOpened: {
+        downloadTarget = gguf ? 1 : canPull ? 0 : 2
         if (gguf && modelInfo.repositoryId) ggufLibraryFetcher.fetchDetails(modelInfo.repositoryId)
     }
     Connections {
@@ -56,7 +74,7 @@ SentinelOverlayModal {
         RowLayout {
             Layout.fillWidth: true
             Label { Layout.fillWidth: true; text: root.info("name"); font.pixelSize: 22; font.bold: true; color: SentinelTheme.textPrimary; wrapMode: Text.WordWrap }
-            Button { text: "×"; Accessible.name: qsTr("Close model details"); onClicked: root.close() }
+            SentinelButton { text: "×"; Accessible.name: qsTr("Close model details"); onClicked: root.close() }
         }
         Label { Layout.fillWidth: true; text: qsTr("Publisher: %1 • Type: %2").arg(root.info("provider")).arg(root.info("category")); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
         ScrollView {
@@ -98,10 +116,10 @@ SentinelOverlayModal {
                     }
                 }
                 Label { Layout.fillWidth: true; visible: !!(root.modelInfo && root.modelInfo.runtimeNote); text: root.info("runtimeNote"); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
-                BusyIndicator { running: ollamaModelDetailFetcher.fetching; visible: running; Layout.alignment: Qt.AlignHCenter }
-                ComboBox {
+                BusyIndicator { running: root.downloadTarget === 0 && ollamaModelDetailFetcher.fetching; visible: running; Layout.alignment: Qt.AlignHCenter }
+                SentinelComboBox {
                     Layout.fillWidth: true
-                    visible: root.canPull && ollamaModelDetailFetcher.tags.length > 0
+                    visible: root.downloadTarget === 0 && root.canPull && ollamaModelDetailFetcher.tags.length > 0
                     model: ollamaModelDetailFetcher.tags
                     textRole: "fullTag"
                     Accessible.name: qsTr("Model variant and quantization")
@@ -119,15 +137,15 @@ SentinelOverlayModal {
                 Label {
                     Layout.fillWidth: true
                     text: ollamaModelDetailFetcher.readme
-                    visible: root.canPull && text.length > 0
+                    visible: root.downloadTarget === 0 && root.canPull && text.length > 0
                     textFormat: Text.PlainText
                     wrapMode: Text.WordWrap
                     color: SentinelTheme.textPrimary
                 }
                 Label {
                     Layout.fillWidth: true
-                    visible: root.pullError.length > 0 || ollamaModelDetailFetcher.errorText.length > 0 || ggufLibraryFetcher.errorText.length > 0 || ollamaPuller.errorText.length > 0
-                    text: root.pullError || ollamaModelDetailFetcher.errorText || ggufLibraryFetcher.errorText || ollamaPuller.errorText
+                    visible: root.targetError.length > 0
+                    text: root.targetError
                     wrapMode: Text.WordWrap
                     color: SentinelTheme.warning
                 }
@@ -135,16 +153,41 @@ SentinelOverlayModal {
         }
         Label { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; text: root.activePull ? root.pullStatus : ggufLibraryFetcher.statusText; color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
         ProgressBar { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; value: root.activePull ? root.pullProgress : ggufLibraryFetcher.progress }
+        Label { text: qsTr("Download destination"); color: SentinelTheme.textPrimary; font.bold: true }
+        SentinelComboBox {
+            id: destinationSelector
+            Layout.fillWidth: true
+            model: ["Ollama", "llama.cpp", "LM Studio"]
+            currentIndex: root.downloadTarget
+            Accessible.name: qsTr("Download destination")
+            onActivated: root.downloadTarget = currentIndex
+        }
+        Label {
+            Layout.fillWidth: true
+            text: root.targetExplanation
+            color: root.targetAvailable ? SentinelTheme.textMuted : SentinelTheme.warning
+            wrapMode: Text.WordWrap
+        }
         Flow {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
-            Button { visible: root.canPull; text: qsTr("Download with Ollama"); enabled: !ollamaPuller.pulling; onClicked: root.downloadRequested(root.effectiveOllamaId) }
-            Button { visible: root.gguf && !root.modelInfo.installed && root.modelInfo.downloadable; text: qsTr("Download for llama.cpp"); enabled: !ggufLibraryFetcher.pulling; onClicked: ggufLibraryFetcher.download(root.modelInfo.id) }
-            Button { visible: root.gguf && root.modelInfo.installed && root.modelInfo.category === "LLM"; text: qsTr("Use with llama.cpp"); onClicked: { ggufLibraryFetcher.select(root.modelInfo.id); root.close() } }
-            Button { visible: root.canPull && !root.gguf; text: qsTr("Find GGUF for llama.cpp"); onClicked: { root.ggufSearchRequested(root.modelInfo.ollamaId.split(':')[0]); root.close() } }
-            Button { visible: root.gguf || root.canPull || (root.modelInfo && root.modelInfo.provider === "LM Studio"); text: qsTr("Open LM Studio downloads ↗"); onClicked: Qt.openUrlExternally(root.managerUrl) }
-            Button { visible: root.modelInfo && !!root.modelInfo.externalUrl; text: qsTr("Model source ↗"); onClicked: Qt.openUrlExternally(root.modelInfo.externalUrl) }
-            Button { visible: root.activePull || ggufLibraryFetcher.pulling; text: qsTr("Cancel download"); onClicked: { if (ggufLibraryFetcher.pulling) ggufLibraryFetcher.cancel(); else root.cancelRequested() } }
+            SentinelButton {
+                text: root.targetAction
+                enabled: root.targetAvailable && !ollamaPuller.pulling && !ggufLibraryFetcher.pulling
+                onClicked: {
+                    if (root.downloadTarget === 0) root.downloadRequested(root.effectiveOllamaId)
+                    else if (root.downloadTarget === 2) Qt.openUrlExternally(root.managerUrl)
+                    else if (!root.gguf) {
+                        root.ggufSearchRequested(root.managerRepository ? root.managerRepository.split('/').pop() : (root.modelInfo.ollamaId || root.modelInfo.name).split(':')[0])
+                        root.close()
+                    } else if (root.modelInfo.installed) {
+                        ggufLibraryFetcher.select(root.modelInfo.id)
+                        root.close()
+                    } else ggufLibraryFetcher.download(root.modelInfo.id)
+                }
+            }
+            SentinelButton { visible: root.modelInfo && !!root.modelInfo.externalUrl; text: qsTr("Model source ↗"); onClicked: Qt.openUrlExternally(root.modelInfo.externalUrl) }
+            SentinelButton { visible: root.activePull || ggufLibraryFetcher.pulling; text: qsTr("Cancel download"); onClicked: { if (ggufLibraryFetcher.pulling) ggufLibraryFetcher.cancel(); else root.cancelRequested() } }
         }
     }
 }
