@@ -500,7 +500,7 @@ private slots:
         QVERIFY(sawOutput);
     }
 
-    void streamsRealProviderDeltasWithStepCorrelation() {
+    void keepsPlannerProtocolPrivateWithStepCorrelation() {
         StreamingPlannerProvider provider;
         LlmAgentRuntime planner(NullAgentRuntime::standardTools(), &provider);
         ModelBinding binding;
@@ -544,8 +544,10 @@ private slots:
                 QCOMPARE(event.turnId, turnId);
             }
         }
-        QVERIFY(start >= 0 && firstDelta > start && lastDelta >= firstDelta &&
-                completed > lastDelta);
+        QVERIFY(start >= 0 && completed > start);
+        QCOMPARE(firstDelta, -1);
+        QCOMPARE(lastDelta, -1);
+        QCOMPARE(streamingState.finalAnswer, QStringLiteral("A specific contextual answer."));
     }
 
     void emitsCorrelatedTerminalEventsInOrder() {

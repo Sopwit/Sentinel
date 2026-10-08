@@ -48,6 +48,7 @@ public:
     }
     void setObservationIntent(const ObservationIntent& intent) override {
         activeIntent_ = intent;
+        observationIntentClassified_ = true;
     }
     void setEvidence(const QList<EvidenceRecord>& evidence) override {
         activeEvidence_ = evidence;
@@ -97,6 +98,7 @@ private:
     bool serializeProviderRequests_ = false;
     ModelBinding modelBinding_;
     mutable ObservationIntent activeIntent_;
+    bool observationIntentClassified_ = false;
     mutable QList<EvidenceRecord> activeEvidence_;
     mutable QList<StructuredFact> structuredFacts_;
     mutable AgentPlanningContext planningContext_;

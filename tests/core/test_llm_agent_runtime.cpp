@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <QtTest>
+#include <QJsonDocument>
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
@@ -40,6 +41,8 @@ public:
                 failNext = false;
                 return {false, {}, QStringLiteral("provider offline")};
             }
+            if (!scriptedPlainReplies.isEmpty())
+                return {true, scriptedPlainReplies.takeFirst(), {}};
             return {true, scriptedReply, {}};
         }
         if (scriptedRequests.isEmpty())
@@ -49,6 +52,7 @@ public:
 
     QStringList prompts;
     QString scriptedReply;
+    QStringList scriptedPlainReplies;
     QList<ChatProviderReply> scriptedRequests;
     QList<ChatRequestOptions> requestOptions;
     bool failNext = false;
@@ -203,6 +207,117 @@ private slots:
         QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
         QCOMPARE(decision.answer, QStringLiteral("Everything is done."));
         QVERIFY(runtime.lastDecisionUsedLlm());
+    }
+
+    void conversationalFinalDoesNotRequestTools() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral(
+            "{\"action\":\"final\",\"grounding\":\"context\","
+            "\"answer\":\"Merhaba! Sana nasıl yardımcı olabilirim?\"}");
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        runtime.setObservationIntent({});
+        const auto decision = runtime.nextStep(QStringLiteral("merhaba"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
+        QCOMPARE(decision.grounding, GroundingMode::Context);
+        QVERIFY(decision.toolId.isEmpty());
+        QVERIFY(provider.prompts.first().contains(QStringLiteral("Tools are optional")));
+        QVERIFY(!provider.prompts.first().contains(QStringLiteral("authorization=")));
+    }
+
+    void acceptsBriefConversationalGreeting() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral(
+            "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":\"Merhaba!\"}");
+        LlmAgentRuntime runtime({}, &provider);
+        runtime.setObservationIntent({});
+        QCOMPARE(runtime.nextStep(QStringLiteral("Merhaba"), {}).kind,
+                 AgentStepDecision::Kind::FinalAnswer);
+    }
+
+    void nativeProviderCanAnswerWithoutToolsOrEvidence() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply reply;
+        reply.success = true;
+        reply.message = QStringLiteral("Hello! How can I help?");
+        provider->scriptedRequests = {reply};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        runtime.setObservationIntent({});
+        const auto decision = runtime.nextStep(QStringLiteral("hello"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
+        QCOMPARE(decision.grounding, GroundingMode::Context);
+        QVERIFY(decision.toolId.isEmpty());
+    }
+
+    void allExposedDescriptorsResolveWithoutDanglingMetadata() {
+        const auto tools = BuiltInToolProvider::descriptors();
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime(tools, &provider);
+        for (const auto& tool : tools) {
+            if (!tool.enabled || !tool.exposedToModel)
+                continue;
+            QJsonObject arguments;
+            const auto properties = tool.inputSchema.value("properties").toObject();
+            for (const auto& required : tool.inputSchema.value("required").toArray()) {
+                const auto name = required.toString();
+                const auto field = properties.value(name).toObject();
+                const auto choices = field.value("enum").toArray();
+                const auto type = field.value("type").toString();
+                arguments.insert(name, !choices.isEmpty() ? choices.first()
+                                      : type == "integer" ? QJsonValue(1)
+                                      : type == "array" ? QJsonValue(QJsonArray{})
+                                      : type == "object" ? QJsonValue(QJsonObject{})
+                                                         : QJsonValue("fixture"));
+            }
+            provider.scriptedReply = QString::fromUtf8(QJsonDocument(QJsonObject{
+                {"action", "tool"}, {"tool", tool.id}, {"args", arguments}})
+                    .toJson(QJsonDocument::Compact));
+            const auto decision = runtime.nextStep(QStringLiteral("explicit tool request"), {});
+            QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
+            QCOMPARE(decision.toolId, tool.id);
+            QCOMPARE(decision.toolName, tool.name);
+            QCOMPARE(decision.riskLevel, tool.riskLevel);
+            QCOMPARE(decision.executionMode, tool.executionMode);
+        }
+    }
+
+    void repairsArgumentsAgainstRegisteredSchemaBeforeExecution() {
+        FakeChatProvider provider;
+        provider.scriptedPlainReplies = {
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"read-file\",\"args\":{\"filename\":\"audit.txt\"}}"),
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"read-file\",\"args\":{\"path\":\"audit.txt\"}}")};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        const auto decision = runtime.nextStep(QStringLiteral("read audit.txt"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(decision.arguments.first().id, QStringLiteral("path"));
+        QCOMPARE(provider.prompts.size(), 2);
+        QVERIFY(provider.prompts.last().contains(QStringLiteral("Invalid arguments for read-file")));
+    }
+
+    void normalizesOnlyRegisteredToolAction() {
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        provider.scriptedReply = QStringLiteral(
+            "{\"action\":\"read-file\",\"args\":{\"path\":\"audit.txt\"}}");
+        auto decision = runtime.nextStep(QStringLiteral("read audit.txt"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(decision.toolId, QStringLiteral("read-file"));
+        provider.scriptedReply = QStringLiteral(
+            "{\"action\":\"invented-tool\",\"args\":{}}");
+        decision = runtime.nextStep(QStringLiteral("read audit.txt"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+    }
+
+    void acceptsSingleFencedDecision() {
+        FakeChatProvider provider;
+        provider.scriptedReply = QStringLiteral(
+            "```json\n{\"action\":\"final\",\"grounding\":\"context\","
+            "\"answer\":\"A useful explanation.\"}\n```");
+        LlmAgentRuntime runtime({}, &provider);
+        QCOMPARE(runtime.nextStep(QStringLiteral("explain"), {}).kind,
+                 AgentStepDecision::Kind::FinalAnswer);
     }
 
     void acceptsNativeToolContinuationFinalWithEvidenceClaims() {
