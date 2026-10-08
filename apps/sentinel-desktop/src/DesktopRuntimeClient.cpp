@@ -9,6 +9,10 @@
 
 namespace sentinel::desktop {
 namespace {
+const QJsonObject& projectionFields() {
+    static const auto fields = ipc::desktopProjectionFields();
+    return fields;
+}
 core::ChatMessageStatus messageStatus(const QString& state) {
     if (state == "streaming" || state == "running") {
         return core::ChatMessageStatus::Streaming;
@@ -34,7 +38,7 @@ bool active(const QString& state) {
     return state == "running" || state == "approval";
 }
 bool validProperties(const QJsonObject& properties) {
-    const auto fields = ipc::desktopProjectionFields();
+    const auto& fields = projectionFields();
     for (auto it = properties.begin(); it != properties.end(); ++it) {
         if (!fields.contains(it.key())) {
             return false;
@@ -369,7 +373,7 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
         return value(name);
     }
     // Snapshot readers are allowed before the first projection arrives.
-    if (args.isEmpty() && ipc::desktopProjectionFields().contains(name)) {
+    if (args.isEmpty() && projectionFields().contains(name)) {
         return value(name);
     }
     if (name == "attachControlledTaskSettings") {
@@ -544,7 +548,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
             return;
         }
         for (auto it = properties.begin(); it != properties.end(); ++it) {
-            if (!ipc::desktopProjectionFields().contains(it.key())) {
+            if (!projectionFields().contains(it.key())) {
                 emit operationFailed("unknown-projection-field");
                 return;
             }
@@ -559,7 +563,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         if (--m_projectionRemaining != 0) {
             return;
         }
-        const auto fields = ipc::desktopProjectionFields();
+        const auto& fields = projectionFields();
         bool complete = true;
         for (auto field = fields.begin(); field != fields.end(); ++field) {
             const auto metadata = field.value().toObject();
@@ -629,7 +633,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
             return;
         }
         if (m_sessionId != request.target) {
-            const auto fields = ipc::desktopProjectionFields();
+            const auto& fields = projectionFields();
             for (auto it = fields.begin(); it != fields.end(); ++it) {
                 if (it.value().toObject().value("scope") == "session") {
                     m_values.remove(it.key());
@@ -717,7 +721,7 @@ void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
         return;
     }
     for (auto it = properties.begin(); it != properties.end(); ++it) {
-        if (ipc::desktopProjectionFields().contains(it.key())) {
+        if (projectionFields().contains(it.key())) {
             m_values[it.key()] = it.value().toVariant();
         }
     }
