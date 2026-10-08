@@ -1,0 +1,53 @@
+File	Line	Source
+core/src/memory/SqlitePragmas.cpp	17	query.exec(QStringLiteral("PRAGMA journal_mode = WAL"));
+core/src/memory/SqlitePragmas.cpp	18	query.exec(QStringLiteral("PRAGMA synchronous = NORMAL"));
+core/src/memory/SqlitePragmas.cpp	19	query.exec(QStringLiteral("PRAGMA busy_timeout = 5000"));
+core/src/memory/SqlitePragmas.cpp	20	query.exec(QStringLiteral("PRAGMA cache_size = -16384"));
+core/src/memory/SqlitePragmas.cpp	21	query.exec(QStringLiteral("PRAGMA temp_store = MEMORY"));
+core/src/memory/SqlitePragmas.cpp	22	query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
+core/src/memory/SqlitePragmas.cpp	23	query.exec(QStringLiteral("PRAGMA wal_autocheckpoint = 1000"));
+core/src/memory/SqlitePragmas.cpp	24	query.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)"));
+core/src/memory/SQLiteMemoryStore.cpp	221	query.addBindValue(QStringLiteral("schema_version"));
+core/src/memory/SQLiteMemoryStore.cpp	264	"WHERE key='schema_version'"))) {
+core/src/memory/SQLiteMemoryStore.cpp	279	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS memory_entries("
+core/src/memory/SQLiteMemoryStore.cpp	287	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS memory_schema_metadata("
+core/src/memory/SQLiteMemoryStore.cpp	295	if (!columns.exec(QStringLiteral("PRAGMA table_info(memory_entries)"))) {
+core/src/memory/SQLiteMemoryStore.cpp	314	QStringLiteral("CREATE TABLE memory_entries_new(id INTEGER PRIMARY KEY, "
+core/src/memory/SQLiteMemoryStore.cpp	392	query.addBindValue(QStringLiteral("schema_version"));
+core/src/memory/LocalRagStore.cpp	238	"CREATE TABLE IF NOT EXISTS rag_documents ("
+core/src/memory/LocalRagStore.cpp	244	"CREATE TABLE IF NOT EXISTS rag_retrievals ("
+core/src/chat/SQLiteChatHistoryStore.cpp	74	if (!query.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
+core/src/chat/SQLiteChatHistoryStore.cpp	345	query.addBindValue(QStringLiteral("schema_version"));
+core/src/chat/SQLiteChatHistoryStore.cpp	388	"WHERE key='schema_version'"))) {
+core/src/chat/SQLiteChatHistoryStore.cpp	403	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS chat_messages("
+core/src/chat/SQLiteChatHistoryStore.cpp	454	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS chat_history_schema_metadata("
+core/src/chat/SQLiteChatHistoryStore.cpp	511	query.addBindValue(QStringLiteral("schema_version"));
+core/src/chat/SQLiteConversationStore.cpp	79	if (!query.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
+core/src/chat/SQLiteConversationStore.cpp	610	query.addBindValue(QStringLiteral("schema_version"));
+core/src/chat/SQLiteConversationStore.cpp	724	"WHERE key='schema_version'"))) {
+core/src/chat/SQLiteConversationStore.cpp	740	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversations("
+core/src/chat/SQLiteConversationStore.cpp	767	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_messages("
+core/src/chat/SQLiteConversationStore.cpp	803	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_summary_metadata("
+core/src/chat/SQLiteConversationStore.cpp	826	if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_schema_metadata("
+core/src/chat/SQLiteConversationStore.cpp	836	query.addBindValue(QStringLiteral("schema_version"));
+core/src/security/SQLitePermissionGrantStore.cpp	22	query.exec(QStringLiteral("PRAGMA busy_timeout=5000"));
+core/src/security/SQLitePermissionGrantStore.cpp	53	QStringLiteral("CREATE TABLE IF NOT EXISTS permission_grants("
+core/src/security/SQLitePermissionGrantStore.cpp	67	if (!query.exec(QStringLiteral("PRAGMA table_info(permission_grants)"))) {
+core/src/security/SQLitePermissionGrantStore.cpp	81	if (!query.exec(QStringLiteral("PRAGMA user_version=2")) || !connection.db.commit()) {
+core/src/plugin/PluginManifest.cpp	187	if (json.value(QStringLiteral("credential_schema_version")).toInt(-1) != 1) {
+core/src/plugin/PluginManifest.cpp	295	json[QStringLiteral("credential_schema_version")] = 1;
+core/src/agent/SQLiteAgentRunStore.cpp	33	pragma.exec(QStringLiteral("PRAGMA foreign_keys=ON"));
+core/src/agent/SQLiteAgentRunStore.cpp	34	pragma.exec(QStringLiteral("PRAGMA busy_timeout=5000"));
+core/src/agent/SQLiteAgentRunStore.cpp	119	if (!info.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
+core/src/agent/SQLiteAgentRunStore.cpp	164	"WHERE key='schema_version'"))) {
+core/src/agent/SQLiteAgentRunStore.cpp	175	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_run_schema_metadata("
+core/src/agent/SQLiteAgentRunStore.cpp	177	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_runs("
+core/src/agent/SQLiteAgentRunStore.cpp	184	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_steps("
+core/src/agent/SQLiteAgentRunStore.cpp	189	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_tool_calls("
+core/src/agent/SQLiteAgentRunStore.cpp	194	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_requirements("
+core/src/agent/SQLiteAgentRunStore.cpp	197	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_evidence("
+core/src/agent/SQLiteAgentRunStore.cpp	200	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_claims("
+core/src/agent/SQLiteAgentRunStore.cpp	205	QStringLiteral("CREATE TABLE IF NOT EXISTS agent_authorizations("
+core/src/agent/SQLiteAgentRunStore.cpp	278	"VALUES('schema_version',7) ON CONFLICT(key) "
+core/src/job/BackgroundJobService.cpp	182	"CREATE TABLE IF NOT EXISTS sentinel_jobs ("
+core/src/event/DurableEventLog.cpp	13	QStringLiteral("CREATE TABLE IF NOT EXISTS sentinel_events ("

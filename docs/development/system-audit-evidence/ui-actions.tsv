@@ -1,0 +1,260 @@
+File	Line	Handler	Contract coverage
+tests/helpers/settings_ui_certification.qml	18	Button { text: "Settings"; onClicked: surface = 0 }	—
+tests/helpers/settings_ui_certification.qml	19	Button { text: "Onboarding"; onClicked: { shellViewModel.reopenOnboarding(); surface = 1; onboarding.active = true } }	—
+tests/helpers/settings_ui_certification.qml	20	Button { text: "Chat"; onClicked: surface = 2 }	—
+tests/helpers/settings_ui_certification.qml	21	Button { text: "780 px"; onClicked: { window.width = 780; window.height = 640 } }	—
+ui/qml/Main.qml	274	onClicked: root.openSettings()	openSettingslocal/unresolved
+ui/qml/Main.qml	430	onClicked: {	—
+ui/qml/Main.qml	438	onClicked: {	—
+ui/qml/Main.qml	568	onClicked: root.viewModel.cancelDaemonRun()	cancelDaemonRunlocal/unresolved
+ui/qml/Main.qml	574	onClicked: root.viewModel.respondToDaemonApproval(false)	respondToDaemonApprovallocal/unresolved
+ui/qml/Main.qml	578	onClicked: root.viewModel.respondToDaemonApproval(true)	respondToDaemonApprovallocal/unresolved
+ui/qml/Main.qml	586	onActivated: commandPalette.openPalette()	—
+ui/qml/Main.qml	591	onActivated: root.navigateToPage("Dashboard")	navigateToPagelocal/unresolved
+ui/qml/Main.qml	596	onActivated: root.navigateToPage("Models")	navigateToPagelocal/unresolved
+ui/qml/Main.qml	601	onActivated: root.openSettings()	openSettingslocal/unresolved
+ui/qml/Main.qml	606	onActivated: root.focusChatComposer()	focusChatComposerlocal/unresolved
+ui/qml/Main.qml	611	onActivated: root.openSettings()	openSettingslocal/unresolved
+ui/qml/Main.qml	616	onActivated: trayCompanionWindow.toggleVisibility()	—
+ui/qml/Main.qml	621	onActivated: {	—
+ui/qml/components/base/EmptyState.qml	76	onClicked: root.actionTriggered()	actionTriggeredlocal/unresolved
+ui/qml/components/base/ErrorBanner.qml	102	onClicked: root.actionTriggered()	actionTriggeredlocal/unresolved
+ui/qml/components/base/ErrorBanner.qml	144	onClicked: root.dismissed()	dismissedlocal/unresolved
+ui/qml/components/base/SettingToggleRow.qml	38	onClicked: {	—
+ui/qml/components/base/SettingToggleRow.qml	83	onToggled: {	—
+ui/qml/components/chat/HomeChatSurface.qml	60	onTriggered: homeChat.showSuggestions = false	—
+ui/qml/components/chat/HomeChatSurface.qml	329	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	360	onClicked: homeChat.conversationSidebarOpen = true	—
+ui/qml/components/chat/HomeChatSurface.qml	397	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	476	onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)	searchConversation contract
+ui/qml/components/chat/HomeChatSurface.qml	500	onClicked: homeChat.conversationSidebarOpen = false	—
+ui/qml/components/chat/HomeChatSurface.qml	528	onClicked: homeChat.sidebarView = "recent"	—
+ui/qml/components/chat/HomeChatSurface.qml	555	onClicked: homeChat.sidebarView = (homeChat.sidebarView === "pinned" ? "recent" : "pinned")	—
+ui/qml/components/chat/HomeChatSurface.qml	581	onClicked: homeChat.sidebarView = (homeChat.sidebarView === "archived" ? "recent" : "archived")	—
+ui/qml/components/chat/HomeChatSurface.qml	653	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	704	onClicked: convItemMenu.popup()	—
+ui/qml/components/chat/HomeChatSurface.qml	737	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	749	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	763	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	846	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1003	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1125	onClicked: homeChat.viewModel.clearAttachments()	clearAttachmentslocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	1151	onClicked: homeAttachMenu.open()	—
+ui/qml/components/chat/HomeChatSurface.qml	1201	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1236	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1311	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1362	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1395	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	1416	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	1450	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	1641	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1675	onClicked: messageMenu.popup()	—
+ui/qml/components/chat/HomeChatSurface.qml	1711	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1723	onTriggered: homeChat.viewModel.regenerateChatResponse(	regenerateChatResponselocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	1733	onTriggered: homeChat.viewModel.retryChatResponse(	retryChatResponselocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	1739	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1755	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1771	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1783	onTriggered: homeChat.viewModel.exportTranscript("markdown")	exportTranscript contract
+ui/qml/components/chat/HomeChatSurface.qml	1787	onTriggered: homeChat.viewModel.exportTranscript("txt")	exportTranscript contract
+ui/qml/components/chat/HomeChatSurface.qml	1794	onTriggered: {	—
+ui/qml/components/chat/HomeChatSurface.qml	1911	onClicked: homeChat.viewModel.clearAttachments()	clearAttachmentslocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	1937	onClicked: attachMenu.open()	—
+ui/qml/components/chat/HomeChatSurface.qml	1987	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	2022	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	2061	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	2133	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	2184	onClicked: {	—
+ui/qml/components/chat/HomeChatSurface.qml	2213	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	2235	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	2274	onActivated: function(index) {	—
+ui/qml/components/chat/HomeChatSurface.qml	2311	onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))	attachFileToChatlocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	2323	onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))	attachFileToChatlocal/unresolved
+ui/qml/components/chat/HomeChatSurface.qml	2428	onClicked: deleteConfirmDialog.close()	—
+ui/qml/components/chat/HomeChatSurface.qml	2451	onClicked: {	—
+ui/qml/components/dialogs/ModelDetailPopup.qml	228	onClicked: root.close()	closelocal/unresolved
+ui/qml/components/dialogs/ModelDetailPopup.qml	380	onClicked: root.cancelRequested()	cancelRequestedlocal/unresolved
+ui/qml/components/dialogs/ModelDetailPopup.qml	420	onClicked: {	—
+ui/qml/components/dialogs/ModelDetailPopup.qml	492	onClicked: {	—
+ui/qml/components/dialogs/RuntimeDetailPopup.qml	491	onClicked: root.close()	closelocal/unresolved
+ui/qml/components/dialogs/RuntimeDetailPopup.qml	520	onClicked: Qt.openUrlExternally(root.docsUrl)	—
+ui/qml/components/dialogs/RuntimeDetailPopup.qml	571	onClicked: Qt.openUrlExternally(root.githubUrl)	—
+ui/qml/components/dialogs/TrayCompanionWindow.qml	49	onAccepted: if (panel.controller.ask(text)) text = ""	asklocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	54	Button { text: qsTr("Ask"); enabled: prompt.enabled && prompt.text.trim().length > 0; onClicked: if (panel.controller.ask(prompt.text)) prompt.text = "" }	asklocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	55	Button { text: qsTr("Quick Agent"); enabled: prompt.enabled && prompt.text.trim().length > 0; onClicked: if (panel.controller.agent(prompt.text)) prompt.text = "" }	agentlocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	56	Button { text: panel.snapshot.voiceState === "listening" ? qsTr("Stop PTT") : qsTr("Voice/PTT"); enabled: panel.snapshot.voiceAvailable && !panel.snapshot.busy; Accessible.name: text; onClicked: panel.controller.voiceAction(panel.snapshot.voiceState === "listening" ? "stop" : "start") }	voiceActionlocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	57	Button { text: qsTr("Cancel voice"); visible: ["listening", "transcribing", "requestingpermission", "startingcapture"].indexOf(panel.snapshot.voiceState) >= 0; enabled: panel.snapshot.ready; onClicked: panel.controller.voiceAction("cancel") }	voiceActionlocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	61	Button { text: qsTr("Use transcript"); visible: (panel.snapshot.voiceTranscript || "").length > 0; enabled: prompt.enabled; onClicked: prompt.text = panel.snapshot.voiceTranscript }	—
+ui/qml/components/dialogs/TrayCompanionWindow.qml	74	Button { text: qsTr("Allow Once"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(true) }	approvelocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	75	Button { text: qsTr("Deny"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(false) }	approvelocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	76	Button { text: qsTr("Open"); onClicked: { panel.controller.openApproval(); panel.hide() } }	openApprovallocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	91	Button { text: qsTr("Cancel"); visible: panel.snapshot.busy; enabled: panel.snapshot.ready; onClicked: panel.controller.cancel() }	cancellocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	92	Button { Layout.fillWidth: true; text: qsTr("Continue last conversation"); enabled: panel.snapshot.ready && panel.snapshot.sessionId.length > 0; onClicked: { panel.controller.continueConversation(); panel.hide() } }	continueConversationlocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	94	Button { text: qsTr("Open Sentinel"); onClicked: { panel.viewModel.requestWindowActive("Dashboard"); panel.hide() } }	requestWindowActivelocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	95	Button { text: qsTr("Settings"); onClicked: { panel.viewModel.requestWindowActive("Settings"); panel.hide() } }	requestWindowActivelocal/unresolved
+ui/qml/components/dialogs/TrayCompanionWindow.qml	96	Button { text: qsTr("Quit"); onClicked: Qt.quit() }	—
+ui/qml/components/dialogs/UpdateProgressModal.qml	151	onClicked: updateModal.cancelUpdate()	—
+ui/qml/components/dialogs/UpdateProgressModal.qml	605	onClicked: updateModal.cancelUpdate()	—
+ui/qml/components/dialogs/UpdateProgressModal.qml	634	onClicked: {	—
+ui/qml/components/navigation/BottomDock.qml	180	onClicked: dock.pageRequested(tabBtn.modelData.id)	—
+ui/qml/components/navigation/CommandPalette.qml	211	onClicked: palette.runAction(modelData)	—
+ui/qml/components/navigation/HeaderBar.qml	112	onClicked: {	—
+ui/qml/components/navigation/HeaderBar.qml	136	onClicked: {	—
+ui/qml/components/navigation/TitleBar.qml	60	onClicked: root.minimizeRequested()	minimizeRequestedlocal/unresolved
+ui/qml/components/navigation/TitleBar.qml	66	onClicked: root.maximizeRequested()	maximizeRequestedlocal/unresolved
+ui/qml/components/navigation/TitleBar.qml	74	onClicked: root.closeRequested()	closeRequestedlocal/unresolved
+ui/qml/components/navigation/TitleBarButton.qml	54	onClicked: root.clicked()	clickedlocal/unresolved
+ui/qml/components/notifications/NotificationCenterPanel.qml	120	onClicked: {	—
+ui/qml/components/notifications/NotificationCenterPanel.qml	130	onClicked: {	—
+ui/qml/components/notifications/NotificationCenterPanel.qml	140	onClicked: {	—
+ui/qml/components/notifications/NotificationCenterPanel.qml	152	onClicked: root.closeRequested()	closeRequestedlocal/unresolved
+ui/qml/components/notifications/NotificationCenterPanel.qml	196	onClicked: {	—
+ui/qml/components/notifications/NotificationCenterPanel.qml	330	onClicked: {	—
+ui/qml/components/notifications/NotificationCenterPanel.qml	362	onClicked: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	54	onClicked: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	222	onClicked: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	237	onClicked: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	253	onClicked: snoozeMenu.open()	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	261	onTriggered: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	267	onTriggered: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	273	onTriggered: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	279	onTriggered: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	285	onTriggered: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	299	onClicked: {	—
+ui/qml/components/notifications/NotificationItemDelegate.qml	317	onClicked: {	—
+ui/qml/components/notifications/NotificationToast.qml	117	onTriggered: {	—
+ui/qml/components/notifications/NotificationToast.qml	212	onClicked: {	—
+ui/qml/components/notifications/NotificationToast.qml	324	onClicked: {	—
+ui/qml/onboarding/ModelSetupStep.qml	59	onActivated: (index) => {	—
+ui/qml/onboarding/OnboardingScreen.qml	52	Shortcut { sequence: "Tab"; enabled: onboarding.active && onboarding.ownsFocus; context: Qt.WindowShortcut; onActivated: onboarding.moveFocus(false) }	—
+ui/qml/onboarding/OnboardingScreen.qml	53	Shortcut { sequence: "Shift+Tab"; enabled: onboarding.active && onboarding.ownsFocus; context: Qt.WindowShortcut; onActivated: onboarding.moveFocus(true) }	—
+ui/qml/onboarding/OnboardingScreen.qml	302	onClicked: onboarding.viewModel.backOnboarding()	backOnboardinglocal/unresolved
+ui/qml/onboarding/OnboardingScreen.qml	314	onClicked: {	—
+ui/qml/onboarding/ProcessingModeStep.qml	27	onActivated: (index) => root.viewModel.onboardingProcessingMode = root.modes[index]	—
+ui/qml/onboarding/ProviderSetupStep.qml	74	onActivated: (index) => {	—
+ui/qml/onboarding/ProviderSetupStep.qml	100	onEditingFinished: root.setEndpointFor(root.providerIdAt(providerCombo.currentIndex), text)	setEndpointForlocal/unresolved,providerIdAtlocal/unresolved
+ui/qml/onboarding/VoiceSetupStep.qml	55	onActivated: (index) => {	—
+ui/qml/pages/AgentInspectorPage.qml	39	onClicked: page.viewModel.refresh()	refreshlocal/unresolved
+ui/qml/pages/AgentInspectorPage.qml	118	onClicked: {	—
+ui/qml/pages/AgentInspectorPage.qml	142	onClicked: page.viewModel.loadMore()	loadMorelocal/unresolved
+ui/qml/pages/AgentInspectorPage.qml	167	onClicked: page.showingDetail = false	—
+ui/qml/pages/AgentInspectorPage.qml	191	onClicked: page.viewModel.selectRun(parent.run.parentRunId)	selectRunlocal/unresolved
+ui/qml/pages/AgentInspectorPage.qml	200	onClicked: page.viewModel.selectRun(entry.runId)	selectRunlocal/unresolved
+ui/qml/pages/ChatPanel.qml	221	onClicked: {	—
+ui/qml/pages/ChatPanel.qml	260	onClicked: chatPanel.conversationFilter = modelData	—
+ui/qml/pages/ChatPanel.qml	414	onClicked: {	—
+ui/qml/pages/ChatPanel.qml	500	onClicked: overflowMenu.open()	—
+ui/qml/pages/ChatPanel.qml	569	onTriggered: {	—
+ui/qml/pages/ChatPanel.qml	580	onTriggered: {	—
+ui/qml/pages/ChatPanel.qml	592	onTriggered: {	—
+ui/qml/pages/ChatPanel.qml	606	onTriggered: {	—
+ui/qml/pages/ChatPanel.qml	681	onAccepted: {	—
+ui/qml/pages/ChatPanel.qml	696	onClicked: {	—
+ui/qml/pages/models/LocalModelsTab.qml	98	onClicked: root.viewModel.selectedOllamaModel = card.modelData	—
+ui/qml/pages/models/LocalModelsTab.qml	104	onClicked: ollamaPuller.removeModel(card.modelData)	—
+ui/qml/pages/models/ModelsPage.qml	829	onClicked: modelsPage.sidebarCollapsed = !modelsPage.sidebarCollapsed	—
+ui/qml/pages/models/ModelsPage.qml	882	onClicked: modelsPage.activeCategory = modelData	—
+ui/qml/pages/models/ModelsPage.qml	1080	onClicked: modelsPage.ollamaSort = "popular"	—
+ui/qml/pages/models/ModelsPage.qml	1112	onClicked: modelsPage.ollamaSort = "newest"	—
+ui/qml/pages/models/ModelsPage.qml	1142	onClicked: modelsPage.fetchOllamaModels()	—
+ui/qml/pages/models/ModelsPage.qml	1265	onClicked: modelsPage.fetchOllamaModels()	—
+ui/qml/pages/models/ModelsPage.qml	1466	onClicked: {	—
+ui/qml/pages/models/ModelsPage.qml	1574	onClicked: {	—
+ui/qml/pages/models/ModelsPage.qml	1663	onClicked: {	—
+ui/qml/pages/models/OnlineRegistryTab.qml	103	onClicked: root.openModelDetail(card.modelData)	openModelDetaillocal/unresolved
+ui/qml/pages/models/OnlineRegistryTab.qml	110	onClicked: ollamaPuller.pull(card.modelData.ollamaId)	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	81	onActivated: (index) => root.viewModel.appLanguage = model[index]	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	109	onActivated: (index) => root.viewModel.themeName = model[index]	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	147	onClicked: root.viewModel.themeName = modelData	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	250	onToggled: (checked) => root.viewModel.reducedMotionEnabled = checked	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	260	onToggled: (checked) => root.viewModel.highContrastEnabled = checked	—
+ui/qml/pages/settings/AppearanceSettingsTab.qml	317	onClicked: root.viewModel.uiDensity = densityBtn.modelData	—
+ui/qml/pages/settings/ModelSettingsTab.qml	136	onActivated: (index) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	222	onActivated: (index) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	266	onActivated: (choice) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	285	onActivated: (choice) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	302	onEditingFinished: {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	344	onClicked: {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	371	onActivated: (index) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	389	onEditingFinished: root.viewModel.ollamaEndpoint = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	404	onEditingFinished: root.viewModel.lmStudioEndpoint = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	419	onEditingFinished: root.viewModel.llamaCppEndpoint = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	433	onEditingFinished: root.viewModel.cloudApiEndpoint = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	466	onActivated: (index) => {	—
+ui/qml/pages/settings/ModelSettingsTab.qml	485	onEditingFinished: root.viewModel.openAiApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	501	onEditingFinished: root.viewModel.claudeApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	517	onEditingFinished: root.viewModel.geminiApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	533	onEditingFinished: root.viewModel.deepseekApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	549	onEditingFinished: root.viewModel.groqApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	565	onEditingFinished: root.viewModel.mistralApiKey = text	—
+ui/qml/pages/settings/ModelSettingsTab.qml	589	onActivated: (index) => root.applyInferencePreset(index)	applyInferencePresetlocal/unresolved
+ui/qml/pages/settings/ModelSettingsTab.qml	660	onToggled: (enabled) => {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	72	onActivated: (index) => {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	106	onToggled: (checked) => root.viewModel.agentAutonomousMode = checked	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	145	onClicked: {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	159	onClicked: {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	173	onClicked: root.confirmClearPermissions = false	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	210	onAccepted: root.createControlledPlan()	createControlledPlanlocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	217	onClicked: root.createControlledPlan()	createControlledPlanlocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	319	onClicked: root.viewModel.approveControlledAgentTask(root.activeTaskId, "approve")	approveControlledAgentTasklocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	326	onClicked: root.viewModel.denyControlledAgentTask(root.activeTaskId)	denyControlledAgentTasklocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	333	onClicked: root.viewModel.startControlledAgentTask(root.activeTaskId)	startControlledAgentTasklocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	343	onClicked: root.viewModel.executeControlledAgentStep(root.activeTaskId)	executeControlledAgentSteplocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	350	onClicked: root.viewModel.cancelControlledAgentTask(root.activeTaskId)	cancelControlledAgentTasklocal/unresolved
+ui/qml/pages/settings/SecuritySettingsTab.qml	376	onToggled: (checked) => root.viewModel.proxyEnabled = checked	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	392	onActivated: (index) => root.viewModel.proxyType = (index === 1 ? "SOCKS5" : "HTTP")	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	412	onEditingFinished: root.viewModel.proxyHost = text	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	419	onEditingFinished: root.viewModel.proxyPort = parseInt(text) || 0	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	436	onEditingFinished: root.viewModel.proxyUser = text	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	451	onEditingFinished: {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	482	onActivated: (index) => {	—
+ui/qml/pages/settings/SecuritySettingsTab.qml	500	onEditingFinished: root.viewModel.webSearchApiKey = text	—
+ui/qml/pages/settings/SettingsPage.qml	30	onActivated: {	—
+ui/qml/pages/settings/SettingsPage.qml	139	onClicked: settingsPage.jumpTo(modelData.key)	—
+ui/qml/pages/settings/SystemSettingsTab.qml	56	onClicked: root.openUpdateRequested()	openUpdateRequestedlocal/unresolved
+ui/qml/pages/settings/SystemSettingsTab.qml	97	onToggled: (checked) => root.viewModel.soundEffectsEnabled = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	107	onToggled: (checked) => root.viewModel.companionEnabled = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	116	onToggled: (checked) => nativeDesktop.startAtLogin = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	135	onActivated: nativeDesktop.shortcut = currentIndex === 2 ? "Disabled" : currentText	—
+ui/qml/pages/settings/SystemSettingsTab.qml	145	onToggled: (checked) => root.viewModel.developerModeEnabled = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	183	onActivated: (index) => {	—
+ui/qml/pages/settings/SystemSettingsTab.qml	207	onActivated: (index) => {	—
+ui/qml/pages/settings/SystemSettingsTab.qml	233	onToggled: (checked) => root.viewModel.notifyModelDownloads = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	243	onToggled: (checked) => root.viewModel.notifyModelRemovals = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	253	onToggled: (checked) => root.viewModel.notifyAgentResponses = checked	—
+ui/qml/pages/settings/SystemSettingsTab.qml	262	onToggled: (checked) => root.viewModel.notifySystemUpdates = checked	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	105	onClicked: {	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	127	onActivated: (index) => root.viewModel.selectedTtsEngine = (index === 1 ? "Kokoro" : "Piper")	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	148	onEditingFinished: root.viewModel.kokoroModelPath = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	156	onClicked: root.openPathDialog("kokoroModel", qsTr("Select Kokoro model file"), [qsTr("Model files (*.onnx *.pt *.pth *.bin *.safetensors)"), qsTr("All files (*)")])	openPathDialoglocal/unresolved
+ui/qml/pages/settings/VoiceSettingsTab.qml	173	onEditingFinished: root.viewModel.kokoroVoice = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	194	onEditingFinished: root.viewModel.piperBinaryPath = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	202	onClicked: root.openPathDialog("piperBinary", qsTr("Select Piper executable"), [qsTr("Executables (*)"), qsTr("All files (*)")])	openPathDialoglocal/unresolved
+ui/qml/pages/settings/VoiceSettingsTab.qml	224	onEditingFinished: root.viewModel.piperModelPath = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	232	onClicked: root.openPathDialog("piperModel", qsTr("Select Piper model file"), [qsTr("ONNX model files (*.onnx)"), qsTr("All files (*)")])	openPathDialoglocal/unresolved
+ui/qml/pages/settings/VoiceSettingsTab.qml	243	onToggled: (checked) => root.viewModel.piperFileOutputExecutionEnabled = checked	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	271	onEditingFinished: root.viewModel.whisperBinaryPath = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	279	onClicked: root.openPathDialog("whisperBinary", qsTr("Select Whisper executable"), [qsTr("Executables (*)"), qsTr("All files (*)")])	openPathDialoglocal/unresolved
+ui/qml/pages/settings/VoiceSettingsTab.qml	299	onEditingFinished: root.viewModel.whisperModelPath = text	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	307	onClicked: root.openPathDialog("whisperModel", qsTr("Select Whisper model file"), [qsTr("Whisper model files (*.bin *.gguf)"), qsTr("All files (*)")])	openPathDialoglocal/unresolved
+ui/qml/pages/settings/VoiceSettingsTab.qml	318	onToggled: (checked) => root.viewModel.whisperTranscriptionExecutionEnabled = checked	—
+ui/qml/pages/settings/VoiceSettingsTab.qml	326	onAccepted: {	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	97	onActivated: function(index) {	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	119	onClicked: workspaceFolderDialog.open()	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	125	onClicked: root.viewModel.clearWorkspaceRoot()	clearWorkspaceRootlocal/unresolved
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	147	onToggled: (checked) => root.viewModel.localKnowledgeBaseEnabled = checked	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	160	onClicked: knowledgeFileDialog.open()	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	166	onClicked: root.viewModel.reindexKnowledgeBase()	reindexKnowledgeBaselocal/unresolved
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	172	onClicked: root.viewModel.clearKnowledgeBase()	clearKnowledgeBaselocal/unresolved
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	199	onActivated: (index) => root.viewModel.semanticProvider = index === 0 ? "ollama" : "disabled"	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	210	onEditingFinished: root.viewModel.semanticEmbeddingModel = text	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	252	onActivated: (index) => root.viewModel.exportDefaultFormat = model[index]	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	273	onActivated: (index) => {	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	296	onToggled: (checked) => root.viewModel.exportIncludeTimestamps = checked	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	306	onToggled: (checked) => root.viewModel.exportIncludeCitations = checked	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	316	onToggled: (checked) => root.viewModel.exportAnonymizeNames = checked	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	325	onToggled: (checked) => root.viewModel.exportIncludeModelMetadata = checked	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	348	onEditingFinished: root.viewModel.configurationProfile = text	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	365	onActivated: (index) => {	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	393	onAccepted: {	—
+ui/qml/pages/settings/WorkspaceSettingsTab.qml	403	onAccepted: {	—

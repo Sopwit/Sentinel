@@ -1,0 +1,2 @@
+File	Evidence	Status
+core/src/runtime/WindowsSecureFileMutationBackend.cpp	CMake platform source registration; securefs Q_OS_WIN declarations/definitions	RESOLVED_ACTIVE_PLATFORM_SPECIFIC

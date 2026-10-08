@@ -1,0 +1,101 @@
+File	Line	Source
+core/src/ide/IdeIntegrationService.cpp	55	QString termProgram = qgetenv("TERM_PROGRAM");
+core/src/ide/IdeIntegrationService.cpp	66	QString caller = qgetenv("OPENCODE_CALLER");
+core/src/app/AppMetadata.cpp	14	return QString::fromLatin1(SENTINEL_APP_ID);
+core/src/app/AppMetadata.cpp	18	return QString::fromLatin1(SENTINEL_DISPLAY_NAME);
+core/src/app/AppMetadata.cpp	22	return QString::fromLatin1(SENTINEL_APP_VERSION);
+core/src/app/AppMetadata.cpp	26	return QString::fromLatin1(SENTINEL_PROJECT_VERSION);
+core/src/app/AppMetadata.cpp	30	return QString::fromLatin1(SENTINEL_BUILD_NUMBER);
+core/src/app/AppMetadata.cpp	34	return QString::fromLatin1(SENTINEL_GIT_COMMIT);
+core/src/app/AppMetadata.cpp	38	const auto configured = QString::fromLatin1(SENTINEL_BUILD_TYPE);
+core/src/app/AppMetadata.cpp	51	return QString::fromLatin1(SENTINEL_ORGANIZATION_NAME);
+core/src/app/AppMetadata.cpp	55	return QString::fromLatin1(SENTINEL_COPYRIGHT);
+core/src/proxy/ProxyResolver.cpp	17	config.httpProxy = QString::fromUtf8(qgetenv("http_proxy"));
+core/src/proxy/ProxyResolver.cpp	18	config.httpsProxy = QString::fromUtf8(qgetenv("https_proxy"));
+core/src/proxy/ProxyResolver.cpp	19	config.noProxy = QString::fromUtf8(qgetenv("no_proxy"));
+core/src/proxy/ProxyResolver.cpp	20	config.ftpProxy = QString::fromUtf8(qgetenv("ftp_proxy"));
+core/src/config/ConfigVariableSubstitutor.cpp	47	QByteArray value = qgetenv(varName.toUtf8().constData());
+core/src/config/RuntimeFeatureFlags.cpp	28	return enabled(QStringLiteral("SENTINEL_EXPERIMENTAL"));
+core/src/notification/ExternalEditorService.cpp	18	QString editor = qgetenv("VISUAL");
+core/src/notification/ExternalEditorService.cpp	20	editor = qgetenv("EDITOR");
+core/src/runtime/RealToolExecutor.cpp	1030	QString user = qEnvironmentVariable("USER");
+core/src/runtime/RealToolExecutor.cpp	1032	user = qEnvironmentVariable("USERNAME");
+core/src/plugin/PluginHostSession.cpp	70	request.environment.insert(QStringLiteral("PATH"), qEnvironmentVariable("PATH"));
+core/src/session/AutoUpdateService.cpp	27	m_manifestUrl = QUrl(qEnvironmentVariable("SENTINEL_UPDATE_MANIFEST"));
+core/src/session/AutoUpdateService.cpp	103	const QString updater = qEnvironmentVariable("SENTINEL_UPDATER_COMMAND");
+core/include/sentinel/core/app/ApplicationControllerBuilder.h	5	#ifndef SENTINEL_CORE_APPLICATIONCONTROLLERBUILDER_H
+core/include/sentinel/core/app/ApplicationControllerBuilder.h	6	#define SENTINEL_CORE_APPLICATIONCONTROLLERBUILDER_H
+core/include/sentinel/core/app/ApplicationControllerBuilder.h	136	#endif // SENTINEL_CORE_APPLICATIONCONTROLLERBUILDER_H
+core/include/sentinel/core/observability/IObservabilityService.h	18	QString serviceVersion{QString::fromLatin1(SENTINEL_APP_VERSION)};
+apps/sentinel-plugin-host/main.cpp	40	return QString::fromLatin1(SENTINEL_APP_VERSION);
+apps/sentinel-plugin-host/main.cpp	282	!checkVersionRequirement(QString::fromLatin1(SENTINEL_APP_VERSION),
+apps/sentinel-desktop/bootstrap/PlatformInitializer.h	5	#ifndef SENTINEL_DESKTOP_PLATFORMINITIALIZER_H
+apps/sentinel-desktop/bootstrap/PlatformInitializer.h	6	#define SENTINEL_DESKTOP_PLATFORMINITIALIZER_H
+apps/sentinel-desktop/bootstrap/PlatformInitializer.h	30	#endif // SENTINEL_DESKTOP_PLATFORMINITIALIZER_H
+apps/sentinel-desktop/bootstrap/SingleInstanceGuard.h	5	#ifndef SENTINEL_DESKTOP_SINGLEINSTANCEGUARD_H
+apps/sentinel-desktop/bootstrap/SingleInstanceGuard.h	6	#define SENTINEL_DESKTOP_SINGLEINSTANCEGUARD_H
+apps/sentinel-desktop/bootstrap/SingleInstanceGuard.h	38	#endif // SENTINEL_DESKTOP_SINGLEINSTANCEGUARD_H
+apps/sentinel-desktop/bootstrap/LoggingInitializer.h	5	#ifndef SENTINEL_DESKTOP_LOGGINGINITIALIZER_H
+apps/sentinel-desktop/bootstrap/LoggingInitializer.h	6	#define SENTINEL_DESKTOP_LOGGINGINITIALIZER_H
+apps/sentinel-desktop/bootstrap/LoggingInitializer.h	16	#endif // SENTINEL_DESKTOP_LOGGINGINITIALIZER_H
+apps/sentinel-desktop/bootstrap/GraphicsInitializer.h	5	#ifndef SENTINEL_DESKTOP_GRAPHICSINITIALIZER_H
+apps/sentinel-desktop/bootstrap/GraphicsInitializer.h	6	#define SENTINEL_DESKTOP_GRAPHICSINITIALIZER_H
+apps/sentinel-desktop/bootstrap/GraphicsInitializer.h	17	#endif // SENTINEL_DESKTOP_GRAPHICSINITIALIZER_H
+apps/sentinel-desktop/bootstrap/LoggingInitializer.cpp	22	if (!verbose && qgetenv("QT_LOGGING_RULES").isEmpty()) {
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.h	5	#ifndef SENTINEL_DESKTOP_APPLICATIONBOOTSTRAPPER_H
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.h	6	#define SENTINEL_DESKTOP_APPLICATIONBOOTSTRAPPER_H
+apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.h	66	#endif // SENTINEL_DESKTOP_APPLICATIONBOOTSTRAPPER_H
+apps/sentinel-desktop/src/GraphicsBackend.cpp	54	linuxDefaultGraphicsApi(qgetenv("QSG_RHI_BACKEND"), qgetenv("QT_QUICK_BACKEND"));
+apps/sentinel-desktop/src/DaemonClient.cpp	33	return QStringLiteral("sentinel-daemon-%1").arg(qEnvironmentVariable("USERNAME"));
+apps/sentinel-desktop/include/sentinel/desktop/DesktopControllerBridge.h	28	#define SENTINEL_DESKTOP_FORWARD(name)                                                             \
+apps/sentinel-desktop/include/sentinel/desktop/DesktopControllerBridge.h	39	#undef SENTINEL_DESKTOP_FORWARD
+apps/sentinel-desktop/include/sentinel/desktop/viewmodels/ChatViewModel.h	5	#ifndef SENTINEL_DESKTOP_VIEWMODELS_CHATVIEWMODEL_H
+apps/sentinel-desktop/include/sentinel/desktop/viewmodels/ChatViewModel.h	6	#define SENTINEL_DESKTOP_VIEWMODELS_CHATVIEWMODEL_H
+apps/sentinel-desktop/include/sentinel/desktop/viewmodels/ChatViewModel.h	55	#endif // SENTINEL_DESKTOP_VIEWMODELS_CHATVIEWMODEL_H
+apps/sentinel-cli/commands/ModelCommand.h	5	#ifndef SENTINEL_CLI_MODELCOMMAND_H
+apps/sentinel-cli/commands/ModelCommand.h	6	#define SENTINEL_CLI_MODELCOMMAND_H
+apps/sentinel-cli/commands/ModelCommand.h	16	#endif // SENTINEL_CLI_MODELCOMMAND_H
+apps/sentinel-cli/commands/StatusCommand.h	5	#ifndef SENTINEL_CLI_STATUSCOMMAND_H
+apps/sentinel-cli/commands/StatusCommand.h	6	#define SENTINEL_CLI_STATUSCOMMAND_H
+apps/sentinel-cli/commands/StatusCommand.h	16	#endif // SENTINEL_CLI_STATUSCOMMAND_H
+apps/sentinel-cli/commands/ConfigCommand.h	5	#ifndef SENTINEL_CLI_CONFIGCOMMAND_H
+apps/sentinel-cli/commands/ConfigCommand.h	6	#define SENTINEL_CLI_CONFIGCOMMAND_H
+apps/sentinel-cli/commands/ConfigCommand.h	16	#endif // SENTINEL_CLI_CONFIGCOMMAND_H
+apps/sentinel-cli/commands/ChatCommand.h	5	#ifndef SENTINEL_CLI_CHATCOMMAND_H
+apps/sentinel-cli/commands/ChatCommand.h	6	#define SENTINEL_CLI_CHATCOMMAND_H
+apps/sentinel-cli/commands/ChatCommand.h	16	#endif // SENTINEL_CLI_CHATCOMMAND_H
+apps/sentinel-daemon/service/DaemonService.h	5	#ifndef SENTINEL_DAEMON_DAEMONSERVICE_H
+apps/sentinel-daemon/service/DaemonService.h	6	#define SENTINEL_DAEMON_DAEMONSERVICE_H
+apps/sentinel-daemon/service/DaemonService.h	41	#endif // SENTINEL_DAEMON_DAEMONSERVICE_H
+apps/sentinel-daemon/service/DaemonIpcServer.cpp	318	return QStringLiteral("sentinel-daemon-%1").arg(qEnvironmentVariable("USERNAME"));
+cli/crates/sentinel-ipc/build.rs	9	line.strip_prefix("set(SENTINEL_APP_VERSION \"")
+cli/crates/sentinel-ipc/build.rs	12	.expect("SENTINEL_APP_VERSION");
+cli/crates/sentinel-ipc/build.rs	13	println!("cargo:rerun-if-env-changed=SENTINEL_APP_VERSION");
+cli/crates/sentinel-ipc/build.rs	14	let version = std::env::var("SENTINEL_APP_VERSION").unwrap_or_else(|_| version.to_owned());
+cli/crates/sentinel-ipc/build.rs	15	println!("cargo:rustc-env=SENTINEL_APP_VERSION={version}");
+cli/crates/sentinel-ipc/src/lib.rs	4	pub const APP_VERSION: &str = env!("SENTINEL_APP_VERSION");
+cli/crates/sentinel-ipc/src/lib.rs	164	PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".sentinel/run/daemon.sock")
+cli/crates/sentinel-cli/src/main.rs	328	let on_path = std::env::var_os("PATH").is_some_and(|paths| {
+cmake/SentinelCcache.cmake	4	option(SENTINEL_USE_CCACHE "Enable ccache/sccache build compiler launcher" ON)
+cmake/SentinelCcache.cmake	6	if(SENTINEL_USE_CCACHE)
+cmake/SentinelCompilerFlags.cmake	4	option(SENTINEL_ENABLE_WERROR "Treat compiler warnings as errors" OFF)
+cmake/SentinelCompilerFlags.cmake	5	option(SENTINEL_ENABLE_LTO "Enable Link-Time Optimization (IPO/LTO) for Release builds" OFF)
+cmake/SentinelCompilerFlags.cmake	19	$<$<BOOL:${SENTINEL_ENABLE_WERROR}>:/WX>
+cmake/SentinelCompilerFlags.cmake	33	$<$<BOOL:${SENTINEL_ENABLE_WERROR}>:-Werror>
+cmake/SentinelCompilerFlags.cmake	37	if(SENTINEL_ENABLE_LTO)
+cmake/SentinelSigning.cmake	5	set(SENTINEL_SIGN_THUMBPRINT "" CACHE STRING "SHA-1 Thumbprint of code signing certificate in Windows Certificate Store")
+cmake/SentinelSigning.cmake	6	set(SENTINEL_SIGN_PFX_FILE "" CACHE STRING "Path to the code signing certificate PFX file")
+cmake/SentinelSigning.cmake	7	set(SENTINEL_SIGN_PFX_PASSWORD "" CACHE STRING "Password for the PFX certificate file")
+cmake/SentinelSigning.cmake	8	set(SENTINEL_TIMESTAMP_URL "http://timestamp.digicert.com" CACHE STRING "Timestamp server URL")
+cmake/SentinelSigning.cmake	33	set(SIGN_ARGS sign /fd SHA256 /tr "${SENTINEL_TIMESTAMP_URL}" /td SHA256)
+cmake/SentinelSigning.cmake	35	if(SENTINEL_SIGN_THUMBPRINT)
+cmake/SentinelSigning.cmake	36	list(APPEND SIGN_ARGS /sha1 "${SENTINEL_SIGN_THUMBPRINT}")
+cmake/SentinelSigning.cmake	38	elseif(SENTINEL_SIGN_PFX_FILE)
+cmake/SentinelSigning.cmake	39	list(APPEND SIGN_ARGS /f "${SENTINEL_SIGN_PFX_FILE}")
+cmake/SentinelSigning.cmake	40	if(SENTINEL_SIGN_PFX_PASSWORD)
+cmake/SentinelSigning.cmake	41	list(APPEND SIGN_ARGS /p "${SENTINEL_SIGN_PFX_PASSWORD}")
+cmake/SentinelSigning.cmake	72	set(SENTINEL_MACOS_CODESIGN_IDENTITY "" CACHE STRING "Developer ID Application certificate identity for macOS signing")
+cmake/SentinelSigning.cmake	73	set(SENTINEL_MACOS_NOTARY_PROFILE "" CACHE STRING "notarytool profile name for macOS notarization")
+cmake/SentinelSigning.cmake	77	if(CODESIGN_EXECUTABLE AND SENTINEL_MACOS_CODESIGN_IDENTITY)
+cmake/SentinelSigning.cmake	78	message(STATUS "macOS code signing configured with identity: ${SENTINEL_MACOS_CODESIGN_IDENTITY}")
+cmake/SentinelSigning.cmake	83	--sign "${SENTINEL_MACOS_CODESIGN_IDENTITY}"
