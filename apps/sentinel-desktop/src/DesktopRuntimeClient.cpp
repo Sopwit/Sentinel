@@ -70,6 +70,22 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
                     return;
                 }
                 const auto failed = m_requests.take(id);
+                const bool generationRequest = failed.name == "chat.send" || failed.name == "agent.start" ||
+                                               failed.name == "chat.retry" || failed.name == "chat.regenerate" ||
+                                               failed.name == "chat.edit";
+                if (generationRequest) {
+                    m_submissionError = code;
+                    m_submissionErrorSummary =
+                        code == "provider-unavailable"
+                            ? tr("The selected provider is unavailable. Check that its server is running "
+                                 "and its endpoint is correct in Settings.")
+                        : code == "model-unavailable"
+                            ? tr("The selected model is unavailable. Load the model in its server "
+                                 "and select an available model.")
+                        : code == "runtime-busy"
+                            ? tr("Another request is still running. Wait for it or stop it before retrying.")
+                            : tr("The message could not be sent: %1").arg(code);
+                }
                 if (failed.name == "voice.state") {
                     m_voiceQueryPending = false;
                 }
@@ -380,6 +396,10 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
             return false;
         }
         m_submissionPending = true;
+        m_submissionError.clear();
+        m_submissionErrorSummary.clear();
+        m_values["chatErrorCategory"] = QString{};
+        m_values["chatSendLifecycleSummary"] = QString{};
         m_output.clear();
         m_approval = {};
         m_values.remove("latestToolExecutionSummary");
@@ -416,6 +436,10 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
         m_kind = "chat";
         m_output.clear();
         m_activeAssistantId = 0;
+        m_submissionError.clear();
+        m_submissionErrorSummary.clear();
+        m_values["chatErrorCategory"] = QString{};
+        m_values["chatSendLifecycleSummary"] = QString{};
         const auto id = send(command, payload, m_sessionId);
         projectRun();
         emit changed();
@@ -435,6 +459,10 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
 void DesktopRuntimeClient::attach(const QString& id) {
     if (id.isEmpty() || m_attaching) {
         return;
+    }
+    if (id != m_sessionId) {
+        m_submissionError.clear();
+        m_submissionErrorSummary.clear();
     }
     m_attaching = true;
     send(DaemonClient::Command::session_attach, {{"session_id", id}}, id);
@@ -757,6 +785,15 @@ void DesktopRuntimeClient::onEvent(const QString& name, const QJsonObject& paylo
         }
         m_state = payload.value("state").toString();
         m_output = payload.value("text").toString();
+        if (name == "run.failed") {
+            m_values["chatErrorCategory"] = payload.value("detail").toString();
+            const auto detail = payload.value("detail").toString();
+            m_values["chatSendLifecycleSummary"] =
+                detail == "ProviderUnavailable" || detail == "ConnectionFailed"
+                    ? tr("The selected provider is unavailable. Check that its server is running "
+                         "and its endpoint is correct in Settings.")
+                    : detail;
+        }
         m_approval = {};
         m_approvalResponsePending = false;
         requestMessages();
@@ -838,6 +875,13 @@ void DesktopRuntimeClient::projectRun() {
                                          : busy && m_kind == "chat"
                                              ? (m_output.isEmpty() ? "sending" : "streaming")
                                              : m_state;
+    if (!m_submissionError.isEmpty()) {
+        // Session polling restores server metadata, but cannot erase a rejected
+        // submission: no authoritative run was created for that request.
+        m_values["chatSendLifecycleState"] = QStringLiteral("failed");
+        m_values["chatErrorCategory"] = m_submissionError;
+        m_values["chatSendLifecycleSummary"] = m_submissionErrorSummary;
+    }
     m_values["conversationHistoryMessageCount"] = m_messages.size();
     m_values["latestApprovalSummary"] = m_approval.value("detail").toString();
     if (m_kind == "chat" && !m_submissionPending && !m_messages.isEmpty() &&
