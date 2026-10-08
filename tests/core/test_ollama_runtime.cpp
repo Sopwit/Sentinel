@@ -7,17 +7,73 @@
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
+#include <QDir>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QStandardPaths>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUrlQuery>
 #include <QtTest>
+#include <cstring>
 
 using sentinel::core::NullOllamaRuntimeClient;
 using sentinel::core::OllamaConfig;
 using sentinel::core::OllamaConnectionStatus;
 using sentinel::core::OllamaEndpoint;
 using sentinel::core::OllamaHealthStatus;
+
+class CatalogReply final : public QNetworkReply {
+public:
+    CatalogReply(const QNetworkRequest& request, QByteArray body, QObject* parent)
+        : QNetworkReply(parent), body_(std::move(body)) {
+        setRequest(request);
+        setUrl(request.url());
+        setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 200);
+        setRawHeader("Link", "<https://huggingface.co/api/models?cursor=second>; rel=\"next\"");
+        open(QIODevice::ReadOnly);
+        QTimer::singleShot(0, this, [this] {
+            emit readyRead();
+            setFinished(true);
+            emit finished();
+        });
+    }
+    void abort() override {
+        setError(OperationCanceledError, "cancelled");
+    }
+    qint64 bytesAvailable() const override {
+        return body_.size() - offset_ + QNetworkReply::bytesAvailable();
+    }
+
+protected:
+    qint64 readData(char* data, qint64 maximum) override {
+        const auto count = std::min(maximum, qint64(body_.size() - offset_));
+        if (!count)
+            return -1;
+        std::memcpy(data, body_.constData() + offset_, size_t(count));
+        offset_ += count;
+        return count;
+    }
+
+private:
+    QByteArray body_;
+    qint64 offset_ = 0;
+};
+class CatalogNetwork final : public QNetworkAccessManager {
+public:
+    QList<QUrl> requests;
+    QByteArray body;
+
+protected:
+    QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) override {
+        requests.append(request.url());
+        return new CatalogReply(request, body, this);
+    }
+};
 
 class OllamaRuntimeTest final : public QObject {
     Q_OBJECT
@@ -31,6 +87,9 @@ private slots:
     void taskCategoriesAndMixedCapabilities();
     void parsesLmStudioCloudAndDownloadMetadata();
     void explicitRefreshBypassesFreshCache();
+    void catalogContinuationsStayOnTrustedOrigin();
+    void catalogSearchPagesUseTaskAndPreserveCacheOnInvalidResponse();
+    void webCatalogRestoresSnapshotAndRejectsMalformedCache();
     void llamaCppLoadedTemplateCapabilities_data();
     void llamaCppLoadedTemplateCapabilities();
 };
@@ -265,6 +324,88 @@ void OllamaRuntimeTest::explicitRefreshBypassesFreshCache() {
     QVERIFY(!refreshSucceeded);
     QCOMPARE(source.catalogState(), sentinel::core::HuggingFaceCatalogState::Offline);
     QVERIFY(!source.entries().isEmpty());
+}
+
+void OllamaRuntimeTest::catalogContinuationsStayOnTrustedOrigin() {
+    using sentinel::core::HuggingFaceModelSource;
+    const auto url = HuggingFaceModelSource::continuationUrl(
+        "<https://huggingface.co/api/models?cursor=next>; rel=\"next\"");
+    QVERIFY(!url.isEmpty());
+    QCOMPARE(url.query(), QString("cursor=next"));
+    for (const auto& target :
+         {"https://evil.example/api/models", "http://huggingface.co/api/models",
+          "https://user@huggingface.co/api/models", "https://huggingface.co:444/api/models",
+          "https://huggingface.co/api/token"}) {
+        QVERIFY(HuggingFaceModelSource::continuationUrl(QString("<%1>; rel=\"next\"").arg(target))
+                    .isEmpty());
+    }
+    QVERIFY(HuggingFaceModelSource::continuationUrl(
+                "<https://huggingface.co/api/models>; rel=\"previous\"")
+                .isEmpty());
+}
+
+void OllamaRuntimeTest::webCatalogRestoresSnapshotAndRejectsMalformedCache() {
+    const auto previous = QStandardPaths::isTestModeEnabled();
+    QStandardPaths::setTestModeEnabled(true);
+    const auto root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(root);
+    const auto path = root + "/model-catalog-ollama.json";
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(QJsonDocument(QJsonObject{{"schema", 1},
+                                         {"source", "ollama"},
+                                         {"fetchedAt", "2026-10-08T12:00:00Z"},
+                                         {"models", QJsonArray{QJsonObject{{"id", "cached-model"},
+                                                                           {"name", "Cached"}}}}})
+                   .toJson());
+    file.close();
+    OllamaLibraryFetcher cached;
+    const bool restored =
+        cached.models().size() == 1 && cached.fetchedAt() == "2026-10-08T12:00:00Z";
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("{invalid");
+    file.close();
+    OllamaLibraryFetcher malformed;
+    const bool rejected = malformed.models().isEmpty() && malformed.fetchedAt().isEmpty();
+    file.remove();
+    QStandardPaths::setTestModeEnabled(previous);
+    QVERIFY(restored);
+    QVERIFY(rejected);
+}
+
+void OllamaRuntimeTest::catalogSearchPagesUseTaskAndPreserveCacheOnInvalidResponse() {
+    QTemporaryDir directory;
+    sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));
+    auto* network = new CatalogNetwork;
+    network->setParent(&source);
+    delete source.network_;
+    source.network_ = network;
+    network->body =
+        R"([{"id":"test/video","pipeline_tag":"text-to-video","downloads":123,"likes":4,"lastModified":"2026-10-08T12:00:00Z","tags":["text-to-video"]}])";
+    QSignalSpy finished(&source, &sentinel::core::HuggingFaceModelSource::requestFinished);
+    source.searchCatalog("video", "text-to-video", "lastModified", true);
+    QTRY_COMPARE(finished.size(), 1);
+    QVERIFY(finished.takeFirst().first().toBool());
+    const QUrlQuery query(network->requests.first());
+    QCOMPARE(query.queryItemValue("pipeline_tag"), QString("text-to-video"));
+    QCOMPARE(query.queryItemValue("sort"), QString("lastModified"));
+    QVERIFY(source.hasMore());
+    QCOMPARE(source.repositories().first().downloads.value(), qint64(123));
+    QCOMPARE(source.repositories().first().pipelineTask, QString("text-to-video"));
+    network->body = R"([{"id":"test/second","pipeline_tag":"text-to-video"}])";
+    source.fetchMore();
+    QTRY_COMPARE(finished.size(), 1);
+    QVERIFY(finished.takeFirst().first().toBool());
+    QCOMPARE(network->requests.last().query(), QString("cursor=second"));
+    QCOMPARE(source.repositories().size(), 1);
+    QCOMPARE(source.repositories().first().id, QString("test/second"));
+    sentinel::core::HuggingFaceModelSource restored(directory.filePath("catalog.json"));
+    QVERIFY(restored.hasMore());
+    network->body = "{invalid";
+    source.fetchMore();
+    QTRY_COMPARE(finished.size(), 1);
+    QVERIFY(!finished.takeFirst().first().toBool());
+    QCOMPARE(source.repositories().first().id, QString("test/second"));
 }
 
 QTEST_MAIN(OllamaRuntimeTest)

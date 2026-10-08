@@ -16,6 +16,7 @@
 
 class QNetworkAccessManager;
 class QNetworkReply;
+class OllamaRuntimeTest;
 
 namespace sentinel::core {
 
@@ -55,12 +56,18 @@ struct HuggingFaceRepository {
     QString architecture;
     QString revision;
     QString lastUpdated;
+    QString pipelineTask;
+    std::optional<qint64> downloads;
+    std::optional<qint64> likes;
+    bool gated = false;
     QStringList tags;
     QList<HuggingFaceArtifact> artifacts;
 };
 
 class HuggingFaceModelSource final : public QObject, public IModelLibrarySourceAdapter {
     Q_OBJECT
+    friend class ::OllamaRuntimeTest;
+
 public:
     explicit HuggingFaceModelSource(QString cachePath = {}, QObject* parent = nullptr);
     QString sourceId() const override;
@@ -78,6 +85,12 @@ public:
     QString cachePath() const;
     bool clearMetadataCache(int olderThanDays = 0);
     void search(const QString& text, bool forceRefresh = false);
+    void searchCatalog(const QString& text, const QString& task, const QString& sort,
+                       bool forceRefresh = false);
+    bool hasMore() const {
+        return !nextPage_.isEmpty();
+    }
+    void fetchMore();
     void fetchRepository(const QString& repositoryId);
     void setTokenProvider(std::function<QString()> provider);
     QString token() const;
@@ -96,6 +109,7 @@ signals:
 
 private:
     void request(const QUrl& url, const QString& query, const QString& repositoryId);
+    static QUrl continuationUrl(const QString& links);
     void loadCache();
     bool saveCache() const;
     HuggingFaceRepository parseRepository(const QJsonObject& object) const;
@@ -106,6 +120,7 @@ private:
     QStringList knownStorageRoots_;
     QJsonArray cachedModels_;
     QString cachedQuery_;
+    QUrl nextPage_;
     QDateTime fetchedAt_;
     HuggingFaceCatalogState state_ = HuggingFaceCatalogState::Unavailable;
     QString detail_;

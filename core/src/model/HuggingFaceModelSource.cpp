@@ -16,12 +16,14 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QSet>
 #include <QStandardPaths>
 #include <QUrlQuery>
 
 namespace sentinel::core {
 namespace {
 
+constexpr int pageSize = 40;
 constexpr int maxRepositories = 40;
 constexpr int maxArtifacts = 200;
 constexpr int cacheMinutes = 15;
@@ -109,6 +111,7 @@ bool HuggingFaceModelSource::clearMetadataCache(int olderThanDays) {
     if (!file.exists()) {
         cachedModels_ = {};
         cachedQuery_.clear();
+        nextPage_ = QUrl{};
         fetchedAt_ = {};
         state_ = HuggingFaceCatalogState::Unavailable;
         emit catalogChanged();
@@ -122,6 +125,7 @@ bool HuggingFaceModelSource::clearMetadataCache(int olderThanDays) {
     if (!QFile::remove(cachePath_)) return false;
     cachedModels_ = {};
     cachedQuery_.clear();
+    nextPage_ = QUrl{};
     fetchedAt_ = {};
     state_ = HuggingFaceCatalogState::Unavailable;
     emit catalogChanged();
@@ -213,6 +217,14 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
     repository.revision = object.value(QStringLiteral("sha")).toString();
     if (!pinnedRevision(repository.revision)) repository.revision.clear();
     repository.lastUpdated = object.value(QStringLiteral("lastModified")).toString();
+    repository.pipelineTask = object.value("pipeline_tag").toString();
+    if (object.value("downloads").isDouble())
+        repository.downloads = object.value("downloads").toInteger();
+    if (object.value("likes").isDouble())
+        repository.likes = object.value("likes").toInteger();
+    repository.gated =
+        object.value("gated").toBool() ||
+        (object.value("gated").isString() && object.value("gated").toString() != "false");
     const auto card = object.value(QStringLiteral("cardData")).toObject();
     repository.license = card.value(QStringLiteral("license")).toString();
     if (repository.license.isEmpty())
@@ -381,7 +393,17 @@ QList<ModelLibraryEntry> HuggingFaceModelSource::query(const HuggingFaceSearchQu
 }
 
 void HuggingFaceModelSource::search(const QString& text, bool forceRefresh) {
-    const auto query = text.trimmed();
+    searchCatalog(text, {}, "downloads", forceRefresh);
+}
+
+void HuggingFaceModelSource::searchCatalog(const QString& text, const QString& task,
+                                           const QString& sort, bool forceRefresh) {
+    const auto query = task.isEmpty() && sort == "downloads"
+                           ? text.trimmed()
+                           : QString::fromUtf8(QJsonDocument(QJsonObject{{"text", text.trimmed()},
+                                                                         {"task", task},
+                                                                         {"sort", sort}})
+                                                   .toJson(QJsonDocument::Compact));
     if (!forceRefresh && query == cachedQuery_ && fetchedAt_.isValid() &&
         fetchedAt_.secsTo(QDateTime::currentDateTimeUtc()) < cacheMinutes * 60 &&
         (state_ == HuggingFaceCatalogState::Current || state_ == HuggingFaceCatalogState::Empty)) {
@@ -390,14 +412,33 @@ void HuggingFaceModelSource::search(const QString& text, bool forceRefresh) {
     }
     QUrl url(QStringLiteral("https://huggingface.co/api/models"));
     QUrlQuery parameters;
-    parameters.addQueryItem(QStringLiteral("search"), query);
-    parameters.addQueryItem(QStringLiteral("sort"), QStringLiteral("downloads"));
+    parameters.addQueryItem(QStringLiteral("search"), text.trimmed());
+    if (!task.isEmpty())
+        parameters.addQueryItem(QStringLiteral("pipeline_tag"), task);
+    parameters.addQueryItem(QStringLiteral("sort"), sort == "lastModified" ? sort : "downloads");
     parameters.addQueryItem(QStringLiteral("direction"), QStringLiteral("-1"));
-    parameters.addQueryItem(QStringLiteral("limit"), QString::number(maxRepositories));
+    parameters.addQueryItem(QStringLiteral("limit"), QString::number(pageSize));
     parameters.addQueryItem(QStringLiteral("full"), QStringLiteral("true"));
     parameters.addQueryItem(QStringLiteral("blobs"), QStringLiteral("true"));
     url.setQuery(parameters);
     request(url, query, {});
+}
+
+QUrl HuggingFaceModelSource::continuationUrl(const QString& links) {
+    static const QRegularExpression nextLink(QStringLiteral("<([^>]+)>;\\s*rel=\"next\""));
+    const auto match = nextLink.match(links);
+    const QUrl candidate(match.captured(1));
+    // A server-supplied continuation must never redirect a token to another origin.
+    return match.hasMatch() && candidate.scheme() == "https" &&
+                   candidate.host() == "huggingface.co" && candidate.port(-1) == -1 &&
+                   candidate.userInfo().isEmpty() && candidate.path() == "/api/models"
+               ? candidate
+               : QUrl{};
+}
+
+void HuggingFaceModelSource::fetchMore() {
+    if (!fetching() && hasMore())
+        request(nextPage_, cachedQuery_, {});
 }
 
 void HuggingFaceModelSource::fetchRepository(const QString& repositoryId) {
@@ -449,6 +490,7 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
         activeReply_ = nullptr;
         const auto status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const auto errorCode = reply->rawHeader("X-Error-Code");
+        const auto links = QString::fromUtf8(reply->rawHeader("Link"));
         responseBuffer_.append(reply->readAll());
         const auto body = responseBuffer_;
         const bool okay = reply->error() == QNetworkReply::NoError &&
@@ -488,12 +530,17 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
         }
         if (repositoryId.isEmpty()) {
             QJsonArray next;
+            QSet<QString> seen;
             for (const auto& value : document.array()) {
                 if (next.size() >= maxRepositories) break;
-                if (value.isObject() && !parseRepository(value.toObject()).id.isEmpty())
+                const auto id = value.isObject() ? parseRepository(value.toObject()).id : QString{};
+                if (!id.isEmpty() && !seen.contains(id)) {
                     next.append(value);
+                    seen.insert(id);
+                }
             }
             cachedModels_ = next;
+            nextPage_ = continuationUrl(links);
             cachedQuery_ = query;
             fetchedAt_ = QDateTime::currentDateTimeUtc();
         } else {
@@ -536,6 +583,7 @@ void HuggingFaceModelSource::loadCache() {
     if (!document.isObject()) return;
     const auto data = document.object();
     cachedQuery_ = data.value(QStringLiteral("query")).toString();
+    nextPage_ = continuationUrl(data.value("nextPage").toString());
     fetchedAt_ = QDateTime::fromString(data.value(QStringLiteral("fetchedAt")).toString(),
                                        Qt::ISODateWithMs);
     for (const auto& item : data.value(QStringLiteral("models")).toArray()) {
@@ -556,10 +604,16 @@ bool HuggingFaceModelSource::saveCache() const {
     if (!QDir().mkpath(QFileInfo(cachePath_).absolutePath())) return false;
     QSaveFile file(cachePath_);
     if (!file.open(QIODevice::WriteOnly)) return false;
-    const auto payload = QJsonDocument(QJsonObject{
-        {QStringLiteral("query"), cachedQuery_},
-        {QStringLiteral("fetchedAt"), fetchedAt_.toString(Qt::ISODateWithMs)},
-        {QStringLiteral("models"), cachedModels_}}).toJson(QJsonDocument::Compact);
+    const auto payload =
+        QJsonDocument(
+            QJsonObject{{QStringLiteral("nextPage"),
+                         nextPage_.isEmpty()
+                             ? QString{}
+                             : QString("<%1>; rel=\"next\"").arg(nextPage_.toString())},
+                        {QStringLiteral("query"), cachedQuery_},
+                        {QStringLiteral("fetchedAt"), fetchedAt_.toString(Qt::ISODateWithMs)},
+                        {QStringLiteral("models"), cachedModels_}})
+            .toJson(QJsonDocument::Compact);
     if (file.write(payload) != payload.size()) return false;
     return file.commit();
 }

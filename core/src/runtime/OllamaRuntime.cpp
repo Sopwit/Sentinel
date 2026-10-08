@@ -7,7 +7,10 @@
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
+#include <QDateTime>
+#include <QDir>
 #include <QEventLoop>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,6 +18,8 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QSaveFile>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QUrlQuery>
 #include <QVariant>
@@ -26,6 +31,41 @@
 namespace sentinel::core {
 
 namespace {
+
+QString catalogSnapshotPath(const QString& source) {
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/model-catalog-" +
+           source + ".json";
+}
+void loadCatalogSnapshot(const QString& source, QVariantList& models, QString& fetchedAt) {
+    QFile file(catalogSnapshotPath(source));
+    if (file.size() > 256 * 1024 || !file.open(QIODevice::ReadOnly))
+        return;
+    const auto object = QJsonDocument::fromJson(file.readAll()).object();
+    const auto timestamp = object.value("fetchedAt").toString();
+    if (object.value("schema").toInt() != 1 || object.value("source").toString() != source ||
+        !QDateTime::fromString(timestamp, Qt::ISODate).isValid())
+        return;
+    const auto records = object.value("models").toArray();
+    for (const auto& record : records)
+        if (!record.isObject() || record.toObject().value("id").toString().isEmpty())
+            return;
+    models = records.toVariantList();
+    fetchedAt = timestamp;
+}
+void saveCatalogSnapshot(const QString& source, const QVariantList& models,
+                         const QString& fetchedAt) {
+    const auto bytes = QJsonDocument(QJsonObject{{"schema", 1},
+                                                 {"source", source},
+                                                 {"fetchedAt", fetchedAt},
+                                                 {"models", QJsonArray::fromVariantList(models)}})
+                           .toJson(QJsonDocument::Compact);
+    if (bytes.size() > 256 * 1024)
+        return;
+    QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    QSaveFile file(catalogSnapshotPath(source));
+    if (file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size())
+        file.commit();
+}
 
 constexpr auto defaultOllamaEndpoint = "http://127.0.0.1:11434";
 
@@ -758,7 +798,9 @@ QString catalogPlainText(QString value) {
 // ── OllamaLibraryFetcher implementation ───────────────────────────────────────
 
 OllamaLibraryFetcher::OllamaLibraryFetcher(QObject* parent)
-    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {
+    sentinel::core::loadCatalogSnapshot("ollama", models_, fetchedAt_);
+}
 
 bool OllamaLibraryFetcher::fetching() const {
     return fetching_;
@@ -835,6 +877,10 @@ void OllamaLibraryFetcher::handleReplyFinished() {
 
     const QString html = QString::fromUtf8(r->readAll());
     parseHtml(html);
+    if (errorText_.isEmpty()) {
+        fetchedAt_ = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+        sentinel::core::saveCatalogSnapshot("ollama", models_, fetchedAt_);
+    }
     emit fetchFinished(errorText_.isEmpty());
 }
 
@@ -1246,7 +1292,9 @@ void OllamaModelDetailFetcher::parseHtml(const QString& html) {
 // ── LMStudioLibraryFetcher implementation ─────────────────────────────────────
 
 LMStudioLibraryFetcher::LMStudioLibraryFetcher(QObject* parent)
-    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {
+    sentinel::core::loadCatalogSnapshot("lmstudio", models_, fetchedAt_);
+}
 
 bool LMStudioLibraryFetcher::fetching() const {
     return fetching_;
@@ -1319,6 +1367,10 @@ void LMStudioLibraryFetcher::handleReplyFinished() {
 
     const QString html = QString::fromUtf8(r->readAll());
     parseHtml(html);
+    if (errorText_.isEmpty()) {
+        fetchedAt_ = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+        sentinel::core::saveCatalogSnapshot("lmstudio", models_, fetchedAt_);
+    }
     emit fetchFinished(errorText_.isEmpty());
 }
 
