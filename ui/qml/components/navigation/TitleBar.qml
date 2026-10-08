@@ -86,26 +86,9 @@ Item {
         enabled: root.frameless
         cursorShape: Qt.ArrowCursor
 
-        property real lastMouseX: 0
-        property real lastMouseY: 0
-
-        onPressed: function(event) {
-            lastMouseX = event.screenX
-            lastMouseY = event.screenY
-        }
-
-        onPositionChanged: function(event) {
-            if (pressed) {
-                var dx = event.screenX - lastMouseX
-                var dy = event.screenY - lastMouseY
-                var win = root.Window.window
-                if (win) {
-                    win.x += dx
-                    win.y += dy
-                }
-                lastMouseX = event.screenX
-                lastMouseY = event.screenY
-            }
+        onPressed: {
+            const window = root.Window.window
+            if (window) window.startSystemMove()
         }
 
         onDoubleClicked: {

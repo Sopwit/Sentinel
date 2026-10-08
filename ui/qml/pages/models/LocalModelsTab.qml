@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -30,7 +32,7 @@ Item {
             Label {
                 text: qsTr("Installed Runtimes & Models")
                 color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontSection
+                font.pixelSize: SentinelTheme.fontCard
                 font.bold: true
                 Layout.fillWidth: true
             }
@@ -98,7 +100,7 @@ Item {
 
                                 SentinelButton {
                                     text: qsTr("Delete")
-                                    accent: SentinelTheme.statusError
+                                    accent: SentinelTheme.errorText
                                     onClicked: ollamaPuller.removeModel(card.modelData)
                                 }
                             }

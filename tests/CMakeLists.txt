@@ -27,14 +27,26 @@ if(APPLE)
     set_target_properties(audio_certification_probe PROPERTIES MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/helpers/audio_certification_Info.plist.in")
 endif()
-qt_add_executable(settings_ui_certification_probe EXCLUDE_FROM_ALL helpers/settings_ui_certification_probe.cpp)
+qt_add_executable(settings_ui_certification_probe helpers/settings_ui_certification_probe.cpp
+    ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/NativeCompanionAdapter.cpp
+    ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/include/sentinel/desktop/NativeCompanionAdapter.h)
 if(APPLE)
+    target_sources(settings_ui_certification_probe PRIVATE
+        ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/MacNativeActivation.mm
+        ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/src/MacNativeNotifications.mm
+        ${PROJECT_SOURCE_DIR}/apps/sentinel-desktop/include/sentinel/desktop/MacNativeNotifications.h)
+    target_link_libraries(settings_ui_certification_probe PRIVATE "-framework Carbon" "-framework AppKit" "-framework UserNotifications")
     set_target_properties(settings_ui_certification_probe PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.SettingsCertification"
         MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Settings Certification")
 endif()
-target_link_libraries(settings_ui_certification_probe PRIVATE sentinel_desktop_viewmodels Qt6::Quick Qt6::Qml)
+if(WIN32)
+    target_link_libraries(settings_ui_certification_probe PRIVATE user32)
+endif()
+target_link_libraries(settings_ui_certification_probe PRIVATE sentinel_desktop_viewmodels Qt6::Quick Qt6::Qml Qt6::Test)
+add_test(NAME test_onboarding_focus COMMAND $<TARGET_FILE:settings_ui_certification_probe> --focus-smoke)
+set_tests_properties(test_onboarding_focus PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 file(GLOB_RECURSE CERTIFICATION_QML_FILES "${CMAKE_SOURCE_DIR}/ui/qml/*.qml")
 foreach(qml_file IN LISTS CERTIFICATION_QML_FILES)
     get_filename_component(qml_name "${qml_file}" NAME)
@@ -45,6 +57,14 @@ qt_add_resources(settings_ui_certification_probe "certification_qml"
 qt_add_resources(settings_ui_certification_probe "certification_qmldir"
     PREFIX "/qt/qml" BASE "${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
     FILES "${CMAKE_BINARY_DIR}/apps/sentinel-desktop/Sentinel/Desktop/qmldir")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/branding/tray/linux/sentinel-tray-32-black.png" PROPERTIES QT_RESOURCE_ALIAS "branding/tray.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/branding/app-icon/linux/512x512/apps/sentinel.png" PROPERTIES QT_RESOURCE_ALIAS "icons/dev.sentinel.Sentinel.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/branding/wordmark/sentinel-lockup.svg" PROPERTIES QT_RESOURCE_ALIAS "branding/sentinel-lockup.svg")
+qt_add_resources(settings_ui_certification_probe "certification_brand"
+    PREFIX "/" FILES
+    "${CMAKE_SOURCE_DIR}/resources/branding/app-icon/linux/512x512/apps/sentinel.png"
+    "${CMAKE_SOURCE_DIR}/resources/branding/tray/linux/sentinel-tray-32-black.png"
+    "${CMAKE_SOURCE_DIR}/resources/branding/wordmark/sentinel-lockup.svg")
 file(GLOB CERTIFICATION_ICON_FILES "${CMAKE_SOURCE_DIR}/resources/icons/tabler/*.svg"
     "${CMAKE_SOURCE_DIR}/resources/icons/lucide/*.svg")
 qt_add_resources(settings_ui_certification_probe "certification_icons"

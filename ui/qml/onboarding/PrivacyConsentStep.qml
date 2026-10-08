@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -39,6 +41,7 @@ Item {
                 model: root.assurances
 
                 delegate: RowLayout {
+        id: delegateScope1
                     required property string modelData
                     Layout.fillWidth: true
                     spacing: SentinelTheme.spaceMd
@@ -60,7 +63,7 @@ Item {
 
                     Label {
                         Layout.fillWidth: true
-                        text: modelData
+                        text: delegateScope1.modelData
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontBody
                         wrapMode: Text.WordWrap

@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import QtQuick.Shapes
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
@@ -300,6 +303,8 @@ SentinelOverlayModal {
                             Repeater {
                                 model: root.featuresList
                                 Rectangle {
+        required property var modelData
+        id: delegateScope1
                                     implicitHeight: 22
                                     implicitWidth: featureLbl.implicitWidth + 16
                                     radius: 11
@@ -310,7 +315,7 @@ SentinelOverlayModal {
                                     Label {
                                         id: featureLbl
                                         anchors.centerIn: parent
-                                        text: modelData
+                                        text: delegateScope1.modelData
                                         font.family: root.sfProFont
                                         font.pixelSize: SentinelTheme.fontTiny
                                         color: SentinelTheme.textPrimary
@@ -348,6 +353,8 @@ SentinelOverlayModal {
                             Repeater {
                                 model: root.worksWithList
                                 Rectangle {
+        required property var modelData
+        id: delegateScope2
                                     implicitHeight: 22
                                     implicitWidth: modelChipLbl.implicitWidth + 16
                                     radius: 11
@@ -358,7 +365,7 @@ SentinelOverlayModal {
                                     Label {
                                         id: modelChipLbl
                                         anchors.centerIn: parent
-                                        text: modelData
+                                        text: delegateScope2.modelData
                                         font.family: root.sfProFont
                                         font.pixelSize: SentinelTheme.fontTiny
                                         color: SentinelTheme.textMuted
@@ -598,7 +605,7 @@ SentinelOverlayModal {
                                 }
                             }
                             Label {
-                                text: isOllama ? "GitHub" : qsTr("Website")
+                                text: root.isOllama ? "GitHub" : qsTr("Website")
                                 font.family: root.sfProFont
                                 font.pixelSize: SentinelTheme.fontSmall
                                 color: SentinelTheme.textMuted

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -896,7 +898,7 @@ Item {
 
                                         TablerGlyph {
                                             anchors.centerIn: parent
-                                            text: modelsPage.categoryIcon(modelData)
+                                            text: modelsPage.categoryIcon(navButton.modelData)
                                             font.family: SentinelTheme.iconFontFamily
                                             color: navButton.active
                                                    ? SentinelTheme.textPrimary
@@ -915,7 +917,7 @@ Item {
                                         anchors.right: parent.right
                                         anchors.rightMargin: SentinelTheme.spaceMd
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: modelsPage.categoryTitle(modelData)
+                                        text: modelsPage.categoryTitle(navButton.modelData)
                                         color: navButton.active
                                                ? SentinelTheme.textPrimary
                                                : (navButton.hovered ? SentinelTheme.textPrimary : SentinelTheme.textMuted)
@@ -1048,9 +1050,8 @@ Item {
                                 visible: ollamaLibraryFetcher.fetching
                                 spacing: SentinelTheme.spaceXs
                                 Rectangle {
-                                    width: 8; height: 8; radius: 4
+                                    Layout.preferredWidth: 8; Layout.preferredHeight: 8; radius: 4
                                     color: SentinelTheme.accent
-                                    opacity: 1.0
                                     SequentialAnimation on opacity {
                                         loops: Animation.Infinite
                                         NumberAnimation { from: 0.3; to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
@@ -1362,6 +1363,7 @@ Item {
                          : 3
                 return Math.floor(width / cols)
             }
+            readonly property int columns: Math.max(1, Math.floor(width / cellWidth))
             cellHeight: 210
             model: modelsPage.currentModels
             activeFocusOnTab: true
@@ -1369,20 +1371,20 @@ Item {
             focusPolicy: Qt.StrongFocus
 
             Keys.onLeftPressed: {
-                if (currentIndex % columns > 0)
+                if (currentIndex % modelGrid.columns > 0)
                     currentIndex = Math.max(0, currentIndex - 1)
             }
             Keys.onRightPressed: {
-                if (currentIndex % columns < columns - 1 && currentIndex < count - 1)
+                if (currentIndex % modelGrid.columns < modelGrid.columns - 1 && currentIndex < count - 1)
                     currentIndex = Math.min(count - 1, currentIndex + 1)
             }
             Keys.onUpPressed: {
-                var prev = currentIndex - columns
+                var prev = currentIndex - modelGrid.columns
                 if (prev >= 0)
                     currentIndex = prev
             }
             Keys.onDownPressed: {
-                var next = currentIndex + columns
+                var next = currentIndex + modelGrid.columns
                 if (next < count)
                     currentIndex = next
             }
@@ -1509,7 +1511,7 @@ Item {
                                     RowLayout {
                                         anchors.centerIn: parent
                                         spacing: 4
-                                        Rectangle { width: 5; height: 5; radius: 3; color: SentinelTheme.success }
+                                        Rectangle { Layout.preferredWidth: 5; Layout.preferredHeight: 5; radius: 3; color: SentinelTheme.success }
                                         Label {
                                             id: devInstalledLbl
                                             text: qsTr("Installed")
@@ -1621,7 +1623,7 @@ Item {
 
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        height: 4; radius: 2
+                                        Layout.preferredHeight: 4; radius: 2
                                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                         Rectangle {
                                             width: parent.width * modelDelegate.pullProgress

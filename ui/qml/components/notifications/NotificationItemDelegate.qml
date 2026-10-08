@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -50,8 +52,8 @@ Rectangle {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
         onClicked: {
-            if (notifData && !notifData.read && viewModel) {
-                viewModel.markNotificationRead(notifData.id)
+            if (root.notifData && !root.notifData.read && root.viewModel) {
+                root.viewModel.markNotificationRead(root.notifData.id)
             }
         }
     }
@@ -103,14 +105,14 @@ Rectangle {
 
         Rectangle {
             id: priorityBar
-            width: 3
-            height: parent.height
+            Layout.preferredWidth: 3
+            Layout.preferredHeight: parent.height
             radius: 1.5
-            color: notifData ? priorityColor(notifData.priority) : "transparent"
+            color: root.notifData ? root.priorityColor(root.notifData.priority) : "transparent"
             Layout.fillHeight: true
 
             Accessible.role: Accessible.Graphic
-            Accessible.name: "Priority: " + (notifData ? notifData.priority : "Normal")
+            Accessible.name: "Priority: " + (root.notifData ? root.notifData.priority : "Normal")
         }
 
         ColumnLayout {
@@ -122,25 +124,25 @@ Rectangle {
                 Layout.fillWidth: true
 
                 TablerGlyph {
-                    text: notifData ? categoryIcon(notifData.category) : ""
+                    text: root.notifData ? root.categoryIcon(root.notifData.category) : ""
                     font.pixelSize: SentinelTheme.fontSmall
-                    color: notifData ? priorityColor(notifData.priority) : SentinelTheme.textMuted
+                    color: root.notifData ? root.priorityColor(root.notifData.priority) : SentinelTheme.textMuted
                 }
 
                 Text {
-                    text: notifData ? notifData.category : ""
+                    text: root.notifData ? root.notifData.category : ""
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: true
-                    color: notifData ? priorityColor(notifData.priority) : SentinelTheme.textMuted
+                    color: root.notifData ? root.priorityColor(root.notifData.priority) : SentinelTheme.textMuted
 
                     Accessible.role: Accessible.StaticText
-                    Accessible.name: notifData ? "Category: " + notifData.category : ""
+                    Accessible.name: root.notifData ? "Category: " + root.notifData.category : ""
                 }
 
                 Rectangle {
-                    visible: notifData && !notifData.read && !notifData.archived
-                    width: 8
-                    height: 8
+                    visible: root.notifData && !root.notifData.read && !root.notifData.archived
+                    Layout.preferredWidth: 8
+                    Layout.preferredHeight: 8
                     radius: 4
                     color: SentinelTheme.accent
 
@@ -151,16 +153,16 @@ Rectangle {
                 Item { Layout.fillWidth: true }
 
                 Text {
-                    text: notifData ? timeAgo(notifData.timestamp) : ""
+                    text: root.notifData ? root.timeAgo(root.notifData.timestamp) : ""
                     font.pixelSize: SentinelTheme.fontSmall - 1
                     color: SentinelTheme.textMuted
 
                     Accessible.role: Accessible.StaticText
-                    Accessible.name: notifData ? "Time: " + timeAgo(notifData.timestamp) : ""
+                    Accessible.name: root.notifData ? "Time: " + root.timeAgo(root.notifData.timestamp) : ""
                 }
 
                 TablerGlyph {
-                    visible: notifData && notifData.pinned
+                    visible: root.notifData && root.notifData.pinned
                     text: "pin"
                     font.pixelSize: SentinelTheme.fontSmall
 
@@ -169,40 +171,40 @@ Rectangle {
                 }
 
                 TablerGlyph {
-                    visible: notifData && notifData.snoozed
+                    visible: root.notifData && root.notifData.snoozed
                     text: "alarm"
                     font.pixelSize: SentinelTheme.fontSmall
 
                     Accessible.role: Accessible.Graphic
-                    Accessible.name: "Snoozed until " + (notifData.snoozeUntil ? new Date(notifData.snoozeUntil).toLocaleString() : "later")
+                    Accessible.name: "Snoozed until " + (root.notifData.snoozeUntil ? new Date(root.notifData.snoozeUntil).toLocaleString() : "later")
                 }
             }
 
             Text {
-                text: notifData ? notifData.title : ""
+                text: root.notifData ? root.notifData.title : ""
                 font.pixelSize: SentinelTheme.fontBody
-                font.bold: notifData ? !notifData.read : false
+                font.bold: root.notifData ? !root.notifData.read : false
                 color: SentinelTheme.textPrimary
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 Layout.fillWidth: true
 
                 Accessible.role: Accessible.StaticText
-                Accessible.name: notifData ? notifData.title : ""
+                Accessible.name: root.notifData ? root.notifData.title : ""
             }
 
             Text {
-                text: notifData ? notifData.body : ""
+                text: root.notifData ? root.notifData.body : ""
                 font.pixelSize: SentinelTheme.fontSmall
                 color: SentinelTheme.textMuted
                 elide: Text.ElideRight
-                maximumLineCount: notifData && notifData.archived ? 1 : 2
+                maximumLineCount: root.notifData && root.notifData.archived ? 1 : 2
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
-                visible: notifData && notifData.body.length > 0
+                visible: root.notifData && root.notifData.body.length > 0
 
                 Accessible.role: Accessible.StaticText
-                Accessible.name: notifData ? notifData.body : ""
+                Accessible.name: root.notifData ? root.notifData.body : ""
             }
         }
 
@@ -211,15 +213,15 @@ Rectangle {
             visible: mouseArea.containsMouse
 
             SentinelButton {
-                iconName: notifData && notifData.pinned ? "pin" : "map-pin"
+                iconName: root.notifData && root.notifData.pinned ? "pin" : "map-pin"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: notifData && notifData.pinned ? qsTr("Unpin") : qsTr("Pin")
-                Accessible.name: notifData && notifData.pinned ? qsTr("Unpin notification") : qsTr("Pin notification")
+                tooltipText: root.notifData && root.notifData.pinned ? qsTr("Unpin") : qsTr("Pin")
+                Accessible.name: root.notifData && root.notifData.pinned ? qsTr("Unpin notification") : qsTr("Pin notification")
                 onClicked: {
-                    if (notifData && viewModel) {
-                        viewModel.pinNotification(notifData.id)
+                    if (root.notifData && root.viewModel) {
+                        root.viewModel.pinNotification(root.notifData.id)
                     }
                 }
             }
@@ -230,11 +232,11 @@ Rectangle {
                 implicitHeight: 28
                 flat: true
                 tooltipText: qsTr("Mark read")
-                visible: notifData && !notifData.read && !notifData.archived
+                visible: root.notifData && !root.notifData.read && !root.notifData.archived
                 Accessible.name: qsTr("Mark notification as read")
                 onClicked: {
-                    if (notifData && viewModel) {
-                        viewModel.markNotificationRead(notifData.id)
+                    if (root.notifData && root.viewModel) {
+                        root.viewModel.markNotificationRead(root.notifData.id)
                     }
                 }
             }
@@ -247,7 +249,7 @@ Rectangle {
                 flat: true
                 tooltipText: qsTr("Snooze")
                 Accessible.name: qsTr("Snooze notification")
-                visible: notifData && !notifData.archived
+                visible: root.notifData && !root.notifData.archived
                 onClicked: snoozeMenu.open()
 
                 Menu {
@@ -257,31 +259,31 @@ Rectangle {
                     MenuItem {
                         text: qsTr("5 minutes")
                         onTriggered: {
-                            if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 5)
+                            if (root.notifData && root.viewModel) root.viewModel.snoozeNotification(root.notifData.id, 5)
                         }
                     }
                     MenuItem {
                         text: qsTr("15 minutes")
                         onTriggered: {
-                            if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 15)
+                            if (root.notifData && root.viewModel) root.viewModel.snoozeNotification(root.notifData.id, 15)
                         }
                     }
                     MenuItem {
                         text: qsTr("1 hour")
                         onTriggered: {
-                            if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 60)
+                            if (root.notifData && root.viewModel) root.viewModel.snoozeNotification(root.notifData.id, 60)
                         }
                     }
                     MenuItem {
                         text: qsTr("4 hours")
                         onTriggered: {
-                            if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 240)
+                            if (root.notifData && root.viewModel) root.viewModel.snoozeNotification(root.notifData.id, 240)
                         }
                     }
                     MenuItem {
                         text: qsTr("Until tomorrow")
                         onTriggered: {
-                            if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 1440)
+                            if (root.notifData && root.viewModel) root.viewModel.snoozeNotification(root.notifData.id, 1440)
                         }
                     }
                 }
@@ -292,14 +294,14 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: notifData && notifData.archived ? qsTr("Unarchive") : qsTr("Archive")
-                Accessible.name: notifData && notifData.archived ? qsTr("Unarchive notification") : qsTr("Archive notification")
+                tooltipText: root.notifData && root.notifData.archived ? qsTr("Unarchive") : qsTr("Archive")
+                Accessible.name: root.notifData && root.notifData.archived ? qsTr("Unarchive notification") : qsTr("Archive notification")
                 onClicked: {
-                    if (notifData && viewModel) {
-                        if (notifData.archived) {
-                            root.remove(notifData.id)
+                    if (root.notifData && root.viewModel) {
+                        if (root.notifData.archived) {
+                            root.remove(root.notifData.id)
                         } else {
-                            viewModel.archiveNotification(notifData.id)
+                            root.viewModel.archiveNotification(root.notifData.id)
                         }
                     }
                 }
@@ -313,8 +315,8 @@ Rectangle {
                 tooltipText: qsTr("Remove")
                 Accessible.name: qsTr("Remove notification")
                 onClicked: {
-                    if (notifData && viewModel) {
-                        viewModel.removeNotificationById(notifData.id)
+                    if (root.notifData && root.viewModel) {
+                        root.viewModel.removeNotificationById(root.notifData.id)
                     }
                 }
             }

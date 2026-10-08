@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Controls.Basic
@@ -72,6 +74,7 @@ Item {
                 model: root.features
 
                 delegate: Rectangle {
+        id: delegateScope1
                     required property var modelData
                     readonly property int cardWidth: 240
 
@@ -88,15 +91,15 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         Image {
-                            source: "qrc:/icons/tabler/" + modelData.icon + ".svg"
+                            source: "qrc:/icons/tabler/" + delegateScope1.modelData.icon + ".svg"
                             sourceSize.width: 22
                             sourceSize.height: 22
-                            width: 22
-                            height: 22
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
                         }
 
                         Label {
-                            text: modelData.title
+                            text: delegateScope1.modelData.title
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontBody
                             font.bold: true
@@ -106,7 +109,7 @@ Item {
 
                         Label {
                             Layout.fillWidth: true
-                            text: modelData.caption
+                            text: delegateScope1.modelData.caption
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             wrapMode: Text.WordWrap

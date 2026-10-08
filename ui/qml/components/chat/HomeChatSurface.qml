@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Dialogs
@@ -54,7 +56,7 @@ ShellPanel {
     Timer {
         id: dismissSuggestionsTimer
         interval: 5000
-        running: showSuggestions && !_suggestionsDismissed
+        running: homeChat.showSuggestions && !homeChat._suggestionsDismissed
         onTriggered: homeChat.showSuggestions = false
     }
 
@@ -323,6 +325,7 @@ ShellPanel {
                     hoverEnabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("New Chat")
+                    Accessible.name: ToolTip.text
                     onClicked: {
                         homeChat.viewModel.createConversation(qsTr("New Chat"))
                         homeChat.forceChatView = true
@@ -353,6 +356,7 @@ ShellPanel {
                     hoverEnabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Show sidebar")
+                    Accessible.name: ToolTip.text
                     onClicked: homeChat.conversationSidebarOpen = true
                     contentItem: TablerGlyph {
                         text: "menu"
@@ -389,6 +393,7 @@ ShellPanel {
                         hoverEnabled: true
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("New Chat")
+                    Accessible.name: ToolTip.text
                         onClicked: {
                             homeChat.viewModel.createConversation(qsTr("New Chat"))
                             homeChat.forceChatView = true
@@ -491,6 +496,7 @@ ShellPanel {
                         hoverEnabled: true
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Hide sidebar")
+                    Accessible.name: ToolTip.text
                         onClicked: homeChat.conversationSidebarOpen = false
                         contentItem: TablerGlyph {
                             text: "x"
@@ -965,6 +971,8 @@ ShellPanel {
                             Repeater {
                                 model: suggestionGrid.suggestions
                                 delegate: Rectangle {
+        required property var modelData
+        id: delegateScope1
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 62 * homeChat.resolutionScale
                                     radius: SentinelTheme.radiusMd
@@ -993,7 +1001,7 @@ ShellPanel {
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            homePromptInput.text = modelData.prompt
+                                            homePromptInput.text = delegateScope1.modelData.prompt
                                             homePromptInput.forceActiveFocus()
                                         }
                                     }
@@ -1004,7 +1012,7 @@ ShellPanel {
                                         spacing: SentinelTheme.spaceSm
 
                                         TablerGlyph {
-                                            text: modelData.icon
+                                            text: delegateScope1.modelData.icon
                                             font.pixelSize: 22 * homeChat.resolutionScale
                                             Layout.alignment: Qt.AlignVCenter
                                         }
@@ -1015,14 +1023,14 @@ ShellPanel {
                                             Layout.alignment: Qt.AlignVCenter
 
                                             Text {
-                                                text: modelData.title
+                                                text: delegateScope1.modelData.title
                                                 font.pixelSize: SentinelTheme.fontSmall
                                                 font.bold: true
                                                 color: SentinelTheme.textPrimary
                                             }
 
                                             Text {
-                                                text: modelData.prompt
+                                                text: delegateScope1.modelData.prompt
                                                 font.pixelSize: SentinelTheme.fontTiny
                                                 color: SentinelTheme.textMuted
                                                 elide: Text.ElideRight

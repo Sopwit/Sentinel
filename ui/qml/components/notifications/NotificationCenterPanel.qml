@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
@@ -96,27 +98,27 @@ ShellPanel {
 
                 Text {
                     text: {
-                        var unreadCount = viewModel ? viewModel.unreadNotificationCount : 0
+                        var unreadCount = root.viewModel ? root.viewModel.unreadNotificationCount : 0
                         return unreadCount > 0 ? qsTr("(%1 unread)").arg(unreadCount) : ""
                     }
                     font.pixelSize: SentinelTheme.fontSmall
                     color: SentinelTheme.accent
-                    visible: (viewModel ? viewModel.unreadNotificationCount : 0) > 0
+                    visible: (root.viewModel ? root.viewModel.unreadNotificationCount : 0) > 0
                 }
 
                 Item { Layout.fillWidth: true }
 
                 // ── DND toggle ───────────────────────────────────
                 SentinelButton {
-                    iconName: viewModel && viewModel.dndEnabled ? "volume-off" : "volume-2"
+                    iconName: root.viewModel && root.viewModel.dndEnabled ? "volume-off" : "volume-2"
                     implicitWidth: 32
                     implicitHeight: 32
                     flat: true
-                    tooltipText: viewModel && viewModel.dndEnabled ? qsTr("Do Not Disturb is on") : qsTr("Do Not Disturb is off")
-                    Accessible.name: viewModel && viewModel.dndEnabled ? qsTr("Disable do not disturb") : qsTr("Enable do not disturb")
-                    highlighted: viewModel && viewModel.dndEnabled
+                    tooltipText: root.viewModel && root.viewModel.dndEnabled ? qsTr("Do Not Disturb is on") : qsTr("Do Not Disturb is off")
+                    Accessible.name: root.viewModel && root.viewModel.dndEnabled ? qsTr("Disable do not disturb") : qsTr("Enable do not disturb")
+                    highlighted: root.viewModel && root.viewModel.dndEnabled
                     onClicked: {
-                        if (viewModel) viewModel.dndEnabled = !viewModel.dndEnabled
+                        if (root.viewModel) root.viewModel.dndEnabled = !root.viewModel.dndEnabled
                     }
                 }
 
@@ -126,7 +128,7 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontSmall
                     Accessible.name: qsTr("Mark all notifications as read")
                     onClicked: {
-                        if (viewModel) viewModel.markAllNotificationsRead()
+                        if (root.viewModel) root.viewModel.markAllNotificationsRead()
                     }
                 }
 
@@ -136,7 +138,7 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontSmall
                     Accessible.name: qsTr("Clear all archived notifications")
                     onClicked: {
-                        if (viewModel) viewModel.clearArchivedNotifications()
+                        if (root.viewModel) root.viewModel.clearArchivedNotifications()
                     }
                 }
 
@@ -154,7 +156,7 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            Layout.preferredHeight: 1
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
         }
 
@@ -174,24 +176,26 @@ ShellPanel {
                 Accessible.name: qsTr("Search notifications")
                 onTextChanged: {
                     root.searchQuery = text
-                    if (viewModel) viewModel.notificationSearchQuery = text
+                    if (root.viewModel) root.viewModel.notificationSearchQuery = text
                 }
             }
 
             Repeater {
-                model: viewModel ? viewModel.notificationCategories : ["All"]
+                model: root.viewModel ? root.viewModel.notificationCategories : ["All"]
 
                 delegate: SentinelButton {
-                    text: modelData === "All" ? qsTr("All") : modelData
-                    iconName: modelData === "All" ? "" : root.categoryIcon(modelData)
+        required property var modelData
+        id: delegateScope1
+                    text: delegateScope1.modelData === "All" ? qsTr("All") : delegateScope1.modelData
+                    iconName: delegateScope1.modelData === "All" ? "" : root.categoryIcon(delegateScope1.modelData)
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
-                    font.bold: root.activeFilter === modelData
-                    highlighted: root.activeFilter === modelData
-                    Accessible.name: "Filter by category: " + modelData
+                    font.bold: root.activeFilter === delegateScope1.modelData
+                    highlighted: root.activeFilter === delegateScope1.modelData
+                    Accessible.name: "Filter by category: " + delegateScope1.modelData
                     onClicked: {
-                        root.activeFilter = modelData
-                        if (viewModel) viewModel.notificationCategoryFilter = modelData
+                        root.activeFilter = delegateScope1.modelData
+                        if (root.viewModel) root.viewModel.notificationCategoryFilter = delegateScope1.modelData
                     }
                 }
             }
@@ -199,7 +203,7 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            Layout.preferredHeight: 1
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
         }
 
@@ -223,9 +227,9 @@ ShellPanel {
                 Accessible.role: Accessible.List
                 Accessible.name: "Notification list"
 
-                function populate() {
+                function refreshNotifications() {
                     notificationModel.clear()
-                    var summaries = viewModel ? viewModel.notificationFilteredSummaries : []
+                    var summaries = root.viewModel ? root.viewModel.notificationFilteredSummaries : []
                     var groups = {}
                     for (var i = 0; i < summaries.length; ++i) {
                         var n = root.parseNotification(summaries[i])
@@ -271,20 +275,20 @@ ShellPanel {
                     }
                 }
 
-                Component.onCompleted: populate()
+                Component.onCompleted: refreshNotifications()
             }
 
             Connections {
-                target: viewModel
+                target: root.viewModel
                 function onNativeExperienceChanged() {
-                    notificationList.populate()
+                    notificationList.refreshNotifications()
                 }
             }
         }
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            Layout.preferredHeight: 1
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
         }
 
@@ -311,19 +315,21 @@ ShellPanel {
                 }
 
                 Repeater {
-                    model: viewModel ? viewModel.notificationCategories : []
+                    model: root.viewModel ? root.viewModel.notificationCategories : []
 
                     delegate: SentinelButton {
-                        property bool muted: viewModel ? viewModel.isChannelMuted(modelData) : false
-                        text: modelData
-                        iconName: root.categoryIcon(modelData)
+        required property var modelData
+        id: delegateScope2
+                        property bool muted: root.viewModel ? root.viewModel.isChannelMuted(delegateScope2.modelData) : false
+                        text: delegateScope2.modelData
+                        iconName: root.categoryIcon(delegateScope2.modelData)
                         flat: true
                         font.pixelSize: SentinelTheme.fontTiny
                         highlighted: !muted
-                        Accessible.name: modelData + " channel, " + (muted ? "muted" : "active")
+                        Accessible.name: delegateScope2.modelData + " channel, " + (muted ? "muted" : "active")
                         onClicked: {
-                            if (viewModel) {
-                                viewModel.setChannelMuted(modelData, !muted)
+                            if (root.viewModel) {
+                                root.viewModel.setChannelMuted(delegateScope2.modelData, !muted)
                             }
                         }
                     }
@@ -336,7 +342,7 @@ ShellPanel {
 
                 Text {
                     text: {
-                        var summaries = viewModel ? viewModel.notificationLifecycleSummaries : []
+                        var summaries = root.viewModel ? root.viewModel.notificationLifecycleSummaries : []
                         return summaries.length > 0 ? summaries.join(" \u00B7 ") : ""
                     }
                     font.pixelSize: SentinelTheme.fontSmall - 1
@@ -355,7 +361,7 @@ ShellPanel {
                     Accessible.name: qsTr("Open notification settings")
                     onClicked: {
                         root.closeRequested()
-                        if (viewModel) viewModel.currentPage = "Settings"
+                        if (root.viewModel) root.viewModel.currentPage = "Settings"
                     }
                 }
             }
@@ -367,8 +373,16 @@ ShellPanel {
         id: notificationDelegate
 
         Loader {
+            id: notificationLoader
+            required property var model
             width: parent ? parent.width : 480
-            sourceComponent: model.type === "groupHeader" ? groupHeaderComponent : notificationItemComponent
+            sourceComponent: notificationLoader.model.type === "groupHeader" ? groupHeaderComponent : notificationItemComponent
+            Binding {
+                target: notificationLoader.item
+                property: "row"
+                value: notificationLoader.model
+                when: notificationLoader.status === Loader.Ready
+            }
         }
     }
 
@@ -376,12 +390,17 @@ ShellPanel {
         id: groupHeaderComponent
 
         ShellPanel {
+            id: groupHeader
+            property var row: ({})
+            activeFocusOnTab: true
+            Keys.onReturnPressed: root.toggleGroup(groupHeader.row.groupName)
+            Keys.onSpacePressed: root.toggleGroup(groupHeader.row.groupName)
             height: 36
             panelColor: "transparent"
             borderWidth: 0
 
             Accessible.role: Accessible.Button
-            Accessible.name: model.groupName + " group, " + model.groupCount + " notifications"
+            Accessible.name: groupHeader.row.groupName + " group, " + groupHeader.row.groupCount + " notifications"
 
             RowLayout {
                 anchors.fill: parent
@@ -390,24 +409,24 @@ ShellPanel {
                 spacing: 6
 
                 TablerGlyph {
-                    text: root.categoryIcon(model.groupName)
+                    text: root.categoryIcon(groupHeader.row.groupName)
                     font.pixelSize: SentinelTheme.fontSmall
                     color: SentinelTheme.textPrimary
                 }
 
                 Text {
-                    text: model.groupName
+                    text: groupHeader.row.groupName
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: true
                     color: SentinelTheme.textPrimary
                 }
 
                 Rectangle {
-                    width: 18
-                    height: 18
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
                     radius: 9
                     color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.15)
-                    visible: model.groupCount > 0
+                    visible: groupHeader.row.groupCount > 0
 
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -420,7 +439,7 @@ ShellPanel {
 
                     Text {
                         anchors.centerIn: parent
-                        text: model.groupCount
+                        text: groupHeader.row.groupCount
                         font.pixelSize: SentinelTheme.fontTiny
                         font.bold: true
                         color: SentinelTheme.accent
@@ -430,15 +449,13 @@ ShellPanel {
                 Item { Layout.fillWidth: true }
 
                 TablerGlyph {
-                    text: model.expanded ? "chevron-down" : "chevron-right"
+                    text: groupHeader.row.expanded ? "chevron-down" : "chevron-right"
                     font.pixelSize: 10
                     color: SentinelTheme.textMuted
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.toggleGroup(model.groupName)
+                TapHandler {
+                    onTapped: root.toggleGroup(groupHeader.row.groupName)
                 }
             }
         }
@@ -448,22 +465,24 @@ ShellPanel {
         id: notificationItemComponent
 
         NotificationItemDelegate {
+            id: notificationRow
+            property var row: ({})
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
             viewModel: root.viewModel
             notifData: ({
-                id: model.id,
-                category: model.category,
-                title: model.title,
-                body: model.body,
-                priority: model.priority,
-                timestamp: model.timestamp,
-                pinned: model.pinned,
-                archived: model.archived,
-                read: model.read,
-                snoozed: model.snoozed,
-                snoozeUntil: model.snoozeUntil
+                id: notificationRow.row.id,
+                category: notificationRow.row.category,
+                title: notificationRow.row.title,
+                body: notificationRow.row.body,
+                priority: notificationRow.row.priority,
+                timestamp: notificationRow.row.timestamp,
+                pinned: notificationRow.row.pinned,
+                archived: notificationRow.row.archived,
+                read: notificationRow.row.read,
+                snoozed: notificationRow.row.snoozed,
+                snoozeUntil: notificationRow.row.snoozeUntil
             })
 
             onRemove: function(id) {

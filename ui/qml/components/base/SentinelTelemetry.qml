@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import Sentinel.Desktop
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts

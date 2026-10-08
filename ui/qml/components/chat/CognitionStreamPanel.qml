@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -55,6 +57,7 @@ ShellPanel {
             ]
 
             RowLayout {
+        id: delegateScope1
                 required property int index
                 required property string modelData
                 Layout.fillWidth: true
@@ -74,7 +77,7 @@ ShellPanel {
 
                 Label {
                     Layout.preferredWidth: 58
-                    text: "0" + (index + 1)
+                    text: "0" + (delegateScope1.index + 1)
                     color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.72)
                     font.pixelSize: SentinelTheme.fontTiny
                     font.letterSpacing: 1.1
@@ -90,7 +93,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: modelData
+                    text: delegateScope1.modelData
                     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.88)
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight

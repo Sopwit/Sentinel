@@ -39,8 +39,8 @@ Item {
                 source: "qrc:/icons/tabler/" + root.icon + ".svg"
                 sourceSize.width: root.compact ? 36 : 48
                 sourceSize.height: root.compact ? 36 : 48
-                width: root.compact ? 36 : 48
-                height: width
+                Layout.preferredWidth: root.compact ? 36 : 48
+                Layout.preferredHeight: width
                 fillMode: Image.PreserveAspectFit
             }
 

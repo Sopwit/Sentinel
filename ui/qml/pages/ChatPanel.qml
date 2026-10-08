@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -219,7 +221,7 @@ ShellPanel {
                 onClicked: {
                     var nextNumber = chatPanel.viewModel.conversationStoreConversationCount + 1
                     var createdId = chatPanel.viewModel.createConversation(qsTr("Conversation ") + nextNumber)
-                    actionStatusText = createdId.length > 0 ? qsTr("New conversation created.") : qsTr("New conversation unavailable.")
+                    chatPanel.actionStatusText = createdId.length > 0 ? qsTr("New conversation created.") : qsTr("New conversation unavailable.")
                     renameInput.clear()
                 }
             }
@@ -579,7 +581,7 @@ ShellPanel {
                                         var ok = conversationDelegate.pinned
                                                  ? chatPanel.viewModel.unpinConversation(conversationDelegate.conversationId)
                                                  : chatPanel.viewModel.pinConversation(conversationDelegate.conversationId)
-                                        actionStatusText = ok
+                                        chatPanel.actionStatusText = ok
                                                            ? (conversationDelegate.pinned ? qsTr("Conversation unpinned.") : qsTr("Conversation pinned."))
                                                            : qsTr("Conversation pin update refused.")
                                     }
@@ -591,7 +593,7 @@ ShellPanel {
                                         var ok = conversationDelegate.archived
                                                  ? chatPanel.viewModel.unarchiveConversation(conversationDelegate.conversationId)
                                                  : chatPanel.viewModel.archiveConversation(conversationDelegate.conversationId)
-                                        actionStatusText = ok
+                                        chatPanel.actionStatusText = ok
                                                            ? (conversationDelegate.archived ? qsTr("Conversation unarchived.") : qsTr("Conversation archived."))
                                                            : qsTr("Conversation update refused.")
                                     }
@@ -604,7 +606,7 @@ ShellPanel {
                                     onTriggered: {
                                         var duplicateId = chatPanel.viewModel.duplicateConversation(
                                             conversationDelegate.conversationId)
-                                        actionStatusText = duplicateId.length > 0
+                                        chatPanel.actionStatusText = duplicateId.length > 0
                                                            ? chatPanel.viewModel.conversationDuplicateLastResultSummary
                                                            : qsTr("Conversation duplicate refused.")
                                     }

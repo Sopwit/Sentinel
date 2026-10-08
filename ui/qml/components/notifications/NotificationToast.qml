@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -95,15 +97,15 @@ Item {
     }
 
     Connections {
-        target: viewModel
+        target: root.viewModel
         function onNativeExperienceChanged() {
-            const summaries = viewModel.notificationFilteredSummaries
+            const summaries = root.viewModel.notificationFilteredSummaries
             if (summaries.length === 0) return
 
             for (let i = 0; i < summaries.length; ++i) {
-                const latest = parseNotification(summaries[i])
+                const latest = root.parseNotification(summaries[i])
                 if (!latest || latest.archived || latest.read || latest.snoozed) continue
-                enqueueToast(latest)
+                root.enqueueToast(latest)
             }
         }
     }
@@ -114,7 +116,7 @@ Item {
         repeat: false
         onTriggered: {
             if (toastQueue.count > 0) {
-                dismiss(toastQueue.get(toastQueue.count - 1).id)
+                root.dismiss(toastQueue.get(toastQueue.count - 1).id)
             }
         }
     }
@@ -141,12 +143,13 @@ Item {
             model: toastQueue
 
             delegate: ShellPanel {
+        required property var model
                 id: toastItem
                 width: root.toastWidth
                 implicitHeight: bodyLabel.implicitHeight + 48
                 panelColor: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.95)
                 borderWidth: 1
-                borderColor: SentinelTheme.withAlpha(priorityColor(model.priority), 0.3)
+                borderColor: SentinelTheme.withAlpha(root.priorityColor(toastItem.model.priority), 0.3)
 
                 layer.enabled: true
                 layer.effect: MultiEffect {
@@ -158,11 +161,11 @@ Item {
                 }
 
                 Accessible.role: Accessible.Button
-                Accessible.name: model.category + ": " + model.title + ". " + model.body
+                Accessible.name: toastItem.model.category + ": " + toastItem.model.title + ". " + toastItem.model.body
                 Accessible.onPressAction: {
                     fadeOutAnim.stop()
-                    root.dismiss(model.id)
-                    if (viewModel) viewModel.markNotificationRead(model.id)
+                    root.dismiss(toastItem.model.id)
+                    if (root.viewModel) root.viewModel.markNotificationRead(toastItem.model.id)
                 }
 
                 property real startX: root.toastWidth + 20
@@ -171,14 +174,14 @@ Item {
 
                 transform: Translate {
                     id: slideTransform
-                    x: startX + dragX
+                    x: toastItem.startX + toastItem.dragX
                 }
 
                 NumberAnimation {
                     target: slideTransform
                     property: "x"
-                    from: startX
-                    to: endX
+                    from: toastItem.startX
+                    to: toastItem.endX
                     duration: MotionTokens.slow
                     easing.type: Easing.OutCubic
                     running: true
@@ -195,7 +198,7 @@ Item {
                         duration: MotionTokens.normal
                         easing.type: Easing.InCubic
                     }
-                    onFinished: root.dismiss(model.id)
+                    onFinished: root.dismiss(toastItem.model.id)
                     running: true
                 }
 
@@ -208,12 +211,12 @@ Item {
                     drag.maximumX: 0
                     onClicked: {
                         fadeOutAnim.stop()
-                        root.dismiss(model.id)
-                        if (viewModel) viewModel.markNotificationRead(model.id)
+                        root.dismiss(toastItem.model.id)
+                        if (root.viewModel) root.viewModel.markNotificationRead(toastItem.model.id)
                     }
                     onReleased: {
                         if (toastItem.dragX < -80) {
-                            root.dismiss(model.id)
+                            root.dismiss(toastItem.model.id)
                         } else {
                             toastItem.dragX = 0
                         }
@@ -232,14 +235,14 @@ Item {
                     spacing: 10
 
                     Rectangle {
-                        width: 4
-                        height: parent.height
+                        Layout.preferredWidth: 4
+                        Layout.preferredHeight: parent.height
                         radius: 2
-                        color: priorityColor(model.priority)
+                        color: root.priorityColor(toastItem.model.priority)
                         Layout.fillHeight: true
 
                         Accessible.role: Accessible.Graphic
-                        Accessible.name: "Priority: " + (model.priority || "Normal")
+                        Accessible.name: "Priority: " + (toastItem.model.priority || "Normal")
                     }
 
                     ColumnLayout {
@@ -251,26 +254,26 @@ Item {
                             Layout.fillWidth: true
 
                             TablerGlyph {
-                                text: categoryIcon(model.category)
+                                text: root.categoryIcon(toastItem.model.category)
                                 font.pixelSize: SentinelTheme.fontSmall
-                                color: priorityColor(model.priority)
+                                color: root.priorityColor(toastItem.model.priority)
                             }
 
                             Text {
-                                text: model.category
+                                text: toastItem.model.category
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
-                                color: priorityColor(model.priority)
+                                color: root.priorityColor(toastItem.model.priority)
 
                                 Accessible.role: Accessible.StaticText
-                                Accessible.name: "Category: " + model.category
+                                Accessible.name: "Category: " + toastItem.model.category
                             }
 
                             Item { Layout.fillWidth: true }
 
                             Text {
                                 text: {
-                                    var d = new Date(model.timestamp)
+                                    var d = new Date(toastItem.model.timestamp)
                                     return d.toLocaleTimeString(Qt.locale(), Locale.ShortFormat)
                                 }
                                 font.pixelSize: SentinelTheme.fontSmall - 2
@@ -283,7 +286,7 @@ Item {
 
                         Text {
                             id: titleLabel
-                            text: model.title
+                            text: toastItem.model.title
                             font.pixelSize: SentinelTheme.fontBody
                             font.bold: true
                             color: SentinelTheme.textPrimary
@@ -292,12 +295,12 @@ Item {
                             Layout.fillWidth: true
 
                             Accessible.role: Accessible.StaticText
-                            Accessible.name: model.title
+                            Accessible.name: toastItem.model.title
                         }
 
                         Text {
                             id: bodyLabel
-                            text: model.body
+                            text: toastItem.model.body
                             font.pixelSize: SentinelTheme.fontSmall
                             color: SentinelTheme.textMuted
                             elide: Text.ElideRight
@@ -306,7 +309,7 @@ Item {
                             Layout.fillWidth: true
 
                             Accessible.role: Accessible.StaticText
-                            Accessible.name: model.body
+                            Accessible.name: toastItem.model.body
                         }
                     }
 
@@ -320,7 +323,7 @@ Item {
 
                         onClicked: {
                             fadeOutAnim.stop()
-                            root.dismiss(model.id)
+                            root.dismiss(toastItem.model.id)
                         }
                     }
                 }

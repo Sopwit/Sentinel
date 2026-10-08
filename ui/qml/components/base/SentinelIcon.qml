@@ -1,4 +1,6 @@
 // Lucide Icons — ISC License: https://lucide.dev/license
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import Sentinel.Desktop

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -31,7 +33,7 @@ Item {
             Label {
                 text: qsTr("Online Model Library & Registry")
                 color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontSection
+                font.pixelSize: SentinelTheme.fontCard
                 font.bold: true
                 Layout.fillWidth: true
             }

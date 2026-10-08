@@ -73,7 +73,7 @@ Item {
             spacing: SentinelTheme.spaceMd
 
             Rectangle {
-                width: 4
+                Layout.preferredWidth: 4
                 Layout.fillHeight: true
                 radius: 2
                 color: root.bannerColor
@@ -103,15 +103,15 @@ Item {
             }
 
             Item {
-                width: 4
-                height: 1
+                Layout.preferredWidth: 4
+                Layout.preferredHeight: 1
                 visible: actionBtn.visible
             }
 
             Item {
                 Layout.alignment: Qt.AlignVCenter
-                width: 28
-                height: 28
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
 
                 Rectangle {
                     anchors.fill: parent

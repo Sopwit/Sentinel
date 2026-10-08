@@ -72,13 +72,13 @@ Window {
                 font.pixelSize: SentinelTheme.fontBody
             }
 
-            Item { height: 8 }
+            Item { Layout.preferredHeight: 8 }
 
             Rectangle {
                 id: progressTrack
                 Layout.alignment: Qt.AlignHCenter
-                width: 160
-                height: 3
+                Layout.preferredWidth: 160
+                Layout.preferredHeight: 3
                 radius: 1.5
                 color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(root.modeName), 0.15)
 

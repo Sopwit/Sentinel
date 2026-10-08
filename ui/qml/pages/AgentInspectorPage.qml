@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -108,6 +110,7 @@ Item {
                         spacing: 4
                         model: page.viewModel.runs
                         delegate: ItemDelegate {
+        id: delegateScope1
                             required property var entry
                             width: runList.width
                             height: 94
@@ -118,10 +121,10 @@ Item {
                             }
                             contentItem: Column {
                                 spacing: 4
-                                Text { text: entry.goal || qsTr("Agent run"); color: SentinelTheme.textPrimary; width: parent.width; elide: Text.ElideRight; font.bold: true }
-                                Text { text: entry.state + "  /  " + entry.runType; color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
-                                Text { text: entry.provider + " / " + entry.model; color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
-                                Text { text: page.stamp(entry.startedAt) + "  " + entry.duration + "  " + entry.stepCount + qsTr(" steps"); color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
+                                Text { text: delegateScope1.entry.goal || qsTr("Agent run"); color: SentinelTheme.textPrimary; width: parent.width; elide: Text.ElideRight; font.bold: true }
+                                Text { text: delegateScope1.entry.state + "  /  " + delegateScope1.entry.runType; color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
+                                Text { text: delegateScope1.entry.provider + " / " + delegateScope1.entry.model; color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
+                                Text { text: page.stamp(delegateScope1.entry.startedAt) + "  " + delegateScope1.entry.duration + "  " + delegateScope1.entry.stepCount + qsTr(" steps"); color: SentinelTheme.textMuted; width: parent.width; elide: Text.ElideRight }
                             }
                         }
                     }
@@ -201,12 +204,13 @@ Item {
                             Repeater {
                                 model: page.viewModel.timeline
                                 delegate: ColumnLayout {
+        id: delegateScope2
                                     required property var entry
                                     Layout.fillWidth: true
                                     spacing: 2
-                                    Text { text: entry.kind + "  /  " + entry.title + (entry.duration ? "  " + entry.duration : ""); color: SentinelTheme.textPrimary; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                                    Text { text: entry.detail || ""; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
-                                    Text { text: [entry.batchId ? qsTr("Batch %1").arg(entry.batchId.slice(0, 8)) : "", entry.source, entry.observation, entry.observationKind !== undefined ? qsTr("Observation %1").arg(entry.observationKind) : "", entry.failure, entry.mutation, entry.sandbox, entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
+                                    Text { text: delegateScope2.entry.kind + "  /  " + delegateScope2.entry.title + (delegateScope2.entry.duration ? "  " + delegateScope2.entry.duration : ""); color: SentinelTheme.textPrimary; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                                    Text { text: delegateScope2.entry.detail || ""; color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
+                                    Text { text: [delegateScope2.entry.batchId ? qsTr("Batch %1").arg(delegateScope2.entry.batchId.slice(0, 8)) : "", delegateScope2.entry.source, delegateScope2.entry.observation, delegateScope2.entry.observationKind !== undefined ? qsTr("Observation %1").arg(delegateScope2.entry.observationKind) : "", delegateScope2.entry.failure, delegateScope2.entry.mutation, delegateScope2.entry.sandbox, delegateScope2.entry.toolCallId].filter(Boolean).join("  /  "); color: SentinelTheme.textMuted; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; visible: text.length > 0 }
                                 }
                             }
                             Text { text: qsTr("Approvals"); color: SentinelTheme.textPrimary; font.bold: true }

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -124,23 +126,24 @@ Item {
                 Repeater {
                     model: root.displayedPermissionGrants
                     delegate: RowLayout {
+        id: delegateScope1
                         required property var modelData
                         Layout.fillWidth: true
                         Label {
                             Layout.fillWidth: true
-                            text: modelData.scope || qsTr("General access")
+                            text: delegateScope1.modelData.scope || qsTr("General access")
                             elide: Text.ElideMiddle
                             color: SentinelTheme.textPrimary
                         }
                         Label {
-                            text: modelData.createdAt
+                            text: delegateScope1.modelData.createdAt
                             color: SentinelTheme.textMuted
                         }
                         SentinelButton {
                             text: qsTr("Revoke")
                             accent: root.modeAccent
                             onClicked: {
-                                if (root.viewModel.revokePersistentPermission(modelData.id))
+                                if (root.viewModel.revokePersistentPermission(delegateScope1.modelData.id))
                                     root.displayedPermissionGrants = root.viewModel.persistentPermissionGrants
                             }
                         }
@@ -265,7 +268,7 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.topMargin: SentinelTheme.spaceXs
-                    height: 1
+                    Layout.preferredHeight: 1
                     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
                 }
 

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import Sentinel.Desktop
@@ -46,7 +48,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: reducedMotion ? 0 : MotionTokens.duration(MotionTokens.slow, "")
+                duration: glow.reducedMotion ? 0 : MotionTokens.duration(MotionTokens.slow, "")
                 easing.type: MotionTokens.enter
             }
         }

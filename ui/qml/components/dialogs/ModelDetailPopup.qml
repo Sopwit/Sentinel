@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -347,7 +349,7 @@ SentinelOverlayModal {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 4
+                        Layout.preferredHeight: 4
                         radius: 2
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
 

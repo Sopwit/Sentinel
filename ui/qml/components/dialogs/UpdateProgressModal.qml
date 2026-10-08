@@ -335,7 +335,7 @@ SentinelOverlayModal {
                                 from: 0
                                 to: 360
                                 duration: 1200
-                                running: visible
+                                running: updateModal.visible
                             }
                         }
                     }
@@ -385,7 +385,7 @@ SentinelOverlayModal {
                                 from: 0
                                 to: 360
                                 duration: 1200
-                                running: visible
+                                running: updateModal.visible
                             }
                         }
 

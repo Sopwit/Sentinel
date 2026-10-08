@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Sentinel.Desktop
 
@@ -35,22 +37,22 @@ Item {
     // Ambient drifting glow orb
     Rectangle {
         id: ambientGlow
-        width: parent.width * 0.45
-        height: parent.height * 0.45
+        width: atmosphere.width * 0.45
+        height: atmosphere.height * 0.45
         radius: width / 2
         color: SentinelTheme.withAlpha(atmosphere.accentColor, 0.030)
 
         SequentialAnimation on x {
             loops: Animation.Infinite
             NumberAnimation {
-                from: -parent.width * 0.1
-                to: parent.width * 0.6
+                from: -atmosphere.width * 0.1
+                to: atmosphere.width * 0.6
                 duration: 16000
                 easing.type: Easing.InOutSine
             }
             NumberAnimation {
-                from: parent.width * 0.6
-                to: -parent.width * 0.1
+                from: atmosphere.width * 0.6
+                to: -atmosphere.width * 0.1
                 duration: 16000
                 easing.type: Easing.InOutSine
             }
@@ -59,14 +61,14 @@ Item {
         SequentialAnimation on y {
             loops: Animation.Infinite
             NumberAnimation {
-                from: -parent.height * 0.1
-                to: parent.height * 0.5
+                from: -atmosphere.height * 0.1
+                to: atmosphere.height * 0.5
                 duration: 22000
                 easing.type: Easing.InOutSine
             }
             NumberAnimation {
-                from: parent.height * 0.5
-                to: -parent.height * 0.1
+                from: atmosphere.height * 0.5
+                to: -atmosphere.height * 0.1
                 duration: 22000
                 easing.type: Easing.InOutSine
             }

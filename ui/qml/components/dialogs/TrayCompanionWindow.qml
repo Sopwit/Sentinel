@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Controls.Basic
@@ -51,8 +53,12 @@ Window {
             RowLayout {
                 Button { text: qsTr("Ask"); enabled: prompt.enabled && prompt.text.trim().length > 0; onClicked: if (panel.controller.ask(prompt.text)) prompt.text = "" }
                 Button { text: qsTr("Quick Agent"); enabled: prompt.enabled && prompt.text.trim().length > 0; onClicked: if (panel.controller.agent(prompt.text)) prompt.text = "" }
-                Button { text: qsTr("Voice/PTT"); enabled: false; Accessible.name: panel.snapshot.voice }
+                Button { text: panel.snapshot.voiceState === "listening" ? qsTr("Stop PTT") : qsTr("Voice/PTT"); enabled: panel.snapshot.voiceAvailable && !panel.snapshot.busy; Accessible.name: text; onClicked: panel.controller.voiceAction(panel.snapshot.voiceState === "listening" ? "stop" : "start") }
+                Button { text: qsTr("Cancel voice"); visible: ["listening", "transcribing", "requestingpermission", "startingcapture"].indexOf(panel.snapshot.voiceState) >= 0; enabled: panel.snapshot.ready; onClicked: panel.controller.voiceAction("cancel") }
             }
+            ProgressBar { Layout.fillWidth: true; visible: panel.snapshot.voiceState === "listening"; from: 0; to: 1; value: panel.snapshot.voiceLevel || 0; Accessible.name: qsTr("Microphone input level") }
+            Label { Layout.fillWidth: true; visible: (panel.snapshot.voiceTranscript || "").length > 0; text: panel.snapshot.voiceTranscript || ""; color: SentinelTheme.textPrimary; wrapMode: Text.Wrap }
+            Button { text: qsTr("Use transcript"); visible: (panel.snapshot.voiceTranscript || "").length > 0; enabled: prompt.enabled; onClicked: prompt.text = panel.snapshot.voiceTranscript }
             Label { Layout.fillWidth: true; text: panel.snapshot.voice; color: SentinelTheme.textMuted; wrapMode: Text.Wrap; font.pixelSize: 11 }
             Label { Layout.fillWidth: true; text: qsTr("Run: %1").arg(panel.snapshot.state || "Idle"); color: SentinelTheme.textPrimary }
             Label { Layout.fillWidth: true; text: qsTr("Workspace: %1").arg(panel.snapshot.workspace || "Unavailable"); color: SentinelTheme.textMuted; elide: Text.ElideRight }
