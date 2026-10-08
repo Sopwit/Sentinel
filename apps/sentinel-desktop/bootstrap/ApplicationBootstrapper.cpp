@@ -1,3 +1,4 @@
+#include "sentinel/desktop/RemoteAgentInspectorService.h"
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -206,8 +207,15 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     m_runtimeClient->setPreferredSession(m_settings->activeConversationId());
     QObject::connect(m_runtimeClient.get(), &DesktopRuntimeClient::sessionChanged, m_settings.get(),
                      [this](const QString& id) { m_settings->setActiveConversationId(id); });
-    m_inspectorService = std::make_unique<sentinel::core::AgentInspectorService>(nullptr);
+    auto inspector = std::make_unique<RemoteAgentInspectorService>(*m_daemonClient);
+    auto* remoteInspector = inspector.get();
+    m_inspectorService = std::move(inspector);
     m_inspectorViewModel = std::make_unique<AgentInspectorViewModel>(*m_inspectorService);
+    connect(remoteInspector, &RemoteAgentInspectorService::updated, m_inspectorViewModel.get(),
+            [this, remoteInspector] {
+                m_inspectorViewModel->refreshFromRemote(remoteInspector->recentRuns(500),
+                                                        remoteInspector->hasMore());
+            });
     m_modeManager = std::make_unique<sentinel::core::ModeManager>();
     m_taskbarIntegration = std::make_unique<sentinel::core::WinTaskbarIntegration>();
     m_shellViewModel = std::make_unique<DesktopShellViewModel>(

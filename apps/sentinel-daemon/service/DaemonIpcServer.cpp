@@ -1,3 +1,5 @@
+#include "sentinel/core/agent/AgentHistoryCodec.h"
+#include "sentinel/core/app/AgentInspectorService.h"
 #include <QCoreApplication>
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonDesktopSettings.h"
@@ -690,6 +692,37 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     }
     if (!m_controller) {
         error(socket, id, "runtime-unavailable");
+        return;
+    }
+    if (name == "agent.history") {
+        core::AgentInspectorService history(m_controller->agentRunStore());
+        const auto before =
+            QDateTime::fromString(payload.value("before_time").toString(), Qt::ISODateWithMs);
+        const auto runs =
+            before.isValid() ? history.runsBefore(before, payload.value("before_id").toString(), 26)
+                             : history.recentRuns(26);
+        const auto detail = history.detail(payload.value("run_id").toString());
+        using namespace core::agent_wire;
+        QJsonObject result{{"runs", encodeList(runs)},
+                           {"run", encode(detail.run)},
+                           {"steps", encodeList(detail.steps)},
+                           {"tools", encodeList(detail.tools)},
+                           {"authorizations", encodeList(detail.authorizations)},
+                           {"evidence", encodeList(detail.evidence)},
+                           {"claims", encodeList(detail.claims)},
+                           {"children", encodeList(detail.children)},
+                           {"error", history.error()}};
+        for (const auto& key :
+             {"tools", "steps", "authorizations", "evidence", "claims", "children"}) {
+            auto list = result.value(key).toArray();
+            while (!list.isEmpty() &&
+                   QJsonDocument(result).toJson(QJsonDocument::Compact).size() > 220000) {
+                list.removeLast();
+                result.insert(key, list);
+                result.insert("truncated", true);
+            }
+        }
+        reply({{"history", result}});
         return;
     }
     if (name == "model.helper_state" || name == "model.helper_action") {

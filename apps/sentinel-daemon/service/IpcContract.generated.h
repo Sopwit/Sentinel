@@ -10,7 +10,7 @@ inline constexpr int major = 1;
 inline constexpr int minor = 1;
 inline constexpr int max_frame_bytes = 262144;
 inline constexpr int max_pending_bytes = 1048576;
-enum class Command { hello, daemon_status, daemon_shutdown, model_list, model_current, session_list, session_create, session_attach, chat_send, agent_start, run_cancel, approval_respond, desktop_projection, desktop_action, session_messages, model_select, chat_regenerate, chat_retry, chat_edit, desktop_settings, desktop_setting, model_helper_state, model_helper_action, desktop_settings_service, terminal_state, workspace_files, workspace_select, workspace_root, workspace_changes, workspace_create, provider_select, terminal_attach, voice_state, voice_action, voice_audio };
+enum class Command { hello, daemon_status, daemon_shutdown, model_list, model_current, session_list, session_create, session_attach, chat_send, agent_start, run_cancel, approval_respond, desktop_projection, desktop_action, session_messages, model_select, chat_regenerate, chat_retry, chat_edit, desktop_settings, desktop_setting, model_helper_state, model_helper_action, desktop_settings_service, terminal_state, workspace_files, workspace_select, workspace_root, workspace_changes, workspace_create, provider_select, terminal_attach, voice_state, voice_action, voice_audio, agent_history };
 inline QJsonArray capabilities() { return {QStringLiteral("chat"), QStringLiteral("agent"), QStringLiteral("approval"), QStringLiteral("sessions"), QStringLiteral("events"), QStringLiteral("desktop-projection"), QStringLiteral("model-selection"), QStringLiteral("session-messages"), QStringLiteral("terminal-state"), QStringLiteral("workspace-files"), QStringLiteral("workspace-changes")}; }
 inline QJsonObject commands() { return {
 {QStringLiteral("hello"), QJsonObject{{QStringLiteral("client_id"), QStringLiteral("string")}, {QStringLiteral("major"), QStringLiteral("integer")}, {QStringLiteral("minor"), QStringLiteral("integer")}, {QStringLiteral("capabilities"), QStringLiteral("array")}}},
@@ -48,6 +48,7 @@ inline QJsonObject commands() { return {
 {QStringLiteral("voice.state"), QJsonObject{}},
 {QStringLiteral("voice.action"), QJsonObject{{QStringLiteral("action"), QStringLiteral("string")}}},
 {QStringLiteral("voice.audio"), QJsonObject{{QStringLiteral("pcm"), QStringLiteral("string")}, {QStringLiteral("final"), QStringLiteral("boolean")}, {QStringLiteral("speech"), QStringLiteral("boolean")}}},
+{QStringLiteral("agent.history"), QJsonObject{{QStringLiteral("run_id"), QStringLiteral("string")}, {QStringLiteral("before_time"), QStringLiteral("string")}, {QStringLiteral("before_id"), QStringLiteral("string")}}},
 }; }
 }
 // clang-format on

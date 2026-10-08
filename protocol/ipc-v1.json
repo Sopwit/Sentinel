@@ -114,6 +114,11 @@
       "pcm": "string",
       "final": "boolean",
       "speech": "boolean"
+    },
+    "agent.history": {
+      "run_id": "string",
+      "before_time": "string",
+      "before_id": "string"
     }
   },
   "events": {
@@ -346,6 +351,9 @@
     },
     "voice.audio": {
       "accepted": "boolean"
+    },
+    "agent.history": {
+      "history": "object"
     }
   },
   "capabilities": [

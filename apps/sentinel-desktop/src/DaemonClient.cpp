@@ -186,7 +186,8 @@ QString DaemonClient::request(Command command, const QJsonObject& payload) {
     }
     m_pending.insert(id, {name, m_clock.elapsed() + m_requestTimeoutMs});
     if (command != Command::desktop_projection && command != Command::desktop_settings &&
-        command != Command::session_list && command != Command::model_helper_state)
+        command != Command::session_list && command != Command::model_helper_state &&
+        command != Command::agent_history)
         qCDebug(desktopIpcLog) << "request" << id << name << "generation" << m_serverGeneration;
     if (m_socket.write(frame) != frame.size()) {
         m_pending.remove(id);

@@ -39,6 +39,7 @@ pub const COMMANDS: &[(&str, &[(&str, &str)])] = &[
 ("voice.state", &[]),
 ("voice.action", &[("action", "string")]),
 ("voice.audio", &[("pcm", "string"), ("final", "boolean"), ("speech", "boolean")]),
+("agent.history", &[("run_id", "string"), ("before_time", "string"), ("before_id", "string")]),
 ];
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -113,6 +114,8 @@ VoiceState {},
 VoiceAction {action: String},
 #[serde(rename = "voice.audio")]
 VoiceAudio {pcm: String, r#final: bool, speech: bool},
+#[serde(rename = "agent.history")]
+AgentHistory {run_id: String, before_time: String, before_id: String},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -187,6 +190,8 @@ VoiceState {state: String, available: bool, owned: bool, transcript: String, fai
 VoiceAction {accepted: bool},
 #[serde(rename = "voice.audio")]
 VoiceAudio {accepted: bool},
+#[serde(rename = "agent.history")]
+AgentHistory {history: serde_json::Value},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
