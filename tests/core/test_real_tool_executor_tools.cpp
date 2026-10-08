@@ -7,11 +7,13 @@
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QScopeGuard>
 
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
 #include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/IFileSystemService.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
@@ -151,6 +153,56 @@ class RealToolExecutorToolsTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void authorizedReadRejectsReplacedResourcesAndKeepsBounds() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        QtFileSystemService fs;
+        const auto filename = workspace.filePath("evidence.txt");
+        QFile original(filename);
+        QVERIFY(original.open(QIODevice::WriteOnly));
+        QCOMPARE(original.write("trusted content"), qint64(15));
+        original.close();
+        const auto authorized = fs.resolve(filename, workspace.path(), FileSystemAccess::Read);
+        QVERIFY(authorized.ok());
+        const auto bounded = fs.readFile(*authorized.value, 7);
+        QVERIFY(bounded.ok());
+        QCOMPARE(bounded.value->content, QByteArray("trusted"));
+        QVERIFY(bounded.value->truncated);
+        const auto complete = fs.readFile(*authorized.value, 15);
+        QVERIFY(complete.ok());
+        QVERIFY(complete.value->complete);
+        QVERIFY(QFile::rename(filename, filename + ".original"));
+        QFile replacement(filename);
+        QVERIFY(replacement.open(QIODevice::WriteOnly));
+        replacement.write("untrusted replacement");
+        replacement.close();
+        const auto changed = fs.readFile(*authorized.value, 100);
+        QCOMPARE(changed.failure, FileSystemFailure::ResourceChanged);
+        QVERIFY(!changed.value.has_value());
+        QVERIFY(!fs.readFile(*authorized.value, -1).ok());
+#if defined(Q_OS_UNIX)
+        QVERIFY(QFile::remove(filename));
+        QVERIFY(QFile::link(filename + ".original", filename));
+        const auto link = fs.readFile(*authorized.value, 100);
+        QVERIFY(!link.ok());
+        QVERIFY(!link.value.has_value());
+        QVERIFY(QFile::remove(filename));
+        QVERIFY(QFile::rename(filename + ".original", filename));
+        const auto parentAuthorization =
+            fs.resolve(filename, workspace.path(), FileSystemAccess::Read);
+        QVERIFY(parentAuthorization.ok());
+        const auto parent = QFileInfo(filename).absolutePath();
+        QVERIFY(QDir().rename(parent, parent + "-moved"));
+        auto cleanupParent = qScopeGuard([parent] {
+            QFile::remove(parent);
+            QDir().rename(parent + "-moved", parent);
+        });
+        QVERIFY(QFile::link(parent + "-moved", parent));
+        const auto escapedParent = fs.readFile(*parentAuthorization.value, 100);
+        QVERIFY(!escapedParent.ok());
+        QVERIFY(!escapedParent.value.has_value());
+#endif
+    }
     void registeredFilesystemHandlerUsesFrozenWorkspace() {
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());

@@ -5,6 +5,7 @@
 namespace sentinel::core::securefs {
 
 #if defined(Q_OS_UNIX) || defined(Q_OS_WIN)
+FileSystemResult<FileRead> readFile(const AuthorizedPath& path, qint64 maxBytes);
 FileSystemResult<FileWrite> writeFile(const AuthorizedPath& path, const QByteArray& bytes,
                                       bool makeParents);
 FileSystemResult<bool> deleteFile(const AuthorizedPath& path);
