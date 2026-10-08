@@ -28,6 +28,7 @@ class SQLiteConversationStoreTest final : public QObject {
 private slots:
     void startsEmptyAndInitializesSchema();
     void createsListsAndLoadsConversation();
+    void automaticTitlesPreserveManualAndStaleEdits();
     void appendsAndLoadsMessagesInDeterministicOrder();
     void pinsAndUnpinsConversationMetadata();
     void persistsConversationsAcrossInstances();
@@ -322,6 +323,26 @@ void SQLiteConversationStoreTest::doesNotMigrateOrClearSingleTranscriptStore() {
     QCOMPARE(messages.at(1).content, QStringLiteral("existing"));
     QVERIFY(QFile::exists(chatPath));
     QVERIFY(QFile::exists(conversationPath));
+}
+
+void SQLiteConversationStoreTest::automaticTitlesPreserveManualAndStaleEdits() {
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    SQLiteConversationStore store(directory.filePath("titles.sqlite3"));
+    const auto record = store.createConversation(QStringLiteral("New Chat"));
+    QVERIFY(store.autoTitleConversation(record.id, QStringLiteral("First message")));
+    QVERIFY(store.updateAutoTitleConversation(record.id, QStringLiteral("Qt Interface Design"),
+                                              QStringLiteral("First message")));
+    QVERIFY(!store.updateAutoTitleConversation(record.id, QStringLiteral("Stale response"),
+                                               QStringLiteral("First message")));
+    QVERIFY(store.renameConversation(record.id, QStringLiteral("My chosen title")));
+    QVERIFY(!store.updateAutoTitleConversation(record.id, QStringLiteral("Overwrite"),
+                                               QStringLiteral("My chosen title")));
+    QCOMPARE(store.listConversations().first().title, QStringLiteral("My chosen title"));
+    const auto deleted = store.createConversation(QStringLiteral("New Chat"));
+    QVERIFY(store.deleteConversation(deleted.id));
+    QVERIFY(!store.updateAutoTitleConversation(deleted.id, QStringLiteral("Resurrected"),
+                                               QStringLiteral("New Chat")));
 }
 
 QTEST_MAIN(SQLiteConversationStoreTest)

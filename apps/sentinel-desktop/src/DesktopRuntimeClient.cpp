@@ -694,6 +694,7 @@ void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
         }
     }
     m_values["activeConversationTitle"] = snapshot.value("title").toString();
+    m_values["conversationListCurrentTitle"] = snapshot.value("title").toString();
     m_values["activeConversationSummary"] = snapshot.value("summary").toString();
     m_values["activeConversationPinned"] = snapshot.value("pinned").toBool();
     m_values["activeConversationArchived"] = snapshot.value("archived").toBool();

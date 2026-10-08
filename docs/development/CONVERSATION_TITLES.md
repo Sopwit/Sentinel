@@ -1,0 +1,9 @@
+# Automatic conversation titles
+
+The daemon generates a short topic title after a completed Chat or Agent response using the same captured provider/model through ModelService. Generation runs on a cancellable background worker; it does not stream into the transcript or execute tools. A new user generation cancels the metadata request. The first three completed turns may refine a greeting into the actual subject; later titles remain stable.
+
+Conversation stores remain authoritative. New Chat placeholders receive the existing first-message fallback immediately. Generated titles replace only automatic names, using a compare-and-set against the captured title and user_renamed flag. Deleted records, manual renames and stale worker results are rejected. SQLite writes occur only on the daemon thread. Unavailable providers or invalid/empty title output keep the existing title. No provider fallback or new credentials are introduced.
+
+Existing session.list/attach metadata supplies the persisted title to Desktop. Both activeConversationTitle and conversationListCurrentTitle are projected, so sidebar and header agree. New Chat buttons create an untitled record instead of a translated persisted placeholder.
+
+Validation 2026-10-08: tests preset configure/build completed; CTest114/114 PASS. Store regressions cover stale/manual/deleted updates; Desktop IPC covers an outstanding background request while Chat completes, generated title projection and manual rename precedence. Generated-contract checks, changed-QML lint and diff-check passed. Real installed qwen2.5:3b generated “Qt QML UI Tasarımı Adımları” from a Turkish Qt/QML conversation; the title survived daemon restart in an isolated profile. Existing user Desktop was left running, so native visual acceptance requires launching the rebuilt app. Evidence retained locally in build/tests/system-audit-evidence/conversation-titles/.

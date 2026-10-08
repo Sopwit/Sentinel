@@ -380,6 +380,75 @@ private slots:
             QVERIFY(reply.at(0).toString() != oldId);
         }
     }
+    void backgroundConversationTitleIsDurableAndProjected_data() {
+        QTest::addColumn<bool>("manualRename");
+        QTest::newRow("generated-title") << false;
+        QTest::newRow("manual-title-wins") << true;
+    }
+    void backgroundConversationTitleIsDurableAndProjected() {
+        QFETCH(bool, manualRename);
+        QTemporaryDir directory{QDir::tempPath() + "/st-XXXXXX"};
+        QVERIFY(directory.isValid());
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner |
+                                         QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        auto gate = std::make_shared<QSemaphore>();
+        auto started = std::make_shared<std::atomic_bool>(false);
+        const auto releaseOnExit = qScopeGuard([gate] { gate->release(); });
+        class Provider final : public sentinel::core::IChatProvider {
+        public:
+            std::shared_ptr<QSemaphore> gate;
+            std::shared_ptr<std::atomic_bool> started;
+            QString name() const override { return "title-fixture"; }
+            sentinel::core::ChatProviderStatus status() const override {
+                return sentinel::core::ChatProviderStatus::Ready;
+            }
+            sentinel::core::ChatProviderReply sendMessage(const QString& prompt) override {
+                if (prompt.startsWith("Create a concise conversation title")) {
+                    started->store(true);
+                    if (!gate->tryAcquire(1, 5000)) return {false, {}, "title timeout"};
+                    return {true, "Qt Interface Design", {}};
+                }
+                return {true, "A useful answer about Qt.", {}};
+            }
+        };
+        sentinel::test::DeterministicModelServiceFixture fixture;
+        auto models = fixture.takeModelService();
+        models->registerProvider("ollama", [gate, started](const sentinel::core::ModelBinding&) {
+            auto provider = std::make_shared<Provider>();
+            provider->gate = gate;
+            provider->started = started;
+            return provider;
+        });
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(std::move(models))
+                                 .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+                                 .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                                 .build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("title.sock")));
+        DaemonClient transport(directory.filePath("title.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        sentinel::desktop::DesktopControllerBridge bridge({nullptr, &adapter});
+        sentinel::desktop::QuickPanelController panel(adapter);
+        QTRY_VERIFY(adapter.ready());
+        QVERIFY(!bridge.createConversation(QStringLiteral("New Chat")).isEmpty());
+        QTRY_COMPARE(adapter.value("activeConversationTitle").toString(), QString("New Chat"));
+        const auto sid = adapter.sessionId();
+        QVERIFY(panel.ask(QStringLiteral("Help me design a Qt interface")));
+        QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));
+        QTRY_VERIFY(started->load());
+        // The answer finished and IPC remains usable while title generation waits.
+        if (manualRename)
+            QVERIFY(controller->renameConversation(sid, QStringLiteral("My chosen title")));
+        gate->release();
+        const auto expected = manualRename ? QStringLiteral("My chosen title")
+                                           : QStringLiteral("Qt Interface Design");
+        QTRY_COMPARE(adapter.value("activeConversationTitle").toString(), expected);
+        QTRY_COMPARE(adapter.value("conversationListCurrentTitle").toString(), expected);
+        QVERIFY(adapter.value("conversationTitles").toStringList().contains(expected));
+        for (const auto& record : controller->conversationStore()->listConversations())
+            if (record.id == sid) QCOMPARE(record.title, expected);
+    }
     void compatibleFutureEvent() {
         Peer peer;
         DaemonClient client(peer.path, 1000, 1000);

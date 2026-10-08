@@ -327,7 +327,7 @@ ShellPanel {
                     ToolTip.text: qsTr("New Chat")
                     Accessible.name: ToolTip.text
                     onClicked: {
-                        homeChat.viewModel.createConversation(qsTr("New Chat"))
+                        homeChat.viewModel.createConversation("")
                         homeChat.forceChatView = true
                         promptInput.clear()
                         homePromptInput.clear()
@@ -395,7 +395,7 @@ ShellPanel {
                         ToolTip.text: qsTr("New Chat")
                     Accessible.name: ToolTip.text
                         onClicked: {
-                            homeChat.viewModel.createConversation(qsTr("New Chat"))
+                            homeChat.viewModel.createConversation("")
                             homeChat.forceChatView = true
                             homeChat.conversationSidebarOpen = !homeChat.compact
                             promptInput.clear()

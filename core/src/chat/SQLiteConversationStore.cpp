@@ -371,10 +371,24 @@ bool SQLiteConversationStore::autoTitleConversation(const QString& conversationI
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("UPDATE conversations SET title = ?, updated_at = ? "
                                  "WHERE id = ? AND deleted = 0 AND user_renamed = 0 "
-                                 "AND title IN ('Current Transcript', 'Untitled Conversation')"));
+                                 "AND title IN ('Current Transcript', 'Untitled Conversation', 'New Chat', 'New chat')"));
     query.addBindValue(normalizedTitle(title));
     query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
     query.addBindValue(conversationId);
+    return query.exec() && query.numRowsAffected() == 1;
+}
+
+bool SQLiteConversationStore::updateAutoTitleConversation(const QString& conversationId,
+                                                           const QString& title,
+                                                           const QString& expectedTitle) {
+    if (!database_.isOpen() || title.trimmed().isEmpty()) return false;
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("UPDATE conversations SET title = ?, updated_at = ? "
+                                 "WHERE id = ? AND deleted = 0 AND user_renamed = 0 AND title = ?"));
+    query.addBindValue(normalizedTitle(title));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+    query.addBindValue(conversationId);
+    query.addBindValue(expectedTitle);
     return query.exec() && query.numRowsAffected() == 1;
 }
 
