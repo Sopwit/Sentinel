@@ -2288,14 +2288,6 @@ ShellPanel {
         }
     }
 
-        Text {
-            Layout.fillWidth: true
-            visible: homeChat.inChatMode && !homeChat.chatReady
-            text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local %1 only. No cloud provider active.").arg(homeChat.localProviderLabel))
-            color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
-        }
         }
     }
 }
