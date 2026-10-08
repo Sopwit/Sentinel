@@ -29,24 +29,41 @@ QVariantMap QuickPanelController::state() const {
                                              runtime_.value("activeRuntimeModelLabel").toString()
                                        : QStringLiteral("Unavailable");
     if (runtime_.ready() && result.value("busy").toBool() &&
-        !runtime_.value("activeChatModelId").toString().isEmpty())
+        !runtime_.value("activeChatModelId").toString().isEmpty()) {
         result["model"] = runtime_.value("activeChatProviderId").toString() +
                           QStringLiteral(" / ") + runtime_.value("activeChatModelId").toString();
+    }
     result["network"] = runtime_.ready() ? runtime_.settingsValue("networkMode", "Unavailable")
                                          : QStringLiteral("Unavailable");
     if (!runtime_.ready()) {
         result["approvalCount"] = 0;
         result["approval"] = QVariantMap{};
     }
-    result["voice"] = QStringLiteral("Unavailable — daemon voice capture is not exposed");
+    const auto voice = runtime_.voiceState();
+    result["voiceAvailable"] = runtime_.ready() && voice.value("available").toBool() &&
+                               voice.value("state").toString() != "Transcribing";
+    result["voiceState"] = voice.value("state").toString().toLower();
+    result["voiceLevel"] = voice.value("level", 0.0);
+    result["voiceTranscript"] = voice.value("transcript", QString{});
+    result["voice"] =
+        !runtime_.ready()                               ? tr("Loading voice state…")
+        : voice.value("requesting_permission").toBool() ? tr("Requesting microphone permission")
+        : voice.value("state").toString() == "StartingCapture" ? tr("Preparing microphone…")
+        : voice.value("state").toString() == "Transcribing"    ? tr("Processing speech…")
+        : voice.value("state").toString() == "Failed"
+            ? tr("Voice error: %1").arg(voice.value("failure").toString())
+        : !voice.value("available").toBool() && voice.value("state").toString() != "Listening"
+            ? tr("Unavailable — STT runtime/model is not ready or voice is busy")
+            : voice.value("state").toString();
     return result;
 }
 bool QuickPanelController::submit(const QString& text, bool agentMode) {
     error_.clear();
     const bool accepted =
         runtime_.dispatch(agentMode ? "runAgentRequest" : "sendMessage", {text.trimmed()}).toBool();
-    if (!accepted)
+    if (!accepted) {
         error_ = QStringLiteral("Request unavailable: check connection, session and active run.");
+    }
     emit changed();
     return accepted;
 }
@@ -55,6 +72,9 @@ bool QuickPanelController::ask(const QString& text) {
 }
 bool QuickPanelController::agent(const QString& text) {
     return submit(text, true);
+}
+bool QuickPanelController::runtimeVoiceAction(const QString& action) {
+    return runtime_.voiceAction(action);
 }
 bool QuickPanelController::cancel() {
     return runtime_.cancelRun();
@@ -69,62 +89,74 @@ void QuickPanelController::continueConversation() {
 }
 void QuickPanelController::openApproval() {
     const auto session = runtime_.quickPanelSnapshot().value("approvalSession").toString();
-    if (!session.isEmpty())
+    if (!session.isEmpty()) {
         openLink("sentinel://session/" + session);
+    }
 }
 void QuickPanelController::project() {
-    if (runtime_.ready() && error_ == "daemon-unavailable")
+    if (runtime_.ready() && error_ == "daemon-unavailable") {
         error_.clear();
+    }
     const auto snapshot = runtime_.quickPanelSnapshot();
     const auto run = snapshot.value("runId").toString();
     const auto status = snapshot.value("state").toString();
     const auto pending = snapshot.value("approval").toMap();
     const auto approval = pending.value("approval_id").toString();
     if (runtime_.ready()) {
-        if (!approval.isEmpty() && approval != lastApproval_)
+        if (!approval.isEmpty() && approval != lastApproval_) {
             emit notificationRequested(tr("Approval needed"),
                                        pending.value("detail").toString().left(240),
                                        snapshot.value("approvalSession").toString());
+        }
         if (!run.isEmpty() && run == lastRun_ && status != lastState_ &&
             (lastState_ == "running" || lastState_ == "approval") &&
             (status == "completed" || status == "failed" || status == "cancelled") &&
-            snapshot.value("kind") == "agent")
+            snapshot.value("kind") == "agent") {
             emit notificationRequested(tr("Sentinel Agent: %1").arg(status),
                                        tr("Open Sentinel to review this run."),
                                        runtime_.sessionId());
+        }
     }
     lastRun_ = run;
     lastState_ = status;
     // Keep the last notified ID across disconnects and resolved snapshots.
-    if (runtime_.ready() && !approval.isEmpty())
+    if (runtime_.ready() && !approval.isEmpty()) {
         lastApproval_ = approval;
+    }
     emit changed();
 }
 QVariantMap QuickPanelController::parseLink(const QString& text) {
-    if (text.size() > 512)
+    if (text.size() > 512) {
         return {};
+    }
     const QUrl url(text, QUrl::StrictMode);
     if (!url.isValid() || url.scheme() != "sentinel" || !url.userInfo().isEmpty() ||
-        url.port() != -1 || url.hasQuery() || url.hasFragment())
+        url.port() != -1 || url.hasQuery() || url.hasFragment()) {
         return {};
-    if (url.host() == "settings" && (url.path().isEmpty() || url.path() == "/"))
+    }
+    if (url.host() == "settings" && (url.path().isEmpty() || url.path() == "/")) {
         return {{"page", "Settings"}};
-    if (url.host() != "session")
+    }
+    if (url.host() != "session") {
         return {};
+    }
     const QString id = url.path().mid(1);
     static const QRegularExpression boundedId(QStringLiteral("^[A-Za-z0-9_-]{1,128}$"));
-    if (!boundedId.match(id).hasMatch())
+    if (!boundedId.match(id).hasMatch()) {
         return {};
+    }
     return {{"page", "Dashboard"}, {"sessionId", id}};
 }
 bool QuickPanelController::openLink(const QString& url) {
     const auto target = parseLink(url);
-    if (target.isEmpty())
+    if (target.isEmpty()) {
         return false;
+    }
     const auto session = target.value("sessionId").toString();
     if (!session.isEmpty()) {
-        if (!runtime_.ready())
+        if (!runtime_.ready()) {
             return false;
+        }
         runtime_.dispatch("switchConversation", {session});
     }
     emit openRequested(target.value("page").toString(), session);

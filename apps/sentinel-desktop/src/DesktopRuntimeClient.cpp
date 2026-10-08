@@ -1,25 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "sentinel/desktop/DesktopRuntimeClient.h"
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QJsonDocument>
+#include <QPermissions>
 #include <cmath>
 
 namespace sentinel::desktop {
 namespace {
 core::ChatMessageStatus messageStatus(const QString& state) {
-    if (state == "streaming" || state == "running")
+    if (state == "streaming" || state == "running") {
         return core::ChatMessageStatus::Streaming;
-    if (state == "cancelled")
+    }
+    if (state == "cancelled") {
         return core::ChatMessageStatus::Cancelled;
-    if (state == "failed" || state == "error")
+    }
+    if (state == "failed" || state == "error") {
         return core::ChatMessageStatus::Failed;
-    if (state == "interrupted")
+    }
+    if (state == "interrupted") {
         return core::ChatMessageStatus::Interrupted;
-    if (state == "queued")
+    }
+    if (state == "queued") {
         return core::ChatMessageStatus::Queued;
-    if (state == "sent")
+    }
+    if (state == "sent") {
         return core::ChatMessageStatus::Sent;
+    }
     return core::ChatMessageStatus::Completed;
 }
 bool active(const QString& state) {
@@ -28,8 +36,9 @@ bool active(const QString& state) {
 bool validProperties(const QJsonObject& properties) {
     const auto fields = ipc::desktopProjectionFields();
     for (auto it = properties.begin(); it != properties.end(); ++it) {
-        if (!fields.contains(it.key()))
+        if (!fields.contains(it.key())) {
             return false;
+        }
         const auto field = fields.value(it.key()).toObject();
         const auto type = field.value("type").toString();
         const auto value = it.value();
@@ -37,12 +46,16 @@ bool validProperties(const QJsonObject& properties) {
             (type == "array" && !value.isArray()) || (type == "object" && !value.isObject()) ||
             ((type == "integer" || type == "number") &&
              (!value.isDouble() || !std::isfinite(value.toDouble()))) ||
-            (type == "integer" && std::floor(value.toDouble()) != value.toDouble()))
+            (type == "integer" && std::floor(value.toDouble()) != value.toDouble())) {
             return false;
-        if (field.value("cpp") == "QStringList")
-            for (const auto& item : value.toArray())
-                if (!item.isString())
+        }
+        if (field.value("cpp") == "QStringList") {
+            for (const auto& item : value.toArray()) {
+                if (!item.isString()) {
                     return false;
+                }
+            }
+        }
     }
     return true;
 }
@@ -53,16 +66,32 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
     connect(&transport, &DaemonClient::eventReceived, this, &DesktopRuntimeClient::onEvent);
     connect(&transport, &DaemonClient::requestFailed, this,
             [this](const QString& id, DaemonClient::Error, const QString& code) {
-                if (!m_requests.contains(id))
+                if (!m_requests.contains(id)) {
                     return;
+                }
                 const auto failed = m_requests.take(id);
-                if (failed.name == "desktop.projection")
+                if (failed.name == "voice.state") {
+                    m_voiceQueryPending = false;
+                }
+                if (failed.name == "desktop.projection") {
                     m_projectionRemaining = 0;
-                if (failed.name == "desktop.settings_service")
+                }
+                if (failed.name == "desktop.settings_service") {
                     m_settingsQueries.remove(failed.target);
+                }
+                if (failed.name == "voice.action" || failed.name == "voice.audio") {
+                    ++m_voiceGeneration;
+                    m_voiceStartPending = false;
+                    m_microphonePermissionPending = false;
+                    m_captureLimit.stop();
+                    m_voiceDevices.cancelCapture();
+                    m_outboundVoicePcm.clear();
+                    m_localVoiceFailure = code;
+                }
                 m_submissionPending = false;
-                if (failed.name == "approval.respond")
+                if (failed.name == "approval.respond") {
                     m_approvalResponsePending = false;
+                }
                 m_attaching = false;
                 m_values["chatErrorCategory"] = code;
                 m_values["chatSendLifecycleSummary"] = code;
@@ -72,7 +101,22 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
             });
     connect(&transport, &DaemonClient::connectionStateChanged, this, [this] {
         if (!m_transport.daemonReachable()) {
+            ++m_voiceGeneration;
+            m_microphonePermissionPending = false;
+            m_voiceStartPending = false;
+            m_captureLimit.stop();
+            m_voiceDevices.cancelCapture();
+            m_outboundVoicePcm.clear();
+            m_capturedVoiceSegments.clear();
+            m_voiceState.clear();
+            m_voiceQueryPending = false;
             m_loaded = false;
+            m_settingsLoaded = false;
+            m_sessionsLoaded = false;
+            m_projection.clear();
+            m_settings = {};
+            m_values.clear();
+            m_messages.clear();
             m_requests.clear();
             m_submissionPending = false;
             m_attaching = false;
@@ -109,6 +153,136 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
         }
     });
     m_refreshTimer.start();
+    m_voiceTimer.setInterval(2000);
+    connect(&m_voiceTimer, &QTimer::timeout, this, [this] {
+        if (ready() && !m_voiceQueryPending) {
+            m_voiceQueryPending = true;
+            send(DaemonClient::Command::voice_state);
+        }
+    });
+    m_voiceTimer.start();
+    connect(&m_voiceDevices, &core::AudioDeviceService::speechSegmentReady, this,
+            [this](const QByteArray& pcm) {
+                if (m_capturedVoiceSegments.size() + pcm.size() > 16000LL * 2 * 60) {
+                    voiceAction("cancel");
+                    m_localVoiceFailure = "CaptureFailure";
+                } else {
+                    m_capturedVoiceSegments.append(pcm);
+                }
+            });
+    m_captureLimit.setSingleShot(true);
+    m_captureLimit.setInterval(59000);
+    connect(&m_captureLimit, &QTimer::timeout, this, [this] { voiceAction("stop"); });
+    connect(&m_voiceDevices, &core::AudioDeviceService::captureFailed, this,
+            [this](core::AudioFailure failure) {
+                voiceAction("cancel");
+                m_localVoiceFailure = core::audioFailureName(failure);
+                emit changed();
+            });
+}
+QVariantMap DesktopRuntimeClient::voiceState() const {
+    auto result = m_voiceState;
+    result["level"] = m_voiceDevices.inputLevel();
+    result["requesting_permission"] = m_microphonePermissionPending;
+    if (m_microphonePermissionPending || m_voiceStartPending) {
+        result["available"] = false;
+    }
+    if (m_microphonePermissionPending) {
+        result["state"] = "RequestingPermission";
+    } else if (m_voiceStartPending) {
+        result["state"] = "StartingCapture";
+    } else if (m_voiceDevices.isCapturing()) {
+        result["state"] = "Listening";
+    } else if (!m_outboundVoicePcm.isEmpty()) {
+        result["state"] = "Transcribing";
+    }
+    if (!m_localVoiceFailure.isEmpty()) {
+        result["failure"] = m_localVoiceFailure;
+        result["state"] = "Failed";
+    }
+    return result;
+}
+void DesktopRuntimeClient::sendVoiceChunk() {
+    constexpr qsizetype chunkSize = 49152;
+    const auto chunk = m_outboundVoicePcm.mid(m_voiceOffset, chunkSize);
+    m_voiceOffset += chunk.size();
+    send(DaemonClient::Command::voice_audio,
+         {{"pcm", QString::fromLatin1(chunk.toBase64())},
+          {"final", m_voiceOffset == m_outboundVoicePcm.size()},
+          {"speech", m_voiceSpeechDetected}},
+         QString::number(m_voiceGeneration));
+}
+bool DesktopRuntimeClient::voiceAction(const QString& action) {
+    if (!ready()) {
+        return false;
+    }
+    if (action == "cancel") {
+        ++m_voiceGeneration;
+        m_microphonePermissionPending = false;
+        m_voiceStartPending = false;
+        m_captureLimit.stop();
+        m_voiceDevices.cancelCapture();
+        m_capturedVoiceSegments.clear();
+        m_outboundVoicePcm.clear();
+        m_voiceState["transcript"] = QString{};
+        send(DaemonClient::Command::voice_action, {{"action", "cancel"}}, "cancel");
+    } else if (action == "stop") {
+        if (!m_voiceDevices.isCapturing()) {
+            return false;
+        }
+        m_captureLimit.stop();
+        const auto finalSegment = m_voiceDevices.stopCapture();
+        m_outboundVoicePcm = std::move(m_capturedVoiceSegments);
+        m_outboundVoicePcm.append(finalSegment);
+        m_voiceSpeechDetected = m_voiceDevices.speechDetected();
+        m_voiceOffset = 0;
+        if (m_outboundVoicePcm.isEmpty() || m_outboundVoicePcm.size() > 16000LL * 2 * 60) {
+            voiceAction("cancel");
+            m_localVoiceFailure = "CaptureFailure";
+        } else {
+            sendVoiceChunk();
+        }
+    } else if (action == "start") {
+        if (active(m_state) || m_microphonePermissionPending || m_voiceStartPending ||
+            m_voiceDevices.isCapturing() || !m_outboundVoicePcm.isEmpty() ||
+            !m_voiceState.value("available").toBool() ||
+            m_voiceState.value("state").toString() == "Transcribing") {
+            return false;
+        }
+        m_localVoiceFailure.clear();
+        m_capturedVoiceSegments.clear();
+        m_voiceState["transcript"] = QString{};
+        const auto generation = ++m_voiceGeneration;
+        const auto begin = [this, generation] {
+            if (generation != m_voiceGeneration || !ready()) {
+                return;
+            }
+            m_microphonePermissionPending = false;
+            if (QCoreApplication::instance()->checkPermission(QMicrophonePermission{}) !=
+                Qt::PermissionStatus::Granted) {
+                m_localVoiceFailure = "MicrophonePermissionDenied";
+                emit changed();
+                return;
+            }
+            m_voiceStartPending = true;
+            send(DaemonClient::Command::voice_action, {{"action", "start"}},
+                 QString::number(generation));
+            emit changed();
+        };
+        if (QCoreApplication::instance()->checkPermission(QMicrophonePermission{}) ==
+            Qt::PermissionStatus::Undetermined) {
+            m_microphonePermissionPending = true;
+            QCoreApplication::instance()->requestPermission(
+                QMicrophonePermission{}, this, [begin](const QPermission&) { begin(); });
+        } else {
+            begin();
+        }
+    } else {
+        return false;
+    }
+    m_voiceTimer.setInterval(100);
+    emit changed();
+    return true;
 }
 QString DesktopRuntimeClient::send(DaemonClient::Command command, const QJsonObject& payload,
                                    const QString& target) {
@@ -117,26 +291,30 @@ QString DesktopRuntimeClient::send(DaemonClient::Command command, const QJsonObj
     return id;
 }
 void DesktopRuntimeClient::refresh() {
-    if (!m_transport.daemonReachable())
+    if (!m_transport.daemonReachable()) {
         return;
+    }
     if (m_projectionRemaining == 0) {
         m_projectionRemaining = -1;
         send(DaemonClient::Command::desktop_projection, {{"page", 0}});
     }
     send(DaemonClient::Command::session_list);
     send(DaemonClient::Command::desktop_settings);
-    if (!m_sessionId.isEmpty())
+    if (!m_sessionId.isEmpty()) {
         attach(m_sessionId);
+    }
 }
 QVariant DesktopRuntimeClient::settingsService(const QString& action, const QVariantList& arguments,
                                                bool query) {
-    if (!ipc::desktopSettingsActions().contains(action))
+    if (!ipc::desktopSettingsActions().contains(action)) {
         return QVariantMap{{"accepted", false}, {"code", "UnknownSettingsAction"}};
+    }
     const auto serialized =
         QJsonDocument(QJsonArray::fromVariantList(arguments)).toJson(QJsonDocument::Compact);
     const auto key = action + (query ? QString::fromUtf8(serialized) : QStringLiteral("[]"));
-    if (!ready())
+    if (!ready()) {
         return QVariantMap{{"accepted", false}, {"code", "DaemonUnavailable"}};
+    }
     if (query) {
         if (!m_settingsQueries.contains(key)) {
             m_settingsQueries.insert(key);
@@ -158,25 +336,32 @@ void DesktopRuntimeClient::setSetting(const QString& key, const QString& value) 
     send(DaemonClient::Command::desktop_setting, {{"key", key}, {"value", value}});
 }
 QVariant DesktopRuntimeClient::value(const QString& name) const {
-    if (name == "localChatSendAvailable")
+    if (name == "localChatSendAvailable") {
         return ready() && !m_sessionId.isEmpty() && !active(m_state) && !m_submissionPending &&
                m_values.value(name).toBool();
-    if (name == "providerStatus" && !m_transport.daemonReachable())
+    }
+    if (name == "providerStatus" && !m_transport.daemonReachable()) {
         return m_transport.statusSummary();
-    if (name == "localChatSendAvailabilitySummary" && !ready())
+    }
+    if (name == "localChatSendAvailabilitySummary" && !ready()) {
         return m_transport.statusSummary();
+    }
     return m_values.value(name);
 }
 QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList& args) {
-    if (args.isEmpty() && m_values.contains(name))
+    if (args.isEmpty() && m_values.contains(name)) {
         return value(name);
+    }
     // Snapshot readers are allowed before the first projection arrives.
-    if (args.isEmpty() && ipc::desktopProjectionFields().contains(name))
+    if (args.isEmpty() && ipc::desktopProjectionFields().contains(name)) {
         return value(name);
-    if (name == "attachControlledTaskSettings")
+    }
+    if (name == "attachControlledTaskSettings") {
         return {};
-    if (!ready())
+    }
+    if (!ready()) {
         return false;
+    }
     const auto text = args.isEmpty() ? QString{} : args.first().toString();
     if (name == "createConversation") {
         return send(DaemonClient::Command::session_create, {{"title", text}});
@@ -187,11 +372,13 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
     }
     if (name == "sendMessage" || name == "runAgentRequest" || name == "runLocalInference") {
         if (m_sessionId.isEmpty() || active(m_state) || m_submissionPending ||
-            text.trimmed().isEmpty())
+            text.trimmed().isEmpty()) {
             return false;
+        }
         if (name == "runLocalInference" && args.size() > 1 && !args.at(1).toString().isEmpty() &&
-            args.at(1).toString() != value("selectedLocalModel").toString())
+            args.at(1).toString() != value("selectedLocalModel").toString()) {
             return false;
+        }
         m_submissionPending = true;
         m_output.clear();
         m_approval = {};
@@ -206,14 +393,18 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
         emit changed();
         return true;
     }
-    if (name == "stopChatGeneration" || name == "cancelAgentRun" || name == "cancelLocalInference")
+    if (name == "stopChatGeneration" || name == "cancelAgentRun" ||
+        name == "cancelLocalInference") {
         return cancelRun();
-    if (name == "respondToAgentApproval")
+    }
+    if (name == "respondToAgentApproval") {
         return respondToApproval(args.first().toBool());
+    }
     if (name == "regenerateChatResponse" || name == "retryChatResponse" ||
         name == "editAndResendChatMessage") {
-        if (active(m_state) || m_submissionPending || args.isEmpty())
+        if (active(m_state) || m_submissionPending || args.isEmpty()) {
             return false;
+        }
         QJsonObject payload{{"session_id", m_sessionId}, {"message_id", args.first().toInt()}};
         auto command = name == "retryChatResponse" ? DaemonClient::Command::chat_retry
                                                    : DaemonClient::Command::chat_regenerate;
@@ -242,28 +433,68 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
     return name == "duplicateConversation" ? QVariant(id) : QVariant(true);
 }
 void DesktopRuntimeClient::attach(const QString& id) {
-    if (id.isEmpty() || m_attaching)
+    if (id.isEmpty() || m_attaching) {
         return;
+    }
     m_attaching = true;
     send(DaemonClient::Command::session_attach, {{"session_id", id}}, id);
 }
 void DesktopRuntimeClient::requestMessages() {
-    if (!m_sessionId.isEmpty())
+    if (!m_sessionId.isEmpty()) {
         send(DaemonClient::Command::session_messages, {{"session_id", m_sessionId}}, m_sessionId);
+    }
 }
 void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
                                       const QJsonObject& payload) {
-    if (!m_requests.contains(id))
+    if (!m_requests.contains(id)) {
         return;
+    }
     const auto request = m_requests.take(id);
-    if (name == "desktop.settings_service") {
+    if (name == "voice.state") {
+        m_voiceQueryPending = false;
+        m_voiceState = payload.toVariantMap();
+        const bool busy = m_voiceDevices.isCapturing() || m_microphonePermissionPending ||
+                          m_voiceStartPending || !m_outboundVoicePcm.isEmpty() ||
+                          payload.value("state").toString() == "Transcribing";
+        m_voiceTimer.setInterval(busy ? 100 : 2000);
+    } else if (name == "voice.action" && request.target != "cancel") {
+        if (request.target != QString::number(m_voiceGeneration)) {
+            return;
+        }
+        m_voiceStartPending = false;
+        m_voiceDevices.setVadEnabled(m_voiceState.value("vad_enabled", true).toBool());
+        if (!payload.value("accepted").toBool() ||
+            !m_voiceDevices.selectInput(m_voiceState.value("input_device_id").toString()) ||
+            !m_voiceDevices.startCapture()) {
+            voiceAction("cancel");
+            if (m_localVoiceFailure.isEmpty()) {
+                m_localVoiceFailure = "CaptureFailure";
+            }
+            emit operationFailed("voice-capture-unavailable");
+        } else {
+            m_captureLimit.start();
+        }
+    } else if (name == "voice.audio") {
+        if (request.target != QString::number(m_voiceGeneration)) {
+            return;
+        }
+        if (!payload.value("accepted").toBool()) {
+            voiceAction("cancel");
+            m_localVoiceFailure = "TranscriptionFailure";
+        } else if (m_voiceOffset < m_outboundVoicePcm.size()) {
+            sendVoiceChunk();
+        } else {
+            m_outboundVoicePcm.clear();
+        }
+    } else if (name == "desktop.settings_service") {
         const auto result = payload.value("result").toObject();
         const auto action = request.target.left(request.target.indexOf('['));
         if (ipc::desktopSettingsActions().value(action).toObject().value("query").toBool()) {
             m_settingsStates[request.target] = result.toVariantMap();
         } else {
-            if (result.contains("accepted") && !result.value("accepted").toBool())
+            if (result.contains("accepted") && !result.value("accepted").toBool()) {
                 emit operationFailed(result.value("code").toString("daemon-settings-rejected"));
+            }
             m_settingsQueries.clear();
             m_settingsStates.clear();
             refresh();
@@ -275,8 +506,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
             emit operationFailed("malformed-projection");
             return;
         }
-        if (page == 0)
+        if (page == 0) {
             m_projection.clear();
+        }
         const auto properties = payload.value("properties").toObject();
         if (!validProperties(properties)) {
             m_projectionRemaining = 0;
@@ -292,30 +524,52 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         }
         if (page == 0) {
             m_projectionRemaining = pages;
-            for (int next = 1; next < pages; ++next)
+            for (int next = 1; next < pages; ++next) {
                 send(DaemonClient::Command::desktop_projection, {{"page", next}});
+            }
         }
-        if (--m_projectionRemaining != 0)
+        if (--m_projectionRemaining != 0) {
             return;
-        for (auto it = m_projection.begin(); it != m_projection.end(); ++it)
+        }
+        const auto fields = ipc::desktopProjectionFields();
+        bool complete = true;
+        for (auto field = fields.begin(); field != fields.end(); ++field) {
+            const auto metadata = field.value().toObject();
+            if (metadata.value("eager").toBool() &&
+                metadata.value("scope").toString() == "global" &&
+                !m_projection.contains(field.key())) {
+                complete = false;
+                break;
+            }
+        }
+        if (!complete) {
+            emit operationFailed("incomplete-projection");
+            return;
+        }
+        for (auto it = m_projection.begin(); it != m_projection.end(); ++it) {
             m_values[it.key()] = it.value();
+        }
         m_loaded = true;
     } else if (name == "desktop.settings") {
         m_settings = payload.value("values").toObject();
+        m_settingsLoaded = true;
     } else if (name == "desktop.setting") {
-        if (!payload.value("accepted").toBool())
+        if (!payload.value("accepted").toBool()) {
             emit operationFailed("daemon-setting-rejected");
+        }
         send(DaemonClient::Command::desktop_settings);
     } else if (name == "session.list") {
         m_sessions = payload.value("sessions").toArray();
+        m_sessionsLoaded = true;
         QStringList ids, titles, summaries;
         for (const auto& item : m_sessions) {
             const auto session = item.toObject();
             ids.append(session.value("session_id").toString());
             titles.append(session.value("title").toString());
             summaries.append(session.value("summary").toString());
-            if (session.value("session_id").toString() == m_sessionId && !m_submissionPending)
+            if (session.value("session_id").toString() == m_sessionId && !m_submissionPending) {
                 applySnapshot(session);
+            }
         }
         m_values["conversationIds"] = ids;
         m_values["conversationTitles"] = titles;
@@ -330,25 +584,29 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         m_values["conversationArchivedSummaries"] = archived;
         m_values["conversationStoreConversationCount"] = ids.size();
         if (m_sessionId.isEmpty() && !m_attaching) {
-            if (ids.contains(m_preferredSession))
+            if (ids.contains(m_preferredSession)) {
                 attach(m_preferredSession);
-            else if (!ids.isEmpty())
+            } else if (!ids.isEmpty()) {
                 attach(ids.first());
-            else
+            } else {
                 send(DaemonClient::Command::session_create, {{"title", "New Chat"}});
+            }
         }
     } else if (name == "session.create") {
         attach(payload.value("session_id").toString());
         send(DaemonClient::Command::session_list);
     } else if (name == "session.attach") {
         m_attaching = false;
-        if (payload.value("session_id").toString() != request.target)
+        if (payload.value("session_id").toString() != request.target) {
             return;
+        }
         if (m_sessionId != request.target) {
             const auto fields = ipc::desktopProjectionFields();
-            for (auto it = fields.begin(); it != fields.end(); ++it)
-                if (it.value().toObject().value("scope") == "session")
+            for (auto it = fields.begin(); it != fields.end(); ++it) {
+                if (it.value().toObject().value("scope") == "session") {
                     m_values.remove(it.key());
+                }
+            }
             m_messages.clear();
         }
         m_sessionId = request.target;
@@ -357,8 +615,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         requestMessages();
         emit sessionChanged(m_sessionId);
     } else if (name == "session.messages") {
-        if (request.target != m_sessionId || request.runId != m_runId)
+        if (request.target != m_sessionId || request.runId != m_runId) {
             return;
+        }
         QList<core::ChatMessage> messages;
         for (const auto& item : payload.value("messages").toArray()) {
             const auto row = item.toObject();
@@ -379,7 +638,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
             message.replacesMessageId = row.value("replaces").toInt();
             messages.append(message);
         }
-        m_messages = messages;
+        m_messages = std::move(messages);
         m_activeAssistantId = m_kind == "chat" && !m_messages.isEmpty() &&
                                       m_messages.last().role == core::ChatRole::Assistant
                                   ? m_messages.last().id
@@ -387,8 +646,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
     } else if (name == "chat.send" || name == "agent.start" || name == "chat.retry" ||
                name == "chat.regenerate" || name == "chat.edit") {
         m_submissionPending = false;
-        if (payload.value("session_id").toString() != m_sessionId)
+        if (payload.value("session_id").toString() != m_sessionId) {
             return;
+        }
         m_runId = payload.value("run_id").toString();
         m_output.clear();
         m_approval = {};
@@ -400,15 +660,17 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         attach(m_sessionId);
         send(DaemonClient::Command::session_list);
     } else if (name == "desktop.action" || name == "model.select") {
-        if (!payload.value("accepted").toBool(true))
+        if (!payload.value("accepted").toBool(true)) {
             emit operationFailed("daemon-action-rejected");
-        if (request.target == "duplicateConversation" && payload.value("accepted").toBool())
+        }
+        if (request.target == "duplicateConversation" && payload.value("accepted").toBool()) {
             attach(payload.value("result").toObject().value("value").toString());
+        }
         refresh();
     }
     if (ready() && !m_sessionId.isEmpty() && m_startupProjectionTimer.isValid()) {
         qDebug() << "Desktop handshake to authoritative projection/session (ms):"
-                 << m_startupProjectionTimer.nsecsElapsed() / 1000000.0;
+                 << static_cast<double>(m_startupProjectionTimer.nsecsElapsed()) / 1000000.0;
         m_startupProjectionTimer.invalidate();
     }
     projectRun();
@@ -418,16 +680,19 @@ void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
     const auto generation = snapshot.value("server_generation").toString();
     const auto sequence = static_cast<quint64>(snapshot.value("event_sequence").toDouble());
     if ((!generation.isEmpty() && generation != m_generation) ||
-        (sequence && sequence < m_sequence))
+        (sequence && sequence < m_sequence)) {
         return;
+    }
     const auto properties = snapshot.value("properties").toObject();
     if (!validProperties(properties)) {
         emit operationFailed("malformed-session-projection");
         return;
     }
-    for (auto it = properties.begin(); it != properties.end(); ++it)
-        if (ipc::desktopProjectionFields().contains(it.key()))
+    for (auto it = properties.begin(); it != properties.end(); ++it) {
+        if (ipc::desktopProjectionFields().contains(it.key())) {
             m_values[it.key()] = it.value().toVariant();
+        }
+    }
     m_values["activeConversationTitle"] = snapshot.value("title").toString();
     m_values["activeConversationSummary"] = snapshot.value("summary").toString();
     m_values["activeConversationPinned"] = snapshot.value("pinned").toBool();
@@ -437,36 +702,44 @@ void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
     m_state = snapshot.value("state").toString();
     m_output = snapshot.value("output").toString();
     m_approval = snapshot.value("approval").toObject();
-    if (m_state != "approval" || snapshot.value("approval_id").toString().isEmpty())
+    if (m_state != "approval" || snapshot.value("approval_id").toString().isEmpty()) {
         m_approval = {};
-    else
+    } else {
         m_approval.insert("approval_id", snapshot.value("approval_id"));
-    if (sequence)
+    }
+    if (sequence) {
         m_sequence = sequence;
+    }
     m_values["activeChatProviderId"] = snapshot.value("provider_id").toString();
     m_values["activeChatModelId"] = snapshot.value("model_id").toString();
     m_values["conversationRuntimeActiveModel"] = snapshot.value("model_id").toString();
 }
 void DesktopRuntimeClient::onEvent(const QString& name, const QJsonObject& payload) {
     if (payload.value("session_id").toString() != m_sessionId ||
-        payload.value("run_id").toString() != m_runId)
+        payload.value("run_id").toString() != m_runId) {
         return;
+    }
     // Closed runs cannot advance the cursor used by the next run or revive its state.
-    if (!active(m_state))
+    if (!active(m_state)) {
         return;
+    }
     const auto generation = payload.value("server_generation").toString();
-    if (!generation.isEmpty() && generation != m_generation)
+    if (!generation.isEmpty() && generation != m_generation) {
         return;
+    }
     const auto sequence = static_cast<quint64>(payload.value("event_sequence").toDouble());
-    if (sequence && sequence <= m_sequence)
+    if (sequence && sequence <= m_sequence) {
         return;
-    if (sequence)
+    }
+    if (sequence) {
         m_sequence = sequence;
+    }
     if (name == "agent.activity") {
         m_values["latestAgentActivitySummary"] = payload.value("activity").toString();
     } else if (name == "output.delta") {
-        if (!active(m_state))
+        if (!active(m_state)) {
             return;
+        }
         m_output += payload.value("text").toString();
     } else if (name == "approval.requested") {
         m_approval = payload;
@@ -478,8 +751,9 @@ void DesktopRuntimeClient::onEvent(const QString& name, const QJsonObject& paylo
     } else if (name == "run.started") {
         applySnapshot(payload);
     } else if (name == "run.completed" || name == "run.failed" || name == "run.cancelled") {
-        if (!active(m_state))
+        if (!active(m_state)) {
             return;
+        }
         m_state = payload.value("state").toString();
         m_output = payload.value("text").toString();
         m_approval = {};
@@ -500,8 +774,9 @@ QVariantMap DesktopRuntimeClient::quickPanelSnapshot() const {
         if (session.value("session_id").toString() == m_sessionId) {
             continue;
         }
-        if (session.value("state").toString() != "approval" || pending.isEmpty())
+        if (session.value("state").toString() != "approval" || pending.isEmpty()) {
             continue;
+        }
         ++count;
         if (approval.isEmpty()) {
             approval = pending;
@@ -528,8 +803,10 @@ QVariantMap DesktopRuntimeClient::quickPanelSnapshot() const {
 bool DesktopRuntimeClient::respondToQuickApproval(bool allow) {
     const auto snapshot = quickPanelSnapshot();
     const auto approval = snapshot.value("approval").toMap();
-    if (!ready() || m_approvalResponsePending || approval.value("approval_id").toString().isEmpty())
+    if (!ready() || m_approvalResponsePending ||
+        approval.value("approval_id").toString().isEmpty()) {
         return false;
+    }
     m_approvalResponsePending = true;
     send(DaemonClient::Command::approval_respond,
          {{"run_id", snapshot.value("approvalRun").toString()},
@@ -544,8 +821,9 @@ void DesktopRuntimeClient::projectRun() {
     const bool busy = connected && (active(m_state) || m_submissionPending);
     m_values["agentLoopActive"] = busy && m_kind == "agent";
     m_values["agentAwaitingApproval"] = connected && m_state == "approval" && !m_approval.isEmpty();
-    m_values["agentStatus"] =
-        !connected ? m_transport.statusSummary() : (busy && m_kind == "agent" ? "Busy" : "Ready");
+    m_values["agentStatus"] = !connected ? m_transport.statusSummary()
+                              : !ready() ? QStringLiteral("Loading authoritative state…")
+                                         : (busy && m_kind == "agent" ? "Busy" : "Ready");
     m_values["lastAgentResponse"] =
         m_kind == "agent" ? m_output : m_values.value("lastAgentResponse");
     m_values["chatGenerationActive"] = busy && m_kind == "chat";
@@ -565,16 +843,18 @@ void DesktopRuntimeClient::projectRun() {
         m_messages.last().role == core::ChatRole::Assistant && !m_runId.isEmpty() &&
         m_messages.last().id == m_activeAssistantId) {
         auto& message = m_messages.last();
-        if (busy)
+        if (busy) {
             message.content = m_output;
+        }
         message.partial = busy;
         message.status = messageStatus(m_state);
     }
 }
 bool DesktopRuntimeClient::respondToApproval(bool allow) {
     if (!ready() || m_approvalResponsePending || m_state != "approval" ||
-        m_approval.value("approval_id").toString().isEmpty())
+        m_approval.value("approval_id").toString().isEmpty()) {
         return false;
+    }
     m_approvalResponsePending = true;
     send(DaemonClient::Command::approval_respond,
          {{"run_id", m_runId}, {"approval_id", m_approval.value("approval_id")}, {"allow", allow}},
@@ -582,8 +862,9 @@ bool DesktopRuntimeClient::respondToApproval(bool allow) {
     return true;
 }
 bool DesktopRuntimeClient::cancelRun() {
-    if (!ready() || !active(m_state) || m_runId.isEmpty())
+    if (!ready() || !active(m_state) || m_runId.isEmpty()) {
         return false;
+    }
     send(DaemonClient::Command::run_cancel, {{"run_id", m_runId}}, m_sessionId);
     return true;
 }

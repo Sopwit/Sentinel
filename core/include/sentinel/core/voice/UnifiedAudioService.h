@@ -260,6 +260,8 @@ public:
     void setFileSystemService(const IFileSystemService* service) { fileSystemService_ = service; }
     bool startPushToTalk(VoiceInteractionMode mode, bool speakAnswer = false);
     void stopPushToTalk();
+    // GUI-owned, permission-checked mono 16 kHz signed 16-bit capture. No file ingress.
+    bool transcribeCapturedPcm(const QByteArray& pcm, bool speechDetected);
     void transcribeAudioFile(const QString& path, const QString& language = {});
     void readAloud(const QString& text, const QString& voice = {});
     void updateAgentActivity(VoiceInteractionState state);
@@ -268,6 +270,7 @@ public:
     VoiceInteractionMode mode() const { return mode_; }
     SpeechTranscript transcript() const { return transcript_; }
     SpeechProviderInfo sttInfo() const;
+    quint64 sttRevision() const { return sttRevision_; }
     SpeechProviderInfo ttsInfo() const;
     AudioPrivacyState privacy() const { return privacy_; }
     AudioFailure failure() const { return failure_; }
@@ -311,6 +314,7 @@ private:
     AudioPrivacyState privacy_;
     AudioFailure failure_{AudioFailure::None};
     quint64 generation_{0};
+    quint64 sttRevision_{0};
     bool speakAnswer_{false};
     QString generatedAudioPath_;
     bool bridgeActive_{false};

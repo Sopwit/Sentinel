@@ -1,6 +1,7 @@
+#include <QCoreApplication>
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include "DaemonIpcServer.h"
 #include "DaemonDesktopSettings.h"
+#include "DaemonIpcServer.h"
 #include "DaemonModelHelpers.h"
 #include "DesktopProjection.generated.h"
 #include "IpcContract.generated.h"
@@ -75,25 +76,31 @@ DaemonIpcServer::~DaemonIpcServer() {
     if (m_controller && !m_agentSubscription.isEmpty()) {
         m_controller->agentRuntime()->unsubscribe(m_agentSubscription);
     }
-    if (!m_projectionConnection.isEmpty())
+    if (!m_projectionConnection.isEmpty()) {
         QSqlDatabase::removeDatabase(m_projectionConnection);
+    }
 }
 bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
-    if (!m_projectionConnection.isEmpty())
+    if (!m_projectionConnection.isEmpty()) {
         return false;
+    }
     m_projectionConnection = "sentinel-ipc-projection-" + uuid();
     auto db = QSqlDatabase::addDatabase("QSQLITE", m_projectionConnection);
     db.setDatabaseName(path);
-    if (!db.open())
+    if (!db.open()) {
         return false;
-    if (!QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
+    }
+    if (!QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner)) {
         return false;
+    }
     QSqlQuery query(db);
     if (!query.exec("CREATE TABLE IF NOT EXISTS session_projection "
-                    "(session_id TEXT PRIMARY KEY, payload TEXT NOT NULL)"))
+                    "(session_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")) {
         return false;
-    if (!query.exec("SELECT session_id, payload FROM session_projection"))
+    }
+    if (!query.exec("SELECT session_id, payload FROM session_projection")) {
         return false;
+    }
     while (query.next()) {
         auto value = QJsonDocument::fromJson(query.value(1).toByteArray()).object();
         if (value.value("state") == "running" || value.value("state") == "approval") {
@@ -107,8 +114,9 @@ bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
     return true;
 }
 void DaemonIpcServer::rememberRun() {
-    if (m_sessionId.isEmpty())
+    if (m_sessionId.isEmpty()) {
         return;
+    }
     const QJsonObject value{{"run_id", m_runId},
                             {"run_type", m_kind},
                             {"state", m_state},
@@ -117,8 +125,9 @@ void DaemonIpcServer::rememberRun() {
                             {"provider_id", m_providerId},
                             {"model_id", m_modelId}};
     m_lastRuns.insert(m_sessionId, value);
-    if (m_projectionConnection.isEmpty())
+    if (m_projectionConnection.isEmpty()) {
         return;
+    }
     QSqlQuery query(QSqlDatabase::database(m_projectionConnection));
     query.prepare("INSERT OR REPLACE INTO session_projection (session_id, payload) VALUES (?, ?)");
     query.addBindValue(m_sessionId);
@@ -126,39 +135,45 @@ void DaemonIpcServer::rememberRun() {
     // Transcript retention remains exclusively owned by the conversation/history stores.
     metadata.remove("output");
     query.addBindValue(QString::fromUtf8(QJsonDocument(metadata).toJson(QJsonDocument::Compact)));
-    if (!query.exec())
+    if (!query.exec()) {
         qWarning("IPC session projection persistence failed");
+    }
 }
 core::ToolExecutionResult DaemonIpcServer::inspectFile(const QString& sessionId,
                                                        const QString& root, const QString& tool,
                                                        const QString& path) {
     const auto preferences =
         m_controller->currentWorkspaceProfile().configured.value("tools").toObject();
-    if (preferences.value(tool).isBool() && !preferences.value(tool).toBool())
+    if (preferences.value(tool).isBool() && !preferences.value(tool).toBool()) {
         return {core::ToolExecutionStatus::Blocked, "Tool disabled by workspace profile."};
+    }
     auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
-    if (!runtime)
+    if (!runtime) {
         return {core::ToolExecutionStatus::Blocked, "Runtime unavailable."};
+    }
     return runtime->inspectWorkspace(sessionId, root, tool, path);
 }
 void DaemonIpcServer::captureChangeBaseline(const QString& sessionId) {
     auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
-    if (!runtime || !m_settings)
+    if (!runtime || !m_settings) {
         return;
+    }
     const auto workspace = core::WorkspaceService{}.selectedWorkspace(
         m_settings->selectedWorkspaceId(), m_settings->workspaceCatalogJson());
     ChangeBaseline baseline;
     baseline.root = workspace.rootPath;
     baseline.workspaceId = workspace.id;
     const auto listing = inspectFile(sessionId, baseline.root, "glob", baseline.root);
-    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation)
+    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation) {
         return;
+    }
     const auto data = listing.structuredObservation->data;
     baseline.complete = data.value("complete").toBool();
     baseline.truncated = !baseline.complete;
-    int budget = 32768;
-    for (const auto& item : data.value("matches").toArray())
+    qsizetype budget = 32768;
+    for (const auto& item : data.value("matches").toArray()) {
         baseline.listed.insert(item.toString());
+    }
     auto paths = baseline.listed.values();
     std::sort(paths.begin(), paths.end());
     for (const auto& path : paths) {
@@ -181,45 +196,52 @@ void DaemonIpcServer::captureChangeBaseline(const QString& sessionId) {
         baseline.contents.insert(path, text);
         budget -= text.size();
     }
-    if (m_changeBaselines.size() >= 8 && !m_changeBaselines.contains(sessionId))
+    if (m_changeBaselines.size() >= 8 && !m_changeBaselines.contains(sessionId)) {
         m_changeBaselines.erase(m_changeBaselines.begin());
+    }
     m_changeBaselines.insert(sessionId, baseline);
 }
 QJsonObject DaemonIpcServer::reviewChanges(const QString& sessionId) {
-    if (!m_changeBaselines.contains(sessionId))
+    if (!m_changeBaselines.contains(sessionId)) {
         return {{"available", false},
                 {"reason",
                  "No in-memory baseline for this run; snapshots do not survive daemon restart."},
                 {"files", QJsonArray{}},
                 {"truncated", false}};
+    }
     auto* runtime = dynamic_cast<core::AgentRuntime*>(m_controller->agentRuntime());
-    if (!runtime || !m_settings)
+    if (!runtime || !m_settings) {
         return {{"available", false}, {"files", QJsonArray{}}, {"truncated", false}};
+    }
     const auto& baseline = m_changeBaselines[sessionId];
     const auto workspace = core::WorkspaceService{}.selectedWorkspace(
         m_settings->selectedWorkspaceId(), m_settings->workspaceCatalogJson());
-    if (workspace.id != baseline.workspaceId || workspace.rootPath != baseline.root)
+    if (workspace.id != baseline.workspaceId || workspace.rootPath != baseline.root) {
         return {{"available", false},
                 {"reason", "Select the original workspace to review its changes."},
                 {"files", QJsonArray{}},
                 {"truncated", false}};
+    }
     const auto listing = inspectFile(sessionId, baseline.root, "glob", baseline.root);
-    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation)
+    if (listing.status != core::ToolExecutionStatus::Succeeded || !listing.structuredObservation) {
         return {{"available", false},
                 {"reason", "Current filesystem observation is not authorized."},
                 {"files", QJsonArray{}},
                 {"truncated", false}};
+    }
     QSet<QString> paths;
-    for (const auto& value : listing.structuredObservation->data.value("matches").toArray())
+    for (const auto& value : listing.structuredObservation->data.value("matches").toArray()) {
         paths.insert(value.toString());
-    for (auto it = baseline.contents.begin(); it != baseline.contents.end(); ++it)
+    }
+    for (auto it = baseline.contents.begin(); it != baseline.contents.end(); ++it) {
         paths.insert(it.key());
+    }
     auto ordered = paths.values();
     std::sort(ordered.begin(), ordered.end());
     QJsonArray files;
     bool truncated =
         baseline.truncated || listing.structuredObservation->data.value("truncated").toBool();
-    int budget = 50000;
+    qsizetype budget = 50000;
     for (const auto& path : ordered) {
         const bool known = baseline.contents.contains(path);
         if (!known && (baseline.listed.contains(path) || !baseline.complete)) {
@@ -240,12 +262,14 @@ QJsonObject DaemonIpcServer::reviewChanges(const QString& sessionId) {
             continue;
         }
         const auto before = baseline.contents.value(path);
-        if (known && before == after)
+        if (known && before == after) {
             continue;
-        auto lines = [](QString text) {
+        }
+        auto lines = [](const QString& text) {
             auto result = text.split('\n');
-            if (text.endsWith('\n') || text.isEmpty())
+            if (text.endsWith('\n') || text.isEmpty()) {
                 result.removeLast();
+            }
             return result;
         };
         const auto oldLines = lines(before), newLines = lines(after);
@@ -256,14 +280,18 @@ QJsonObject DaemonIpcServer::reviewChanges(const QString& sessionId) {
                            .arg(oldLines.size())
                            .arg(newLines.isEmpty() ? 0 : 1)
                            .arg(newLines.size());
-        for (const auto& line : oldLines)
+        for (const auto& line : oldLines) {
             diff += "-" + line + "\n";
-        if (!before.isEmpty() && !before.endsWith('\n'))
+        }
+        if (!before.isEmpty() && !before.endsWith('\n')) {
             diff += "\\ No newline at end of file\n";
-        for (const auto& line : newLines)
+        }
+        for (const auto& line : newLines) {
             diff += "+" + line + "\n";
-        if (!after.isEmpty() && !after.endsWith('\n'))
+        }
+        if (!after.isEmpty() && !after.endsWith('\n')) {
             diff += "\\ No newline at end of file\n";
+        }
         if (diff.size() > budget || files.size() >= 32) {
             truncated = true;
             break;
@@ -459,6 +487,12 @@ void DaemonIpcServer::handleNewConnection() {
         m_clients.insert(socket, {});
         qInfo("IPC client connected");
         connect(socket, &QLocalSocket::disconnected, this, [this, socket] {
+            if (m_voiceOwner == socket && m_controller && m_controller->audioSession()) {
+                m_voiceOwner.clear();
+                m_voiceCaptureReserved = false;
+                m_voicePcm.clear();
+                m_controller->audioSession()->cancel();
+            }
             m_clients.remove(socket);
             socket->deleteLater();
             qInfo("IPC client disconnected");
@@ -525,8 +559,9 @@ QJsonObject DaemonIpcServer::session(const QString& id, bool presentation) const
             if (presentation && id == m_controller->activeConversationId()) {
                 for (int page = 0; page < desktop_contract::pages; ++page) {
                     const auto values = desktop_contract::projection(m_controller, page, true);
-                    for (auto it = values.begin(); it != values.end(); ++it)
+                    for (auto it = values.begin(); it != values.end(); ++it) {
                         properties.insert(it.key(), it.value());
+                    }
                 }
             }
             QJsonObject snapshot{
@@ -552,8 +587,9 @@ QJsonObject DaemonIpcServer::session(const QString& id, bool presentation) const
                 {"approval", id == m_sessionId ? m_approvalPayload : QJsonObject{}}};
             if (id != m_sessionId) {
                 const auto remembered = m_lastRuns.value(id);
-                for (auto it = remembered.begin(); it != remembered.end(); ++it)
+                for (auto it = remembered.begin(); it != remembered.end(); ++it) {
                     snapshot.insert(it.key(), it.value());
+                }
             }
             return snapshot;
         }
@@ -657,13 +693,15 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             m_modelHelpers = std::make_unique<DaemonModelHelpers>();
             connect(&m_modelHelpers->puller, &OllamaModelPuller::pullFinished, this,
                     [this](const QString&, bool success) {
-                        if (success && m_controller)
+                        if (success && m_controller) {
                             m_controller->refreshOllamaStatus();
+                        }
                     });
             connect(&m_modelHelpers->puller, &OllamaModelPuller::removeFinished, this,
                     [this](const QString&, bool success) {
-                        if (success && m_controller)
+                        if (success && m_controller) {
                             m_controller->refreshOllamaStatus();
+                        }
                     });
         }
         const auto state = m_modelHelpers->state(component);
@@ -710,9 +748,11 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
                                    argument.toInt() >= 0
                          : type == "array" ? argument.isArray()
                                            : false;
-            if (type == "array")
-                for (const auto& item : argument.toArray())
+            if (type == "array") {
+                for (const auto& item : argument.toArray()) {
                     valid = valid && item.isString();
+                }
+            }
             if (!valid) {
                 error(socket, id, "invalid-settings-arguments");
                 return;
@@ -748,6 +788,96 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             m_controller->setSelectedLocalModel(
                 m_settings->selectedModelForProvider(m_settings->selectedRuntimeProvider()));
             m_controller->configureMcpServers(m_settings->mcpServersJson());
+        }
+        reply({{"accepted", accepted}});
+        return;
+    }
+    if (name == "voice.state") {
+        auto* audio = m_controller->audioSession();
+        const bool busy = m_voiceCaptureReserved ||
+                          (audio && audio->state() == core::VoiceInteractionState::Transcribing);
+        const bool available = audio &&
+                               audio->sttInfo().readiness == core::AudioRuntimeReadiness::Ready &&
+                               (!busy || m_voiceOwner == socket);
+        reply(
+            {{"state", audio ? core::voiceInteractionStateName(audio->state()) : "Unavailable"},
+             {"available", available},
+             {"input_device_id", audio ? audio->devices()->selectedInputId() : QString{}},
+             {"vad_enabled", audio ? audio->devices()->vadEnabled() : true},
+             {"owned", m_voiceOwner == socket},
+             {"transcript", m_voiceOwner == socket && audio && !m_voiceCaptureReserved &&
+                                    audio->state() == core::VoiceInteractionState::Completed &&
+                                    audio->sttRevision() == m_voiceSttRevision
+                                ? audio->transcript().finalText
+                                : QString{}},
+             {"failure", audio ? core::audioFailureName(audio->failure()) : "RuntimeUnavailable"}});
+        return;
+    }
+    if (name == "voice.action") {
+        auto* audio = m_controller->audioSession();
+        const auto action = payload.value("action").toString();
+        if (!audio || (action != "start" && action != "cancel")) {
+            error(socket, id, "invalid-voice-action");
+            return;
+        }
+        const bool busy =
+            m_voiceCaptureReserved || audio->state() == core::VoiceInteractionState::Transcribing;
+        if (m_voiceOwner && m_voiceOwner != socket && (busy || action != "start")) {
+            error(socket, id, "voice-busy");
+            return;
+        }
+        if (action == "start") {
+            if (m_state == "running" || m_state == "approval" || busy ||
+                audio->sttInfo().readiness != core::AudioRuntimeReadiness::Ready) {
+                error(socket, id, "voice-unavailable");
+                return;
+            }
+            // Platform capture and microphone permission belong to the GUI client.
+            // Daemon owns STT and accepts only bounded normalized in-memory PCM.
+            audio->cancel();
+            m_voiceOwner = socket;
+            m_voiceCaptureReserved = true;
+            m_voiceSttRevision = audio->sttRevision();
+            m_voicePcm.clear();
+        } else {
+            m_voiceCaptureReserved = false;
+            m_voicePcm.clear();
+            audio->cancel();
+            m_voiceOwner.clear();
+        }
+        reply({{"accepted", true}});
+        return;
+    }
+    if (name == "voice.audio") {
+        if (!m_voiceCaptureReserved || m_voiceOwner != socket) {
+            error(socket, id, "voice-not-owned");
+            return;
+        }
+        const auto encoded = payload.value("pcm").toString().toLatin1();
+        const auto decoded =
+            QByteArray::fromBase64Encoding(encoded, QByteArray::AbortOnBase64DecodingErrors);
+        if (!decoded || encoded.size() > 87384 || decoded.decoded.size() % 2 != 0 ||
+            m_voicePcm.size() + decoded.decoded.size() > 16000LL * 2 * 60) {
+            m_voiceCaptureReserved = false;
+            m_voicePcm.clear();
+            m_controller->audioSession()->cancel();
+            error(socket, id, "invalid-captured-audio");
+            return;
+        }
+        if (m_controller->audioSession()->sttRevision() != m_voiceSttRevision) {
+            m_voiceCaptureReserved = false;
+            m_voicePcm.clear();
+            error(socket, id, "voice-configuration-changed");
+            return;
+        }
+        m_voicePcm.append(decoded.decoded);
+        bool accepted = true;
+        if (payload.value("final").toBool()) {
+            m_voiceCaptureReserved = false;
+            const auto pcm = std::move(m_voicePcm);
+            m_voicePcm.clear();
+            accepted = m_controller->audioSession()->transcribeCapturedPcm(
+                pcm, payload.value("speech").toBool());
         }
         reply({{"accepted", accepted}});
         return;
@@ -898,8 +1028,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         const auto workspaceId = payload.value("workspace_id").toString();
         const auto catalog = m_settings->workspaceCatalogJson();
         bool exists = false;
-        for (const auto& workspace : service.availableWorkspaces(catalog))
+        for (const auto& workspace : service.availableWorkspaces(catalog)) {
             exists = exists || (workspace.id == workspaceId && !workspace.archived);
+        }
         if (!exists) {
             error(socket, id, "unknown-workspace");
             return;
@@ -995,14 +1126,16 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         properties.insert("activeRuntimeReadinessSummary", readiness.safeDetail);
         properties.insert("active_runs", m_state == "running" || m_state == "approval" ? 1 : 0);
         QJsonArray mcp;
-        if (auto* extensions = m_controller->extensionService())
-            for (const auto& extension : extensions->filter(core::ExtensionType::MCP))
+        if (auto* extensions = m_controller->extensionService()) {
+            for (const auto& extension : extensions->filter(core::ExtensionType::MCP)) {
                 mcp.append(QJsonObject{{"id", extension.id},
                                        {"name", extension.displayName},
                                        {"enabled", extension.effectiveEnabled},
                                        {"available", extension.available},
                                        {"connection", extension.connectionState},
                                        {"failure", extension.failureCategory}});
+            }
+        }
         properties.insert("mcp_servers", mcp);
         QJsonArray providers;
         for (const auto& providerId : m_controller->modelService()->knownProviderIds()) {
@@ -1025,8 +1158,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
                                {"archived", workspace.archived}};
         };
         QJsonArray workspaces;
-        for (const auto& workspace : service.availableWorkspaces(catalog))
+        for (const auto& workspace : service.availableWorkspaces(catalog)) {
             workspaces.append(describe(workspace));
+        }
         reply({{"properties", properties},
                {"providers", providers},
                {"workspaces", workspaces},
@@ -1193,8 +1327,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     m_sessionId = sid;
     m_runId = uuid();
     m_kind = name == "agent.start" ? "agent" : "chat";
-    if (m_kind == "agent")
+    if (m_kind == "agent") {
         captureChangeBaseline(sid);
+    }
     m_output.clear();
     m_agentTurnId.clear();
     m_subagentSessions.clear();
@@ -1207,19 +1342,20 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     m_starting = true;
     m_clients[socket].sessions.insert(sid);
     bool accepted = false;
-    if (name == "chat.retry")
+    if (name == "chat.retry") {
         accepted = m_controller->retryChatResponse(payload.value("message_id").toInt());
-    else if (name == "chat.regenerate")
+    } else if (name == "chat.regenerate") {
         accepted = m_controller->regenerateChatResponse(payload.value("message_id").toInt());
-    else if (name == "chat.edit")
+    } else if (name == "chat.edit") {
         accepted = !m_controller
                         ->editAndResendChatMessage(payload.value("message_id").toInt(),
                                                    payload.value("text").toString())
                         .isEmpty();
-    else
+    } else {
         accepted = m_kind == "agent"
                        ? m_controller->runAgentRequest(payload.value("text").toString())
                        : m_controller->sendMessage(payload.value("text").toString());
+    }
     m_starting = false;
     if (!accepted) {
         m_state = "failed";
@@ -1234,8 +1370,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
 }
 void DaemonIpcServer::publishEvent(const QString& name, const QJsonObject& data) {
     if (name == "run.started" || name == "run.completed" || name == "run.cancelled" ||
-        name == "run.failed")
+        name == "run.failed") {
         rememberRun();
+    }
     auto payload = data;
     if (name == "run.completed" || name == "run.failed" || name == "run.cancelled") {
         payload.insert("state", m_state);
@@ -1285,8 +1422,8 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
     using core::AgentEventType;
     if (m_kind == "agent" && e.sessionId != m_controller->activeAgentSessionId() &&
         (m_state == "running" || m_state == "approval")) {
-        if (e.type == AgentEventType::RunStarted)
-            if (const auto* started = std::get_if<core::AgentRunStartedEvent>(&e.payload))
+        if (e.type == AgentEventType::RunStarted) {
+            if (const auto* started = std::get_if<core::AgentRunStartedEvent>(&e.payload)) {
                 if (started->parentRunId == m_agentTurnId) {
                     m_subagentSessions.insert(e.sessionId);
                     publishEvent("subagent.activity", {{"subagent_id", e.sessionId},
@@ -1294,6 +1431,8 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
                                                        {"role", started->role},
                                                        {"state", "running"}});
                 }
+            }
+        }
         if (m_subagentSessions.contains(e.sessionId) &&
             (e.type == AgentEventType::AgentCompleted || e.type == AgentEventType::AgentFailed ||
              e.type == AgentEventType::AgentCancelled)) {
@@ -1312,8 +1451,9 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
         (m_state != "running" && m_state != "approval")) {
         return;
     }
-    if (e.type == AgentEventType::RunStarted)
+    if (e.type == AgentEventType::RunStarted) {
         m_agentTurnId = e.turnId;
+    }
     if (e.type != AgentEventType::ModelOutputDelta) {
         static const QStringList names{
             "SessionCreated",       "RunStarted",           "ContextSnapshot",
@@ -1325,11 +1465,14 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
         const int index = static_cast<int>(e.type);
         if (index >= 0 && index < names.size()) {
             QJsonObject activity{{"activity", names.at(index)}, {"step", qMax(0, e.stepIndex)}};
-            if (e.type == AgentEventType::ToolApprovalResolved)
-                if (const auto* decision = std::get_if<core::AgentTextEvent>(&e.payload))
+            if (e.type == AgentEventType::ToolApprovalResolved) {
+                if (const auto* decision = std::get_if<core::AgentTextEvent>(&e.payload)) {
                     if (decision->text == QLatin1String("Approved") ||
-                        decision->text == QLatin1String("Denied"))
+                        decision->text == QLatin1String("Denied")) {
                         activity.insert("decision", decision->text);
+                    }
+                }
+            }
             publishEvent("agent.activity", activity);
         }
     }
@@ -1355,8 +1498,9 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
                                       : "Tool completed");
             data.insert("tool_call_id", e.toolCallId);
             data.insert("timestamp", e.timestamp.toString(Qt::ISODateWithMs));
-            if (e.type == AgentEventType::ToolExecutionStarted)
+            if (e.type == AgentEventType::ToolExecutionStarted) {
                 m_toolStarts.insert(e.toolCallId, e.timestamp);
+            }
             if ((e.type == AgentEventType::ToolExecutionCompleted ||
                  e.type == AgentEventType::ToolExecutionFailed) &&
                 m_toolStarts.contains(e.toolCallId)) {

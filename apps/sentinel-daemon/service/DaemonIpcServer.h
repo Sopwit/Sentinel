@@ -7,6 +7,7 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QLockFile>
+#include <QPointer>
 #include <QSet>
 #include <memory>
 namespace sentinel::core {
@@ -33,6 +34,10 @@ public:
     }
 
 private:
+    QPointer<QLocalSocket> m_voiceOwner;
+    QByteArray m_voicePcm;
+    bool m_voiceCaptureReserved = false;
+    quint64 m_voiceSttRevision = 0;
     struct Client {
         QByteArray input;
         bool hello = false;

@@ -105,6 +105,15 @@
     },
     "terminal.attach": {
       "session_id": "string"
+    },
+    "voice.state": {},
+    "voice.action": {
+      "action": "string"
+    },
+    "voice.audio": {
+      "pcm": "string",
+      "final": "boolean",
+      "speech": "boolean"
     }
   },
   "events": {
@@ -322,6 +331,21 @@
       "state": "string",
       "output": "string",
       "run_id": "string"
+    },
+    "voice.state": {
+      "state": "string",
+      "available": "boolean",
+      "owned": "boolean",
+      "transcript": "string",
+      "failure": "string",
+      "input_device_id": "string",
+      "vad_enabled": "boolean"
+    },
+    "voice.action": {
+      "accepted": "boolean"
+    },
+    "voice.audio": {
+      "accepted": "boolean"
     }
   },
   "capabilities": [

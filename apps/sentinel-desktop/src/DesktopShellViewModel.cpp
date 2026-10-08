@@ -7040,8 +7040,13 @@ QVariantMap DesktopShellViewModel::pendingDaemonApproval() const {
                                 : QVariantMap{};
 }
 QString DesktopShellViewModel::daemonConnectionStatus() const {
-    return controller_.remote() ? controller_.remote()->transport().statusSummary()
-                                : QStringLiteral("Legacy test fixture");
+    if (const auto* runtime = controller_.remote()) {
+        if (runtime->transport().daemonReachable())
+            return runtime->ready() ? tr("Ready — daemon connected")
+                                    : tr("Loading authoritative state…");
+        return runtime->transport().statusSummary();
+    }
+    return QStringLiteral("Legacy test fixture");
 }
 bool DesktopShellViewModel::daemonConnected() const {
     return controller_.remote() && controller_.remote()->transport().daemonReachable();

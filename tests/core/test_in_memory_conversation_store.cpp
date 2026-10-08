@@ -46,10 +46,15 @@ void InMemoryConversationStoreTest::createsListsAndLoadsConversation() {
     const auto conversations = store.listConversations();
 
     QCOMPARE(conversations.size(), 2);
-    QCOMPARE(conversations.at(0).id, first.id);
-    QCOMPARE(conversations.at(0).title, QStringLiteral("Alpha"));
-    QCOMPARE(conversations.at(1).id, second.id);
-    QCOMPARE(conversations.at(1).title, QStringLiteral("Beta"));
+    // Creation can straddle a millisecond: recency sorts descending, tied IDs ascending.
+    const bool secondIsNewer = second.updatedAtUtc > first.updatedAtUtc;
+    const auto& newest = secondIsNewer ? second : first;
+    const auto& older = secondIsNewer ? first : second;
+    QCOMPARE(conversations.at(0).id, newest.id);
+    QCOMPARE(conversations.at(0).title, newest.title);
+    QCOMPARE(conversations.at(1).id, older.id);
+    QCOMPARE(conversations.at(1).title, older.title);
+    QVERIFY(conversations.at(0).updatedAtUtc >= conversations.at(1).updatedAtUtc);
     QCOMPARE(store.lastError().code, ConversationStoreErrorCode::None);
 }
 
