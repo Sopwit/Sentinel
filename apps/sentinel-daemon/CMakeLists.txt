@@ -1,6 +1,8 @@
 add_library(sentinel_daemon_service STATIC
     service/DaemonDesktopSettings.h
     service/DaemonDesktopSettings.cpp
+    service/LocalModelRuntime.h
+    service/LocalModelRuntime.cpp
     service/DaemonModelHelpers.h
     service/DaemonModelHelpers.cpp
     service/DaemonIpcServer.h

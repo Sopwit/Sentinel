@@ -29,6 +29,7 @@ DaemonService::~DaemonService() {
         }
     }
     m_ipcServer.setController(nullptr);
+    m_localModelRuntime.reset();
     m_controller.reset();
     m_settings.reset();
     m_ipcServer.stopServer();
@@ -144,6 +145,7 @@ bool DaemonService::initialize(const QString& socketPath) {
             m_settings->selectedModelForProvider(m_settings->selectedRuntimeProvider()));
     };
     selection();
+    m_localModelRuntime = std::make_unique<LocalModelRuntime>(*m_controller);
     connect(m_settings.get(), &core::AppSettings::selectedRuntimeProviderChanged, this, selection);
     connect(m_settings.get(), &core::AppSettings::selectedLocalModelChanged, this, selection);
     const auto webSearch = [this] {
