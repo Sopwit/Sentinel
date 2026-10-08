@@ -68,6 +68,15 @@ public:
     void setTypeFilter(QString value);
     void setProviderFilter(QString value);
     void setSearchText(QString value);
+    void refreshFromRemote(const QList<sentinel::core::StoredAgentRun>& runs, bool hasMore) {
+        loadedRuns_ = runs;
+        hasMore_ = hasMore;
+        setError(service_.error());
+        applyFilters();
+        emit runsChanged();
+        if (!selectedRunId_.isEmpty())
+            selectRun(selectedRunId_);
+    }
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void loadMore();
     Q_INVOKABLE void selectRun(const QString& runId);

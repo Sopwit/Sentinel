@@ -16,15 +16,16 @@ struct AgentInspectorDetail {
     QList<StoredAgentRun> children;
 };
 
-class AgentInspectorService final {
+class AgentInspectorService {
 public:
     explicit AgentInspectorService(const IAgentRunStore* store) : store_(store) {}
 
-    QList<StoredAgentRun> recentRuns(int limit) const;
-    QList<StoredAgentRun> runsBefore(const QDateTime& time, const QString& runId,
-                                    int limit) const;
-    AgentInspectorDetail detail(const QString& runId) const;
-    QString error() const;
+    virtual ~AgentInspectorService() = default;
+    virtual QList<StoredAgentRun> recentRuns(int limit) const;
+    virtual QList<StoredAgentRun> runsBefore(const QDateTime& time, const QString& runId,
+                                             int limit) const;
+    virtual AgentInspectorDetail detail(const QString& runId) const;
+    virtual QString error() const;
 
 private:
     const IAgentRunStore* store_ = nullptr;

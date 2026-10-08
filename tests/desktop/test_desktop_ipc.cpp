@@ -1,3 +1,5 @@
+#include "sentinel/desktop/RemoteAgentInspectorService.h"
+#include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "../../protocol/QtIpcContract.generated.h"
 #include "../support/DeterministicChatFixture.h"
@@ -379,6 +381,58 @@ private slots:
         for (const auto& reply : replies) {
             QVERIFY(reply.at(0).toString() != oldId);
         }
+    }
+    void daemonInspectorReadsDurableHistoryAndDetails() {
+        QTemporaryDir directory{QDir::tempPath() + "/ah-XXXXXX"};
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner |
+                                                            QFileDevice::WriteOwner |
+                                                            QFileDevice::ExeOwner));
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller =
+            builder.withModelService(models.takeModelService())
+                .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                .withAgentRuntime(std::make_unique<sentinel::core::NullAgentRuntime>())
+                .build();
+        auto* store = controller->mutableAgentRunStore();
+        QVERIFY(store);
+        const auto prefix = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        QString selected;
+        for (int i = 0; i < 31; ++i) {
+            sentinel::core::AgentEvent event;
+            event.turnId = prefix + QString::number(i);
+            event.sessionId = prefix;
+            event.id = event.turnId + "-start";
+            event.timestamp = QDateTime::currentDateTimeUtc().addSecs(300 + i);
+            event.type = sentinel::core::AgentEventType::RunStarted;
+            event.providerId = "llama-cpp-server";
+            event.modelId = "inspector-model";
+            event.payload =
+                sentinel::core::AgentRunStartedEvent{QStringLiteral("Inspect durable history")};
+            QVERIFY(store->record(event));
+            event.id = event.turnId + "-end";
+            event.type = sentinel::core::AgentEventType::AgentCompleted;
+            event.payload = sentinel::core::AgentTextEvent{QStringLiteral("History was persisted")};
+            QVERIFY(store->record(event));
+            selected = event.turnId;
+        }
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("history.sock")));
+        DaemonClient transport(directory.filePath("history.sock"), 3000, 10);
+        sentinel::desktop::RemoteAgentInspectorService history(transport);
+        sentinel::desktop::AgentInspectorViewModel inspector(history);
+        connect(&history, &sentinel::desktop::RemoteAgentInspectorService::updated, &inspector,
+                [&] { inspector.refreshFromRemote(history.recentRuns(500), history.hasMore()); });
+        QTRY_VERIFY(history.recentRuns(50).size() >= 26);
+        QVERIFY(history.error().isEmpty());
+        inspector.selectRun(selected);
+        QTRY_COMPARE(inspector.selectedRun().value("answer").toString(),
+                     QString("History was persisted"));
+        QCOMPARE(inspector.selectedRun().value("provider").toString(), QString("llama-cpp-server"));
+        QVERIFY(inspector.hasMore());
+        inspector.loadMore();
+        QTRY_VERIFY(history.recentRuns(500).size() >= 31);
+        QVERIFY(inspector.errorMessage().isEmpty());
     }
     void rejectedSendRemainsVisibleAcrossPollingAndRecovers() {
         QTemporaryDir directory{QDir::tempPath() + "/se-XXXXXX"};

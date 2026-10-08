@@ -13,6 +13,8 @@ add_library(sentinel_desktop_viewmodels STATIC
     include/sentinel/desktop/QuickPanelController.h
     src/QuickPanelController.cpp
     include/sentinel/desktop/DesktopModelHelper.h
+    src/RemoteAgentInspectorService.cpp
+    include/sentinel/desktop/RemoteAgentInspectorService.h
     src/DesktopModelHelper.cpp
     include/sentinel/desktop/DesktopRuntimeClient.h
     include/sentinel/desktop/DesktopControllerBridge.h
