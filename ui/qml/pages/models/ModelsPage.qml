@@ -21,6 +21,9 @@ Item {
     property bool sidebarCollapsed: false
     property string searchQuery: ""
 
+    readonly property var installedOllamaNames: JSON.parse(JSON.stringify(shellViewModel.installedOllamaModelNames || []))
+    readonly property var loadedStudioNames: JSON.parse(JSON.stringify(shellViewModel.loadedLMStudioModelNames || []))
+
     // ── Static model catalog ─────────────────────────────────────────────────
     readonly property var modelCatalog: ggufLibraryFetcher.catalog || []
 
@@ -33,8 +36,14 @@ Item {
 
     // ── Filter state ─────────────────────────────────────────────────────────
     property string activeCategory: "All"
+    property string discoveryTask: ""
+    onDiscoveryTaskChanged: catalogSearchTimer.restart()
+    property string discoverySort: "downloads"
+    function discoveryQuery() { return JSON.stringify({text: searchQuery, category: activeCategory, sort: discoverySort, task: discoveryTask}) }
+    onActiveCategoryChanged: { discoveryTask = ""; catalogSearchTimer.restart() }
+    onDiscoverySortChanged: catalogSearchTimer.restart()
     onSearchQueryChanged: catalogSearchTimer.restart()
-    Timer { id: catalogSearchTimer; interval: 700; onTriggered: ggufLibraryFetcher.fetch(modelsPage.searchQuery) }
+    Timer { id: catalogSearchTimer; interval: 700; onTriggered: ggufLibraryFetcher.fetch(modelsPage.discoveryQuery()) }
 
     readonly property bool catalogFetching: ollamaLibraryFetcher.fetching || lmStudioLibraryFetcher.fetching || ggufLibraryFetcher.fetching
     function inferredLocalCategory(name) {
@@ -99,7 +108,7 @@ Item {
         }
 
         // Add local installed Ollama models if they are not already in the list
-        var ollamaNames = shellViewModel.installedOllamaModelNames || []
+        var ollamaNames = installedOllamaNames
         for (var n = 0; n < ollamaNames.length; n++) {
             var localName = ollamaNames[n]
             var localOid = localName.toLowerCase()
@@ -134,7 +143,7 @@ Item {
         }
 
         // Add local loaded LM Studio models if they are not already in the list
-        var lmNames = shellViewModel.loadedLMStudioModelNames || []
+        var lmNames = loadedStudioNames
         for (var n = 0; n < lmNames.length; n++) {
             var localName = lmNames[n]
             var localOid = localName.toLowerCase()
@@ -207,8 +216,8 @@ Item {
         if (!daemonClient.daemonReachable) return
         ollamaLibraryFetcher.fetch(ollamaSort)
         lmStudioLibraryFetcher.fetch()
-        if (force) ggufLibraryFetcher.refreshCatalog(searchQuery)
-        else ggufLibraryFetcher.fetch(searchQuery)
+        if (force) ggufLibraryFetcher.refreshCatalog(discoveryQuery())
+        else ggufLibraryFetcher.fetch(discoveryQuery())
     }
 
     Component.onCompleted: fetchOllamaModels()
@@ -246,8 +255,8 @@ Item {
         }
 
         // Force dependency on model name changes
-        var names1 = shellViewModel.installedOllamaModelNames
-        var names2 = shellViewModel.loadedLMStudioModelNames
+        var names1 = installedOllamaNames
+        var names2 = loadedStudioNames
 
         return baseList.slice().sort(function(a, b) {
             var aInstalled = isInstalledOnDevice(a)
@@ -261,21 +270,9 @@ Item {
     property var currentModels: []
 
     onFilteredModelsChanged: {
-        var newModels = filteredModels || []
-        if (currentModels.length !== newModels.length) {
-            currentModels = newModels
-            return
-        }
-        var changed = false
-        for (var i = 0; i < newModels.length; i++) {
-            if (JSON.stringify(currentModels[i]) !== JSON.stringify(newModels[i])) {
-                changed = true
-                break
-            }
-        }
-        if (changed) {
-            currentModels = newModels
-        }
+        // Detach the visible snapshot from QML's live QVariant sequence wrappers.
+        var snapshot = JSON.parse(JSON.stringify(filteredModels || []))
+        if (JSON.stringify(currentModels) !== JSON.stringify(snapshot)) currentModels = snapshot
     }
 
     // ── Installed model detection via Ollama / LM Studio ─────────────────────
@@ -283,8 +280,8 @@ Item {
         if (!model) return false
         if (model.gguf) return !!model.installed
         var isLM = (model.provider === "LM Studio" || (model.id && model.id.indexOf("lmstudio/") !== -1))
-        var names = isLM ? (shellViewModel.loadedLMStudioModelNames || [])
-                         : (shellViewModel.installedOllamaModelNames || [])
+        var names = isLM ? modelsPage.loadedStudioNames
+                         : modelsPage.installedOllamaNames
         if (!names || names.length === 0) return false
 
         var candidates = []
@@ -596,9 +593,12 @@ Item {
                     }
                     spacing: SentinelTheme.spaceXs
 
-                    RowLayout {
+                    GridLayout {
+                        id: catalogToolbar
                         Layout.fillWidth: true
-                        spacing: SentinelTheme.spaceSm
+                        columns: width < 600 ? 1 : 2
+                        columnSpacing: SentinelTheme.spaceSm
+                        rowSpacing: SentinelTheme.spaceSm
 
                         Label {
                             text: modelsPage.categoryTitle(modelsPage.activeCategory).toUpperCase()
@@ -607,10 +607,9 @@ Item {
                             font.letterSpacing: 1.8
                         }
 
-                        Item { Layout.fillWidth: true }
-
                         SentinelTextField {
                             id: searchField
+                            Layout.fillWidth: true
                             placeholderText: qsTr("Search models…")
                             implicitWidth: 180
                             implicitHeight: 26
@@ -638,7 +637,9 @@ Item {
                         }
 
                         // Sort controls / Refresh button / count chips
-                        RowLayout {
+                        Flow {
+                            Layout.fillWidth: true
+                            Layout.columnSpan: catalogToolbar.columns
                             spacing: SentinelTheme.spaceSm
 
                             // Loading Indicator
@@ -663,13 +664,15 @@ Item {
 
                             // Sort Popular / Newest / Refresh
                             RowLayout {
-                                visible: (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
+                                id: catalogSourceActions
+                                readonly property bool sortRelevant: modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision"
                                 spacing: SentinelTheme.spaceSm
 
                                 Button {
                                     id: sortPopularBtn
+                                    visible: catalogSourceActions.sortRelevant
                                     implicitHeight: 22
-                                    implicitWidth: 64
+                                    implicitWidth: contentItem.implicitWidth + 20
                                     flat: true
                                     checkable: true
                                     checked: modelsPage.ollamaSort === "popular"
@@ -700,8 +703,9 @@ Item {
 
                                 Button {
                                     id: sortNewestBtn
+                                    visible: catalogSourceActions.sortRelevant
                                     implicitHeight: 22
-                                    implicitWidth: 64
+                                    implicitWidth: contentItem.implicitWidth + 20
                                     flat: true
                                     checkable: true
                                     checked: modelsPage.ollamaSort === "newest"
@@ -961,7 +965,7 @@ Item {
         }
         Label {
             Layout.fillWidth: true
-            text: ggufLibraryFetcher.catalogStatus
+            text: [ggufLibraryFetcher.catalogStatus, ollamaLibraryFetcher.catalogStatus, lmStudioLibraryFetcher.catalogStatus].filter(function(value) { return value.length > 0 }).join("\n")
             color: SentinelTheme.textMuted
             wrapMode: Text.WordWrap
         }
@@ -975,6 +979,20 @@ Item {
         ProgressBar { Layout.fillWidth: true; visible: ggufLibraryFetcher.pulling; value: ggufLibraryFetcher.progress }
         BusyIndicator { visible: ggufLibraryFetcher.fetching; running: visible; Layout.alignment: Qt.AlignHCenter }
 
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+            SentinelButton { text: qsTr("Previous discovery page"); enabled: ggufLibraryFetcher.hasPrevious && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.previousPage() }
+            SentinelButton { text: qsTr("More from Hugging Face"); enabled: ggufLibraryFetcher.hasMore && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.nextPage() }
+            SentinelComboBox {
+                visible: modelsPage.activeCategory === "Video" || modelsPage.activeCategory === "Image"
+                width: Math.min(parent.width, 260)
+                model: modelsPage.activeCategory === "Video" ? [qsTr("Text to video"), qsTr("Image to video")] : [qsTr("Text to image"), qsTr("Image to image")]
+                currentIndex: modelsPage.discoveryTask.length > 0 ? 1 : 0
+                onActivated: modelsPage.discoveryTask = currentIndex === 1 ? (modelsPage.activeCategory === "Video" ? "image-to-video" : "image-to-image") : ""
+            }
+            SentinelComboBox { width: Math.min(parent.width, 300); model: [qsTr("Discovery: Most downloaded"), qsTr("Discovery: Recently updated")]; onActivated: modelsPage.discoverySort = currentIndex === 1 ? "lastModified" : "downloads" }
+        }
         // Model grid
         GridView {
             id: modelGrid

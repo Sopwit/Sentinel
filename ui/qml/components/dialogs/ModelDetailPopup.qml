@@ -45,7 +45,7 @@ SentinelOverlayModal {
           ? modelInfo.externalUrl.substring(23).split('/').slice(0, 2).join('/') : ""
     readonly property string managerUrl: managerRepository.length > 0
         ? "lmstudio://open_from_hf?model=" + encodeURIComponent(managerRepository) : modelInfo && modelInfo.externalUrl && modelInfo.externalUrl.indexOf("https://lmstudio.ai/models/") === 0 ? modelInfo.externalUrl : "lmstudio://"
-    function info(key) { return modelInfo && modelInfo[key] ? String(modelInfo[key]) : qsTr("Not reported") }
+    function info(key) { return modelInfo && (modelInfo[key] !== undefined && modelInfo[key] !== null && modelInfo[key] !== "") ? String(modelInfo[key]) : qsTr("Not reported") }
     onModelInfoChanged: {
         selectedTagObj = null
         if (canPull) ollamaModelDetailFetcher.fetchDetails(modelInfo.ollamaId.split(':')[0])
@@ -104,6 +104,11 @@ SentinelOverlayModal {
                             {label: qsTr("Download size"), value: root.selectedTagObj ? root.selectedTagObj.size : root.info("size")},
                             {label: qsTr("License"), value: root.info("license")},
                             {label: qsTr("Architecture"), value: root.info("architecture")},
+                            {label: qsTr("Source task"), value: root.info("pipelineTask")},
+                            {label: qsTr("Last updated"), value: root.info("lastUpdated")},
+                            {label: qsTr("Source downloads"), value: root.info("downloads")},
+                            {label: qsTr("Source likes"), value: root.info("likes")},
+                            {label: qsTr("Revision"), value: root.info("revision")},
                             {label: qsTr("Repository"), value: root.info("repositoryId")},
                             {label: qsTr("Artifact"), value: root.info("filename")},
                             {label: qsTr("Local file"), value: root.info("localFile")},

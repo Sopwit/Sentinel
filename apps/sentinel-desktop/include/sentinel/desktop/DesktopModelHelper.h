@@ -7,6 +7,8 @@ namespace sentinel::desktop {
 class DesktopModelHelper final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool pulling READ pulling NOTIFY changed)
+    Q_PROPERTY(bool hasMore READ hasMore NOTIFY changed)
+    Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY changed)
     Q_PROPERTY(bool fetching READ fetching NOTIFY changed)
     Q_PROPERTY(QString activeModel READ activeModel NOTIFY changed)
     Q_PROPERTY(double progress READ progress NOTIFY changed)
@@ -20,6 +22,18 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(QString installCmd READ installCmd NOTIFY changed)
 public:
     DesktopModelHelper(DaemonClient& transport, QString component, QObject* parent = nullptr);
+    bool hasMore() const {
+        return m_values.value("hasMore").toBool();
+    }
+    bool hasPrevious() const {
+        return m_values.value("hasPrevious").toBool();
+    }
+    Q_INVOKABLE void nextPage() {
+        action("nextPage", {});
+    }
+    Q_INVOKABLE void previousPage() {
+        action("previousPage", {});
+    }
     bool pulling() const {
         return m_values.value("pulling").value<bool>();
     }
