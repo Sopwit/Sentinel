@@ -10,6 +10,7 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(bool fetching READ fetching NOTIFY changed)
     Q_PROPERTY(QString activeModel READ activeModel NOTIFY changed)
     Q_PROPERTY(double progress READ progress NOTIFY changed)
+    Q_PROPERTY(QString catalogStatus READ catalogStatus NOTIFY changed)
     Q_PROPERTY(QString statusText READ statusText NOTIFY changed)
     Q_PROPERTY(QString errorText READ errorText NOTIFY changed)
     Q_PROPERTY(QVariantList models READ models NOTIFY changed)
@@ -30,6 +31,9 @@ public:
     }
     double progress() const {
         return m_values.value("progress").value<double>();
+    }
+    QString catalogStatus() const {
+        return m_values.value("catalogStatus").toString();
     }
     QString statusText() const {
         return m_values.value("statusText").value<QString>();
@@ -60,6 +64,9 @@ public:
     }
     Q_INVOKABLE void fetch(const QString& value = {}) {
         action("fetch", value);
+    }
+    Q_INVOKABLE void refreshCatalog(const QString& query = {}) {
+        action("refresh", query);
     }
     Q_INVOKABLE void fetchDetails(const QString& value) {
         action("fetchDetails", value);

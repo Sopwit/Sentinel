@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonModelHelpers.h"
+#include "sentinel/core/model/ModelCategory.h"
 #include "sentinel/core/model/ModelOperationService.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include <QDesktopServices>
@@ -26,13 +27,8 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
         for (const auto& entry : controller_->modelLibrary()->entries()) {
             if (entry.format != "GGUF" || models.size() >= 100)
                 continue;
-            const auto tags = entry.tags.join(' ').toLower();
             const auto category =
-                tags.contains("text-to-video") || tags.contains("image-to-video") ? "Video"
-                : tags.contains("text-to-image")                                  ? "Image"
-                : tags.contains("feature-extraction")                             ? "Embedding"
-                : tags.contains("image-text-to-text") || tags.contains("vision")  ? "Vision"
-                                                                                  : "LLM";
+                core::modelCategory(entry.repositoryId + " " + entry.displayName, entry.tags);
             models.append(QJsonObject{
                 {"id", entry.id},
                 {"name", entry.displayName},
@@ -70,6 +66,16 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                              record.state == core::ModelOperationState::Running;
         return {{"models", models},
                 {"catalog", catalog_},
+                {"catalogStatus",
+                 QStringLiteral("Bundled catalog checked 2026-10-08. Hugging Face: %1 Last "
+                                "fetched: %2. Showing at most 100 GGUF artifacts.")
+                     .arg(controller_->modelOperations()->huggingFaceSource()->catalogDetail(),
+                          controller_->modelOperations()->huggingFaceSource()->fetchedAt().isValid()
+                              ? controller_->modelOperations()
+                                    ->huggingFaceSource()
+                                    ->fetchedAt()
+                                    .toString(Qt::ISODate)
+                              : QStringLiteral("not yet fetched"))},
                 {"fetching", controller_->modelOperations()->huggingFaceSource()->fetching()},
                 {"pulling", !activeOperation_.isEmpty() && pending},
                 {"activeModel", record.libraryId},
@@ -106,8 +112,9 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
                                 const QString& value, const QString& endpoint) {
     if (component == "ggufLibraryFetcher" && controller_) {
         auto* operations = controller_->modelOperations();
-        if (action == "fetch")
-            operations->huggingFaceSource()->search(value.isEmpty() ? "GGUF" : value);
+        if (action == "fetch" || action == "refresh")
+            operations->huggingFaceSource()->search(value.isEmpty() ? "GGUF" : value,
+                                                    action == "refresh");
         else if (action == "fetchDetails")
             operations->huggingFaceSource()->fetchRepository(value);
         else if (action == "import")
