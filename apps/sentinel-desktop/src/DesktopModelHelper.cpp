@@ -42,9 +42,12 @@ DesktopModelHelper::DesktopModelHelper(DaemonClient& transport, QString componen
                     return;
                 const bool wasFetching = fetching();
                 const bool wasPulling = pulling();
-                m_values = payload.value("properties").toObject().toVariantMap();
+                auto values = payload.value("properties").toObject().toVariantMap();
                 if (!m_actionError.isEmpty())
-                    m_values["errorText"] = m_actionError;
+                    values["errorText"] = m_actionError;
+                if (values == m_values)
+                    return;
+                m_values = std::move(values);
                 emit changed();
                 if (wasFetching && !fetching())
                     emit fetchFinished(errorText().isEmpty());

@@ -14,6 +14,7 @@
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 #include "sentinel/desktop/DaemonClient.h"
 #include "sentinel/desktop/DesktopControllerBridge.h"
+#include "sentinel/desktop/DesktopModelHelper.h"
 #include "sentinel/desktop/DesktopRuntimeClient.h"
 #include "sentinel/desktop/DesktopSettingsStore.h"
 #include "sentinel/desktop/QuickPanelController.h"
@@ -434,6 +435,55 @@ private slots:
         inspector.loadMore();
         QTRY_VERIFY(history.recentRuns(500).size() >= 31);
         QVERIFY(inspector.errorMessage().isEmpty());
+    }
+    void modelHelperPublishesChangedPagesWithoutRepeatingIdenticalSnapshots() {
+        Peer peer;
+        DaemonClient transport(peer.path, 5000, 1000);
+        sentinel::desktop::DesktopModelHelper helper(transport, "ggufLibraryFetcher");
+        QSignalSpy changed(&helper, &sentinel::desktop::DesktopModelHelper::changed);
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(transport.daemonReachable());
+        const auto nextStateRequest = [&]() {
+            for (int i = 0; i < 10; ++i) {
+                const auto request = read(peer.socket);
+                const auto name = request.value("name").toString();
+                if (name == "model.helper_state")
+                    return request;
+                send(peer.socket, frame("response", request.value("id").toString(), name,
+                                        name == "model.helper_action"
+                                            ? QJsonObject{{"accepted", true}}
+                                            : QJsonObject{{"running", true},
+                                                          {"daemon_version", "fixture"},
+                                                          {"uptime_ms", 0},
+                                                          {"active_runs", 0},
+                                                          {"sessions", 0}}));
+            }
+            return QJsonObject{};
+        };
+        const auto publish = [&](const QJsonObject& request, const QString& id) {
+            send(peer.socket,
+                 frame("response", request.value("id").toString(), "model.helper_state",
+                       {{"component", "ggufLibraryFetcher"},
+                        {"properties",
+                         QJsonObject{{"models", QJsonArray{QJsonObject{{"id", id}, {"name", id}}}},
+                                     {"hasMore", true},
+                                     {"errorText", ""},
+                                     {"fetching", false}}}}));
+        };
+        publish(nextStateRequest(), "page-one");
+        QTRY_COMPARE(helper.models().size(), 1);
+        QCOMPARE(helper.models().first().toMap().value("id").toString(), QString("page-one"));
+        helper.nextPage();
+        const auto next = nextStateRequest();
+        publish(next, "page-two");
+        QTRY_VERIFY(helper.models().size() == 1 &&
+                    helper.models().first().toMap().value("id").toString() == "page-two");
+        helper.fetch();
+        const auto same = nextStateRequest();
+        const auto before = changed.size();
+        publish(same, "page-two");
+        QTest::qWait(20);
+        QCOMPARE(changed.size(), before);
     }
     void modelCatalogIsProviderIndependentAndMediaTypesAreExplicit() {
         sentinel::test::DeterministicModelServiceFixture models;

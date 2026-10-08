@@ -4,6 +4,7 @@
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QTimer>
 namespace sentinel::daemon {
 class DaemonModelHelpers final : public QObject {
 public:
@@ -17,6 +18,13 @@ private:
     core::ApplicationController* controller_;
     QJsonArray catalog_;
     QString activeOperation_;
+    QString searchText_;
+    QString searchTask_;
+    QString searchSort_ = "downloads";
+    QString ollamaSort_ = "popular";
+    int catalogPage_ = 0;
+    QTimer refreshTimer_;
+    void refreshCatalog(bool force);
     OllamaLibraryFetcher library;
     OllamaModelDetailFetcher detail;
     LMStudioLibraryFetcher lmStudio;
