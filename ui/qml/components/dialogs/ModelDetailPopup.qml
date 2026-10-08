@@ -21,21 +21,21 @@ SentinelOverlayModal {
     property int downloadTarget: 0
     readonly property bool chatModel: !!(modelInfo && !modelInfo.cloudOnly && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
     readonly property bool targetAvailable: downloadTarget === 0 ? canPull
-        : downloadTarget === 1 ? (gguf ? modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
-        : chatModel
-    readonly property string targetExplanation: modelInfo && modelInfo.cloudOnly
+        : downloadTarget === 1 ? (gguf ? modelInfo.chatCompatible !== false && modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
+        : downloadTarget === 3 ? managerRepository.length > 0 : chatModel
+    readonly property string targetExplanation: downloadTarget === 3 ? qsTr("Hugging Face hosts model cards and files. Review formats, license and access requirements before choosing a compatible runtime.") : modelInfo && modelInfo.cloudOnly
         ? qsTr("This catalog entry is cloud-only. No local download is available; use the model source for cloud availability.")
         : downloadTarget === 0
         ? (canPull ? qsTr("Download the selected variant into Ollama, regardless of your chat provider.") : qsTr("No verified Ollama variant is available for this model."))
         : downloadTarget === 1
-          ? (gguf ? qsTr("Download or select this GGUF model for llama.cpp.") : chatModel ? qsTr("Find compatible GGUF files, then choose a quantization to download for llama.cpp.") : qsTr("This model requires a different runtime; no compatible llama.cpp download is available."))
+          ? (gguf ? (modelInfo.chatCompatible !== false && modelInfo.category === "LLM" ? qsTr("Download or select this GGUF model for llama.cpp.") : qsTr("This GGUF file requires runtime capabilities that Sentinel chat does not currently support. Review its Hugging Face files and requirements.")) : chatModel ? qsTr("Find compatible GGUF files, then choose a quantization to download for llama.cpp.") : qsTr("This model requires a different runtime; no compatible llama.cpp download is available."))
           : (chatModel ? (managerRepository.length > 0 ? qsTr("Open this model in LM Studio's download screen. LM Studio manages the download.") : qsTr("Open the model catalog page to review available LM Studio downloads.")) : qsTr("This model requires a different runtime; it is not supported by LM Studio chat inference."))
     readonly property string targetError: downloadTarget === 0
         ? (pullError || ollamaModelDetailFetcher.errorText || ollamaPuller.errorText)
         : downloadTarget === 1 ? ggufLibraryFetcher.errorText : ""
     readonly property string targetAction: downloadTarget === 0 ? qsTr("Download with Ollama")
         : downloadTarget === 1 ? (gguf ? (modelInfo.installed ? qsTr("Use with llama.cpp") : qsTr("Download for llama.cpp")) : qsTr("Choose GGUF for llama.cpp"))
-        : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
+        : downloadTarget === 3 ? qsTr("Open Hugging Face files ↗") : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
     property var selectedTagObj: null
     readonly property string effectiveOllamaId: selectedTagObj ? selectedTagObj.fullTag : (modelInfo && modelInfo.ollamaId ? modelInfo.ollamaId : "")
     readonly property bool gguf: !!(modelInfo && modelInfo.gguf)
@@ -52,7 +52,7 @@ SentinelOverlayModal {
         else ollamaModelDetailFetcher.cancel()
     }
     onOpened: {
-        downloadTarget = gguf ? 1 : canPull ? 0 : 2
+        downloadTarget = gguf ? 1 : canPull ? 0 : managerRepository.length > 0 ? 3 : 2
         if (gguf && modelInfo.repositoryId) ggufLibraryFetcher.fetchDetails(modelInfo.repositoryId)
     }
     Connections {
@@ -164,7 +164,7 @@ SentinelOverlayModal {
         SentinelComboBox {
             id: destinationSelector
             Layout.fillWidth: true
-            model: ["Ollama", "llama.cpp", "LM Studio"]
+            model: ["Ollama", "llama.cpp", "LM Studio", "Hugging Face files"]
             currentIndex: root.downloadTarget
             Accessible.name: qsTr("Download destination")
             onActivated: root.downloadTarget = currentIndex
@@ -183,6 +183,7 @@ SentinelOverlayModal {
                 enabled: root.targetAvailable && !ollamaPuller.pulling && !ggufLibraryFetcher.pulling
                 onClicked: {
                     if (root.downloadTarget === 0) root.downloadRequested(root.effectiveOllamaId)
+                    else if (root.downloadTarget === 3) Qt.openUrlExternally("https://huggingface.co/" + root.managerRepository + "/tree/main")
                     else if (root.downloadTarget === 2) Qt.openUrlExternally(root.managerUrl)
                     else if (!root.gguf) {
                         root.ggufSearchRequested(root.managerRepository ? root.managerRepository.split('/').pop() : (root.modelInfo.ollamaId || root.modelInfo.name).split(':')[0])

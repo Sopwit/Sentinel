@@ -36,10 +36,12 @@ Item {
 
     // ── Filter state ─────────────────────────────────────────────────────────
     property string activeCategory: "All"
+    property string catalogSource: "all"
+    onCatalogSourceChanged: catalogSearchTimer.restart()
     property string discoveryTask: ""
     onDiscoveryTaskChanged: catalogSearchTimer.restart()
     property string discoverySort: "downloads"
-    function discoveryQuery() { return JSON.stringify({text: searchQuery, category: activeCategory, sort: discoverySort, task: discoveryTask}) }
+    function discoveryQuery() { return JSON.stringify({text: searchQuery, category: activeCategory, sort: discoverySort, task: discoveryTask, ggufOnly: catalogSource === "llamacpp"}) }
     onActiveCategoryChanged: { discoveryTask = ""; catalogSearchTimer.restart() }
     onDiscoverySortChanged: catalogSearchTimer.restart()
     onSearchQueryChanged: catalogSearchTimer.restart()
@@ -129,6 +131,7 @@ Item {
                 category: category,
                 name: localName,
                 provider: "Ollama",
+                catalogSource: "ollama",
                 size: sizeStr,
                 description: qsTr("Custom model installed locally via Ollama."),
                 badge: qsTr("Installed"),
@@ -166,6 +169,7 @@ Item {
                 category: category,
                 name: localName,
                 provider: "LM Studio",
+                catalogSource: "lmstudio",
                 size: sizeStr,
                 description: qsTr("Custom model loaded locally in LM Studio."),
                 badge: qsTr("Loaded"),
@@ -243,6 +247,14 @@ Item {
             baseList = allModels.filter(function(m) { return modelsPage.matchesCategory(m, activeCategory) })
         }
 
+        baseList = baseList.filter(function(m) {
+            if (modelsPage.catalogSource === "all") return true
+            if (modelsPage.catalogSource === "llamacpp") return !!m.gguf
+            if (m.catalogSource) return m.catalogSource === modelsPage.catalogSource
+            if (modelsPage.catalogSource === "huggingface") return !!m.repositoryId || !!(m.externalUrl && m.externalUrl.indexOf("https://huggingface.co/") === 0)
+            if (modelsPage.catalogSource === "lmstudio") return m.provider === "LM Studio"
+            return !!m.ollamaId && m.provider !== "LM Studio"
+        })
         var query = searchQuery.trim().toLowerCase()
         if (query !== "") {
             baseList = baseList.filter(function(m) {
@@ -250,7 +262,11 @@ Item {
                 var idMatch = (m.id && m.id.toLowerCase().indexOf(query) !== -1) ||
                               (m.ollamaId && m.ollamaId.toLowerCase().indexOf(query) !== -1)
                 var descMatch = m.description && m.description.toLowerCase().indexOf(query) !== -1
-                return nameMatch || idMatch || descMatch
+                var repositoryMatch = m.repositoryId && m.repositoryId.toLowerCase().indexOf(query) !== -1
+                var normalizedQuery = query.replace(/[-_.\s]/g, "")
+                var artifactMatch = m.gguf && normalizedQuery.length > 0 &&
+                    ((m.name || "") + " " + (m.repositoryId || "")).toLowerCase().replace(/[-_.\s]/g, "").indexOf(normalizedQuery) !== -1
+                return nameMatch || idMatch || descMatch || repositoryMatch || artifactMatch
             })
         }
 
@@ -279,7 +295,7 @@ Item {
     function isInstalledOnDevice(model) {
         if (!model) return false
         if (model.gguf) return !!model.installed
-        var isLM = (model.provider === "LM Studio" || (model.id && model.id.indexOf("lmstudio/") !== -1))
+        var isLM = (model.catalogSource === "lmstudio" || model.provider === "LM Studio" || (model.id && model.id.indexOf("lmstudio/") !== -1))
         var names = isLM ? modelsPage.loadedStudioNames
                          : modelsPage.installedOllamaNames
         if (!names || names.length === 0) return false
@@ -642,6 +658,12 @@ Item {
                             Layout.columnSpan: catalogToolbar.columns
                             spacing: SentinelTheme.spaceSm
 
+                            SentinelComboBox {
+                                model: [qsTr("All sources"), "Hugging Face", "llama.cpp · GGUF", "Ollama", "LM Studio"]
+                                Accessible.name: qsTr("Model catalog source")
+                                currentIndex: ["all", "huggingface", "llamacpp", "ollama", "lmstudio"].indexOf(modelsPage.catalogSource)
+                                onActivated: modelsPage.catalogSource = ["all", "huggingface", "llamacpp", "ollama", "lmstudio"][currentIndex]
+                            }
                             // Loading Indicator
                             RowLayout {
                                 visible: ollamaLibraryFetcher.fetching
@@ -665,7 +687,7 @@ Item {
                             // Sort Popular / Newest / Refresh
                             RowLayout {
                                 id: catalogSourceActions
-                                readonly property bool sortRelevant: modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision"
+                                readonly property bool sortRelevant: (modelsPage.catalogSource === "all" || modelsPage.catalogSource === "ollama") && (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
                                 spacing: SentinelTheme.spaceSm
 
                                 Button {
@@ -819,7 +841,7 @@ Item {
                         visible: modelsPage.activeCategory !== "Runtime"
                         Layout.fillWidth: true
                         Layout.topMargin: SentinelTheme.spaceMd
-                        text: qsTr("Browse all providers. Download with Ollama, download or import GGUF for llama.cpp, or open the model in LM Studio. Select a card for variants and details.")
+                        text: qsTr("Browse Hugging Face repositories and files, Ollama and LM Studio catalogs, or GGUF models for llama.cpp. Select a card for variants and details.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -1370,9 +1392,9 @@ Item {
 
         onGgufSearchRequested: function(query) {
             modelsPage.activeCategory = "All"
-            modelsPage.searchQuery = ""
-            catalogSearchTimer.stop()
-            ggufLibraryFetcher.fetch(query)
+            modelsPage.catalogSource = "llamacpp"
+            modelsPage.searchQuery = query
+            catalogSearchTimer.restart()
         }
         onDownloadRequested: function(modelId) {
             ollamaPuller.pull(modelId)
