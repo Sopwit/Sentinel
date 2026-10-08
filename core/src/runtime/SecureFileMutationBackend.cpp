@@ -153,6 +153,49 @@ bool writeAll(int fd, const QByteArray& bytes) {
 
 } // namespace
 
+FileSystemResult<FileRead> readFile(const AuthorizedPath& path, qint64 maxBytes) {
+    auto parent = openParent(path, false);
+    if (parent.failure != FileSystemFailure::None)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, parent.failure);
+    // Open relative to the verified parent. Neither parent components nor the leaf may follow
+    // links.
+    Fd input(::openat(parent.fd.value, parent.leaf.constData(),
+                      O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK));
+    if (input.value < 0)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                errno == ENOENT && !path.existedAtAuthorization
+                                    ? FileSystemFailure::NotFound
+                                    : pathError(errno));
+    struct stat opened{};
+    if (::fstat(input.value, &opened) != 0)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::IOError);
+    if (!S_ISREG(opened.st_mode))
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::NotFile);
+    if (!path.existedAtAuthorization || !sameIdentity(opened, path.deviceId, path.fileId))
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::ResourceChanged);
+    QFile file;
+    if (!file.open(input.value, QIODevice::ReadOnly, QFileDevice::DontCloseHandle))
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::ReadFailed);
+    FileRead read;
+    read.path = path.canonicalPath;
+    read.content = file.read(maxBytes + 1);
+    if (file.error() != QFileDevice::NoError)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::ReadFailed);
+    read.complete = read.content.size() <= maxBytes && file.atEnd();
+    read.truncated = !read.complete;
+    read.content.truncate(maxBytes);
+    FileSystemResult<FileRead> result;
+    result.operation = FileSystemOperation::ReadFile;
+    result.resource = path.canonicalPath;
+    result.value = std::move(read);
+    return result;
+}
+
 FileSystemResult<FileWrite> writeFile(const AuthorizedPath& path, const QByteArray& bytes,
                                       bool makeParents) {
     auto parent = openParent(path, makeParents);

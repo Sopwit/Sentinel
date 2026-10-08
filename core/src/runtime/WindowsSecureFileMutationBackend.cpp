@@ -249,6 +249,60 @@ void captureIdentity(AuthorizedPath& path) {
     }
 }
 
+FileSystemResult<FileRead> readFile(const AuthorizedPath& path, qint64 maxBytes) {
+    auto parent = openParent(path, false);
+    if (parent.failure != FileSystemFailure::None)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, parent.failure);
+    auto input = openPath(path.canonicalPath, GENERIC_READ | FILE_READ_ATTRIBUTES, true,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE);
+    if (!input.valid()) {
+        const auto error = GetLastError();
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                error == ERROR_FILE_NOT_FOUND && !path.existedAtAuthorization
+                                    ? FileSystemFailure::NotFound
+                                    : winError(error));
+    }
+    BY_HANDLE_FILE_INFORMATION info{};
+    if (!GetFileInformationByHandle(input.value, &info))
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::IOError);
+    if ((info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::SymlinkEscape);
+    if ((info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::NotFile);
+    if (!path.existedAtAuthorization ||
+        !matches(input.value, path.canonicalPath, path.deviceId, path.fileId))
+        return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                FileSystemFailure::ResourceChanged);
+    FileRead read;
+    read.path = path.canonicalPath;
+    bool eof = false;
+    while (read.content.size() <= maxBytes) {
+        char buffer[65536];
+        DWORD count = 0;
+        const auto requested = static_cast<DWORD>(
+            std::min<qint64>(sizeof(buffer), maxBytes + 1 - read.content.size()));
+        if (!ReadFile(input.value, buffer, requested, &count, nullptr))
+            return failed<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                                    FileSystemFailure::ReadFailed);
+        if (count == 0) {
+            eof = true;
+            break;
+        }
+        read.content.append(buffer, static_cast<qsizetype>(count));
+    }
+    read.complete = eof && read.content.size() <= maxBytes;
+    read.truncated = !read.complete;
+    read.content.truncate(maxBytes);
+    FileSystemResult<FileRead> result;
+    result.operation = FileSystemOperation::ReadFile;
+    result.resource = path.canonicalPath;
+    result.value = std::move(read);
+    return result;
+}
+
 FileSystemResult<FileWrite> writeFile(const AuthorizedPath& path, const QByteArray& bytes,
                                       bool makeParents) {
     auto parent = openParent(path, makeParents, true);

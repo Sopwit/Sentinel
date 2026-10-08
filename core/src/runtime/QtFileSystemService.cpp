@@ -11,6 +11,7 @@
 #include <QSaveFile>
 #include <QSet>
 #include <algorithm>
+#include <limits>
 #include <utility>
 #if defined(Q_OS_UNIX)
 #include <fcntl.h>
@@ -305,46 +306,21 @@ QtFileSystemService::listDirectory(const AuthorizedPath& path, bool includeHidde
 }
 FileSystemResult<FileRead> QtFileSystemService::readFile(const AuthorizedPath& path,
                                                          qint64 maxBytes) const {
-    if (const auto security = validateFinal(path); security != FileSystemFailure::None)
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, security);
-    const QFileInfo info(path.canonicalPath);
-    const auto reason = requiredType(info, false);
-    if (reason != FileSystemFailure::None)
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath, reason);
-    QFile file(path.canonicalPath);
-#if defined(Q_OS_UNIX)
-    const QByteArray encoded = QFile::encodeName(path.canonicalPath);
-    int fd = ::open(encoded.constData(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
-    if (fd < 0)
+    if (maxBytes < 0 || maxBytes >= std::numeric_limits<int>::max() ||
+        path.canonicalPath.isEmpty() || sensitive(path.canonicalPath))
         return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
-                                 FileSystemFailure::ResourceChanged);
-    struct stat opened{};
-    if (::fstat(fd, &opened) != 0 ||
-        (path.existedAtAuthorization && (static_cast<quint64>(opened.st_dev) != path.deviceId ||
-                                         static_cast<quint64>(opened.st_ino) != path.fileId))) {
-        ::close(fd);
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
-                                 FileSystemFailure::ResourceChanged);
-    }
-    if (!file.open(fd, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) {
-        ::close(fd);
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
-                                 FileSystemFailure::ReadFailed);
-    }
+                                 FileSystemFailure::SecurityBoundaryViolation);
+#if defined(Q_OS_UNIX) || defined(Q_OS_WIN)
+    auto opened = securefs::readFile(path, maxBytes);
+    if (!opened.ok())
+        return opened;
+    FileRead read = std::move(*opened.value);
 #else
-    if (!file.open(QIODevice::ReadOnly))
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
-                                 FileSystemFailure::ReadFailed, file.errorString());
-#endif
+    // Unknown platforms have no handle-verification backend: fail closed.
+    return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
+                             FileSystemFailure::SecurityBoundaryViolation);
     FileRead read;
-    read.path = path.canonicalPath;
-    read.content = file.read(maxBytes + 1);
-    if (file.error() != QFileDevice::NoError)
-        return failure<FileRead>(FileSystemOperation::ReadFile, path.canonicalPath,
-                                 FileSystemFailure::ReadFailed, file.errorString());
-    read.complete = read.content.size() <= maxBytes && file.atEnd();
-    read.truncated = !read.complete;
-    read.content.truncate(maxBytes);
+#endif
     static const QSet<QString> binaryExtensions{
         QStringLiteral("zip"), QStringLiteral("exe"),   QStringLiteral("so"),
         QStringLiteral("dll"), QStringLiteral("dylib"), QStringLiteral("wasm"),
@@ -352,7 +328,8 @@ FileSystemResult<FileRead> QtFileSystemService::readFile(const AuthorizedPath& p
         QStringLiteral("png"), QStringLiteral("gif"),   QStringLiteral("webp"),
         QStringLiteral("pdf"), QStringLiteral("mp3"),   QStringLiteral("mp4"),
         QStringLiteral("wav")};
-    read.binary = binaryExtensions.contains(info.suffix().toLower()) || read.content.contains('\0');
+    read.binary = binaryExtensions.contains(QFileInfo(path.canonicalPath).suffix().toLower()) ||
+                  read.content.contains('\0');
     if (!read.binary && !read.content.isEmpty()) {
         int controls = 0;
         for (const char value : read.content) {
