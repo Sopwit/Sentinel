@@ -397,12 +397,12 @@ void HuggingFaceModelSource::search(const QString& text, bool forceRefresh) {
 }
 
 void HuggingFaceModelSource::searchCatalog(const QString& text, const QString& task,
-                                           const QString& sort, bool forceRefresh) {
-    const auto query = task.isEmpty() && sort == "downloads"
+                                           const QString& sort, bool forceRefresh, bool ggufOnly) {
+    const auto query = !ggufOnly && task.isEmpty() && sort == "downloads"
                            ? text.trimmed()
                            : QString::fromUtf8(QJsonDocument(QJsonObject{{"text", text.trimmed()},
                                                                          {"task", task},
-                                                                         {"sort", sort}})
+                                                                         {"sort", sort}, {"ggufOnly", ggufOnly}})
                                                    .toJson(QJsonDocument::Compact));
     if (!forceRefresh && query == cachedQuery_ && fetchedAt_.isValid() &&
         fetchedAt_.secsTo(QDateTime::currentDateTimeUtc()) < cacheMinutes * 60 &&
@@ -415,6 +415,8 @@ void HuggingFaceModelSource::searchCatalog(const QString& text, const QString& t
     parameters.addQueryItem(QStringLiteral("search"), text.trimmed());
     if (!task.isEmpty())
         parameters.addQueryItem(QStringLiteral("pipeline_tag"), task);
+    if (ggufOnly)
+        parameters.addQueryItem(QStringLiteral("filter"), QStringLiteral("gguf"));
     parameters.addQueryItem(QStringLiteral("sort"), sort == "lastModified" ? sort : "downloads");
     parameters.addQueryItem(QStringLiteral("direction"), QStringLiteral("-1"));
     parameters.addQueryItem(QStringLiteral("limit"), QString::number(pageSize));

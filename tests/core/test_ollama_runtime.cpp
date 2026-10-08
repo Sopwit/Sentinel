@@ -406,6 +406,17 @@ void OllamaRuntimeTest::catalogSearchPagesUseTaskAndPreserveCacheOnInvalidRespon
     QTRY_COMPARE(finished.size(), 1);
     QVERIFY(!finished.takeFirst().first().toBool());
     QCOMPARE(source.repositories().first().id, QString("test/second"));
+    network->body = R"([{"id":"test/gguf","tags":["gguf"]}])";
+    source.searchCatalog("video", "text-to-video", "lastModified", false, true);
+    QTRY_COMPARE(finished.size(), 1);
+    QVERIFY(finished.takeFirst().first().toBool());
+    QCOMPARE(QUrlQuery(network->requests.last()).queryItemValue("filter"), QString("gguf"));
+    const auto requestCount = network->requests.size();
+    source.searchCatalog("video", "text-to-video", "lastModified", false, true);
+    QCOMPARE(network->requests.size(), requestCount);
+    source.searchCatalog("video", "text-to-video", "lastModified", false, false);
+    QTRY_COMPARE(network->requests.size(), requestCount + 1);
+    QVERIFY(!QUrlQuery(network->requests.last()).hasQueryItem("filter"));
 }
 
 QTEST_MAIN(OllamaRuntimeTest)

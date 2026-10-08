@@ -32,7 +32,7 @@ void DaemonModelHelpers::refreshCatalog(bool force) {
     auto* source = controller_->modelOperations()->huggingFaceSource();
     if (!source->fetching()) {
         catalogPage_ = 0;
-        source->searchCatalog(searchText_, searchTask_, searchSort_, force);
+        source->searchCatalog(searchText_, searchTask_, searchSort_, force, ggufOnly_);
     }
     if (!library.fetching() && core::NetworkPolicyService::instance().check(QUrl(
                                    "https://ollama.com/library")) == core::NetworkDecision::Allowed)
@@ -54,6 +54,8 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
         QSet<QString> represented;
         for (const auto& entry : controller_->modelLibrary()->entries()) {
             const bool gguf = entry.format == "GGUF";
+            if (ggufOnly_ && !gguf)
+                continue;
             if (!gguf && (entry.repositoryId.isEmpty() || represented.contains(entry.repositoryId)))
                 continue;
             if (!gguf)
@@ -63,6 +65,8 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
             const auto category =
                 core::modelCategory(entry.repositoryId + " " + entry.displayName, entry.tags);
             const auto repository = repositories.value(entry.repositoryId);
+            const bool chatCompatible = category == "LLM" &&
+                (repository.pipelineTask.isEmpty() || repository.pipelineTask == "text-generation");
             models.append(QJsonObject{
                 {"id", gguf ? entry.id : "hf-repository:" + entry.repositoryId},
                 {"name", gguf || repository.displayName.isEmpty() ? entry.displayName
@@ -70,6 +74,7 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"provider",
                  entry.publisher.isEmpty() ? entry.source.displayName : entry.publisher},
                 {"category", category},
+                {"catalogSource", "huggingface"},
                 {"format", gguf ? entry.format : "Repository"},
                 {"quantization", entry.quantization},
                 {"license", entry.license},
@@ -103,8 +108,9 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"tags", QJsonArray::fromStringList(entry.tags)},
                 {"downloadable", core::ModelLibraryService::availableActions(entry).contains(
                                      core::ModelLibraryAction::DownloadAndRegister) &&
-                                     gguf && QString(category) == "LLM"},
+                                     gguf && chatCompatible},
                 {"gguf", gguf},
+                {"chatCompatible", chatCompatible},
                 {"installed", !entry.localFile.isEmpty()},
                 {"ollamaId", ""},
                 {"externalUrl",
@@ -182,6 +188,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
             const auto query = QJsonDocument::fromJson(value.toUtf8()).object();
             searchText_ = query.isEmpty() ? (value.isEmpty() ? "GGUF" : value)
                                           : query.value("text").toString();
+            ggufOnly_ = query.value("ggufOnly").toBool();
             const auto category = query.value("category").toString();
             static const QHash<QString, QString> tasks{
                 {"LLM", "text-generation"},       {"Think", "text-generation"},
@@ -197,7 +204,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
                 query.value("sort").toString() == "lastModified" ? "lastModified" : "downloads";
             catalogPage_ = 0;
             operations->huggingFaceSource()->searchCatalog(searchText_, searchTask_, searchSort_,
-                                                           action == "refresh");
+                                                           action == "refresh", ggufOnly_);
         } else if (action == "nextPage") {
             if (operations->huggingFaceSource()->fetching())
                 return false;
@@ -206,7 +213,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
             for (const auto& entry : controller_->modelLibrary()->entries()) {
                 if (entry.format == "GGUF")
                     ++count;
-                else if (!entry.repositoryId.isEmpty() &&
+                else if (!ggufOnly_ && !entry.repositoryId.isEmpty() &&
                          !represented.contains(entry.repositoryId)) {
                     represented.insert(entry.repositoryId);
                     ++count;

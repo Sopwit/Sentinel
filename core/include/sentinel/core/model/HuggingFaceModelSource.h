@@ -86,7 +86,7 @@ public:
     bool clearMetadataCache(int olderThanDays = 0);
     void search(const QString& text, bool forceRefresh = false);
     void searchCatalog(const QString& text, const QString& task, const QString& sort,
-                       bool forceRefresh = false);
+                       bool forceRefresh = false, bool ggufOnly = false);
     bool hasMore() const {
         return !nextPage_.isEmpty();
     }

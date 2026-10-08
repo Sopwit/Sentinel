@@ -22,6 +22,7 @@ private:
     QString searchTask_;
     QString searchSort_ = "downloads";
     QString ollamaSort_ = "popular";
+    bool ggufOnly_ = false;
     int catalogPage_ = 0;
     QTimer refreshTimer_;
     void refreshCatalog(bool force);

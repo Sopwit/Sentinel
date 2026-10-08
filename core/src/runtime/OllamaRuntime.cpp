@@ -1026,6 +1026,7 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("category")] = category;
         modelObj[QStringLiteral("name")] = catalogPlainText(name);
         modelObj[QStringLiteral("provider")] = provider;
+        modelObj[QStringLiteral("catalogSource")] = QStringLiteral("ollama");
         modelObj[QStringLiteral("size")] = QStringLiteral("—");
         modelObj[QStringLiteral("popularity")] = pulls + QStringLiteral(" pulls");
         modelObj[QStringLiteral("description")] = catalogPlainText(description);
@@ -1543,6 +1544,7 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("category")] = category;
         modelObj[QStringLiteral("name")] = catalogPlainText(name);
         modelObj[QStringLiteral("provider")] = lmsProvider;
+        modelObj[QStringLiteral("catalogSource")] = QStringLiteral("lmstudio");
         modelObj[QStringLiteral("size")] = QStringLiteral("—");
         modelObj[QStringLiteral("popularity")] = downloads + QStringLiteral(" downloads");
         modelObj[QStringLiteral("cloudOnly")] =
