@@ -70,6 +70,9 @@ public:
     QList<HuggingFaceRepository> repositories() const;
     HuggingFaceCatalogState catalogState() const;
     QString catalogDetail() const;
+    bool fetching() const {
+        return activeReply_ != nullptr;
+    }
     QString cachedQuery() const;
     QDateTime fetchedAt() const;
     QString cachePath() const;

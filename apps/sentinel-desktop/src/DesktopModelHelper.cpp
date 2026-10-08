@@ -22,6 +22,7 @@ DesktopModelHelper::DesktopModelHelper(DaemonClient& transport, QString componen
     connect(&transport, &DaemonClient::requestFailed, this,
             [this](const QString& id, DaemonClient::Error, const QString& code) {
                 if (m_reads.remove(id) || m_actions.remove(id)) {
+                    m_actionError = code;
                     m_values["errorText"] = code;
                     emit changed();
                 }
@@ -29,8 +30,10 @@ DesktopModelHelper::DesktopModelHelper(DaemonClient& transport, QString componen
     connect(&transport, &DaemonClient::responseReceived, this,
             [this](const QString& id, const QString&, const QJsonObject& payload) {
                 if (m_actions.remove(id)) {
-                    if (!payload.value("accepted").toBool())
-                        m_values["errorText"] = "Daemon rejected model action";
+                    if (!payload.value("accepted").toBool()) {
+                        m_actionError = "Daemon rejected model action";
+                        m_values["errorText"] = m_actionError;
+                    }
                     refresh();
                     emit changed();
                     return;
@@ -40,6 +43,8 @@ DesktopModelHelper::DesktopModelHelper(DaemonClient& transport, QString componen
                 const bool wasFetching = fetching();
                 const bool wasPulling = pulling();
                 m_values = payload.value("properties").toObject().toVariantMap();
+                if (!m_actionError.isEmpty())
+                    m_values["errorText"] = m_actionError;
                 emit changed();
                 if (wasFetching && !fetching())
                     emit fetchFinished(errorText().isEmpty());
@@ -54,6 +59,8 @@ void DesktopModelHelper::refresh() {
                                        {{"component", m_component}}));
 }
 void DesktopModelHelper::action(const QString& name, const QString& value) {
+    m_actionError.clear();
+    m_values["errorText"] = QString{};
     m_actions.insert(
         m_transport.request(DaemonClient::Command::model_helper_action,
                             {{"component", m_component}, {"action", name}, {"value", value}}));

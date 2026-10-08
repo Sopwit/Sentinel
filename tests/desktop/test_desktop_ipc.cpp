@@ -1,5 +1,6 @@
 #include "sentinel/desktop/RemoteAgentInspectorService.h"
 #include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
+#include "service/DaemonModelHelpers.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "../../protocol/QtIpcContract.generated.h"
 #include "../support/DeterministicChatFixture.h"
@@ -433,6 +434,32 @@ private slots:
         inspector.loadMore();
         QTRY_VERIFY(history.recentRuns(500).size() >= 31);
         QVERIFY(inspector.errorMessage().isEmpty());
+    }
+    void modelCatalogIsProviderIndependentAndMediaTypesAreExplicit() {
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                              .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                              .build();
+        sentinel::daemon::DaemonModelHelpers helper(controller.get());
+        const auto catalog = helper.state("ggufLibraryFetcher").value("catalog").toArray();
+        QVERIFY(catalog.size() > 50);
+        int videos = 0;
+        for (const auto& value : catalog) {
+            const auto model = value.toObject();
+            if (model.value("category") == "Video") {
+                ++videos;
+                QVERIFY(model.value("ollamaId").toString().isEmpty());
+            }
+            if (model.value("format") == "MLX")
+                QVERIFY(model.value("ollamaId").toString().isEmpty());
+        }
+        QVERIFY(videos >= 10);
+        controller->setSelectedRuntimeProvider("llama-cpp-server");
+        QCOMPARE(helper.state("ggufLibraryFetcher").value("catalog").toArray(), catalog);
+        controller->setSelectedRuntimeProvider("lm-studio");
+        QCOMPARE(helper.state("ggufLibraryFetcher").value("catalog").toArray(), catalog);
+        QVERIFY(!helper.action("ggufLibraryFetcher", "download", "unknown-artifact", {}));
     }
     void rejectedSendRemainsVisibleAcrossPollingAndRecovers() {
         QTemporaryDir directory{QDir::tempPath() + "/se-XXXXXX"};

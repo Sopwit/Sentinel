@@ -386,6 +386,8 @@ void HuggingFaceModelSource::search(const QString& text) {
     QUrl url(QStringLiteral("https://huggingface.co/api/models"));
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("search"), query);
+    parameters.addQueryItem(QStringLiteral("sort"), QStringLiteral("downloads"));
+    parameters.addQueryItem(QStringLiteral("direction"), QStringLiteral("-1"));
     parameters.addQueryItem(QStringLiteral("limit"), QString::number(maxRepositories));
     parameters.addQueryItem(QStringLiteral("full"), QStringLiteral("true"));
     parameters.addQueryItem(QStringLiteral("blobs"), QStringLiteral("true"));

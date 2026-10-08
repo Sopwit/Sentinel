@@ -234,6 +234,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
         new DesktopModelHelper(*m_daemonClient, QStringLiteral("ollamaLibraryFetcher"), this);
     auto* ollamaModelDetailFetcher =
         new DesktopModelHelper(*m_daemonClient, QStringLiteral("ollamaModelDetailFetcher"), this);
+    auto* ggufLibraryFetcher =
+        new DesktopModelHelper(*m_daemonClient, QStringLiteral("ggufLibraryFetcher"), this);
     auto* lmStudioLibraryFetcher =
         new DesktopModelHelper(*m_daemonClient, QStringLiteral("lmStudioLibraryFetcher"), this);
 
@@ -261,6 +263,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                                                ollamaLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaModelDetailFetcher"),
                                                ollamaModelDetailFetcher);
+    m_engine.rootContext()->setContextProperty(QStringLiteral("ggufLibraryFetcher"),
+                                               ggufLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"),
                                                lmStudioLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("daemonClient"), daemonClient);
