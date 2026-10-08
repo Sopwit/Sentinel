@@ -28,6 +28,17 @@ ShellPanel {
     readonly property bool sendBusy: sendState === "queued" || sendState === "validating" || sendState === "sending"
                                      || sendState === "streaming" || agentBusy
     readonly property bool streamingActive: sendState === "streaming"
+    property string pendingSendDraft: ""
+    onSendStateChanged: {
+        if (sendState === "failed" && pendingSendDraft.length > 0) {
+            var composer = inChatMode ? promptInput : homePromptInput
+            if (composer.text.length === 0)
+                composer.text = pendingSendDraft
+            pendingSendDraft = ""
+        } else if (sendState === "completed" || sendState === "streaming" || sendState === "running") {
+            pendingSendDraft = ""
+        }
+    }
     property int editTargetMessageId: 0
     property string editConversationId: ""
                                             || viewModel.localInferenceRuntimeState === "Streaming"
@@ -209,6 +220,7 @@ ShellPanel {
         if (prompt.length === 0 || !homeChat.canSend
                 || (homeChat.sendBusy && !homeChat.agentAwaitingApproval))
             return
+        homeChat.pendingSendDraft = promptInput.text
         var accepted = false
         if (homeChat.editTargetMessageId > 0
                 && homeChat.editConversationId === homeChat.viewModel.activeConversationId) {
@@ -223,6 +235,8 @@ ShellPanel {
             homeChat.editConversationId = ""
             recentMessages.followNewMessages = true
             homeChat.scrollToLatest(true)
+        } else {
+            homeChat.pendingSendDraft = ""
         }
     }
 
@@ -815,6 +829,15 @@ ShellPanel {
                 anchors.fill: parent
                 anchors.margins: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
                 spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
+
+                ErrorBanner {
+                    objectName: "chatSendErrorBanner"
+                    Layout.fillWidth: true
+                    show: homeChat.sendState === "failed"
+                          && homeChat.viewModel.chatSendLifecycleSummary.length > 0
+                    visible: show
+                    message: homeChat.viewModel.chatSendLifecycleSummary
+                }
 
             Item {
                 id: homeCenterWrapper

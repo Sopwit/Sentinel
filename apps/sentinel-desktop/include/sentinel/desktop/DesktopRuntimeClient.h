@@ -82,6 +82,7 @@ private:
     QHash<QString, QVariantMap> m_settingsStates;
     QSet<QString> m_settingsQueries;
     QString m_sessionId, m_preferredSession, m_runId, m_state, m_kind, m_output, m_generation;
+    QString m_submissionError, m_submissionErrorSummary;
     quint64 m_sequence = 0;
     QTimer m_refreshTimer;
     QTimer m_voiceTimer;

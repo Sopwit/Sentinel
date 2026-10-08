@@ -380,6 +380,43 @@ private slots:
             QVERIFY(reply.at(0).toString() != oldId);
         }
     }
+    void rejectedSendRemainsVisibleAcrossPollingAndRecovers() {
+        QTemporaryDir directory{QDir::tempPath() + "/se-XXXXXX"};
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner |
+                                         QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                                 .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+                                 .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                                 .build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("send.sock")));
+        DaemonClient transport(directory.filePath("send.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        sentinel::desktop::DesktopControllerBridge bridge({nullptr, &adapter});
+        QTRY_VERIFY(adapter.ready());
+        controller->modelService()->registerProvider("ollama", [](const sentinel::core::ModelBinding&) {
+            return std::shared_ptr<sentinel::core::IChatProvider>{};
+        });
+        QVERIFY(bridge.sendMessage(QStringLiteral("The server stopped after discovery")));
+        QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("failed"));
+        QCOMPARE(bridge.chatErrorCategory(), QString("provider-unavailable"));
+        QVERIFY(bridge.chatSendLifecycleSummary().contains("server"));
+        QVERIFY(!bridge.chatGenerationActive());
+        // Explicit refresh includes session.list; a prior idle session cannot hide the error.
+        adapter.refresh();
+        QTest::qWait(2200);
+        QCOMPARE(bridge.chatSendLifecycleState(), QString("failed"));
+        QCOMPARE(bridge.chatErrorCategory(), QString("provider-unavailable"));
+        controller->modelService()->registerProvider("ollama", [state = models.state](const sentinel::core::ModelBinding&) {
+            return std::make_shared<sentinel::test::DeterministicChatProvider>(state);
+        });
+        QVERIFY(bridge.sendMessage(QStringLiteral("The provider is available again")));
+        QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));
+        QVERIFY(bridge.chatErrorCategory().isEmpty());
+        QVERIFY(adapter.messages().last().content.contains("SENTINEL_TEST_RESPONSE"));
+    }
     void backgroundConversationTitleIsDurableAndProjected_data() {
         QTest::addColumn<bool>("manualRename");
         QTest::newRow("generated-title") << false;
