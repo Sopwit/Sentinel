@@ -61,12 +61,14 @@ private:
         QString name;
         QString target;
         QString runId;
+        QString conversationId;
     };
     QString send(DaemonClient::Command command, const QJsonObject& payload = {},
                  const QString& target = {});
     void onResponse(const QString& id, const QString& name, const QJsonObject& payload);
     void onEvent(const QString& name, const QJsonObject& payload);
     void attach(const QString& id);
+    void clearSession();
     void applySnapshot(const QJsonObject& snapshot);
     void requestMessages();
     void projectRun();

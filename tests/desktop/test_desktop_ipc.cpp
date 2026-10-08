@@ -192,6 +192,37 @@ private slots:
             }
         }
     }
+    void deletingConversationsRefreshesHistoryAndRebindsActiveSession() {
+        QTemporaryDir directory{QDir::tempPath() + "/delete-XXXXXX"};
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                              .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+                              .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                              .build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("daemon.sock")));
+        DaemonClient transport(directory.filePath("daemon.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        sentinel::desktop::DesktopControllerBridge bridge({nullptr, &adapter});
+        QSignalSpy failures(&adapter, &sentinel::desktop::DesktopRuntimeClient::operationFailed);
+        QTRY_VERIFY(adapter.ready());
+        const auto first = bridge.activeConversationId();
+        QVERIFY(!first.isEmpty());
+        bridge.createConversation(QStringLiteral("Deletion regression"));
+        QTRY_VERIFY(bridge.activeConversationId() != first);
+        const auto second = bridge.activeConversationId();
+        QVERIFY(bridge.requestPermanentDeleteConversation(first));
+        QTRY_VERIFY(!bridge.conversationIds().contains(first));
+        QCOMPARE(bridge.activeConversationId(), second);
+        QVERIFY(bridge.requestPermanentDeleteConversation(second));
+        QTRY_VERIFY(!bridge.conversationIds().contains(second));
+        QTRY_VERIFY(!bridge.activeConversationId().isEmpty() && bridge.activeConversationId() != second);
+        const auto replacement = bridge.activeConversationId();
+        QVERIFY(bridge.renameConversation(replacement, QStringLiteral("Still usable")));
+        QTRY_VERIFY(bridge.conversationTitles().contains("Still usable"));
+        QCOMPARE(failures.size(), 0);
+    }
     void onboardingProgressPersistsWithoutDaemon() {
         QTemporaryDir directory;
         QVERIFY(directory.isValid());
