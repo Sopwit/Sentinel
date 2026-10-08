@@ -51,3 +51,9 @@ endif()
 install(TARGETS sentinel-daemon
     RUNTIME DESTINATION ${SENTINEL_DAEMON_INSTALL_DIR}
 )
+
+qt_add_resources(sentinel_daemon_service model_catalog
+    PREFIX "/sentinel"
+    BASE "${PROJECT_SOURCE_DIR}/core/data"
+    FILES "${PROJECT_SOURCE_DIR}/core/data/model-catalog.json"
+)

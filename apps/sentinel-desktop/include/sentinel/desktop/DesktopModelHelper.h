@@ -13,6 +13,7 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(QString statusText READ statusText NOTIFY changed)
     Q_PROPERTY(QString errorText READ errorText NOTIFY changed)
     Q_PROPERTY(QVariantList models READ models NOTIFY changed)
+    Q_PROPERTY(QVariantList catalog READ catalog NOTIFY changed)
     Q_PROPERTY(QString readme READ readme NOTIFY changed)
     Q_PROPERTY(QVariantList tags READ tags NOTIFY changed)
     Q_PROPERTY(QString installCmd READ installCmd NOTIFY changed)
@@ -39,6 +40,9 @@ public:
     QVariantList models() const {
         return m_values.value("models").value<QVariantList>();
     }
+    QVariantList catalog() const {
+        return m_values.value("catalog").toList();
+    }
     QString readme() const {
         return m_values.value("readme").value<QString>();
     }
@@ -60,6 +64,15 @@ public:
     Q_INVOKABLE void fetchDetails(const QString& value) {
         action("fetchDetails", value);
     }
+    Q_INVOKABLE void download(const QString& id) {
+        action("download", id);
+    }
+    Q_INVOKABLE void select(const QString& id) {
+        action("select", id);
+    }
+    Q_INVOKABLE void importFile(const QString& path) {
+        action("import", path);
+    }
     Q_INVOKABLE void cancel() {
         action("cancel", {});
     }
@@ -75,6 +88,7 @@ private:
     DaemonClient& m_transport;
     QString m_component;
     QVariantMap m_values;
+    QString m_actionError;
     QSet<QString> m_reads, m_actions;
 };
 } // namespace sentinel::desktop

@@ -728,7 +728,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     if (name == "model.helper_state" || name == "model.helper_action") {
         const auto component = payload.value("component").toString();
         if (!m_modelHelpers) {
-            m_modelHelpers = std::make_unique<DaemonModelHelpers>();
+            m_modelHelpers = std::make_unique<DaemonModelHelpers>(m_controller);
             connect(&m_modelHelpers->puller, &OllamaModelPuller::pullFinished, this,
                     [this](const QString&, bool success) {
                         if (success && m_controller) {
@@ -755,10 +755,16 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             error(socket, id, "runtime-busy");
             return;
         }
-        reply({{"accepted", m_modelHelpers->action(component, payload.value("action").toString(),
-                                                   payload.value("value").toString(),
-                                                   m_settings ? m_settings->ollamaEndpoint()
-                                                              : m_controller->ollamaEndpoint())}});
+        const auto accepted = m_modelHelpers->action(
+            component, payload.value("action").toString(), payload.value("value").toString(),
+            m_settings ? m_settings->ollamaEndpoint() : m_controller->ollamaEndpoint());
+        if (accepted && component == "ggufLibraryFetcher" && payload.value("action") == "select" &&
+            m_settings) {
+            const auto selected = m_controller->modelService()->selectedModel();
+            m_settings->setSelectedRuntimeProvider(selected.providerId);
+            m_settings->setSelectedLocalModel(selected.modelId);
+        }
+        reply({{"accepted", accepted}});
         return;
     }
     if (name == "desktop.settings_service") {

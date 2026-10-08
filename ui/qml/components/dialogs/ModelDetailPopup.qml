@@ -1,536 +1,150 @@
-// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
-//
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
-
-// ── ModelDetailPopup ──────────────────────────────────────────────────────────
-// Full model detail popup with real Ollama pull integration.
-// Reads ollamaPuller and shellViewModel from QML context.
-// ─────────────────────────────────────────────────────────────────────────────
 SentinelOverlayModal {
     id: root
-
-    // ── Public API ────────────────────────────────────────────────────────────
-    required property var modelInfo    // catalog entry JS object
-    property bool installed: false     // detected from shellViewModel.ollamaModelNames
-    property bool activePull: false    // ollamaPuller.pulling && activeModel matches
-    property real pullProgress: 0.0   // 0..1
+    required property var modelInfo
+    property bool installed: false
+    property bool activePull: false
+    property real pullProgress: 0
     property string pullStatus: ""
     property string pullError: ""
-
     signal downloadRequested(string modelId)
     signal cancelRequested()
-
-    // ── Geometry ──────────────────────────────────────────────────────────────
-    preferredWidth:  500
-    preferredHeight: 360
-    accent: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
-    modeName: "Sentinel"
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    readonly property bool isDone: installed
-    readonly property bool isLMStudio: shellViewModel.selectedRuntimeProvider === "lm-studio"
-
-    // Ollama model install path (platform default)
-    readonly property string ollamaModelPath: {
-        if (Qt.platform.os === "windows") return "%USERPROFILE%\\.ollama\\models"
-        return "~/.ollama/models"
-    }
-
-    // Dynamic detail states
+    signal ggufSearchRequested(string query)
+    preferredWidth: 760
+    preferredHeight: 680
     property var selectedTagObj: null
-
-    readonly property string effectiveOllamaId: {
-        if (selectedTagObj) {
-            return selectedTagObj.fullTag
-        }
-        return modelInfo ? modelInfo.ollamaId : ""
-    }
-
-    readonly property string effectiveSize: {
-        if (installed && modelInfo && modelInfo.ollamaId) {
-            var localDetails = shellViewModel.getLocalModelDetails(modelInfo.ollamaId)
-            if (localDetails && localDetails.sizeFormatted && localDetails.sizeFormatted !== "—") {
-                return localDetails.sizeFormatted
-            }
-        }
-        if (selectedTagObj) {
-            return selectedTagObj.size
-        }
-        return modelInfo ? modelInfo.size : "—"
-    }
-
-    readonly property string effectiveModifiedAt: {
-        if (installed && modelInfo && modelInfo.ollamaId) {
-            var localDetails = shellViewModel.getLocalModelDetails(modelInfo.ollamaId)
-            if (localDetails && localDetails.modifiedAt) {
-                return localDetails.modifiedAt
-            }
-        }
-        return ""
-    }
-
-    readonly property string effectiveContext: {
-        if (modelInfo && modelInfo.context !== undefined) {
-            return modelInfo.context
-        }
-        if (modelInfo && modelInfo.id) {
-            var idLower = modelInfo.id.toLowerCase()
-            if (idLower.indexOf("llama3.3") !== -1 || idLower.indexOf("llama3.2") !== -1 || idLower.indexOf("qwen2.5") !== -1 || idLower.indexOf("deepseek-r1") !== -1 || idLower.indexOf("phi-3.5")) {
-                return "128K"
-            }
-            if (idLower.indexOf("phi4") !== -1 || idLower.indexOf("phi-4") !== -1) {
-                return "16K"
-            }
-            if (idLower.indexOf("gemma2") !== -1 || idLower.indexOf("gemma-2") !== -1 || idLower.indexOf("llama3") !== -1) {
-                return "8K"
-            }
-            if (idLower.indexOf("llava") !== -1) {
-                return "4K"
-            }
-            if (modelInfo.category === "LLM" || modelInfo.category === "Think") {
-                return "8K"
-            }
-        }
-        return "—"
-    }
-
-    readonly property string effectiveInput: {
-        if (modelInfo && modelInfo.input !== undefined) {
-            return modelInfo.input
-        }
-        if (modelInfo && modelInfo.id) {
-            var idLower = modelInfo.id.toLowerCase()
-            if (idLower.indexOf("llava") !== -1 || modelInfo.category === "Vision" || (modelInfo.tags && modelInfo.tags.indexOf("vision") !== -1)) {
-                return qsTr("Text / Image")
-            }
-            if (modelInfo.category === "STT") {
-                return qsTr("Audio")
-            }
-            if (modelInfo.category === "Runtime") {
-                return "—"
-            }
-        }
-        return qsTr("Text")
-    }
-
-    readonly property string ollamaPullCmd: {
-        return "ollama pull " + effectiveOllamaId
-    }
-
+    readonly property string effectiveOllamaId: selectedTagObj ? selectedTagObj.fullTag : (modelInfo && modelInfo.ollamaId ? modelInfo.ollamaId : "")
+    readonly property bool gguf: !!(modelInfo && modelInfo.gguf)
+    readonly property bool canPull: !!(modelInfo && modelInfo.ollamaId && modelInfo.provider !== "LM Studio")
+    readonly property string managerRepository: modelInfo && modelInfo.repositoryId ? modelInfo.repositoryId
+        : modelInfo && modelInfo.externalUrl && modelInfo.externalUrl.indexOf("https://huggingface.co/") === 0
+          ? modelInfo.externalUrl.substring(23).split('/').slice(0, 2).join('/') : ""
+    readonly property string managerUrl: managerRepository.length > 0
+        ? "lmstudio://open_from_hf?model=" + encodeURIComponent(managerRepository) : "lmstudio://"
+    function info(key) { return modelInfo && modelInfo[key] ? String(modelInfo[key]) : qsTr("Not reported") }
     onModelInfoChanged: {
         selectedTagObj = null
-        if (modelInfo && modelInfo.ollamaId && modelInfo.ollamaId !== "") {
-            var baseName = modelInfo.ollamaId.split(':')[0]
-            ollamaModelDetailFetcher.fetchDetails(baseName)
-        } else {
-            ollamaModelDetailFetcher.cancel()
-        }
+        if (canPull) ollamaModelDetailFetcher.fetchDetails(modelInfo.ollamaId.split(':')[0])
+        else ollamaModelDetailFetcher.cancel()
     }
-
     onOpened: {
-        if (modelInfo && modelInfo.ollamaId && modelInfo.ollamaId !== "") {
-            var baseName = modelInfo.ollamaId.split(':')[0]
-            ollamaModelDetailFetcher.fetchDetails(baseName)
-        }
+        if (gguf && modelInfo.repositoryId) ggufLibraryFetcher.fetchDetails(modelInfo.repositoryId)
     }
-
-    onClosed: {
-        ollamaModelDetailFetcher.cancel()
-    }
-
     Connections {
-        target: ollamaModelDetailFetcher
-        function onTagsChanged() {
-            var tags = ollamaModelDetailFetcher.tags
-            if (tags && tags.length > 0) {
-                var defaultTag = "latest"
-                if (root.modelInfo && root.modelInfo.ollamaId) {
-                    var parts = root.modelInfo.ollamaId.split(':')
-                    if (parts.length > 1) {
-                        defaultTag = parts[1]
-                    }
+        target: ggufLibraryFetcher
+        function onChanged() {
+            if (!root.opened || !root.gguf) return
+            var entries = ggufLibraryFetcher.models
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].id === root.modelInfo.id && JSON.stringify(entries[i]) !== JSON.stringify(root.modelInfo)) {
+                    root.modelInfo = entries[i]
+                    break
                 }
-                
-                var found = null
-                for (var i = 0; i < tags.length; i++) {
-                    if (tags[i].tag === defaultTag) {
-                        found = tags[i]
-                        break
-                    }
-                }
-                if (!found && tags.length > 0) {
-                    found = tags[0]
-                }
-                root.selectedTagObj = found
-            } else {
-                root.selectedTagObj = null
             }
         }
     }
-
-    // Clipboard copy helper
-    TextInput {
-        id: clipboardHelper
-        visible: false
-    }
-
-    function copyToClipboard(txt) {
-        clipboardHelper.text = txt
-        clipboardHelper.selectAll()
-        clipboardHelper.copy()
-    }
-
-    // ── Content ───────────────────────────────────────────────────────────────
-    contentItem: Item {
+    onClosed: ollamaModelDetailFetcher.cancel()
+    contentItem: ColumnLayout {
         anchors.fill: parent
-
-        ColumnLayout {
-            anchors { fill: parent; margins: SentinelTheme.spaceLg }
-            spacing: SentinelTheme.spaceMd
-
-            // ── Header ────────────────────────────────────────────────────────
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: SentinelTheme.spaceSm
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-
-                    Label {
-                        Layout.fillWidth: true
-                        text: root.modelInfo ? root.modelInfo.name : ""
-                        font.pixelSize: 20
-                        font.weight: Font.DemiBold
-                        color: SentinelTheme.textPrimary
-                        elide: Text.ElideRight
-                    }
-
-                    Label {
-                        text: root.modelInfo ? qsTr("by %1").arg(root.modelInfo.provider) : ""
-                        font.pixelSize: SentinelTheme.fontSmall
-                        color: SentinelTheme.textMuted
-                    }
-                }
-
-                Button {
-                    id: closeBtn
-                    implicitWidth: 26; implicitHeight: 26
-                    flat: true; hoverEnabled: true
-                    onClicked: root.close()
-                    background: Rectangle {
-                        id: closeBtnBg
-                        radius: height / 2
-                        color: closeBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"
-
-                        layer.enabled: closeBtn.hovered
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                            shadowVerticalOffset: 1
-                            shadowBlur: 0.06
-                            shadowOpacity: 1.0
-                        }
-
-                        Behavior on color { ColorAnimation { duration: 100 } }
-                    }
-                    contentItem: Label {
-                        text: "×"
-                        font.pixelSize: 18
-                        font.bold: true
-                        color: SentinelTheme.textMuted
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-            }
-
-            // Divider
-            Rectangle {
-                Layout.fillWidth: true; implicitHeight: 1
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-            }
-
-            // ── Body (Concise Promo Text) ─────────────────────────────────────
+        anchors.margins: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceMd
+        RowLayout {
+            Layout.fillWidth: true
+            Label { Layout.fillWidth: true; text: root.info("name"); font.pixelSize: 22; font.bold: true; color: SentinelTheme.textPrimary; wrapMode: Text.WordWrap }
+            Button { text: "×"; Accessible.name: qsTr("Close model details"); onClicked: root.close() }
+        }
+        Label { Layout.fillWidth: true; text: qsTr("Publisher: %1 • Type: %2").arg(root.info("provider")).arg(root.info("category")); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+        ScrollView {
+            id: detailsScroll
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            contentWidth: availableWidth
             ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                width: detailsScroll.availableWidth
                 spacing: SentinelTheme.spaceMd
-
-                // Horizontal Premium Specs (Typography-based)
-                RowLayout {
+                Label { Layout.fillWidth: true; text: root.info("description"); color: SentinelTheme.textPrimary; wrapMode: Text.WordWrap; textFormat: Text.PlainText }
+                Label { Layout.fillWidth: true; text: qsTr("Best for: %1").arg(root.info("bestFor")); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+                GridLayout {
                     Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceLg
-
-                    // Context Window
-                    ColumnLayout {
-                        spacing: 2
-                        Label {
-                            text: root.modelInfo && root.modelInfo.category === "Runtime" ? qsTr("INTERFACE") : qsTr("CONTEXT")
-                            font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.Bold
-                            color: SentinelTheme.textPlaceholder
-                        }
-                        Label {
-                            text: root.modelInfo && root.modelInfo.category === "Runtime"
-                                ? (root.modelInfo.id === "ollama" ? "Local HTTP API" : "Desktop GUI / API")
-                                : (root.effectiveContext === "—" ? "—" : qsTr("%1 tokens").arg(root.effectiveContext))
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.DemiBold
-                            color: SentinelTheme.textPrimary
-                        }
-                    }
-
-                    // Vertical Separator
-                    Rectangle {
-                        Layout.preferredHeight: 24
-                        implicitWidth: 1
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    // Input Type
-                    ColumnLayout {
-                        spacing: 2
-                        Label {
-                            text: root.modelInfo && root.modelInfo.category === "Runtime" ? qsTr("DEFAULT PORT") : qsTr("INPUT TYPE")
-                            font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.Bold
-                            color: SentinelTheme.textPlaceholder
-                        }
-                        Label {
-                            text: root.modelInfo && root.modelInfo.category === "Runtime"
-                                ? (root.modelInfo.id === "ollama" ? "11434" : "1234")
-                                : root.effectiveInput
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.DemiBold
-                            color: SentinelTheme.textPrimary
+                    columns: root.width < 520 ? 1 : 2
+                    columnSpacing: SentinelTheme.spaceLg
+                    rowSpacing: SentinelTheme.spaceSm
+                    Repeater {
+                        model: [
+                            {label: qsTr("Context window"), value: root.info("context")},
+                            {label: qsTr("Input"), value: root.info("input")},
+                            {label: qsTr("Format"), value: root.info("format")},
+                            {label: qsTr("Quantization"), value: root.selectedTagObj ? root.selectedTagObj.tag : root.info("quantization")},
+                            {label: qsTr("Download size"), value: root.selectedTagObj ? root.selectedTagObj.size : root.info("size")},
+                            {label: qsTr("License"), value: root.info("license")},
+                            {label: qsTr("Architecture"), value: root.info("architecture")},
+                            {label: qsTr("Repository"), value: root.info("repositoryId")},
+                            {label: qsTr("Artifact"), value: root.info("filename")},
+                            {label: qsTr("Local file"), value: root.info("localFile")},
+                            {label: qsTr("Tags / capabilities"), value: root.modelInfo && root.modelInfo.tags && root.modelInfo.tags.length > 0 ? root.modelInfo.tags.join(", ") : qsTr("Not reported")}
+                        ]
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Label { text: parent.modelData.label; color: SentinelTheme.textMuted; font.pixelSize: SentinelTheme.fontTiny }
+                            Label { Layout.fillWidth: true; text: parent.modelData.value; color: SentinelTheme.textPrimary; wrapMode: Text.WrapAnywhere; textFormat: Text.PlainText }
                         }
                     }
-
-                    Item { Layout.fillWidth: true }
                 }
-
+                Label { Layout.fillWidth: true; visible: !!(root.modelInfo && root.modelInfo.runtimeNote); text: root.info("runtimeNote"); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+                BusyIndicator { running: ollamaModelDetailFetcher.fetching; visible: running; Layout.alignment: Qt.AlignHCenter }
+                ComboBox {
+                    Layout.fillWidth: true
+                    visible: root.canPull && ollamaModelDetailFetcher.tags.length > 0
+                    model: ollamaModelDetailFetcher.tags
+                    textRole: "fullTag"
+                    Accessible.name: qsTr("Model variant and quantization")
+                    onModelChanged: {
+                        if (!model || model.length === 0) { root.selectedTagObj = null; return }
+                        var requested = root.modelInfo && root.modelInfo.ollamaId ? root.modelInfo.ollamaId : ""
+                        if (requested.indexOf(':') < 0) requested += ":latest"
+                        var chosen = 0
+                        for (var i = 0; i < model.length; i++) if (model[i].fullTag === requested) { chosen = i; break }
+                        currentIndex = chosen
+                        root.selectedTagObj = model[chosen]
+                    }
+                    onActivated: root.selectedTagObj = model[currentIndex]
+                }
                 Label {
                     Layout.fillWidth: true
-                    text: root.modelInfo ? root.modelInfo.description : ""
-                    font.pixelSize: SentinelTheme.fontControl
-                    color: SentinelTheme.textPrimary
+                    text: ollamaModelDetailFetcher.readme
+                    visible: root.canPull && text.length > 0
+                    textFormat: Text.PlainText
                     wrapMode: Text.WordWrap
-                    lineHeight: 1.35
-                    maximumLineCount: 3
-                    elide: Text.ElideRight
+                    color: SentinelTheme.textPrimary
                 }
-
-                // Progress Indicator (Active download only)
-                ColumnLayout {
-                    visible: root.activePull
+                Label {
                     Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceXs
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Label {
-                            Layout.fillWidth: true
-                            text: root.pullStatus.length > 0 ? root.pullStatus : qsTr("Downloading model…")
-                            font.pixelSize: SentinelTheme.fontSmall
-                            color: root.accent
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 4
-                        radius: 2
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-
-                        Rectangle {
-                            width: parent.width * root.pullProgress
-                            height: parent.height
-                            radius: parent.radius
-                            color: root.accent
-                        }
-                    }
-                }
-
-                Item { Layout.fillHeight: true }
-            }
-
-            // ── Footer ────────────────────────────────────────────────────────
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: SentinelTheme.spaceMd
-
-                // Cancel download
-                Button {
-                    id: cancelPullBtn
-                    visible: root.activePull
-                    implicitHeight: 32
-                    implicitWidth: 80
-                    hoverEnabled: true
-                    onClicked: root.cancelRequested()
-                    background: Rectangle {
-                        id: cancelBg
-                        radius: 6
-                        color: cancelPullBtn.hovered
-                             ? SentinelTheme.withAlpha("#ef4444", 0.08)
-                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
-                        border.color: SentinelTheme.withAlpha("#ef4444", 0.20)
-                        border.width: 1
-
-                        layer.enabled: cancelPullBtn.hovered
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            shadowVerticalOffset: 1
-                            shadowBlur: 0.08
-                            shadowOpacity: 1.0
-                        }
-
-                        Behavior on color { ColorAnimation { duration: 100 } }
-                    }
-                    contentItem: Label {
-                        text: qsTr("Cancel")
-                        font.pixelSize: SentinelTheme.fontSmall
-                        color: "#ef4444"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                // Download / Remove Button
-                Button {
-                    id: actionBtn
-                    visible: root.modelInfo && root.modelInfo.ollamaId !== "" && shellViewModel.selectedRuntimeProvider === "ollama" && (root.modelInfo.downloadable || root.isDone)
-                    enabled: !root.activePull
-                    implicitHeight: 32
-                    implicitWidth: actionLbl.implicitWidth + 24
-                    hoverEnabled: true
-                    onClicked: {
-                        if (root.isDone) {
-                            ollamaPuller.removeModel(root.modelInfo.ollamaId)
-                        } else {
-                            root.downloadRequested(root.modelInfo.ollamaId)
-                        }
-                    }
-                    scale: actionBtn.down ? 0.97 : 1.0
-
-                    background: Rectangle {
-                        id: actionBg
-                        radius: 6
-                        color: {
-                            if (root.isDone) {
-                                return actionBtn.hovered ? "#ef4444" : SentinelTheme.withAlpha("#ef4444", 0.12)
-                            }
-                            return actionBtn.enabled
-                                 ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.12))
-                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                        }
-                        border.color: {
-                            if (root.isDone) {
-                                return "#ef4444"
-                            }
-                            return actionBtn.enabled
-                                 ? root.accent
-                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                        }
-                        border.width: 1
-
-                        layer.enabled: actionBtn.enabled && (actionBtn.hovered || root.isDone)
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                            shadowVerticalOffset: 2
-                            shadowBlur: 0.10
-                            shadowOpacity: 1.0
-                        }
-
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                        Behavior on border.color { ColorAnimation { duration: 150 } }
-                    }
-
-                    contentItem: Label {
-                        id: actionLbl
-                        text: root.isDone
-                            ? qsTr("Remove Model")
-                            : root.activePull ? qsTr("Downloading…")
-                            : qsTr("Install Model")
-                        font.pixelSize: SentinelTheme.fontSmall
-                        font.weight: Font.Medium
-                        color: {
-                            if (root.isDone) {
-                                return actionBtn.hovered ? "#ffffff" : "#ef4444"
-                            }
-                            return actionBtn.enabled
-                                 ? (actionBtn.hovered ? "#ffffff" : root.accent)
-                                 : SentinelTheme.textMuted
-                        }
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-                }
-
-                // External website button
-                Button {
-                    id: externalLinkBtn
-                    visible: root.modelInfo && root.modelInfo.externalUrl && root.modelInfo.externalUrl !== ""
-                    implicitHeight: 32
-                    implicitWidth: extLbl.implicitWidth + 24
-                    hoverEnabled: true
-                    onClicked: {
-                        if (root.modelInfo && root.modelInfo.externalUrl) {
-                            Qt.openUrlExternally(root.modelInfo.externalUrl)
-                        }
-                    }
-                    background: Rectangle {
-                        id: extBg
-                        radius: 6
-                        color: externalLinkBtn.hovered ? root.accent : "transparent"
-                        border.color: externalLinkBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.20)
-                        border.width: 1
-
-                        layer.enabled: externalLinkBtn.hovered
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                            shadowVerticalOffset: 2
-                            shadowBlur: 0.10
-                            shadowOpacity: 1.0
-                        }
-
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                        Behavior on border.color { ColorAnimation { duration: 150 } }
-                    }
-                    contentItem: Label {
-                        id: extLbl
-                        text: qsTr("Visit provider website ↗")
-                        font.pixelSize: SentinelTheme.fontSmall
-                        color: externalLinkBtn.hovered ? "#ffffff" : root.accent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
+                    visible: root.pullError.length > 0 || ollamaModelDetailFetcher.errorText.length > 0 || ggufLibraryFetcher.errorText.length > 0 || ollamaPuller.errorText.length > 0
+                    text: root.pullError || ollamaModelDetailFetcher.errorText || ggufLibraryFetcher.errorText || ollamaPuller.errorText
+                    wrapMode: Text.WordWrap
+                    color: SentinelTheme.warning
                 }
             }
         }
-    }
-
-    // ── Copy feedback timer ───────────────────────────────────────────────────
-    Timer {
-        id: copyFeedback
-        interval: 1600
-        repeat: false
+        Label { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; text: root.activePull ? root.pullStatus : ggufLibraryFetcher.statusText; color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+        ProgressBar { Layout.fillWidth: true; visible: root.activePull || ggufLibraryFetcher.pulling; value: root.activePull ? root.pullProgress : ggufLibraryFetcher.progress }
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+            Button { visible: root.canPull; text: qsTr("Download with Ollama"); enabled: !ollamaPuller.pulling; onClicked: root.downloadRequested(root.effectiveOllamaId) }
+            Button { visible: root.gguf && !root.modelInfo.installed && root.modelInfo.downloadable; text: qsTr("Download for llama.cpp"); enabled: !ggufLibraryFetcher.pulling; onClicked: ggufLibraryFetcher.download(root.modelInfo.id) }
+            Button { visible: root.gguf && root.modelInfo.installed && root.modelInfo.category === "LLM"; text: qsTr("Use with llama.cpp"); onClicked: { ggufLibraryFetcher.select(root.modelInfo.id); root.close() } }
+            Button { visible: root.canPull && !root.gguf; text: qsTr("Find GGUF for llama.cpp"); onClicked: { root.ggufSearchRequested(root.modelInfo.ollamaId.split(':')[0]); root.close() } }
+            Button { visible: root.gguf || root.canPull || (root.modelInfo && root.modelInfo.provider === "LM Studio"); text: qsTr("Open LM Studio downloads ↗"); onClicked: Qt.openUrlExternally(root.managerUrl) }
+            Button { visible: root.modelInfo && !!root.modelInfo.externalUrl; text: qsTr("Model source ↗"); onClicked: Qt.openUrlExternally(root.modelInfo.externalUrl) }
+            Button { visible: root.activePull || ggufLibraryFetcher.pulling; text: qsTr("Cancel download"); onClicked: { if (ggufLibraryFetcher.pulling) ggufLibraryFetcher.cancel(); else root.cancelRequested() } }
+        }
     }
 }

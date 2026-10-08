@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Sentinel.Desktop
 
 Item {
@@ -21,444 +22,31 @@ Item {
     property string searchQuery: ""
 
     // ── Static model catalog ─────────────────────────────────────────────────
-    readonly property var modelCatalog: [
-        // LLM - Ollama
-        {
-            id: "llama3.3-70b",    category: "LLM",
-            name: "Llama 3.3 70B",   provider: "Meta",
-            size: "42 GB",           description: qsTr("High-capacity multilingual open-weight model. Strong at reasoning, coding, and long-context tasks."),
-            bestFor: qsTr("Complex reasoning, developer workflows, and multi-turn agents."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Reasoning", "Code", "Multilingual"],
-            downloadable: true,     ollamaId: "llama3.3:70b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
-        },
-        {
-            id: "llama3.2-3b",     category: "LLM",
-            name: "Llama 3.2 3B",    provider: "Meta",
-            size: "2.0 GB",          description: qsTr("Lightweight on-device model ideal for edge inference and fast response."),
-            bestFor: qsTr("Fast local chat, low-overhead agent automation, and daily assistance."),
-            badge: "Edge",           badgeColor: "#10b981",
-            tags: ["Fast", "Edge"],
-            downloadable: true,     ollamaId: "llama3.2:3b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct"
-        },
-        {
-            id: "llama3.2-1b",     category: "LLM",
-            name: "Llama 3.2 1B",    provider: "Meta",
-            size: "1.3 GB",          description: qsTr("Ultra-compact model designed for low-latency Edge devices and mobile usage."),
-            bestFor: qsTr("Ultra-fast autocomplete and resource-constrained edge computing."),
-            badge: "Edge",           badgeColor: "#10b981",
-            tags: ["Fast", "Ultra-light"],
-            downloadable: true,     ollamaId: "llama3.2:1b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct"
-        },
-        {
-            id: "llama3.1-8b",     category: "LLM",
-            name: "Llama 3.1 8B",    provider: "Meta",
-            size: "4.7 GB",          description: qsTr("Meta Llama 3.1 8B Instruct. Highly capable multilingual model with expanded context window."),
-            bestFor: qsTr("General-purpose agent workflows, daily coding assistance, and tool use."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Meta", "Multilingual", "Agent"],
-            downloadable: true,     ollamaId: "llama3.1:8b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct"
-        },
-        {
-            id: "qwen2.5-14b",     category: "LLM",
-            name: "Qwen 2.5 14B",    provider: "Alibaba",
-            size: "9.0 GB",          description: qsTr("Balanced multilingual model with strong math and code capabilities."),
-            bestFor: qsTr("Structured JSON formatting, multilingual writing, and mathematical queries."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Math", "Code", "Chinese"],
-            downloadable: true,     ollamaId: "qwen2.5:14b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct"
-        },
-        {
-            id: "qwen2.5-32b",     category: "LLM",
-            name: "Qwen 2.5 32B",    provider: "Alibaba",
-            size: "20 GB",           description: qsTr("Large multilingual model with exceptional coding, math and translation capabilities."),
-            bestFor: qsTr("Professional coding, advanced text reasoning, and complex translation."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Math", "Code", "Multilingual"],
-            downloadable: true,     ollamaId: "qwen2.5:32b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct"
-        },
-        {
-            id: "qwen2.5-coder-7b", category: "LLM",
-            name: "Qwen 2.5 Coder 7B", provider: "Alibaba",
-            size: "4.7 GB",          description: qsTr("State-of-the-art coding specialist with broad programming language support and chat usability."),
-            bestFor: qsTr("Inline code completion, refactoring, unit test generation, and debugging."),
-            badge: "Coding",         badgeColor: "#2563eb",
-            tags: ["Code", "Developer", "Fast"],
-            downloadable: true,     ollamaId: "qwen2.5-coder:7b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct"
-        },
-        {
-            id: "gemma2-9b",       category: "LLM",
-            name: "Gemma 2 9B",      provider: "Google",
-            size: "5.5 GB",          description: qsTr("Google's highly efficient open-weight model, delivering high quality and safety features."),
-            bestFor: qsTr("Analytical text processing, summarization, and safe content generation."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Google", "Efficient", "Safe"],
-            downloadable: true,     ollamaId: "gemma2:9b",
-            context: "8K",          input: "Text",
-            externalUrl: "https://huggingface.co/google/gemma-2-9b-it"
-        },
-        {
-            id: "mistral-7b",      category: "LLM",
-            name: "Mistral 7B",      provider: "Mistral AI",
-            size: "4.1 GB",          description: qsTr("Efficient 7B instruction-tuned model with sliding window attention."),
-            bestFor: qsTr("General text editing, summarization, and context-aware chat."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Efficient", "Instruction"],
-            downloadable: true,     ollamaId: "mistral:7b",
-            context: "32K",         input: "Text",
-            externalUrl: "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3"
-        },
-        {
-            id: "mistral-nemo",    category: "LLM",
-            name: "Mistral Nemo 12B", provider: "Mistral AI",
-            size: "7.1 GB",          description: qsTr("State-of-the-art 12B model built in collaboration with NVIDIA. Very large token dictionary."),
-            bestFor: qsTr("Multilingual translation, conversational AI, and precise general writing."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["Nvidia", "Multilingual", "128K"],
-            downloadable: true,     ollamaId: "mistral-nemo",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/mistralai/Mistral-Nemo-Instruct-2407"
-        },
-        // Reasoning / Think
-        {
-            id: "deepseek-r1-32b", category: "Think",
-            name: "DeepSeek R1 32B", provider: "DeepSeek",
-            size: "20 GB",           description: qsTr("Highly capable reasoning model distilled from DeepSeek R1 into Qwen 32B. Elite logical output."),
-            bestFor: qsTr("Scientific analysis, advanced competitive coding, and complex mathematical proofs."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "CoT", "Advanced"],
-            downloadable: true,     ollamaId: "deepseek-r1:32b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-        },
-        {
-            id: "deepseek-r1-14b", category: "Think",
-            name: "DeepSeek R1 14B", provider: "DeepSeek",
-            size: "9.0 GB",          description: qsTr("Chain-of-thought reasoning model trained with reinforcement learning."),
-            bestFor: qsTr("Deep mathematical problem solving, code logic verification, and complex logic."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "Math", "CoT"],
-            downloadable: true,     ollamaId: "deepseek-r1:14b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
-        },
-        {
-            id: "deepseek-r1-8b",  category: "Think",
-            name: "DeepSeek R1 8B",  provider: "DeepSeek",
-            size: "4.7 GB",          description: qsTr("Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic."),
-            bestFor: qsTr("Distilled step-by-step thinking, fast reasoning, and task planning."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "CoT", "Distilled"],
-            downloadable: true,     ollamaId: "deepseek-r1:8b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-8B"
-        },
-        {
-            id: "deepseek-r1-1.5b", category: "Think",
-            name: "DeepSeek R1 1.5B", provider: "DeepSeek",
-            size: "900 MB",          description: qsTr("Ultra-lightweight reasoning model distilled from DeepSeek R1. Fast reasoning on any device."),
-            bestFor: qsTr("Low-overhead logical tasks, edge reasoning, and instant math/logic answers."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "Edge", "CoT"],
-            downloadable: true,     ollamaId: "deepseek-r1:1.5b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-        },
-        {
-            id: "phi4",            category: "Think",
-            name: "Phi-4",           provider: "Microsoft",
-            size: "9.1 GB",          description: qsTr("Small model with strong STEM reasoning. Punches well above its weight class."),
-            bestFor: qsTr("STEM reasoning, scientific logic, and quick logic puzzles."),
-            badge: "Open Weight",    badgeColor: "#4f8ef7",
-            tags: ["STEM", "Compact"],
-            downloadable: true,     ollamaId: "phi4",
-            context: "16K",         input: "Text",
-            externalUrl: "https://huggingface.co/microsoft/phi-4"
-        },
-        // MLX Models (Apple Silicon Optimized)
-        {
-            id: "mlx-llama3.2-3b", category: "LLM",
-            name: "MLX Llama 3.2 3B", provider: "MLX / Meta",
-            size: "2.0 GB",          description: qsTr("Apple Silicon optimized Llama 3.2 3B Instruct model using Apple's MLX framework."),
-            bestFor: qsTr("Mac-native low-latency chat and light task orchestration."),
-            badge: "MLX / Apple",    badgeColor: "#ec4899",
-            tags: ["MLX", "Apple Silicon", "Meta"],
-            downloadable: true,     ollamaId: "llama3.2:3b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/Llama-3.2-3B-Instruct-4bit"
-        },
-        {
-            id: "mlx-deepseek-r1-8b", category: "Think",
-            name: "MLX DeepSeek R1 8B", provider: "MLX / DeepSeek",
-            size: "4.7 GB",          description: qsTr("Apple Silicon optimized DeepSeek R1 8B reasoning model using Apple's MLX framework."),
-            bestFor: qsTr("Apple Silicon accelerated logical reasoning and step-by-step thinking."),
-            badge: "MLX / Reasoning", badgeColor: "#ec4899",
-            tags: ["MLX", "Reasoning", "CoT"],
-            downloadable: true,     ollamaId: "deepseek-r1:8b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-8B-4bit"
-        },
-        {
-            id: "mlx-qwen2.5-coder-7b", category: "LLM",
-            name: "MLX Qwen 2.5 Coder 7B", provider: "MLX / Alibaba",
-            size: "4.3 GB",          description: qsTr("Apple Silicon optimized Qwen 2.5 Coder 7B coding model using Apple's MLX framework."),
-            bestFor: qsTr("Mac-optimized code completion, scripting, and developer tools integration."),
-            badge: "MLX / Code",     badgeColor: "#ec4899",
-            tags: ["MLX", "Code", "Alibaba"],
-            downloadable: true,     ollamaId: "qwen2.5-coder:7b",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
-        },
-        {
-            id: "mlx-gemma2-9b",    category: "LLM",
-            name: "MLX Gemma 2 9B",   provider: "MLX / Google",
-            size: "5.5 GB",          description: qsTr("Apple Silicon optimized Gemma 2 9B instruction model using Apple's MLX framework."),
-            bestFor: qsTr("Efficient Google-grade conversational queries on Apple Silicon."),
-            badge: "MLX / Apple",    badgeColor: "#ec4899",
-            tags: ["MLX", "Apple Silicon", "Google"],
-            downloadable: true,     ollamaId: "gemma2:9b",
-            context: "8K",          input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/gemma-2-9b-it-4bit"
-        },
-        {
-            id: "mlx-phi4",         category: "Think",
-            name: "MLX Phi-4",        provider: "MLX / Microsoft",
-            size: "8.7 GB",          description: qsTr("Apple Silicon optimized Phi-4 STEM reasoning model using Apple's MLX framework."),
-            bestFor: qsTr("Mac-accelerated STEM logical problem solving and mathematical proofs."),
-            badge: "MLX / Apple",    badgeColor: "#ec4899",
-            tags: ["MLX", "STEM", "Microsoft"],
-            downloadable: true,     ollamaId: "phi4",
-            context: "16K",         input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/phi-4-4bit"
-        },
-        // Hugging Face / Community Models
-        {
-            id: "hf-llama3-8b",    category: "LLM",
-            name: "Llama 3 8B (Community)", provider: "HF / Meta",
-            size: "4.8 GB",          description: qsTr("HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)"),
-            bestFor: qsTr("Community-led fine-tunes, generic text generation, and roleplay."),
-            badge: "HF via Ollama",  badgeColor: "#64748b",
-            tags: ["Hugging Face", "LLM", "Meta"],
-            downloadable: true,     ollamaId: "llama3:8b",
-            context: "8K",          input: "Text",
-            externalUrl: "https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct"
-        },
-        {
-            id: "hf-gemma2-2b",    category: "LLM",
-            name: "Gemma 2 2B (Community)", provider: "HF / Google",
-            size: "1.6 GB",          description: qsTr("HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)"),
-            bestFor: qsTr("Lightweight local task orchestration and edge device prototyping."),
-            badge: "HF via Ollama",  badgeColor: "#64748b",
-            tags: ["Hugging Face", "Edge", "Google"],
-            downloadable: true,     ollamaId: "gemma2:2b",
-            context: "8K",          input: "Text",
-            externalUrl: "https://huggingface.co/google/gemma-2-2b-it"
-        },
-        {
-            id: "hf-phi3.5",       category: "LLM",
-            name: "Phi-3.5 3.8B (Community)", provider: "HF / Microsoft",
-            size: "2.2 GB",          description: qsTr("HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)"),
-            bestFor: qsTr("Long context text analysis, document summarization, and logical reasoning."),
-            badge: "HF via Ollama",  badgeColor: "#64748b",
-            tags: ["Hugging Face", "LLM", "Microsoft"],
-            downloadable: true,     ollamaId: "phi3.5",
-            context: "128K",        input: "Text",
-            externalUrl: "https://huggingface.co/microsoft/Phi-3.5-mini-instruct"
-        },
-        // Image / Vision
-        {
-            id: "stable-diff-3.5", category: "Image",
-            name: "Stable Diffusion 3.5", provider: "Stability AI",
-            size: "8.9 GB",          description: qsTr("Text-to-image generation with high fidelity and prompt adherence."),
-            bestFor: qsTr("Creative artwork, graphic design, and precise text rendering in images."),
-            badge: "Image Gen",      badgeColor: "#e05fc4",
-            tags: ["Text-to-Image", "Art"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/stabilityai/stable-diffusion-3.5-large"
-        },
-        {
-            id: "stable-diff-xl",  category: "Image",
-            name: "Stable Diffusion XL", provider: "Stability AI",
-            size: "6.5 GB",          description: qsTr("High-resolution photo-realistic image generation model. Base + Refiner system."),
-            bestFor: qsTr("Detailed art, photo-realism, textures, and digital painting generation."),
-            badge: "Image Gen",      badgeColor: "#e05fc4",
-            tags: ["SDXL", "Art", "Photo-Realism"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
-        },
-        {
-            id: "flux-schnell",    category: "Image",
-            name: "FLUX.1 Schnell", provider: "Black Forest Labs",
-            size: "23.8 GB",         description: qsTr("Ultra-fast 12B transformer model for high-quality image synthesis."),
-            bestFor: qsTr("Photorealistic image synthesis, fast high-quality art generation."),
-            badge: "Image Gen",      badgeColor: "#e05fc4",
-            tags: ["Fast", "Text-to-Image"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/black-forest-labs/FLUX.1-schnell"
-        },
-        {
-            id: "flux-schnell-mlx", category: "Image",
-            name: "FLUX.1 Schnell MLX", provider: "MLX / BFL",
-            size: "12.0 GB",         description: qsTr("Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX."),
-            bestFor: qsTr("Apple Silicon hardware-accelerated instant local text-to-image creation."),
-            badge: "MLX / Image",    badgeColor: "#ec4899",
-            tags: ["MLX", "Text-to-Image", "BFL"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/mlx-community/flux1-schnell-mlx"
-        },
-        {
-            id: "hunyuan-video",   category: "Video",
-            name: "HunyuanVideo",    provider: "Tencent",
-            size: "11.5 GB",         description: qsTr("Open-source text-to-video generation model with high quality physics and prompt following."),
-            bestFor: qsTr("High-fidelity physics-guided video generation and clip creation."),
-            badge: "Video Gen",      badgeColor: "#8b5cf6",
-            tags: ["Text-to-Video", "Local"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://github.com/Tencent/HunyuanVideo"
-        },
-        {
-            id: "ltx-video",       category: "Video",
-            name: "LTX-Video",       provider: "Lightricks",
-            size: "5.4 GB",          description: qsTr("Highly efficient real-time local text-to-video generation model."),
-            bestFor: qsTr("Real-time local text-to-video prototyping and fast animations."),
-            badge: "Video Gen",      badgeColor: "#8b5cf6",
-            tags: ["Fast", "Text-to-Video"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/Lightricks/LTX-Video"
-        },
-        {
-            id: "cogvideox-5b",    category: "Video",
-            name: "CogVideoX 5B",    provider: "THUDM",
-            size: "10.0 GB",         description: qsTr("Highly efficient text-to-video generation model with high quality video output."),
-            bestFor: qsTr("Local high-quality cinematic video and animation production."),
-            badge: "Video Gen",      badgeColor: "#8b5cf6",
-            tags: ["Video", "Local", "THUDM"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/THUDM/CogVideoX-5b"
-        },
-        {
-            id: "llava-1.6",       category: "Vision",
-            name: "LLaVA 1.6",      provider: "LLaVA Team",
-            size: "4.7 GB",          description: qsTr("Multimodal LLM that can answer questions about images and visual content."),
-            bestFor: qsTr("Describing images, analyzing graphs, and solving visual queries."),
-            badge: "Vision LLM",     badgeColor: "#0ea5e9",
-            tags: ["Multimodal", "VQA"],
-            downloadable: true,     ollamaId: "llava:13b",
-            context: "4K",          input: "Text / Image",
-            externalUrl: "https://github.com/haotian-liu/LLaVA"
-        },
-        {
-            id: "llama3.2-vision-11b", category: "Vision",
-            name: "Llama 3.2 Vision 11B", provider: "Meta",
-            size: "7.9 GB",          description: qsTr("Multimodal model from Meta. Understands visual inputs, charts, images, and text."),
-            bestFor: qsTr("Visual reasoning, document understanding, optical character recognition (OCR), and visual QA."),
-            badge: "Vision LLM",     badgeColor: "#0ea5e9",
-            tags: ["Multimodal", "Vision", "Meta"],
-            downloadable: true,     ollamaId: "llama3.2-vision:11b",
-            context: "128K",        input: "Text / Image",
-            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct"
-        },
-        // STT / ASR
-        {
-            id: "whisper-large-v3",category: "STT",
-            name: "Whisper Large v3", provider: "OpenAI",
-            size: "3.1 GB",          description: qsTr("State-of-the-art multilingual speech recognition model."),
-            bestFor: qsTr("State-of-the-art multilingual voice transcription and dictation."),
-            badge: "ASR",            badgeColor: "#0ea5e9",
-            tags: ["Multilingual", "STT"],
-            downloadable: false,    ollamaId: "",
-            context: "30s",         input: "Audio",
-            externalUrl: "https://github.com/openai/whisper"
-        },
-        {
-            id: "whisper-base",    category: "STT",
-            name: "Whisper Base",    provider: "OpenAI",
-            size: "148 MB",          description: qsTr("Compact speech recognition for real-time transcription on-device."),
-            bestFor: qsTr("Real-time low-latency English dictation and voice commands."),
-            badge: "ASR",            badgeColor: "#0ea5e9",
-            tags: ["Fast", "STT", "Edge"],
-            downloadable: false,    ollamaId: "",
-            context: "30s",         input: "Audio",
-            externalUrl: "https://github.com/openai/whisper"
-        },
-        // TTS
-        {
-            id: "kokoro-v1",       category: "TTS",
-            name: "Kokoro v1.0",     provider: "Kokoro",
-            size: "326 MB",          description: qsTr("High-quality neural text-to-speech with multiple voice styles."),
-            bestFor: qsTr("Studio-quality natural text-to-speech voicing for screen readers."),
-            badge: "TTS",            badgeColor: "#14b8a6",
-            tags: ["Voices", "TTS"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://huggingface.co/hexgrad/Kokoro-82M"
-        },
-        {
-            id: "piper-en",        category: "TTS",
-            name: "Piper (English)", provider: "Rhasspy",
-            size: "64 MB",           description: qsTr("Fast local TTS with natural-sounding voices. Low latency."),
-            bestFor: qsTr("Ultra-low-latency real-time voice synthesis and speech feedback."),
-            badge: "TTS",            badgeColor: "#14b8a6",
-            tags: ["Fast", "TTS", "Edge"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text",
-            externalUrl: "https://github.com/OHF-Voice/piper1-gpl"
-        },
-        // Runtimes
-        {
-            id: "ollama",          category: "Runtime",
-            name: "Ollama",          provider: "Ollama",
-            size: "—",               description: qsTr("Local model runner with OpenAI-compatible API. Supports Llama, Mistral, Qwen and more."),
-            bestFor: qsTr("Hosting local models, hosting APIs, and orchestrating edge runtimes."),
-            badge: "Runtime",        badgeColor: "#64748b",
-            tags: ["Launcher", "API"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "—",
-            externalUrl: "https://ollama.com"
-        },
-        {
-            id: "lmstudio",        category: "Runtime",
-            name: "LM Studio",       provider: "LM Studio Inc.",
-            size: "—",               description: qsTr("Desktop app for local inference. GUI model browser and OpenAI endpoint."),
-            bestFor: qsTr("Exploring Hugging Face models, GUI playground, and running local endpoints."),
-            badge: "Runtime",        badgeColor: "#64748b",
-            tags: ["GUI", "API"],
-            downloadable: false,    ollamaId: "",
-            context: "—",           input: "—",
-            externalUrl: "https://lmstudio.ai"
-        }
-    ]
+    readonly property var modelCatalog: ggufLibraryFetcher.catalog || []
+
+    FileDialog {
+        id: ggufImportDialog
+        title: qsTr("Import a local GGUF model")
+        nameFilters: [qsTr("GGUF models (*.gguf)")]
+        onAccepted: ggufLibraryFetcher.importFile(selectedFile.toString())
+    }
 
     // ── Filter state ─────────────────────────────────────────────────────────
     property string activeCategory: "All"
+    onSearchQueryChanged: catalogSearchTimer.restart()
+    Timer { id: catalogSearchTimer; interval: 700; onTriggered: ggufLibraryFetcher.fetch(modelsPage.searchQuery) }
 
     readonly property var allModels: {
         var liveModels = ollamaLibraryFetcher.models || []
         var lmModels = lmStudioLibraryFetcher.models || []
+        var ggufModels = ggufLibraryFetcher.models || []
         var list = []
         var seenOllamaIds = {}
         var seenIds = {}
+
+        for (var g = 0; g < ggufModels.length; g++) {
+            list.push(ggufModels[g]); seenIds[ggufModels[g].id] = true
+        }
 
         // Add live models first
         for (var i = 0; i < liveModels.length; i++) {
@@ -586,7 +174,7 @@ Item {
 
     readonly property var categories: {
         var cats = ["All"]
-        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Runtime"]
+        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Embedding", "Runtime"]
         
         var presentCats = []
         for (var i = 0; i < allModels.length; i++) {
@@ -616,10 +204,9 @@ Item {
     property string ollamaSort: "popular"
 
     function fetchOllamaModels() {
-        if (shellViewModel.selectedRuntimeProvider === "ollama") {
-            ollamaLibraryFetcher.fetch(ollamaSort)
-        }
+        ollamaLibraryFetcher.fetch(ollamaSort)
         lmStudioLibraryFetcher.fetch()
+        ggufLibraryFetcher.fetch()
     }
 
     Component.onCompleted: {
@@ -627,9 +214,7 @@ Item {
     }
 
     onOllamaSortChanged: {
-        if (shellViewModel.selectedRuntimeProvider === "ollama") {
-            ollamaLibraryFetcher.fetch(ollamaSort)
-        }
+        ollamaLibraryFetcher.fetch(ollamaSort)
     }
 
     readonly property var filteredModels: {
@@ -674,7 +259,7 @@ Item {
         }
         var changed = false
         for (var i = 0; i < newModels.length; i++) {
-            if (currentModels[i].id !== newModels[i].id || currentModels[i].badge !== newModels[i].badge) {
+            if (currentModels[i].id !== newModels[i].id || currentModels[i].badge !== newModels[i].badge || currentModels[i].installed !== newModels[i].installed || currentModels[i].description !== newModels[i].description || currentModels[i].size !== newModels[i].size || currentModels[i].license !== newModels[i].license) {
                 changed = true
                 break
             }
@@ -687,6 +272,7 @@ Item {
     // ── Installed model detection via Ollama / LM Studio ─────────────────────
     function isInstalledOnDevice(model) {
         if (!model) return false
+        if (model.gguf) return !!model.installed
         var isLM = (model.provider === "LM Studio" || (model.id && model.id.indexOf("lmstudio/") !== -1))
         var names = isLM ? (shellViewModel.loadedLMStudioModelNames || [])
                          : (shellViewModel.installedOllamaModelNames || [])
@@ -708,12 +294,11 @@ Item {
                 if (n === needle) return true
 
                 // Match "llama3.2" against "llama3.2:3b-instruct-q4_K_M"
-                var base = needle.split(":")[0]
-                if (n === base || n.startsWith(base + ":") || n.startsWith(base + "-")) return true
-                if (n.startsWith(needle)) return true
+                if (needle.indexOf(":") === -1 && (n === needle + ":latest")) return true
+
 
                 // Flexible match for MLX/Hugging Face custom tags
-                if (needle.length > 3 && (n.indexOf(needle) !== -1 || needle.indexOf(n) !== -1)) return true
+
             }
         }
         return false
@@ -745,6 +330,7 @@ Item {
         if (cat === "Video") return "movie"
         if (cat === "STT") return "microphone"
         if (cat === "TTS") return "volume-2"
+        if (cat === "Embedding") return "search"
         if (cat === "Runtime") return "settings"
         return "circle"
     }
@@ -771,6 +357,7 @@ Item {
         if (cat === "Video") return qsTr("Video Generation")
         if (cat === "STT") return qsTr("Speech to Text")
         if (cat === "TTS") return qsTr("Text to Speech")
+        if (cat === "Embedding") return qsTr("Embedding Models")
         if (cat === "Runtime") return qsTr("Local Runtimes")
         return cat
     }
@@ -1067,7 +654,7 @@ Item {
 
                             // Sort Popular / Newest / Refresh
                             RowLayout {
-                                visible: (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision") && (shellViewModel.selectedRuntimeProvider === "ollama")
+                                visible: (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
                                 spacing: SentinelTheme.spaceSm
 
                                 Button {
@@ -1135,6 +722,13 @@ Item {
                                 }
 
                                 Button {
+                                    text: qsTr("Import GGUF…")
+                                    Accessible.name: qsTr("Import a local model for llama.cpp")
+                                    implicitHeight: 26
+                                    onClicked: ggufImportDialog.open()
+                                }
+
+                                Button {
                                     id: refreshBtn
                                     implicitHeight: 22
                                     implicitWidth: 54
@@ -1181,7 +775,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     horizontalAlignment: Text.AlignHCenter
-                                    text: "● " + shellViewModel.ollamaModelCount + (shellViewModel.selectedRuntimeProvider === "lm-studio" ? qsTr(" loaded") : qsTr(" installed"))
+                                    text: "● " + shellViewModel.ollamaModelCount + qsTr(" Ollama installed")
                                     font.pixelSize: SentinelTheme.fontTiny
                                     color: SentinelTheme.success
                                 }
@@ -1212,9 +806,7 @@ Item {
                         visible: modelsPage.activeCategory !== "Runtime"
                         Layout.fillWidth: true
                         Layout.topMargin: SentinelTheme.spaceMd
-                        text: shellViewModel.selectedRuntimeProvider === "lm-studio"
-                            ? qsTr("Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.")
-                            : qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
+                        text: qsTr("Browse all providers. Download with Ollama, download or import GGUF for llama.cpp, or open the model in LM Studio. Select a card for variants and details.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -1304,7 +896,7 @@ Item {
                        : qsTr("No models available")
                 description: modelsPage.searchQuery.length > 0 ? qsTr("Try a different search term or browse categories.")
                              : modelsPage.activeCategory === "Installed" ? qsTr("Download a model from the catalog to get started.")
-                             : qsTr("Check your Ollama connection or try a different provider.")
+                             : qsTr("Refresh the catalog or import a local GGUF model.")
                 compact: modelsPage.compact
                 anchors.centerIn: parent
             }
@@ -1350,6 +942,16 @@ Item {
             }
         }
         }
+
+        Label {
+            Layout.fillWidth: true
+            visible: ggufLibraryFetcher.statusText.length > 0 || ggufLibraryFetcher.errorText.length > 0
+            text: ggufLibraryFetcher.errorText || ggufLibraryFetcher.statusText
+            color: ggufLibraryFetcher.errorText.length > 0 ? SentinelTheme.warning : SentinelTheme.textMuted
+            wrapMode: Text.WordWrap
+        }
+        ProgressBar { Layout.fillWidth: true; visible: ggufLibraryFetcher.pulling; value: ggufLibraryFetcher.progress }
+        BusyIndicator { visible: ggufLibraryFetcher.fetching; running: visible; Layout.alignment: Qt.AlignHCenter }
 
         // Model grid
         GridView {
@@ -1565,7 +1167,7 @@ Item {
                                 // Download / Details button — opens popup
                                 Button {
                                     id: dlBtn
-                                    visible: (!modelDelegate.activePull && !modelDelegate.effectivelyInstalled) && (!modelDelegate.modelData.downloadable || (shellViewModel.selectedRuntimeProvider === "ollama" && modelDelegate.modelData.ollamaId !== ""))
+                                    visible: !modelDelegate.activePull && !modelDelegate.effectivelyInstalled
                                     enabled: true
                                     anchors.right: parent.right
                                     implicitHeight: 30
@@ -1606,7 +1208,7 @@ Item {
 
                                     contentItem: Label {
                                         id: dlBtnLabel
-                                        text: modelDelegate.modelData.downloadable ? qsTr("↓ Download") : qsTr("External ↗")
+                                        text: qsTr("Details & downloads")
                                         font.pixelSize: SentinelTheme.fontSmall
                                         font.weight: Font.Medium
                                         color: SentinelTheme.accent
@@ -1726,6 +1328,12 @@ Item {
         pullError:   modelInfo && modelsPage.isModelPulling(modelInfo) && !ollamaPuller.pulling
                     ? ollamaPuller.errorText : ""
 
+        onGgufSearchRequested: function(query) {
+            modelsPage.activeCategory = "All"
+            modelsPage.searchQuery = ""
+            catalogSearchTimer.stop()
+            ggufLibraryFetcher.fetch(query)
+        }
         onDownloadRequested: function(modelId) {
             ollamaPuller.pull(modelId)
         }

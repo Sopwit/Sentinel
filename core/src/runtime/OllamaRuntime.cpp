@@ -928,8 +928,12 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         }
 
         QString category = QStringLiteral("LLM");
-        if (caps.contains(QStringLiteral("vision")) || ollamaId.contains(QStringLiteral("llava")) ||
-            ollamaId.contains(QStringLiteral("bakllava"))) {
+        if (caps.contains(QStringLiteral("embedding")) ||
+            ollamaId.contains(QStringLiteral("embed"))) {
+            category = QStringLiteral("Embedding");
+        } else if (caps.contains(QStringLiteral("vision")) ||
+                   ollamaId.contains(QStringLiteral("llava")) ||
+                   ollamaId.contains(QStringLiteral("bakllava"))) {
             category = QStringLiteral("Vision");
         } else if (caps.contains(QStringLiteral("thinking")) ||
                    ollamaId.contains(QStringLiteral("deepseek-r1")) ||
@@ -969,7 +973,8 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("category")] = category;
         modelObj[QStringLiteral("name")] = name;
         modelObj[QStringLiteral("provider")] = provider;
-        modelObj[QStringLiteral("size")] = pulls + QStringLiteral(" pulls");
+        modelObj[QStringLiteral("size")] = QStringLiteral("—");
+        modelObj[QStringLiteral("popularity")] = pulls + QStringLiteral(" pulls");
         modelObj[QStringLiteral("description")] = description;
         modelObj[QStringLiteral("externalUrl")] =
             QStringLiteral("https://ollama.com/library/") + ollamaId;
