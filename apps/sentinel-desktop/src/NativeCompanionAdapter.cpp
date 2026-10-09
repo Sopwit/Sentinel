@@ -13,7 +13,9 @@
 #include <QIcon>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QQuickWindow>
+#include <QQuickItem>
 #include <QSaveFile>
 #include <QScreen>
 #include <QSettings>
@@ -45,6 +47,12 @@ NativeCompanionAdapter::NativeCompanionAdapter(DesktopShellViewModel& vm,
                          : "Disabled";
     setWindow(root);
     qApp->installEventFilter(this);
+    connect(qApp, &QGuiApplication::focusWindowChanged, this, [this](QWindow* focused) {
+        if (!focused || !observedPanel_ || !observedPanel_->isVisible()) return;
+        for (auto* current = focused; current; current = current->transientParent())
+            if (current == observedPanel_) { panelReceivedFocus_ = true; return; }
+        if (panelReceivedFocus_) observedPanel_->hide();
+    });
 #ifdef Q_OS_WIN
     qApp->installNativeEventFilter(this);
 #endif
@@ -142,7 +150,7 @@ void NativeCompanionAdapter::bindQuickPanel(QuickPanelController* controller) {
     });
     connect(&viewModel_, &DesktopShellViewModel::nativeNotificationRequested, this,
             [this](const QString& title, const QString& body, const QString& category) {
-                if (!trayIcon_ || !trayIcon_->isVisible())
+                if (!trayIcon_ || !trayIcon_->isVisible() || viewModel_.dndEnabled() || viewModel_.isChannelMuted(category))
                     return;
 #ifdef Q_OS_MACOS
                 // Agent terminal notifications are owned by QuickPanelController.
@@ -161,11 +169,9 @@ void NativeCompanionAdapter::bindQuickPanel(QuickPanelController* controller) {
 #endif
             });
     connect(controller, &QuickPanelController::notificationRequested, this,
-            [this](const QString& title, const QString& body, const QString& session) {
-                const auto policy = settings_.notificationPolicy();
-                if (!trayIcon_ || !trayIcon_->isVisible() || policy == "None" ||
-                    policy == "Disabled" ||
-                    (policy == "Custom" && !settings_.notifyAgentResponses()))
+            [this](const QString& title, const QString& body, const QString& session, const QString& category, const QString& priority) {
+                if (!trayIcon_ || !trayIcon_->isVisible() ||
+                    !viewModel_.shouldShowNotification({{"category", category}, {"priority", priority}, {"title", title}}))
                     return;
                 notificationSession_ = session;
                 notificationPage_ = "Dashboard";
@@ -220,6 +226,7 @@ void NativeCompanionAdapter::togglePanel() {
                 },
                 Qt::QueuedConnection);
     }
+    panelReceivedFocus_ = false;
     panelOpenTimer_.start();
     QRect anchor = trayIcon_ ? trayIcon_->geometry() : QRect{};
     QScreen* screen =
@@ -230,7 +237,7 @@ void NativeCompanionAdapter::togglePanel() {
         return;
     const QRect area = screen->availableGeometry();
     panel->setScreen(screen);
-    panel->resize(qMin(380, area.width() - 24), qMin(650, area.height() - 24));
+    panel->resize(qMin(420, area.width() - 24), qMin(panel->height(), area.height() - 24));
     int x = anchor.isEmpty() ? area.right() - panel->width() - 12
                              : anchor.center().x() - panel->width() / 2;
     int y = anchor.isEmpty() || anchor.center().y() < area.center().y()
@@ -263,6 +270,20 @@ void NativeCompanionAdapter::openSettings() {
     emit viewModel_.requestWindowActive("Settings");
 }
 bool NativeCompanionAdapter::eventFilter(QObject* object, QEvent* event) {
+    if (observedPanel_ && observedPanel_->isVisible()) {
+        if (event->type() == QEvent::ApplicationDeactivate ||
+            (event->type() == QEvent::ApplicationStateChange && QGuiApplication::applicationState() != Qt::ApplicationActive)) observedPanel_->hide();
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto* target = qobject_cast<QWindow*>(object);
+            if (auto* item = qobject_cast<QQuickItem*>(object)) target = item->window();
+            bool ownedPopup = false;
+            for (auto* current = target; current; current = current->transientParent())
+                if (current == observedPanel_) { ownedPopup = true; break; }
+            const auto position = static_cast<QMouseEvent*>(event)->globalPosition().toPoint();
+            if (!ownedPopup && !observedPanel_->geometry().contains(position)) observedPanel_->hide();
+        }
+    }
+
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride) {
         auto* panel = qobject_cast<QWindow*>(object);
         if (!panel || panel->objectName() != "sentinelQuickPanel")

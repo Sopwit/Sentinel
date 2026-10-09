@@ -8,6 +8,7 @@
 #include "sentinel/desktop/QuickPanelController.h"
 #include <QApplication>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -45,6 +46,32 @@ private slots:
         QWindow quickWindow;
         quickWindow.setObjectName("sentinelQuickPanel");
         settings.setCompanionEnabled(true);
+        native.togglePanel();
+        QVERIFY(quickWindow.isVisible());
+        QWindow dropdown;
+        dropdown.setTransientParent(&quickWindow);
+        const QPointF outside(quickWindow.geometry().bottomRight() + QPoint(20, 20));
+        // Activating the application can briefly focus its main window before the panel.
+        qApp->focusWindowChanged(&window);
+        QVERIFY(quickWindow.isVisible());
+        qApp->focusWindowChanged(&quickWindow);
+        qApp->focusWindowChanged(&dropdown);
+        QVERIFY(quickWindow.isVisible());
+        qApp->focusWindowChanged(&window);
+        QVERIFY(!quickWindow.isVisible());
+        native.togglePanel();
+        QVERIFY(quickWindow.isVisible());
+        QMouseEvent popupClick(QEvent::MouseButtonPress, QPointF(1, 1), outside, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(&dropdown, &popupClick);
+        QVERIFY(quickWindow.isVisible());
+        QMouseEvent outsideClick(QEvent::MouseButtonPress, QPointF(1, 1), outside, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(&window, &outsideClick);
+        QVERIFY(!quickWindow.isVisible());
+        native.togglePanel();
+        QVERIFY(quickWindow.isVisible());
+        QEvent deactivate(QEvent::ApplicationDeactivate);
+        QCoreApplication::sendEvent(qApp, &deactivate);
+        QVERIFY(!quickWindow.isVisible());
         for (int repeat = 0; repeat < 3; ++repeat) {
             native.togglePanel();
             QVERIFY(quickWindow.isVisible());

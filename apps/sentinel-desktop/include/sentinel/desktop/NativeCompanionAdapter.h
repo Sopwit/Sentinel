@@ -76,6 +76,7 @@ private:
     core::AppSettings& settings_;
     QWindow* window_ = nullptr;
     QPointer<QWindow> observedPanel_;
+    bool panelReceivedFocus_ = false;
     QMetaObject::Connection frameConnection_;
     QElapsedTimer panelOpenTimer_;
     QuickPanelController* quickPanel_ = nullptr;

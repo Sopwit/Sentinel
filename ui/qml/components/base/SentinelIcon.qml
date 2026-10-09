@@ -16,6 +16,6 @@ Image {
     width: iconSize
     height: iconSize
     fillMode: Image.PreserveAspectFit
-    layer.enabled: true
+    layer.enabled: GraphicsInfo.api !== GraphicsInfo.Software
     layer.effect: MultiEffect { colorization: 1.0; colorizationColor: root.tint }
 }
