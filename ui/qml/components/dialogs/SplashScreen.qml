@@ -17,7 +17,7 @@ Window {
     signal dismissed()
 
     opacity: 1.0
-    Behavior on opacity { NumberAnimation { duration: 200 } }
+    Behavior on opacity { NumberAnimation { duration: MotionTokens.duration(200) } }
 
     width: 420
     height: 320
@@ -91,9 +91,9 @@ Window {
 
                     SequentialAnimation on x {
                         loops: Animation.Infinite
-                        running: true
-                        NumberAnimation { from: 0; to: progressTrack.width - progressBar.width; duration: 1200; easing.type: Easing.InOutQuad }
-                        NumberAnimation { from: progressTrack.width - progressBar.width; to: 0; duration: 1200; easing.type: Easing.InOutQuad }
+                        running: !MotionTokens.reducedMotion
+                        NumberAnimation { from: 0; to: progressTrack.width - progressBar.width; duration: MotionTokens.duration(1200); easing.type: Easing.InOutQuad }
+                        NumberAnimation { from: progressTrack.width - progressBar.width; to: 0; duration: MotionTokens.duration(1200); easing.type: Easing.InOutQuad }
                     }
                 }
             }

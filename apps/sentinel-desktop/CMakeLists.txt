@@ -327,7 +327,7 @@ target_link_libraries(sentinel-desktop
 
 set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Desktop"
+    MACOSX_BUNDLE_BUNDLE_NAME "Sentinel"
     MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.Sentinel"
     MACOSX_BUNDLE_ICON_FILE "sentinel.icns"
     MACOSX_BUNDLE_INFO_PLIST ${SENTINEL_MACOS_INFO_PLIST}
@@ -393,8 +393,8 @@ install(TARGETS sentinel-desktop
 if(WIN32)
     # Set properties for CPack WiX generator to create Start Menu and Desktop shortcuts natively
     set_target_properties(sentinel-desktop PROPERTIES
-        CPACK_DESKTOP_SHORTCUTS "Sentinel Desktop"
-        CPACK_START_MENU_SHORTCUTS "Sentinel Desktop"
+        CPACK_DESKTOP_SHORTCUTS "Sentinel"
+        CPACK_START_MENU_SHORTCUTS "Sentinel"
     )
 
     get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)

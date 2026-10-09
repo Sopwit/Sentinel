@@ -1,8 +1,8 @@
 # Windows Package Manager (Winget) Manifest
-# Package: Sentinel Desktop
+# Package: Sentinel
 PackageIdentifier: Sopwit.Sentinel
 PackageVersion: 1.0.0
-PackageName: Sentinel Desktop
+PackageName: Sentinel
 Publisher: Sopwit
 PublisherUrl: https://sentinel.dev
 PublisherSupportUrl: https://sentinel.dev/support
@@ -26,12 +26,12 @@ Tags:
 Installers:
   - Architecture: x64
     InstallerType: nullsoft
-    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Desktop-Windows-1.0.0-x64.exe
+    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Windows-1.0.0-x64.exe
     InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
     Scope: user
   - Architecture: x64
     InstallerType: wix
-    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Desktop-Windows-1.0.0-x64.msi
+    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Windows-1.0.0-x64.msi
     InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
     Scope: machine
 ManifestType: singleton

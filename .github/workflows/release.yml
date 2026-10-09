@@ -42,7 +42,7 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts
           cpack --config build/package-ready/CPackConfig.cmake
-          tar -C dist -czf "artifacts/Sentinel-Desktop-Linux.tar.gz" .
+          tar -C dist -czf "artifacts/Sentinel-Linux.tar.gz" .
           cp build/package-ready/*.deb artifacts/
           cp build/package-ready/*.rpm artifacts/
       - name: Create AppImage
@@ -66,7 +66,7 @@ jobs:
             --plugin qt --output appimage
           appimage=$(find . -maxdepth 1 -type f -name '*.AppImage' -print -quit)
           test -n "$appimage"
-          mv "$appimage" artifacts/Sentinel-Desktop-Linux.AppImage
+          mv "$appimage" artifacts/Sentinel-Linux.AppImage
       - name: Generate checksums
         run: |
           set -euo pipefail
@@ -105,7 +105,7 @@ jobs:
           APPLE_APP_PASS: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
           set -euo pipefail
-          app='dist/Sentinel Desktop.app'
+          app='dist/Sentinel.app'
           mv dist/sentinel-desktop.app "$app"
           signing_identity='-'
           if [ -n "${APPLE_CERT_BASE64:-}" ]; then
@@ -127,10 +127,10 @@ jobs:
           fi
           brew install create-dmg
           mkdir artifacts
-          create-dmg --volname 'Sentinel Desktop Installer' --window-pos 200 120 --window-size 600 300 --icon-size 100 --icon 'Sentinel Desktop.app' 175 120 --hide-extension 'Sentinel Desktop.app' --app-drop-link 425 120 artifacts/Sentinel-Desktop-macOS.dmg dist/
+          create-dmg --volname 'Sentinel Installer' --window-pos 200 120 --window-size 600 300 --icon-size 100 --icon 'Sentinel.app' 175 120 --hide-extension 'Sentinel.app' --app-drop-link 425 120 artifacts/Sentinel-macOS.dmg dist/
           if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_APP_PASS:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
-            xcrun notarytool submit artifacts/Sentinel-Desktop-macOS.dmg --apple-id "$APPLE_ID" --password "$APPLE_APP_PASS" --team-id "$APPLE_TEAM_ID" --wait
-            xcrun stapler staple artifacts/Sentinel-Desktop-macOS.dmg
+            xcrun notarytool submit artifacts/Sentinel-macOS.dmg --apple-id "$APPLE_ID" --password "$APPLE_APP_PASS" --team-id "$APPLE_TEAM_ID" --wait
+            xcrun stapler staple artifacts/Sentinel-macOS.dmg
           fi
       - name: Generate checksums
         run: |
@@ -179,8 +179,8 @@ jobs:
           $exe = Get-ChildItem build/package-ready -Filter '*.exe' | Select-Object -First 1
           $msi = Get-ChildItem build/package-ready -Filter '*.msi' | Select-Object -First 1
           if ($null -eq $exe -or $null -eq $msi) { throw 'CPack did not produce both EXE and MSI installers.' }
-          Copy-Item $exe.FullName artifacts/Sentinel-Desktop-Windows-x64.exe
-          Copy-Item $msi.FullName artifacts/Sentinel-Desktop-Windows-x64.msi
+          Copy-Item $exe.FullName artifacts/Sentinel-Windows-x64.exe
+          Copy-Item $msi.FullName artifacts/Sentinel-Windows-x64.msi
       - name: Sign Windows binaries when configured
         if: ${{ secrets.WIN_CERT_BASE64 != '' }}
         shell: pwsh

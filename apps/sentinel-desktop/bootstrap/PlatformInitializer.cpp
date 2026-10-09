@@ -117,9 +117,11 @@ void initializePlatformIntegrations(const QString& crashDumpPath) {
     if (regStatus == ERROR_SUCCESS) {
         const QString appPath = QCoreApplication::applicationFilePath();
         const std::wstring appPathW = appPath.toStdWString();
-        RegSetValueExW(hKey, L"Sentinel Desktop", 0, REG_SZ,
+        RegSetValueExW(hKey, L"Sentinel", 0, REG_SZ,
                        reinterpret_cast<const BYTE*>(appPathW.c_str()),
                        static_cast<DWORD>((appPathW.size() + 1) * sizeof(wchar_t)));
+        // Drop the pre-rename autostart entry so the app does not start twice.
+        RegDeleteValueW(hKey, L"Sentinel Desktop");
         RegCloseKey(hKey);
     }
 #endif

@@ -1,6 +1,6 @@
 /* Turkish InfoPlist.strings */
-"CFBundleDisplayName" = "Sentinel Masaüstü";
-"CFBundleName" = "Sentinel Masaüstü";
+"CFBundleDisplayName" = "Sentinel";
+"CFBundleName" = "Sentinel";
 "NSHumanReadableCopyright" = "© 2026 Sopwit. Tüm hakları saklıdır.";
 "NSMicrophoneUsageDescription" = "Sentinel, sesli komutları yakalamak ve metne dönüştürmek için mikrofon erişimine ihtiyaç duyar.";
 "NSSpeechRecognitionUsageDescription" = "Sentinel, konuşulan komutları metne dönüştürmek için konuşma tanımayı kullanır.";

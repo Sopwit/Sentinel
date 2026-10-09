@@ -11,6 +11,8 @@
 
 #include "sentinel/core/app/AppMetadata.h"
 
+#include "sentinel/core/app/StorageMigration.h"
+
 #include "sentinel/core/app/ModeManager.h"
 #include "sentinel/core/app/RecoveryService.h"
 #include "sentinel/core/app/SettingsService.h"
@@ -104,6 +106,13 @@ ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
     QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
+
+    // The display name doubles as the Qt application name, so renaming the
+    // product also renames every per-application storage root. Move pre-rename
+    // data across before anything reads a standard path.
+    sentinel::core::StorageMigration::migrateLegacyApplicationStorage(
+        sentinel::core::AppMetadata::legacyDisplayName(),
+        sentinel::core::AppMetadata::displayName());
 
     m_parser.setApplicationDescription(QStringLiteral("Sentinel AI Desktop Assistant"));
     m_parser.addHelpOption();

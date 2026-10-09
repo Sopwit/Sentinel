@@ -24,7 +24,7 @@ if(APPLE)
 endif()
 
 set(SENTINEL_APP_ID "dev.sentinel.Sentinel" CACHE STRING "Reverse-DNS application id")
-set(SENTINEL_DISPLAY_NAME "Sentinel Desktop" CACHE STRING "User-visible application name")
+set(SENTINEL_DISPLAY_NAME "Sentinel")
 set(SENTINEL_ORGANIZATION_NAME "Sopwit" CACHE STRING "Application organization name")
 set(SENTINEL_COPYRIGHT "© 2026 Sopwit. All rights reserved." CACHE STRING "Application copyright")
 set(SENTINEL_MACOS_CATEGORY "public.app-category.productivity" CACHE STRING "macOS App Store category")
