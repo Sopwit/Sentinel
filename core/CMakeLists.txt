@@ -568,7 +568,6 @@ if(MINGW)
     target_compile_options(sentinel_core PRIVATE "-Wa,-mbig-obj")
 endif()
 
-find_package(Qt6 QUIET COMPONENTS Pdf)
 if(TARGET Qt6::Pdf)
     target_link_libraries(sentinel_core PUBLIC Qt6::Pdf)
     target_compile_definitions(sentinel_core PRIVATE SENTINEL_HAS_QT_PDF)

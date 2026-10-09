@@ -306,6 +306,10 @@ sentinel_enable_pch(sentinel_desktop_viewmodels)
 sentinel_enable_pch(sentinel-desktop)
 
 
+# This helper is imported explicitly by ModelsPage, not as a module-wide script.
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js
+    PROPERTIES QT_QML_SKIP_QMLDIR_ENTRY TRUE)
+
 qt_add_qml_module(sentinel-desktop
     URI Sentinel.Desktop
     VERSION 1.0
