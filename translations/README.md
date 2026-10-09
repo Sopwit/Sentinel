@@ -1,6 +1,6 @@
 # Sentinel Translation & Localization (i18n)
 
-This directory contains the XML translation source (`.ts`) files for Sentinel Desktop.
+This directory contains the XML translation source (`.ts`) files for Sentinel.
 
 ## Supported Locales
 - `sentinel_en.ts` — English (Master / Default)
