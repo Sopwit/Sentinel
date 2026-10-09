@@ -106,7 +106,13 @@ struct ChatProviderReply {
     std::optional<QJsonObject> structuredResult;
 };
 
+struct ChatImage {
+    QString mimeType;
+    QByteArray bytes;
+};
+
 struct ChatRequestOptions {
+    QList<ChatImage> images;
     std::shared_ptr<std::atomic_bool> cancellationToken;
     bool structuredOutput = false;
     bool nativeToolCalling = false;
@@ -145,7 +151,7 @@ public:
     virtual ChatProviderStatus status() const = 0;
     virtual ChatProviderReply sendMessage(const QString& message) = 0;
     virtual ChatProviderReply sendRequest(const QString& message, const ChatRequestOptions& options) {
-        if (options.structuredOutput || options.nativeToolCalling) {
+        if (options.structuredOutput || options.nativeToolCalling || !options.images.isEmpty()) {
             ChatProviderReply reply;
             reply.errorMessage = QStringLiteral("Requested model capability is unavailable through this provider.");
             reply.error = ChatProviderReply::Error::CapabilityRejected;

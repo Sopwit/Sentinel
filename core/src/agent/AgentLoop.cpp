@@ -36,6 +36,7 @@ QString AgentLoop::workingDirectory() const {
 void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
     AgentContextInput input;
     input.goal = state.goal;
+    input.responseProfileInstructions = responseProfileInstructions_;
     input.workspace = workingDirectory();
     input.workspaceContext = workspaceContext_;
     input.skills = skills_;

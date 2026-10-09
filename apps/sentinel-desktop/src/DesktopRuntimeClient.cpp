@@ -390,7 +390,7 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
         attach(text);
         return true;
     }
-    if (name == "sendMessage" || name == "runAgentRequest" || name == "runLocalInference") {
+    if (name == "sendMessage" || name == "sendMessageWithAttachments" || name == "runAgentRequestWithAttachments" || name == "runAgentRequest" || name == "runLocalInference") {
         if (m_sessionId.isEmpty() || active(m_state) || m_submissionPending ||
             text.trimmed().isEmpty()) {
             return false;
@@ -409,10 +409,11 @@ QVariant DesktopRuntimeClient::dispatch(const QString& name, const QVariantList&
         m_values.remove("latestToolExecutionSummary");
         m_values.remove("latestAgentActivitySummary");
         m_activeAssistantId = 0;
-        m_kind = name == "runAgentRequest" ? "agent" : "chat";
+        m_kind = name.startsWith("runAgentRequest") ? "agent" : "chat";
         send(m_kind == "agent" ? DaemonClient::Command::agent_start
                                : DaemonClient::Command::chat_send,
-             {{"session_id", m_sessionId}, {"text", text}}, m_sessionId);
+             {{"session_id", m_sessionId}, {"text", text},
+              {"attachments", name.endsWith("WithAttachments") && args.size() > 1 ? QJsonArray::fromVariantList(args.at(1).toList()) : QJsonArray{}}}, m_sessionId);
         projectRun();
         emit changed();
         return true;

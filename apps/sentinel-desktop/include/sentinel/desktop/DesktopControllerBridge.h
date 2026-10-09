@@ -19,6 +19,7 @@ public:
     bool isRemote() const {
         return m_source.remote != nullptr;
     }
+    core::ApplicationController* local() const { return m_source.local; }
     DesktopRuntimeClient* remote() const {
         return m_source.remote;
     }

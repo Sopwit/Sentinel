@@ -103,6 +103,7 @@ private:
     bool m_outputTruncated = false;
     int m_chatCursor = 0;
     bool m_starting = false;
+    bool m_loadingAttachments = false;
     bool m_shuttingDown = false;
     QElapsedTimer m_uptime;
     std::unique_ptr<DaemonModelHelpers> m_modelHelpers;

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QDateTime>
+#include <QJsonArray>
 #include <QString>
 #include "sentinel/core/interfaces/IChatProvider.h"
 
@@ -45,6 +46,7 @@ struct ChatMessage {
     int replacesMessageId = 0;
     bool partial = false;
     ChatProviderErrorCategory errorCategory = ChatProviderErrorCategory::None;
+    QJsonArray attachmentData;
 };
 
 inline QString chatRoleName(ChatRole role) {

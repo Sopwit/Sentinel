@@ -42,7 +42,8 @@ public:
 private:
     ChatProviderReply sendMessageWithToken(
         const QString& message,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken);
+        const std::shared_ptr<std::atomic_bool>& cancellationToken,
+        const QList<ChatImage>& images = {});
     OllamaConfig config_;
     int timeoutMs_ = 30000;
     QString selectedModel_;

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentEvent.h"
+#include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/agent/ContextEngine.h"
 #include "sentinel/core/agent/AgentLoopState.h"
 #include "sentinel/core/agent/AgentPipelineResult.h"
@@ -58,6 +59,8 @@ struct AgentResponse {
 };
 
 struct AgentSessionOptions {
+    QString responseProfileInstructions;
+    QList<ChatImage> inputImages;
     AgentContextInput::WorkspaceContext workspaceContext;
     QString workspaceName;
     QString presetId;

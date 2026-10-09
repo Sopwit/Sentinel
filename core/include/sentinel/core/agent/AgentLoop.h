@@ -97,6 +97,7 @@ public:
         observationIntentPolicy_ = std::move(policy);
     }
     void setObservationContext(QString context) { observationContext_ = std::move(context); }
+    void setResponseProfileInstructions(QString instructions) { responseProfileInstructions_ = instructions.left(2000); }
     void setWorkspaceContext(AgentContextInput::WorkspaceContext context) {
         workspaceContext_ = std::move(context);
     }
@@ -174,6 +175,7 @@ private:
     const IToolRegistry* toolRegistry_ = nullptr;
     std::shared_ptr<IObservationIntentPolicy> observationIntentPolicy_;
     QString observationContext_;
+    QString responseProfileInstructions_;
     AgentContextInput::WorkspaceContext workspaceContext_;
     QString resourceScope_;
     ContextEngine contextEngine_;

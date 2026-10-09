@@ -1162,7 +1162,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             error(socket, id, "runtime-unavailable");
             return;
         }
-        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+        if (m_loadingAttachments || m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
             m_controller->chatModeService()->busy()) {
             error(socket, id, "runtime-busy");
             return;
@@ -1313,7 +1313,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         return;
     }
     if (name == "provider.select") {
-        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+        if (m_loadingAttachments || m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
             m_controller->chatModeService()->busy()) {
             error(socket, id, "runtime-busy");
             return;
@@ -1329,7 +1329,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         return;
     }
     if (name == "model.select") {
-        if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+        if (m_loadingAttachments || m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
             m_controller->chatModeService()->busy()) {
             error(socket, id, "runtime-busy");
             return;
@@ -1438,7 +1438,7 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         reply({{"accepted", true}});
         return;
     }
-    if (m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
+    if (m_loadingAttachments || m_state == "running" || m_state == "approval" || m_controller->agentLoopActive() ||
         m_controller->chatModeService()->busy()) {
         error(socket, id, "runtime-busy");
         return;
@@ -1512,8 +1512,8 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
                         .isEmpty();
     } else {
         accepted = m_kind == "agent"
-                       ? m_controller->runAgentRequest(payload.value("text").toString())
-                       : m_controller->sendMessage(payload.value("text").toString());
+                       ? m_controller->runAgentRequestWithAttachments(payload.value("text").toString(), loaded.attachments)
+                       : m_controller->sendMessageWithAttachments(payload.value("text").toString(), loaded.attachments);
     }
     m_starting = false;
     if (!accepted) {

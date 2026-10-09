@@ -57,7 +57,7 @@ private:
     void initializeSchema();
     void setLastError(ConversationStoreErrorCode code, const QString& summary) const;
 
-    static constexpr int currentSchemaVersion = 5;
+    static constexpr int currentSchemaVersion = 6;
 
     QString databasePath_;
     QString connectionName_;
