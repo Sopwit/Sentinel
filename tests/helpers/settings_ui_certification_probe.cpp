@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQmlComponent>
 #include <QQuickItem>
 #include <QJSValue>
 #include <QQuickWindow>
@@ -74,6 +75,7 @@ int main(int argc, char** argv) {
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName("Sentinel Settings Certification");
     QStandardPaths::setTestModeEnabled(true);
+    const bool phase1Smoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--phase1-smoke";
     const bool traySmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--tray-smoke";
     const bool focusSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--focus-smoke";
     const bool navigationSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--navigation-smoke";
@@ -81,9 +83,9 @@ int main(int argc, char** argv) {
     const bool settingsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--settings-smoke";
     const bool modelsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--models-smoke";
     QTemporaryDir temporaryProfile;
-    if (argc != 2 || (!focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
+    if (argc != 2 || (!phase1Smoke && !focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
         return 2;
-    QDir profile(focusSmoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke ? temporaryProfile.path() : QString::fromLocal8Bit(argv[1]));
+    QDir profile(phase1Smoke || focusSmoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke ? temporaryProfile.path() : QString::fromLocal8Bit(argv[1]));
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(profile.filePath("settings.json")),
         sentinel::core::inMemoryTestCredentialStore());
@@ -98,7 +100,7 @@ int main(int argc, char** argv) {
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("navigationSmoke", navigationSmoke);
     QObject::connect(&engine, &QQmlApplicationEngine::exit, &app, &QApplication::exit);
-    if (navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke) settings.setOnboardingComplete(true);
+    if (phase1Smoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke) settings.setOnboardingComplete(true);
     engine.addImportPath(QStringLiteral(CERTIFICATION_QML_IMPORT));
     QTranslator translator;
     auto translate = [&] {
@@ -115,6 +117,10 @@ int main(int argc, char** argv) {
     sentinel::desktop::NativeCompanionAdapter native(viewModel, settings, nullptr);
     engine.rootContext()->setContextProperty("nativeDesktop", &native);
     engine.rootContext()->setContextProperty("shellViewModel", &viewModel);
+    if (qEnvironmentVariableIsSet("SENTINEL_UI_NOTIFICATION_FIXTURE")) {
+        viewModel.setDndEnabled(true); // Synthetic history only; do not request an OS banner.
+        viewModel.addNotificationWithPriority("Security", "Disposable test notice", "Synthetic content for notification UI verification.", "High");
+    }
     CatalogUiFixture library, emptyLibrary;
     library.models = {
         QVariantMap{{"id", "qwen-small"}, {"name", "Qwen 2.5 7B"}, {"ollamaId", "qwen2.5:7b"}, {"category", "LLM"}, {"provider", "Ollama"}, {"description", "Small variant"}, {"badge", "Open"}, {"badgeColor", "#4f8ef7"}},
@@ -126,6 +132,157 @@ int main(int argc, char** argv) {
     engine.load(QUrl::fromLocalFile(QStringLiteral(CERTIFICATION_QML_WRAPPER)));
     if (engine.rootObjects().isEmpty())
         return 3;
+    if (phase1Smoke) {
+        auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        QTimer::singleShot(250, &app, [&, window] {
+            auto find = [](auto&& self, QQuickItem* item, const QString& name) -> QQuickItem* {
+                if (item->objectName() == name) return item;
+                for (auto* child : item->childItems()) if (auto* found = self(self, child, name)) return found;
+                return nullptr;
+            };
+            auto check = [&](bool ok, const char* detail) {
+                if (!ok) qFatal("Phase 1 acceptance failed: %s", detail);
+            };
+            auto* page = find(find, window->contentItem(), "settingsPage");
+            auto* popup = window->findChild<QObject*>("notificationCenterPopup");
+            auto* palette = window->findChild<QObject*>("certificationPalette");
+            check(page && popup && palette, "mounted shared surfaces");
+            page->setProperty("activeCategory", "Notifications");
+            QApplication::processEvents();
+            auto* history = find(find, page, "notificationHistoryButton");
+            check(history, "Settings history entry");
+            history->forceActiveFocus();
+            QMetaObject::invokeMethod(history, "clicked"); QTest::qWait(100);
+            check(popup->property("visible").toBool(), "history opens");
+            auto* empty = find(find, window->contentItem(), "notificationHistoryEmpty");
+            check(empty && empty->isVisible(), "empty history");
+            QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(100);
+            check(!viewModel.notificationCenterVisible() && !popup->property("visible").toBool(), "Escape synchronizes visibility");
+            check(history->hasActiveFocus(), "focus returns to history entry");
+            viewModel.addNotificationWithPriority("Security", "Disposable phase 1 notice", "Synthetic test content", "High");
+            viewModel.setNotificationCenterVisible(true); QTest::qWait(100);
+            auto* list = find(find, window->contentItem(), "notificationHistoryList");
+            check(list && list->property("count").toInt() == 2 && !empty->isVisible(), "group and populated history");
+            viewModel.setDndEnabled(true); QApplication::processEvents();
+            check(list->property("count").toInt() == 2, "DND retains history");
+            auto* markRead = find(find, window->contentItem(), "notificationMarkReadButton");
+            auto* archive = find(find, window->contentItem(), "notificationArchiveButton");
+            check(markRead && archive, "notification row actions");
+            QMetaObject::invokeMethod(markRead, "clicked"); QApplication::processEvents();
+            const auto readRow = QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object();
+            check(readRow.value("read").toBool(), "row marks notification read");
+            archive = find(find, window->contentItem(), "notificationArchiveButton");
+            check(archive, "archive action survives refresh");
+            QMetaObject::invokeMethod(archive, "clicked"); QApplication::processEvents();
+            check(QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object().value("archived").toBool(), "row archives notification");
+            check(viewModel.notificationFilteredSummaries().join(" ").contains("Disposable phase 1 notice"), "archive remains in history");
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(5, 5)); QTest::qWait(100);
+            check(!popup->property("visible").toBool() && !viewModel.notificationCenterVisible(), "outside dismissal");
+            check(viewModel.clearArchivedNotifications(), "clear archived");
+            viewModel.setDndEnabled(false);
+            const auto actions = qmlVariant(palette->property("actions")).toList();
+            for (const auto& value : actions) {
+                const auto action = value.toMap();
+                const auto name = action.value("action").toString();
+                if (name == "settings" || name == "notifications" || name == "search-chats" || name == "universal-search" || name == "theme") {
+                    const auto oldTheme = viewModel.themeName();
+                    QMetaObject::invokeMethod(palette, "runAction", Q_ARG(QVariant, value));
+                    QApplication::processEvents();
+                    if (name == "settings") check(page->property("activeCategory").toString() == action.value("category", "Interface").toString(), "category route");
+                    if (name == "notifications") { check(viewModel.notificationCenterVisible(), "palette history route"); viewModel.setNotificationCenterVisible(false); }
+                    if (name.startsWith("search") || name == "universal-search") check(!action.value("enabled").toBool(), "unsupported search disabled");
+                    if (name == "theme") check(viewModel.themeName() != oldTheme, "theme cycle");
+                }
+            }
+            for (int width : {1100, 900, 780}) {
+                window->setWidth(width); window->setHeight(width == 780 ? 640 : 780); QTest::qWait(60);
+                auto* sidebar = find(find, page, "settingsCategorySidebar");
+                check(sidebar && sidebar->isVisible() == !page->property("compact").toBool(), "responsive breakpoint");
+                auto inspect = [&](auto&& self, QQuickItem* item) -> void {
+                    if (item->isVisible()) check(!item->property("truncated").toBool(), "complete sidebar labels");
+                    for (auto* child : item->childItems()) self(self, child);
+                };
+                inspect(inspect, sidebar);
+            }
+            auto* status = find(find, window->contentItem(), "daemonStatusButton");
+            check(status, "focusable daemon indicator"); status->forceActiveFocus();
+            const auto* accessible = QAccessible::queryAccessibleInterface(status);
+            check(accessible && !accessible->text(QAccessible::Name).isEmpty(), "status accessible name");
+            QTest::keyClick(window, Qt::Key_Space); QTest::qWait(60);
+            auto* statusPopup = window->findChild<QObject*>("daemonStatusPopup");
+            check(statusPopup && statusPopup->property("visible").toBool(), "keyboard opens daemon details");
+            check(window->activeFocusItem() && window->activeFocusItem() != status, "status popup receives focus");
+            QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(40);
+            check(status->hasActiveFocus(), "status popup restores focus");
+            window->setProperty("surface", 2); viewModel.startVoiceCapture(true); QTest::qWait(60);
+            check(!viewModel.voiceInputStatus().isEmpty() && !viewModel.voiceInputMessage().contains("ModelUnavailable"), "voice prerequisite guidance");
+            auto* voiceSetup = find(find, window->contentItem(), "chatVoiceSetupButton");
+            check(voiceSetup && voiceSetup->isVisible(), "voice setup action");
+            QMetaObject::invokeMethod(voiceSetup, "clicked"); QApplication::processEvents();
+            check(page->property("activeCategory").toString() == "Voice" && window->property("surface").toInt() == 0, "voice settings route");
+            QQmlComponent finishComponent(&engine);
+            finishComponent.setData(R"(
+                import QtQuick
+                import Sentinel.Desktop
+                FinishStep {
+                    width: 900; height: 680
+                    viewModel: QtObject {
+                        property bool daemonConnected: false
+                        property string activeRuntimeReadinessState: "ready"
+                        property string currentModeName: "Calm"
+                        property string onboardingProcessingMode: "local"
+                        property var onboardingSnapshot: ({providerId: "fixture", modelId: "fixture"})
+                        property string appLanguage: "en"
+                        property string themeName: "Liquid Glass Light"
+                        function languageDisplayName(code) { return code }
+                    }
+                }
+            )", QUrl("qrc:/phase1-finish-test.qml"));
+            std::unique_ptr<QObject> finish(finishComponent.create());
+            check(bool(finish), "finish component fixture");
+            auto* readiness = qvariant_cast<QObject*>(finish->property("viewModel"));
+            check(readiness && !finish->property("inferenceReady").toBool(), "offline readiness is false");
+            readiness->setProperty("daemonConnected", true);
+            check(finish->property("inferenceReady").toBool() && finish->property("modelRunnable").toBool(), "authoritative ready presentation");
+            readiness->setProperty("activeRuntimeReadinessState", "busy");
+            check(!finish->property("inferenceReady").toBool() && finish->property("modelRunnable").toBool(), "busy is not ready to send");
+            for (const char* state : {"missingModel", "unavailable", "unknown"}) {
+                readiness->setProperty("activeRuntimeReadinessState", state);
+                check(!finish->property("inferenceReady").toBool() && !finish->property("modelRunnable").toBool(), "unconfirmed model is not runnable");
+            }
+            window->setProperty("surface", 0);
+            auto luminance = [](const QColor& color) {
+                auto linear = [](double v) { return v <= 0.04045 ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4); };
+                return 0.2126 * linear(color.redF()) + 0.7152 * linear(color.greenF()) + 0.0722 * linear(color.blueF());
+            };
+            for (const char* theme : {"Liquid Glass Light", "Liquid Glass Dark"}) {
+                viewModel.setThemeName(theme);
+                for (bool contrast : {false, true}) {
+                    viewModel.setHighContrastEnabled(contrast); QTest::qWait(100);
+                    const auto screenshot = window->grabWindow();
+                    check(!screenshot.isNull(), "renderer returns icon pixels");
+                    const auto background = window->property("settingsSurface").value<QColor>();
+                    for (const char* buttonName : {"DashboardNavigationButton", "ModelsNavigationButton", "InspectorNavigationButton"}) {
+                        auto* button = find(find, window->contentItem(), buttonName);
+                        check(button, "navigation icon button");
+                        const auto origin = button->mapToScene(QPointF(button->width() / 2 - 10, button->height() / 2 - 10));
+                        const double scale = screenshot.devicePixelRatio();
+                        int contrastingPixels = 0;
+                        for (int y = int(origin.y() * scale); y < int((origin.y() + 20) * scale); ++y)
+                            for (int x = int(origin.x() * scale); x < int((origin.x() + 20) * scale); ++x) {
+                                const double a = luminance(screenshot.pixelColor(x, y)), b = luminance(background);
+                                if ((qMax(a, b) + 0.05) / (qMin(a, b) + 0.05) >= 3.0) ++contrastingPixels;
+                            }
+                        check(contrastingPixels >= 10, "icon strokes visible at >= 3:1 against rail surface");
+                        qInfo() << "Icon contrast pixels" << theme << contrast << buttonName << contrastingPixels;
+                    }
+                }
+            }
+            qInfo("Onboarding readiness state matrix and rendered rail stroke samples passed; not full WCAG certification");
+            qInfo("Phase 1 notification lifecycle/dismissal/focus, palette routes, labels, status and missing-STT flow passed (isolated harness)");
+            app.exit(0);
+        });
+    }
     if (traySmoke) {
         auto* panel = engine.rootObjects().first()->findChild<QQuickWindow*>("sentinelQuickPanel");
         auto* fixture = engine.rootObjects().first()->findChild<QObject*>("quickPanelFixture");
@@ -148,6 +305,19 @@ int main(int argc, char** argv) {
             prompt->forceActiveFocus();
             QTest::keyClick(panel, Qt::Key_Return);
             if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().isEmpty()) { app.exit(72); return; }
+            prompt->setProperty("text", "line one");
+            prompt->forceActiveFocus();
+            QTest::keyClick(panel, Qt::Key_Return, Qt::ShiftModifier);
+            if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().contains('\n')) { app.exit(78); return; }
+            auto* statusButton = find(find, panel->contentItem(), "quickPanelStatus");
+            auto* statusPopup = panel->findChild<QObject*>("quickPanelStatusDetails");
+            if (!statusButton || !statusPopup) { app.exit(79); return; }
+            QMetaObject::invokeMethod(statusButton, "clicked");
+            QTest::qWait(40);
+            if (!statusPopup->property("visible").toBool()) { app.exit(80); return; }
+            QTest::keyClick(panel, Qt::Key_Escape);
+            QTest::qWait(80);
+            if (statusPopup->property("visible").toBool() || !panel->isVisible()) { app.exit(81); return; }
             panel->setProperty("agentMode", true);
             prompt->setProperty("text", "Agent question");
             QTest::keyClick(panel, Qt::Key_Return);
@@ -155,7 +325,7 @@ int main(int argc, char** argv) {
             prompt->forceActiveFocus(Qt::TabFocusReason);
             QTest::keyClick(panel, Qt::Key_Tab);
             if (!panel->activeFocusItem() || !panel->activeFocusItem()->isVisible()) { app.exit(74); return; }
-            state["preview"] = "A concise response saved in the conversation.";
+            state["preview"] = "Fixture response preview — no inference performed.";
             fixture->setProperty("state", state);
             QTest::qWait(80);
             panel->grabWindow().save(QDir::tempPath() + "/sentinel-tray-panel.png");
@@ -172,6 +342,27 @@ int main(int argc, char** argv) {
             QApplication::processEvents();
             auto* error = find(find, panel->contentItem(), "quickPanelError");
             if (!error || !error->isVisible() || error->property("text").toString() != "Fixture connection error") { app.exit(77); return; }
+            fixture->setProperty("error", "request-timeout");
+            QApplication::processEvents();
+            if (!error->property("text").toString().contains("daemon did not reply")) { app.exit(82); return; }
+            const auto evidence = qEnvironmentVariable("SENTINEL_TRAY_EVIDENCE_DIR");
+            if (!evidence.isEmpty()) {
+                QDir().mkpath(evidence);
+                panel->setWidth(420);
+                for (const auto& theme : {QStringLiteral("Paper"), QStringLiteral("Liquid Glass Dark")}) {
+                    viewModel.setThemeName(theme);
+                    QTest::qWait(100);
+                    panel->grabWindow().save(evidence + (theme == "Paper" ? "/quick-error-light.png" : "/quick-error-dark.png"));
+                }
+                fixture->setProperty("error", "");
+                state["busy"] = false; state["preview"] = "";
+                fixture->setProperty("state", state); prompt->setProperty("text", "");
+                QTest::qWait(100); panel->grabWindow().save(evidence + "/quick-idle-dark.png");
+                state["busy"] = true; state["approvalCount"] = 1;
+                state["approval"] = QVariantMap{{"tool", "Fixture read-only operation"}, {"risk", 0}, {"detail", "Synthetic test approval; no task executed."}};
+                fixture->setProperty("state", state);
+                QTest::qWait(100); panel->grabWindow().save(evidence + "/quick-approval-fixture-dark.png");
+            }
             qInfo("Tray loading/empty/response/error, Chat/Agent keyboard submission, focus and compact layout passed");
             app.exit(0);
         });

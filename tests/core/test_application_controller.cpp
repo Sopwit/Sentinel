@@ -271,6 +271,7 @@ class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void compatibleLocalReadinessTracksDiscovery();
     void exposesProviderNameAndInitialSystemMessage();
     void exposesProviderStatus();
     void exposesAgentStatusWithoutRuntime();
@@ -904,7 +905,7 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("requiresApiKey: no")));
     QVERIFY(controller->runtimeProviderValidationTraces()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("readiness=disabled")));
+                .contains(QStringLiteral("lm-studio: readiness=unknown")));
     QVERIFY(controller->providerCredentialRegistrySummary().contains(
         QStringLiteral("API key values are persisted")));
     QVERIFY(controller->credentialStoreSummary().contains(QStringLiteral("ready")));
@@ -919,6 +920,34 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));
     QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 3);
+}
+
+void ApplicationControllerTest::compatibleLocalReadinessTracksDiscovery() {
+    using namespace sentinel::core;
+    for (const auto& id : {QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}) {
+        auto service = std::make_unique<ModelService>();
+        auto* observed = service.get();
+        observed->setSelectedProviderId(id);
+        observed->setSelectedModelId(QStringLiteral("test-model"));
+        ApplicationControllerBuilder builder;
+        builder.withModelService(std::move(service));
+        auto controller = builder.build();
+        QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("unknown"));
+        ProviderDiscoveryOutcome success;
+        success.completed = true;
+        const auto sequence = observed->beginProviderHealthObservation();
+        observed->acceptProviderDiscovery(id, {{QStringLiteral("test-model"), {}, 0}}, success,
+                                          sequence);
+        observed->reportProviderDiscovery(id, sequence, true, ChatProviderErrorCategory::None);
+        QCOMPARE(controller->activeRuntimeProviderId(), id);
+        QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("ready"));
+        ProviderDiscoveryOutcome failed;
+        failed.category = ChatProviderErrorCategory::ConnectionFailed;
+        const auto failureSequence = observed->beginProviderHealthObservation();
+        observed->acceptProviderDiscovery(id, {}, failed, failureSequence);
+        observed->reportProviderDiscovery(id, failureSequence, false, failed.category);
+        QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("unavailable"));
+    }
 }
 
 void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocalOllama() {

@@ -28,6 +28,8 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        connectionStatus: shellViewModel.daemonConnectionStatus
+        runtimeStatus: shellViewModel.activeRuntimeReadinessState
         currentPage: surface === 0 ? "Settings" : "Dashboard"
         onPageRequested: function(page) { surface = page === "Settings" ? 0 : 2 }
     }
@@ -38,7 +40,7 @@ ApplicationWindow {
             window.width = 780
             window.height = 640
             rail.pageRequested("Dashboard")
-            if (surface !== 2 || rail.width !== 76) { Qt.exit(20); return }
+            if (surface !== 2 || rail.width !== 56) { Qt.exit(20); return }
             rail.pageRequested("Settings")
             settingsPage.sidebarExpanded = false
             settingsPage.jumpTo("Voice")
@@ -62,11 +64,26 @@ ApplicationWindow {
             Button { text: "Settings"; onClicked: surface = 0 }
             Button { text: "Onboarding"; onClicked: { shellViewModel.reopenOnboarding(); surface = 1; onboarding.active = true } }
             Button { text: "Chat"; onClicked: surface = 2 }
+            Button { text: "Commands"; onClicked: palette.openPalette() }
+            Button { text: "History"; onClicked: shellViewModel.notificationCenterVisible = true }
             Button { text: "780 px"; onClicked: { window.width = 780; window.height = 640 } }
         }
         SettingsPage { id: settingsPage; viewModel: shellViewModel; visible: surface === 0; Layout.fillWidth: true; Layout.fillHeight: true }
         ModelsPage { objectName: "modelsPage"; viewModel: shellViewModel; visible: surface === 3; Layout.fillWidth: true; Layout.fillHeight: true }
-        HomeChatSurface { viewModel: shellViewModel; visible: surface === 2; Layout.fillWidth: true; Layout.fillHeight: true }
+        HomeChatSurface { viewModel: shellViewModel; onVoiceSettingsRequested: { surface = 0; settingsPage.jumpTo("Voice") } visible: surface === 2; Layout.fillWidth: true; Layout.fillHeight: true }
+    }
+    NotificationCenterPanel {
+        id: notifications
+        fallbackFocusItem: rail.settingsFocusItem
+        viewModel: shellViewModel
+        onOpenSettingsRequested: { surface = 0; settingsPage.jumpTo("Notifications") }
+    }
+    CommandPalette {
+        id: palette
+        objectName: "certificationPalette"
+        viewModel: shellViewModel
+        onOpenSettingsRequested: function(category) { surface = 0; settingsPage.jumpTo(category) }
+        onFocusChatRequested: surface = 2
     }
     QtObject {
         id: quickFixture
@@ -89,6 +106,7 @@ ApplicationWindow {
         anchors.fill: parent
         viewModel: shellViewModel
         active: !shellViewModel.onboardingComplete || surface === 1
+        onConfigureModelsRequested: { surface = 0; settingsPage.jumpTo("AI") }
         onFinished: surface = 0
     }
 }

@@ -49,6 +49,7 @@ class DesktopShellViewModelTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void localizesVoiceFailures();
     void exposesInitialShellState();
     void exposesAgentStatusWithoutRuntime();
     void exposesAgentToolMetadata();
@@ -652,7 +653,7 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("requiresApiKey: no")));
     QVERIFY(fixture.viewModel.runtimeProviderValidationTraces()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("readiness=disabled")));
+                .contains(QStringLiteral("lm-studio: readiness=unknown")));
     QCOMPARE(fixture.viewModel.providerCredentialRegistryStatus(), QStringLiteral("missing"));
     QVERIFY(fixture.viewModel.providerCredentialRegistrySummary().contains(
         QStringLiteral("API key values are persisted")));
@@ -3594,6 +3595,21 @@ void DesktopShellViewModelTest::ignoresRepeatedAndUnknownNavigationChanges() {
     fixture.viewModel.setCurrentPage(QStringLiteral("Unknown"));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(spy.count(), 0);
+}
+
+void DesktopShellViewModelTest::localizesVoiceFailures() {
+    ViewModelFixture fixture;
+    auto message = [&](const char* code) { return fixture.viewModel.voiceStatusMessage(QString::fromLatin1(code)); };
+    QVERIFY(message("").isEmpty());
+    QVERIFY(message("ModelUnavailable: technical detail").contains("speech engine"));
+    QVERIFY(message("RuntimeUnavailable").contains("speech engine"));
+    QVERIFY(message("MicrophonePermissionDenied").contains("denied"));
+    QVERIFY(message("AudioDeviceUnavailable").contains("microphone"));
+    QVERIFY(message("TranscriptionFailure").contains("recognition failed"));
+    QVERIFY(message("NoSpeechDetected").contains("No speech"));
+    QVERIFY(message("Cancelled").contains("cancelled"));
+    QCOMPARE(message("Localized system guidance"), QStringLiteral("Localized system guidance"));
+    QVERIFY(message("ModelUnavailable") != message("AudioDeviceUnavailable"));
 }
 
 QTEST_MAIN(DesktopShellViewModelTest)
