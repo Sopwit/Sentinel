@@ -106,7 +106,7 @@ void QuickPanelController::project() {
         if (!approval.isEmpty() && approval != lastApproval_) {
             emit notificationRequested(tr("Approval needed"),
                                        pending.value("detail").toString().left(240),
-                                       snapshot.value("approvalSession").toString());
+                                       snapshot.value("approvalSession").toString(), QStringLiteral("Security"), QStringLiteral("High"));
         }
         if (!run.isEmpty() && run == lastRun_ && status != lastState_ &&
             (lastState_ == "running" || lastState_ == "approval") &&
@@ -114,7 +114,8 @@ void QuickPanelController::project() {
             snapshot.value("kind") == "agent") {
             emit notificationRequested(tr("Sentinel Agent: %1").arg(status),
                                        tr("Open Sentinel to review this run."),
-                                       runtime_.sessionId());
+                                       runtime_.sessionId(), QStringLiteral("Agent"),
+                                       status == "failed" ? QStringLiteral("High") : QStringLiteral("Normal"));
         }
     }
     lastRun_ = run;

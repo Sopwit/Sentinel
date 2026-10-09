@@ -24,7 +24,7 @@ Item {
         sourceSize.width: root.iconSize
         sourceSize.height: root.iconSize
         fillMode: Image.PreserveAspectFit
-        layer.enabled: true
+        layer.enabled: GraphicsInfo.api !== GraphicsInfo.Software
         layer.effect: MultiEffect {
             colorization: 1.0
             colorizationColor: root.color

@@ -29,7 +29,7 @@ public:
 signals:
     void changed();
     void openRequested(const QString& page, const QString& sessionId);
-    void notificationRequested(const QString& title, const QString& body, const QString& sessionId);
+    void notificationRequested(const QString& title, const QString& body, const QString& sessionId, const QString& category, const QString& priority);
 
 private:
     bool runtimeVoiceAction(const QString& action);
