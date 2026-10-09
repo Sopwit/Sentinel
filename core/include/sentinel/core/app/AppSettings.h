@@ -264,6 +264,8 @@ public:
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
     void setPiperModelPath(const QString& path);
+    QString voiceInputSource() const;
+    void setVoiceInputSource(const QString& source);
     QString whisperBinaryPath() const;
     void setWhisperBinaryPath(const QString& path);
     QString whisperModelPath() const;
@@ -305,6 +307,8 @@ public:
     void setExportAnonymizeNames(bool enabled);
     bool exportIncludeModelMetadata() const;
     void setExportIncludeModelMetadata(bool enabled);
+    QString responseProfileInstructions() const;
+    void setResponseProfileInstructions(const QString& instructions);
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
     QString defaultPermissionPolicyState() const;
@@ -433,6 +437,7 @@ signals:
     void activeConversationIdChanged();
     void selectedWorkspaceIdChanged();
     void workspaceSettingsChanged();
+    void responseProfileInstructionsChanged();
     void selectedSkillProfileChanged();
     void defaultPermissionPolicyStateChanged();
     void updateCheckPolicyChanged();

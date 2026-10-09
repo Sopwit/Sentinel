@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/LocalInference.h"
+#include "sentinel/core/chat/ChatImageContent.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
@@ -730,6 +731,11 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
     QJsonObject body;
     body.insert(QStringLiteral("model"), response.model);
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
+    if (!request.images.isEmpty()) {
+        QJsonArray images;
+        for (const auto& image : request.images) images.append(QString::fromLatin1(image.bytes.toBase64()));
+        body.insert(QStringLiteral("images"), images);
+    }
     body.insert(QStringLiteral("stream"), false);
 
     QJsonObject options;
@@ -866,6 +872,11 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     QJsonObject body;
     body.insert(QStringLiteral("model"), result.model);
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
+    if (!request.images.isEmpty()) {
+        QJsonArray images;
+        for (const auto& image : request.images) images.append(QString::fromLatin1(image.bytes.toBase64()));
+        body.insert(QStringLiteral("images"), images);
+    }
     body.insert(QStringLiteral("stream"), true);
 
     QJsonObject options;
@@ -1236,7 +1247,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         if (isAnthropic) {
             QJsonObject messageObj;
             messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-            messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+            messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images, true));
             QJsonArray messagesArr;
             messagesArr.append(messageObj);
 
@@ -1302,6 +1313,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
             QJsonArray partsArr;
             partsArr.append(partObj);
+        appendGeminiImageParts(partsArr, request.images);
 
             QJsonObject contentObj;
             contentObj.insert(QStringLiteral("role"), QStringLiteral("user"));
@@ -1374,7 +1386,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         // OpenAI-compatible cloud (OpenAI, DeepSeek, Groq, Mistral).
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
@@ -1447,7 +1459,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
     QJsonObject messageObj;
     messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-    messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+    messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
 
     QJsonArray messagesArr;
     messagesArr.append(messageObj);
@@ -1627,7 +1639,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images, true));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
@@ -1646,6 +1658,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
         QJsonArray partsArr;
         partsArr.append(partObj);
+        appendGeminiImageParts(partsArr, request.images);
 
         QJsonObject contentObj;
         contentObj.insert(QStringLiteral("role"), QStringLiteral("user"));
@@ -1671,7 +1684,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 

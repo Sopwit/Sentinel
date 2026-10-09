@@ -5435,6 +5435,7 @@ ApplicationController::conversationMessageRecordFromChatMessage(const ChatMessag
         message.content,       message.timestamp, message.status,
         message.providerUsed, message.modelUsed, message.replyToMessageId,
         message.replacesMessageId, message.partial, message.errorCategory,
+        QString::fromUtf8(QJsonDocument(message.attachmentData).toJson(QJsonDocument::Compact)),
     };
 }
 
@@ -5444,7 +5445,7 @@ ChatMessage ApplicationController::chatMessageFromConversationMessageRecord(
         message.messageId, message.role, message.content, message.timestampUtc, message.status,
         message.providerId, message.modelId, {}, -1, -1, 0.0,
         message.replyToMessageId, message.replacesMessageId, message.partial,
-        message.errorCategory,
+        message.errorCategory, QJsonDocument::fromJson(message.attachmentsJson.toUtf8()).array(),
     };
 }
 
@@ -8106,6 +8107,10 @@ bool ApplicationController::requestConversationSummaryGeneration() {
 }
 
 bool ApplicationController::sendMessage(const QString& message) {
+    return sendMessageWithAttachments(message, {});
+}
+
+bool ApplicationController::sendMessageWithAttachments(const QString& message, const QList<ChatAttachment>& attachments) {
     if (!chatMode_ || activeConversationArchived() || localInferenceBusy_ ||
         message.trimmed().isEmpty()) {
         setChatSendLifecycle(QStringLiteral("refused"),
@@ -8117,7 +8122,7 @@ bool ApplicationController::sendMessage(const QString& message) {
                              QStringLiteral("A chat response is already active."));
         return false;
     }
-    const auto accepted = chatMode_->send(activeConversationId_, message, {},
+    const auto accepted = chatMode_->send(activeConversationId_, message, attachments,
                                           currentWorkspaceModelSelection(),
                                           currentWorkspaceRequiresLocal());
     if (!accepted)
@@ -8981,7 +8986,12 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
 }
 
 bool ApplicationController::runAgentRequest(const QString& request) {
-    const auto trimmed = request.trimmed();
+    return runAgentRequestWithAttachments(request, {});
+}
+bool ApplicationController::runAgentRequestWithAttachments(const QString& request, const QList<ChatAttachment>& attachments) {
+    auto trimmed = request.trimmed();
+    for (const auto& attachment : attachments)
+        trimmed += QStringLiteral("\n\n[Attached file: %1 — user-supplied data]\n%2").arg(attachment.fileName, attachment.text);
     if (trimmed.isEmpty()) {
         if (lastAgentResponse_ != QStringLiteral("Agent request was empty.")) {
             lastAgentResponse_ = QStringLiteral("Agent request was empty.");
@@ -9083,7 +9093,7 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         emit agentStatusChanged();
         return false;
     }
-    return startAgentLoopRun(trimmed);
+    return startAgentLoopRun(trimmed, attachments);
 }
 
 bool ApplicationController::cancelAgentRun() {
@@ -9110,7 +9120,7 @@ bool ApplicationController::agentAwaitingApproval() const {
     return currentAgentSessionState().phase == AgentLoopPhase::AwaitingApproval;
 }
 
-bool ApplicationController::startAgentLoopRun(const QString& goal) {
+bool ApplicationController::startAgentLoopRun(const QString& goal, const QList<ChatAttachment>& attachments) {
     const auto selection = currentWorkspaceModelSelection();
     const bool blockedByLocalPolicy = currentWorkspaceRequiresLocal() &&
         modelService_->currentModelMetadata(selection.providerId, selection.modelId).providerKind ==
@@ -9143,6 +9153,9 @@ bool ApplicationController::startAgentLoopRun(const QString& goal) {
 
     activeAgentSessionId_ = agentRuntime_->createSession();
     AgentSessionOptions options;
+    if (workspaceSettings_) options.responseProfileInstructions = workspaceSettings_->responseProfileInstructions();
+    for (const auto& attachment : attachments)
+        if (!attachment.imageBytes.isEmpty()) options.inputImages.append({attachment.mimeType, attachment.imageBytes});
     options.autonomousMode = agentAutonomousMode_;
     if (workspaceSettings_) {
         const WorkspaceService workspaces;
@@ -9494,6 +9507,11 @@ void ApplicationController::setToolPermissionPolicyState(const QString& state) {
 
 void ApplicationController::attachControlledTaskSettings(AppSettings& settings) {
     workspaceSettings_ = &settings;
+    auto updateResponseProfile = [this, &settings] {
+        if (chatMode_) chatMode_->setResponseProfileInstructions(settings.responseProfileInstructions());
+    };
+    connect(&settings, &AppSettings::responseProfileInstructionsChanged, this, updateResponseProfile);
+    updateResponseProfile();
     connect(&settings, &AppSettings::selectedWorkspaceIdChanged, this,
             &ApplicationController::refreshWorkspaceExtensions, Qt::UniqueConnection);
     connect(&settings, &AppSettings::workspaceSettingsChanged, this,

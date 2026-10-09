@@ -75,6 +75,7 @@ public:
     void setToolRegistry(const IToolRegistry* registry) {
         registry_ = registry;
     }
+    void setInputImages(const QList<ChatImage>& images) { inputImages_ = images; }
     void setAllowedToolIds(const QStringList& ids) {
         allowedToolIds_ = ids;
         allowedToolFilterSet_ = true;
@@ -97,6 +98,7 @@ private:
     std::shared_ptr<std::mutex> providerSerialization_;
     bool serializeProviderRequests_ = false;
     ModelBinding modelBinding_;
+    QList<ChatImage> inputImages_;
     mutable ObservationIntent activeIntent_;
     bool observationIntentClassified_ = false;
     mutable QList<EvidenceRecord> activeEvidence_;

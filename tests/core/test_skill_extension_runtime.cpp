@@ -20,6 +20,28 @@ class SkillExtensionRuntimeTest final: public QObject {
     Q_OBJECT
     QString preferencePath;
 private slots:
+    void responseProfileIsBoundedAndDoesNotAlterGoalOrTools() {
+        AgentContextInput input;
+        input.goal = "Explain recursion";
+        input.responseProfileInstructions = QString(4000, 'x');
+        input.contextWindowTokens = 8192;
+        const auto context = ContextEngine{}.build(input);
+        int profiles = 0;
+        for (const auto& item : context.items) {
+            if (item.kind == AgentContextKind::Goal) QCOMPARE(item.content, input.goal);
+            if (item.kind == AgentContextKind::ResponseProfile) {
+                ++profiles;
+                QCOMPARE(item.content.size(), 2000);
+                QCOMPARE(item.source, QString("user-response-profile"));
+            }
+            QVERIFY(item.kind != AgentContextKind::Tool);
+        }
+        QCOMPARE(profiles, 1);
+        input.responseProfileInstructions.clear();
+        for (const auto& item : ContextEngine{}.build(input).items)
+            QVERIFY(item.kind != AgentContextKind::ResponseProfile);
+    }
+
     void workspaceScopedSkillEnablementPersists() {
         {
             SkillService service;

@@ -26,6 +26,8 @@ struct ChatAttachment {
     QString localReference;
     ChatAttachmentState state = ChatAttachmentState::Selected;
     QString compatibilityReason;
+    QString text;
+    QByteArray imageBytes;
 };
 
 class ChatModeService final : public QObject {
@@ -43,6 +45,7 @@ public:
                const ModelSelection& selection = {}, bool requireLocal = false);
     bool sendExisting(const QString& conversationId, int userMessageId, int replacesMessageId = 0,
                       const ModelSelection& selection = {}, bool requireLocal = false);
+    void setResponseProfileInstructions(QString instructions) { profileInstructions_ = instructions.left(2000); }
     bool stop();
     bool busy() const;
     ChatMessage activeMessage() const;
@@ -67,6 +70,7 @@ private:
     QThread* worker_ = nullptr;
     QSet<QThread*> workers_;
     std::shared_ptr<std::atomic_bool> cancellation_;
+    QString profileInstructions_;
     QString activeConversationId_;
     int activeMessageId_ = 0;
     qint64 lastPersistMs_ = 0;

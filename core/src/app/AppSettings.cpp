@@ -1325,6 +1325,14 @@ void AppSettings::setKokoroVoice(const QString& voice) {
     emit kokoroVoiceChanged();
 }
 
+QString AppSettings::voiceInputSource() const {
+    return store_ ? store_->value(QStringLiteral("voiceInputSource"), QStringLiteral("local")) : QStringLiteral("local");
+}
+void AppSettings::setVoiceInputSource(const QString& source) {
+    if (store_ && (source == QLatin1String("local") || source == QLatin1String("system")))
+        store_->setValue(QStringLiteral("voiceInputSource"), source);
+}
+
 QString AppSettings::whisperBinaryPath() const {
     return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
                   : QString();
@@ -1635,6 +1643,17 @@ void AppSettings::setExportIncludeModelMetadata(bool enabled) {
     store_->setValue(QString::fromLatin1(exportIncludeModelMetadataKey),
                      enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit workspaceSettingsChanged();
+}
+
+QString AppSettings::responseProfileInstructions() const {
+    return store_ ? store_->value(QStringLiteral("responseProfileInstructions")).left(2000) : QString{};
+}
+void AppSettings::setResponseProfileInstructions(const QString& instructions) {
+    if (!store_ || instructions.size() > 2000) return;
+    const auto normalized = instructions.trimmed();
+    if (normalized == responseProfileInstructions()) return;
+    store_->setValue(QStringLiteral("responseProfileInstructions"), normalized);
+    emit responseProfileInstructionsChanged();
 }
 
 QString AppSettings::selectedSkillProfile() const {

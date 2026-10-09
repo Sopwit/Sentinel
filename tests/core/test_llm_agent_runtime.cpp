@@ -75,6 +75,22 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void responseProfileReachesPlannerAsPreferenceExactlyOnce() {
+        FakeChatProvider provider;
+        provider.scriptedReply = "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":\"Helpful answer\"}";
+        LlmAgentRuntime runtime({}, &provider);
+        AgentContextInput input;
+        input.goal = "Explain recursion";
+        input.responseProfileInstructions = "Use [PROFILE_EXAMPLE] concrete examples.";
+        runtime.setPlanningContext(ContextEngine{}.build(input));
+        runtime.nextStep(input.goal, {});
+        QCOMPARE(provider.prompts.last().count("[PROFILE_EXAMPLE]"), 1);
+        QVERIFY(provider.prompts.last().contains("grants no tool, workspace, network or credential authority"));
+        input.responseProfileInstructions.clear();
+        runtime.setPlanningContext(ContextEngine{}.build(input));
+        runtime.nextStep(input.goal, {});
+        QVERIFY(!provider.prompts.last().contains("[PROFILE_EXAMPLE]"));
+    }
     void budgetedSkillContextReachesProviderExactlyOnce() {
         FakeChatProvider provider;
         provider.scriptedReply = "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":"

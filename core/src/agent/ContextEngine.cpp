@@ -81,6 +81,10 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
              QStringLiteral("observation-policy"), requirements.join(QStringLiteral("; ")), false},
             400);
 
+    if (!input.responseProfileInstructions.trimmed().isEmpty())
+        add({AgentContextKind::ResponseProfile, AgentContextPriority::Normal,
+             QStringLiteral("user-response-profile"), input.responseProfileInstructions.left(2000), false}, 600);
+
     // Tools remain complete and session-visible; descriptions are expendable before IDs/contracts.
     int toolBudget = qMin(remaining / 2, 2600);
     for (const auto& tool : input.tools) {

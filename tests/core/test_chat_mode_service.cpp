@@ -21,7 +21,7 @@ namespace {
 
 class FixtureProvider final : public IChatProvider {
 public:
-    enum class ReplyMode { FinalOnly, StreamWithEmptyFinal, Failure, IgnoresCancellation };
+    enum class ReplyMode { FinalOnly, StreamWithEmptyFinal, Failure, EchoPrompt, IgnoresCancellation };
 
     explicit FixtureProvider(ReplyMode mode, std::shared_ptr<std::atomic_int> finished = {})
         : mode_(mode), finished_(std::move(finished)) {}
@@ -42,7 +42,7 @@ public:
     ChatProviderReply sendMessage(const QString&) override {
         return {};
     }
-    ChatProviderReply sendRequest(const QString&, const ChatRequestOptions&) override {
+    ChatProviderReply sendRequest(const QString& prompt, const ChatRequestOptions&) override {
         if (mode_ == ReplyMode::Failure) {
             ChatProviderReply result;
             result.errorMessage = QStringLiteral("Fixture transport failure.");
@@ -54,7 +54,7 @@ public:
             QThread::msleep(100);
         ChatProviderReply result;
         result.success = true;
-        result.message = QStringLiteral("SENTINEL_CHAT_PIPELINE_OK");
+        result.message = mode_ == ReplyMode::EchoPrompt ? prompt : QStringLiteral("SENTINEL_CHAT_PIPELINE_OK");
         result.lifecycle = ChatRequestLifecycle::Completed;
         if (finished_)
             ++*finished_;
@@ -104,7 +104,24 @@ private slots:
     void shutdownJoinsCancelledAndReplacementWorkers();
     void sqliteStoreAcceptsInitiallyEmptyAssistantPlaceholder();
     void geminiPreservesAuthoritativeJsonSchema();
+    void responseProfileChangesRequestWithoutChangingUserMessage();
 };
+
+void ChatModeServiceTest::responseProfileChangesRequestWithoutChangingUserMessage() {
+    Harness harness(FixtureProvider::ReplyMode::EchoPrompt);
+    ChatModeService service(harness.models, harness.session, harness.store);
+    service.setResponseProfileInstructions("Use concrete learning examples.");
+    QVERIFY(service.send(harness.conversationId, "Explain recursion", {}, {"ollama", "fixture"}));
+    QTRY_VERIFY(!service.busy());
+    QCOMPARE(harness.session.messages().first().content, QString("Explain recursion"));
+    QVERIFY(harness.session.messages().last().content.contains("Use concrete learning examples."));
+    QVERIFY(harness.session.messages().last().content.contains("grants no tool or data access"));
+    service.setResponseProfileInstructions({});
+    QVERIFY(service.send(harness.conversationId, "Next question", {}, {"ollama", "fixture"}));
+    QTRY_VERIFY(!service.busy());
+    // The prior assistant may quote its request, but no active profile block is prepended.
+    QVERIFY(harness.session.messages().last().content.startsWith("User: Explain recursion"));
+}
 
 void ChatModeServiceTest::geminiPreservesAuthoritativeJsonSchema() {
     ToolDescriptor tool;

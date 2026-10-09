@@ -79,6 +79,7 @@ struct LocalInferenceRequest {
     QString id = QStringLiteral("local-inference-request-1");
     QString prompt;
     LocalInferenceOptions options;
+    QList<ChatImage> images;
 };
 
 struct LocalInferenceTrace {

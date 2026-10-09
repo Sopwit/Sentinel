@@ -964,6 +964,7 @@ void AgentRuntime::prepareExecution(const QStringList& availableToolIds) {
 
 void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
                                  const AgentSessionOptions& options, const QString& goal) {
+    loop.setResponseProfileInstructions(options.responseProfileInstructions);
     loop.setWorkspaceContext(options.workspaceContext);
     loop.setSkills(skillService_.skills());
     const auto workspaceRoot = options.workspaceContext.rootPath.trimmed().isEmpty()
@@ -972,6 +973,7 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
     if (!workspaceRoot.isEmpty())
         loop.setResourceScope(workspaceRoot);
     if (auto* llm = dynamic_cast<LlmAgentRuntime*>(planner_)) {
+        llm->setInputImages(options.inputImages);
         llm->setAllowedToolIds(
             (options.restrictAvailableTools || !options.availableToolIds.isEmpty())
                 ? options.availableToolIds

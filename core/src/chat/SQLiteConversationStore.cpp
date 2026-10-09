@@ -242,8 +242,8 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("INSERT INTO conversation_messages("
                                  "conversation_id, message_id, role, content, timestamp, status, "
-                                 "provider_id, model_id, reply_to_id, replaces_id, partial, error_category) "
-                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                                 "provider_id, model_id, reply_to_id, replaces_id, partial, error_category, attachments_json) "
+                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                                  "ON CONFLICT(conversation_id, message_id) DO UPDATE SET "
                                  "role = excluded.role,"
                                  "content = excluded.content,"
@@ -254,7 +254,7 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
                                  "reply_to_id = excluded.reply_to_id,"
                                  "replaces_id = excluded.replaces_id,"
                                  "partial = excluded.partial,"
-                                 "error_category = excluded.error_category"));
+                                 "error_category = excluded.error_category, attachments_json = excluded.attachments_json"));
     query.addBindValue(message.conversationId);
     query.addBindValue(message.messageId);
     query.addBindValue(chatRoleName(message.role));
@@ -267,6 +267,7 @@ bool SQLiteConversationStore::appendMessage(const ConversationMessageRecord& mes
     query.addBindValue(message.replacesMessageId);
     query.addBindValue(message.partial ? 1 : 0);
     query.addBindValue(chatProviderErrorCategoryName(message.errorCategory));
+    query.addBindValue(message.attachmentsJson.isNull() ? QStringLiteral("[]") : message.attachmentsJson);
     if (!query.exec()) {
         database_.rollback();
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
@@ -309,7 +310,7 @@ SQLiteConversationStore::loadMessages(const QString& conversationId) const {
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("SELECT conversation_id, message_id, role, content, timestamp, "
                                  "status, provider_id, model_id, reply_to_id, replaces_id, "
-                                 "partial, error_category FROM conversation_messages "
+                                 "partial, error_category, attachments_json FROM conversation_messages "
                                  "WHERE conversation_id = ? "
                                  "ORDER BY message_id ASC"));
     query.addBindValue(conversationId);
@@ -328,7 +329,7 @@ SQLiteConversationStore::loadMessages(const QString& conversationId) const {
             statusFromName(query.value(5).toString()),
             query.value(6).toString(), query.value(7).toString(),
             query.value(8).toInt(), query.value(9).toInt(),
-            query.value(10).toBool(), categoryFromName(query.value(11).toString()),
+            query.value(10).toBool(), categoryFromName(query.value(11).toString()), query.value(12).toString(),
         });
     }
 
@@ -798,6 +799,7 @@ void SQLiteConversationStore::initializeSchema() {
     }
 
     const QList<QPair<QString, QString>> messageColumns{
+        {QStringLiteral("attachments_json"), QStringLiteral("TEXT NOT NULL DEFAULT '[]'")},
         {QStringLiteral("provider_id"), QStringLiteral("TEXT NOT NULL DEFAULT ''")},
         {QStringLiteral("model_id"), QStringLiteral("TEXT NOT NULL DEFAULT ''")},
         {QStringLiteral("reply_to_id"), QStringLiteral("INTEGER NOT NULL DEFAULT 0")},

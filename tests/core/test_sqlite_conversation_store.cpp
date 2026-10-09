@@ -73,7 +73,7 @@ void SQLiteConversationStoreTest::startsEmptyAndInitializesSchema() {
     SQLiteConversationStore store(databasePath(dir));
 
     QCOMPARE(store.status(), ConversationStoreStatus::Ready);
-    QCOMPARE(store.schemaVersion(), 5);
+    QCOMPARE(store.schemaVersion(), 6);
     QVERIFY(store.listConversations().isEmpty());
 }
 
@@ -313,7 +313,7 @@ void SQLiteConversationStoreTest::doesNotMigrateOrClearSingleTranscriptStore() {
 
     {
         SQLiteConversationStore conversationStore(conversationPath);
-    QCOMPARE(conversationStore.schemaVersion(), 5);
+    QCOMPARE(conversationStore.schemaVersion(), 6);
         QVERIFY(conversationStore.listConversations().isEmpty());
     }
 

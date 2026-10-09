@@ -67,11 +67,12 @@ class CatalogNetwork final : public QNetworkAccessManager {
 public:
     QList<QUrl> requests;
     QByteArray body;
+    std::function<QByteArray(const QUrl&)> responder;
 
 protected:
     QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) override {
         requests.append(request.url());
-        return new CatalogReply(request, body, this);
+        return new CatalogReply(request, responder ? responder(request.url()) : body, this);
     }
 };
 
@@ -89,6 +90,8 @@ private slots:
     void explicitRefreshBypassesFreshCache();
     void catalogContinuationsStayOnTrustedOrigin();
     void catalogSearchPagesUseTaskAndPreserveCacheOnInvalidResponse();
+    void automaticCatalogAccumulatesAndStopsRepeatedCursor();
+    void repositoryMetadataRetrievesExactSizeAndConfiguration();
     void webCatalogRestoresSnapshotAndRejectsMalformedCache();
     void llamaCppLoadedTemplateCapabilities_data();
     void llamaCppLoadedTemplateCapabilities();
@@ -281,6 +284,8 @@ void OllamaRuntimeTest::taskCategoriesAndMixedCapabilities() {
     QCOMPARE(modelCategory("detector", {"object-detection"}), QString("Vision"));
     QCOMPARE(modelCategory("video", {"video-to-video"}), QString("Video"));
     QCOMPARE(modelCategory("speech", {"text-to-speech"}), QString("TTS"));
+    QCOMPARE(modelCategory("speech", {}, "audio-to-audio"), QString("STS"));
+    QCOMPARE(modelCategory("speech", {"speech-to-speech"}), QString("STS"));
     QCOMPARE(modelCategory("speech", {"automatic-speech-recognition"}), QString("STT"));
 }
 void OllamaRuntimeTest::parsesLmStudioCloudAndDownloadMetadata() {
@@ -403,15 +408,16 @@ void OllamaRuntimeTest::catalogSearchPagesUseTaskAndPreserveCacheOnInvalidRespon
     QTRY_COMPARE(finished.size(), 1);
     QVERIFY(finished.takeFirst().first().toBool());
     QCOMPARE(network->requests.last().query(), QString("cursor=second"));
-    QCOMPARE(source.repositories().size(), 1);
-    QCOMPARE(source.repositories().first().id, QString("test/second"));
+    QCOMPARE(source.repositories().size(), 2);
+    QCOMPARE(source.repositories().last().id, QString("test/second"));
     sentinel::core::HuggingFaceModelSource restored(directory.filePath("catalog.json"));
-    QVERIFY(restored.hasMore());
+    QVERIFY(!restored.hasMore());
+    source.nextPage_ = QUrl("https://huggingface.co/api/models?cursor=third");
     network->body = "{invalid";
     source.fetchMore();
     QTRY_COMPARE(finished.size(), 1);
     QVERIFY(!finished.takeFirst().first().toBool());
-    QCOMPARE(source.repositories().first().id, QString("test/second"));
+    QCOMPARE(source.repositories().last().id, QString("test/second"));
     network->body = R"([{"id":"test/gguf","tags":["gguf"]}])";
     source.searchCatalog("video", "text-to-video", "lastModified", false, true);
     QTRY_COMPARE(finished.size(), 1);
@@ -423,6 +429,51 @@ void OllamaRuntimeTest::catalogSearchPagesUseTaskAndPreserveCacheOnInvalidRespon
     source.searchCatalog("video", "text-to-video", "lastModified", false, false);
     QTRY_COMPARE(network->requests.size(), requestCount + 1);
     QVERIFY(!QUrlQuery(network->requests.last()).hasQueryItem("filter"));
+}
+
+void OllamaRuntimeTest::automaticCatalogAccumulatesAndStopsRepeatedCursor() {
+    QTemporaryDir directory;
+    sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));
+    auto* network = new CatalogNetwork; network->setParent(&source);
+    delete source.network_; source.network_ = network;
+    network->responder = [](const QUrl& url) {
+        QJsonArray rows;
+        const bool second = QUrlQuery(url).hasQueryItem("cursor");
+        for (int i = second ? 45 : 0; i < (second ? 90 : 45); ++i)
+            rows.append(QJsonObject{{"id", QString("test/model%1").arg(i)}, {"pipeline_tag", "text-generation"}});
+        return QJsonDocument(rows).toJson();
+    };
+    source.setAutoFetch(true);
+    source.searchCatalog("", "text-generation", "downloads", true);
+    QTRY_COMPARE_WITH_TIMEOUT(source.repositories().size(), 90, 4000);
+    QCOMPARE(network->requests.size(), 2);
+    QVERIFY(!source.hasMore());
+    sentinel::core::HuggingFaceModelSource restored(directory.filePath("catalog.json"));
+    QCOMPARE(restored.repositories().size(), 90);
+    network->responder = [](const QUrl&) { return QByteArray("[]"); };
+    source.searchCatalog("", "audio-to-audio", "downloads", true);
+    QVERIFY(source.repositories().isEmpty());
+}
+void OllamaRuntimeTest::repositoryMetadataRetrievesExactSizeAndConfiguration() {
+    QTemporaryDir directory;
+    sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));
+    auto* network = new CatalogNetwork; network->setParent(&source);
+    delete source.network_; source.network_ = network;
+    network->responder = [](const QUrl& url) {
+        if (url.path().endsWith("config.json")) return QByteArray(R"({"model_type":"qwen2","max_position_embeddings":32768})");
+        if (url.path().endsWith("README.md")) return QByteArray("# Model card\nDocumented publisher metadata.");
+        return QByteArray(R"({"id":"test/model","sha":"1111111111111111111111111111111111111111","pipeline_tag":"text-generation","cardData":{"license":"apache-2.0"},"siblings":[{"rfilename":"model-Q4_K_M.gguf","lfs":{"size":123456789,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},{"rfilename":"config.json"},{"rfilename":"README.md"}]})");
+    };
+    source.fetchRepository("test/model");
+    QTRY_VERIFY(!source.repositories().isEmpty());
+    QTRY_COMPARE(source.repositories().first().metadata.value("config").toObject().value("max_position_embeddings").toInt(), 32768);
+    QTRY_VERIFY(!source.repositories().first().metadata.value("modelCard").toString().isEmpty());
+    const auto artifact = source.repositories().first().artifacts.first();
+    QCOMPARE(artifact.sizeBytes.value(), qint64(123456789));
+    QCOMPARE(artifact.sha256, QString(64, 'a'));
+    QCOMPARE(source.repositories().first().license, QString("apache-2.0"));
+    QCOMPARE(source.repositories().first().architecture, QString("qwen2"));
+    QCOMPARE(source.entries().first().sizeBytes.value(), qint64(123456789));
 }
 
 QTEST_MAIN(OllamaRuntimeTest)

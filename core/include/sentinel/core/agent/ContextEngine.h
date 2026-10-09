@@ -24,7 +24,8 @@ enum class AgentContextKind {
     Fact,
     Tool,
     Requirement,
-    Skill
+    Skill,
+    ResponseProfile
 };
 enum class AgentContextPriority { Critical, High, Normal, Low };
 
@@ -52,6 +53,7 @@ struct AgentContextInput {
         QString retrievalPreference;
         QString memoryScope;
     } workspaceContext;
+    QString responseProfileInstructions;
     QString goal;
     QString workspace;
     const IChatHistoryStore* chatHistoryStore = nullptr;

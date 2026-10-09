@@ -99,12 +99,12 @@ ChatProviderReply OllamaChatProvider::sendRequest(const QString& message,
                                                   const ChatRequestOptions& options) {
     if (options.nativeToolCalling || options.structuredOutput)
         return IChatProvider::sendRequest(message, options);
-    return sendMessageWithToken(message, options.cancellationToken);
+    return sendMessageWithToken(message, options.cancellationToken, options.images);
 }
 
 ChatProviderReply OllamaChatProvider::sendMessageWithToken(
     const QString& message,
-    const std::shared_ptr<std::atomic_bool>& cancellationToken) {
+    const std::shared_ptr<std::atomic_bool>& cancellationToken, const QList<ChatImage>& images) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty()) {
         return failureReply(QStringLiteral("Prompt is blank."),
@@ -138,6 +138,7 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
     LocalInferenceRequest request;
     request.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     request.prompt = trimmed;
+    request.images = images;
     request.options.model = model;
     if (discoverySnapshot_)
         request.options.modelValidation = *discoverySnapshot_;

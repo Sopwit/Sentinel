@@ -1919,6 +1919,7 @@ public:
     QStringList memoryEntries() const;
     void setConversationExportDirectory(const QString& directoryPath);
 
+    bool sendMessageWithAttachments(const QString& message, const QList<ChatAttachment>& attachments);
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool stopChatGeneration();
     Q_INVOKABLE bool regenerateChatResponse(int userMessageId);
@@ -1951,6 +1952,7 @@ public:
     Q_INVOKABLE bool requestMemoryCandidateCommit(const QString& candidateId);
     Q_INVOKABLE bool recallLocalMemory(const QString& query);
     Q_INVOKABLE void clearLocalMemoryRecall();
+    bool runAgentRequestWithAttachments(const QString& request, const QList<ChatAttachment>& attachments);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool cancelAgentRun();
     Q_INVOKABLE bool agentLoopActive() const;
@@ -2016,7 +2018,7 @@ signals:
     void promptContextInjectionChanged();
 
 private:
-    bool startAgentLoopRun(const QString& goal);
+    bool startAgentLoopRun(const QString& goal, const QList<ChatAttachment>& attachments = {});
     void resumeAgentLoopWithApproval(bool approved, bool alwaysAllow = false);
     AgentLoopState currentAgentSessionState() const;
     void onAgentStepRecord(const AgentStepRecord& record);

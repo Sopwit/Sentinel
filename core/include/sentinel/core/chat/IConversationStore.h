@@ -80,6 +80,7 @@ struct ConversationMessageRecord {
     int replacesMessageId = 0;
     bool partial = false;
     ChatProviderErrorCategory errorCategory = ChatProviderErrorCategory::None;
+    QString attachmentsJson;
 };
 
 struct ConversationSummaryMetadataRecord {
