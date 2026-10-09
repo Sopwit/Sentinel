@@ -11,22 +11,26 @@ use editor::Editor;
 use picker::{Item, Picker};
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Rect},
-    style::{Modifier, Style},
+    layout::{Alignment, Constraint, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::Line,
     widgets::{Block, Clear, Paragraph, Wrap},
 };
 use sentinel_ipc::{Client, Envelope, Error};
 use serde_json::{Value, json};
 use std::{
+    cell::Cell,
     path::Path,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
+        mpsc::{self, Receiver, SyncSender},
     },
     time::{Duration, Instant},
 };
 const COMMANDS: &[(&str, &str)] = &[
+    ("/reconnect", "Reconnect without replaying work"),
+    ("/remove", "Remove last selected file reference"),
     ("/model", "Select a discovered model"),
     ("/provider", "Inspect providers and select a model"),
     ("/workspace", "Select a daemon-owned workspace"),
@@ -48,7 +52,23 @@ const COMMANDS: &[(&str, &str)] = &[
     ("/files", "File context availability"),
     ("/diff", "Change review availability"),
 ];
-const HELP: &str = "Enter: newline · Ctrl+S: send · Ctrl+G: Chat/Agent\nCtrl+P / Tab: command palette · Ctrl+L: models · Ctrl+W: workspaces\nCtrl+O: sessions · Ctrl+N: new session · Ctrl+R: reconnect\nArrows / Home / End: edit · Ctrl+Left/Right: word\nAlt+Up/Down: input history (draft restored)\nPageUp/PageDown: scroll · Ctrl+B: bottom · Ctrl+F: search\nCtrl+C: cancel active run; exit when idle · F1 or /help: help\nPicker: type to filter, Up/Down, Enter, Esc\nApproval: y Allow Once / n Deny; Esc keeps it open\nTerminal selection/copy remains available; history is not persisted.";
+const HELP: &str = "Enter: send · Ctrl+O: newline · Alt/Shift+Enter: newline when supported\nCtrl+P / Tab: commands · Ctrl+L: models · Ctrl+W: workspaces\n/sessions: sessions · Ctrl+N: new · /reconnect: reconnect\nCtrl+R / Ctrl+F: transcript search · F1 or /help: help\nCtrl+A/E: line start/end · Ctrl+U/K: erase to start/end\nArrows: edit · Alt+Up/Down: draft history · Ctrl+Left/Right: word\nPgUp/PgDn: scroll · Ctrl+B: follow latest · /activity: tool details\nCtrl+C: cancel run; idle draft is preserved · Ctrl+D: exit only idle/empty\n/remove: remove last file reference · @: authorized file picker\nPicker: type to filter, Up/Down or Tab/Shift+Tab, Enter, Esc\nApproval: y Allow Once / n Deny; Esc preserves pending approval\nPaste never sends. Input recall is memory-only; sessions belong to daemon.";
+
+// A guard complements Ratatui's panic hook on recoverable error/early-return paths.
+struct TerminalCleanup;
+impl Drop for TerminalCleanup {
+    fn drop(&mut self) {
+        let _ = execute!(std::io::stdout(), DisableBracketedPaste);
+        ratatui::restore();
+    }
+}
+fn newline_key(key: crossterm::event::KeyEvent) -> bool {
+    (key.code == KeyCode::Char('o') && key.modifiers.contains(KeyModifiers::CONTROL))
+        || (key.code == KeyCode::Enter
+            && key
+                .modifiers
+                .intersects(KeyModifiers::ALT | KeyModifiers::SHIFT))
+}
 struct Request {
     name: &'static str,
     payload: Value,
@@ -61,7 +81,7 @@ enum Update {
     Connection(bool),
 }
 struct Worker {
-    tx: Sender<Request>,
+    tx: SyncSender<Request>,
     rx: Receiver<Update>,
     stop: Arc<AtomicBool>,
 }
@@ -72,7 +92,7 @@ impl Drop for Worker {
 }
 fn worker(path: &Path) -> Worker {
     let path = path.to_owned();
-    let (tx, commands) = mpsc::channel::<Request>();
+    let (tx, commands) = mpsc::sync_channel::<Request>(32);
     let (updates, rx) = mpsc::sync_channel(256);
     let stop = Arc::new(AtomicBool::new(false));
     let stopping = stop.clone();
@@ -195,6 +215,9 @@ fn worker(path: &Path) -> Worker {
 #[derive(Default)]
 struct App {
     cancel_after_start: bool,
+    pending_text: String,
+    pending_references: Vec<String>,
+    latest_user: String,
     changes: Vec<Value>,
     references: Vec<String>,
     editor: Editor,
@@ -216,6 +239,7 @@ struct App {
     notice: String,
     busy: bool,
     scroll: u16,
+    viewport_bottom: Cell<u16>,
     follow: bool,
     search: Option<String>,
     last_sequence: u64,
@@ -229,14 +253,22 @@ impl App {
     fn request(&mut self, worker: &Worker, name: &'static str, payload: Value, tag: &str) {
         if worker
             .tx
-            .send(Request {
+            .try_send(Request {
                 name,
                 payload,
                 tag: tag.into(),
             })
             .is_err()
         {
-            self.notice = "Connection worker stopped".into();
+            self.notice =
+                "Connection queue unavailable. Draft preserved; wait for connection recovery."
+                    .into();
+            if tag == "start" {
+                self.state = "rejected".into();
+                self.busy = false;
+                self.editor.insert(&std::mem::take(&mut self.pending_text));
+                self.references.append(&mut self.pending_references);
+            }
         }
     }
     fn refresh(&mut self, worker: &Worker) {
@@ -245,6 +277,12 @@ impl App {
         self.request(worker, "session.list", json!({}), "sessions");
     }
     fn snapshot(&mut self, value: Value) {
+        if value["run_id"].as_str().unwrap_or("") != self.run_id {
+            if self.state != "starting" {
+                self.latest_user.clear();
+            }
+            self.activity.clear();
+        }
         self.sid = value["session_id"].as_str().unwrap_or("").into();
         self.title = value["title"].as_str().unwrap_or("Terminal session").into();
         self.run_id = value["run_id"].as_str().unwrap_or("").into();
@@ -267,9 +305,19 @@ impl App {
     fn update(&mut self, update: Update, worker: &Worker) {
         match update {
             Update::Connection(connected) => {
+                let recovered = connected && !self.connected;
                 self.connected = connected;
+                if recovered {
+                    self.refresh(worker);
+                }
             }
             Update::Failure(tag, error) => {
+                if matches!(
+                    error,
+                    Error::Disconnected | Error::Unavailable(_) | Error::Timeout
+                ) {
+                    self.connected = false;
+                }
                 self.notice = error.to_string();
                 self.busy = false;
                 if tag == "approval" {
@@ -277,6 +325,11 @@ impl App {
                 }
                 if tag == "start" {
                     self.state = "rejected".into();
+                    if self.editor.text.is_empty() {
+                        self.editor.insert(&std::mem::take(&mut self.pending_text));
+                    }
+                    self.references.append(&mut self.pending_references);
+                    self.cancel_after_start = false;
                 }
                 if tag == "connection" {
                     self.connected = false;
@@ -411,6 +464,8 @@ impl App {
                         }
                     }
                     "start" => {
+                        self.pending_text.clear();
+                        self.pending_references.clear();
                         self.run_id = value["run_id"].as_str().unwrap_or("").into();
                         self.state = "running".into();
                         if self.cancel_after_start {
@@ -476,6 +531,15 @@ impl App {
                 }
                 let generation = event.payload["server_generation"].as_str().unwrap_or("");
                 let sequence = event.payload["event_sequence"].as_u64().unwrap_or(0);
+                if !generation.is_empty()
+                    && !self.generation.is_empty()
+                    && generation != self.generation
+                {
+                    return;
+                }
+                if event.name == "output.delta" && !self.active() {
+                    return;
+                }
                 if !generation.is_empty()
                     && generation == self.generation
                     && sequence > 0
@@ -696,6 +760,8 @@ impl App {
     }
     fn command(&mut self, text: &str, worker: &Worker) {
         match text.trim(){
+            "/reconnect"=>self.request(worker,"reconnect",json!({}),"reconnect"),
+            "/remove"=>{self.references.pop();},
             "/model"=>self.open_picker("model"),"/provider"=>self.open_picker("provider"),"/workspace"=>self.open_picker("workspace"),"/sessions"=>self.open_picker("session"),
             "/new"=>{if self.active(){self.notice="Finish or cancel the active run before creating a session.".into();}else{self.request(worker,"session.create",json!({"title":"Terminal session"}),"new");}},
             "/agent"|"/chat"=>{if !self.active(){self.agent=text.trim()=="/agent";}else{self.notice="Mode cannot change during an active run.".into();}},
@@ -725,7 +791,7 @@ impl App {
             return;
         }
         if !self.connected {
-            self.notice = "Disconnected. Ctrl+R reconnects; your draft is preserved.".into();
+            self.notice = "Disconnected. /reconnect reconnects; your draft is preserved.".into();
             return;
         }
         if self.models.is_empty() {
@@ -740,6 +806,9 @@ impl App {
             self.notice="File references require Agent mode and its authorized observation tools. Ctrl+G switches mode explicitly.".into();
             return;
         }
+        self.pending_text = self.editor.text.clone();
+        self.latest_user = self.editor.text.clone();
+        self.pending_references = self.references.clone();
         let mut text = self.editor.take();
         if !self.references.is_empty() {
             text.push_str("\nReferenced workspace files (observe through authorized tools):\n");
@@ -763,6 +832,34 @@ impl App {
         );
     }
 }
+fn panel_block() -> Block<'static> {
+    let block = Block::bordered();
+    if std::env::var_os("SENTINEL_TUI_ASCII").is_some() {
+        block.border_set(ratatui::symbols::border::Set {
+            top_left: "+",
+            top_right: "+",
+            bottom_left: "+",
+            bottom_right: "+",
+            vertical_left: "|",
+            vertical_right: "|",
+            horizontal_top: "-",
+            horizontal_bottom: "-",
+        })
+    } else {
+        block
+    }
+}
+fn header_style() -> Style {
+    let style = Style::default().add_modifier(Modifier::BOLD);
+    if std::env::var_os("NO_COLOR").is_some() {
+        return style;
+    }
+    match std::env::var("SENTINEL_TUI_THEME").as_deref() {
+        Ok("dark") => style.fg(Color::Rgb(169, 202, 211)),
+        Ok("light") => style.fg(Color::Rgb(21, 23, 25)),
+        _ => style,
+    }
+}
 fn modal(area: Rect) -> Rect {
     let width = area.width.saturating_sub(4).min(90);
     let height = area.height.saturating_sub(2).min(18);
@@ -774,81 +871,191 @@ fn modal(area: Rect) -> Rect {
     )
 }
 fn draw(frame: &mut Frame, app: &App) {
+    if frame.area().width < 24 || frame.area().height < 8 {
+        frame.render_widget(
+            Paragraph::new(
+                "Sentinel: enlarge terminal (24×8 minimum). Ctrl+C exits idle; draft retained.",
+            )
+            .wrap(Wrap { trim: false }),
+            frame.area(),
+        );
+        return;
+    }
+    let composer_height =
+        (app.editor.text.lines().count().max(1) as u16 + 2).min((frame.area().height / 3).max(3));
     let areas = Layout::vertical([
         Constraint::Length(3),
         Constraint::Min(1),
-        Constraint::Length(if frame.area().height >= 24 { 6 } else { 4 }),
+        Constraint::Length(composer_height),
         Constraint::Length(2),
     ])
     .split(frame.area());
     let properties = &app.diagnostics["properties"];
-    let title = format!(
-        "Sentinel · {} · {} · {}",
-        if app.agent { "AGENT" } else { "CHAT" },
-        app.title,
-        if app.connected {
-            app.state.as_str()
-        } else {
-            "disconnected"
-        }
-    );
-    let header = format!(
-        "{} / {} · {}\nWorkspace: {} · {}",
-        properties["activeRuntimeProviderLabel"]
-            .as_str()
-            .unwrap_or("unselected"),
-        properties["activeRuntimeModelLabel"]
-            .as_str()
-            .unwrap_or("unselected"),
-        properties["activeRuntimeReadinessSummary"]
-            .as_str()
-            .unwrap_or("readiness unknown"),
-        app.diagnostics["workspace"]["name"]
-            .as_str()
-            .unwrap_or("unknown"),
-        app.diagnostics["workspace"]["root"]
-            .as_str()
-            .unwrap_or("no root")
+    let header_rows = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(1),
+        Constraint::Length(1),
+    ])
+    .split(areas[0]);
+    let header_columns =
+        Layout::horizontal([Constraint::Min(1), Constraint::Length(14)]).split(header_rows[0]);
+    frame.render_widget(
+        Paragraph::new(format!(
+            "SENTINEL / {}",
+            if app.agent { "Agent" } else { "Chat" }
+        ))
+        .style(header_style()),
+        header_columns[0],
     );
     frame.render_widget(
-        Paragraph::new(header).block(Block::bordered().title(title)),
-        areas[0],
+        Paragraph::new(if app.connected {
+            "Connected"
+        } else {
+            "Disconnected"
+        })
+        .alignment(Alignment::Right),
+        header_columns[1],
     );
-    let height = areas[1].height.saturating_sub(2) as usize;
+    frame.render_widget(
+        Block::default()
+            .borders(ratatui::widgets::Borders::BOTTOM)
+            .border_style(Style::default().add_modifier(Modifier::DIM)),
+        header_rows[1],
+    );
+    frame.render_widget(
+        Paragraph::new(format!(
+            "{} / {} · {}",
+            properties["activeRuntimeProviderLabel"]
+                .as_str()
+                .unwrap_or("Provider unselected"),
+            properties["activeRuntimeModelLabel"]
+                .as_str()
+                .unwrap_or("Model unselected"),
+            properties["activeRuntimeReadinessSummary"]
+                .as_str()
+                .unwrap_or("readiness unknown"),
+        ))
+        .style(Style::default().add_modifier(Modifier::DIM)),
+        header_rows[2],
+    );
+    let height = areas[1].height as usize;
     let width = areas[1].width.saturating_sub(2).max(1) as usize;
-    let lines = app
-        .output
+    let empty = app.output.is_empty() && !app.active();
+    let transcript = if empty {
+        if !app.connected {
+            "Daemon disconnected\nStart sentinel-daemon, then /reconnect.\nYour draft stays here. /help lists commands.".into()
+        } else if app.models.is_empty() {
+            "Choose a model to begin\n/provider inspects readiness · /model selects a model\n/doctor shows diagnostics".into()
+        } else {
+            format!(
+                "Start a new {} conversation\nType a message below and press Enter.\nCtrl+P commands · /model change model",
+                if app.agent { "Agent" } else { "Chat" }
+            )
+        }
+    } else if app.active() {
+        format!(
+            "{}{} · {}\n{}\n\n{}",
+            if app.latest_user.is_empty() {
+                String::new()
+            } else {
+                format!("You\n{}\n\n", app.latest_user)
+            },
+            if app.agent { "Agent" } else { "Assistant" },
+            app.state,
+            app.output,
+            app.activity
+                .iter()
+                .rev()
+                .take(3)
+                .rev()
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    } else {
+        app.output.clone()
+    };
+    let lines = transcript
         .lines()
-        .map(|line| line.chars().count().max(1).div_ceil(width))
+        .map(|line| Line::raw(line).width().max(1).div_ceil(width))
         .sum::<usize>();
     let scroll = if app.follow {
         lines.saturating_sub(height).min(u16::MAX as usize) as u16
     } else {
         app.scroll
     };
+    app.viewport_bottom
+        .set(lines.saturating_sub(height).min(u16::MAX as usize) as u16);
+    let transcript_area = if empty {
+        let content_height = transcript.lines().count() as u16;
+        Rect::new(
+            areas[1].x,
+            areas[1].y + areas[1].height.saturating_sub(content_height) / 2,
+            areas[1].width,
+            content_height.min(areas[1].height),
+        )
+    } else {
+        areas[1]
+    };
+    let styled_lines = transcript
+        .lines()
+        .map(|line| {
+            if [
+                "You",
+                "Assistant",
+                "Agent",
+                "user",
+                "assistant",
+                "agent",
+                "system",
+            ]
+            .contains(&line)
+                || line.starts_with("Assistant ·")
+                || line.starts_with("Agent ·")
+            {
+                Line::styled(line.to_owned(), header_style())
+            } else {
+                Line::raw(line.to_owned())
+            }
+        })
+        .collect::<Vec<_>>();
     frame.render_widget(
-        Paragraph::new(app.output.as_str())
+        Paragraph::new(styled_lines)
+            .alignment(if empty {
+                Alignment::Center
+            } else {
+                Alignment::Left
+            })
             .wrap(Wrap { trim: false })
-            .scroll((scroll, 0))
-            .block(Block::bordered().title("Transcript / output · PgUp/PgDn")),
-        areas[1],
+            .scroll((if empty { 0 } else { scroll }, 0)),
+        transcript_area,
     );
     let before = &app.editor.text[..app.editor.cursor];
     let row = before.chars().filter(|&c| c == '\n').count();
-    let col = before.rsplit('\n').next().unwrap_or("").chars().count();
+    let col = Line::raw(before.rsplit('\n').next().unwrap_or("")).width();
+    let horizontal = col.saturating_sub(areas[2].width.saturating_sub(3) as usize);
     let visible = areas[2].height.saturating_sub(2) as usize;
     let start = row.saturating_sub(visible.saturating_sub(1));
     frame.render_widget(
         Paragraph::new(app.editor.text.as_str())
-            .scroll((start.min(u16::MAX as usize) as u16, 0))
+            .scroll((
+                start.min(u16::MAX as usize) as u16,
+                horizontal.min(u16::MAX as usize) as u16,
+            ))
             .block(
-                Block::bordered().title("Composer · Enter newline · Ctrl+S send · Ctrl+P commands"),
+                panel_block()
+                    .border_style(Style::default().add_modifier(Modifier::DIM))
+                    .title(" Message "),
             ),
         areas[2],
     );
     if app.picker.is_none() && app.approval.is_none() && areas[2].width > 2 && areas[2].height > 2 {
         frame.set_cursor_position((
-            areas[2].x + 1 + (col as u16).min(areas[2].width - 3),
+            areas[2].x
+                + 1
+                + col
+                    .saturating_sub(horizontal)
+                    .min(areas[2].width.saturating_sub(3) as usize) as u16,
             areas[2].y + 1 + row.saturating_sub(start).min(visible.saturating_sub(1)) as u16,
         ));
     }
@@ -856,12 +1063,12 @@ fn draw(frame: &mut Frame, app: &App) {
         .activity
         .last()
         .map(String::as_str)
-        .unwrap_or("No activity");
+        .unwrap_or(app.state.as_str());
     let reference_hint = if app.references.is_empty() {
         String::new()
     } else {
         format!(
-            "Refs: {} · Ctrl+D remove · ",
+            "Refs: {} · /remove · ",
             app.references
                 .iter()
                 .map(|p| format!("@{}", serde_json::to_string(p).unwrap_or_default()))
@@ -869,18 +1076,33 @@ fn draw(frame: &mut Frame, app: &App) {
                 .join(", ")
         )
     };
-    let notice = if let Some(search) = &app.search {
+    let notice = if !app.follow && lines > height + app.scroll as usize {
+        "Viewing earlier output · new content below · Ctrl+B follows latest".to_owned()
+    } else if let Some(search) = &app.search {
         format!("Search: {search} · Enter find / Esc close")
     } else if app.notice.is_empty() {
         activity.to_owned()
     } else {
         app.notice.clone()
     };
+    let footer_rows =
+        Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).split(areas[3]);
     frame.render_widget(
-        Paragraph::new(format!(
-            "{reference_hint}{notice}\nF1 help · Ctrl+G mode · Ctrl+O sessions · Ctrl+C cancel/exit"
-        )),
-        areas[3],
+        Paragraph::new(format!("{reference_hint}{notice}")),
+        footer_rows[0],
+    );
+    let footer_columns =
+        Layout::horizontal([Constraint::Min(1), Constraint::Length(14)]).split(footer_rows[1]);
+    frame.render_widget(
+        Paragraph::new("Enter send · Ctrl+O newline · Ctrl+P commands · F1 help")
+            .style(Style::default().add_modifier(Modifier::DIM)),
+        footer_columns[0],
+    );
+    frame.render_widget(
+        Paragraph::new(app.state.as_str())
+            .alignment(Alignment::Right)
+            .style(header_style()),
+        footer_columns[1],
     );
     if let Some(picker) = &app.picker {
         let area = modal(frame.area());
@@ -896,7 +1118,7 @@ fn draw(frame: &mut Frame, app: &App) {
             .map(|(i, item)| {
                 format!(
                     "{} {}{}",
-                    if i == picker.selected { "›" } else { " " },
+                    if i == picker.selected { ">" } else { " " },
                     item.label,
                     if item.enabled { "" } else { " [unavailable]" }
                 )
@@ -906,18 +1128,23 @@ fn draw(frame: &mut Frame, app: &App) {
         let selected = visible
             .get(picker.selected)
             .map(|item| format!("{} · {}", item.id, item.extra))
-            .unwrap_or_else(|| "No matches".into());
+            .unwrap_or_else(|| {
+                if !app.connected {
+                    "Disconnected: cached choices may be stale; /reconnect".into()
+                } else {
+                    "No matches. Change filter or Esc to return.".into()
+                }
+            });
         frame.render_widget(
-            Paragraph::new(format!("Filter: {}\n{rows}\n{selected}", picker.query)).block(
-                Block::bordered().title(format!("{} · Enter select · Esc cancel", picker.kind)),
-            ),
+            Paragraph::new(format!("Filter: {}\n{rows}\n{selected}", picker.query))
+                .block(panel_block().title(format!("{} · Enter select · Esc cancel", picker.kind))),
             area,
         );
     }
     if let Some(p) = &app.approval {
         let area = modal(frame.area());
         frame.render_widget(Clear, area);
-        frame.render_widget(Paragraph::new(format!("Tool: {} · risk {}\nResources: {}\n{}\nSession: {}\nRun: {}\nScope: this pending operation only\n{}",p["tool"].as_str().unwrap_or("unknown"),p["risk"],p["resources"],p["detail"].as_str().unwrap_or(""),app.sid,app.run_id,if app.approval_pending{"Waiting for authoritative response…"}else{"y Allow Once · n Deny · Esc keeps approval open"})).wrap(Wrap{trim:false}).block(Block::bordered().title("Approval required").style(Style::default().add_modifier(Modifier::BOLD))),area);
+        frame.render_widget(Paragraph::new(format!("Tool: {} · risk {}\nResources: {}\n{}\nSession: {}\nRun: {}\nScope: this pending operation only\n{}",p["tool"].as_str().unwrap_or("unknown"),p["risk"],p["resources"],p["detail"].as_str().unwrap_or(""),app.sid,app.run_id,if app.approval_pending{"Waiting for authoritative response…"}else{"y Allow Once · n Deny · Esc keeps approval open"})).wrap(Wrap{trim:false}).block(panel_block().title("Approval required").style(Style::default().add_modifier(Modifier::BOLD))),area);
     }
 }
 pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
@@ -929,21 +1156,28 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
         ..App::default()
     };
     app.refresh(&worker);
-    let mut terminal = ratatui::init();
+    let mut terminal = ratatui::try_init().map_err(|e| Error::Unavailable(e.to_string()))?;
+    let _cleanup = TerminalCleanup;
     let _ = execute!(std::io::stdout(), EnableBracketedPaste);
-    let result = (|| -> Result<(), Error> {
+    (|| -> Result<(), Error> {
+        let mut dirty = true;
         loop {
             while let Ok(update) = worker.rx.try_recv() {
                 app.update(update, &worker);
+                dirty = true;
             }
-            terminal
-                .draw(|frame| draw(frame, &app))
-                .map_err(|e| Error::Protocol(e.to_string()))?;
+            if dirty {
+                terminal
+                    .draw(|frame| draw(frame, &app))
+                    .map_err(|e| Error::Protocol(e.to_string()))?;
+                dirty = false;
+            }
             if !event::poll(Duration::from_millis(50))
                 .map_err(|e| Error::Protocol(e.to_string()))?
             {
                 continue;
             }
+            dirty = true;
             match event::read().map_err(|e| Error::Protocol(e.to_string()))? {
                 Event::Paste(text) => {
                     if app.picker.is_none() && app.approval.is_none() {
@@ -964,13 +1198,20 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                                 );
                                 app.state = "cancelling".into();
                             }
-                        } else {
+                        } else if app.editor.text.is_empty()
+                            && app.picker.is_none()
+                            && app.search.is_none()
+                        {
                             break;
+                        } else {
+                            app.picker = None;
+                            app.search = None;
+                            app.notice =
+                                "Draft preserved. Ctrl+D exits only with an empty composer.".into();
                         }
-                        continue;
-                    }
-                    if ctrl && key.code == KeyCode::Char('r') {
-                        app.request(&worker, "reconnect", json!({}), "reconnect");
+                        if app.state == "starting" {
+                            app.cancel_after_start = true;
+                        }
                         continue;
                     }
                     if let Some(p) = &app.approval {
@@ -987,8 +1228,8 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                     if let Some(picker) = &mut app.picker {
                         match key.code {
                             KeyCode::Esc => app.picker = None,
-                            KeyCode::Up => picker.move_by(false),
-                            KeyCode::Down => picker.move_by(true),
+                            KeyCode::Up | KeyCode::BackTab => picker.move_by(false),
+                            KeyCode::Down | KeyCode::Tab => picker.move_by(true),
                             KeyCode::Backspace => {
                                 picker.query.pop();
                                 picker.selected = 0;
@@ -1006,6 +1247,10 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                                 if let Some(item) = item {
                                     if !item.enabled {
                                         app.notice = "Selection is unavailable.".into();
+                                        continue;
+                                    }
+                                    if !app.connected && kind != "command" {
+                                        app.notice = "Disconnected. Selection was not changed; /reconnect retries.".into();
                                         continue;
                                     }
                                     if app.active() && kind != "command" {
@@ -1087,7 +1332,7 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                             KeyCode::Backspace => {
                                 search.pop();
                             }
-                            KeyCode::Char(c) => search.push(c),
+                            KeyCode::Char(c) if !ctrl => search.push(c),
                             KeyCode::Enter => {
                                 let query = search.to_lowercase();
                                 if let Some(line) = app
@@ -1106,8 +1351,15 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                         }
                         continue;
                     }
+                    if newline_key(key) {
+                        app.editor.insert("\n");
+                        continue;
+                    }
                     match key.code {
-                        KeyCode::Char('s') if ctrl => app.send(&worker),
+                        KeyCode::Char('a') if ctrl => app.editor.home(),
+                        KeyCode::Char('e') if ctrl => app.editor.end(),
+                        KeyCode::Char('u') if ctrl => app.editor.kill_to_start(),
+                        KeyCode::Char('k') if ctrl => app.editor.kill_to_end(),
                         KeyCode::Char('g') if ctrl => {
                             if !app.active() {
                                 app.agent = !app.agent;
@@ -1117,15 +1369,16 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                         KeyCode::Tab => app.open_picker("command"),
                         KeyCode::Char('l') if ctrl => app.open_picker("model"),
                         KeyCode::Char('w') if ctrl => app.open_picker("workspace"),
-                        KeyCode::Char('o') if ctrl => app.open_picker("session"),
+
                         KeyCode::Char('n') if ctrl => app.command("/new", &worker),
-                        KeyCode::Char('r') if ctrl => {
-                            app.request(&worker, "reconnect", json!({}), "reconnect")
-                        }
+                        KeyCode::Char('r') if ctrl => app.search = Some(String::new()),
                         KeyCode::Char('b') if ctrl => app.follow = true,
                         KeyCode::Char('f') if ctrl => app.search = Some(String::new()),
                         KeyCode::F(1) => app.command("/help", &worker),
                         KeyCode::PageUp => {
+                            if app.follow {
+                                app.scroll = app.viewport_bottom.get();
+                            }
                             app.follow = false;
                             app.scroll = app.scroll.saturating_sub(10);
                         }
@@ -1133,7 +1386,7 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                             app.follow = false;
                             app.scroll = app.scroll.saturating_add(10);
                         }
-                        KeyCode::Enter => app.editor.insert("\n"),
+                        KeyCode::Enter => app.send(&worker),
                         KeyCode::Left if ctrl => app.editor.word(false),
                         KeyCode::Right if ctrl => app.editor.word(true),
                         KeyCode::Left => app.editor.left(),
@@ -1162,7 +1415,14 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                             );
                         }
                         KeyCode::Char('d') if ctrl => {
-                            app.references.pop();
+                            if !app.active()
+                                && !app.busy
+                                && app.editor.text.is_empty()
+                                && app.references.is_empty()
+                            {
+                                break;
+                            }
+                            app.editor.delete();
                         }
                         KeyCode::Char(c) if !ctrl => app.editor.insert(&c.to_string()),
                         _ => {}
@@ -1172,18 +1432,58 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
             }
         }
         Ok(())
-    })();
-    let _ = execute!(std::io::stdout(), DisableBracketedPaste);
-    ratatui::restore();
-    result
+    })()
 }
 #[cfg(test)]
 mod tests {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend};
     #[test]
+    fn compact_header_centered_empty_state_and_composer() {
+        for (width, height) in [(80, 24), (120, 40), (160, 48)] {
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            let mut app = App {
+                state: "idle".into(),
+                ..App::default()
+            };
+            terminal.draw(|frame| draw(frame, &app)).unwrap();
+            let buffer = terminal.backend().buffer();
+            let row = |y| {
+                (0..width)
+                    .map(|x| buffer[(x, y)].symbol())
+                    .collect::<String>()
+            };
+            assert!(row(0).starts_with("SENTINEL / Chat"));
+            assert!(row(0).ends_with("Disconnected"));
+            assert!(row(2).contains("Provider unselected / Model unselected"));
+            let center = (3..height - 5)
+                .find(|&y| row(y).contains("Daemon disconnected"))
+                .unwrap();
+            assert!(center > height / 3 && center < height * 2 / 3);
+            assert!(row(height - 5).contains(" Message "));
+            app.agent = true;
+            app.state = "running".into();
+            app.run_id = "fixture-run".into();
+            app.latest_user = "Check the workspace".into();
+            app.output = "Inspecting authorized context".into();
+            app.activity.push("step 1 · tool requested".into());
+            terminal.draw(|frame| draw(frame, &app)).unwrap();
+            let text = terminal
+                .backend()
+                .buffer()
+                .content
+                .iter()
+                .map(|c| c.symbol())
+                .collect::<String>();
+            assert!(text.contains("SENTINEL / Agent"));
+            assert!(text.contains("You"));
+            assert!(text.contains("Agent · running"));
+            assert!(text.contains("step 1 · tool requested"));
+        }
+    }
+    #[test]
     fn terminal_size_matrix() {
-        for (width, height) in [(80, 24), (100, 30), (120, 40), (40, 12), (10, 4)] {
+        for (width, height) in [(80, 24), (100, 30), (120, 40), (160, 48), (40, 12), (10, 4)] {
             let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
             let mut app = App::default();
             app.open_picker("command");
@@ -1193,7 +1493,7 @@ mod tests {
         }
     }
     fn test_worker() -> Worker {
-        let (tx, _) = mpsc::channel();
+        let (tx, _) = mpsc::sync_channel(32);
         let (_, rx) = mpsc::sync_channel(8);
         Worker {
             tx,
@@ -1235,6 +1535,107 @@ mod tests {
         assert!(app.activity[0].contains("12 ms"));
         assert!(app.activity[0].contains("Tool completed"));
         assert!(!app.activity[0].contains("secret-must-not-be-projected"));
+    }
+    #[test]
+    fn bounded_stream_render_measurement() {
+        let mut terminal = Terminal::new(TestBackend::new(160, 48)).unwrap();
+        let mut app = App {
+            state: "running".into(),
+            connected: true,
+            follow: true,
+            ..App::default()
+        };
+        let begin = Instant::now();
+        for _ in 0..100 {
+            app.output.push_str(&"stream 界 output\n".repeat(100));
+            terminal.draw(|frame| draw(frame, &app)).unwrap();
+        }
+        eprintln!(
+            "100 incremental TestBackend renders at 160x48: {:?}, retained {} bytes",
+            begin.elapsed(),
+            app.output.len()
+        );
+        assert!(app.output.len() <= 262144);
+    }
+    #[test]
+    fn stale_generation_and_closed_run_cannot_append_output() {
+        let mut app = App::default();
+        app.snapshot(json!({"session_id":"s", "run_id":"r", "state":"running", "output":"stable", "server_generation":"current"}));
+        let worker = test_worker();
+        let event = |generation: &str| {
+            Update::Event(Envelope {
+                version: sentinel_ipc::Version { major: 1, minor: 1 },
+                kind: sentinel_ipc::MessageType::Event,
+                id: String::new(),
+                name: "output.delta".into(),
+                payload: json!({"session_id":"s","run_id":"r","text":" stale", "server_generation":generation,"event_sequence":99}),
+            })
+        };
+        app.update(event("old"), &worker);
+        assert_eq!(app.output, "stable");
+        app.state = "cancelled".into();
+        app.update(event("current"), &worker);
+        assert_eq!(app.output, "stable");
+        assert_eq!(app.state, "cancelled");
+    }
+    #[test]
+    fn keyboard_contract_has_reliable_newline_without_flow_control() {
+        use crossterm::event::KeyEvent;
+        assert!(newline_key(KeyEvent::new(
+            KeyCode::Char('o'),
+            KeyModifiers::CONTROL
+        )));
+        assert!(newline_key(KeyEvent::new(
+            KeyCode::Enter,
+            KeyModifiers::ALT
+        )));
+        assert!(newline_key(KeyEvent::new(
+            KeyCode::Enter,
+            KeyModifiers::SHIFT
+        )));
+        assert!(!newline_key(KeyEvent::new(
+            KeyCode::Enter,
+            KeyModifiers::NONE
+        )));
+        assert!(!newline_key(KeyEvent::new(
+            KeyCode::Char('s'),
+            KeyModifiers::CONTROL
+        )));
+    }
+    #[test]
+    fn rejected_submission_restores_draft_and_references() {
+        let mut app = App {
+            pending_text: "ü draft".into(),
+            pending_references: vec!["file name".into()],
+            state: "starting".into(),
+            ..App::default()
+        };
+        app.update(
+            Update::Failure("start".into(), Error::Timeout),
+            &test_worker(),
+        );
+        assert_eq!(app.editor.text, "ü draft");
+        assert_eq!(app.references, ["file name"]);
+        assert_eq!(app.state, "rejected");
+    }
+    #[test]
+    fn empty_composer_is_three_rows_and_unicode_cursor_is_safe() {
+        let mut terminal = Terminal::new(TestBackend::new(80, 24)).unwrap();
+        let mut app = App::default();
+        terminal.draw(|frame| draw(frame, &app)).unwrap();
+        let text = terminal
+            .backend()
+            .buffer()
+            .content
+            .iter()
+            .map(|c| c.symbol())
+            .collect::<String>();
+        assert!(text.contains("Daemon disconnected"));
+        assert!(!text.contains("Ctrl+S"));
+        app.editor.insert(&"界🙂ü".repeat(100));
+        terminal.draw(|frame| draw(frame, &app)).unwrap();
+        app.editor.insert("\nsecond\nthird");
+        terminal.draw(|frame| draw(frame, &app)).unwrap();
     }
     #[test]
     fn mode_is_explicit() {

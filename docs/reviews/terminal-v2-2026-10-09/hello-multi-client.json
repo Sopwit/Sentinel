@@ -1,0 +1,61 @@
+{
+  "kind": "REAL IPC HANDSHAKE ONLY",
+  "responses": [
+    {
+      "id": "v2-readonly-0",
+      "name": "hello",
+      "payload": {
+        "capabilities": [
+          "chat",
+          "agent",
+          "approval",
+          "sessions",
+          "events",
+          "desktop-projection",
+          "model-selection",
+          "session-messages",
+          "terminal-state",
+          "workspace-files",
+          "workspace-changes"
+        ],
+        "daemon_version": "1.0.0-rc.8",
+        "major": 1,
+        "minor": 1,
+        "server_generation": "214de4a1-9db5-4d6e-8d25-1e3af6632256"
+      },
+      "type": "response",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "v2-readonly-1",
+      "name": "hello",
+      "payload": {
+        "capabilities": [
+          "chat",
+          "agent",
+          "approval",
+          "sessions",
+          "events",
+          "desktop-projection",
+          "model-selection",
+          "session-messages",
+          "terminal-state",
+          "workspace-files",
+          "workspace-changes"
+        ],
+        "daemon_version": "1.0.0-rc.8",
+        "major": 1,
+        "minor": 1,
+        "server_generation": "214de4a1-9db5-4d6e-8d25-1e3af6632256"
+      },
+      "type": "response",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

@@ -23,7 +23,12 @@ impl Picker {
     pub fn visible(&self) -> Vec<&Item> {
         self.items
             .iter()
-            .filter(|item| fuzzy(&self.query, &item.label))
+            .filter(|item| {
+                fuzzy(
+                    &self.query,
+                    &format!("{} {} {}", item.label, item.id, item.extra),
+                )
+            })
             .collect()
     }
     pub fn move_by(&mut self, down: bool) {
@@ -42,6 +47,21 @@ mod tests {
     fn subsequence_and_case() {
         assert!(fuzzy("olma", "Ollama / model"));
         assert!(!fuzzy("xyz", "Ollama"));
+    }
+    #[test]
+    fn identities_and_long_details_are_searchable() {
+        let p = Picker {
+            kind: "session",
+            query: "session-42".into(),
+            selected: 0,
+            items: vec![Item {
+                label: "Untitled".into(),
+                id: "session-42".into(),
+                extra: "long model / workspace detail".into(),
+                enabled: true,
+            }],
+        };
+        assert_eq!(p.visible().len(), 1);
     }
     #[test]
     fn empty_picker_safe() {
