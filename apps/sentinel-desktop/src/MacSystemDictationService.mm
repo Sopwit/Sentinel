@@ -80,7 +80,32 @@ void SystemDictationService::start(const QString& language) {
             guard->cancel(); emit guard->failed(guard->tr("No microphone input is available.")); return;
         }
         SFSpeechAudioBufferRecognitionRequest* request = state.request;
-        [node installTapOnBus:0 bufferSize:1024 format:format block:^(AVAudioPCMBuffer* buffer, AVAudioTime*) { [request appendAudioPCMBuffer:buffer]; }];
+        AVAudioNodeTapBlock tap = ^(AVAudioPCMBuffer* buffer, AVAudioTime*) {
+            [request appendAudioPCMBuffer:buffer];
+        };
+        // The error-reporting API accepts buffers covering 100–400 ms.
+        const auto bufferSize = static_cast<AVAudioFrameCount>(format.sampleRate * 0.1 + 0.5);
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
+        if (@available(macOS 27.0, *)) {
+            NSError* tapError = nil;
+            if (![node installTapOnBus:0 bufferSize:bufferSize format:format error:&tapError block:tap]) {
+                const QString message = tapError
+                    ? QString::fromUtf8(tapError.localizedDescription.UTF8String)
+                    : guard->tr("No microphone input is available.");
+                guard->cancel();
+                emit guard->failed(message);
+                return;
+            }
+        } else
+#endif
+        {
+            // Required only on systems predating the error-reporting API.
+            // Clang still warns about this runtime-guarded compatibility call.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            [node installTapOnBus:0 bufferSize:bufferSize format:format block:tap];
+#pragma clang diagnostic pop
+        }
         state.tapped = true;
         state.task = [state.recognizer recognitionTaskWithRequest:state.request resultHandler:^(SFSpeechRecognitionResult* result, NSError* error) {
             const QString text = result ? QString::fromUtf8(result.bestTranscription.formattedString.UTF8String) : QString{};
