@@ -234,6 +234,8 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopRuntimeClient& client,
                             settings, taskbar, parent) {
     connect(&client, &DesktopRuntimeClient::changed, this,
             &DesktopShellViewModel::runtimeProjectionChanged);
+    connect(&client, &DesktopRuntimeClient::conversationDeleteCompleted, this,
+            &DesktopShellViewModel::conversationDeleteCompleted);
     connect(&client, &DesktopRuntimeClient::changed, this, [this, &client] {
         if (attachmentSendPending_) {
             const auto state = client.value("chatSendLifecycleState").toString();

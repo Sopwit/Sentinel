@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QLocalSocket>
 #include <QStandardPaths>
+#include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUuid>
@@ -127,6 +128,27 @@ private slots:
             if (QDir(path).exists())
                 QVERIFY(QDir(path).removeRecursively());
         }
+    }
+    void deletesInactiveConversationWhileResponseIsRunning() {
+        Harness h(test::DeterministicChatReply::Delayed);
+        auto gate = std::make_shared<QSemaphore>();
+        h.models.state->completionGate = gate;
+        auto release = qScopeGuard([gate] { gate->release(); });
+        const auto inactive = h.controller->createConversation("Inactive");
+        const auto active = h.controller->createConversation("Active");
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket chat, control;
+        hello(chat, h.path);
+        hello(control, h.path);
+        QCOMPARE(request(chat, "chat.send", {{"session_id", active}, {"text", "Hold response"}})
+                     .value("type").toString(), QString("response"));
+        const auto deleted = request(control, "desktop.action", {{"action", "requestPermanentDeleteConversation"},
+            {"session_id", active}, {"arguments", QJsonArray{inactive}}});
+        QVERIFY(deleted.value("payload").toObject().value("accepted").toBool());
+        QCOMPARE(h.controller->activeConversationId(), active);
+        const auto refused = request(control, "desktop.action", {{"action", "requestPermanentDeleteConversation"},
+            {"session_id", active}, {"arguments", QJsonArray{active}}});
+        QCOMPARE(refused.value("payload").toObject().value("code").toString(), QString("runtime-busy"));
     }
     void respondsToPing() {
         Harness h;

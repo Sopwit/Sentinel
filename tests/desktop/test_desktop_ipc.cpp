@@ -276,6 +276,7 @@ private slots:
         QVERIFY(server.startServer(directory.filePath("daemon.sock")));
         DaemonClient transport(directory.filePath("daemon.sock"), 3000, 10);
         sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QSignalSpy deletions(&adapter, &sentinel::desktop::DesktopRuntimeClient::conversationDeleteCompleted);
         sentinel::desktop::DesktopControllerBridge bridge({nullptr, &adapter});
         QSignalSpy failures(&adapter, &sentinel::desktop::DesktopRuntimeClient::operationFailed);
         QTRY_VERIFY(adapter.ready());
@@ -286,6 +287,9 @@ private slots:
         const auto second = bridge.activeConversationId();
         QVERIFY(bridge.requestPermanentDeleteConversation(first));
         QTRY_VERIFY(!bridge.conversationIds().contains(first));
+        QCOMPARE(deletions.size(), 1);
+        QCOMPARE(deletions.first().at(0).toString(), first);
+        QVERIFY(deletions.first().at(1).toBool());
         QCOMPARE(bridge.activeConversationId(), second);
         QVERIFY(bridge.requestPermanentDeleteConversation(second));
         QTRY_VERIFY(!bridge.conversationIds().contains(second));
@@ -294,6 +298,10 @@ private slots:
         QVERIFY(bridge.renameConversation(replacement, QStringLiteral("Still usable")));
         QTRY_VERIFY(bridge.conversationTitles().contains("Still usable"));
         QCOMPARE(failures.size(), 0);
+        QVERIFY(bridge.requestPermanentDeleteConversation(QStringLiteral("missing-conversation")));
+        QTRY_COMPARE(deletions.size(), 3);
+        QVERIFY(!deletions.last().at(1).toBool());
+        QVERIFY(!deletions.last().at(2).toString().isEmpty());
     }
     void onboardingProgressPersistsWithoutDaemon() {
         QTemporaryDir directory;

@@ -1057,13 +1057,20 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             return;
         }
         const bool global = desktop_contract::globalAction(action);
+        const bool deleting = action == "requestPermanentDeleteConversation";
+        const auto deleteTarget = deleting ? arguments.at(0).toString() : QString{};
+        if (deleting && session(deleteTarget).isEmpty()) {
+            error(socket, id, "unknown-session");
+            return;
+        }
         if (m_state == "running" || m_state == "approval") {
             // Selector changes affect future work only; core keeps its frozen ModelBinding.
-            if (action != "setSelectedRuntimeProvider" && action != "setSelectedLocalModel") {
+            if (action != "setSelectedRuntimeProvider" && action != "setSelectedLocalModel" &&
+                !(deleting && deleteTarget != m_sessionId)) {
                 error(socket, id, "runtime-busy");
                 return;
             }
-        } else if (!global) {
+        } else if (!global && !deleting) {
             if (session(sid).isEmpty() || !m_controller->switchConversation(sid)) {
                 error(socket, id, "unknown-session");
                 return;
