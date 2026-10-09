@@ -2249,6 +2249,24 @@ QVariantMap DesktopShellViewModel::autoDetectVoicePathStatus() {
     return result;
 }
 
+QString DesktopShellViewModel::voiceStatusMessage(const QString& status) const {
+    if (status.isEmpty()) return {};
+    const auto code = status.section(QLatin1Char(':'), 0, 0).trimmed();
+    if (code == "ModelUnavailable" || code == "RuntimeUnavailable")
+        return tr("Voice input needs a speech engine and model. Configure Local Whisper or choose system dictation in Voice & Audio.");
+    if (code == "MicrophonePermissionDenied" || code == "PermissionDenied")
+        return tr("Microphone or speech recognition access was denied. Allow access in your system privacy settings and try again.");
+    if (code == "AudioDeviceUnavailable" || code == "CaptureFailure")
+        return tr("The microphone is unavailable. Check your input device in Voice & Audio and try again.");
+    if (code == "NoSpeechDetected") return tr("No speech was detected. Check your microphone and try again.");
+    if (code == "TranscriptionFailure" || code == "ProviderFailure" || code == "Timeout")
+        return tr("Speech recognition failed. Check your speech engine in Voice & Audio and try again.");
+    if (code == "Cancelled") return tr("Voice input cancelled.");
+    if (code == "UnsupportedFormat") return tr("This audio format is not supported by the selected speech engine.");
+    // Native dictation already supplies localized recovery guidance.
+    return status;
+}
+
 QString DesktopShellViewModel::voiceInputSource() const { return settings_.voiceInputSource(); }
 
 void DesktopShellViewModel::setVoiceInputSource(const QString& source) {

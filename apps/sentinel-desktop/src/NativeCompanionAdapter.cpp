@@ -291,8 +291,12 @@ bool NativeCompanionAdapter::eventFilter(QObject* object, QEvent* event) {
         if (panel && panel->objectName() == "sentinelQuickPanel" && panel->isVisible() &&
             static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
             event->accept();
-            if (event->type() == QEvent::KeyPress)
-                panel->hide();
+            if (event->type() == QEvent::KeyPress) {
+                if (panel->property("detailPopupVisible").toBool())
+                    QMetaObject::invokeMethod(panel, "dismissDetails");
+                else
+                    panel->hide();
+            }
             return true;
         }
     }
