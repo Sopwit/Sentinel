@@ -1,0 +1,42 @@
+[
+  {
+    "columns": 80,
+    "rows": 24,
+    "exit": 0,
+    "termios_restored": true,
+    "alternate_screen_restored": true,
+    "bytes": 3098
+  },
+  {
+    "columns": 100,
+    "rows": 30,
+    "exit": 0,
+    "termios_restored": true,
+    "alternate_screen_restored": true,
+    "bytes": 3493
+  },
+  {
+    "columns": 120,
+    "rows": 40,
+    "exit": 0,
+    "termios_restored": true,
+    "alternate_screen_restored": true,
+    "bytes": 3921
+  },
+  {
+    "columns": 160,
+    "rows": 48,
+    "exit": 0,
+    "termios_restored": true,
+    "alternate_screen_restored": true,
+    "bytes": 4721
+  },
+  {
+    "columns": 20,
+    "rows": 6,
+    "exit": 0,
+    "termios_restored": true,
+    "alternate_screen_restored": true,
+    "bytes": 608
+  }
+]

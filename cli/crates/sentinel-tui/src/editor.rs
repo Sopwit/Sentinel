@@ -43,6 +43,23 @@ impl Editor {
             .find('\n')
             .unwrap_or(self.text.len() - self.cursor);
     }
+    pub fn kill_to_end(&mut self) {
+        let end = self.cursor
+            + self.text[self.cursor..]
+                .find('\n')
+                .unwrap_or(self.text.len() - self.cursor);
+        let end = if end == self.cursor && end < self.text.len() {
+            end + 1
+        } else {
+            end
+        };
+        self.text.drain(self.cursor..end);
+    }
+    pub fn kill_to_start(&mut self) {
+        let end = self.cursor;
+        self.home();
+        self.text.drain(self.cursor..end);
+    }
     pub fn word(&mut self, forward: bool) {
         if forward {
             while self.cursor < self.text.len()
@@ -166,6 +183,20 @@ mod tests {
         assert_eq!(e.cursor, 0);
         e.end();
         assert_eq!(e.cursor, 3);
+    }
+    #[test]
+    fn readline_kills_respect_lines_and_utf8() {
+        let mut e = Editor::default();
+        e.insert("first\n界ü rest");
+        e.home();
+        e.right();
+        e.kill_to_end();
+        assert_eq!(e.text, "first\n界");
+        e.kill_to_start();
+        assert_eq!(e.text, "first\n");
+        e.home();
+        e.kill_to_end();
+        assert_eq!(e.text, "first\n");
     }
     #[test]
     fn bounded_paste() {
