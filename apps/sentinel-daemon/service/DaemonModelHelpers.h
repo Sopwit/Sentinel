@@ -5,11 +5,15 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QTimer>
+#include <QElapsedTimer>
+#include <atomic>
+#include <memory>
 #include "sentinel/core/runtime/ProcessExecutor.h"
 namespace sentinel::daemon {
 class DaemonModelHelpers final : public QObject {
 public:
     explicit DaemonModelHelpers(core::ApplicationController* controller, QObject* parent = nullptr);
+    ~DaemonModelHelpers() override;
     QJsonObject state(const QString& component) const;
     bool action(const QString& component, const QString& action, const QString& value,
                 const QString& endpoint);
@@ -18,6 +22,13 @@ public:
 private:
     core::ApplicationController* controller_;
     QJsonArray catalog_;
+    mutable QJsonArray modelRows_;
+    mutable int installedCount_ = 0;
+    mutable QElapsedTimer modelRowsAge_;
+    bool modelRowsBuilding_ = false;
+    std::shared_ptr<std::atomic_bool> modelRowsCancelled_;
+    quint64 modelRowsGeneration_ = 0;
+    void rebuildModelRows();
     QString activeOperation_;
     QString searchText_;
     QString queryKey_;

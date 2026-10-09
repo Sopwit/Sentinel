@@ -83,6 +83,14 @@ public:
         return {core::ToolExecutionStatus::Succeeded, QStringLiteral("Fixture result")};
     }
 };
+class LargeCatalog final : public core::IModelLibrarySourceAdapter {
+public:
+    mutable int reads = 0;
+    QList<core::ModelLibraryEntry> rows;
+    QString sourceId() const override { return "test-large-catalog"; }
+    QString providerId() const override { return {}; }
+    QList<core::ModelLibraryEntry> entries() const override { ++reads; return rows; }
+};
 struct Harness {
     QTemporaryDir directory{QDir::tempPath() + "/sentinel-ipc-XXXXXX"};
     test::DeterministicModelServiceFixture models;
@@ -128,6 +136,57 @@ private slots:
             if (QDir(path).exists())
                 QVERIFY(QDir(path).removeRecursively());
         }
+    }
+    void modelPagesFreezeSnapshotAndDoNotRebuildCatalog() {
+        LargeCatalog catalog;
+        Harness h;
+        for (int i = 0; i < 500; ++i) {
+            core::ModelLibraryEntry row;
+            row.id = QString("fixture-%1").arg(i);
+            row.artifactId = row.id;
+            row.repositoryId = row.id;
+            row.displayName = QString(1000, QLatin1Char('x'));
+            row.format = "GGUF";
+            row.source.id = "hugging-face";
+            catalog.rows.append(row);
+        }
+        h.controller->modelLibrary()->addSourceAdapter(&catalog);
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket socket;
+        hello(socket, h.path);
+        auto page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                        .value("payload").toObject().value("properties").toObject();
+        QTRY_VERIFY_WITH_TIMEOUT(([&] {
+            page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                .value("payload").toObject().value("properties").toObject();
+            return page.value("totalModels").toInt() == 500;
+        })(), 5000);
+        QCOMPARE(page.value("totalModels").toInt(), 500);
+        QVERIFY(page.value("nextOffset").toInt() > 0);
+        const auto reads = catalog.reads;
+        catalog.rows.clear(); // Background discovery changes while this client transfers pages.
+        int count = page.value("models").toArray().size();
+        while (page.value("nextOffset").toInt() >= 0) {
+            QCOMPARE(request(socket, "daemon.status").value("type").toString(), QString("response"));
+            page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", page.value("nextOffset")}})
+                        .value("payload").toObject().value("properties").toObject();
+            count += page.value("models").toArray().size();
+            QCOMPARE(page.value("totalModels").toInt(), 500);
+            QCOMPARE(catalog.reads, reads);
+        }
+        QCOMPARE(count, 500);
+        const auto retained = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"},
+            {"offset", 0}, {"retain_models", true}}).value("payload").toObject().value("properties").toObject();
+        QVERIFY(retained.value("modelsUnchanged").toBool());
+        QVERIFY(retained.value("models").toArray().isEmpty());
+        QCOMPARE(retained.value("totalModels").toInt(), 500);
+        QCOMPARE(catalog.reads, reads);
+        request(socket, "model.helper_action", {{"component", "ggufLibraryFetcher"}, {"action", "cancel"}, {"value", ""}});
+        QTRY_VERIFY_WITH_TIMEOUT(([&] {
+            const auto state = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                .value("payload").toObject().value("properties").toObject();
+            return state.value("totalModels").toInt() == 0 && !state.value("fetching").toBool();
+        })(), 5000);
     }
     void deletesInactiveConversationWhileResponseIsRunning() {
         Harness h(test::DeterministicChatReply::Delayed);

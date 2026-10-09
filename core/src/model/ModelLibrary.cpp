@@ -365,7 +365,7 @@ QList<ModelLibraryAction> ModelLibraryService::availableActions(const ModelLibra
     return actions;
 }
 
-QList<ModelLibraryEntry> ModelLibraryService::entries() const {
+QList<ModelLibraryEntry> ModelLibraryService::entries(const IModelLibrarySourceAdapter* excludedSource) const {
     QList<ModelLibraryEntry> result;
     QSet<QString> identities;
     const auto selection = models_.selectedModel();
@@ -426,6 +426,7 @@ QList<ModelLibraryEntry> ModelLibraryService::entries() const {
         }
     }
     for (const auto* adapter : adapters_) {
+        if (adapter == excludedSource) continue;
         const bool externalSource = adapter->providerId().isEmpty();
         if (!externalSource && !models_.isKnownProvider(adapter->providerId())) continue;
         for (auto entry : adapter->entries()) {

@@ -6,6 +6,7 @@
 namespace sentinel::desktop {
 class DesktopModelHelper final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString modelsJson READ modelsJson NOTIFY modelsChanged)
     Q_PROPERTY(bool pulling READ pulling NOTIFY changed)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY changed)
     Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY changed)
@@ -26,6 +27,7 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(QVariantList tags READ tags NOTIFY changed)
     Q_PROPERTY(QString installCmd READ installCmd NOTIFY changed)
 public:
+    QString modelsJson() const { return m_modelsJson; }
     DesktopModelHelper(DaemonClient& transport, QString component, QObject* parent = nullptr);
     QString query() const { return m_values.value("query").toString(); }
     int installedCount() const { return m_values.value("installedCount").toInt(); }
@@ -111,6 +113,7 @@ public:
         action("cancel", {});
     }
 signals:
+    void modelsChanged();
     void changed();
     void fetchFinished(bool success);
     void pullFinished(const QString& model, bool success);
@@ -118,10 +121,12 @@ signals:
 
 private:
     void refresh();
+    void updateModelsJson(const QVariantList& models);
     void action(const QString& name, const QString& value);
     DaemonClient& m_transport;
     QString m_component;
     QVariantMap m_values;
+    QString m_modelsJson = QStringLiteral("[]");
     QString m_actionError;
     QSet<QString> m_reads, m_actions;
     QVariantList m_partialModels;

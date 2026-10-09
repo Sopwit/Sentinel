@@ -10008,7 +10008,9 @@ CredentialStore ApplicationController::currentCredentialStore() const {
 ModelRegistry ApplicationController::currentModelRegistry() const {
     if (!ollamaCacheInitialized_) initializeOllamaCache();
     QList<ModelSummary> models;
-    for (const auto& entry : modelLibrary_->entries()) {
+    // Hub discovery entries have no runtime provider. Avoid expanding the full
+    // remote catalogue just to project the selected runtime model capabilities.
+    for (const auto& entry : modelLibrary_->entries(modelOperations_->huggingFaceSource())) {
         if (entry.provider.id.isEmpty()) continue;
         ModelSummary model;
         model.id = entry.id;

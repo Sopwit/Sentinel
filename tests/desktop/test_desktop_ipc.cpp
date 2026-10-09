@@ -547,6 +547,25 @@ private slots:
         QTRY_VERIFY(history.recentRuns(500).size() >= 31);
         QVERIFY(inspector.errorMessage().isEmpty());
     }
+    void modelHelperRecoversAfterReadTimeout() {
+        Peer peer;
+        DaemonClient transport(peer.path, 150, 1000);
+        sentinel::desktop::DesktopModelHelper helper(transport, "ggufLibraryFetcher");
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(transport.daemonReachable());
+        // The helper's first request precedes the transport's status refresh.
+        auto first = read(peer.socket);
+        QCOMPARE(first.value("name").toString(), QString("model.helper_state"));
+        peer.status();
+        QTRY_COMPARE(helper.errorText(), QString("request-timeout"));
+        QVERIFY(!helper.fetching());
+        QTRY_VERIFY_WITH_TIMEOUT(peer.socket->canReadLine(), 3000);
+        const auto retry = read(peer.socket);
+        QCOMPARE(retry.value("name").toString(), QString("model.helper_state"));
+        send(peer.socket, frame("response", retry.value("id").toString(), "model.helper_state",
+            {{"component", "ggufLibraryFetcher"}, {"properties", QJsonObject{{"models", QJsonArray{}}, {"fetching", false}, {"errorText", ""}}}}));
+        QTRY_VERIFY(helper.errorText().isEmpty());
+    }
     void modelHelperPublishesChangedPagesWithoutRepeatingIdenticalSnapshots() {
         Peer peer;
         DaemonClient transport(peer.path, 5000, 1000);
@@ -611,7 +630,19 @@ private slots:
         send(peer.socket, frame("response", chunkRequest.value("id").toString(), "model.helper_state",
             {{"component", "ggufLibraryFetcher"}, {"properties", QJsonObject{{"models", second}, {"modelOffset", 45}, {"nextOffset", -1}, {"query", "fixture-query"}}}}));
         QTRY_COMPARE(helper.models().size(), 90);
+        QCOMPARE(QJsonDocument::fromJson(helper.modelsJson().toUtf8()).array().size(), 90);
         QCOMPARE(helper.models().last().toMap().value("id").toString(), QString("89"));
+        const auto json = helper.modelsJson();
+        QSignalSpy modelChanges(&helper, &sentinel::desktop::DesktopModelHelper::modelsChanged);
+        const auto retained = nextStateRequest(); // The regular status poll reuses its cached models.
+        QVERIFY(retained.value("payload").toObject().value("retain_models").toBool());
+        send(peer.socket, frame("response", retained.value("id").toString(), "model.helper_state",
+            {{"component", "ggufLibraryFetcher"}, {"properties", QJsonObject{{"models", QJsonArray{}},
+                {"modelsUnchanged", true}, {"modelOffset", 0}, {"nextOffset", -1}, {"query", "fixture-query"}, {"statusText", "Updated status"}}}}));
+        QTRY_COMPARE(helper.statusText(), QString("Updated status"));
+        QCOMPARE(helper.models().size(), 90);
+        QCOMPARE(helper.modelsJson(), json);
+        QCOMPARE(modelChanges.size(), 0);
     }
     void modelCatalogIsProviderIndependentAndMediaTypesAreExplicit() {
         sentinel::test::DeterministicModelServiceFixture models;

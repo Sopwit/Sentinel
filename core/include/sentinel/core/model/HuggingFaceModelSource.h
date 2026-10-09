@@ -71,6 +71,18 @@ class HuggingFaceModelSource final : public QObject, public IModelLibrarySourceA
     friend class ::OllamaRuntimeTest;
 
 public:
+    // Immutable input for catalogue processing outside the service event loop.
+    struct Snapshot {
+        QJsonArray models;
+        QString storageRoot;
+        QStringList knownStorageRoots;
+        HuggingFaceCatalogState state;
+        QString detail;
+    };
+    Snapshot snapshot() const;
+    static void visitSnapshot(const Snapshot& snapshot,
+        const std::function<void(const HuggingFaceRepository&, const QList<ModelLibraryEntry>&)>& visitor,
+        const std::function<bool()>& cancelled = {});
     explicit HuggingFaceModelSource(QString cachePath = {}, QObject* parent = nullptr);
     QString sourceId() const override;
     QString providerId() const override;
@@ -111,6 +123,7 @@ signals:
     void requestFinished(bool success);
 
 private:
+    explicit HuggingFaceModelSource(const Snapshot& snapshot);
     void request(const QUrl& url, const QString& query, const QString& repositoryId, bool append = false);
     static QUrl continuationUrl(const QString& links);
     void loadCache();
