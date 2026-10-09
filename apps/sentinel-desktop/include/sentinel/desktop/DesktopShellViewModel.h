@@ -1659,7 +1659,10 @@ public:
     Q_PROPERTY(QString attachmentError READ attachmentError NOTIFY attachmentChanged)
     QString voiceInputSource() const;
     void setVoiceInputSource(const QString& source);
+    Q_PROPERTY(QString voiceInputMessage READ voiceInputMessage NOTIFY voiceInputChanged)
     QString voiceInputStatus() const { return voiceInputStatus_; }
+    QString voiceInputMessage() const { return voiceStatusMessage(voiceInputStatus_); }
+    Q_INVOKABLE QString voiceStatusMessage(const QString& status) const;
     QString attachmentError() const { return attachmentError_; }
     QString daemonConnectionStatus() const;
     bool daemonConnected() const;
