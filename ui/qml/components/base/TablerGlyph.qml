@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
+import Sentinel.Desktop
 
 Item {
     id: root
@@ -16,18 +16,11 @@ Item {
     implicitWidth: iconSize
     implicitHeight: iconSize
 
-    Image {
+    SentinelIcon {
         anchors.centerIn: parent
-        width: root.iconSize
-        height: root.iconSize
+        name: root.text
         source: root.text ? "qrc:/icons/tabler/" + root.text + ".svg" : ""
-        sourceSize.width: root.iconSize
-        sourceSize.height: root.iconSize
-        fillMode: Image.PreserveAspectFit
-        layer.enabled: GraphicsInfo.api !== GraphicsInfo.Software
-        layer.effect: MultiEffect {
-            colorization: 1.0
-            colorizationColor: root.color
-        }
+        iconSize: root.iconSize
+        tint: root.color
     }
 }

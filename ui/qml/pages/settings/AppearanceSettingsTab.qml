@@ -20,18 +20,7 @@ Item {
     readonly property var themeChoices: root.viewModel.availableThemes
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
 
-    function localizedThemeName(key) {
-        const names = {
-            "Liquid Glass Light": qsTr("Daylight"), "Liquid Glass Dark": qsTr("Obsidian"),
-            "Sentinel Classic": qsTr("Slate"), "Midnight Blue": qsTr("Deep Ocean"),
-            "Aurora Teal": qsTr("Evergreen"), "Graphite Grey": qsTr("Carbon"),
-            "Solarized Light": qsTr("Honey"), "Nord Frost": qsTr("Polar Night"),
-            "Dracula": qsTr("Velvet"), "Tokyo Night": qsTr("Indigo"),
-            "Paper": qsTr("Porcelain"), "Linen": qsTr("Sandstone"),
-            "Sage Light": qsTr("Meadow"), "Sky Light": qsTr("Blue Mist")
-        }
-        return names[key] || key || ""
-    }
+    function localizedThemeName(key) { return SentinelTheme.localizedThemeName(key) }
 
     function localizedDensityName(key) {
         switch (key) {

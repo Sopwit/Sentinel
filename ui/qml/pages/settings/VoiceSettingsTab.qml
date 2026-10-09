@@ -120,10 +120,11 @@ Item {
         SettingCard {
             title: qsTr("Microphone test")
             subtitle: qsTr("Choose local Whisper or operating-system dictation below, detect existing files, then test your microphone. The transcript stays here and is not sent to a model.")
-            RowLayout {
+            Flow {
                 Layout.fillWidth: true
                 Layout.margins: SentinelTheme.spaceMd
-                Button {
+                spacing: SentinelTheme.spaceSm
+                SentinelButton {
                     text: root.viewModel.voiceRecordingActive ? qsTr("Stop and transcribe") : qsTr("Test microphone")
                     Accessible.name: text
                     onClicked: {
@@ -135,7 +136,7 @@ Item {
                         }
                     }
                 }
-                Button {
+                SentinelButton {
                     text: qsTr("Detect installed voice files")
                     onClicked: root.autoDetectStatus = root.localizedAutoDetectStatus(root.viewModel.autoDetectVoicePaths())
                 }
@@ -143,13 +144,21 @@ Item {
             Label {
                 Layout.fillWidth: true
                 Layout.margins: SentinelTheme.spaceMd
-                text: root.microphoneTestTranscript.length > 0 ? root.microphoneTestTranscript : root.viewModel.voiceInputStatus
+                visible: root.microphoneTestTranscript.length > 0 || root.viewModel.voiceInputStatus.length > 0
+                text: root.microphoneTestTranscript.length > 0 ? root.microphoneTestTranscript : root.viewModel.voiceInputMessage
                 color: SentinelTheme.textPrimary
                 wrapMode: Text.Wrap
                 Accessible.name: text
             }
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: root.viewModel.developerModeEnabled && root.viewModel.voiceInputStatus.length > 0
+            text: qsTr("Voice diagnostics: %1").arg(root.viewModel.voiceInputStatus)
+            color: SentinelTheme.textMuted
+            wrapMode: Text.WrapAnywhere
+        }
         SettingCard {
             title: qsTr("Audio devices")
             subtitle: qsTr("Choose the microphone and output device exposed by the audio runtime.")

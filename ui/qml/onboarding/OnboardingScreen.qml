@@ -22,6 +22,7 @@ FocusScope {
     readonly property bool reducedMotion: viewModel.reducedMotionEnabled
 
     signal finished()
+    signal configureModelsRequested()
 
     function focusNavigation() {
         if (active) nextButton.forceActiveFocus(Qt.TabFocusReason)
@@ -275,6 +276,14 @@ FocusScope {
 
                     FinishStep {
                         viewModel: onboarding.viewModel
+                        onConfigureModelsRequested: {
+                            onboarding.viewModel.onboardingComplete = true
+                            if (onboarding.viewModel.onboardingComplete) {
+                                onboarding.active = false
+                                onboarding.finished()
+                                onboarding.configureModelsRequested()
+                            }
+                        }
                     }
                 }
             }

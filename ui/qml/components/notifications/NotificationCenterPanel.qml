@@ -5,12 +5,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
-ShellPanel {
+Popup {
     id: root
 
     property var viewModel: null
@@ -19,59 +19,97 @@ ShellPanel {
     property QtObject currentGroup: null
     property var expandedGroups: ({})
 
-    signal closeRequested()
+    signal openSettingsRequested
+    function closeRequested() {
+        close();
+    }
+    property var returnFocusItem: null
+    property Item fallbackFocusItem: null
+    objectName: "notificationCenterPopup"
+    parent: Overlay.overlay
+    x: Math.max(12, parent.width - width - 16)
+    y: 16
+    width: Math.min(720, parent.width - 32)
+    height: Math.min(600, parent.height - 32)
+    padding: 12
+    modal: true
+    focus: true
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    onAboutToShow: {
+        returnFocusItem = root.parent.Window.window ? root.parent.Window.window.activeFocusItem : null;
+        notificationList.refreshNotifications();
+    }
+    onOpened: searchField.forceActiveFocus(Qt.PopupFocusReason)
+    onClosed: {
+        if (viewModel)
+            viewModel.notificationCenterVisible = false;
+        const target = returnFocusItem && returnFocusItem.visible && returnFocusItem.enabled ? returnFocusItem : fallbackFocusItem;
+        if (target)
+            target.forceActiveFocus(Qt.PopupFocusReason);
+    }
+    Connections {
+        target: root.viewModel
+        function onNotificationCenterVisibleChanged() {
+            if (root.viewModel.notificationCenterVisible && !root.visible)
+                root.open();
+            else if (!root.viewModel.notificationCenterVisible && root.visible)
+                root.close();
+        }
+    }
+    Component.onCompleted: {
+        if (viewModel && viewModel.notificationCenterVisible)
+            open();
+    }
 
     implicitWidth: 480
     implicitHeight: 600
-    panelColor: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.97)
-    borderWidth: 1
-    borderColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
-    radius: SentinelTheme.radiusLg
-
-    Accessible.role: Accessible.Dialog
-    Accessible.name: "Notification center"
-
-    Keys.onEscapePressed: root.closeRequested()
-    Keys.onUpPressed: notificationList.decrementCurrentIndex()
-    Keys.onDownPressed: notificationList.incrementCurrentIndex()
-    Keys.onReturnPressed: {
-        var idx = notificationList.currentIndex
-        if (idx >= 0 && idx < notificationModel.count) {
-            var item = notificationModel.get(idx)
-            if (item && !item.read && viewModel) {
-                viewModel.markNotificationRead(item.id)
-            }
-        }
+    background: ShellPanel {
+        panelColor: SentinelTheme.backgroundRaised
+        borderWidth: 1
+        borderColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.3)
+        radius: SentinelTheme.radiusLg
     }
 
     function parseNotification(jsonStr) {
-        try { return JSON.parse(jsonStr) }
-        catch(e) { return null }
+        try {
+            return JSON.parse(jsonStr);
+        } catch (e) {
+            return null;
+        }
     }
 
     function categoryIcon(cat) {
         switch (cat) {
-            case "Tasks": return "bolt"
-            case "Models": return "brain"
-            case "Updates": return "refresh"
-            case "Brain": return "bulb"
-            case "Workspace": return "folder"
-            case "Security": return "shield"
-            default: return "bell"
+        case "Tasks":
+            return "bolt";
+        case "Models":
+            return "brain";
+        case "Updates":
+            return "refresh";
+        case "Brain":
+            return "bulb";
+        case "Workspace":
+            return "folder";
+        case "Security":
+            return "shield";
+        default:
+            return "bell";
         }
     }
 
     function toggleGroup(category) {
         if (root.expandedGroups[category]) {
-            root.expandedGroups[category] = false
+            root.expandedGroups[category] = false;
         } else {
-            root.expandedGroups[category] = true
+            root.expandedGroups[category] = true;
         }
-        root.expandedGroups = root.expandedGroups
+        root.expandedGroups = Object.assign({}, root.expandedGroups);
+        notificationList.refreshNotifications();
     }
 
-    ColumnLayout {
-        anchors.fill: parent
+    contentItem: ColumnLayout {
+        Accessible.role: Accessible.Dialog
+        Accessible.name: qsTr("Notification center")
         spacing: 0
 
         // ── Header ───────────────────────────────────────────────
@@ -98,15 +136,17 @@ ShellPanel {
 
                 Text {
                     text: {
-                        var unreadCount = root.viewModel ? root.viewModel.unreadNotificationCount : 0
-                        return unreadCount > 0 ? qsTr("(%1 unread)").arg(unreadCount) : ""
+                        var unreadCount = root.viewModel ? root.viewModel.unreadNotificationCount : 0;
+                        return unreadCount > 0 ? qsTr("(%1 unread)").arg(unreadCount) : "";
                     }
                     font.pixelSize: SentinelTheme.fontSmall
                     color: SentinelTheme.accent
                     visible: (root.viewModel ? root.viewModel.unreadNotificationCount : 0) > 0
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 // ── DND toggle ───────────────────────────────────
                 SentinelButton {
@@ -118,7 +158,8 @@ ShellPanel {
                     Accessible.name: root.viewModel && root.viewModel.dndEnabled ? qsTr("Disable do not disturb") : qsTr("Enable do not disturb")
                     highlighted: root.viewModel && root.viewModel.dndEnabled
                     onClicked: {
-                        if (root.viewModel) root.viewModel.dndEnabled = !root.viewModel.dndEnabled
+                        if (root.viewModel)
+                            root.viewModel.dndEnabled = !root.viewModel.dndEnabled;
                     }
                 }
 
@@ -128,7 +169,8 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontSmall
                     Accessible.name: qsTr("Mark all notifications as read")
                     onClicked: {
-                        if (root.viewModel) root.viewModel.markAllNotificationsRead()
+                        if (root.viewModel)
+                            root.viewModel.markAllNotificationsRead();
                     }
                 }
 
@@ -138,7 +180,8 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontSmall
                     Accessible.name: qsTr("Clear all archived notifications")
                     onClicked: {
-                        if (root.viewModel) root.viewModel.clearArchivedNotifications()
+                        if (root.viewModel)
+                            root.viewModel.clearArchivedNotifications();
                     }
                 }
 
@@ -161,7 +204,7 @@ ShellPanel {
         }
 
         // ── Search + Category filters ───────────────────────────
-        RowLayout {
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.leftMargin: 16
             Layout.rightMargin: 16
@@ -175,32 +218,37 @@ ShellPanel {
                 placeholderText: qsTr("Search notifications...")
                 Accessible.name: qsTr("Search notifications")
                 onTextChanged: {
-                    root.searchQuery = text
-                    if (root.viewModel) root.viewModel.notificationSearchQuery = text
+                    root.searchQuery = text;
+                    if (root.viewModel)
+                        root.viewModel.notificationSearchQuery = text;
                 }
             }
 
-            Repeater {
-                model: root.viewModel ? root.viewModel.notificationCategories : ["All"]
+            Flow {
+                Layout.fillWidth: true
+                spacing: 4
+                Repeater {
+                    model: root.viewModel ? root.viewModel.notificationCategories : ["All"]
 
-                delegate: SentinelButton {
-        required property var modelData
-        id: delegateScope1
-                    text: delegateScope1.modelData === "All" ? qsTr("All") : delegateScope1.modelData
-                    iconName: delegateScope1.modelData === "All" ? "" : root.categoryIcon(delegateScope1.modelData)
-                    flat: true
-                    font.pixelSize: SentinelTheme.fontSmall
-                    font.bold: root.activeFilter === delegateScope1.modelData
-                    highlighted: root.activeFilter === delegateScope1.modelData
-                    Accessible.name: "Filter by category: " + delegateScope1.modelData
-                    onClicked: {
-                        root.activeFilter = delegateScope1.modelData
-                        if (root.viewModel) root.viewModel.notificationCategoryFilter = delegateScope1.modelData
+                    delegate: SentinelButton {
+                        id: delegateScope1
+                        required property var modelData
+                        text: delegateScope1.modelData === "All" ? qsTr("All") : delegateScope1.modelData
+                        iconName: delegateScope1.modelData === "All" ? "" : root.categoryIcon(delegateScope1.modelData)
+                        flat: true
+                        font.pixelSize: SentinelTheme.fontSmall
+                        font.bold: root.activeFilter === delegateScope1.modelData
+                        highlighted: root.activeFilter === delegateScope1.modelData
+                        Accessible.name: "Filter by category: " + delegateScope1.modelData
+                        onClicked: {
+                            root.activeFilter = delegateScope1.modelData;
+                            if (root.viewModel)
+                                root.viewModel.notificationCategoryFilter = delegateScope1.modelData;
+                        }
                     }
                 }
             }
         }
-
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
@@ -218,44 +266,60 @@ ShellPanel {
 
             ListView {
                 id: notificationList
-                model: ListModel { id: notificationModel }
+                model: ListModel {
+                    id: notificationModel
+                    dynamicRoles: true
+                }
                 delegate: notificationDelegate
                 spacing: 2
                 boundsBehavior: Flickable.StopAtBounds
                 focus: true
+                objectName: "notificationHistoryList"
+                Keys.onReturnPressed: {
+                    if (currentIndex >= 0 && currentIndex < notificationModel.count) {
+                        const entry = notificationModel.get(currentIndex);
+                        if (entry.type === "groupHeader")
+                            root.toggleGroup(entry.groupName);
+                        else if (root.viewModel)
+                            root.viewModel.markNotificationRead(entry.id);
+                    }
+                }
 
                 Accessible.role: Accessible.List
                 Accessible.name: "Notification list"
 
                 function refreshNotifications() {
-                    notificationModel.clear()
-                    var summaries = root.viewModel ? root.viewModel.notificationFilteredSummaries : []
-                    var groups = {}
+                    notificationModel.clear();
+                    var summaries = root.viewModel ? root.viewModel.notificationFilteredSummaries : [];
+                    var groups = {};
                     for (var i = 0; i < summaries.length; ++i) {
-                        var n = root.parseNotification(summaries[i])
-                        if (!n) continue
+                        var n = root.parseNotification(summaries[i]);
+                        if (!n)
+                            continue;
                         if (n.snoozed) {
-                            var now = new Date().getTime()
-                            if (n.snoozeUntil && n.snoozeUntil > now) continue
+                            var now = new Date().getTime();
+                            if (n.snoozeUntil && n.snoozeUntil > now)
+                                continue;
                         }
-                        var cat = n.category || "Other"
-                        if (!groups[cat]) groups[cat] = []
-                        groups[cat].push(n)
+                        var cat = n.category || "Other";
+                        if (!groups[cat])
+                            groups[cat] = [];
+                        groups[cat].push(n);
                     }
-                    var catKeys = Object.keys(groups)
+                    var catKeys = Object.keys(groups);
                     for (var g = 0; g < catKeys.length; ++g) {
-                        var cg = catKeys[g]
-                        var expanded = root.expandedGroups[cg] !== false
+                        var cg = catKeys[g];
+                        var expanded = root.expandedGroups[cg] !== false;
                         notificationModel.append({
                             type: "groupHeader",
                             groupName: cg,
                             groupCount: groups[cg].length,
                             expanded: expanded
-                        })
+                        });
                         if (expanded) {
-                            var items = groups[cg]
+                            var items = groups[cg];
                             for (var k = 0; k < items.length; ++k) {
-                                var ni = items[k]
+                                var ni = items[k];
                                 notificationModel.append({
                                     type: "notification",
                                     id: ni.id,
@@ -269,10 +333,18 @@ ShellPanel {
                                     read: ni.read || false,
                                     snoozed: ni.snoozed || false,
                                     snoozeUntil: ni.snoozeUntil || 0
-                                })
+                                });
                             }
                         }
                     }
+                }
+
+                Label {
+                    objectName: "notificationHistoryEmpty"
+                    anchors.centerIn: parent
+                    visible: notificationModel.count === 0
+                    text: root.searchQuery.length > 0 ? qsTr("No matching notifications") : qsTr("No notifications yet")
+                    color: SentinelTheme.textMuted
                 }
 
                 Component.onCompleted: refreshNotifications()
@@ -281,7 +353,7 @@ ShellPanel {
             Connections {
                 target: root.viewModel
                 function onNativeExperienceChanged() {
-                    notificationList.refreshNotifications()
+                    notificationList.refreshNotifications();
                 }
             }
         }
@@ -302,7 +374,7 @@ ShellPanel {
             spacing: 6
 
             // ── Channel mute toggles ──────────────────────────────
-            RowLayout {
+            Flow {
                 Layout.fillWidth: true
                 spacing: 4
 
@@ -315,11 +387,13 @@ ShellPanel {
                 }
 
                 Repeater {
-                    model: root.viewModel ? root.viewModel.notificationCategories : []
+                    model: root.viewModel ? root.viewModel.notificationCategories.filter(function (category) {
+                        return category !== "All";
+                    }) : []
 
                     delegate: SentinelButton {
-        required property var modelData
-        id: delegateScope2
+                        id: delegateScope2
+                        required property var modelData
                         property bool muted: root.viewModel ? root.viewModel.isChannelMuted(delegateScope2.modelData) : false
                         text: delegateScope2.modelData
                         iconName: root.categoryIcon(delegateScope2.modelData)
@@ -329,7 +403,7 @@ ShellPanel {
                         Accessible.name: delegateScope2.modelData + " channel, " + (muted ? "muted" : "active")
                         onClicked: {
                             if (root.viewModel) {
-                                root.viewModel.setChannelMuted(delegateScope2.modelData, !muted)
+                                root.viewModel.setChannelMuted(delegateScope2.modelData, !muted);
                             }
                         }
                     }
@@ -342,8 +416,8 @@ ShellPanel {
 
                 Text {
                     text: {
-                        var summaries = root.viewModel ? root.viewModel.notificationLifecycleSummaries : []
-                        return summaries.length > 0 ? summaries.join(" \u00B7 ") : ""
+                        var summaries = root.viewModel ? root.viewModel.notificationLifecycleSummaries : [];
+                        return summaries.length > 0 ? summaries.join(" \u00B7 ") : "";
                     }
                     font.pixelSize: SentinelTheme.fontSmall - 1
                     color: SentinelTheme.textMuted
@@ -360,8 +434,8 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontSmall
                     Accessible.name: qsTr("Open notification settings")
                     onClicked: {
-                        root.closeRequested()
-                        if (root.viewModel) root.viewModel.currentPage = "Settings"
+                        root.closeRequested();
+                        root.openSettingsRequested();
                     }
                 }
             }
@@ -446,7 +520,9 @@ ShellPanel {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 TablerGlyph {
                     text: groupHeader.row.expanded ? "chevron-down" : "chevron-right"
@@ -472,21 +548,22 @@ ShellPanel {
             Layout.rightMargin: 8
             viewModel: root.viewModel
             notifData: ({
-                id: notificationRow.row.id,
-                category: notificationRow.row.category,
-                title: notificationRow.row.title,
-                body: notificationRow.row.body,
-                priority: notificationRow.row.priority,
-                timestamp: notificationRow.row.timestamp,
-                pinned: notificationRow.row.pinned,
-                archived: notificationRow.row.archived,
-                read: notificationRow.row.read,
-                snoozed: notificationRow.row.snoozed,
-                snoozeUntil: notificationRow.row.snoozeUntil
-            })
+                    id: notificationRow.row.id,
+                    category: notificationRow.row.category,
+                    title: notificationRow.row.title,
+                    body: notificationRow.row.body,
+                    priority: notificationRow.row.priority,
+                    timestamp: notificationRow.row.timestamp,
+                    pinned: notificationRow.row.pinned,
+                    archived: notificationRow.row.archived,
+                    read: notificationRow.row.read,
+                    snoozed: notificationRow.row.snoozed,
+                    snoozeUntil: notificationRow.row.snoozeUntil
+                })
 
-            onRemove: function(id) {
-                if (viewModel) viewModel.removeNotificationById(id)
+            onRemove: function (id) {
+                if (viewModel)
+                    viewModel.removeNotificationById(id);
             }
         }
     }

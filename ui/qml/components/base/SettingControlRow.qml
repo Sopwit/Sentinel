@@ -67,7 +67,7 @@ Rectangle {
 
         Item {
             id: controlContainer
-            Layout.preferredWidth: root.controlWidth
+            Layout.preferredWidth: Math.min(root.controlWidth, Math.max(120, root.width * 0.44))
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
             implicitWidth: root.controlWidth
             implicitHeight: Math.max(36, childrenRect.height)

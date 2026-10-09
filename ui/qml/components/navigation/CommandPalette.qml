@@ -15,24 +15,24 @@ SentinelOverlayModal {
     required property var viewModel
     property string query: ""
     property string actionStatus: ""
-    signal openSettingsRequested()
+    signal openSettingsRequested(string category)
     signal openUpdateRequested()
     signal focusChatRequested()
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var actions: [
         { "title": qsTr("Ask Sentinel"), "subtitle": qsTr("Focus the fixed chat composer"), "kind": qsTr("Chat"), "action": "ask", "enabled": true },
         { "title": qsTr("New Chat"), "subtitle": qsTr("Create a local conversation"), "kind": qsTr("Chat"), "action": "new-chat", "enabled": true },
-        { "title": qsTr("Search Chats"), "subtitle": qsTr("Filter conversations by title or id"), "kind": qsTr("Search"), "action": "search-chats", "enabled": true },
-        { "title": qsTr("Open Workspace"), "subtitle": qsTr("Open workspace controls in Settings"), "kind": qsTr("Workspace"), "action": "settings", "enabled": true },
-        { "title": qsTr("Open Settings"), "subtitle": qsTr("Open floating preferences"), "kind": qsTr("Modal"), "action": "settings", "enabled": true },
-        { "title": qsTr("Check Updates"), "subtitle": qsTr("Check release boundary and open update installer modal"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
-        { "title": qsTr("Open Updates"), "subtitle": qsTr("Open manual update and release notes surfaces"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
-        { "title": qsTr("Open Notifications"), "subtitle": qsTr("Open notification center controls"), "kind": qsTr("Notifications"), "action": "settings", "enabled": true },
+        { "title": qsTr("Search Chats"), "subtitle": qsTr("Conversation search is not available in this palette"), "kind": qsTr("Search"), "action": "search-chats", "enabled": false },
+        { "title": qsTr("Open Workspace"), "subtitle": qsTr("Open workspace controls in Settings"), "kind": qsTr("Workspace"), "category": "Memory", "action": "settings", "enabled": true },
+        { "title": qsTr("Open Settings"), "subtitle": qsTr("Open the full Settings page"), "kind": qsTr("Settings"), "action": "settings", "enabled": true },
+        { "title": qsTr("Check Updates"), "subtitle": qsTr("Check for updates in the update dialog"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
+        { "title": qsTr("Open Updates"), "subtitle": qsTr("Open the update status dialog"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
+        { "title": qsTr("Open Notifications"), "subtitle": qsTr("Open notification center controls"), "kind": qsTr("Notifications"), "action": "notifications", "enabled": true },
         { "title": qsTr("Export Current Chat"), "subtitle": qsTr("Save Markdown in the controlled export directory"), "kind": qsTr("Export"), "action": "export-md", "enabled": true },
         { "title": qsTr("Export Data"), "subtitle": qsTr("Prepare export preview for local data"), "kind": qsTr("Export"), "action": "export-preview", "enabled": true },
-        { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle through available Light, Dark, Glass, and Adaptive themes"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
-        { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "action": "settings", "enabled": true },
-        { "title": qsTr("Universal Search"), "subtitle": qsTr("Search chats, settings, models, and profiles"), "kind": qsTr("Search"), "action": "universal-search", "enabled": true }
+        { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle through all available theme presets"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
+        { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "category": "AI", "action": "settings", "enabled": true },
+        { "title": qsTr("Universal Search"), "subtitle": qsTr("Only command filtering is available; global search is not implemented"), "kind": qsTr("Search"), "action": "universal-search", "enabled": false }
     ]
     readonly property var filteredActions: {
         var normalized = query.trim().toLowerCase()
@@ -61,6 +61,7 @@ SentinelOverlayModal {
     }
 
     function runAction(action) {
+        if (!action.enabled) return
         if (action.page && action.page.length > 0) {
             viewModel.currentPage = action.page
             close()
@@ -75,7 +76,10 @@ SentinelOverlayModal {
             palette.focusChatRequested()
         } else if (action.action === "settings") {
             close()
-            palette.openSettingsRequested()
+            palette.openSettingsRequested(action.category || "Interface")
+        } else if (action.action === "notifications") {
+            close()
+            viewModel.notificationCenterVisible = true
         } else if (action.action === "updates") {
             close()
             palette.openUpdateRequested()
@@ -86,12 +90,12 @@ SentinelOverlayModal {
             viewModel.prepareExportPreview("conversations", "Markdown")
             actionStatus = viewModel.exportPreviewSummaries.join(" / ")
         } else if (action.action === "theme") {
-            var choices = ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
+            var choices = viewModel.availableThemes
+            if (!choices.length) return
             var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length
             viewModel.themeName = choices[next]
-            actionStatus = qsTr("Theme changed to %1.").arg(viewModel.themeName)
-        } else if (action.action === "search-chats" || action.action === "universal-search") {
-            actionStatus = qsTr("Type to search commands, chats, settings, models, and profiles.")
+            actionStatus = qsTr("Theme changed to %1.").arg(SentinelTheme.localizedThemeName(viewModel.themeName))
+
         } else {
             actionStatus = qsTr("%1 is unavailable.").arg(action.title)
         }
@@ -150,6 +154,7 @@ SentinelOverlayModal {
                 id: searchField
                 Layout.fillWidth: true
                 placeholderText: qsTr("Search local commands")
+                Accessible.name: placeholderText
                 text: palette.query
                 onTextChanged: palette.query = text
                 Keys.onDownPressed: actionList.forceActiveFocus()
@@ -207,7 +212,9 @@ SentinelOverlayModal {
                 height: Math.max(58, actionText.implicitHeight + SentinelTheme.spaceMd)
                 hoverEnabled: true
                 focusPolicy: Qt.StrongFocus
-                enabled: true
+                enabled: modelData.enabled
+                Accessible.name: modelData.title
+                Accessible.description: modelData.subtitle
                 onClicked: palette.runAction(modelData)
 
                 contentItem: RowLayout {

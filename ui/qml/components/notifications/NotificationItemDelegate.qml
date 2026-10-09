@@ -21,7 +21,7 @@ Rectangle {
     signal archive(string id)
     signal remove(string id)
 
-    height: notifData ? contentColumn.implicitHeight + 24 : 0
+    height: notifData ? Math.max(100, contentColumn.implicitHeight + 24) : 0
     radius: SentinelTheme.radiusMd
     color: {
         if (mouseArea.containsMouse) return SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.15)
@@ -210,7 +210,8 @@ Rectangle {
 
         ColumnLayout {
             spacing: 4
-            visible: mouseArea.containsMouse
+            visible: true
+            Layout.preferredWidth: 32
 
             SentinelButton {
                 iconName: root.notifData && root.notifData.pinned ? "pin" : "map-pin"
@@ -228,6 +229,7 @@ Rectangle {
 
             SentinelButton {
                 iconName: "check"
+                objectName: "notificationMarkReadButton"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
@@ -290,20 +292,17 @@ Rectangle {
             }
 
             SentinelButton {
+                objectName: "notificationArchiveButton"
+                visible: root.notifData && !root.notifData.archived
                 iconName: "folder"
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: root.notifData && root.notifData.archived ? qsTr("Unarchive") : qsTr("Archive")
-                Accessible.name: root.notifData && root.notifData.archived ? qsTr("Unarchive notification") : qsTr("Archive notification")
+                tooltipText: qsTr("Archive")
+                Accessible.name: qsTr("Archive notification")
                 onClicked: {
-                    if (root.notifData && root.viewModel) {
-                        if (root.notifData.archived) {
-                            root.remove(root.notifData.id)
-                        } else {
-                            root.viewModel.archiveNotification(root.notifData.id)
-                        }
-                    }
+                    if (root.notifData && root.viewModel)
+                        root.viewModel.archiveNotification(root.notifData.id)
                 }
             }
 
