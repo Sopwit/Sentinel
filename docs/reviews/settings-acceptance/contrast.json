@@ -1,0 +1,898 @@
+[
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.60197618116933,
+        "text": "settingsText",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.951114327773238,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 16.284360380738566,
+        "text": "settingsText",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.818131138482459,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.39683691793616,
+        "text": "settingsText",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 11.073599203430268,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 17.220483693490873,
+        "text": "settingsText",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 7.210078464561372,
+        "text": "settingsMuted",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 16.284360380738566,
+        "text": "settingsText",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.818131138482459,
+        "text": "settingsMuted",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 20.11946711678122,
+        "text": "settingsText",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 11.486146735183027,
+        "text": "settingsMuted",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Paper"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.56072975134349,
+        "text": "settingsText",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.933844778280866,
+        "text": "settingsMuted",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 16.284360380738566,
+        "text": "settingsText",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.818131138482459,
+        "text": "settingsMuted",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.34864685525637,
+        "text": "settingsText",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 11.046087633272625,
+        "text": "settingsMuted",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Linen"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.386951668794676,
+        "text": "settingsText",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.861085288309538,
+        "text": "settingsMuted",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 16.284360380738566,
+        "text": "settingsText",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.818131138482459,
+        "text": "settingsMuted",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.14561409034166,
+        "text": "settingsText",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 10.93017680341197,
+        "text": "settingsMuted",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Sage Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.349661917773,
+        "text": "settingsText",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.845472368511478,
+        "text": "settingsMuted",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 16.284360380738566,
+        "text": "settingsText",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.818131138482459,
+        "text": "settingsMuted",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.10204679381112,
+        "text": "settingsText",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 10.905304357342679,
+        "text": "settingsMuted",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Sky Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 12.051753816620586,
+        "text": "settingsText",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 4.989012347840098,
+        "text": "settingsMuted",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 11.777950057620153,
+        "text": "settingsText",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 4.875666991195463,
+        "text": "settingsMuted",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.468046557009853,
+        "text": "settingsText",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 11.114252584487147,
+        "text": "settingsMuted",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 19.025752065368845,
+        "text": "settingsText",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.861747913182288,
+        "text": "settingsMuted",
+        "theme": "Solarized Light"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.526786421654045,
+        "text": "settingsText",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.597408194527069,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 13.887684088588395,
+        "text": "settingsText",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 5.543892107724498,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 18.924630438241557,
+        "text": "settingsText",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 17.311545594175964,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 15.90262512712252,
+        "text": "settingsText",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 14.54712792694567,
+        "text": "settingsMuted",
+        "theme": "Liquid Glass Dark"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 13.21983550268812,
+        "text": "settingsText",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.504163957981779,
+        "text": "settingsMuted",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 11.808937121954514,
+        "text": "settingsText",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 5.810001432701008,
+        "text": "settingsMuted",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 16.560575137001514,
+        "text": "settingsText",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 15.148996039080235,
+        "text": "settingsMuted",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 14.793133428663952,
+        "text": "settingsText",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 13.532206331149906,
+        "text": "settingsMuted",
+        "theme": "Sentinel Classic"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 17.454267305969196,
+        "text": "settingsText",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 8.167904505568337,
+        "text": "settingsMuted",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 15.016773389373883,
+        "text": "settingsText",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 7.027254073519237,
+        "text": "settingsMuted",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 19.393973560849194,
+        "text": "settingsText",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 17.74088316527677,
+        "text": "settingsMuted",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 16.685599055950128,
+        "text": "settingsText",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 15.263363253822135,
+        "text": "settingsMuted",
+        "theme": "Midnight Blue"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.721362245649097,
+        "text": "settingsText",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 8.431063108308132,
+        "text": "settingsMuted",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 12.984828324077606,
+        "text": "settingsText",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.54706868032423,
+        "text": "settingsMuted",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 17.723949781842332,
+        "text": "settingsText",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 16.213207743134067,
+        "text": "settingsMuted",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 13.763378949683275,
+        "text": "settingsText",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 12.59022536767185,
+        "text": "settingsMuted",
+        "theme": "Aurora Teal"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 16.14053363359993,
+        "text": "settingsText",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 7.450308478214156,
+        "text": "settingsMuted",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 13.668551355854481,
+        "text": "settingsText",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.309266246280565,
+        "text": "settingsMuted",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 18.46368945219463,
+        "text": "settingsText",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 16.889893984004956,
+        "text": "settingsMuted",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 15.635907289366541,
+        "text": "settingsText",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 14.303144403771428,
+        "text": "settingsMuted",
+        "theme": "Graphite Grey"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 10.256596494185008,
+        "text": "settingsText",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.58717874906019,
+        "text": "settingsMuted",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 8.26291668405039,
+        "text": "settingsText",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 5.306761284534338,
+        "text": "settingsMuted",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 12.489605735490946,
+        "text": "settingsText",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 11.42502517282041,
+        "text": "settingsMuted",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 10.061873026545335,
+        "text": "settingsText",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 9.204225901810211,
+        "text": "settingsMuted",
+        "theme": "Nord Frost"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 15.263949320453545,
+        "text": "settingsText",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 7.309086928024186,
+        "text": "settingsMuted",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 13.288583217118573,
+        "text": "settingsText",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.36319001361287,
+        "text": "settingsMuted",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 16.270873541877254,
+        "text": "settingsText",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 14.883987832496459,
+        "text": "settingsMuted",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 14.165197521110754,
+        "text": "settingsText",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 12.95779399959594,
+        "text": "settingsMuted",
+        "theme": "Dracula"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 11.46675739245737,
+        "text": "settingsText",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": false,
+        "ratio": 6.845470092999089,
+        "text": "settingsMuted",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 10.203964435404531,
+        "text": "settingsText",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": false,
+        "ratio": 6.091602968641751,
+        "text": "settingsMuted",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 18.511802737305466,
+        "text": "settingsText",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsBackground",
+        "highContrast": true,
+        "ratio": 16.933906221475063,
+        "text": "settingsMuted",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 16.473164147602898,
+        "text": "settingsText",
+        "theme": "Tokyo Night"
+    },
+    {
+        "AA_normal_text": true,
+        "background": "settingsSurface",
+        "highContrast": true,
+        "ratio": 15.069035728449894,
+        "text": "settingsMuted",
+        "theme": "Tokyo Night"
+    }
+]

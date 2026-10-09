@@ -15,12 +15,14 @@
 #include "sentinel/desktop/DaemonClient.h"
 #include "sentinel/desktop/DesktopControllerBridge.h"
 #include "sentinel/desktop/DesktopModelHelper.h"
+#include "sentinel/desktop/DesktopBackupHelper.h"
 #include "sentinel/desktop/DesktopRuntimeClient.h"
 #include "sentinel/desktop/DesktopSettingsStore.h"
 #include "sentinel/desktop/QuickPanelController.h"
 #include "service/DaemonIpcServer.h"
 
 #include <QDir>
+#include <QCryptographicHash>
 #include <QJSEngine>
 #include <QJsonDocument>
 #include <QLocalServer>
@@ -232,6 +234,36 @@ private slots:
         QCOMPARE(engine.evaluate("ids('size')").toString(), QString("zero,largest,unknown,bad"));
         QCOMPARE(engine.evaluate("models[0].id").toString(), QString("unknown"));
     }
+    void modelVariantsShareCardsWithoutLosingArtifactIdentity() {
+        QFile script(":/catalog-test/ModelCatalog.js");
+        QVERIFY(script.open(QIODevice::ReadOnly));
+        QJSEngine engine;
+        QVERIFY(!engine.evaluate(QString::fromUtf8(script.readAll())).isError());
+        const auto result = engine.evaluate(R"JS(
+            var source = [
+                {id:'small', name:'Qwen 2.5 7B', ollamaId:'qwen2.5:7b', category:'LLM'},
+                {id:'large', name:'Qwen 2.5 14B', ollamaId:'qwen2.5:14b', category:'LLM'},
+                {id:'coder', name:'Qwen 2.5 Coder 7B', ollamaId:'qwen2.5-coder:7b', category:'LLM'},
+                {id:'next', name:'Qwen 3 7B', ollamaId:'qwen3:7b', category:'LLM'},
+                {id:'q4', name:'Alpha 8B', repositoryId:'publisher/Alpha-8B-GGUF', filename:'Alpha-Q4_K_M.gguf', gguf:true},
+                {id:'q8', name:'Alpha 8B', repositoryId:'publisher/Alpha-8B-GGUF', filename:'Alpha-Q8_0.gguf', gguf:true},
+                {id:'other', name:'Alpha 8B', repositoryId:'other/Alpha-8B-GGUF', gguf:true}
+            ];
+            var grouped = groupModels(source);
+            grouped.length === 5 && grouped[0].variants.length === 2 &&
+            grouped[0].familyName === 'Qwen 2.5' &&
+            grouped[0].variants[1].ollamaId === 'qwen2.5:14b' &&
+            grouped[3].variants[1].filename === 'Alpha-Q8_0.gguf' &&
+            grouped[3].variants[1].variantLabel === 'Alpha-Q8_0.gguf' &&
+            source[0].variants === undefined && groupModels([]).length === 0 &&
+            groupModels([source[0],source[0]]).length === 1 &&
+            groupModels([source[0],source[0]])[0].variants.length === 1 &&
+            matchesSearch(source[1], '14b');
+        )JS");
+        QVERIFY2(!result.isError(), qPrintable(result.toString()));
+        QVERIFY(result.toBool());
+    }
+
     void deletingConversationsRefreshesHistoryAndRebindsActiveSession() {
         QTemporaryDir directory{QDir::tempPath() + "/delete-XXXXXX"};
         sentinel::test::DeterministicModelServiceFixture models;
@@ -554,7 +586,24 @@ private slots:
         const auto before = changed.size();
         publish(same, "page-two");
         QTest::qWait(20);
-        QCOMPARE(changed.size(), before);
+        QVERIFY(changed.size() > before);
+        QCOMPARE(helper.models().first().toMap().value("id").toString(), QString("page-two"));
+        helper.fetch("fixture-query");
+        auto chunkRequest = nextStateRequest();
+        QJsonArray first, second;
+        for (int i = 0; i < 90; ++i) {
+            QJsonObject row{{"id", QString::number(i)}, {"name", QString("Model %1").arg(i)}};
+            if (i < 45) first.append(row); else second.append(row);
+        }
+        send(peer.socket, frame("response", chunkRequest.value("id").toString(), "model.helper_state",
+            {{"component", "ggufLibraryFetcher"}, {"properties", QJsonObject{{"models", first}, {"modelOffset", 0}, {"nextOffset", 45}, {"query", "fixture-query"}}}}));
+        chunkRequest = nextStateRequest();
+        QCOMPARE(chunkRequest.value("payload").toObject().value("offset").toInt(), 45);
+        QVERIFY(helper.models().isEmpty());
+        send(peer.socket, frame("response", chunkRequest.value("id").toString(), "model.helper_state",
+            {{"component", "ggufLibraryFetcher"}, {"properties", QJsonObject{{"models", second}, {"modelOffset", 45}, {"nextOffset", -1}, {"query", "fixture-query"}}}}));
+        QTRY_COMPARE(helper.models().size(), 90);
+        QCOMPARE(helper.models().last().toMap().value("id").toString(), QString("89"));
     }
     void modelCatalogIsProviderIndependentAndMediaTypesAreExplicit() {
         sentinel::test::DeterministicModelServiceFixture models;
@@ -988,6 +1037,9 @@ private slots:
         QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));
         QTRY_VERIFY(adapter.messages().size() >= 4);
         QCOMPARE(adapter.messages().last().content, QString("SENTINEL_TEST_RESPONSE"));
+        const auto savedQuickChat = controller->conversationStore()->loadMessages(first);
+        QVERIFY(!savedQuickChat.isEmpty());
+        QCOMPARE(savedQuickChat.last().content, QString("SENTINEL_TEST_RESPONSE"));
         QVERIFY(panel.ask(QStringLiteral("Next turn")));
         QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));
         QTRY_VERIFY(adapter.messages().size() >= 6);
@@ -1105,6 +1157,12 @@ private slots:
                                       : QString("failed"));
         if (action == "allow")
             QCOMPARE(bridge.lastAgentResponse(), QString("Fixture finished"));
+        if (action == "allow") {
+            const auto saved = controller->conversationStore()->loadMessages(actorSession);
+            QVERIFY(!saved.isEmpty());
+            QCOMPARE(saved.last().content, QString("Fixture finished"));
+        }
+
         QCOMPARE(notices.size(), 2);
         QVERIFY(!panel.approve(true));
         // A late completion from this closed run cannot turn cancellation/denial into success.
@@ -1122,6 +1180,83 @@ private slots:
         QTRY_VERIFY(!adapter.pendingApproval().value("approval_id").toString().isEmpty());
         QVERIFY(panel.cancel());
         QTRY_VERIFY(!bridge.agentLoopActive());
+    }
+    void backupTransferIntegrityAndIsolation() {
+        QTemporaryDir directory{QDir::tempPath() + "/sd-XXXXXX"};
+        sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(), sentinel::core::inMemoryTestCredentialStore());
+        sentinel::test::DeterministicModelServiceFixture models(sentinel::test::DeterministicChatReply::Final, &settings);
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService()).withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>()).build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        server.setSettings(&settings);
+        const auto path = directory.filePath("daemon.sock");
+        QVERIFY(server.startServer(path));
+        DaemonClient owner(path, 2000, 10), other(path, 2000, 10);
+        QTRY_VERIFY(owner.daemonReachable() && other.daemonReachable());
+        auto call = [](DaemonClient& client, const QString& action, const QJsonObject& value) {
+            QSignalSpy responses(&client, &DaemonClient::responseReceived);
+            const auto id = client.request(DaemonClient::Command::backup_transfer, {{"action", action}, {"value", value}});
+            QElapsedTimer timer; timer.start();
+            while (timer.elapsed() < 2000) {
+                for (const auto& response : responses)
+                    if (response.at(0).toString() == id) return response.at(2).toJsonObject().value("result").toObject();
+                QTest::qWait(1);
+            }
+            return QJsonObject{};
+        };
+        const auto exported = call(owner, "export", {{"domains", QJsonArray{"settings"}}});
+        QVERIFY(exported.value("succeeded").toBool());
+        const auto transfer = exported.value("transferId").toString();
+        QCOMPARE(call(other, "read", {{"transferId", transfer}, {"offset", 0}}).value("code").toString(), QString("UnknownTransfer"));
+        QByteArray backup;
+        while (backup.size() < exported.value("size").toInt()) {
+            const auto chunk = call(owner, "read", {{"transferId", transfer}, {"offset", backup.size()}});
+            QVERIFY(chunk.value("succeeded").toBool());
+            backup += QByteArray::fromBase64(chunk.value("data").toString().toLatin1());
+        }
+        QCOMPARE(QCryptographicHash::hash(backup, QCryptographicHash::Sha256).toHex(), exported.value("sha256").toString().toLatin1());
+        // Pad valid JSON beyond one IPC frame to exercise real chunking.
+        backup += QByteArray(300000, ' ');
+        auto begin = [&](const QByteArray& digest) {
+            return call(owner, "importBegin", {{"domains", QJsonArray{"settings"}}, {"size", backup.size()}, {"sha256", QString::fromLatin1(digest)}, {"replace", false}}).value("transferId").toString();
+        };
+        auto upload = [&](const QString& id) {
+            for (int offset = 0; offset < backup.size(); offset += 48 * 1024) {
+                const auto result = call(owner, "write", {{"transferId", id}, {"offset", offset}, {"data", QString::fromLatin1(backup.mid(offset, 48 * 1024).toBase64())}});
+                if (!result.value("succeeded").toBool()) return false;
+            }
+            return true;
+        };
+        const auto bad = begin(QByteArray(64, '0'));
+        QVERIFY(!bad.isEmpty());
+        QCOMPARE(call(owner, "write", {{"transferId", bad}, {"offset", 1}, {"data", "eA=="}}).value("code").toString(), QString("InvalidChunk"));
+        QVERIFY(upload(bad));
+        QCOMPARE(call(owner, "commit", {{"transferId", bad}}).value("code").toString(), QString("IntegrityFailure"));
+        const auto good = begin(QCryptographicHash::hash(backup, QCryptographicHash::Sha256).toHex());
+        QVERIFY(upload(good));
+        QVERIFY(call(owner, "commit", {{"transferId", good}}).value("succeeded").toBool());
+        const auto cancelled = begin(QCryptographicHash::hash(backup, QCryptographicHash::Sha256).toHex());
+        QVERIFY(call(owner, "cancel", {}).value("succeeded").toBool());
+        QCOMPARE(call(owner, "commit", {{"transferId", cancelled}}).value("code").toString(), QString("UnknownTransfer"));
+        sentinel::desktop::DesktopRuntimeClient runtime(owner);
+        QTRY_VERIFY(runtime.ready());
+        sentinel::desktop::DesktopBackupHelper helper(&runtime);
+        const auto file = QUrl::fromLocalFile(directory.filePath("backup.json"));
+        QVERIFY(helper.exportFile(file, {"settings"}));
+        QTRY_VERIFY(!helper.busy());
+        QVERIFY2(helper.status().contains("saved successfully"), qPrintable(helper.status()));
+        QVERIFY(helper.inspectFile(file));
+        QCOMPARE(helper.importDomains(), QStringList{"settings"});
+        QVERIFY(!helper.preview().isEmpty());
+        QVERIFY(helper.importFile({"settings"}, false));
+        QTRY_VERIFY(!helper.busy());
+        QVERIFY2(helper.status().contains("restored successfully"), qPrintable(helper.status()));
+        QVERIFY(!helper.inspectFile(QUrl::fromLocalFile(directory.filePath("absent.json"))));
+        QVERIFY(helper.importDomains().isEmpty());
+        QTRY_VERIFY(runtime.ready());
+        runtime.setSetting("responseProfileInstructions", "Use short technical explanations.");
+        QTRY_COMPARE(settings.responseProfileInstructions(), QString("Use short technical explanations."));
+        QTRY_COMPARE(runtime.settingsValue("responseProfileInstructions", {}), QString("Use short technical explanations."));
     }
     void daemonSettingsRejectMalformedAndUnknownActions() {
         QTemporaryDir directory{QDir::tempPath() + "/sd-XXXXXX"};

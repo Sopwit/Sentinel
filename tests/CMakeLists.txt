@@ -47,6 +47,16 @@ endif()
 target_link_libraries(settings_ui_certification_probe PRIVATE sentinel_desktop_viewmodels Qt6::Quick Qt6::Qml Qt6::Test)
 add_test(NAME test_onboarding_focus COMMAND $<TARGET_FILE:settings_ui_certification_probe> --focus-smoke)
 set_tests_properties(test_onboarding_focus PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+add_test(NAME test_navigation_settings COMMAND settings_ui_certification_probe --navigation-smoke)
+set_tests_properties(test_navigation_settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+add_test(NAME test_chat_surface COMMAND settings_ui_certification_probe --chat-smoke)
+add_test(NAME test_models_surface COMMAND settings_ui_certification_probe --models-smoke)
+add_test(NAME test_settings_surface COMMAND settings_ui_certification_probe --settings-smoke)
+add_test(NAME test_tray_surface COMMAND settings_ui_certification_probe --tray-smoke)
+set_tests_properties(test_tray_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+set_tests_properties(test_settings_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+set_tests_properties(test_models_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+set_tests_properties(test_chat_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 file(GLOB_RECURSE CERTIFICATION_QML_FILES "${CMAKE_SOURCE_DIR}/ui/qml/*.qml" "${CMAKE_SOURCE_DIR}/ui/qml/*.js")
 foreach(qml_file IN LISTS CERTIFICATION_QML_FILES)
     get_filename_component(qml_name "${qml_file}" NAME)
@@ -69,6 +79,15 @@ file(GLOB CERTIFICATION_ICON_FILES "${CMAKE_SOURCE_DIR}/resources/icons/tabler/*
     "${CMAKE_SOURCE_DIR}/resources/icons/lucide/*.svg")
 qt_add_resources(settings_ui_certification_probe "certification_icons"
     PREFIX "/" BASE "${CMAKE_SOURCE_DIR}/resources" FILES ${CERTIFICATION_ICON_FILES})
+set(CERTIFICATION_QM_FILES)
+foreach(language en tr de es fr zh ja ar)
+    set(qm_file "${CMAKE_BINARY_DIR}/apps/sentinel-desktop/sentinel_${language}.qm")
+    set_source_files_properties("${qm_file}" PROPERTIES GENERATED TRUE QT_RESOURCE_ALIAS "sentinel_${language}.qm")
+    list(APPEND CERTIFICATION_QM_FILES "${qm_file}")
+endforeach()
+qt_add_resources(settings_ui_certification_probe "certification_translations"
+    PREFIX "/i18n" FILES ${CERTIFICATION_QM_FILES})
+add_dependencies(settings_ui_certification_probe Sentinel_lrelease)
 target_compile_definitions(settings_ui_certification_probe PRIVATE
     CERTIFICATION_QML_IMPORT="${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
     CERTIFICATION_TRANSLATIONS="${CMAKE_BINARY_DIR}/apps/sentinel-desktop"
