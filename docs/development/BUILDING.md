@@ -10,6 +10,17 @@ cmake --build --preset debug
 
 On macOS, launch the bundle with `open build/debug/apps/sentinel-desktop/sentinel-desktop.app`.
 
+If your shell places ccache compiler wrappers on `PATH`, `SENTINEL_USE_CCACHE=OFF`
+only disables Sentinel's automatic compiler launcher. To bypass the shell wrappers
+as well, use `CCACHE_DISABLE=1 cmake --fresh --preset debug -DSENTINEL_USE_CCACHE=OFF`
+and `CCACHE_DISABLE=1 cmake --build --preset debug -j6`, or use the `no-ccache`
+preset for both commands.
+
+Linguist's `unfinished` and `untranslated` counts describe incomplete translation
+catalogs; missing translations fall back to source text. They are not compiler
+errors. Unsigned/ad-hoc signing messages are expected for local macOS builds
+without a configured signing identity.
+
 New profiles use llama.cpp by default. Models → Runtime setup can install `llama-server` after an explicit user action: Homebrew on supported macOS setups, otherwise a source build requiring Git, CMake, and a C++ compiler. Source builds stay under the application's data directory. Existing provider preferences are preserved.
 
 The Hugging Face catalog follows API continuation links automatically; it has no fixed 40-model limit. Repository details, `config.json`, and model cards supply artifact sizes and published metadata. Fields the publisher does not supply can remain unavailable. GGUF artifacts can be registered with llama.cpp; downloading a safetensors, PyTorch, or ONNX file does not make that model runnable by llama.cpp or assemble a complete multi-file repository. Gated repositories require an authorized Hugging Face token.
