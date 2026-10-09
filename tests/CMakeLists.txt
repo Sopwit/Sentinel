@@ -49,6 +49,8 @@ add_test(NAME test_onboarding_focus COMMAND $<TARGET_FILE:settings_ui_certificat
 set_tests_properties(test_onboarding_focus PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 add_test(NAME test_navigation_settings COMMAND settings_ui_certification_probe --navigation-smoke)
 set_tests_properties(test_navigation_settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+add_test(NAME test_ui_phase1 COMMAND settings_ui_certification_probe --phase1-smoke)
+set_tests_properties(test_ui_phase1 PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 add_test(NAME test_chat_surface COMMAND settings_ui_certification_probe --chat-smoke)
 add_test(NAME test_models_surface COMMAND settings_ui_certification_probe --models-smoke)
 add_test(NAME test_settings_surface COMMAND settings_ui_certification_probe --settings-smoke)

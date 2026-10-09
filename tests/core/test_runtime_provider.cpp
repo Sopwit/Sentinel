@@ -27,6 +27,7 @@ private slots:
     void keepsUnsupportedProviderDisabled();
     void fallsBackToEnabledLocalProviderForDisabledSelection();
     void exposesCapabilityMetadata();
+    void localCompatibleProvidersReflectObservedReadiness();
 };
 
 static OllamaHealthCheckResult healthyHealth() {
@@ -82,6 +83,22 @@ void RuntimeProviderTest::reportsReadinessTransitions() {
                                      true,
                                      true};
     QCOMPARE(busy.descriptor().readiness, RuntimeReadinessState::Busy);
+}
+
+void RuntimeProviderTest::localCompatibleProvidersReflectObservedReadiness() {
+    for (const auto& id : {QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}) {
+        for (const auto state : {RuntimeReadinessState::Ready, RuntimeReadinessState::Unavailable,
+                                 RuntimeReadinessState::Busy, RuntimeReadinessState::Unknown,
+                                 RuntimeReadinessState::MissingModel}) {
+            const sentinel::core::OpenAICompatibleLocalRuntimeProvider provider{
+                id, id, QStringLiteral("Observed endpoint status"), QStringLiteral("test-model"),
+                state};
+            QCOMPARE(provider.descriptor().readiness, state);
+            QVERIFY(provider.descriptor().enabled);
+            QVERIFY(!provider.descriptor().readinessReason.contains(
+                QStringLiteral("no endpoint probing")));
+        }
+    }
 }
 
 void RuntimeProviderTest::keepsUnsupportedProviderDisabled() {
