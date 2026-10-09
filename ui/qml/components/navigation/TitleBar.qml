@@ -12,7 +12,7 @@ import Sentinel.Desktop
 Item {
     id: root
 
-    property string title: qsTr("Sentinel Desktop Alpha")
+    property string title: qsTr("Sentinel")
     property string modeName: ""
     property bool frameless: false
     property bool maximized: false

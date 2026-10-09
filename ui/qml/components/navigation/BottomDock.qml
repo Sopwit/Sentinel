@@ -48,8 +48,8 @@ Item {
         SequentialAnimation on opacity {
             loops: Animation.Infinite
             running: true
-            NumberAnimation { to: 1.0; duration: 2400; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 0.0; duration: 2400; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 1.0; duration: MotionTokens.duration(2400); easing.type: Easing.InOutSine }
+            NumberAnimation { to: 0.0; duration: MotionTokens.duration(2400); easing.type: Easing.InOutSine }
         }
     }
 

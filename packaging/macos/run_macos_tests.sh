@@ -10,7 +10,7 @@ echo "[1/6] Running Core CTest Suite..."
 ctest --test-dir build --output-on-failure
 
 # 2. Verify Bundle Structure
-APP_BUNDLE="build/apps/sentinel-desktop/Sentinel Desktop.app"
+APP_BUNDLE="build/apps/sentinel-desktop/sentinel-desktop.app"
 if [ -d "${APP_BUNDLE}" ]; then
     echo "[2/6] Verifying macOS App Bundle Layout..."
     test -f "${APP_BUNDLE}/Contents/Info.plist"

@@ -18,6 +18,10 @@ QString AppMetadata::displayName() {
     return QString::fromLatin1(SENTINEL_DISPLAY_NAME);
 }
 
+QString AppMetadata::legacyDisplayName() {
+    return QStringLiteral("Sentinel Desktop");
+}
+
 QString AppMetadata::version() {
     return QString::fromLatin1(SENTINEL_APP_VERSION);
 }

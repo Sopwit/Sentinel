@@ -1,4 +1,4 @@
-# Enterprise Silent Installation Script for Sentinel Desktop
+# Enterprise Silent Installation Script for Sentinel
 Param(
     [string]$InstallerPath = ".\Sentinel-1.0.0-win64.exe",
     [string]$MsiPath = ".\Sentinel-1.0.0-win64.msi"

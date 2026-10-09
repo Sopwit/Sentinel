@@ -36,6 +36,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/app/ApplicationControllerBuilder.h
     include/sentinel/core/app/AppMetadata.h
     include/sentinel/core/app/AppSettings.h
+    include/sentinel/core/app/StorageMigration.h
     include/sentinel/core/app/CompanionService.h
     include/sentinel/core/app/ContextAssembly.h
     include/sentinel/core/app/FileLogger.h
@@ -349,6 +350,7 @@ add_library(sentinel_core STATIC
     src/app/OrchestrationDiagnostics.cpp
     src/app/OnboardingService.cpp
     src/app/SettingsService.cpp
+    src/app/StorageMigration.cpp
     src/app/BackupService.cpp
     src/app/ProductMessages.cpp
     src/app/SkillProfileService.cpp

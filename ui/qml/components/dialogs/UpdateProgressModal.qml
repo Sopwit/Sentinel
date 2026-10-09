@@ -334,8 +334,8 @@ SentinelOverlayModal {
                                 loops: Animation.Infinite
                                 from: 0
                                 to: 360
-                                duration: 1200
-                                running: updateModal.visible
+                                duration: MotionTokens.duration(1200)
+                                running: updateModal.visible && !MotionTokens.reducedMotion
                             }
                         }
                     }
@@ -384,8 +384,8 @@ SentinelOverlayModal {
                                 loops: Animation.Infinite
                                 from: 0
                                 to: 360
-                                duration: 1200
-                                running: updateModal.visible
+                                duration: MotionTokens.duration(1200)
+                                running: updateModal.visible && !MotionTokens.reducedMotion
                             }
                         }
 
@@ -431,7 +431,7 @@ SentinelOverlayModal {
                             color: SentinelTheme.accent
 
                             Behavior on width {
-                                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                                NumberAnimation { duration: MotionTokens.duration(150); easing.type: Easing.OutQuad }
                             }
                         }
                     }

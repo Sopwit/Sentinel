@@ -98,7 +98,7 @@ void registerSentinelProtocol() {
 
     // 3. Install Path & Version Registry Entry
     HKEY hAppMeta = nullptr;
-    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Sopwit\\Sentinel Desktop", 0, nullptr, 0,
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Sopwit\\Sentinel", 0, nullptr, 0,
                         KEY_SET_VALUE, nullptr, &hAppMeta, nullptr) == ERROR_SUCCESS) {
         const std::wstring versionStr = AppMetadata::version().toStdWString();
         RegSetValueExW(hAppMeta, L"Version", 0, REG_SZ,
@@ -109,6 +109,8 @@ void registerSentinelProtocol() {
                        static_cast<DWORD>((appPathW.size() + 1) * sizeof(wchar_t)));
         RegCloseKey(hAppMeta);
     }
+    // Remove the pre-rename entry so only the current identity remains.
+    RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Sopwit\\Sentinel Desktop");
 
     // Notify Windows that shell associations changed
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);

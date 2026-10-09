@@ -6065,8 +6065,7 @@ bool DesktopShellViewModel::checkForUpdates() {
         networkManager_ = new QNetworkAccessManager(this);
     }
 
-    const QString userAgent =
-        QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
+    const QString userAgent = QStringLiteral("Sentinel/%1").arg(core::AppMetadata::version());
     QNetworkRequest request(QUrl(settings_.updateCheckUrl()));
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
     request.setRawHeader("Accept", "application/vnd.github.v3+json");
@@ -6283,7 +6282,7 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
     const QUrl reqUrl(assetUrl);
     QNetworkRequest request(reqUrl);
     request.setHeader(QNetworkRequest::UserAgentHeader,
-                      QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version()));
+                      QStringLiteral("Sentinel/%1").arg(core::AppMetadata::version()));
     request.setTransferTimeout(30000);
 
     downloadReply_ = networkManager_->get(request);

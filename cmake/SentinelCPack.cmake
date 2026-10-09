@@ -12,13 +12,13 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/LICENSE.txt")
 
 if(WIN32)
     set(CPACK_GENERATOR "NSIS;WIX")
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Sentinel Desktop")
-    set(CPACK_PACKAGE_EXECUTABLES "sentinel-desktop" "Sentinel Desktop")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Sentinel")
+    set(CPACK_PACKAGE_EXECUTABLES "sentinel-desktop" "Sentinel")
     set(CPACK_CREATE_DESKTOP_LINKS "sentinel-desktop")
 
     # NSIS (EXE) Settings
-    set(CPACK_NSIS_DISPLAY_NAME "Sentinel Desktop")
-    set(CPACK_NSIS_PACKAGE_NAME "Sentinel Desktop")
+    set(CPACK_NSIS_DISPLAY_NAME "Sentinel")
+    set(CPACK_NSIS_PACKAGE_NAME "Sentinel")
     set(CPACK_NSIS_HELP_LINK "https://sentinel.dev")
     set(CPACK_NSIS_URL_INFO_ABOUT "https://sentinel.dev")
     set(CPACK_NSIS_CONTACT "sopwith.osdev@gmail.com")
@@ -27,13 +27,13 @@ if(WIN32)
     # NSIS Visuals
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/branding/app-icon/windows/sentinel.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/resources/branding/app-icon/windows/sentinel.ico")
-    set(CPACK_NSIS_BRANDING_TEXT "Sentinel Desktop Installer")
+    set(CPACK_NSIS_BRANDING_TEXT "Sentinel Installer")
     set(CPACK_NSIS_MUI_FINISHPAGE_RUN "sentinel-desktop.exe")
 
     # NSIS Shortcuts & Links (start menu entry created by CPack via CPACK_PACKAGE_EXECUTABLES)
     set(CPACK_NSIS_MENU_LINKS
-        "sentinel-desktop.exe" "Sentinel Desktop"
-        "https://sentinel.dev" "Sentinel Desktop Website"
+        "sentinel-desktop.exe" "Sentinel"
+        "https://sentinel.dev" "Sentinel Website"
     )
 
     # WiX uses a version-specific product identity and a stable upgrade family.
@@ -43,7 +43,7 @@ if(WIN32)
     set(CPACK_WIX_UI_REF "WixUI_InstallDir")
     set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/packaging/windows/installer/license.rtf")
     set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/resources/branding/app-icon/windows/sentinel.ico")
-    set(CPACK_WIX_PROGRAM_MENU_FOLDER "Sentinel Desktop")
+    set(CPACK_WIX_PROGRAM_MENU_FOLDER "Sentinel")
     set(CPACK_WIX_PROPERTY_ARPHELPLINK "https://sentinel.dev")
     set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT "https://sentinel.dev")
     set(CPACK_WIX_PROPERTY_ARPCONTACT "sopwith.osdev@gmail.com")
@@ -63,9 +63,9 @@ elseif(UNIX AND NOT APPLE)
 
 elseif(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
-    set(CPACK_DMG_VOLUME_NAME "Sentinel Desktop")
+    set(CPACK_DMG_VOLUME_NAME "Sentinel")
     set(CPACK_DMG_FORMAT "UDBZ")
-    set(CPACK_BUNDLE_NAME "Sentinel Desktop")
+    set(CPACK_BUNDLE_NAME "Sentinel")
     if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/apps/sentinel-desktop/sentinel-desktop.app/Contents/Info.plist")
         set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_BINARY_DIR}/apps/sentinel-desktop/sentinel-desktop.app/Contents/Info.plist")
     elseif(EXISTS "${CMAKE_SOURCE_DIR}/packaging/macos/bundle/Info.plist.in")

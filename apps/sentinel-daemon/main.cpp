@@ -5,6 +5,7 @@
 #include "service/DaemonService.h"
 
 #include "sentinel/core/app/AppMetadata.h"
+#include "sentinel/core/app/StorageMigration.h"
 
 #include <QCommandLineParser>
 #include <QTimer>
@@ -36,6 +37,12 @@ int main(int argc, char* argv[]) {
     parser.process(app);
     if (parser.isSet("profile-name")) {
         QCoreApplication::setApplicationName(parser.value("profile-name"));
+    } else {
+        // The daemon inherits its storage roots from the renamed display name;
+        // move data written under the pre-rename daemon identity first.
+        sentinel::core::StorageMigration::migrateLegacyApplicationStorage(
+            sentinel::core::AppMetadata::legacyDisplayName() + QStringLiteral(" Daemon"),
+            QCoreApplication::applicationName());
     }
     sentinel::daemon::DaemonService service;
     if (!service.initialize(parser.value("socket"))) {

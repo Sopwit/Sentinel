@@ -12,6 +12,9 @@ namespace sentinel::core {
 struct AppMetadata {
     static QString appId();
     static QString displayName();
+    // Application name used before the product was renamed to "Sentinel". Kept
+    // solely so existing installs can migrate their per-application storage roots.
+    static QString legacyDisplayName();
     static QString version();
     static QString projectVersion();
     static QString buildNumber();
