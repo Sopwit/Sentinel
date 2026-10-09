@@ -86,7 +86,7 @@ CLI approvals are interactive on terminal stdin only: `y` allows once, everythin
 | 7 | Runtime rejected, unavailable or busy |
 | 130 | Authoritatively cancelled |
 
-Cancellation previously returned 2; it now returns 130 so scripts can distinguish cancellation from usage errors. `run` remains an alias for `agent`; positional argument words remain supported. No natural-language-to-shell dispatch is added. TUI migration: Enter now inserts a newline and Ctrl+S sends; the old `/agent task` composer syntax is rejected. Select Agent mode explicitly, then send the task.
+Cancellation previously returned 2; it now returns 130 so scripts can distinguish cancellation from usage errors. `run` remains an alias for `agent`; positional argument words remain supported. No natural-language-to-shell dispatch is added. TUI migration: Enter now sends and Ctrl+O inserts a newline; the old `/agent task` composer syntax is rejected. Select Agent mode explicitly, then send the task.
 
 ## Completions
 

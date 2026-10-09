@@ -8,8 +8,8 @@ The compact header shows **CHAT** or **AGENT**, session title, connection/run st
 
 | Key | Action |
 | --- | --- |
-| Enter | Insert newline; never sends |
-| Ctrl+S | Send composer contents or execute a slash command |
+| Enter | Send when idle and non-empty; disconnected drafts are preserved |
+| Ctrl+O | Insert newline; Alt/Shift+Enter aliases depend on terminal support |
 | Ctrl+G | Explicitly switch Chat/Agent while idle |
 | Left/Right, Home/End, Up/Down | Cursor and line editing; Up/Down recall history in a single-line draft |
 | Ctrl+Left/Right | Word movement |
@@ -18,17 +18,19 @@ The compact header shows **CHAT** or **AGENT**, session title, connection/run st
 | Ctrl+P / Tab | Fuzzy command palette |
 | Ctrl+L | Model picker |
 | Ctrl+W | Workspace picker |
-| Ctrl+O | Session picker |
+| `/sessions` | Session picker |
 | Ctrl+N | New daemon session |
 | `@` / `/files` | Authorized workspace file picker |
-| Ctrl+D | Remove the last selected file reference |
+| `/remove` | Remove the last selected file reference |
+| Ctrl+D | Exit only idle/empty; otherwise delete character |
 | PageUp/PageDown | Scroll output |
 | Ctrl+B | Follow/jump to bottom |
 | Ctrl+F | Search displayed output; Enter finds the first matching line |
-| Ctrl+R | Reconnect the session |
+| Ctrl+R | Search displayed transcript |
+| `/reconnect` | Reconnect the session |
 | F1, `?` on an empty composer, `/help` | Keybindings and command list |
 | Ctrl+C during a run | Request cancellation once and wait for daemon terminal state |
-| Ctrl+C while idle | Exit TUI |
+| Ctrl+C while idle | Preserve draft; exit only when empty |
 
 Bracketed paste inserts text without sending. Native terminal selection/copy remains available; the app does not capture the mouse.
 
@@ -36,7 +38,7 @@ Pickers support case-insensitive subsequence search, Up/Down selection, Enter, a
 
 ## Slash commands
 
-Type a command and press Ctrl+S, or choose it through Ctrl+P.
+Type a command and press Enter, or choose it through Ctrl+P.
 
 | Command | Behavior |
 | --- | --- |
@@ -62,7 +64,7 @@ Unknown slash commands are not sent to Agent or shell. Model/provider configurat
 
 ## Files and changes
 
-The picker obtains only authorized paths from the daemon's `glob` tool. File names with spaces are preserved and encoded as quoted references. Selected quoted paths are visible in the footer (clipped to terminal width), can be removed with Ctrl+D, and are appended explicitly to an Agent request for observation through its normal tools. Rust does not read file contents. Chat sends with selected file references are blocked until the user explicitly switches mode. Literal/quoted `@path` text can also be pasted as part of an Agent task; it remains a request for authorized observation, not an eager prompt dump.
+The picker obtains only authorized paths from the daemon's `glob` tool. File names with spaces are preserved and encoded as quoted references. Selected quoted paths are visible in the footer (clipped to terminal width), can be removed with `/remove`, and are appended explicitly to an Agent request for observation through its normal tools. Rust does not read file contents. Chat sends with selected file references are blocked until the user explicitly switches mode. Literal/quoted `@path` text can also be pasted as part of an Agent task; it remains a request for authorized observation, not an eager prompt dump.
 
 Workspace roots come from WorkspaceService, never arbitrary terminal CWD. Sensitive files, symlink escapes, authorization denials, disabled workspace tools and hidden traversal rules remain governed by the backend. Files require a custom workspace with an attached root. Built-in workspace roots cannot be changed.
 
@@ -75,3 +77,5 @@ Only accepted AgentLoop finals complete Agent work. The UI displays safe runtime
 Approvals show operation, resource, risk, run/session identities, and the pending-operation scope. `y` is **Allow Once**; `n` is **Deny**. Esc leaves the modal visible. The modal stays pending while a response is in flight; stale/duplicate decisions are rejected by daemon identity checks. It clears only after accepted response or authoritative terminal state. Persistent grants are not offered.
 
 IPC runs on a background worker. The rendering loop does not enumerate providers or synchronously wait for daemon replies. On connection loss, the worker retries and reattaches the same session, replacing the snapshot and using sequence/generation metadata to avoid replay duplication. Pending approval comes from the authoritative attach snapshot. Disconnect never cancels or replays an Agent mutation. Daemon restart recovers persisted conversations but does not restart interrupted runs or retain change baselines.
+
+See the [V2 keyboard contract](../development/TUI_KEYBINDING_CONTRACT.md) for context precedence and Ctrl+A/E/U/K editing. Ctrl+S is no longer Send.
