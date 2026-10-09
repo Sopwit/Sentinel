@@ -74,6 +74,13 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
                     return;
                 }
                 const auto failed = m_requests.take(id);
+                if (failed.target == "requestPermanentDeleteConversation")
+                    emit conversationDeleteCompleted(failed.conversationId, false,
+                        code == "request-timeout"
+                            ? tr("Deletion could not be confirmed. Refresh the conversation list before retrying.")
+                            : code == "runtime-busy"
+                            ? tr("Stop the active response before deleting this conversation.")
+                            : tr("The conversation could not be deleted: %1").arg(code));
                 const bool generationRequest = failed.name == "chat.send" || failed.name == "agent.start" ||
                                                failed.name == "chat.retry" || failed.name == "chat.regenerate" ||
                                                failed.name == "chat.edit";
@@ -714,6 +721,9 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         attach(m_sessionId);
         send(DaemonClient::Command::session_list);
     } else if (name == "desktop.action" || name == "model.select") {
+        if (request.target == "requestPermanentDeleteConversation")
+            emit conversationDeleteCompleted(request.conversationId, payload.value("accepted").toBool(),
+                payload.value("accepted").toBool() ? QString{} : tr("The conversation store rejected deletion."));
         if (!payload.value("accepted").toBool(true)) {
             emit operationFailed("daemon-action-rejected");
         }

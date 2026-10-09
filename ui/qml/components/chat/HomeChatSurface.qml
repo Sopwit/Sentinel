@@ -55,6 +55,23 @@ ShellPanel {
     property string conversationFilter: ""
     property string sidebarView: "recent"
     property string deleteRequestError: ""
+    property bool deleteRequestPending: false
+
+    Connections {
+        target: homeChat.viewModel
+        ignoreUnknownSignals: true
+        function onConversationDeleteCompleted(conversationId, succeeded, summary) {
+            if (!homeChat.deleteRequestPending || conversationId !== homeChat.pendingDeleteConversationId) return
+            homeChat.deleteRequestPending = false
+            if (!succeeded) {
+                homeChat.deleteRequestError = summary
+                return
+            }
+            deleteConfirmDialog.close()
+            homeChat.pendingDeleteConversationId = ""
+            homeChat.pendingDeleteConversationTitle = ""
+        }
+    }
     property string pendingDeleteConversationId: ""
     property string pendingDeleteConversationTitle: ""   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
@@ -1679,7 +1696,7 @@ if (homeChat.compact)
         modal: true
         dim: true
         padding: 0
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        closePolicy: homeChat.deleteRequestPending ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         background: Rectangle {
             radius: SentinelTheme.radiusLg
@@ -1777,6 +1794,7 @@ if (homeChat.compact)
                     // Cancel
                     Button {
                         id: deleteCancelBtn
+                        enabled: !homeChat.deleteRequestPending
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
                         text: qsTr("Cancel")
@@ -1800,18 +1818,19 @@ if (homeChat.compact)
                     // Confirm delete
                     Button {
                         id: deleteConfirmBtn
+                        enabled: !homeChat.deleteRequestPending
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
                         text: qsTr("Delete")
                         hoverEnabled: true
                         onClicked: {
+                            homeChat.deleteRequestError = ""
+                            homeChat.deleteRequestPending = true
                             if (!homeChat.viewModel.requestPermanentDeleteConversation(homeChat.pendingDeleteConversationId)) {
+                                homeChat.deleteRequestPending = false
                                 homeChat.deleteRequestError = qsTr("The conversation could not be deleted. Check the daemon connection and stop any active request before retrying.")
                                 return
                             }
-                            deleteConfirmDialog.close()
-                            homeChat.pendingDeleteConversationId = ""
-                            homeChat.pendingDeleteConversationTitle = ""
                         }
 
                         contentItem: Text {

@@ -55,6 +55,7 @@ signals:
     void changed();
     void sessionChanged(const QString& sessionId);
     void operationFailed(const QString& code);
+    void conversationDeleteCompleted(const QString& conversationId, bool succeeded, const QString& summary);
 
 private:
     struct Request {

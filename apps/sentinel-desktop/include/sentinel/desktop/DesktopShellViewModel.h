@@ -2838,6 +2838,7 @@ signals:
     void conversationExportChanged();
     void conversationDuplicateChanged();
     void conversationDeleteChanged();
+    void conversationDeleteCompleted(const QString& conversationId, bool succeeded, const QString& summary);
     void memoryCandidatesChanged();
     void memoryRecallChanged();
     void contextAssemblyChanged();
