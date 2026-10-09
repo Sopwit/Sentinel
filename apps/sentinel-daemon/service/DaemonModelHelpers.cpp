@@ -24,7 +24,7 @@ namespace sentinel::daemon {
 DaemonModelHelpers::DaemonModelHelpers(core::ApplicationController* controller, QObject* parent)
     : QObject(parent), puller(this), controller_(controller), library(this), detail(this),
       lmStudio(this) {
-    controller_->modelOperations()->huggingFaceSource()->setAutoFetch(true);
+    controller_->modelOperations()->huggingFaceSource()->setAutoFetch(false);
     initModelCatalog();
     QFile file(":/sentinel/model-catalog.json");
     if (file.open(QIODevice::ReadOnly))
@@ -58,7 +58,7 @@ void DaemonModelHelpers::refreshCatalog(bool force) {
 QJsonObject DaemonModelHelpers::state(const QString& component) const {
     if (component == "ggufLibraryFetcher" && controller_) {
         QJsonArray models = modelRows_;
-        if (!modelRowsBuilding_ && (!modelRowsAge_.isValid() || modelRowsAge_.elapsed() >= 10000))
+        if (!modelRowsBuilding_ && !controller_->modelOperations()->huggingFaceSource()->fetching() && (!modelRowsAge_.isValid() || modelRowsAge_.elapsed() >= 10000))
             const_cast<DaemonModelHelpers*>(this)->rebuildModelRows();
         const auto record = controller_->modelOperations()->operation(activeOperation_);
         const auto pending = record.state == core::ModelOperationState::Queued ||
@@ -72,8 +72,9 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"runtimeInstalled", !runtimeBinary().isEmpty()},
                 {"setupStatus", setupStatus_}, {"setupBusy", setupBusy_},
                 {"catalog", catalog_},
-                {"hasMore", source->hasMore()},
-                {"hasPrevious", false},
+                {"hasMore", catalogPage_ + 1 < catalogPages_ || source->hasMore()},
+                {"hasPrevious", catalogPage_ > 0},
+                {"catalogPage", catalogPage_}, {"catalogPages", catalogPages_},
                 {"query", queryKey_},
                 {"catalogStatus", source->catalogDetail()},
                 {"fetching", modelRowsBuilding_ || controller_->modelOperations()->huggingFaceSource()->fetching()},
@@ -121,21 +122,26 @@ void DaemonModelHelpers::rebuildModelRows() {
     const auto loadedStudio = controller_->loadedLMStudioModelNames();
     const auto generation = modelRowsGeneration_;
     const bool ggufOnly = ggufOnly_;
+    const int page = catalogPage_;
     modelRowsBuilding_ = true;
     modelRowsCancelled_ = std::make_shared<std::atomic_bool>(false);
     const auto cancelled = modelRowsCancelled_;
-    auto* watcher = new QFutureWatcher<QPair<QJsonArray, int>>(this);
-    connect(watcher, &QFutureWatcher<QPair<QJsonArray, int>>::finished, this, [this, watcher, generation] {
+    auto* watcher = new QFutureWatcher<ModelRows>(this);
+    connect(watcher, &QFutureWatcher<ModelRows>::finished, this, [this, watcher, generation] {
         modelRowsBuilding_ = false;
         if (generation == modelRowsGeneration_) {
             const auto result = watcher->result();
-            modelRows_ = result.first;
-            installedCount_ = result.second;
+            modelRows_ = result.models;
+            installedCount_ = result.installed;
+            catalogPages_ = result.pages;
+            catalogPage_ = qMin(catalogPage_, catalogPages_ - 1);
             modelRowsAge_.start();
         }
         watcher->deleteLater();
     });
-    watcher->setFuture(QtConcurrent::run([snapshot, localEntries, loadedStudio, ggufOnly, cancelled] {
+    watcher->setFuture(QtConcurrent::run([snapshot, localEntries, loadedStudio, ggufOnly, cancelled, page] {
+        int pages = 1;
+        const auto window = core::HuggingFaceModelSource::pageSnapshot(snapshot, page, 40, &pages);
         QJsonArray models;
         QSet<QString> represented;
         QSet<QString> installed;
@@ -222,7 +228,7 @@ void DaemonModelHelpers::rebuildModelRows() {
                     : entry.provider.id + ":" + entry.nativeModelId);
         };
         for (const auto& entry : localEntries) consume(entry, {});
-        core::HuggingFaceModelSource::visitSnapshot(snapshot,
+        core::HuggingFaceModelSource::visitSnapshot(window,
             [&](const core::HuggingFaceRepository& repository, const QList<core::ModelLibraryEntry>& entries) {
                 for (const auto& entry : entries) {
                     if (cancelled->load()) break;
@@ -230,7 +236,7 @@ void DaemonModelHelpers::rebuildModelRows() {
                 }
             }, [cancelled] { return cancelled->load(); });
         for (const auto& name : loadedStudio) installed.insert("lm-studio:" + name);
-        return qMakePair(models, static_cast<int>(installed.size()));
+        return ModelRows{models, static_cast<int>(installed.size()), pages};
     }));
 }
 
@@ -249,7 +255,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
             return true;
         }
         if (action == "fetch" || action == "refresh") {
-            if (queryKey_ != value) modelRows_ = {};
+            modelRows_ = {};
             queryKey_ = value;
             const auto query = QJsonDocument::fromJson(value.toUtf8()).object();
             searchText_ = query.isEmpty() ? (value.isEmpty() ? "GGUF" : value)
@@ -274,28 +280,17 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
         } else if (action == "nextPage") {
             if (operations->huggingFaceSource()->fetching())
                 return false;
-            int count = 0;
-            QSet<QString> represented;
-            for (const auto& entry : controller_->modelLibrary()->entries()) {
-                if (entry.format == "GGUF")
-                    ++count;
-                else if (!ggufOnly_ && !entry.repositoryId.isEmpty() &&
-                         !represented.contains(entry.repositoryId)) {
-                    represented.insert(entry.repositoryId);
-                    ++count;
-                }
-            }
-            if (count > (catalogPage_ + 1) * 40)
-                ++catalogPage_;
+            if (catalogPage_ + 1 < catalogPages_) ++catalogPage_;
             else if (operations->huggingFaceSource()->hasMore()) {
-                catalogPage_ = 0;
+                ++catalogPage_;
                 operations->huggingFaceSource()->fetchMore();
-            } else
-                return false;
+            } else return false;
+            modelRows_ = {};
         } else if (action == "previousPage") {
             if (catalogPage_ == 0)
                 return false;
             --catalogPage_;
+            modelRows_ = {};
         } else if (action == "fetchDetails")
             operations->huggingFaceSource()->fetchRepository(value);
         else if (action == "import")

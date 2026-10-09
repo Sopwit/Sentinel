@@ -87,9 +87,11 @@ void DesktopModelHelper::refresh() {
 }
 void DesktopModelHelper::action(const QString& name, const QString& value) {
     m_actionError.clear();
-    if (name == "fetch" || name == "refresh") {
+    if (name == "fetch" || name == "refresh" || name == "nextPage" || name == "previousPage") {
         m_reads.clear(); m_offset = 0; m_partialModels.clear();
-        m_values["models"] = QVariantList{}; m_values["query"] = value; m_values["fetching"] = true;
+        m_values["models"] = QVariantList{};
+        if (name == "fetch" || name == "refresh") m_values["query"] = value;
+        m_values["fetching"] = true;
         updateModelsJson({});
         emit changed();
     }

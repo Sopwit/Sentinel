@@ -52,6 +52,7 @@ Item {
     function beginDiscovery() {
         if (activeCategory === "Runtime") { discoveryPending = false; catalogSearchTimer.stop(); return }
         if (daemonClient.daemonReachable) { discoveryPending = true; currentModels = [] }
+        currentPage = 0
         catalogSearchTimer.restart()
     }
     onCatalogSourceChanged: beginDiscovery()
@@ -281,11 +282,17 @@ Item {
             if (!modelsPage.setupPrompted && daemonClient.daemonReachable && ggufLibraryFetcher.query && !ggufLibraryFetcher.runtimeInstalled && ggufLibraryFetcher.installedCount === 0) { modelsPage.setupPrompted = true; runtimeSetup.open() }
         }
     }
+    property int currentPage: 0
+    readonly property int modelsPerPage: 40
+    readonly property int pageCount: Math.max(1, Math.ceil(filteredModels.length / modelsPerPage))
+    readonly property var visibleModels: filteredModels.slice(currentPage * modelsPerPage, (currentPage + 1) * modelsPerPage)
+    onPageCountChanged: currentPage = Math.min(currentPage, pageCount - 1)
     property var currentModels: []
 
-    onFilteredModelsChanged: {
+    onListSortChanged: currentPage = 0
+    onVisibleModelsChanged: {
         // Detach the visible snapshot from QML's live QVariant sequence wrappers.
-        var snapshot = JSON.parse(JSON.stringify(filteredModels || []))
+        var snapshot = JSON.parse(JSON.stringify(visibleModels || []))
         if (JSON.stringify(currentModels) !== JSON.stringify(snapshot)) currentModels = snapshot
     }
 
@@ -1350,6 +1357,48 @@ Item {
                         NumberAnimation { duration: MotionTokens.duration(160); easing.type: Easing.OutCubic }
                     }
                 }
+            }
+        }
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+            SentinelButton {
+                objectName: "modelsPreviousPage"
+                text: qsTr("Previous page")
+                enabled: modelsPage.currentPage > 0
+                onClicked: { modelsPage.currentPage--; modelGrid.positionViewAtBeginning() }
+            }
+            Label {
+                text: qsTr("Page %1 / %2 · %3 per page").arg(modelsPage.currentPage + 1).arg(modelsPage.pageCount).arg(modelsPage.modelsPerPage)
+                color: SentinelTheme.textMuted
+                padding: SentinelTheme.spaceSm
+            }
+            SentinelButton {
+                objectName: "modelsNextPage"
+                text: qsTr("Next page")
+                enabled: modelsPage.currentPage + 1 < modelsPage.pageCount
+                onClicked: { modelsPage.currentPage++; modelGrid.positionViewAtBeginning() }
+            }
+        }
+        Flow {
+            Layout.fillWidth: true
+            visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0
+            spacing: SentinelTheme.spaceSm
+            SentinelButton {
+                text: qsTr("Previous catalog batch")
+                enabled: ggufLibraryFetcher.hasPrevious && !ggufLibraryFetcher.fetching
+                onClicked: { modelsPage.currentPage = 0; ggufLibraryFetcher.previousPage(); modelGrid.positionViewAtBeginning() }
+            }
+            Label {
+                text: qsTr("Hugging Face · Batch %1").arg((ggufLibraryFetcher.catalogPage || 0) + 1)
+                color: SentinelTheme.textMuted
+                padding: SentinelTheme.spaceSm
+            }
+            SentinelButton {
+                objectName: "modelsNextBatch"
+                text: qsTr("Next catalog batch")
+                enabled: ggufLibraryFetcher.hasMore && !ggufLibraryFetcher.fetching
+                onClicked: { modelsPage.currentPage = 0; ggufLibraryFetcher.nextPage(); modelGrid.positionViewAtBeginning() }
             }
         }
     }

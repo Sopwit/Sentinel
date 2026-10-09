@@ -224,7 +224,23 @@ int main(int argc, char** argv) {
                     sidebar->forceActiveFocus(Qt::TabFocusReason);
                     QTest::keyClick(window, Qt::Key_Tab);
                     if (!window->activeFocusItem()) { app.exit(48); return; }
-                    qInfo("Model grouping, version selection, animated sidebar, empty/loading/error and keyboard flow passed");
+                    for (int i = 0; i < 90; ++i)
+                        library.models.append(QVariantMap{{"id", QString("fixture/page%1").arg(i)}, {"name", QString("Page model %1").arg(i)}, {"category", "LLM"}});
+                    library.notify();
+                    QApplication::processEvents();
+                    if (qmlVariant(page->property("currentModels")).toList().size() != 40 || page->property("pageCount").toInt() != 3) { app.exit(51); return; }
+                    auto* next = find(find, window->contentItem(), "modelsNextPage");
+                    auto* previous = find(find, window->contentItem(), "modelsPreviousPage");
+                    if (!next || !previous || !QMetaObject::invokeMethod(next, "clicked")) { app.exit(52); return; }
+                    QApplication::processEvents();
+                    if (page->property("currentPage").toInt() != 1 || qmlVariant(page->property("currentModels")).toList().size() != 40) { app.exit(53); return; }
+                    QMetaObject::invokeMethod(next, "clicked"); QApplication::processEvents();
+                    if (qmlVariant(page->property("currentModels")).toList().size() != 11 || next->isEnabled()) { app.exit(54); return; }
+                    QMetaObject::invokeMethod(previous, "clicked"); QApplication::processEvents();
+                    if (page->property("currentPage").toInt() != 1) { app.exit(55); return; }
+                    page->setProperty("searchQuery", "Page model 89"); QApplication::processEvents();
+                    if (page->property("currentPage").toInt() != 0 || qmlVariant(page->property("currentModels")).toList().size() != 1) { app.exit(56); return; }
+                    qInfo("Model pagination, grouping, variants, responsive sidebar, empty/loading/error and keyboard flow passed");
                     app.exit(0);
                 });
             });

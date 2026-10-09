@@ -93,6 +93,7 @@ private slots:
     void catalogSearchPagesUseTaskAndPreserveCacheOnInvalidResponse();
     void automaticCatalogAccumulatesAndStopsRepeatedCursor();
     void catalogSnapshotOutlivesSourceAndSupportsCancellation();
+    void catalogPagesBoundFamiliesAndKeepVariantsTogether();
     void repositoryMetadataRetrievesExactSizeAndConfiguration();
     void webCatalogRestoresSnapshotAndRejectsMalformedCache();
     void llamaCppLoadedTemplateCapabilities_data();
@@ -456,9 +457,32 @@ void OllamaRuntimeTest::automaticCatalogAccumulatesAndStopsRepeatedCursor() {
     source.searchCatalog("", "audio-to-audio", "downloads", true);
     QVERIFY(source.repositories().isEmpty());
 }
+void OllamaRuntimeTest::catalogPagesBoundFamiliesAndKeepVariantsTogether() {
+    sentinel::core::HuggingFaceModelSource::Snapshot snapshot{};
+    snapshot.models.append(QJsonObject{{"id", "test/family-7b-GGUF"}});
+    for (int i = 0; i < 80; ++i)
+        snapshot.models.append(QJsonObject{{"id", QString("test/release%1").arg(i)}});
+    snapshot.models.append(QJsonObject{{"id", "test/family-14b-GGUF"}});
+    int pages = 0;
+    const auto first = sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, 0, 40, &pages);
+    QCOMPARE(pages, 3);
+    QCOMPARE(first.models.size(), 41); // Two variants, 39 other families.
+    QCOMPARE(first.models.last().toObject().value("id").toString(), QString("test/family-14b-GGUF"));
+    const auto second = sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, 1, 40, nullptr);
+    const auto last = sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, 2, 40, nullptr);
+    QCOMPARE(second.models.size(), 40);
+    QCOMPARE(last.models.size(), 1);
+    QCOMPARE(first.models.size() + second.models.size() + last.models.size(), snapshot.models.size());
+    QCOMPARE(sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, 999, 40, nullptr).models, last.models);
+    QCOMPARE(sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, -1, 40, nullptr).models, first.models);
+    snapshot.models = {};
+    QVERIFY(sentinel::core::HuggingFaceModelSource::pageSnapshot(snapshot, 0, 40, &pages).models.isEmpty());
+    QCOMPARE(pages, 1);
+}
+
 void OllamaRuntimeTest::catalogSnapshotOutlivesSourceAndSupportsCancellation() {
     QTemporaryDir directory;
-    sentinel::core::HuggingFaceModelSource::Snapshot snapshot;
+    sentinel::core::HuggingFaceModelSource::Snapshot snapshot{};
     {
         sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));
         source.cachedModels_ = QJsonDocument::fromJson(R"([{"id":"test/one","pipeline_tag":"text-generation","siblings":[{"rfilename":"model.gguf"}]},{"id":"test/two"}])").array();
