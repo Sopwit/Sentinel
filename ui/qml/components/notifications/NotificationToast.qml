@@ -76,8 +76,8 @@ Item {
     function enqueueToast(notification) {
         if (!notification || !notification.id) return
         if (shownIds[notification.id]) return
-        if (viewModel && viewModel.dndEnabled) return
-        if (viewModel && viewModel.isChannelMuted && viewModel.isChannelMuted(notification.category)) return
+        shownIds[notification.id] = true
+        if (viewModel && !viewModel.shouldShowNotification(notification)) return
 
         trimShownIds()
         shownIds[notification.id] = true
@@ -112,7 +112,7 @@ Item {
 
     Timer {
         id: dismissTimer
-        interval: 300
+        interval: root.displayDuration
         repeat: false
         onTriggered: {
             if (toastQueue.count > 0) {

@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -14,9 +15,32 @@ Item {
     id: root
     required property var viewModel
     property bool compact: false
+    property bool notificationsOnly: false
+    property bool generalOnly: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property var soundManager: null
     readonly property int panelPadding: SentinelTheme.spaceLg
+
+    readonly property var backup: root.viewModel.backupManager
+    property var backupAvailability: ({})
+    property var recovery: ({})
+    property var selectedBackupDomains: ["settings", "workspaceProfiles", "extensions"]
+    property bool replaceImport: false
+    property string recoveryStatus: ""
+    readonly property var backupDomains: [
+        { key: "settings", title: qsTr("Basic settings") },
+        { key: "workspaceProfiles", title: qsTr("Workspace profiles") },
+        { key: "extensions", title: qsTr("Extension configuration") },
+        { key: "chat", title: qsTr("Conversations") },
+        { key: "memory", title: qsTr("Memory") }
+    ]
+    function refreshRecovery() {
+        const availability = root.viewModel.productBackupAvailability()
+        const state = root.viewModel.productRecoveryState()
+        if (JSON.stringify(availability) !== JSON.stringify(root.backupAvailability)) root.backupAvailability = availability
+        if (JSON.stringify(state) !== JSON.stringify(root.recovery)) root.recovery = state
+    }
+    Timer { interval: 1500; repeat: true; triggeredOnStart: true; running: root.visible && !root.generalOnly && !root.notificationsOnly; onTriggered: root.refreshRecovery() }
 
     signal openUpdateRequested()
 
@@ -32,16 +56,131 @@ Item {
         spacing: SentinelTheme.spaceMd
 
         SectionTitle {
-            title: qsTr("System & Diagnostic Tools")
+            visible: !root.generalOnly && !root.notificationsOnly
+            title: qsTr("Backup & Recovery")
+            subtitle: qsTr("Save selected local data or restore a reviewed backup. Credentials, model files and temporary recordings are excluded.")
+            Layout.fillWidth: true
+        }
+        SettingCard {
+            visible: !root.generalOnly && !root.notificationsOnly
+            title: qsTr("Backup data")
+            subtitle: qsTr("Basic settings include theme, language and network mode from the runtime. Desktop-only presentation preferences are not included in this format.")
+            Repeater {
+                model: root.backupDomains
+                SettingToggleRow {
+                    required property var modelData
+                    title: modelData.title
+                    compact: root.compact
+                    interactive: !root.backup.busy && root.backupAvailability[modelData.key] === true
+                    checked: root.selectedBackupDomains.indexOf(modelData.key) >= 0
+                    onToggled: (checked) => {
+                        const next = root.selectedBackupDomains.filter(function(key) { return key !== modelData.key })
+                        if (checked) next.push(modelData.key)
+                        root.selectedBackupDomains = next
+                    }
+                }
+            }
+            Flow {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                spacing: 8
+                SentinelButton { objectName: "backupExportButton"; text: qsTr("Export backup"); enabled: root.viewModel.daemonConnected && !root.backup.busy && root.selectedBackupDomains.length > 0; onClicked: backupSaveDialog.open() }
+                SentinelButton { objectName: "backupInspectButton"; text: qsTr("Choose backup to restore"); enabled: !root.backup.busy; onClicked: backupOpenDialog.open() }
+                SentinelButton { visible: root.backup.cancellable; text: qsTr("Cancel transfer"); onClicked: root.backup.cancel() }
+            }
+            Label {
+                visible: root.backup.preview.length > 0
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                text: root.backup.preview
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+                color: SentinelTheme.textPrimary
+            }
+            SettingControlRow {
+                visible: root.backup.importDomains.length > 0
+                title: qsTr("Restore mode")
+                subtitle: qsTr("Merge reports conflicts. Replace overwrites only the selected data domains.")
+                compact: root.compact
+                SentinelComboBox {
+                    anchors.fill: parent
+                    model: [qsTr("Merge"), qsTr("Replace selected data")]
+                    currentIndex: root.replaceImport ? 1 : 0
+                    onActivated: (index) => { root.replaceImport = index === 1; confirmRestore.checked = false }
+                }
+            }
+            CheckBox {
+                id: confirmRestore
+                visible: root.backup.importDomains.length > 0
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                text: root.replaceImport ? qsTr("I reviewed this backup and allow replacement of the selected data.") : qsTr("I reviewed this backup and want to merge the selected data.")
+                contentItem: Text { text: confirmRestore.text; color: SentinelTheme.textPrimary; wrapMode: Text.WordWrap; leftPadding: confirmRestore.indicator.width + 8; verticalAlignment: Text.AlignVCenter }
+            }
+            SentinelButton {
+                visible: root.backup.importDomains.length > 0
+                Layout.margins: SentinelTheme.spaceMd
+                text: qsTr("Restore selected data")
+                enabled: root.viewModel.daemonConnected && !root.backup.busy && confirmRestore.checked && root.selectedBackupDomains.some(function(key) { return root.backup.importDomains.indexOf(key) >= 0 })
+                onClicked: {
+                    const selected = root.selectedBackupDomains.filter(function(key) { return root.backup.importDomains.indexOf(key) >= 0 })
+                    root.backup.importFile(selected, root.replaceImport)
+                    confirmRestore.checked = false
+                }
+            }
+            ProgressBar { visible: root.backup.busy; Layout.fillWidth: true; value: root.backup.progress }
+            Label { Layout.fillWidth: true; Layout.margins: SentinelTheme.spaceMd; visible: root.backup.status.length > 0; text: root.backup.status; color: SentinelTheme.textMuted; wrapMode: Text.WordWrap; textFormat: Text.PlainText }
+        }
+        SettingCard {
+            visible: !root.generalOnly && !root.notificationsOnly
+            title: qsTr("Recovery status")
+            subtitle: qsTr("Inspect interrupted work. Recovery never automatically restarts a model, tool or agent.")
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                text: root.recovery.health ? qsTr("%1 · interrupted chat messages: %2 · agent runs: %3").arg(root.recovery.health).arg(root.recovery.interruptedChatMessages || 0).arg(root.recovery.interruptedAgentRuns || 0) : qsTr("Waiting for recovery information from the daemon…")
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
+            Repeater {
+                model: root.recovery.conditions || []
+                Label { required property var modelData; Layout.fillWidth: true; Layout.margins: SentinelTheme.spaceMd; text: modelData.domain + ": " + modelData.code; color: SentinelTheme.warning; textFormat: Text.PlainText; wrapMode: Text.WordWrap }
+            }
+            Repeater {
+                model: root.recovery.interruptedModelOperations || []
+                ColumnLayout {
+                    id: interruptedDownload
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.margins: SentinelTheme.spaceMd
+                    Label { text: interruptedDownload.modelData.filename; Layout.fillWidth: true; color: SentinelTheme.textPrimary; wrapMode: Text.WrapAnywhere }
+                    SentinelButton {
+                        text: qsTr("Discard interrupted download")
+                        onClicked: {
+                            const result = root.viewModel.resolveInterruptedModelOperation(interruptedDownload.modelData.id)
+                            root.recoveryStatus = result.accepted ? qsTr("Interrupted download discarded.") : result.code === "Pending" ? qsTr("Discard requested. Recovery status will update after confirmation.") : qsTr("Could not discard the interrupted download.")
+                            root.refreshRecovery()
+                        }
+                    }
+                }
+            }
+            Label { visible: root.recoveryStatus.length > 0; text: root.recoveryStatus; Layout.fillWidth: true; Layout.margins: SentinelTheme.spaceMd; color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+        }
+
+        SectionTitle {
+            visible: !root.notificationsOnly
+            title: root.generalOnly ? qsTr("Desktop") : qsTr("Updates & Diagnostics")
             subtitle: qsTr("System integration, notifications, updates, and audio feedback.")
             Layout.fillWidth: true
         }
 
         SettingCard {
-            title: qsTr("Software Updates & System Info")
+            visible: !root.notificationsOnly
+            title: root.generalOnly ? qsTr("Desktop") : qsTr("Updates")
             subtitle: qsTr("Check for application updates, release notes, and system runtime status.")
 
             SettingControlRow {
+                visible: !root.generalOnly
                 title: qsTr("Check for Updates")
                 subtitle: qsTr("Current version: v%1 (%2)").arg(Qt.application.version).arg(Qt.platform.os)
                 accent: root.modeAccent
@@ -58,6 +197,7 @@ Item {
             }
 
             ColumnLayout {
+                visible: !root.generalOnly
                 Layout.fillWidth: true
                 Layout.leftMargin: SentinelTheme.spaceMd
                 Layout.rightMargin: SentinelTheme.spaceMd
@@ -88,6 +228,7 @@ Item {
             }
 
             SettingToggleRow {
+                visible: root.generalOnly
                 title: qsTr("Enable Sound Effects")
                 subtitle: qsTr("Play subtle audio cues for completions, notifications, and key interactions.")
                 checked: root.viewModel.soundEffectsEnabled
@@ -98,6 +239,7 @@ Item {
             }
 
             SettingToggleRow {
+                visible: root.generalOnly
                 title: qsTr("Enable Companion Service")
                 subtitle: qsTr("Run background tray companion for system-wide shortcuts and quick assistant access.")
                 checked: root.viewModel.companionEnabled
@@ -108,6 +250,7 @@ Item {
             }
 
             SettingToggleRow {
+                visible: root.generalOnly
                 title: qsTr("Start Sentinel at login")
                 subtitle: nativeDesktop.startupStatus
                 checked: nativeDesktop.startAtLogin
@@ -117,18 +260,20 @@ Item {
             }
             Label {
                 Layout.fillWidth: true
+                visible: root.generalOnly
                 text: qsTr("Quick Panel shortcut: %1").arg(nativeDesktop.shortcutStatus)
                 color: SentinelTheme.textMuted
                 wrapMode: Text.Wrap
             }
             Label {
-                visible: nativeDesktop.notificationStatus.length > 0
+                visible: root.generalOnly && nativeDesktop.notificationStatus.length > 0
                 Layout.fillWidth: true
-                text: qsTr("macOS notifications: %1").arg(nativeDesktop.notificationStatus)
+                text: qsTr("System notifications: %1").arg(nativeDesktop.notificationStatus)
                 color: SentinelTheme.textMuted
                 wrapMode: Text.Wrap
             }
             ComboBox {
+                visible: root.generalOnly
                 model: ["Ctrl+Alt+Space", "Ctrl+Alt+S", "Disabled"]
                 currentIndex: (nativeDesktop.shortcut === "" || nativeDesktop.shortcut === "Disabled") ? 2 : (nativeDesktop.shortcut === "Ctrl+Alt+S" ? 1 : 0)
                 Accessible.name: qsTr("Global Quick Panel shortcut")
@@ -136,6 +281,7 @@ Item {
             }
 
             SettingToggleRow {
+                visible: !root.generalOnly
                 title: qsTr("Developer Diagnostics Mode")
                 subtitle: qsTr("Show read-only permission, tool, agent, notification, and task diagnostics. This does not change execution permissions.")
                 checked: root.viewModel.developerModeEnabled
@@ -146,7 +292,7 @@ Item {
             }
 
             SettingCard {
-                visible: root.viewModel.developerModeEnabled
+                visible: !root.generalOnly && root.viewModel.developerModeEnabled
                 title: qsTr("Developer Diagnostics")
                 subtitle: qsTr("Read-only runtime details for troubleshooting.")
 
@@ -163,6 +309,7 @@ Item {
             }
 
             SettingControlRow {
+                visible: !root.generalOnly
                 title: qsTr("Update Policy")
                 subtitle: qsTr("Frequency for checking software updates and security releases.")
                 accent: root.modeAccent
@@ -187,6 +334,61 @@ Item {
                 }
             }
 
+
+        }
+
+        SectionTitle {
+            visible: root.notificationsOnly
+            title: qsTr("Delivery")
+            subtitle: qsTr("Turn each notification type on or off. Your notification history stays available when alerts are paused.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            visible: root.notificationsOnly
+            SettingToggleRow {
+                objectName: "settingsDnd"
+                title: qsTr("Do Not Disturb")
+                subtitle: qsTr("Pause banners and system alerts. Notifications remain in your history.")
+                checked: root.viewModel.dndEnabled
+                compact: root.compact
+                onToggled: (checked) => root.viewModel.dndEnabled = checked
+            }
+            SettingControlRow {
+                title: qsTr("Notification history")
+                subtitle: qsTr("Review alerts, mark them read, or clear archived items.")
+                compact: root.compact
+                SentinelButton { anchors.fill: parent; text: qsTr("Open history"); onClicked: root.viewModel.notificationCenterVisible = true }
+            }
+            Flow {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                spacing: 8
+                SentinelButton { text: qsTr("Mark all read"); onClicked: root.viewModel.markAllNotificationsRead() }
+                SentinelButton { text: qsTr("Clear archived"); onClicked: root.viewModel.clearArchivedNotifications() }
+            }
+        }
+        SettingCard {
+            visible: root.notificationsOnly
+            title: qsTr("Channels")
+            subtitle: qsTr("Channel switches apply to banners and system alerts, alongside the delivery policy.")
+            Repeater {
+                model: [{ key: "Tasks", title: qsTr("Tasks") }, { key: "Security", title: qsTr("Permissions & security") }, { key: "Workspace", title: qsTr("Workspace") }, { key: "Brain", title: qsTr("Memory & knowledge") }]
+                SettingToggleRow {
+                    required property var modelData
+                    title: modelData.title
+                    compact: root.compact
+                    checked: { root.viewModel.notificationCenterSummaries; return !root.viewModel.isChannelMuted(modelData.key) }
+                    onToggled: (checked) => root.viewModel.setChannelMuted(modelData.key, !checked)
+                }
+            }
+        }
+        SettingCard {
+            visible: root.notificationsOnly
+            title: qsTr("Notification Types")
+            subtitle: qsTr("Only the events you enable will notify you.")
+
             SettingControlRow {
                 title: qsTr("Notification Policy")
                 subtitle: qsTr("Filter level for system popups and banner alerts.")
@@ -210,19 +412,6 @@ Item {
                     }
                 }
             }
-        }
-
-        SectionTitle {
-            title: qsTr("Notifications")
-            subtitle: qsTr("Turn each notification type on or off. New notification types can be added here without changing the rest of Settings.")
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceMd
-        }
-
-        SettingCard {
-            title: qsTr("Notification Types")
-            subtitle: qsTr("Only the events you enable will notify you.")
-
             SettingToggleRow {
                 title: qsTr("Model Downloads")
                 subtitle: qsTr("Notify when local LLM downloads or weight verifications complete.")
@@ -264,4 +453,20 @@ Item {
         }
 
     }
+    FileDialog {
+        id: backupSaveDialog
+        title: qsTr("Save Sentinel backup")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "json"
+        nameFilters: [qsTr("Sentinel backup (*.json)")]
+        onAccepted: root.backup.exportFile(selectedFile, root.selectedBackupDomains)
+    }
+    FileDialog {
+        id: backupOpenDialog
+        title: qsTr("Inspect Sentinel backup")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Sentinel backup (*.json)")]
+        onAccepted: { confirmRestore.checked = false; root.backup.inspectFile(selectedFile) }
+    }
+
 }

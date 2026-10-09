@@ -14,25 +14,23 @@ Item {
     id: root
     required property var viewModel
     property bool compact: false
+    property bool showGeneral: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
-    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Nord Frost", "Dracula"]
+    readonly property var themeChoices: root.viewModel.availableThemes
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
 
     function localizedThemeName(key) {
-        switch (key) {
-        case "Liquid Glass Light": return qsTr("Liquid Glass Light")
-        case "Liquid Glass Dark": return qsTr("Liquid Glass Dark")
-        case "Sentinel Classic": return qsTr("Sentinel Classic")
-        case "Midnight Blue": return qsTr("Midnight Blue")
-        case "Aurora Teal": return qsTr("Aurora Teal")
-        case "Graphite Grey": return qsTr("Graphite Grey")
-        case "Solarized Light": return qsTr("Solarized Light")
-        case "Nord Frost": return qsTr("Nord Frost")
-        case "Dracula": return qsTr("Dracula")
-        case "Tokyo Night": return qsTr("Tokyo Night")
-        default: return key ? key : ""
+        const names = {
+            "Liquid Glass Light": qsTr("Daylight"), "Liquid Glass Dark": qsTr("Obsidian"),
+            "Sentinel Classic": qsTr("Slate"), "Midnight Blue": qsTr("Deep Ocean"),
+            "Aurora Teal": qsTr("Evergreen"), "Graphite Grey": qsTr("Carbon"),
+            "Solarized Light": qsTr("Honey"), "Nord Frost": qsTr("Polar Night"),
+            "Dracula": qsTr("Velvet"), "Tokyo Night": qsTr("Indigo"),
+            "Paper": qsTr("Porcelain"), "Linen": qsTr("Sandstone"),
+            "Sage Light": qsTr("Meadow"), "Sky Light": qsTr("Blue Mist")
         }
+        return names[key] || key || ""
     }
 
     function localizedDensityName(key) {
@@ -56,12 +54,14 @@ Item {
         spacing: SentinelTheme.spaceMd
 
         SectionTitle {
-            title: qsTr("General")
+            visible: root.showGeneral
+            title: qsTr("Language")
             subtitle: qsTr("Desktop shell and localization preferences.")
             Layout.fillWidth: true
         }
 
         SettingCard {
+            visible: root.showGeneral
             SettingControlRow {
                 title: qsTr("Language")
                 subtitle: qsTr("Application interface display language.")
@@ -84,13 +84,15 @@ Item {
         }
 
         SectionTitle {
-            title: qsTr("Appearance")
+            visible: !root.showGeneral
+            title: qsTr("Theme")
             subtitle: qsTr("Theme foundation and visual presets for desktop UI.")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
         }
 
         SettingCard {
+            visible: !root.showGeneral
             SettingControlRow {
                 title: qsTr("Active Theme")
                 subtitle: qsTr("Primary color theme palette.")
@@ -175,6 +177,11 @@ Item {
                                     clip: true
 
                                     color: {
+                                        if (themeCard.modelData === "Paper") return "#fafafa"
+                                        if (themeCard.modelData === "Linen") return "#faf5ed"
+                                        if (themeCard.modelData === "Sage Light") return "#f0f6f0"
+                                        if (themeCard.modelData === "Sky Light") return "#eef5fc"
+                                        if (themeCard.modelData === "Solarized Light") return "#fdf6e3"
                                         if (themeCard.modelData === "Liquid Glass Light") return "#f4f6f9"
                                         if (themeCard.modelData === "Liquid Glass Dark") return "#0d1117"
                                         if (themeCard.modelData === "Sentinel Classic") return "#1b1f24"
@@ -233,6 +240,7 @@ Item {
         }
 
         SectionTitle {
+            visible: !root.showGeneral
             title: qsTr("Accessibility")
             subtitle: qsTr("Comfort, motion, contrast, and density preferences.")
             Layout.fillWidth: true
@@ -240,14 +248,25 @@ Item {
         }
 
         SettingCard {
+            visible: !root.showGeneral
             SettingToggleRow {
                 title: qsTr("Reduced Motion")
-                subtitle: qsTr("Disables all animations and transitions throughout the UI.")
+                subtitle: qsTr("Disables decorative motion and makes transitions immediate. Loading indicators remain visible.")
                 checked: root.viewModel.reducedMotionEnabled
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
                 onToggled: (checked) => root.viewModel.reducedMotionEnabled = checked
+            }
+
+            SettingToggleRow {
+                title: qsTr("Reduce Transparency")
+                subtitle: qsTr("Use solid panels and controls for clearer separation from the background.")
+                checked: root.viewModel.reducedTransparencyEnabled
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                onToggled: (checked) => root.viewModel.reducedTransparencyEnabled = checked
             }
 
             SettingToggleRow {
@@ -289,7 +308,7 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 hoverEnabled: true
-                                focusPolicy: Qt.NoFocus
+                                focusPolicy: Qt.StrongFocus
 
                                 contentItem: Text {
                                     text: root.localizedDensityName(densityBtn.modelData)

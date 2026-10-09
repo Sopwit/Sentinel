@@ -18,8 +18,8 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: visible ? (mainLayout.implicitHeight + SentinelTheme.spaceXs * 2) : 0
     radius: SentinelTheme.radiusLg
-    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.45)
-    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+    color: SentinelTheme.backgroundRaised
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, SentinelTheme.highContrast ? 0.5 : 0.12)
     border.width: 1
 
     ColumnLayout {

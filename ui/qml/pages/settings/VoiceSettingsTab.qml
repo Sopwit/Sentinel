@@ -17,6 +17,17 @@ Item {
     property var voiceFileDialog: null
     property var soundManager: null
     property string autoDetectStatus: ""
+    property string microphoneTestTranscript: ""
+    property bool microphoneTestActive: false
+    Connections {
+        target: root.viewModel
+        function onVoiceTestTranscriptionCompleted(text) {
+            if (root.microphoneTestActive) {
+                root.microphoneTestTranscript = text
+                root.microphoneTestActive = false
+            }
+        }
+    }
     property string pendingPathTarget: ""
     readonly property int panelPadding: SentinelTheme.spaceLg
 
@@ -71,6 +82,24 @@ Item {
         return lines.join("\n- ")
     }
 
+    property var deviceSettings: []
+    property string deviceStatus: ""
+    property string pendingPreferenceId: ""
+    property var pendingPreferenceValue: null
+    property double pendingPreferenceDeadline: 0
+    function refreshDevices() {
+        const rows = root.viewModel.productSettings().filter(function(row) { return row.id.indexOf("speech.") === 0 })
+        if (JSON.stringify(rows) !== JSON.stringify(root.deviceSettings)) root.deviceSettings = rows
+        if (root.pendingPreferenceId.length > 0) {
+            const confirmed = rows.some(function(row) { return row.id === root.pendingPreferenceId && row.value === root.pendingPreferenceValue })
+            if (confirmed || Date.now() > root.pendingPreferenceDeadline) {
+                root.deviceStatus = confirmed ? qsTr("Preference saved.") : qsTr("The change was not confirmed. The currently stored value is shown; check the connection and try again.")
+                root.pendingPreferenceId = ""
+            }
+        }
+    }
+    Timer { interval: 1500; repeat: true; triggeredOnStart: true; running: root.visible; onTriggered: root.refreshDevices() }
+
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
 
@@ -86,6 +115,87 @@ Item {
             title: qsTr("Voice & Audio Settings")
             subtitle: qsTr("Configure local speech-to-text (Whisper) and text-to-speech (Piper, Kokoro) runtimes and paths.")
             Layout.fillWidth: true
+        }
+
+        SettingCard {
+            title: qsTr("Microphone test")
+            subtitle: qsTr("Choose local Whisper or operating-system dictation below, detect existing files, then test your microphone. The transcript stays here and is not sent to a model.")
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                Button {
+                    text: root.viewModel.voiceRecordingActive ? qsTr("Stop and transcribe") : qsTr("Test microphone")
+                    Accessible.name: text
+                    onClicked: {
+                        if (root.viewModel.voiceRecordingActive) root.viewModel.stopVoiceCapture()
+                        else {
+                            root.microphoneTestTranscript = ""
+                            root.microphoneTestActive = true
+                            root.viewModel.startVoiceCapture(true)
+                        }
+                    }
+                }
+                Button {
+                    text: qsTr("Detect installed voice files")
+                    onClicked: root.autoDetectStatus = root.localizedAutoDetectStatus(root.viewModel.autoDetectVoicePaths())
+                }
+            }
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                text: root.microphoneTestTranscript.length > 0 ? root.microphoneTestTranscript : root.viewModel.voiceInputStatus
+                color: SentinelTheme.textPrimary
+                wrapMode: Text.Wrap
+                Accessible.name: text
+            }
+        }
+
+        SettingCard {
+            title: qsTr("Audio devices")
+            subtitle: qsTr("Choose the microphone and output device exposed by the audio runtime.")
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                visible: root.deviceSettings.length === 0
+                text: root.viewModel.daemonConnected ? qsTr("Loading audio devices…") : qsTr("Connect to the daemon to configure audio devices.")
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
+            Repeater {
+                model: root.deviceSettings
+                SettingControlRow {
+                    id: deviceRow
+                    required property var modelData
+                    title: modelData.id === "speech.input-device" ? qsTr("Microphone") : modelData.id === "speech.output-device" ? qsTr("Audio output") : qsTr("Voice activity detection")
+                    compact: root.compact
+                    SentinelComboBox {
+                        anchors.fill: parent
+                        enabled: deviceRow.modelData.enabled && model.length > 0
+                        model: deviceRow.modelData.id === "speech.vad-enabled" ? [true, false] : deviceRow.modelData.allowedValues
+                        currentIndex: model.indexOf(deviceRow.modelData.value)
+                        delegateTextResolver: (value) => typeof value === "boolean" ? (value ? qsTr("Enabled") : qsTr("Disabled")) : value
+                        displayText: currentIndex >= 0 ? delegateTextResolver(model[currentIndex]) : qsTr("No device selected")
+                        onActivated: (index) => {
+                            const result = root.viewModel.setProductSetting(deviceRow.modelData.id, model[index])
+                            if (result.code === "Pending") {
+                                root.pendingPreferenceId = deviceRow.modelData.id
+                                root.pendingPreferenceValue = model[index]
+                                root.pendingPreferenceDeadline = Date.now() + 10000
+                            }
+                            root.deviceStatus = result.accepted ? qsTr("Audio preference saved.") : result.code === "Pending" ? qsTr("Waiting for the daemon to confirm the change…") : qsTr("Could not change the audio preference. Check device availability and try again.")
+                            root.refreshDevices()
+                        }
+                    }
+                }
+            }
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                visible: root.deviceStatus.length > 0
+                text: root.deviceStatus
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
         }
 
         SettingCard {
@@ -249,6 +359,21 @@ Item {
             subtitle: qsTr("Local speech recognition settings (Whisper).")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            title: qsTr("Voice input")
+            SettingControlRow {
+                title: qsTr("Recognition source")
+                subtitle: qsTr("Local Whisper uses your configured model. System dictation uses the operating system; on macOS, on-device speech recognition is required.")
+                compact: root.compact
+                controlWidth: 220
+                SentinelComboBox {
+                    model: [qsTr("Local Whisper"), qsTr("System dictation")]
+                    currentIndex: root.viewModel.voiceInputSource === "system" ? 1 : 0
+                    onActivated: root.viewModel.voiceInputSource = currentIndex === 1 ? "system" : "local"
+                }
+            }
         }
 
         SettingCard {

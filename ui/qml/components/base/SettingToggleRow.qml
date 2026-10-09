@@ -62,7 +62,7 @@ Rectangle {
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontBody
                 font.weight: Font.Medium
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
             }
 
             Label {
@@ -77,6 +77,10 @@ Rectangle {
 
         SentinelSwitch {
             id: switchControl
+            enabled: root.interactive
+            objectName: root.objectName.length > 0 ? root.objectName + "Switch" : ""
+            Accessible.name: root.title
+            Accessible.description: root.subtitle
             Layout.alignment: Qt.AlignVCenter
             checked: root.checked
             accent: root.accent

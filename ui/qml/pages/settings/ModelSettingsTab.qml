@@ -5,6 +5,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -12,6 +13,7 @@ Item {
     id: root
     required property var viewModel
     property bool compact: false
+    property bool advanced: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property var voiceFileDialog: null
     property var soundManager: null
@@ -115,10 +117,15 @@ Item {
                 compact: root.compact
                 showDivider: true
 
+                Item {
+                    anchors.fill: parent
                 SentinelComboBox {
                     id: runtimeProviderCombo
                     accent: root.modeAccent
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: statusLight.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
                     implicitHeight: 36
                     model: root.viewModel.selectableRuntimeProviderLabels
                     currentIndex: {
@@ -141,32 +148,27 @@ Item {
                         }
                     }
                 }
-            }
-
-            SettingControlRow {
-                title: qsTr("Runtime Status")
-                subtitle: root.currentProvider === "ollama" && root.viewModel.ollamaDiscoveryStatus.length > 0
-                          ? root.viewModel.ollamaDiscoveryStatus
-                          : root.viewModel.localInferenceHealthSummary
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-
-                StatusChip {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    width: parent.width
-                    value: root.viewModel.localInferenceRuntimeState.length > 0
-                           ? root.viewModel.localInferenceRuntimeState
-                           : qsTr("Unknown")
-                    accent: root.modeAccent
-                    active: root.viewModel.localInferenceRuntimeState.toLowerCase().indexOf("ready") >= 0
-                         || root.viewModel.localInferenceRuntimeState.toLowerCase().indexOf("healthy") >= 0
-                    muted: root.viewModel.localInferenceRuntimeState.length === 0
+                    Rectangle {
+                        id: statusLight
+                        objectName: "providerStatusLight"
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 12; height: 12; radius: 6
+                        readonly property string readinessState: (root.viewModel.activeRuntimeReadinessState || "").toLowerCase()
+                        color: ["ready", "healthy", "available", "connected"].indexOf(readinessState) >= 0 ? SentinelTheme.success
+                               : /error|failed|unavailable|unreachable|missing|blocked|offline|invalid|disabled|incompatible|unauthorized/.test(readinessState) ? SentinelTheme.error : SentinelTheme.warning
+                        activeFocusOnTab: true
+                        Accessible.role: Accessible.Indicator
+                        Accessible.name: qsTr("Runtime status: %1").arg(root.viewModel.activeRuntimeReadinessState || qsTr("Waiting"))
+                        ToolTip.visible: statusHover.hovered || activeFocus
+                        ToolTip.text: root.viewModel.activeRuntimeReadinessSummary || Accessible.name
+                        HoverHandler { id: statusHover }
+                    }
                 }
             }
 
             SettingControlRow {
+                visible: root.advanced
                 title: qsTr("Provider Catalog")
                 subtitle: root.viewModel.activeRuntimeProviderLabel
                 accent: root.modeAccent
@@ -437,7 +439,7 @@ Item {
 
         SettingCard {
             title: qsTr("Cloud Providers")
-            subtitle: qsTr("Select a cloud provider and configure its API credentials. Keys are saved to local settings.")
+            subtitle: qsTr("Select a cloud provider and configure its API credentials. Credentials use the configured secure credential store.")
 
             SettingControlRow {
                 title: qsTr("Active Cloud Provider")
@@ -567,7 +569,13 @@ Item {
             }
         }
 
+        SentinelButton {
+            Layout.fillWidth: true
+            text: root.advanced ? qsTr("Hide advanced settings") : qsTr("Show advanced settings")
+            onClicked: root.advanced = !root.advanced
+        }
         SettingCard {
+            visible: root.advanced
             title: qsTr("Inference Parameters")
             subtitle: qsTr("Fine-tune sampling temperature, top-p nucleus sampling, and context boundaries.")
 
