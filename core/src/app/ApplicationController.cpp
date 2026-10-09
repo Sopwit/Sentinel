@@ -9926,11 +9926,43 @@ RuntimeIntegrationReport ApplicationController::currentRuntimeIntegrationReport(
 }
 
 RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() const {
+    // Discovery health is authoritative; listing a configured model alone is not readiness.
+    const auto localReadiness = [this](const QString& provider) {
+        const auto status = modelService_->providerStatus(provider);
+        switch (status.catalog) {
+        case ProviderCatalogState::Available:
+            if (status.health == ProviderHealth::Degraded ||
+                status.health == ProviderHealth::Unavailable)
+                return RuntimeReadinessState::Unavailable;
+            if (status.health != ProviderHealth::Available)
+                return RuntimeReadinessState::Unknown;
+            if (selectedRuntimeProvider() == provider) {
+                if (selectedLocalModel().isEmpty() ||
+                    !status.modelIds.contains(selectedLocalModel()))
+                    return RuntimeReadinessState::MissingModel;
+                if (localInferenceBusy_)
+                    return RuntimeReadinessState::Busy;
+            }
+            return RuntimeReadinessState::Ready;
+        case ProviderCatalogState::Empty:
+            return RuntimeReadinessState::MissingModel;
+        case ProviderCatalogState::AuthenticationRequired:
+            return RuntimeReadinessState::Unauthorized;
+        case ProviderCatalogState::EndpointUnavailable:
+        case ProviderCatalogState::Failed:
+        case ProviderCatalogState::Stale:
+            return RuntimeReadinessState::Unavailable;
+        case ProviderCatalogState::Pending:
+            return RuntimeReadinessState::Busy;
+        default:
+            return RuntimeReadinessState::Unknown;
+        }
+    };
     const auto health = currentOllamaHealthCheck();
     const auto models = modelService_->providerStatus(QStringLiteral("ollama")).catalog ==
                                 ProviderCatalogState::Available
-        ? modelService_->providerDiscoveredModels(QStringLiteral("ollama"))
-        : QList<OllamaModelSummary>{};
+                            ? modelService_->providerDiscoveredModels(QStringLiteral("ollama"))
+                            : QList<OllamaModelSummary>{};
     const OllamaRuntimeProvider ollamaProvider{
         ollamaEndpoint(),   health, models, selectedLocalModel(), localChatInferenceEnabled_,
         localInferenceBusy_};
@@ -9939,17 +9971,19 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         modelService_->providerStatus(QStringLiteral("openai-compatible-local")).safeDetail,
         selectedRuntimeProvider() == QStringLiteral("openai-compatible-local")
             ? selectedLocalModel()
-            : QString()};
+            : QString(),
+        localReadiness(QStringLiteral("openai-compatible-local"))};
     const OpenAICompatibleLocalRuntimeProvider lmStudioProvider{
         QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
         modelService_->providerStatus(QStringLiteral("lm-studio")).safeDetail,
-        selectedRuntimeProvider() == QStringLiteral("lm-studio") ? selectedLocalModel()
-                                                                 : QString()};
+        selectedRuntimeProvider() == QStringLiteral("lm-studio") ? selectedLocalModel() : QString(),
+        localReadiness(QStringLiteral("lm-studio"))};
     const OpenAICompatibleLocalRuntimeProvider llamaCppProvider{
         QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server"),
         modelService_->providerStatus(QStringLiteral("llama-cpp-server")).safeDetail,
         selectedRuntimeProvider() == QStringLiteral("llama-cpp-server") ? selectedLocalModel()
-                                                                        : QString()};
+                                                                        : QString(),
+        localReadiness(QStringLiteral("llama-cpp-server"))};
     const QString settingsPath =
         QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
             .filePath(QStringLiteral("settings.json"));

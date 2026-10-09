@@ -213,29 +213,27 @@ RuntimeProviderDescriptor OpenAICompatibleRuntimeProvider::descriptor() const {
                                            QStringLiteral("OpenAI-Compatible API"));
 }
 
-OpenAICompatibleLocalRuntimeProvider::OpenAICompatibleLocalRuntimeProvider(QString providerId,
-                                                                           QString displayName,
-                                                                           QString endpointSummary,
-                                                                           QString selectedModel)
+OpenAICompatibleLocalRuntimeProvider::OpenAICompatibleLocalRuntimeProvider(
+    QString providerId, QString displayName, QString endpointSummary, QString selectedModel,
+    RuntimeReadinessState readiness)
     : providerId_(std::move(providerId)), displayName_(std::move(displayName)),
-      endpointSummary_(std::move(endpointSummary)), selectedModel_(std::move(selectedModel)) {}
+      endpointSummary_(std::move(endpointSummary)), selectedModel_(std::move(selectedModel)),
+      readiness_(readiness) {}
 
 RuntimeProviderDescriptor OpenAICompatibleLocalRuntimeProvider::descriptor() const {
     return RuntimeProviderDescriptor{
         providerId_,
         displayName_,
-        QStringLiteral("configuration-required"),
-        RuntimeReadinessState::Disabled,
-        QStringLiteral("Disabled until the user configures an explicit loopback "
-                       "OpenAI-compatible endpoint and model."),
+        runtimeReadinessStateName(readiness_),
+        readiness_,
+        runtimeReadinessStateName(readiness_),
         endpointSummary_.trimmed().isEmpty() ? QStringLiteral("Not configured")
                                              : endpointSummary_.trimmed(),
         selectedModel_.trimmed().isEmpty()
             ? QStringLiteral("No model selected")
             : QStringLiteral("Selected model: %1").arg(selectedModel_.trimmed()),
-        QStringLiteral("%1 support is local-only and OpenAI-compatible, but no endpoint probing, "
-                       "cloud fallback, API key, or automatic model discovery is enabled.")
-            .arg(displayName_),
+        endpointSummary_.trimmed().isEmpty() ? QStringLiteral("Provider has not been checked.")
+                                             : endpointSummary_.trimmed(),
         RuntimeCapabilitySet{
             true,
             false,
@@ -252,7 +250,7 @@ RuntimeProviderDescriptor OpenAICompatibleLocalRuntimeProvider::descriptor() con
         },
         selectedModel_.trimmed().isEmpty() ? QStringList{} : QStringList{selectedModel_.trimmed()},
         true,
-        false,
+        readiness_ == RuntimeReadinessState::Ready || readiness_ == RuntimeReadinessState::Busy,
         providerId_ != QStringLiteral("openai-compatible-local"),
     };
 }
