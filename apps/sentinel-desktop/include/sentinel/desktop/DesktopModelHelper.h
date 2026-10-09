@@ -17,11 +17,23 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(QString errorText READ errorText NOTIFY changed)
     Q_PROPERTY(QVariantList models READ models NOTIFY changed)
     Q_PROPERTY(QVariantList catalog READ catalog NOTIFY changed)
+    Q_PROPERTY(QString query READ query NOTIFY changed)
+    Q_PROPERTY(int installedCount READ installedCount NOTIFY changed)
+    Q_PROPERTY(QString setupStatus READ setupStatus NOTIFY changed)
+    Q_PROPERTY(bool runtimeInstalled READ runtimeInstalled NOTIFY changed)
+    Q_PROPERTY(bool setupBusy READ setupBusy NOTIFY changed)
     Q_PROPERTY(QString readme READ readme NOTIFY changed)
     Q_PROPERTY(QVariantList tags READ tags NOTIFY changed)
     Q_PROPERTY(QString installCmd READ installCmd NOTIFY changed)
 public:
     DesktopModelHelper(DaemonClient& transport, QString component, QObject* parent = nullptr);
+    QString query() const { return m_values.value("query").toString(); }
+    int installedCount() const { return m_values.value("installedCount").toInt(); }
+    QString setupStatus() const { return m_values.value("setupStatus").toString(); }
+    bool runtimeInstalled() const { return m_values.value("runtimeInstalled").toBool(); }
+    bool setupBusy() const { return m_values.value("setupBusy").toBool(); }
+    Q_INVOKABLE void cancelSetup() { action("cancelSetup", {}); }
+    Q_INVOKABLE void setupRuntime() { action("setupRuntime", {}); }
     bool hasMore() const {
         return m_values.value("hasMore").toBool();
     }
@@ -85,6 +97,7 @@ public:
     Q_INVOKABLE void fetchDetails(const QString& value) {
         action("fetchDetails", value);
     }
+    Q_INVOKABLE void downloadFile(const QString& id) { action("downloadFile", id); }
     Q_INVOKABLE void download(const QString& id) {
         action("download", id);
     }
@@ -111,5 +124,8 @@ private:
     QVariantMap m_values;
     QString m_actionError;
     QSet<QString> m_reads, m_actions;
+    QVariantList m_partialModels;
+    QString m_partialQuery;
+    int m_offset = 0;
 };
 } // namespace sentinel::desktop

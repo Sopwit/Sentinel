@@ -10,6 +10,7 @@
 #include <QJsonArray>
 #include <QObject>
 #include <QStringList>
+#include <QSet>
 
 #include <functional>
 #include <optional>
@@ -61,6 +62,7 @@ struct HuggingFaceRepository {
     std::optional<qint64> likes;
     bool gated = false;
     QStringList tags;
+    QJsonObject metadata;
     QList<HuggingFaceArtifact> artifacts;
 };
 
@@ -91,6 +93,7 @@ public:
         return !nextPage_.isEmpty();
     }
     void fetchMore();
+    void setAutoFetch(bool enabled) { autoFetch_ = enabled; }
     void fetchRepository(const QString& repositoryId);
     void setTokenProvider(std::function<QString()> provider);
     QString token() const;
@@ -108,10 +111,11 @@ signals:
     void requestFinished(bool success);
 
 private:
-    void request(const QUrl& url, const QString& query, const QString& repositoryId);
+    void request(const QUrl& url, const QString& query, const QString& repositoryId, bool append = false);
     static QUrl continuationUrl(const QString& links);
     void loadCache();
     bool saveCache() const;
+    void fetchSupplement(const QString& repositoryId, const QString& revision, const QString& filename);
     HuggingFaceRepository parseRepository(const QJsonObject& object) const;
     QList<ModelLibraryEntry> entriesFor(const HuggingFaceRepository& repository) const;
 
@@ -129,6 +133,8 @@ private:
     QNetworkReply* activeReply_ = nullptr;
     QByteArray responseBuffer_;
     bool responseTooLarge_ = false;
+    bool autoFetch_ = false;
+    QSet<QString> visitedPages_;
 };
 
 } // namespace sentinel::core

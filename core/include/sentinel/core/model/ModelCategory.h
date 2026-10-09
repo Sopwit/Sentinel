@@ -8,6 +8,7 @@ namespace sentinel::core {
 inline QString modelCategory(const QString& name, const QStringList& capabilities,
                              const QString& pipelineTask = {}) {
     const auto task = pipelineTask.toLower();
+    if (task == "audio-to-audio" || capabilities.join(' ').contains("speech-to-speech", Qt::CaseInsensitive)) return "STS";
     if (!task.isEmpty()) {
         if (task == "text-to-video" || task == "image-to-video" || task == "video-to-video")
             return "Video";
@@ -40,6 +41,7 @@ inline QString modelCategory(const QString& name, const QStringList& capabilitie
     if (tags.contains("text-to-image") || tags.contains("image-to-image") ||
         tags.contains("image-generation"))
         return "Image";
+    if (tags.contains("audio-to-audio") || tags.contains("speech-to-speech")) return "STS";
     if (tags.contains("automatic-speech-recognition") || id.contains("whisper"))
         return "STT";
     if (tags.contains("text-to-speech"))

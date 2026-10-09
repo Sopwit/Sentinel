@@ -644,7 +644,7 @@ void ModelOperationService::beginDownload(const ModelOperationRecord& record) {
     const auto destination = huggingFaceSource_.destinationPath(artifact);
     const auto url = huggingFaceSource_.downloadUrl(artifact);
     if (record.sourceId != QLatin1String("hugging-face") || destination.isEmpty() ||
-        !url.isValid() || record.artifactFilename.endsWith(QStringLiteral(".gguf"), Qt::CaseInsensitive) == false) {
+        !url.isValid() || !(record.artifactFilename.endsWith(".gguf", Qt::CaseInsensitive) || record.artifactFilename.endsWith(".safetensors") || record.artifactFilename.endsWith(".bin") || record.artifactFilename.endsWith(".onnx")) || (record.kind == ModelOperationKind::DownloadAndRegister && !record.artifactFilename.endsWith(".gguf", Qt::CaseInsensitive))) {
         finish(ModelOperationState::Failed, ModelOperationError::UnsupportedAction,
                safeErrorText(ModelOperationError::UnsupportedAction));
         return;
@@ -781,7 +781,7 @@ void ModelOperationService::issueDownloadRequest(const QUrl& url, const QString&
                    error, safeErrorText(error));
             return;
         }
-        const bool validHeader = validGgufHeader(downloadPrefix_);
+        const bool validHeader = artifact.artifactFilename.endsWith(".gguf", Qt::CaseInsensitive) ? validGgufHeader(downloadPrefix_) : downloadedBytes_ > 0;
         const bool sizeMatches = !artifact.sizeBytes || downloadedBytes_ == *artifact.sizeBytes;
         const bool hashMatches = artifact.artifactHash.isEmpty() ||
             QString::fromLatin1(downloadHash_->result().toHex())
@@ -839,7 +839,7 @@ void ModelOperationService::issueDownloadRequest(const QUrl& url, const QString&
         finish(ModelOperationState::Succeeded, ModelOperationError::None,
                record.kind == ModelOperationKind::DownloadAndRegister
                    ? QStringLiteral("GGUF downloaded and registered.")
-                   : QStringLiteral("GGUF downloaded."));
+                   : QStringLiteral("Model artifact downloaded. Use a compatible runtime for this format."));
         emit catalogChanged(QStringLiteral("hugging-face"));
     });
 }

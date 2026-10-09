@@ -18,13 +18,23 @@ SentinelOverlayModal {
     preferredWidth: 760
     preferredHeight: 680
     // The download destination is independent of the active chat provider.
-    property int downloadTarget: 0
+    property int downloadTarget: 1
+    property var catalogVariants: []
+    property string lastRepository: ""
+    property string lastOllamaId: ""
+    property bool metadataLoading: false
+    function requestMetadata() {
+        if (canPull && modelInfo.ollamaId !== lastOllamaId) { lastOllamaId = modelInfo.ollamaId; ollamaModelDetailFetcher.fetchDetails(modelInfo.ollamaId.split(':')[0]) }
+        if (modelInfo && modelInfo.repositoryId && modelInfo.repositoryId !== lastRepository) {
+            lastRepository = modelInfo.repositoryId; metadataLoading = true; ggufLibraryFetcher.fetchDetails(modelInfo.repositoryId)
+        }
+    }
     readonly property bool runtimeModel: !!(modelInfo && modelInfo.category === "Runtime")
     readonly property bool chatModel: !!(modelInfo && !modelInfo.cloudOnly && ["LLM", "Think", "Vision", "Embedding"].indexOf(modelInfo.category) >= 0)
     readonly property bool targetAvailable: runtimeModel ? !!modelInfo.externalUrl : downloadTarget === 0 ? canPull
         : downloadTarget === 1 ? (gguf ? modelInfo.chatCompatible !== false && modelInfo.category === "LLM" && (modelInfo.installed || modelInfo.downloadable) : chatModel)
-        : downloadTarget === 3 ? managerRepository.length > 0 : chatModel
-    readonly property string targetExplanation: runtimeModel ? root.info("integration") : downloadTarget === 3 ? qsTr("Hugging Face hosts model cards and files. Review formats, license and access requirements before choosing a compatible runtime.") : modelInfo && modelInfo.cloudOnly
+        : downloadTarget === 3 ? !!(modelInfo && modelInfo.artifactDownloadable) : chatModel
+    readonly property string targetExplanation: runtimeModel ? root.info("integration") : downloadTarget === 3 ? qsTr("Download the selected artifact from its pinned Hugging Face revision. Formats other than GGUF require their own compatible engine; downloading a file does not install that engine.") : modelInfo && modelInfo.cloudOnly
         ? qsTr("This catalog entry is cloud-only. No local download is available; use the model source for cloud availability.")
         : downloadTarget === 0
         ? (canPull ? qsTr("Download the selected variant into Ollama, regardless of your chat provider.") : qsTr("No verified Ollama variant is available for this model."))
@@ -36,7 +46,7 @@ SentinelOverlayModal {
         : downloadTarget === 1 ? ggufLibraryFetcher.errorText : ""
     readonly property string targetAction: runtimeModel ? qsTr("Open runtime setup ↗") : downloadTarget === 0 ? qsTr("Download with Ollama")
         : downloadTarget === 1 ? (gguf ? (modelInfo.installed ? qsTr("Use with llama.cpp") : qsTr("Download for llama.cpp")) : qsTr("Choose GGUF for llama.cpp"))
-        : downloadTarget === 3 ? qsTr("Open Hugging Face files ↗") : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
+        : downloadTarget === 3 ? qsTr("Download selected file") : (managerRepository.length > 0 ? qsTr("Open LM Studio downloads ↗") : qsTr("Open LM Studio catalog ↗"))
     property var selectedTagObj: null
     readonly property string effectiveOllamaId: selectedTagObj ? selectedTagObj.fullTag : (modelInfo && modelInfo.ollamaId ? modelInfo.ollamaId : "")
     readonly property bool gguf: !!(modelInfo && modelInfo.gguf)
@@ -48,25 +58,35 @@ SentinelOverlayModal {
         ? "lmstudio://open_from_hf?model=" + encodeURIComponent(managerRepository) : modelInfo && modelInfo.externalUrl && modelInfo.externalUrl.indexOf("https://lmstudio.ai/models/") === 0 ? modelInfo.externalUrl : "lmstudio://"
     function info(key) { return modelInfo && (modelInfo[key] !== undefined && modelInfo[key] !== null && modelInfo[key] !== "") ? String(modelInfo[key]) : qsTr("Not reported") }
     onModelInfoChanged: {
-        selectedTagObj = null
-        if (canPull) ollamaModelDetailFetcher.fetchDetails(modelInfo.ollamaId.split(':')[0])
-        else ollamaModelDetailFetcher.cancel()
+        if (opened) requestMetadata()
     }
     onOpened: {
-        downloadTarget = gguf ? 1 : canPull ? 0 : managerRepository.length > 0 ? 3 : 2
-        if (gguf && modelInfo.repositoryId) ggufLibraryFetcher.fetchDetails(modelInfo.repositoryId)
+        lastRepository = ""; lastOllamaId = ""; selectedTagObj = null
+        downloadTarget = gguf || chatModel ? 1 : modelInfo && modelInfo.artifactDownloadable ? 3 : canPull ? 0 : managerRepository.length > 0 ? 3 : 2
+        requestMetadata()
     }
     Connections {
         target: ggufLibraryFetcher
         function onChanged() {
-            if (!root.opened || !root.gguf) return
+            if (!root.opened || !root.modelInfo || !root.modelInfo.repositoryId) return
+            if (!ggufLibraryFetcher.fetching) root.metadataLoading = false
             var entries = ggufLibraryFetcher.models
+            var variants = []
             for (var i = 0; i < entries.length; i++) {
-                if (entries[i].id === root.modelInfo.id && JSON.stringify(entries[i]) !== JSON.stringify(root.modelInfo)) {
-                    root.modelInfo = entries[i]
-                    break
+                var entry = entries[i]
+                if (entry.repositoryId !== root.modelInfo.repositoryId) continue
+                if (entry.filename) variants.push(Object.assign({}, entry, {variantLabel: entry.filename}))
+                if (entry.id === root.modelInfo.id || (!root.modelInfo.filename && !entry.filename)) {
+                    var merged = Object.assign({}, root.modelInfo)
+                    Object.keys(entry).forEach(function(key) { if (entry[key] !== undefined && entry[key] !== "" && entry[key] !== null) merged[key] = entry[key] })
+                    if (JSON.stringify(merged) !== JSON.stringify(root.modelInfo)) root.modelInfo = merged
+                } else if (!root.gguf && root.canPull) {
+                    var details = Object.assign({}, root.modelInfo)
+                    ;["context", "license", "architecture", "modelCard", "input", "bestFor", "lastUpdated", "revision"].forEach(function(key) { if (entry[key] !== undefined && entry[key] !== "" && entry[key] !== null) details[key] = entry[key] })
+                    if (JSON.stringify(details) !== JSON.stringify(root.modelInfo)) root.modelInfo = details
                 }
             }
+            if (variants.length > 0 && !root.canPull) root.catalogVariants = variants
         }
     }
     onClosed: ollamaModelDetailFetcher.cancel()
@@ -80,6 +100,19 @@ SentinelOverlayModal {
             SentinelButton { text: "×"; Accessible.name: qsTr("Close model details"); onClicked: root.close() }
         }
         Label { Layout.fillWidth: true; text: qsTr("Publisher: %1 • Type: %2").arg(root.info("provider")).arg(root.info("category")); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
+        SentinelComboBox {
+            Layout.fillWidth: true
+            visible: root.catalogVariants.length > 1 || (root.catalogVariants.length > 0 && root.modelInfo && !root.modelInfo.filename && !root.canPull)
+            model: root.catalogVariants
+            textRole: "variantLabel"
+            Accessible.name: qsTr("Model file or version")
+            onActivated: function(index) {
+                root.modelInfo = root.catalogVariants[index]
+                root.selectedTagObj = null
+                root.downloadTarget = root.gguf ? 1 : root.modelInfo.artifactDownloadable ? 3 : 1
+            }
+        }
+        BusyIndicator { running: root.metadataLoading; visible: running; Layout.alignment: Qt.AlignHCenter }
         ScrollView {
             id: detailsScroll
             Layout.fillWidth: true
@@ -107,7 +140,7 @@ SentinelOverlayModal {
                             {label: qsTr("Input"), value: root.info("input")},
                             {label: qsTr("Format"), value: root.info("format")},
                             {label: qsTr("Quantization"), value: root.selectedTagObj ? root.selectedTagObj.tag : root.info("quantization")},
-                            {label: qsTr("Download size"), value: root.selectedTagObj ? root.selectedTagObj.size : root.info("size")},
+                            {label: qsTr("Download size"), value: root.selectedTagObj ? root.selectedTagObj.size : root.metadataLoading && (!root.modelInfo.size || root.modelInfo.size === "—") ? qsTr("Retrieving exact file size…") : root.info("size")},
                             {label: qsTr("License"), value: root.info("license")},
                             {label: qsTr("Architecture"), value: root.info("architecture")},
                             {label: qsTr("Source task"), value: root.info("pipelineTask")},
@@ -128,6 +161,7 @@ SentinelOverlayModal {
                         }
                     }
                 }
+                Label { Layout.fillWidth: true; visible: !!(root.modelInfo && root.modelInfo.modelCard); text: root.modelInfo ? root.modelInfo.modelCard || "" : ""; textFormat: Text.PlainText; color: SentinelTheme.textPrimary; wrapMode: Text.WordWrap }
                 Label { Layout.fillWidth: true; visible: !!(root.modelInfo && root.modelInfo.runtimeNote); text: root.info("runtimeNote"); color: SentinelTheme.textMuted; wrapMode: Text.WordWrap }
                 BusyIndicator { running: root.downloadTarget === 0 && ollamaModelDetailFetcher.fetching; visible: running; Layout.alignment: Qt.AlignHCenter }
                 SentinelComboBox {
@@ -187,11 +221,11 @@ SentinelOverlayModal {
             spacing: SentinelTheme.spaceSm
             SentinelButton {
                 text: root.targetAction
-                enabled: root.targetAvailable && !ollamaPuller.pulling && !ggufLibraryFetcher.pulling
+                enabled: root.targetAvailable && !root.metadataLoading && !ollamaPuller.pulling && !ggufLibraryFetcher.pulling
                 onClicked: {
                     if (root.runtimeModel) Qt.openUrlExternally(root.modelInfo.documentationUrl || root.modelInfo.externalUrl)
                     else if (root.downloadTarget === 0) root.downloadRequested(root.effectiveOllamaId)
-                    else if (root.downloadTarget === 3) Qt.openUrlExternally("https://huggingface.co/" + root.managerRepository + "/tree/main")
+                    else if (root.downloadTarget === 3) ggufLibraryFetcher.downloadFile(root.modelInfo.id)
                     else if (root.downloadTarget === 2) Qt.openUrlExternally(root.managerUrl)
                     else if (!root.gguf) {
                         root.ggufSearchRequested(root.managerRepository ? root.managerRepository.split('/').pop() : (root.modelInfo.ollamaId || root.modelInfo.name).split(':')[0])
