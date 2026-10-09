@@ -748,7 +748,24 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             return;
         }
         if (name == "model.helper_state") {
-            reply({{"component", component}, {"properties", state}});
+            auto properties = state;
+            const auto models = state.value("models").toArray();
+            const int offset = payload.value("offset").toInt(0);
+            if (offset < 0 || offset > models.size()) { error(socket, id, "invalid-model-offset"); return; }
+            QJsonArray batch;
+            qsizetype bytes = 0;
+            int next = offset;
+            while (next < models.size()) {
+                const auto rowBytes = QJsonDocument(models.at(next).toObject()).toJson(QJsonDocument::Compact).size();
+                if (!batch.isEmpty() && bytes + rowBytes > 80 * 1024) break;
+                batch.append(models.at(next++));
+                bytes += rowBytes;
+            }
+            properties["models"] = batch;
+            properties["modelOffset"] = offset;
+            properties["nextOffset"] = next < models.size() ? next : -1;
+            properties["totalModels"] = models.size();
+            reply({{"component", component}, {"properties", properties}});
             return;
         }
         if (m_state == "running" || m_state == "approval") {

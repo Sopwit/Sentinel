@@ -10,6 +10,11 @@
 #include <QJsonDocument>
 #include <QSet>
 #include <QUrlQuery>
+#include <QStandardPaths>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QLocale>
 static void initModelCatalog() {
     Q_INIT_RESOURCE(model_catalog);
 }
@@ -17,6 +22,7 @@ namespace sentinel::daemon {
 DaemonModelHelpers::DaemonModelHelpers(core::ApplicationController* controller, QObject* parent)
     : QObject(parent), puller(this), controller_(controller), library(this), detail(this),
       lmStudio(this) {
+    controller_->modelOperations()->huggingFaceSource()->setAutoFetch(true);
     initModelCatalog();
     QFile file(":/sentinel/model-catalog.json");
     if (file.open(QIODevice::ReadOnly))
@@ -50,32 +56,30 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
         for (const auto& repository :
              controller_->modelOperations()->huggingFaceSource()->repositories())
             repositories.insert(repository.id, repository);
-        int eligible = 0;
+
         QSet<QString> represented;
         for (const auto& entry : controller_->modelLibrary()->entries()) {
             const bool gguf = entry.format == "GGUF";
             if (ggufOnly_ && !gguf)
                 continue;
-            if (!gguf && (entry.repositoryId.isEmpty() || represented.contains(entry.repositoryId)))
-                continue;
-            if (!gguf)
-                represented.insert(entry.repositoryId);
-            if (eligible++ < catalogPage_ * 40 || models.size() >= 40)
-                continue;
+            const bool artifact = gguf || entry.format == "safetensors" || entry.artifactFilename.endsWith(".bin") || entry.artifactFilename.endsWith(".onnx");
+            if (entry.source.id != "hugging-face" && !gguf) continue;
+            if (!artifact && (entry.repositoryId.isEmpty() || represented.contains(entry.repositoryId))) continue;
+            represented.insert(entry.repositoryId);
             const auto repository = repositories.value(entry.repositoryId);
             const auto category = core::modelCategory(entry.repositoryId + " " + entry.displayName,
                                                       entry.tags, repository.pipelineTask);
             const bool chatCompatible = category == "LLM" &&
                 (repository.pipelineTask.isEmpty() || repository.pipelineTask == "text-generation");
             models.append(QJsonObject{
-                {"id", gguf ? entry.id : "hf-repository:" + entry.repositoryId},
+                {"id", artifact ? entry.id : "hf-repository:" + entry.repositoryId},
                 {"name", gguf || repository.displayName.isEmpty() ? entry.displayName
                                                                   : repository.displayName},
                 {"provider",
                  entry.publisher.isEmpty() ? entry.source.displayName : entry.publisher},
                 {"category", category},
                 {"catalogSource", "huggingface"},
-                {"format", gguf ? entry.format : "Repository"},
+                {"format", artifact ? entry.format : "Repository"},
                 {"quantization", entry.quantization},
                 {"license", entry.license},
                 {"architecture", entry.architecture},
@@ -87,12 +91,12 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"gated", repository.gated},
                 {"revision", entry.revision},
                 {"repositoryId", entry.repositoryId},
-                {"filename", gguf ? entry.artifactFilename : QString{}},
+                {"filename", artifact ? entry.artifactFilename : QString{}},
                 {"sizeBytes",
-                 gguf && entry.sizeBytes ? QJsonValue(*entry.sizeBytes) : QJsonValue{}},
+                 entry.sizeBytes ? QJsonValue(*entry.sizeBytes) : QJsonValue{}},
                 {"size",
-                 gguf && entry.sizeBytes
-                     ? QString::number(double(*entry.sizeBytes) / 1073741824.0, 'f', 2) + " GB"
+                 entry.sizeBytes
+                     ? QLocale().formattedDataSize(*entry.sizeBytes, 2) + " (" + QString::number(*entry.sizeBytes) + " bytes)"
                      : "—"},
                 {"description", repository.pipelineTask.isEmpty()
                                     ? "Model repository; review the source for runtime and "
@@ -112,6 +116,14 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                                      core::ModelLibraryAction::DownloadAndRegister) &&
                                      gguf && chatCompatible},
                 {"gguf", gguf},
+                {"artifactDownloadable", artifact && core::ModelLibraryService::availableActions(entry).contains(core::ModelLibraryAction::Download)},
+                {"context", repository.metadata.value("config").toObject().value("max_position_embeddings").isDouble()
+                    ? QString::number(repository.metadata.value("config").toObject().value("max_position_embeddings").toInteger())
+                    : repository.metadata.value("gguf").toObject().value("context_length").isDouble()
+                    ? QString::number(repository.metadata.value("gguf").toObject().value("context_length").toInteger()) : QString{}},
+                {"input", repository.pipelineTask.startsWith("text-") ? "Text" : repository.pipelineTask == "audio-to-audio" || repository.pipelineTask == "automatic-speech-recognition" ? "Audio" : repository.pipelineTask.startsWith("image-") ? "Image" : ""},
+                {"bestFor", repository.pipelineTask},
+                {"modelCard", repository.metadata.value("modelCard").toString().left(16000)},
                 {"chatCompatible", chatCompatible},
                 {"installed", !entry.localFile.isEmpty()},
                 {"ollamaId", ""},
@@ -120,6 +132,12 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                 {"localFile", entry.localFile},
                 {"nativeModelId", entry.nativeModelId}});
         }
+        QSet<QString> installed;
+        for (const auto& entry : controller_->modelLibrary()->entries()) {
+            if (entry.installed == core::ModelLibraryInstalledState::Installed || !entry.localFile.isEmpty())
+                installed.insert(!entry.localFile.isEmpty() ? QFileInfo(entry.localFile).canonicalFilePath() : entry.provider.id + ":" + entry.nativeModelId);
+        }
+        for (const auto& name : controller_->loadedLMStudioModelNames()) installed.insert("lm-studio:" + name);
         const auto record = controller_->modelOperations()->operation(activeOperation_);
         const auto pending = record.state == core::ModelOperationState::Queued ||
                              record.state == core::ModelOperationState::Running;
@@ -128,22 +146,14 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
             source->catalogState() != core::HuggingFaceCatalogState::Current &&
             source->catalogState() != core::HuggingFaceCatalogState::Empty;
         return {{"models", models},
+                {"installedCount", installed.size()},
+                {"runtimeInstalled", !runtimeBinary().isEmpty()},
+                {"setupStatus", setupStatus_}, {"setupBusy", setupBusy_},
                 {"catalog", catalog_},
-                {"hasMore", eligible > (catalogPage_ + 1) * 40 ||
-                                controller_->modelOperations()->huggingFaceSource()->hasMore()},
-                {"hasPrevious", catalogPage_ > 0},
-                {"catalogStatus",
-                 QStringLiteral("Bundled catalog checked 2026-10-08. Hugging Face: %1 Last "
-                                "fetched: %2. Automatic refresh every 15 minutes. Discovery page "
-                                "%3 (40 entries per page).")
-                     .arg(controller_->modelOperations()->huggingFaceSource()->catalogDetail(),
-                          controller_->modelOperations()->huggingFaceSource()->fetchedAt().isValid()
-                              ? controller_->modelOperations()
-                                    ->huggingFaceSource()
-                                    ->fetchedAt()
-                                    .toString(Qt::ISODate)
-                              : QStringLiteral("not yet fetched"))
-                     .arg(catalogPage_ + 1)},
+                {"hasMore", source->hasMore()},
+                {"hasPrevious", false},
+                {"query", queryKey_},
+                {"catalogStatus", source->catalogDetail()},
                 {"fetching", controller_->modelOperations()->huggingFaceSource()->fetching()},
                 {"pulling", !activeOperation_.isEmpty() && pending},
                 {"activeModel", record.libraryId},
@@ -186,7 +196,15 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
                                 const QString& value, const QString& endpoint) {
     if (component == "ggufLibraryFetcher" && controller_) {
         auto* operations = controller_->modelOperations();
+        if (action == "setupRuntime") return setupRuntime();
+        if (action == "cancelSetup") {
+            setupCancelled_ = true; setupBusy_ = false;
+            setupStatus_ = "Runtime installation cancelled.";
+            if (!setupProcess_.isEmpty()) setupProcesses_.terminate(setupProcess_);
+            return true;
+        }
         if (action == "fetch" || action == "refresh") {
+            queryKey_ = value;
             const auto query = QJsonDocument::fromJson(value.toUtf8()).object();
             searchText_ = query.isEmpty() ? (value.isEmpty() ? "GGUF" : value)
                                           : query.value("text").toString();
@@ -196,7 +214,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
                 {"LLM", "text-generation"},       {"Think", "text-generation"},
                 {"Vision", "image-text-to-text"}, {"Image", "text-to-image"},
                 {"Video", "text-to-video"},       {"STT", "automatic-speech-recognition"},
-                {"TTS", "text-to-speech"},        {"Embedding", "feature-extraction"}};
+                {"TTS", "text-to-speech"}, {"STS", "audio-to-audio"},        {"Embedding", "feature-extraction"}};
             searchTask_ = tasks.value(category);
             const auto requestedTask = query.value("task").toString();
             if ((category == "Video" && requestedTask == "image-to-video") ||
@@ -242,13 +260,13 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
                     : QString{});
         else if (action == "cancel")
             return operations->cancel(activeOperation_);
-        else if (action == "download" || action == "select") {
+        else if (action == "download" || action == "downloadFile" || action == "select") {
             for (const auto& entry : controller_->modelLibrary()->entries()) {
-                if (entry.id != value || entry.format != "GGUF")
+                if (entry.id != value)
                     continue;
-                if (action == "download")
+                if (action == "download" || action == "downloadFile")
                     activeOperation_ =
-                        operations->start(core::ModelLibraryAction::DownloadAndRegister, entry);
+                        operations->start(action == "download" && entry.format == "GGUF" && entry.shardGroup.isEmpty() ? core::ModelLibraryAction::DownloadAndRegister : core::ModelLibraryAction::Download, entry);
                 else if (!entry.localFile.isEmpty()) {
                     controller_->setSelectedRuntimeProvider("llama-cpp-server");
                     controller_->setSelectedLocalModel(
@@ -303,5 +321,67 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
     } else
         return false;
     return true;
+}
+
+QString DaemonModelHelpers::runtimeBinary() const {
+    auto binary = QStandardPaths::findExecutable("llama-server");
+    if (!binary.isEmpty()) return binary;
+    const auto root = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("runtimes/llama.cpp");
+    return QStandardPaths::findExecutable("llama-server", {QCoreApplication::applicationDirPath(), "/opt/homebrew/bin", "/usr/local/bin", root + "/build/bin", root + "/build/bin/Release"});
+}
+bool DaemonModelHelpers::setupRuntime() {
+    if (setupBusy_) return false;
+    if (!runtimeBinary().isEmpty()) {
+        setupStatus_ = "llama.cpp is installed. Choose or download a model.";
+        controller_->setSelectedRuntimeProvider("llama-cpp-server");
+        return true;
+    }
+    if (core::NetworkPolicyService::instance().check(QUrl("https://github.com/ggml-org/llama.cpp")) != core::NetworkDecision::Allowed) {
+        setupStatus_ = "Runtime installation is blocked by network policy."; return false;
+    }
+    setupCancelled_ = false; setupBusy_ = true;
+    runSetupStep(0);
+    return true;
+}
+void DaemonModelHelpers::runSetupStep(int step) {
+    if (setupCancelled_) return;
+    const auto root = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("runtimes/llama.cpp");
+    core::ProcessRequest request;
+    request.timeoutMs = 30 * 60 * 1000;
+    request.unconfinedPermitted = true;
+    request.environment = QProcessEnvironment::systemEnvironment();
+    auto brew = QStandardPaths::findExecutable("brew", {"/opt/homebrew/bin", "/usr/local/bin", "/home/linuxbrew/.linuxbrew/bin"});
+    const bool useBrew = !brew.isEmpty();
+    if (useBrew) {
+        request.program = brew; request.arguments = {"install", "llama.cpp"};
+        setupStatus_ = "Installing llama.cpp with Homebrew…";
+    } else {
+        const auto git = QStandardPaths::findExecutable("git");
+        const auto cmake = QStandardPaths::findExecutable("cmake");
+        if (git.isEmpty() || cmake.isEmpty()) {
+            setupBusy_ = false;
+            setupStatus_ = "Install Git, CMake and a C++ compiler, then retry. On macOS Homebrew can install llama.cpp directly. Official setup: github.com/ggml-org/llama.cpp/blob/master/docs/install.md";
+            return;
+        }
+        QDir().mkpath(QFileInfo(root).absolutePath());
+        if (step == 0 && QFileInfo::exists(root + "/CMakeLists.txt")) step = 1;
+        if (step == 0) { request.program = git; request.arguments = {"clone", "--depth", "1", "https://github.com/ggml-org/llama.cpp.git", root}; setupStatus_ = "Downloading official llama.cpp sources…"; }
+        else if (step == 1) { request.program = cmake; request.arguments = {"-S", root, "-B", root + "/build", "-DCMAKE_BUILD_TYPE=Release", "-DLLAMA_CURL=OFF"}; setupStatus_ = "Configuring llama.cpp…"; }
+        else { request.program = cmake; request.arguments = {"--build", root + "/build", "--config", "Release", "--target", "llama-server", "-j", "2"}; setupStatus_ = "Building llama.cpp…"; }
+    }
+    setupProcess_ = setupProcesses_.start(request, [this, step, useBrew](const core::ProcessRecord& record) {
+        if (setupCancelled_ || (record.state != core::ProcessState::Exited && record.state != core::ProcessState::Failed && record.state != core::ProcessState::Cancelled)) return;
+        if (record.state != core::ProcessState::Exited || record.exitCode != 0) {
+            setupBusy_ = false;
+            setupStatus_ = "Installation failed. Check Git/CMake/compiler availability and network access, then retry. " + record.error;
+        } else if (!useBrew && step < 2) runSetupStep(step + 1);
+        else {
+            setupBusy_ = false;
+            if (runtimeBinary().isEmpty()) setupStatus_ = "Installation finished but llama-server was not found. Check the installation output.";
+            else { setupStatus_ = "llama.cpp installed. Choose or download a model."; controller_->setSelectedRuntimeProvider("llama-cpp-server"); controller_->refreshModelDiscovery(); }
+        }
+    }, [this](const QString&, core::ProcessStream, const QByteArray& output) {
+        if (!setupCancelled_ && !output.isEmpty()) setupStatus_ = QString::fromUtf8(output).right(1200);
+    });
 }
 } // namespace sentinel::daemon

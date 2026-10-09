@@ -38,15 +38,22 @@ Item {
     // ── Filter state ─────────────────────────────────────────────────────────
     property string activeCategory: "All"
     property string catalogSource: "all"
-    onCatalogSourceChanged: catalogSearchTimer.restart()
+    property bool discoveryPending: false
+    property bool setupPrompted: false
+    function beginDiscovery() {
+        if (activeCategory === "Runtime") { discoveryPending = false; catalogSearchTimer.stop(); return }
+        if (daemonClient.daemonReachable) { discoveryPending = true; currentModels = [] }
+        catalogSearchTimer.restart()
+    }
+    onCatalogSourceChanged: beginDiscovery()
     property string discoveryTask: ""
-    onDiscoveryTaskChanged: catalogSearchTimer.restart()
+    onDiscoveryTaskChanged: beginDiscovery()
     property string listSort: "installed"
     property string discoverySort: "downloads"
     function discoveryQuery() { return JSON.stringify({text: searchQuery, category: activeCategory, sort: discoverySort, task: discoveryTask, ggufOnly: catalogSource === "llamacpp"}) }
-    onActiveCategoryChanged: { discoveryTask = ""; catalogSearchTimer.restart() }
-    onDiscoverySortChanged: catalogSearchTimer.restart()
-    onSearchQueryChanged: catalogSearchTimer.restart()
+    onActiveCategoryChanged: { discoveryTask = ""; beginDiscovery() }
+    onDiscoverySortChanged: beginDiscovery()
+    onSearchQueryChanged: beginDiscovery()
     Timer { id: catalogSearchTimer; interval: 700; onTriggered: { if (modelsPage.activeCategory !== "Runtime") ggufLibraryFetcher.fetch(modelsPage.discoveryQuery()) } }
 
     readonly property bool catalogFetching: ollamaLibraryFetcher.fetching || lmStudioLibraryFetcher.fetching || ggufLibraryFetcher.fetching
@@ -115,14 +122,14 @@ Item {
             var localName = ollamaNames[n]
             var localOid = localName.toLowerCase()
             var baseLocal = localOid.split(":")[0]
-            
-            if (seenOllamaIds[localOid] || seenOllamaIds[baseLocal] || seenIds[localOid] || seenIds[baseLocal]) {
+
+            if (seenOllamaIds[localOid] || seenIds[localOid]) {
                 continue
             }
-            
+
             var details = shellViewModel.getLocalModelDetails(localName)
             var sizeStr = (details && details.sizeFormatted) ? details.sizeFormatted : "—"
-            
+
             var category = inferredLocalCategory(localOid)
 
             var localModelObj = {
@@ -139,7 +146,7 @@ Item {
                 tags: ["Local", "Ollama"],
                 downloadable: false
             }
-            
+
             list.push(localModelObj)
             seenIds[localName] = true
             seenOllamaIds[localOid] = true
@@ -151,16 +158,16 @@ Item {
             var localName = lmNames[n]
             var localOid = localName.toLowerCase()
             var baseLocal = localOid.split(":")[0]
-            
+
             // Allow duplicate names across providers but ensure unique IDs in this view
             var uniqueId = "lmstudio/" + localName
             if (seenIds[uniqueId]) {
                 continue
             }
-            
+
             var details = shellViewModel.getLocalModelDetails(localName)
             var sizeStr = (details && details.sizeFormatted) ? details.sizeFormatted : "—"
-            
+
             var category = inferredLocalCategory(localOid)
 
             var localModelObj = {
@@ -177,7 +184,7 @@ Item {
                 tags: ["Local", "LM Studio"],
                 downloadable: false
             }
-            
+
             list.push(localModelObj)
             seenIds[uniqueId] = true
         }
@@ -187,8 +194,8 @@ Item {
 
     readonly property var categories: {
         var cats = ["All"]
-        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Embedding", "Other", "Runtime"]
-        
+        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "STS", "Embedding", "Other", "Runtime"]
+
         var presentCats = []
         for (var i = 0; i < allModels.length; i++) {
             var cat = allModels[i].category
@@ -211,6 +218,7 @@ Item {
             }
         }
 
+        if (cats.indexOf("STS") < 0) cats.splice(cats.indexOf("Runtime") >= 0 ? cats.indexOf("Runtime") : cats.length, 0, "STS")
         return cats
     }
 
@@ -240,6 +248,7 @@ Item {
     }
 
     readonly property var filteredModels: {
+        if (discoveryPending || (daemonClient.daemonReachable && ggufLibraryFetcher.fetching && ggufLibraryFetcher.models.length === 0 && activeCategory !== "Runtime")) return []
         var baseList = []
         if (activeCategory === "All" || categories.indexOf(activeCategory) === -1) {
             baseList = allModels
@@ -251,9 +260,16 @@ Item {
             return (modelsPage.activeCategory === "Runtime" || Catalog.matchesSource(m, modelsPage.catalogSource)) && Catalog.matchesSearch(m, modelsPage.searchQuery)
         })
         var installed = baseList.map(function(m) { return modelsPage.isInstalledOnDevice(m) })
-        return Catalog.sortModels(baseList, listSort, installed)
+        return Catalog.groupModels(Catalog.sortModels(baseList, listSort, installed))
     }
 
+    Connections {
+        target: ggufLibraryFetcher
+        function onChanged() {
+            if (ggufLibraryFetcher.query === modelsPage.discoveryQuery()) modelsPage.discoveryPending = false
+            if (!modelsPage.setupPrompted && daemonClient.daemonReachable && ggufLibraryFetcher.query && !ggufLibraryFetcher.runtimeInstalled && ggufLibraryFetcher.installedCount === 0) { modelsPage.setupPrompted = true; runtimeSetup.open() }
+        }
+    }
     property var currentModels: []
 
     onFilteredModelsChanged: {
@@ -323,6 +339,7 @@ Item {
         if (cat === "Video") return "movie"
         if (cat === "STT") return "microphone"
         if (cat === "TTS") return "volume-2"
+        if (cat === "STS") return "microphone"
         if (cat === "Embedding") return "search"
         if (cat === "Runtime") return "settings"
         return "circle"
@@ -337,6 +354,7 @@ Item {
         if (cat === "Video") return 14
         if (cat === "STT") return 14
         if (cat === "TTS") return 14
+        if (cat === "STS") return 14
         if (cat === "Runtime") return 15
         return 14
     }
@@ -350,6 +368,7 @@ Item {
         if (cat === "Video") return qsTr("Video Generation")
         if (cat === "STT") return qsTr("Speech to Text")
         if (cat === "TTS") return qsTr("Text to Speech")
+        if (cat === "STS") return qsTr("Speech to Speech")
         if (cat === "Embedding") return qsTr("Embedding Models")
         if (cat === "Other") return qsTr("Other Tasks")
         if (cat === "Runtime") return qsTr("Local Runtimes")
@@ -362,18 +381,25 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: modelsPage.sidebarCollapsed ? 64 : (modelsPage.compact ? 196 : 278)
+            id: modelSidebar
+            objectName: "modelSidebar"
+            readonly property real expandedWidth: modelsPage.compact ? 196 : 278
+            readonly property bool labelsVisible: !modelsPage.sidebarCollapsed && width >= expandedWidth - 1
+            clip: true
+            Layout.minimumWidth: 64
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.preferredWidth: modelsPage.sidebarCollapsed ? 64 : expandedWidth
             Layout.fillHeight: true
             color: SentinelTheme.backgroundBase
             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
 
             Behavior on Layout.preferredWidth {
-                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: MotionTokens.duration(180); easing.type: Easing.OutCubic }
             }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: modelsPage.sidebarCollapsed ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
+                anchors.margins: SentinelTheme.spaceSm
                 spacing: SentinelTheme.spaceMd
 
                 RowLayout {
@@ -383,7 +409,7 @@ Item {
                     spacing: 0
 
                     Label {
-                        visible: !modelsPage.sidebarCollapsed
+                        visible: modelSidebar.labelsVisible
                         Layout.fillWidth: true
                         Layout.leftMargin: SentinelTheme.spaceMd
                         text: qsTr("Models")
@@ -395,7 +421,7 @@ Item {
                     }
 
                     Item {
-                        visible: modelsPage.sidebarCollapsed
+                        visible: !modelSidebar.labelsVisible
                         Layout.fillWidth: true
                     }
 
@@ -432,7 +458,7 @@ Item {
                     }
 
                     Item {
-                        visible: modelsPage.sidebarCollapsed
+                        visible: !modelSidebar.labelsVisible
                         Layout.fillWidth: true
                     }
                 }
@@ -470,12 +496,11 @@ Item {
                                     // Fixed geometry icon container for exact alignment
                                     Item {
                                         id: iconContainer
+                                        objectName: "modelSidebarIcon"
                                         width: 24
                                         height: 24
                                         anchors.verticalCenter: parent.verticalCenter
-                                        anchors.left: modelsPage.sidebarCollapsed ? undefined : parent.left
-                                        anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
-                                        anchors.horizontalCenter: modelsPage.sidebarCollapsed ? parent.horizontalCenter : undefined
+                                        x: modelSidebar.labelsVisible ? SentinelTheme.spaceLg : (parent.width - width) / 2
 
                                         TablerGlyph {
                                             anchors.centerIn: parent
@@ -492,7 +517,8 @@ Item {
 
                                     // Category Title Label (visible only when expanded)
                                     Text {
-                                        visible: !modelsPage.sidebarCollapsed
+                                        objectName: "modelSidebarLabel"
+                                        visible: modelSidebar.labelsVisible
                                         anchors.left: iconContainer.right
                                         anchors.leftMargin: SentinelTheme.spaceSm
                                         anchors.right: parent.right
@@ -557,6 +583,20 @@ Item {
                         }
                     }
                 }
+                SentinelButton {
+                    Layout.fillWidth: true
+                    text: modelSidebar.labelsVisible ? qsTr("Import") : "+"
+                    Accessible.name: qsTr("Import model")
+                    ToolTip.visible: hovered && !modelSidebar.labelsVisible
+                    ToolTip.text: Accessible.name
+                    onClicked: ggufImportDialog.open()
+                }
+                SentinelButton {
+                    Layout.fillWidth: true
+                    text: modelSidebar.labelsVisible ? qsTr("Runtime setup") : "⚙"
+                    Accessible.name: qsTr("Runtime setup")
+                    onClicked: runtimeSetup.open()
+                }
             }
         }
 
@@ -605,7 +645,7 @@ Item {
                             leftPadding: 10
                             rightPadding: 10
                             onTextChanged: modelsPage.searchQuery = text
-                            
+
                             background: Rectangle {
                                 id: searchFieldBg
                                 radius: 13
@@ -619,7 +659,7 @@ Item {
                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                  border.width: 1
                                  Behavior on border.color {
-                                     ColorAnimation { duration: 120; easing.type: Easing.InOutQuad }
+                                     ColorAnimation { duration: MotionTokens.duration(120); easing.type: Easing.InOutQuad }
                                  }
                              }
                         }
@@ -646,8 +686,9 @@ Item {
                                     color: SentinelTheme.accent
                                     SequentialAnimation on opacity {
                                         loops: Animation.Infinite
-                                        NumberAnimation { from: 0.3; to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
-                                        NumberAnimation { from: 1.0; to: 0.3; duration: 600; easing.type: Easing.InOutQuad }
+                                        running: !MotionTokens.reducedMotion
+                                        NumberAnimation { from: 0.3; to: 1.0; duration: MotionTokens.duration(600); easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 1.0; to: 0.3; duration: MotionTokens.duration(600); easing.type: Easing.InOutQuad }
                                     }
                                 }
                                 Label {
@@ -663,78 +704,11 @@ Item {
                                 readonly property bool sortRelevant: (modelsPage.catalogSource === "all" || modelsPage.catalogSource === "ollama") && (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
                                 spacing: SentinelTheme.spaceSm
 
-                                Button {
-                                    id: sortPopularBtn
-                                    visible: catalogSourceActions.sortRelevant
-                                    implicitHeight: 22
-                                    implicitWidth: contentItem.implicitWidth + 20
-                                    flat: true
-                                    checkable: true
-                                    checked: modelsPage.ollamaSort === "popular"
-                                    onClicked: modelsPage.ollamaSort = "popular"
-                                    contentItem: Label {
-                                        text: qsTr("Ollama: Popular")
-                                        font.pixelSize: SentinelTheme.fontTiny
-                                        font.weight: sortPopularBtn.checked ? Font.Medium : Font.Normal
-                                        color: sortPopularBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    background: Rectangle {
-                                        id: sortPopularBg
-                                        radius: 11
-                                        color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
-                                        border.color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
-                                        layer.enabled: sortPopularBtn.checked
-                                        layer.effect: MultiEffect {
-                                            shadowEnabled: true
-                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                            shadowVerticalOffset: 1
-                                            shadowBlur: 0.06
-                                            shadowOpacity: 1.0
-                                        }
-                                    }
-                                }
 
-                                Button {
-                                    id: sortNewestBtn
-                                    visible: catalogSourceActions.sortRelevant
-                                    implicitHeight: 22
-                                    implicitWidth: contentItem.implicitWidth + 20
-                                    flat: true
-                                    checkable: true
-                                    checked: modelsPage.ollamaSort === "newest"
-                                    onClicked: modelsPage.ollamaSort = "newest"
-                                    contentItem: Label {
-                                        text: qsTr("Ollama: Newest")
-                                        font.pixelSize: SentinelTheme.fontTiny
-                                        font.weight: sortNewestBtn.checked ? Font.Medium : Font.Normal
-                                        color: sortNewestBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    background: Rectangle {
-                                        id: sortNewestBg
-                                        radius: 11
-                                        color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
-                                        border.color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
-                                        layer.enabled: sortNewestBtn.checked
-                                        layer.effect: MultiEffect {
-                                            shadowEnabled: true
-                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                            shadowVerticalOffset: 1
-                                            shadowBlur: 0.06
-                                            shadowOpacity: 1.0
-                                        }
-                                    }
-                                }
 
-                                Button {
-                                    text: qsTr("Import GGUF…")
-                                    Accessible.name: qsTr("Import a local model for llama.cpp")
-                                    implicitHeight: 26
-                                    onClicked: ggufImportDialog.open()
-                                }
+
+
+
 
                                 Button {
                                     id: refreshBtn
@@ -770,7 +744,7 @@ Item {
                             // Ollama installed count chip
                             Rectangle {
                                 id: installedChip
-                                visible: shellViewModel.ollamaModelCount > 0
+                                visible: ggufLibraryFetcher.installedCount > 0
                                 implicitHeight: 22
                                 implicitWidth: installedCountLbl.implicitWidth + 16
                                 radius: 11
@@ -784,7 +758,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     horizontalAlignment: Text.AlignHCenter
-                                    text: "● " + shellViewModel.ollamaModelCount + qsTr(" Ollama installed")
+                                    text: qsTr("%1 installed").arg(ggufLibraryFetcher.installedCount)
                                     font.pixelSize: SentinelTheme.fontTiny
                                     color: SentinelTheme.success
                                 }
@@ -811,14 +785,7 @@ Item {
                         }
                     }
 
-                    Label {
-                        Layout.fillWidth: true
-                        Layout.topMargin: SentinelTheme.spaceMd
-                        text: modelsPage.activeCategory === "Runtime" ? qsTr("Review local inference and voice engines, platform requirements and Sentinel integration. Select a runtime to open its official setup documentation.") : qsTr("Browse Hugging Face repositories and files, Ollama and LM Studio catalogs, or GGUF models for llama.cpp. Select a card for variants and details.")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontSmall
-                        wrapMode: Text.WordWrap
-                    }
+
                 }
             }
 
@@ -893,7 +860,7 @@ Item {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: modelsPage.currentModels.length === 0 && !modelsPage.catalogFetching
+            visible: modelsPage.currentModels.length === 0 && !modelsPage.catalogFetching && !modelsPage.discoveryPending
             z: 1
 
             EmptyState {
@@ -914,7 +881,7 @@ Item {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: modelsPage.catalogFetching && modelsPage.currentModels.length === 0
+            visible: (modelsPage.catalogFetching || modelsPage.discoveryPending) && modelsPage.currentModels.length === 0
             z: 1
 
             Flickable {
@@ -951,19 +918,8 @@ Item {
         }
         }
 
-        Label {
-            Layout.fillWidth: true
-            visible: ggufLibraryFetcher.statusText.length > 0 || ggufLibraryFetcher.errorText.length > 0
-            text: ggufLibraryFetcher.errorText || ggufLibraryFetcher.statusText
-            color: ggufLibraryFetcher.errorText.length > 0 ? SentinelTheme.warning : SentinelTheme.textMuted
-            wrapMode: Text.WordWrap
-        }
-        Label {
-            Layout.fillWidth: true
-            text: [ggufLibraryFetcher.catalogStatus, ollamaLibraryFetcher.catalogStatus, lmStudioLibraryFetcher.catalogStatus].filter(function(value) { return value.length > 0 }).join("\n")
-            color: SentinelTheme.textMuted
-            wrapMode: Text.WordWrap
-        }
+
+
         Label {
             Layout.fillWidth: true
             visible: text.length > 0
@@ -977,8 +933,8 @@ Item {
         Flow {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
-            SentinelButton { visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0; text: qsTr("Previous discovery page"); enabled: ggufLibraryFetcher.hasPrevious && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.previousPage() }
-            SentinelButton { visible: modelsPage.activeCategory !== "Runtime" && ["all", "huggingface", "llamacpp"].indexOf(modelsPage.catalogSource) >= 0; text: qsTr("More from Hugging Face"); enabled: ggufLibraryFetcher.hasMore && !ggufLibraryFetcher.fetching; onClicked: ggufLibraryFetcher.nextPage() }
+
+
             SentinelComboBox {
                 visible: modelsPage.activeCategory === "Video" || modelsPage.activeCategory === "Image"
                 width: Math.min(parent.width, 260)
@@ -1012,6 +968,7 @@ Item {
         // Model grid
         GridView {
             id: modelGrid
+            objectName: "modelGrid"
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -1022,7 +979,7 @@ Item {
                 return Math.floor(width / cols)
             }
             readonly property int columns: Math.max(1, Math.floor(width / cellWidth))
-            cellHeight: 210
+            cellHeight: 250
             model: modelsPage.currentModels
             activeFocusOnTab: true
             keyNavigationWraps: true
@@ -1067,21 +1024,24 @@ Item {
             }
 
                 add: Transition {
-                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200; easing.type: Easing.OutQuad }
-                    NumberAnimation { property: "scale";   from: 0.94; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: MotionTokens.duration(200); easing.type: Easing.OutQuad }
+                    NumberAnimation { property: "scale";   from: 0.94; to: 1; duration: MotionTokens.duration(220); easing.type: Easing.OutCubic }
                 }
 
                 delegate: Item {
                     id: modelDelegate
                     required property var modelData
                     required property int index
+                    property int selectedVariantIndex: 0
+                    readonly property var variants: modelData.variants || [modelData]
+                    readonly property var selectedModel: variants[Math.min(selectedVariantIndex, variants.length - 1)] || modelData
 
                     width: modelGrid.cellWidth
                     height: modelGrid.cellHeight
 
                     // Detect real installed state + active pull
-                    readonly property bool deviceInstalled: modelsPage.isInstalledOnDevice(modelData)
-                    readonly property bool activePull: modelsPage.isPulling(modelData.ollamaId)
+                    readonly property bool deviceInstalled: modelsPage.isInstalledOnDevice(selectedModel)
+                    readonly property bool activePull: modelsPage.isPulling(selectedModel.ollamaId)
 
                     // Reactively track puller progress for this model
                     readonly property real pullProgress: activePull ? ollamaPuller.progress : 0.0
@@ -1111,10 +1071,10 @@ Item {
                         border.width: 1
 
                         Behavior on color {
-                            ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
+                            ColorAnimation { duration: MotionTokens.duration(140); easing.type: Easing.InOutQuad }
                         }
                         Behavior on border.color {
-                            ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
+                            ColorAnimation { duration: MotionTokens.duration(140); easing.type: Easing.InOutQuad }
                         }
 
                         MouseArea {
@@ -1122,7 +1082,8 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             onClicked: {
-                                detailPopup.modelInfo = modelDelegate.modelData
+                                detailPopup.catalogVariants = modelDelegate.variants
+                                detailPopup.modelInfo = modelDelegate.selectedModel
                                 detailPopup.open()
                             }
                         }
@@ -1145,14 +1106,14 @@ Item {
                                     color: SentinelTheme.withAlpha(badgeColorValue, 0.16)
                                     border.color: SentinelTheme.withAlpha(badgeColorValue, 0.32)
                                     border.width: 1
-                                    readonly property color badgeColorValue: modelDelegate.modelData.badgeColor
+                                    readonly property color badgeColorValue: modelDelegate.selectedModel.badgeColor
 
                                     Label {
                                         id: badgeLbl
                                         anchors.centerIn: parent
-                                        text: modelDelegate.modelData.badge
+                                        text: modelDelegate.selectedModel.badge
                                         font.pixelSize: SentinelTheme.fontTiny
-                                        color: modelDelegate.modelData.badgeColor
+                                        color: modelDelegate.selectedModel.badgeColor
                                     }
                                 }
 
@@ -1188,23 +1149,35 @@ Item {
                                 spacing: 2
                                 Label {
                                     Layout.fillWidth: true
-                                    text: modelDelegate.modelData.name
+                                    text: modelDelegate.modelData.familyName || modelDelegate.selectedModel.name
                                     font.pixelSize: SentinelTheme.fontControl
                                     font.weight: Font.Medium
                                     color: SentinelTheme.textPrimary
                                     elide: Text.ElideRight
                                 }
                                 Label {
-                                    text: modelDelegate.modelData.provider
+                                    text: modelDelegate.selectedModel.provider
                                     font.pixelSize: SentinelTheme.fontTiny
                                     color: SentinelTheme.textPlaceholder
                                 }
                             }
 
+                            SentinelComboBox {
+                                objectName: "modelVersionSelector"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                visible: modelDelegate.variants.length > 1
+                                model: modelDelegate.variants
+                                textRole: "variantLabel"
+                                currentIndex: Math.min(modelDelegate.selectedVariantIndex, modelDelegate.variants.length - 1)
+                                Accessible.name: qsTr("Model version")
+                                onActivated: function(index) { modelDelegate.selectedVariantIndex = index }
+                            }
+
                             // Row 3: Description
                             Label {
                                 Layout.fillWidth: true
-                                text: modelDelegate.modelData.description
+                                text: modelDelegate.selectedModel.description
                                 font.pixelSize: SentinelTheme.fontSmall
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
@@ -1223,6 +1196,7 @@ Item {
                                 // Download / Details button — opens popup
                                 Button {
                                     id: dlBtn
+                                    objectName: "modelDetailsButton"
                                     visible: !modelDelegate.activePull && !modelDelegate.effectivelyInstalled
                                     enabled: true
                                     anchors.right: parent.right
@@ -1230,13 +1204,14 @@ Item {
                                     implicitWidth: dlBtnLabel.implicitWidth + 24
                                     hoverEnabled: true
                                     onClicked: {
-                                        detailPopup.modelInfo = modelDelegate.modelData
+                                        detailPopup.catalogVariants = modelDelegate.variants
+                                detailPopup.modelInfo = modelDelegate.selectedModel
                                         detailPopup.open()
                                     }
 
                                     scale: dlBtn.down ? 0.97 : (dlBtn.hovered ? 1.02 : 1.0)
                                     Behavior on scale {
-                                        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                        NumberAnimation { duration: MotionTokens.duration(100); easing.type: Easing.OutCubic }
                                     }
 
                                     background: Rectangle {
@@ -1259,12 +1234,12 @@ Item {
                                             shadowOpacity: 1.0
                                         }
 
-                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.duration(100) } }
                                     }
 
                                     contentItem: Label {
                                         id: dlBtnLabel
-                                        text: modelDelegate.modelData.category === "Runtime" ? qsTr("Setup & compatibility") : qsTr("Details & downloads")
+                                        text: modelDelegate.selectedModel.category === "Runtime" ? qsTr("Setup & compatibility") : qsTr("Details & downloads")
                                         font.pixelSize: SentinelTheme.fontSmall
                                         font.weight: Font.Medium
                                         color: SentinelTheme.accent
@@ -1287,7 +1262,7 @@ Item {
                                             width: parent.width * modelDelegate.pullProgress
                                             height: parent.height; radius: parent.radius
                                             color: SentinelTheme.accent
-                                            Behavior on width { NumberAnimation { duration: 80 } }
+                                            Behavior on width { NumberAnimation { duration: MotionTokens.duration(80) } }
                                         }
                                     }
 
@@ -1319,7 +1294,8 @@ Item {
                                         flat: true
                                         hoverEnabled: true
                                         onClicked: {
-                                            detailPopup.modelInfo = modelDelegate.modelData
+                                            detailPopup.catalogVariants = modelDelegate.variants
+                                detailPopup.modelInfo = modelDelegate.selectedModel
                                             detailPopup.open()
                                         }
                                         background: Rectangle {
@@ -1340,7 +1316,7 @@ Item {
                                                 shadowOpacity: 1.0
                                             }
 
-                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                            Behavior on color { ColorAnimation { duration: MotionTokens.duration(100) } }
                                         }
                                         contentItem: Label {
                                             id: detailsInstalledLbl
@@ -1360,9 +1336,34 @@ Item {
 
                     scale: cardArea.containsMouse ? 1.012 : 1.0
                     Behavior on scale {
-                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: MotionTokens.duration(160); easing.type: Easing.OutCubic }
                     }
                 }
+            }
+        }
+    }
+
+    SentinelOverlayModal {
+        id: runtimeSetup
+        preferredWidth: 600
+        preferredHeight: 420
+        contentItem: ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: SentinelTheme.spaceLg
+            spacing: SentinelTheme.spaceMd
+            Label { text: qsTr("Set up local AI"); font.pixelSize: 22; color: SentinelTheme.textPrimary }
+            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("llama.cpp is the default engine. Sentinel can install it using Homebrew, or build the official sources with Git, CMake and a C++ compiler. Then choose a GGUF model to download."); color: SentinelTheme.textMuted }
+            Label { Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: ggufLibraryFetcher.setupStatus || (ggufLibraryFetcher.runtimeInstalled ? qsTr("llama.cpp is installed.") : qsTr("llama.cpp is not installed.")); color: SentinelTheme.textPrimary }
+            BusyIndicator { running: ggufLibraryFetcher.setupBusy; visible: running }
+            Item { Layout.fillHeight: true }
+            Flow {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceSm
+                SentinelButton { text: qsTr("Install llama.cpp"); enabled: !ggufLibraryFetcher.setupBusy && !ggufLibraryFetcher.runtimeInstalled; onClicked: ggufLibraryFetcher.setupRuntime() }
+                SentinelButton { text: qsTr("Cancel installation"); visible: ggufLibraryFetcher.setupBusy; onClicked: ggufLibraryFetcher.cancelSetup() }
+                SentinelButton { text: qsTr("Ollama setup ↗"); onClicked: Qt.openUrlExternally("https://ollama.com/download") }
+                SentinelButton { text: qsTr("LM Studio setup ↗"); onClicked: Qt.openUrlExternally("https://lmstudio.ai/download") }
+                SentinelButton { text: qsTr("Close"); onClicked: runtimeSetup.close() }
             }
         }
     }
@@ -1370,6 +1371,7 @@ Item {
     // ── Model Detail Popup ────────────────────────────────────────────────────
     ModelDetailPopup {
         id: detailPopup
+        objectName: "modelDetailsPopup"
         modelInfo: null
         modeName: modelsPage.viewModel ? modelsPage.viewModel.currentModeName : "Sentinel"
         accent: modelInfo ? Qt.color(modelInfo.badgeColor) : modelsPage.modeAccent

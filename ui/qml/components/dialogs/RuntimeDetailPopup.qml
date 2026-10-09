@@ -490,7 +490,7 @@ SentinelOverlayModal {
                         hoverEnabled: true
                         onClicked: root.close()
                         scale: down ? 0.98 : (hovered ? 1.02 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: 80 } }
+                        Behavior on scale { NumberAnimation { duration: MotionTokens.duration(80) } }
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusSm
@@ -519,7 +519,7 @@ SentinelOverlayModal {
                         hoverEnabled: true
                         onClicked: Qt.openUrlExternally(root.docsUrl)
                         scale: down ? 0.98 : (hovered ? 1.02 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: 80 } }
+                        Behavior on scale { NumberAnimation { duration: MotionTokens.duration(80) } }
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusSm
@@ -570,7 +570,7 @@ SentinelOverlayModal {
                         hoverEnabled: true
                         onClicked: Qt.openUrlExternally(root.githubUrl)
                         scale: down ? 0.98 : (hovered ? 1.02 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: 80 } }
+                        Behavior on scale { NumberAnimation { duration: MotionTokens.duration(80) } }
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusSm

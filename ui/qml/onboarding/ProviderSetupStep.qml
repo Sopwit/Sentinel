@@ -47,6 +47,14 @@ Item {
             Layout.fillWidth: true
         }
 
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedRuntimeProvider === "llama-cpp-server"
+            Label { Layout.fillWidth: true; text: qsTr("llama.cpp is the default local engine. If it is missing, Sentinel can install it with Homebrew or build the official sources with Git, CMake and a C++ compiler."); wrapMode: Text.WordWrap; color: SentinelTheme.textMuted }
+            SentinelButton { text: qsTr("Set up llama.cpp"); enabled: !ggufLibraryFetcher.setupBusy; onClicked: ggufLibraryFetcher.setupRuntime() }
+            Label { Layout.fillWidth: true; text: ggufLibraryFetcher.setupStatus; wrapMode: Text.WrapAnywhere; color: SentinelTheme.textPrimary }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceMd

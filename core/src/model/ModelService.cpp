@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/model/ModelService.h"
+#include "sentinel/core/chat/ChatImageContent.h"
 
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/chat/OllamaChatProvider.h"
@@ -252,9 +253,10 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
 
     QJsonObject body{{QStringLiteral("model"), binding.modelId}};
     QJsonArray initialParts{QJsonObject{{QStringLiteral("text"), message}}};
+    appendGeminiImageParts(initialParts, options.images);
     if (claude) {
         QJsonArray messages{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                                        {QStringLiteral("content"), message}}};
+                                        {QStringLiteral("content"), chatImageContent(message, options.images, true)}}};
         if (!options.priorToolCalls.isEmpty()) {
             QJsonParseError historyError;
             const auto history = QJsonDocument::fromJson(
@@ -530,7 +532,7 @@ public:
     }
     ChatProviderReply
     sendMessageWithToken(const QString& message,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken) {
+        const std::shared_ptr<std::atomic_bool>& cancellationToken, const QList<ChatImage>& images = {}) {
         if (!config_.isAllowedEndpoint())
             return providerFailure(
                 QStringLiteral("Selected provider '%1' is unavailable or not configured.")
@@ -538,6 +540,7 @@ public:
                 ChatProviderErrorCategory::ProviderUnavailable);
         LocalInferenceRequest request;
         request.prompt = message;
+        request.images = images;
         request.options.model = binding_.modelId;
         request.options.timeoutMs = timeoutMs_;
         request.options.cancellationToken = cancellationToken;
@@ -581,7 +584,7 @@ public:
                                    ChatProviderErrorCategory::CapabilityUnsupported,
                                    ChatProviderReply::Error::CapabilityRejected);
         if (!options.nativeToolCalling && !options.structuredOutput)
-            return sendMessageWithToken(message, options.cancellationToken);
+            return sendMessageWithToken(message, options.cancellationToken, options.images);
         if (!config_.isAllowedEndpoint())
             return providerFailure(QStringLiteral("Selected endpoint is unavailable."),
                                    ChatProviderErrorCategory::ProviderUnavailable);
@@ -593,7 +596,7 @@ public:
             return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Gemini,
                                        binding_, config_, timeoutMs_, message, options);
         QJsonArray messages{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                        {QStringLiteral("content"), message}}};
+                        {QStringLiteral("content"), chatImageContent(message, options.images)}}};
         if (!options.priorToolCalls.isEmpty()) {
             if (options.priorToolCalls.size() != options.toolResults.size())
                 return providerFailure(QStringLiteral("Native tool results are incomplete."),

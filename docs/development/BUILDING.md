@@ -8,6 +8,16 @@ cmake --build --preset debug
 ./build/debug/apps/sentinel-desktop/sentinel-desktop
 ```
 
+On macOS, launch the bundle with `open build/debug/apps/sentinel-desktop/sentinel-desktop.app`.
+
+New profiles use llama.cpp by default. Models → Runtime setup can install `llama-server` after an explicit user action: Homebrew on supported macOS setups, otherwise a source build requiring Git, CMake, and a C++ compiler. Source builds stay under the application's data directory. Existing provider preferences are preserved.
+
+The Hugging Face catalog follows API continuation links automatically; it has no fixed 40-model limit. Repository details, `config.json`, and model cards supply artifact sizes and published metadata. Fields the publisher does not supply can remain unavailable. GGUF artifacts can be registered with llama.cpp; downloading a safetensors, PyTorch, or ONNX file does not make that model runnable by llama.cpp or assemble a complete multi-file repository. Gated repositories require an authorized Hugging Face token.
+
+Chat attachments accept up to four files, each up to 4 MB. Qt PDF is optional; install its development module for PDF text extraction. DOCX text extraction requires `unzip` on PATH. Scanned PDFs require OCR before attaching. Images require a vision-capable model.
+
+Voice & Audio settings select Local Whisper or system dictation. Local Whisper uses the daemon STT runtime and desktop microphone capture. Native system dictation is available on macOS when on-device recognition supports the selected language and microphone/speech permissions are granted. Other platforms can use their desktop dictation input or Local Whisper.
+
 Use `cmake --preset tests`, `release`, `relwithdebinfo`, `package-ready`, `asan`, or `coverage` as needed. The `windows-arm64` preset is experimental. Fedora KDE Plasma is the primary desktop target; do not put Linux-only assumptions in core code.
 
 The CMake tree builds `sentinel_core`, plugin SDK/samples, desktop, CLI, daemon, plugin host, and tests when `SENTINEL_BUILD_TESTS` is enabled. Packaging configuration is in `cmake/SentinelCPack.cmake`.

@@ -539,7 +539,7 @@ private:
     static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
-    static constexpr auto defaultSelectedRuntimeProvider = "ollama";
+    static constexpr auto defaultSelectedRuntimeProvider = "llama-cpp-server";
     static constexpr auto defaultWebSearchProvider = "duckduckgo";
     static constexpr auto defaultSemanticProvider = "disabled";
     static constexpr auto defaultSemanticEmbeddingModel = "nomic-embed-text";

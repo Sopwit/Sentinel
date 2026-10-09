@@ -324,11 +324,11 @@ QList<ModelLibraryProviderState> ModelLibraryService::providerStates() const {
 QList<ModelLibraryAction> ModelLibraryService::availableActions(const ModelLibraryEntry& entry) {
     QList<ModelLibraryAction> actions;
     if (entry.source.id == QLatin1String("hugging-face")) {
-        if (entry.format.compare(QStringLiteral("GGUF"), Qt::CaseInsensitive) == 0 &&
-            !entry.artifactFilename.isEmpty() && !entry.revision.isEmpty()) {
+        if (!entry.artifactFilename.isEmpty() && !entry.revision.isEmpty() &&
+            (entry.format == "GGUF" || entry.format == "safetensors" || entry.artifactFilename.endsWith(".bin") || entry.artifactFilename.endsWith(".onnx"))) {
             if (entry.installed != ModelLibraryInstalledState::Installed)
                 actions.append(ModelLibraryAction::Download);
-            if (entry.shardGroup.isEmpty() && !entry.registeredLocalFile)
+            if (entry.format == "GGUF" && entry.shardGroup.isEmpty() && !entry.registeredLocalFile)
                 actions.append(ModelLibraryAction::DownloadAndRegister);
         }
         if (entry.managedStorage && !entry.registeredLocalFile)

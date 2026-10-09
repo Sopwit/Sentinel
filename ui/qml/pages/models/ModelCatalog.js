@@ -42,3 +42,52 @@ function sortModels(models, mode, installed) {
     });
     return rows.map(function(row) { return row.model; });
 }
+
+// Keep release numbers and fine-tune names; only sizes and artifact encodings
+// are variants. Source namespaces prevent unrelated publishers from merging.
+function familyName(name) {
+    return (name || "").replace(/\.gguf$/i, "")
+        .replace(/(?:[-_\s])(?:q\d(?:_[a-z0-9]+)*|iq\d(?:_[a-z0-9]+)*|f16|f32|bf16|fp16|fp32)(?=$|[-_\s])/ig, "")
+        .replace(/(?:[-_\s])\d+(?:\.\d+)?[bm](?=$|[-_\s])/ig, "")
+        .replace(/[-_\s]+gguf$/i, "").replace(/[-_\s]+$/, "");
+}
+function familyKey(model) {
+    if (model.category === "Runtime" || model.cloudOnly) return "single:" + model.id;
+    var source = model.catalogSource || (model.gguf ? "llamacpp" : model.provider === "LM Studio" ? "lmstudio" : model.ollamaId ? "ollama" : model.provider || "");
+    if (source === "ollama" && model.ollamaId) return "ollama:" + model.ollamaId.toLowerCase().split(":")[0];
+    if (model.repositoryId) return source + ":repo:" + familyName(model.repositoryId).toLowerCase();
+    return source + ":" + familyName(model.name || model.id).toLowerCase();
+}
+function groupModels(models) {
+    var groups = [], indices = {};
+    models.forEach(function(model) {
+        var key = familyKey(model);
+        var index = indices[key];
+        if (index === undefined) {
+            var group = Object.assign({}, model);
+            group.familyName = familyName(model.name || model.id);
+            // Ollama tags are variants of the same named release.
+            if (model.ollamaId && group.familyName.indexOf(":") >= 0)
+                group.familyName = group.familyName.split(":")[0];
+            group.variants = [];
+            indices[key] = groups.length;
+            groups.push(group);
+            index = groups.length - 1;
+        }
+        var variants = groups[index].variants;
+        function identity(value) {
+            if (value.repositoryId && value.filename) return value.repositoryId.toLowerCase() + "@" + (value.revision || "") + ":" + value.filename;
+            if (value.ollamaId) return (value.catalogSource || (value.provider === "LM Studio" ? "lmstudio" : "ollama")) + ":" + value.ollamaId.toLowerCase().replace(/:latest$/, "");
+            return value.id;
+        }
+        var existingIndex = variants.findIndex(function(existing) { return identity(existing) === identity(model); });
+        if (existingIndex < 0)
+            variants.push(Object.assign({}, model, {variantLabel: model.filename || model.name || model.ollamaId || model.id}));
+        else {
+            var existing = variants[existingIndex];
+            Object.keys(model).forEach(function(field) { if ((existing[field] === undefined || existing[field] === "") && model[field] !== undefined) existing[field] = model[field]; });
+            existing.installed = !!existing.installed || !!model.installed;
+        }
+    });
+    return groups;
+}

@@ -103,7 +103,7 @@ void LocalModelRuntime::ensureRunning() {
         if (binary.isEmpty())
             binary = QStandardPaths::findExecutable(
                 "llama-server",
-                {QCoreApplication::applicationDirPath(), "/opt/homebrew/bin", "/usr/local/bin"});
+                {QCoreApplication::applicationDirPath(), "/opt/homebrew/bin", "/usr/local/bin", QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("runtimes/llama.cpp/build/bin"), QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("runtimes/llama.cpp/build/bin/Release")});
         if (binary.isEmpty()) {
             setStatus("llama-server is not installed or not on PATH.");
             return;

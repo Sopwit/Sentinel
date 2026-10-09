@@ -19,13 +19,13 @@
 #include <QSet>
 #include <QStandardPaths>
 #include <QUrlQuery>
+#include <QTimer>
+#include <memory>
 
 namespace sentinel::core {
 namespace {
 
-constexpr int pageSize = 40;
-constexpr int maxRepositories = 40;
-constexpr int maxArtifacts = 200;
+constexpr int pageSize = 100;
 constexpr int cacheMinutes = 15;
 
 bool validRepoId(const QString& id) {
@@ -212,6 +212,7 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
     if (repository.id.isEmpty())
         repository.id = object.value(QStringLiteral("modelId")).toString();
     if (!validRepoId(repository.id)) return {};
+    repository.metadata = object;
     repository.publisher = repository.id.section(QLatin1Char('/'), 0, 0);
     repository.displayName = repository.id.section(QLatin1Char('/'), 1);
     repository.revision = object.value(QStringLiteral("sha")).toString();
@@ -231,6 +232,8 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
         repository.license = object.value(QStringLiteral("license")).toString();
     repository.architecture = object.value(QStringLiteral("config")).toObject()
                                   .value(QStringLiteral("model_type")).toString();
+    if (repository.architecture.isEmpty()) repository.architecture = object.value("gguf").toObject().value("architecture").toString();
+    if (repository.architecture.isEmpty()) repository.architecture = object.value("config").toObject().value("architectures").toArray().isEmpty() ? QString{} : object.value("config").toObject().value("architectures").toArray().first().toString();
     for (const auto& tag : object.value(QStringLiteral("tags")).toArray())
         if (tag.isString() && repository.tags.size() < 80) repository.tags.append(tag.toString());
     const auto task = object.value(QStringLiteral("pipeline_tag")).toString();
@@ -245,7 +248,7 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
         }
     }
     for (const auto& sibling : object.value(QStringLiteral("siblings")).toArray()) {
-        if (!sibling.isObject() || repository.artifacts.size() >= maxArtifacts) break;
+        if (!sibling.isObject()) continue;
         const auto data = sibling.toObject();
         HuggingFaceArtifact artifact;
         artifact.repositoryId = repository.id;
@@ -255,7 +258,8 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
         artifact.blobId = data.value(QStringLiteral("blobId")).toString();
         artifact.etag = data.value(QStringLiteral("etag")).toString();
         const auto lfs = data.value(QStringLiteral("lfs")).toObject();
-        artifact.sha256 = lfs.value(QStringLiteral("oid")).toString();
+        artifact.sha256 = lfs.value(QStringLiteral("sha256")).toString();
+        if (artifact.sha256.isEmpty()) artifact.sha256 = lfs.value(QStringLiteral("oid")).toString();
         if (!QRegularExpression(QStringLiteral("^[a-fA-F0-9]{64}$"))
                  .match(artifact.sha256).hasMatch()) artifact.sha256.clear();
         const auto size = data.value(QStringLiteral("size")).toVariant().toLongLong();
@@ -267,7 +271,8 @@ HuggingFaceModelSource::parseRepository(const QJsonObject& object) const {
             artifact.shardGroup = shardGroup(artifact.filename);
         } else if (artifact.filename.endsWith(QStringLiteral(".safetensors"), Qt::CaseInsensitive)) {
             artifact.format = QStringLiteral("safetensors");
-        }
+        } else if (artifact.filename.endsWith(".bin")) artifact.format = "PyTorch";
+        else if (artifact.filename.endsWith(".onnx")) artifact.format = "ONNX";
         repository.artifacts.append(artifact);
     }
     return repository;
@@ -408,8 +413,18 @@ void HuggingFaceModelSource::searchCatalog(const QString& text, const QString& t
         fetchedAt_.secsTo(QDateTime::currentDateTimeUtc()) < cacheMinutes * 60 &&
         (state_ == HuggingFaceCatalogState::Current || state_ == HuggingFaceCatalogState::Empty)) {
         emit requestFinished(true);
+        if (autoFetch_ && hasMore()) QTimer::singleShot(0, this, &HuggingFaceModelSource::fetchMore);
         return;
     }
+    if (activeReply_) { auto* previous = activeReply_; activeReply_ = nullptr; previous->abort(); }
+    if (query != cachedQuery_) {
+        cachedModels_ = {};
+        fetchedAt_ = {};
+        cachedQuery_ = query;
+        nextPage_ = QUrl{};
+        emit catalogChanged();
+    }
+    visitedPages_.clear();
     QUrl url(QStringLiteral("https://huggingface.co/api/models"));
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("search"), text.trimmed());
@@ -422,6 +437,7 @@ void HuggingFaceModelSource::searchCatalog(const QString& text, const QString& t
     parameters.addQueryItem(QStringLiteral("limit"), QString::number(pageSize));
     parameters.addQueryItem(QStringLiteral("full"), QStringLiteral("true"));
     parameters.addQueryItem(QStringLiteral("blobs"), QStringLiteral("true"));
+    parameters.addQueryItem(QStringLiteral("cardData"), QStringLiteral("true"));
     url.setQuery(parameters);
     request(url, query, {});
 }
@@ -440,7 +456,7 @@ QUrl HuggingFaceModelSource::continuationUrl(const QString& links) {
 
 void HuggingFaceModelSource::fetchMore() {
     if (!fetching() && hasMore())
-        request(nextPage_, cachedQuery_, {});
+        request(nextPage_, cachedQuery_, {}, true);
 }
 
 void HuggingFaceModelSource::fetchRepository(const QString& repositoryId) {
@@ -458,8 +474,9 @@ void HuggingFaceModelSource::fetchRepository(const QString& repositoryId) {
 }
 
 void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
-                                     const QString& repositoryId) {
-    if (activeReply_) activeReply_->abort();
+                                     const QString& repositoryId, bool append) {
+    if (activeReply_) { auto* previous = activeReply_; activeReply_ = nullptr; previous->abort(); }
+    if (repositoryId.isEmpty()) visitedPages_.insert(url.toString());
     responseBuffer_.clear();
     responseTooLarge_ = false;
     const auto decision = NetworkPolicyService::instance().check(url);
@@ -487,7 +504,7 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
             reply->abort();
         }
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply, query, repositoryId]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, query, repositoryId, append]() {
         if (reply != activeReply_) { reply->deleteLater(); return; }
         activeReply_ = nullptr;
         const auto status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -531,10 +548,10 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
             return;
         }
         if (repositoryId.isEmpty()) {
-            QJsonArray next;
+            QJsonArray next = append ? cachedModels_ : QJsonArray{};
             QSet<QString> seen;
+            for (const auto& old : next) seen.insert(old.toObject().value("id").toString());
             for (const auto& value : document.array()) {
-                if (next.size() >= maxRepositories) break;
                 const auto id = value.isObject() ? parseRepository(value.toObject()).id : QString{};
                 if (!id.isEmpty() && !seen.contains(id)) {
                     next.append(value);
@@ -543,6 +560,7 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
             }
             cachedModels_ = next;
             nextPage_ = continuationUrl(links);
+            if (visitedPages_.contains(nextPage_.toString())) nextPage_ = QUrl{};
             cachedQuery_ = query;
             fetchedAt_ = QDateTime::currentDateTimeUtc();
         } else {
@@ -563,9 +581,14 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
                     break;
                 }
             }
-            if (!replaced && cachedModels_.size() < maxRepositories) cachedModels_.append(object);
-            else if (!replaced && !cachedModels_.isEmpty())
-                cachedModels_.replace(cachedModels_.size() - 1, object);
+            if (!replaced) cachedModels_.append(object);
+            const auto revision = object.value("sha").toString();
+            if (pinnedRevision(revision)) {
+                for (const auto& sibling : object.value("siblings").toArray()) {
+                    const auto name = sibling.toObject().value("rfilename").toString();
+                    if (name == "config.json" || name == "README.md") fetchSupplement(repositoryId, revision, name);
+                }
+            }
             if (!fetchedAt_.isValid()) fetchedAt_ = QDateTime::currentDateTimeUtc();
         }
         state_ = cachedModels_.isEmpty() ? HuggingFaceCatalogState::Empty
@@ -575,12 +598,52 @@ void HuggingFaceModelSource::request(const QUrl& url, const QString& query,
         saveCache();
         emit catalogChanged();
         emit requestFinished(true);
+        if (autoFetch_ && hasMore()) QTimer::singleShot(750, this, [this, query] {
+            if (autoFetch_ && query == cachedQuery_ && !fetching() && hasMore()) fetchMore();
+        });
+    });
+}
+
+void HuggingFaceModelSource::fetchSupplement(const QString& repositoryId, const QString& revision, const QString& filename) {
+    QUrl url("https://huggingface.co");
+    url.setPath(QString("/%1/resolve/%2/%3").arg(repositoryId, revision, filename));
+    if (NetworkPolicyService::instance().check(url) != NetworkDecision::Allowed) return;
+    QNetworkRequest request(url);
+    request.setTransferTimeout(12000);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::SameOriginRedirectPolicy);
+    if (!token().isEmpty()) request.setRawHeader("Authorization", "Bearer " + token().toUtf8());
+    auto* reply = network_->get(request);
+    reply->setReadBufferSize(512 * 1024);
+    auto bytes = std::make_shared<QByteArray>();
+    connect(reply, &QNetworkReply::readyRead, this, [reply, bytes] {
+        bytes->append(reply->readAll());
+        if (bytes->size() > 256 * 1024) reply->abort();
+    });
+    connect(reply, &QNetworkReply::finished, this, [this, reply, bytes, repositoryId, revision, filename] {
+        bytes->append(reply->readAll());
+        const bool success = reply->error() == QNetworkReply::NoError && bytes->size() <= 256 * 1024;
+        reply->deleteLater();
+        if (!success) return;
+        for (int i = 0; i < cachedModels_.size(); ++i) {
+            auto object = cachedModels_.at(i).toObject();
+            if (object.value("id").toString() != repositoryId || object.value("sha").toString() != revision) continue;
+            if (filename == "config.json") {
+                const auto config = QJsonDocument::fromJson(*bytes);
+                if (!config.isObject()) return;
+                auto merged = object.value("config").toObject();
+                const auto fields = config.object();
+                for (auto it = fields.begin(); it != fields.end(); ++it) merged[it.key()] = it.value();
+                object["config"] = merged;
+            } else object["modelCard"] = QString::fromUtf8(*bytes);
+            cachedModels_.replace(i, object);
+            saveCache(); emit catalogChanged(); return;
+        }
     });
 }
 
 void HuggingFaceModelSource::loadCache() {
     QFile file(cachePath_);
-    if (QFileInfo(file).size() > 8 * 1024 * 1024 || !file.open(QIODevice::ReadOnly)) return;
+    if (QFileInfo(file).size() > 64 * 1024 * 1024 || !file.open(QIODevice::ReadOnly)) return;
     const auto document = QJsonDocument::fromJson(file.readAll());
     if (!document.isObject()) return;
     const auto data = document.object();
@@ -589,7 +652,6 @@ void HuggingFaceModelSource::loadCache() {
     fetchedAt_ = QDateTime::fromString(data.value(QStringLiteral("fetchedAt")).toString(),
                                        Qt::ISODateWithMs);
     for (const auto& item : data.value(QStringLiteral("models")).toArray()) {
-        if (cachedModels_.size() >= maxRepositories) break;
         if (item.isObject() && !parseRepository(item.toObject()).id.isEmpty())
             cachedModels_.append(item);
     }
@@ -616,7 +678,7 @@ bool HuggingFaceModelSource::saveCache() const {
                         {QStringLiteral("fetchedAt"), fetchedAt_.toString(Qt::ISODateWithMs)},
                         {QStringLiteral("models"), cachedModels_}})
             .toJson(QJsonDocument::Compact);
-    if (file.write(payload) != payload.size()) return false;
+    if (payload.size() > 64 * 1024 * 1024 || file.write(payload) != payload.size()) return false;
     return file.commit();
 }
 
