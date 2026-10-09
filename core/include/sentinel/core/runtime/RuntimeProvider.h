@@ -97,9 +97,10 @@ public:
 
 class OpenAICompatibleLocalRuntimeProvider final : public LocalRuntimeProvider {
 public:
-    OpenAICompatibleLocalRuntimeProvider(QString providerId, QString displayName,
-                                         QString endpointSummary = QStringLiteral("Not configured"),
-                                         QString selectedModel = {});
+    OpenAICompatibleLocalRuntimeProvider(
+        QString providerId, QString displayName,
+        QString endpointSummary = QStringLiteral("Not configured"), QString selectedModel = {},
+        RuntimeReadinessState readiness = RuntimeReadinessState::Disabled);
 
     RuntimeProviderDescriptor descriptor() const override;
 
@@ -108,6 +109,7 @@ private:
     QString displayName_;
     QString endpointSummary_;
     QString selectedModel_;
+    RuntimeReadinessState readiness_;
 };
 
 class ClaudeRuntimeProvider final : public LocalRuntimeProvider {
