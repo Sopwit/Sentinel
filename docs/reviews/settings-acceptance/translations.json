@@ -1,0 +1,141 @@
+{
+  "sentinel_ar": {
+    "language": "ar_SA",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 12,
+    "missing": [],
+    "review": []
+  },
+  "sentinel_de": {
+    "language": "de_DE",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 32,
+    "missing": [],
+    "review": [
+      {
+        "context": "OnboardingScreen",
+        "source": "Choose and download a model.",
+        "translation": [
+          "Wählen Sie ein Modell aus und laden Sie es herunter."
+        ],
+        "issues": [
+          "expansion-review"
+        ]
+      }
+    ]
+  },
+  "sentinel_en": {
+    "language": "en_US",
+    "active_messages": 1216,
+    "finished": 572,
+    "finished_percent": 47.04,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 473,
+    "missing": [],
+    "review": []
+  },
+  "sentinel_es": {
+    "language": "es_ES",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 17,
+    "missing": [],
+    "review": [
+      {
+        "context": "ModelSettingsTab",
+        "source": "AI Settings & Runtimes",
+        "translation": [
+          "Configuración de IA y entornos de ejecución"
+        ],
+        "issues": [
+          "expansion-review"
+        ]
+      },
+      {
+        "context": "RuntimeDetailPopup",
+        "source": "GUI Model Browser",
+        "translation": [
+          "Explorador de modelos con interfaz gráfica"
+        ],
+        "issues": [
+          "expansion-review"
+        ]
+      }
+    ]
+  },
+  "sentinel_fr": {
+    "language": "fr_FR",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 29,
+    "missing": [],
+    "review": [
+      {
+        "context": "HeaderBar",
+        "source": "Toggle System Tray Companion Chat",
+        "translation": [
+          "Afficher ou masquer la discussion compagnon dans la zone de notification"
+        ],
+        "issues": [
+          "expansion-review"
+        ]
+      }
+    ]
+  },
+  "sentinel_ja": {
+    "language": "ja_JP",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 10,
+    "missing": [],
+    "review": []
+  },
+  "sentinel_tr": {
+    "language": "tr_TR",
+    "active_messages": 1216,
+    "finished": 618,
+    "finished_percent": 50.82,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 102,
+    "missing": [],
+    "review": []
+  },
+  "sentinel_zh": {
+    "language": "zh_CN",
+    "active_messages": 1216,
+    "finished": 478,
+    "finished_percent": 39.31,
+    "english_source_messages": 1216,
+    "missing_source_keys": 0,
+    "source_coverage_percent": 100.0,
+    "identical_to_source": 11,
+    "missing": [],
+    "review": []
+  }
+}

@@ -1,0 +1,2475 @@
+[
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Ask Before Checking",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Ask Before Checking",
+                "width": 114
+            }
+        ],
+        "language": "en",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Denetlemeden Önce Sor",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Denetlemeden Önce Sor",
+                "width": 114
+            }
+        ],
+        "language": "tr",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ar",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Vor Überprüfung fragen",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Vor Überprüfung fragen",
+                "width": 114
+            }
+        ],
+        "language": "de",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Preguntar antes de buscar",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Preguntar antes de buscar",
+                "width": 114
+            }
+        ],
+        "language": "es",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Historique des discussions",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Demander avant de vérifier",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Demander avant de vérifier",
+                "width": 114
+            }
+        ],
+        "language": "fr",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "確認前に問い合わせる",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "確認前に問い合わせる",
+                "width": 114
+            }
+        ],
+        "language": "ja",
+        "width": 560
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "AI",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Last Workspace Action",
+                "width": 112
+            },
+            {
+                "name": "",
+                "text": "Semantic Provider",
+                "width": 112
+            }
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Security",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "System",
+        "contentHeight": 735,
+        "contentWidth": 947,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 1320
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 688,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 780
+    },
+    {
+        "category": "Interface",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "Appearance",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "AI",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "llama.cpp server",
+                "width": 90
+            },
+            {
+                "name": "",
+                "text": "No model selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "https://api.openai.com/v1",
+                "width": 132
+            }
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "Voice",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            },
+            {
+                "name": "",
+                "text": "No device selected",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "Memory",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Manual Attachments Only",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "Security",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+            {
+                "name": "",
+                "text": "Example: summarize the selected workspace files",
+                "width": 268
+            },
+            {
+                "name": "",
+                "text": "DuckDuckGo (no API key)",
+                "width": 114
+            }
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "Notifications",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 560
+    },
+    {
+        "category": "System",
+        "contentHeight": 669,
+        "contentWidth": 468,
+        "elisionsForReview": [
+        ],
+        "language": "zh",
+        "width": 560
+    }
+]
