@@ -19,11 +19,21 @@ Window {
     height: Math.min(content.implicitHeight + 24, Screen.desktopAvailableHeight - 24, 540)
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: SentinelTheme.backgroundBase
+    readonly property bool detailPopupVisible: statusDetails.visible
+    function dismissDetails() { statusDetails.close() }
     function focusPrompt() { prompt.forceActiveFocus() }
     function toggleVisibility() { nativeDesktop.togglePanel() }
     function submit() {
+        if (!snapshot.ready || snapshot.busy || !prompt.text.trim()) return
         if ((agentMode ? controller.agent(prompt.text) : controller.ask(prompt.text))) prompt.clear()
     }
+    function errorSummary(code) {
+        if (code.indexOf("request-timeout") >= 0) return qsTr("The daemon did not reply in time. Check connection details before retrying.")
+        if (code.indexOf("provider-unavailable") >= 0) return qsTr("The selected provider is unavailable. Review Models & Providers.")
+        if (code.indexOf("model-unavailable") >= 0 || code.indexOf("ModelNotFound") >= 0) return qsTr("The selected model is unavailable. Choose an available model.")
+        return code
+    }
+    Shortcut { sequence: "Escape"; enabled: panel.visible && !statusDetails.visible; onActivated: panel.hide() }
     onVisibleChanged: viewModel.companionChatVisible = visible
 
     component IconAction: Button {
@@ -41,6 +51,26 @@ Window {
         contentItem: TablerGlyph { text: action.glyph; color: action.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted; font.pixelSize: 18; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
         background: Rectangle { radius: 9; color: action.selected || action.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"; border.width: action.activeFocus ? 2 : 0; border.color: SentinelTheme.accent }
     }
+    Popup {
+        id: statusDetails
+        objectName: "quickPanelStatusDetails"
+        parent: panel.contentItem
+        x: 12; y: 48
+        width: panel.width - 24
+        padding: 12
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onClosed: prompt.forceActiveFocus()
+        background: Rectangle { color: SentinelTheme.backgroundRaised; radius: 10; border.color: SentinelTheme.accentBorderSoft }
+        contentItem: ColumnLayout {
+            Label { text: qsTr("Connection") + ": " + panel.snapshot.connection; color: SentinelTheme.textPrimary; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label { text: qsTr("Runtime") + ": " + (panel.snapshot.state || qsTr("Unknown")); color: SentinelTheme.textPrimary; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label { text: panel.snapshot.model || qsTr("No model confirmed"); color: SentinelTheme.textMuted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label { visible: panel.controller.error.length > 0; text: panel.controller.error; color: SentinelTheme.error; wrapMode: Text.WrapAnywhere; Layout.fillWidth: true; Accessible.name: qsTr("Technical error details") }
+            SentinelButton { text: qsTr("Close"); onClicked: statusDetails.close() }
+        }
+    }
     Rectangle { anchors.fill: parent; color: "transparent"; border.color: SentinelTheme.accentBorderSoft; radius: 12 }
     ScrollView {
         id: scroll
@@ -55,13 +85,18 @@ Window {
             RowLayout {
                 Layout.fillWidth: true
                 Label { text: "Sentinel"; color: SentinelTheme.textPrimary; font.pixelSize: 17; font.bold: true }
-                Rectangle {
-                    width: 7; height: 7; radius: 4
-                    color: !panel.snapshot.ready ? SentinelTheme.error : panel.snapshot.busy ? SentinelTheme.warning : "#22c55e"
-                    Accessible.name: panel.snapshot.connection
-                    HoverHandler { id: statusHover }
-                    ToolTip.visible: statusHover.hovered
-                    ToolTip.text: panel.snapshot.connection + " · " + (panel.snapshot.state || "Idle")
+                IconAction {
+                    objectName: "quickPanelStatus"
+                    glyph: "circle"
+                    hint: qsTr("Connection details") + ": " + panel.snapshot.connection
+                    onClicked: statusDetails.open()
+                }
+                Label {
+                    text: panel.snapshot.connection || qsTr("Disconnected")
+                    color: !panel.snapshot.ready ? SentinelTheme.warning : SentinelTheme.textMuted
+                    font.pixelSize: 11
+                    Layout.maximumWidth: 110
+                    elide: Text.ElideRight
                 }
                 Item { Layout.fillWidth: true }
                 IconAction { glyph: "arrow-up-right"; hint: qsTr("Continue in Sentinel"); enabled: panel.snapshot.ready; onClicked: { panel.controller.continueConversation(); panel.hide() } }
@@ -72,7 +107,7 @@ Window {
                 id: prompt
                 objectName: "quickPanelPrompt"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 86
+                Layout.preferredHeight: Math.min(140, Math.max(70, contentHeight + 24))
                 placeholderText: qsTr("Ask Sentinel…")
                 enabled: panel.snapshot.ready && !panel.snapshot.busy
                 selectByMouse: true
@@ -143,16 +178,17 @@ Window {
                 visible: panel.snapshot.approvalCount > 0
                 Label { Layout.fillWidth: true; text: (panel.snapshot.approval.tool || qsTr("Requested action")) + " · " + ([qsTr("Low risk"), qsTr("Medium risk"), qsTr("High risk")][panel.snapshot.approval.risk] || qsTr("Unknown risk")) + "\n" + (panel.snapshot.approval.resources || []).map(function(item) { return item.resource || "" }).join(", ") + "\n" + (panel.snapshot.approval.detail || qsTr("Review in Sentinel")); color: SentinelTheme.textPrimary; wrapMode: Text.Wrap; maximumLineCount: 4; elide: Text.ElideRight }
                 RowLayout {
-                    Button { text: qsTr("Allow Once"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(true) }
-                    Button { text: qsTr("Deny"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(false) }
+                    SentinelButton { text: qsTr("Allow Once"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(true) }
+                    SentinelButton { text: qsTr("Deny"); enabled: panel.snapshot.ready && !panel.snapshot.approvalPending; onClicked: panel.controller.approve(false) }
                     IconAction { glyph: "arrow-up-right"; hint: qsTr("Review in Sentinel"); onClicked: { panel.controller.openApproval(); panel.hide() } }
                 }
             }
-            Label { objectName: "quickPanelError"; Layout.fillWidth: true; visible: panel.controller.error.length > 0; text: panel.controller.error; color: SentinelTheme.error; wrapMode: Text.Wrap }
+            Label { objectName: "quickPanelError"; Layout.fillWidth: true; visible: panel.controller.error.length > 0; text: panel.errorSummary(panel.controller.error); color: SentinelTheme.error; wrapMode: Text.Wrap }
             TextArea {
                 objectName: "quickPanelPreview"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 110
+                Layout.preferredHeight: Math.min(140, Math.max(64, contentHeight + 20))
+                selectByMouse: true
                 readOnly: true
                 visible: panel.snapshot.preview.length > 0
                 text: panel.snapshot.preview

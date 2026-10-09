@@ -4,6 +4,7 @@ import Sentinel.Desktop
 
 Item {
     id: dashboardPage
+    signal voiceSettingsRequested()
     required property var viewModel
     function focusComposer() { homeChatSurface.focusComposer() }
     function restoreDraft(text) { homeChatSurface.restoreDraft(text) }
@@ -11,5 +12,6 @@ Item {
         id: homeChatSurface
         anchors.fill: parent
         viewModel: dashboardPage.viewModel
+        onVoiceSettingsRequested: dashboardPage.voiceSettingsRequested()
     }
 }

@@ -272,7 +272,7 @@ Item {
                 color: SentinelTheme.textMuted
                 wrapMode: Text.Wrap
             }
-            ComboBox {
+            SentinelComboBox {
                 visible: root.generalOnly
                 model: ["Ctrl+Alt+Space", "Ctrl+Alt+S", "Disabled"]
                 currentIndex: (nativeDesktop.shortcut === "" || nativeDesktop.shortcut === "Disabled") ? 2 : (nativeDesktop.shortcut === "Ctrl+Alt+S" ? 1 : 0)
@@ -359,7 +359,7 @@ Item {
                 title: qsTr("Notification history")
                 subtitle: qsTr("Review alerts, mark them read, or clear archived items.")
                 compact: root.compact
-                SentinelButton { anchors.fill: parent; text: qsTr("Open history"); onClicked: root.viewModel.notificationCenterVisible = true }
+                SentinelButton { anchors.fill: parent; objectName: "notificationHistoryButton"; text: qsTr("Open history"); Accessible.name: text; onClicked: root.viewModel.notificationCenterVisible = true }
             }
             Flow {
                 Layout.fillWidth: true

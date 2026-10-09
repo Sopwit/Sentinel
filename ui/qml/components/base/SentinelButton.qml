@@ -38,18 +38,14 @@ Button {
             anchors.centerIn: parent
             spacing: control.iconName && control.text ? 6 : 0
 
-            Image {
+            SentinelIcon {
                 visible: !!control.iconName
                 width: visible ? 18 : 0
                 height: 18
                 source: control.iconName ? "qrc:/icons/tabler/" + control.iconName + ".svg" : ""
-                sourceSize.width: 18
-                sourceSize.height: 18
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    colorization: 1.0
-                    colorizationColor: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                }
+                name: control.iconName
+                iconSize: 18
+                tint: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
             }
 
             Text {

@@ -42,6 +42,7 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 text: root.title
+                wrapMode: Text.WordWrap
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontBody
                 font.weight: Font.DemiBold

@@ -80,8 +80,8 @@ Item {
         spacing: 0
         Rectangle {
             objectName: "settingsCategorySidebar"
-            visible: settingsPage.sidebarExpanded && settingsPage.width >= 760
-            Layout.preferredWidth: settingsPage.width < 1050 ? 220 : 280
+            visible: settingsPage.sidebarExpanded && !settingsPage.compact
+            Layout.preferredWidth: settingsPage.width < 1050 ? 256 : 280
             Layout.fillHeight: true
             color: SentinelTheme.backgroundRaised
             ColumnLayout {
@@ -119,11 +119,13 @@ Item {
                         id: navItem
                         required property var modelData
                         width: sidebarList.width
-                        height: 44
+                        height: Math.max(44, contentItem.implicitHeight + 16)
                         hoverEnabled: true
                         focusPolicy: Qt.StrongFocus
                         Accessible.name: modelData.title
                         readonly property bool active: settingsPage.activeCategory === modelData.key
+                        ToolTip.visible: hovered || activeFocus
+                        ToolTip.text: modelData.title
                         onClicked: settingsPage.jumpTo(modelData.key)
                         contentItem: RowLayout {
                             spacing: 12
@@ -134,7 +136,7 @@ Item {
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
                                 font.bold: navItem.active
-                                elide: Text.ElideRight
+                                wrapMode: Text.WordWrap
                             }
                         }
                         background: Rectangle {
@@ -147,13 +149,13 @@ Item {
                 }
             }
         }
-        Rectangle { visible: settingsPage.sidebarExpanded && settingsPage.width >= 760; Layout.preferredWidth: 1; Layout.fillHeight: true; color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12) }
+        Rectangle { visible: settingsPage.sidebarExpanded && !settingsPage.compact; Layout.preferredWidth: 1; Layout.fillHeight: true; color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12) }
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
             SentinelComboBox {
-                visible: !settingsPage.sidebarExpanded || settingsPage.width < 760
+                visible: !settingsPage.sidebarExpanded || settingsPage.compact
                 Layout.fillWidth: true
                 Layout.margins: SentinelTheme.spaceMd
                 model: settingsPage.sidebarItems

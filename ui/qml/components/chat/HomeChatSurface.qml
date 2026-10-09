@@ -13,6 +13,7 @@ import Sentinel.Desktop
 
 ShellPanel {
     id: homeChat
+    signal voiceSettingsRequested()
     required property var viewModel
     property bool compact: width < 760
     readonly property bool inChatMode: (viewModel.conversationHistoryMessageCount > 0)
@@ -1580,7 +1581,7 @@ if (homeChat.compact)
                         focusPolicy: Qt.StrongFocus
                         Accessible.name: homeChat.viewModel.voiceRecordingActive ? qsTr("Stop recording") : qsTr("Voice input")
                         ToolTip.visible: hovered || activeFocus
-                        ToolTip.text: homeChat.viewModel.voiceInputStatus.length > 0 ? homeChat.viewModel.voiceInputStatus : Accessible.name
+                        ToolTip.text: homeChat.viewModel.voiceInputStatus.length > 0 ? homeChat.viewModel.voiceInputMessage : Accessible.name
                         enabled: !homeChat.sendBusy
                         onClicked: homeChat.viewModel.voiceRecordingActive ? homeChat.viewModel.stopVoiceCapture() : homeChat.viewModel.startVoiceCapture()
                         contentItem: TablerGlyph {
@@ -1649,10 +1650,17 @@ if (homeChat.compact)
                         }
                     }
                 }
+                SentinelButton {
+                    objectName: "chatVoiceSetupButton"
+                    visible: homeChat.viewModel.voiceInputStatus.length > 0
+                    text: qsTr("Voice & Audio settings")
+                    Accessible.name: text
+                    onClicked: homeChat.voiceSettingsRequested()
+                }
                 Label {
                     Layout.fillWidth: true
                     visible: homeChat.viewModel.voiceInputStatus.length > 0 || homeChat.viewModel.attachmentError.length > 0
-                    text: homeChat.viewModel.attachmentError || homeChat.viewModel.voiceInputStatus
+                    text: homeChat.viewModel.attachmentError || homeChat.viewModel.voiceInputMessage
                     color: SentinelTheme.textMuted
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap

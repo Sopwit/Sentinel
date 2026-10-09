@@ -94,8 +94,9 @@ ApplicationWindow {
         root.viewModel.currentPage = pageName
     }
 
-    function openSettings() {
+    function openSettings(category) {
         root.currentShellPage = "Settings"
+        settingsPage.jumpTo(category || "Interface")
     }
 
     function openUpdateModal() {
@@ -174,6 +175,7 @@ ApplicationWindow {
 
                     DashboardPage {
                         id: dashboardPage
+                        onVoiceSettingsRequested: root.openSettings("Voice")
                         viewModel: root.viewModel
                         anchors.fill: parent
                         visible: root.currentShellPage === "Dashboard"
@@ -247,6 +249,7 @@ ApplicationWindow {
         currentPage: root.currentShellPage
         connectionStatus: root.viewModel.daemonConnectionStatus
         connected: root.viewModel.daemonConnected
+        runtimeStatus: root.viewModel.activeRuntimeProviderLabel + " / " + root.viewModel.activeRuntimeReadinessSummary
         onPageRequested: function(pageName) { root.navigateToPage(pageName) }
     }
 
@@ -263,9 +266,15 @@ ApplicationWindow {
     CommandPalette {
         id: commandPalette
         viewModel: root.viewModel
-        onOpenSettingsRequested: root.openSettings()
+        onOpenSettingsRequested: function(category) { root.openSettings(category) }
         onOpenUpdateRequested: root.openUpdateModal()
         onFocusChatRequested: root.focusChatComposer()
+    }
+
+    NotificationCenterPanel {
+        fallbackFocusItem: navigationRail.settingsFocusItem
+        viewModel: root.viewModel
+        onOpenSettingsRequested: root.openSettings("Notifications")
     }
 
     TrayCompanionWindow {
@@ -276,6 +285,7 @@ ApplicationWindow {
 
     OnboardingScreen {
         id: onboardingScreen
+        onConfigureModelsRequested: root.openSettings("AI")
         viewModel: root.viewModel
         anchors.fill: parent
         onFinished: {
@@ -508,7 +518,9 @@ ApplicationWindow {
     Shortcut {
         sequence: "Esc"
         onActivated: {
-            if (commandPalette.opened)
+            if (root.viewModel.notificationCenterVisible)
+                root.viewModel.notificationCenterVisible = false
+            else if (commandPalette.opened)
                 commandPalette.close()
             else if (root.currentShellPage === "Settings")
                 root.currentShellPage = "Dashboard"

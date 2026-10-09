@@ -7,6 +7,20 @@ pragma Singleton
 import QtQuick
 
 QtObject {
+    function localizedThemeName(key) {
+        const names = {
+            "Liquid Glass Light": qsTranslate("AppearanceSettingsTab", "Daylight"), "Liquid Glass Dark": qsTranslate("AppearanceSettingsTab", "Obsidian"),
+            "Sentinel Classic": qsTranslate("AppearanceSettingsTab", "Slate"), "Midnight Blue": qsTranslate("AppearanceSettingsTab", "Deep Ocean"),
+            "Aurora Teal": qsTranslate("AppearanceSettingsTab", "Evergreen"), "Graphite Grey": qsTranslate("AppearanceSettingsTab", "Carbon"),
+            "Solarized Light": qsTranslate("AppearanceSettingsTab", "Honey"), "Nord Frost": qsTranslate("AppearanceSettingsTab", "Polar Night"),
+            "Dracula": qsTranslate("AppearanceSettingsTab", "Velvet"), "Tokyo Night": qsTranslate("AppearanceSettingsTab", "Indigo"),
+            "Paper": qsTranslate("AppearanceSettingsTab", "Porcelain"), "Linen": qsTranslate("AppearanceSettingsTab", "Sandstone"),
+            "Sage Light": qsTranslate("AppearanceSettingsTab", "Meadow"), "Sky Light": qsTranslate("AppearanceSettingsTab", "Blue Mist")
+        }
+        return names[key] || key || ""
+    }
+
+
     property string activeTheme: "Liquid Glass Light"
     property bool reducedMotion: false
     property bool highContrast: false
