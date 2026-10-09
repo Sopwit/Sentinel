@@ -84,6 +84,25 @@ HuggingFaceModelSource::HuggingFaceModelSource(QString cachePath, QObject* paren
     loadCache();
 }
 
+HuggingFaceModelSource::Snapshot HuggingFaceModelSource::snapshot() const {
+    return {cachedModels_, storageRoot_, knownStorageRoots_, catalogState(), catalogDetail()};
+}
+HuggingFaceModelSource::HuggingFaceModelSource(const Snapshot& snapshot)
+    : storageRoot_(snapshot.storageRoot), knownStorageRoots_(snapshot.knownStorageRoots),
+      cachedModels_(snapshot.models), state_(snapshot.state), detail_(snapshot.detail) {}
+void HuggingFaceModelSource::visitSnapshot(const Snapshot& snapshot,
+    const std::function<void(const HuggingFaceRepository&, const QList<ModelLibraryEntry>&)>& visitor,
+    const std::function<bool()>& cancelled) {
+    // This instance owns only immutable metadata and filesystem lookup configuration.
+    // It creates no network objects and never touches the live source on another thread.
+    HuggingFaceModelSource source(snapshot);
+    for (const auto& value : snapshot.models) {
+        if (cancelled && cancelled()) break;
+        const auto repository = source.parseRepository(value.toObject());
+        if (!repository.id.isEmpty()) visitor(repository, source.entriesFor(repository));
+    }
+}
+
 QString HuggingFaceModelSource::sourceId() const { return QStringLiteral("hugging-face"); }
 QString HuggingFaceModelSource::providerId() const { return {}; }
 HuggingFaceCatalogState HuggingFaceModelSource::catalogState() const {

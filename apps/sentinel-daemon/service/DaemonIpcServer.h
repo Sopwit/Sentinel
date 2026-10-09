@@ -55,6 +55,9 @@ private:
         QByteArray input;
         bool hello = false;
         QSet<QString> sessions;
+        // Freeze each catalogue while its bounded pages are being transferred.
+        QHash<QString, QJsonObject> modelSnapshots;
+        QHash<QString, QJsonArray> completedModelRows;
     };
     void handleNewConnection();
     void handleRequest(const QJsonObject& message, QLocalSocket* socket);

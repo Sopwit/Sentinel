@@ -22,11 +22,20 @@ Item {
     property bool sidebarCollapsed: false
     property string searchQuery: ""
 
-    readonly property var installedOllamaNames: JSON.parse(JSON.stringify(shellViewModel.installedOllamaModelNames || []))
-    readonly property var loadedStudioNames: JSON.parse(JSON.stringify(shellViewModel.loadedLMStudioModelNames || []))
+    readonly property string installedOllamaNamesJson: JSON.stringify(shellViewModel.installedOllamaModelNames || [])
+    readonly property var installedOllamaNames: JSON.parse(installedOllamaNamesJson)
+    readonly property string loadedStudioNamesJson: JSON.stringify(shellViewModel.loadedLMStudioModelNames || [])
+    readonly property var loadedStudioNames: JSON.parse(loadedStudioNamesJson)
 
     // ── Static model catalog ─────────────────────────────────────────────────
-    readonly property var modelCatalog: ggufLibraryFetcher.catalog || []
+    readonly property string modelCatalogJson: JSON.stringify(ggufLibraryFetcher.catalog || [])
+    readonly property var modelCatalog: JSON.parse(modelCatalogJson)
+    readonly property var huggingFaceModels: ggufLibraryFetcher.modelsJson !== undefined
+        ? JSON.parse(ggufLibraryFetcher.modelsJson) : JSON.parse(JSON.stringify(ggufLibraryFetcher.models || []))
+    readonly property var ollamaModels: ollamaLibraryFetcher.modelsJson !== undefined
+        ? JSON.parse(ollamaLibraryFetcher.modelsJson) : JSON.parse(JSON.stringify(ollamaLibraryFetcher.models || []))
+    readonly property var studioModels: lmStudioLibraryFetcher.modelsJson !== undefined
+        ? JSON.parse(lmStudioLibraryFetcher.modelsJson) : JSON.parse(JSON.stringify(lmStudioLibraryFetcher.models || []))
 
     FileDialog {
         id: ggufImportDialog
@@ -69,9 +78,9 @@ Item {
         return Catalog.matchesCategory(model, category)
     }
     readonly property var allModels: {
-        var liveModels = ollamaLibraryFetcher.models || []
-        var lmModels = lmStudioLibraryFetcher.models || []
-        var ggufModels = ggufLibraryFetcher.models || []
+        var liveModels = ollamaModels
+        var lmModels = studioModels
+        var ggufModels = huggingFaceModels
         var list = []
         var seenOllamaIds = {}
         var seenIds = {}
@@ -247,8 +256,10 @@ Item {
         ollamaLibraryFetcher.fetch(ollamaSort)
     }
 
+    readonly property bool waitingForModels: daemonClient.daemonReachable && ggufLibraryFetcher.fetching
+        && huggingFaceModels.length === 0 && activeCategory !== "Runtime"
     readonly property var filteredModels: {
-        if (discoveryPending || (daemonClient.daemonReachable && ggufLibraryFetcher.fetching && ggufLibraryFetcher.models.length === 0 && activeCategory !== "Runtime")) return []
+        if (discoveryPending || waitingForModels) return []
         var baseList = []
         if (activeCategory === "All" || categories.indexOf(activeCategory) === -1) {
             baseList = allModels

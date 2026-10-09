@@ -15,6 +15,8 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QLocale>
+#include <QFutureWatcher>
+#include <QtConcurrentRun>
 static void initModelCatalog() {
     Q_INIT_RESOURCE(model_catalog);
 }
@@ -30,6 +32,10 @@ DaemonModelHelpers::DaemonModelHelpers(core::ApplicationController* controller, 
     refreshTimer_.setInterval(15 * 60 * 1000);
     connect(&refreshTimer_, &QTimer::timeout, this, [this] { refreshCatalog(true); });
     refreshTimer_.start();
+}
+
+DaemonModelHelpers::~DaemonModelHelpers() {
+    if (modelRowsCancelled_) modelRowsCancelled_->store(true);
 }
 
 void DaemonModelHelpers::refreshCatalog(bool force) {
@@ -51,22 +57,96 @@ void DaemonModelHelpers::refreshCatalog(bool force) {
 
 QJsonObject DaemonModelHelpers::state(const QString& component) const {
     if (component == "ggufLibraryFetcher" && controller_) {
+        QJsonArray models = modelRows_;
+        if (!modelRowsBuilding_ && (!modelRowsAge_.isValid() || modelRowsAge_.elapsed() >= 10000))
+            const_cast<DaemonModelHelpers*>(this)->rebuildModelRows();
+        const auto record = controller_->modelOperations()->operation(activeOperation_);
+        const auto pending = record.state == core::ModelOperationState::Queued ||
+                             record.state == core::ModelOperationState::Running;
+        const auto* source = controller_->modelOperations()->huggingFaceSource();
+        const bool sourceFailed = !source->fetching() &&
+            source->catalogState() != core::HuggingFaceCatalogState::Current &&
+            source->catalogState() != core::HuggingFaceCatalogState::Empty;
+        return {{"models", models},
+                {"installedCount", installedCount_},
+                {"runtimeInstalled", !runtimeBinary().isEmpty()},
+                {"setupStatus", setupStatus_}, {"setupBusy", setupBusy_},
+                {"catalog", catalog_},
+                {"hasMore", source->hasMore()},
+                {"hasPrevious", false},
+                {"query", queryKey_},
+                {"catalogStatus", source->catalogDetail()},
+                {"fetching", modelRowsBuilding_ || controller_->modelOperations()->huggingFaceSource()->fetching()},
+                {"pulling", !activeOperation_.isEmpty() && pending},
+                {"activeModel", record.libraryId},
+                {"progress", record.progress.value_or(0)},
+                {"statusText", activeOperation_.isEmpty()
+                                   ? controller_->property("localLlamaRuntimeStatus").toString()
+                                   : record.statusText},
+                {"errorText", record.state == core::ModelOperationState::Failed ? record.statusText
+                                                                                : sourceFailed ? source->catalogDetail() : QString{}}};
+    }
+    if (component == "ollamaPuller")
+        return {{"pulling", puller.pulling()},
+                {"activeModel", puller.activeModel()},
+                {"progress", puller.progress()},
+                {"statusText", puller.statusText()},
+                {"errorText", puller.errorText()}};
+    if (component == "ollamaLibraryFetcher")
+        return {{"fetching", library.fetching()},
+                {"models", QJsonArray::fromVariantList(library.models())},
+                {"catalogStatus",
+                 QString("Ollama last fetched: %1")
+                     .arg(library.fetchedAt().isEmpty() ? "not yet fetched" : library.fetchedAt())},
+                {"errorText", library.errorText()}};
+    if (component == "ollamaModelDetailFetcher")
+        return {{"fetching", detail.fetching()},
+                {"readme", detail.readme()},
+                {"tags", QJsonArray::fromVariantList(detail.tags())},
+                {"installCmd", detail.installCmd()},
+                {"errorText", detail.errorText()}};
+    if (component == "lmStudioLibraryFetcher")
+        return {{"fetching", lmStudio.fetching()},
+                {"models", QJsonArray::fromVariantList(lmStudio.models())},
+                {"catalogStatus", QString("LM Studio last fetched: %1")
+                                      .arg(lmStudio.fetchedAt().isEmpty() ? "not yet fetched"
+                                                                          : lmStudio.fetchedAt())},
+                {"errorText", lmStudio.errorText()}};
+    return {};
+}
+void DaemonModelHelpers::rebuildModelRows() {
+    const auto* source = controller_->modelOperations()->huggingFaceSource();
+    const auto snapshot = source->snapshot();
+    const auto localEntries = controller_->modelLibrary()->entries(source);
+    const auto loadedStudio = controller_->loadedLMStudioModelNames();
+    const auto generation = modelRowsGeneration_;
+    const bool ggufOnly = ggufOnly_;
+    modelRowsBuilding_ = true;
+    modelRowsCancelled_ = std::make_shared<std::atomic_bool>(false);
+    const auto cancelled = modelRowsCancelled_;
+    auto* watcher = new QFutureWatcher<QPair<QJsonArray, int>>(this);
+    connect(watcher, &QFutureWatcher<QPair<QJsonArray, int>>::finished, this, [this, watcher, generation] {
+        modelRowsBuilding_ = false;
+        if (generation == modelRowsGeneration_) {
+            const auto result = watcher->result();
+            modelRows_ = result.first;
+            installedCount_ = result.second;
+            modelRowsAge_.start();
+        }
+        watcher->deleteLater();
+    });
+    watcher->setFuture(QtConcurrent::run([snapshot, localEntries, loadedStudio, ggufOnly, cancelled] {
         QJsonArray models;
-        QHash<QString, core::HuggingFaceRepository> repositories;
-        for (const auto& repository :
-             controller_->modelOperations()->huggingFaceSource()->repositories())
-            repositories.insert(repository.id, repository);
-
         QSet<QString> represented;
-        for (const auto& entry : controller_->modelLibrary()->entries()) {
+        QSet<QString> installed;
+        auto append = [&](const core::ModelLibraryEntry& entry, const core::HuggingFaceRepository& repository) {
             const bool gguf = entry.format == "GGUF";
-            if (ggufOnly_ && !gguf)
-                continue;
+            if (ggufOnly && !gguf)
+                return;
             const bool artifact = gguf || entry.format == "safetensors" || entry.artifactFilename.endsWith(".bin") || entry.artifactFilename.endsWith(".onnx");
-            if (entry.source.id != "hugging-face" && !gguf) continue;
-            if (!artifact && (entry.repositoryId.isEmpty() || represented.contains(entry.repositoryId))) continue;
+            if (entry.source.id != "hugging-face" && !gguf) return;
+            if (!artifact && (entry.repositoryId.isEmpty() || represented.contains(entry.repositoryId))) return;
             represented.insert(entry.repositoryId);
-            const auto repository = repositories.value(entry.repositoryId);
             const auto category = core::modelCategory(entry.repositoryId + " " + entry.displayName,
                                                       entry.tags, repository.pipelineTask);
             const bool chatCompatible = category == "LLM" &&
@@ -131,70 +211,35 @@ QJsonObject DaemonModelHelpers::state(const QString& component) const {
                  gguf ? entry.source.url : "https://huggingface.co/" + entry.repositoryId},
                 {"localFile", entry.localFile},
                 {"nativeModelId", entry.nativeModelId}});
-        }
-        QSet<QString> installed;
-        for (const auto& entry : controller_->modelLibrary()->entries()) {
+        };
+
+        auto consume = [&](core::ModelLibraryEntry entry, const core::HuggingFaceRepository& repository) {
+            if (entry.id.isEmpty()) entry.id = core::ModelLibraryService::entryId(
+                entry.provider.id, entry.runtime.id, entry.source.id, entry.artifactId);
+            append(entry, repository);
             if (entry.installed == core::ModelLibraryInstalledState::Installed || !entry.localFile.isEmpty())
-                installed.insert(!entry.localFile.isEmpty() ? QFileInfo(entry.localFile).canonicalFilePath() : entry.provider.id + ":" + entry.nativeModelId);
-        }
-        for (const auto& name : controller_->loadedLMStudioModelNames()) installed.insert("lm-studio:" + name);
-        const auto record = controller_->modelOperations()->operation(activeOperation_);
-        const auto pending = record.state == core::ModelOperationState::Queued ||
-                             record.state == core::ModelOperationState::Running;
-        const auto* source = controller_->modelOperations()->huggingFaceSource();
-        const bool sourceFailed = !source->fetching() &&
-            source->catalogState() != core::HuggingFaceCatalogState::Current &&
-            source->catalogState() != core::HuggingFaceCatalogState::Empty;
-        return {{"models", models},
-                {"installedCount", installed.size()},
-                {"runtimeInstalled", !runtimeBinary().isEmpty()},
-                {"setupStatus", setupStatus_}, {"setupBusy", setupBusy_},
-                {"catalog", catalog_},
-                {"hasMore", source->hasMore()},
-                {"hasPrevious", false},
-                {"query", queryKey_},
-                {"catalogStatus", source->catalogDetail()},
-                {"fetching", controller_->modelOperations()->huggingFaceSource()->fetching()},
-                {"pulling", !activeOperation_.isEmpty() && pending},
-                {"activeModel", record.libraryId},
-                {"progress", record.progress.value_or(0)},
-                {"statusText", activeOperation_.isEmpty()
-                                   ? controller_->property("localLlamaRuntimeStatus").toString()
-                                   : record.statusText},
-                {"errorText", record.state == core::ModelOperationState::Failed ? record.statusText
-                                                                                : sourceFailed ? source->catalogDetail() : QString{}}};
-    }
-    if (component == "ollamaPuller")
-        return {{"pulling", puller.pulling()},
-                {"activeModel", puller.activeModel()},
-                {"progress", puller.progress()},
-                {"statusText", puller.statusText()},
-                {"errorText", puller.errorText()}};
-    if (component == "ollamaLibraryFetcher")
-        return {{"fetching", library.fetching()},
-                {"models", QJsonArray::fromVariantList(library.models())},
-                {"catalogStatus",
-                 QString("Ollama last fetched: %1")
-                     .arg(library.fetchedAt().isEmpty() ? "not yet fetched" : library.fetchedAt())},
-                {"errorText", library.errorText()}};
-    if (component == "ollamaModelDetailFetcher")
-        return {{"fetching", detail.fetching()},
-                {"readme", detail.readme()},
-                {"tags", QJsonArray::fromVariantList(detail.tags())},
-                {"installCmd", detail.installCmd()},
-                {"errorText", detail.errorText()}};
-    if (component == "lmStudioLibraryFetcher")
-        return {{"fetching", lmStudio.fetching()},
-                {"models", QJsonArray::fromVariantList(lmStudio.models())},
-                {"catalogStatus", QString("LM Studio last fetched: %1")
-                                      .arg(lmStudio.fetchedAt().isEmpty() ? "not yet fetched"
-                                                                          : lmStudio.fetchedAt())},
-                {"errorText", lmStudio.errorText()}};
-    return {};
+                installed.insert(!entry.localFile.isEmpty() ? QFileInfo(entry.localFile).canonicalFilePath()
+                    : entry.provider.id + ":" + entry.nativeModelId);
+        };
+        for (const auto& entry : localEntries) consume(entry, {});
+        core::HuggingFaceModelSource::visitSnapshot(snapshot,
+            [&](const core::HuggingFaceRepository& repository, const QList<core::ModelLibraryEntry>& entries) {
+                for (const auto& entry : entries) {
+                    if (cancelled->load()) break;
+                    consume(entry, repository);
+                }
+            }, [cancelled] { return cancelled->load(); });
+        for (const auto& name : loadedStudio) installed.insert("lm-studio:" + name);
+        return qMakePair(models, static_cast<int>(installed.size()));
+    }));
 }
+
 bool DaemonModelHelpers::action(const QString& component, const QString& action,
                                 const QString& value, const QString& endpoint) {
     if (component == "ggufLibraryFetcher" && controller_) {
+        modelRowsAge_.invalidate();
+        ++modelRowsGeneration_;
+        if (modelRowsCancelled_) modelRowsCancelled_->store(true);
         auto* operations = controller_->modelOperations();
         if (action == "setupRuntime") return setupRuntime();
         if (action == "cancelSetup") {
@@ -204,6 +249,7 @@ bool DaemonModelHelpers::action(const QString& component, const QString& action,
             return true;
         }
         if (action == "fetch" || action == "refresh") {
+            if (queryKey_ != value) modelRows_ = {};
             queryKey_ = value;
             const auto query = QJsonDocument::fromJson(value.toUtf8()).object();
             searchText_ = query.isEmpty() ? (value.isEmpty() ? "GGUF" : value)

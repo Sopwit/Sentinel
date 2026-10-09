@@ -88,7 +88,7 @@ DesktopSettings {},
 #[serde(rename = "desktop.setting")]
 DesktopSetting {key: String, value: String},
 #[serde(rename = "model.helper_state")]
-ModelHelperState {component: String, #[serde(default)] offset: Option<u64>},
+ModelHelperState {component: String, #[serde(default)] offset: Option<u64>, #[serde(default)] retain_models: Option<bool>},
 #[serde(rename = "model.helper_action")]
 ModelHelperAction {component: String, action: String, value: String},
 #[serde(rename = "desktop.settings_service")]

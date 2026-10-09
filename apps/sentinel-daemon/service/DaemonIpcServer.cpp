@@ -733,6 +733,12 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     }
     if (name == "model.helper_state" || name == "model.helper_action") {
         const auto component = payload.value("component").toString();
+        const QStringList components{"ggufLibraryFetcher", "ollamaPuller", "ollamaLibraryFetcher",
+                                     "ollamaModelDetailFetcher", "lmStudioLibraryFetcher"};
+        if (!components.contains(component)) {
+            error(socket, id, "unknown-model-component");
+            return;
+        }
         if (!m_modelHelpers) {
             m_modelHelpers = std::make_unique<DaemonModelHelpers>(m_controller);
             connect(&m_modelHelpers->puller, &OllamaModelPuller::pullFinished, this,
@@ -748,16 +754,29 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
                         }
                     });
         }
-        const auto state = m_modelHelpers->state(component);
-        if (state.isEmpty()) {
-            error(socket, id, "unknown-model-component");
+        const int offset = payload.value("offset").toInt(0);
+        auto& snapshots = m_clients[socket].modelSnapshots;
+        const bool continuation = name == "model.helper_state" && offset > 0;
+        if (continuation && !snapshots.contains(component)) {
+            error(socket, id, "invalid-model-offset");
             return;
         }
         if (name == "model.helper_state") {
+            const auto state = continuation ? snapshots.value(component) : m_modelHelpers->state(component);
             auto properties = state;
             const auto models = state.value("models").toArray();
-            const int offset = payload.value("offset").toInt(0);
             if (offset < 0 || offset > models.size()) { error(socket, id, "invalid-model-offset"); return; }
+            auto& completed = m_clients[socket].completedModelRows;
+            if (offset == 0 && payload.value("retain_models").toBool() && completed.contains(component)
+                && completed.value(component) == models) {
+                properties["models"] = QJsonArray{};
+                properties["modelsUnchanged"] = true;
+                properties["modelOffset"] = 0;
+                properties["nextOffset"] = -1;
+                properties["totalModels"] = models.size();
+                reply({{"component", component}, {"properties", properties}});
+                return;
+            }
             QJsonArray batch;
             qsizetype bytes = 0;
             int next = offset;
@@ -771,6 +790,8 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
             properties["modelOffset"] = offset;
             properties["nextOffset"] = next < models.size() ? next : -1;
             properties["totalModels"] = models.size();
+            if (next < models.size()) snapshots[component] = state;
+            else { snapshots.remove(component); completed[component] = models; }
             reply({{"component", component}, {"properties", properties}});
             return;
         }

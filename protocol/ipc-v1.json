@@ -5621,7 +5621,8 @@
       "attachments": "array"
     },
     "model.helper_state": {
-      "offset": "integer"
+      "offset": "integer",
+      "retain_models": "boolean"
     }
   }
 }

@@ -19,6 +19,7 @@
 #include <QTcpSocket>
 #include <QUrlQuery>
 #include <QtTest>
+#include <QtConcurrentRun>
 #include <cstring>
 
 using sentinel::core::NullOllamaRuntimeClient;
@@ -91,6 +92,7 @@ private slots:
     void catalogContinuationsStayOnTrustedOrigin();
     void catalogSearchPagesUseTaskAndPreserveCacheOnInvalidResponse();
     void automaticCatalogAccumulatesAndStopsRepeatedCursor();
+    void catalogSnapshotOutlivesSourceAndSupportsCancellation();
     void repositoryMetadataRetrievesExactSizeAndConfiguration();
     void webCatalogRestoresSnapshotAndRejectsMalformedCache();
     void llamaCppLoadedTemplateCapabilities_data();
@@ -454,6 +456,32 @@ void OllamaRuntimeTest::automaticCatalogAccumulatesAndStopsRepeatedCursor() {
     source.searchCatalog("", "audio-to-audio", "downloads", true);
     QVERIFY(source.repositories().isEmpty());
 }
+void OllamaRuntimeTest::catalogSnapshotOutlivesSourceAndSupportsCancellation() {
+    QTemporaryDir directory;
+    sentinel::core::HuggingFaceModelSource::Snapshot snapshot;
+    {
+        sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));
+        source.cachedModels_ = QJsonDocument::fromJson(R"([{"id":"test/one","pipeline_tag":"text-generation","siblings":[{"rfilename":"model.gguf"}]},{"id":"test/two"}])").array();
+        snapshot = source.snapshot();
+        source.cachedModels_ = {}; // The worker must retain the original immutable input.
+    }
+    auto future = QtConcurrent::run([snapshot] {
+        QStringList ids;
+        sentinel::core::HuggingFaceModelSource::visitSnapshot(snapshot,
+            [&](const auto& repository, const auto& entries) {
+                ids.append(repository.id);
+                if (repository.id == "test/one" && entries.first().format != "GGUF") ids.append("invalid");
+            });
+        return ids;
+    });
+    future.waitForFinished();
+    QCOMPARE(future.result(), (QStringList{"test/one", "test/two"}));
+    int visited = 0;
+    sentinel::core::HuggingFaceModelSource::visitSnapshot(snapshot,
+        [&](const auto&, const auto&) { ++visited; }, [&] { return visited == 1; });
+    QCOMPARE(visited, 1);
+}
+
 void OllamaRuntimeTest::repositoryMetadataRetrievesExactSizeAndConfiguration() {
     QTemporaryDir directory;
     sentinel::core::HuggingFaceModelSource source(directory.filePath("catalog.json"));

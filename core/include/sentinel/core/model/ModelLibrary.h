@@ -188,7 +188,7 @@ public:
                                      bool* storageFailure = nullptr);
     std::optional<ModelLibraryEntry> localGgufCandidate(const QString& filePath) const;
     QList<ModelLibraryProviderState> providerStates() const;
-    QList<ModelLibraryEntry> entries() const;
+    QList<ModelLibraryEntry> entries(const IModelLibrarySourceAdapter* excludedSource = nullptr) const;
     QList<ModelLibraryEntry> query(const ModelLibraryQuery& filter) const;
     static QList<ModelLibraryAction> availableActions(const ModelLibraryEntry& entry);
     const HardwareFacts& hardwareFacts() const;
