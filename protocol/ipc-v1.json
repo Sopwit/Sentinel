@@ -119,6 +119,10 @@
       "run_id": "string",
       "before_time": "string",
       "before_id": "string"
+    },
+    "backup.transfer": {
+      "action": "string",
+      "value": "object"
     }
   },
   "events": {
@@ -354,6 +358,9 @@
     },
     "agent.history": {
       "history": "object"
+    },
+    "backup.transfer": {
+      "result": "object"
     }
   },
   "capabilities": [
@@ -5334,6 +5341,11 @@
       "read": "exportIncludeModelMetadata",
       "write": "setExportIncludeModelMetadata"
     },
+    "responseProfileInstructions": {
+      "cpp": "QString",
+      "read": "responseProfileInstructions",
+      "write": "setResponseProfileInstructions"
+    },
     "selectedSkillProfile": {
       "cpp": "QString",
       "read": "selectedSkillProfile",
@@ -5599,6 +5611,17 @@
         "string",
         "string"
       ]
+    }
+  },
+  "optional_commands": {
+    "chat.send": {
+      "attachments": "array"
+    },
+    "agent.start": {
+      "attachments": "array"
+    },
+    "model.helper_state": {
+      "offset": "integer"
     }
   }
 }

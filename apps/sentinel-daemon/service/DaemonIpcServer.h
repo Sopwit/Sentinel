@@ -40,6 +40,17 @@ private:
     QByteArray m_voicePcm;
     bool m_voiceCaptureReserved = false;
     quint64 m_voiceSttRevision = 0;
+    struct BackupTransfer {
+        QString id;
+        QByteArray bytes;
+        QByteArray sha256;
+        QStringList domains;
+        int expected = 0;
+        bool importing = false;
+        bool replace = false;
+        QDateTime touched;
+    };
+    QHash<QLocalSocket*, BackupTransfer> m_backupTransfers;
     struct Client {
         QByteArray input;
         bool hello = false;

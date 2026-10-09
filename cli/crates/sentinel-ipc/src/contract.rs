@@ -40,6 +40,7 @@ pub const COMMANDS: &[(&str, &[(&str, &str)])] = &[
 ("voice.action", &[("action", "string")]),
 ("voice.audio", &[("pcm", "string"), ("final", "boolean"), ("speech", "boolean")]),
 ("agent.history", &[("run_id", "string"), ("before_time", "string"), ("before_id", "string")]),
+("backup.transfer", &[("action", "string"), ("value", "object")]),
 ];
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -61,9 +62,9 @@ SessionCreate {title: String},
 #[serde(rename = "session.attach")]
 SessionAttach {session_id: String},
 #[serde(rename = "chat.send")]
-ChatSend {session_id: String, text: String},
+ChatSend {session_id: String, text: String, #[serde(default)] attachments: Option<Vec<serde_json::Value>>},
 #[serde(rename = "agent.start")]
-AgentStart {session_id: String, text: String},
+AgentStart {session_id: String, text: String, #[serde(default)] attachments: Option<Vec<serde_json::Value>>},
 #[serde(rename = "run.cancel")]
 RunCancel {run_id: String},
 #[serde(rename = "approval.respond")]
@@ -87,7 +88,7 @@ DesktopSettings {},
 #[serde(rename = "desktop.setting")]
 DesktopSetting {key: String, value: String},
 #[serde(rename = "model.helper_state")]
-ModelHelperState {component: String},
+ModelHelperState {component: String, #[serde(default)] offset: Option<u64>},
 #[serde(rename = "model.helper_action")]
 ModelHelperAction {component: String, action: String, value: String},
 #[serde(rename = "desktop.settings_service")]
@@ -116,6 +117,8 @@ VoiceAction {action: String},
 VoiceAudio {pcm: String, r#final: bool, speech: bool},
 #[serde(rename = "agent.history")]
 AgentHistory {run_id: String, before_time: String, before_id: String},
+#[serde(rename = "backup.transfer")]
+BackupTransfer {action: String, value: serde_json::Value},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
@@ -192,6 +195,8 @@ VoiceAction {accepted: bool},
 VoiceAudio {accepted: bool},
 #[serde(rename = "agent.history")]
 AgentHistory {history: serde_json::Value},
+#[serde(rename = "backup.transfer")]
+BackupTransfer {result: serde_json::Value},
 }
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "name", content = "payload")]
