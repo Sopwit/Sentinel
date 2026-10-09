@@ -70,7 +70,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->availableLanguages(),
              QStringList({QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
-    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("llama-cpp-server"));
     QVERIFY(settings->localChatInferenceEnabled());
     QVERIFY(settings->localInferenceStreamingEnabled());
     QCOMPARE(settings->localInferenceTimeoutMs(), 0);
@@ -268,7 +268,7 @@ void AppSettingsTest::persistsSelectedRuntimeProvider() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::selectedRuntimeProviderChanged);
 
-    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("llama-cpp-server"));
 
     settings->setSelectedRuntimeProvider(QStringLiteral(" openai-compatible "));
 
@@ -285,7 +285,7 @@ void AppSettingsTest::persistsSelectedRuntimeProvider() {
 
     settings->setSelectedRuntimeProvider(QStringLiteral("unknown-provider"));
 
-    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("llama-cpp-server"));
     QCOMPARE(spy.count(), 4);
 }
 
@@ -589,6 +589,7 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
         settings.setOnboardingComplete(true);
         settings.setRecoveryDraftText(QStringLiteral("draft"));
         settings.setReducedMotionEnabled(true);
+        settings.setReducedTransparencyEnabled(true);
         settings.setHighContrastEnabled(true);
         settings.setUiDensity(QStringLiteral("large"));
         settings.setNotificationCenterJson(QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
@@ -602,6 +603,7 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
         QCOMPARE(settings.recoveryDraftText(), QStringLiteral("draft"));
         QVERIFY(settings.reducedMotionEnabled());
         QVERIFY(settings.highContrastEnabled());
+        QVERIFY(settings.reducedTransparencyEnabled());
         QCOMPARE(settings.uiDensity(), QStringLiteral("Large"));
         QCOMPARE(settings.notificationCenterJson(),
                  QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
@@ -620,6 +622,7 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
     QCOMPARE(reloaded.recoveryDraftText(), QStringLiteral("draft"));
     QVERIFY(reloaded.reducedMotionEnabled());
     QVERIFY(reloaded.highContrastEnabled());
+    QVERIFY(reloaded.reducedTransparencyEnabled());
     QCOMPARE(reloaded.uiDensity(), QStringLiteral("Large"));
     QCOMPARE(reloaded.notificationCenterJson(),
              QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));

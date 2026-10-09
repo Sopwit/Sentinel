@@ -17,7 +17,7 @@ ApplicationWindow {
     minimumWidth: 780
     minimumHeight: 640
     visible: true
-    title: qsTr("Sentinel Desktop Alpha")
+    title: qsTr("Sentinel")
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
     property bool shellReady: true
@@ -33,6 +33,7 @@ ApplicationWindow {
         SentinelTheme.activeTheme = root.viewModel.themeName
         SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
         SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+            SentinelTheme.reducedTransparency = root.viewModel.reducedTransparencyEnabled
         SentinelTheme.uiDensity = root.viewModel.uiDensity
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
@@ -57,6 +58,7 @@ ApplicationWindow {
         function onNativeExperienceChanged() {
             SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
             SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+            SentinelTheme.reducedTransparency = root.viewModel.reducedTransparencyEnabled
             SentinelTheme.uiDensity = root.viewModel.uiDensity
             MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         }
@@ -93,7 +95,7 @@ ApplicationWindow {
     }
 
     function openSettings() {
-        settingsModal.open()
+        root.currentShellPage = "Settings"
     }
 
     function openUpdateModal() {
@@ -120,10 +122,10 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: SentinelTheme.spaceXl
-        anchors.rightMargin: SentinelTheme.spaceXl
-        anchors.topMargin: SentinelTheme.spaceLg + root.shellEntranceOffset
-        anchors.bottomMargin: SentinelTheme.spaceLg + 72 + SentinelTheme.spaceMd - root.shellEntranceOffset
+        anchors.leftMargin: navigationRail.width + 8
+        anchors.rightMargin: 8
+        anchors.topMargin: 8 + root.shellEntranceOffset
+        anchors.bottomMargin: 8 - root.shellEntranceOffset
         spacing: SentinelTheme.spaceMd
         opacity: root.shellReady ? 1.0 : 0.0
 
@@ -134,12 +136,7 @@ ApplicationWindow {
             }
         }
 
-        Label {
-            Layout.fillWidth: true
-            text: root.viewModel.daemonConnectionStatus
-            color: root.viewModel.daemonConnected ? SentinelTheme.textMuted : SentinelTheme.warning
-            Accessible.name: text
-        }
+
 
         RowLayout {
             Layout.fillWidth: true
@@ -208,6 +205,15 @@ ApplicationWindow {
                         }
                     }
 
+                    SettingsPage {
+                        id: settingsPage
+                        anchors.fill: parent
+                        visible: root.currentShellPage === "Settings"
+                        viewModel: root.viewModel
+                        soundManager: soundManager
+                        onOpenUpdateRequested: root.openUpdateModal()
+                    }
+
                     AgentInspectorPage {
                         id: inspectorPage
                         anchors.fill: parent
@@ -233,113 +239,15 @@ ApplicationWindow {
         }
     }
 
-    // ── Bottom Dock ──────────────────────────────────────────────────────────
-    BottomDock {
-        id: bottomDock
-        anchors.horizontalCenter: parent.horizontalCenter
+    NavigationRail {
+        id: navigationRail
+        anchors.left: parent.left
+        anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: SentinelTheme.spaceLg
         currentPage: root.currentShellPage
-        opacity: root.shellReady ? 1.0 : 0.0
-        z: 100
-        onPageRequested: function(pageName) {
-            root.navigateToPage(pageName)
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                easing.type: MotionTokens.enter
-            }
-        }
-    }
-
-
-
-    Button {
-        id: settingsFab
-        Accessible.name: qsTr("Open settings")
-        anchors.right: parent.right
-        anchors.rightMargin: SentinelTheme.spaceXl
-        anchors.verticalCenter: bottomDock.verticalCenter
-        width: 52
-        height: 52
-        opacity: root.shellReady ? 1.0 : 0.0
-        focusPolicy: Qt.StrongFocus
-        hoverEnabled: true
-        scale: settingsFab.down ? InteractionTokens.pressScale
-                                : settingsFab.hovered || settingsFab.activeFocus
-                                  ? InteractionTokens.focusScale
-                                  : 1.0
-        onClicked: root.openSettings()
-
-        contentItem: Item {
-            implicitWidth: 22
-            implicitHeight: 22
-
-            Image {
-                anchors.centerIn: parent
-                width: 22
-                height: 22
-                source: "qrc:/icons/tabler/settings.svg"
-                sourceSize.width: 22
-                sourceSize.height: 22
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    colorization: 1.0
-                    colorizationColor: SentinelTheme.textPrimary
-                }
-            }
-        }
-
-        background: Rectangle {
-            id: fabBg
-            radius: width / 2
-            color: InteractionTokens.surfaceColor(settingsFab.hovered, settingsFab.down,
-                                                   settingsModal.opened,
-                                                   SentinelTheme.calmAccent)
-            border.color: InteractionTokens.borderColor(settingsFab.activeFocus, settingsFab.hovered,
-                                                         settingsModal.opened,
-                                                         SentinelTheme.calmAccent)
-            border.width: 1
-
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.18)
-                shadowVerticalOffset: 2
-                shadowBlur: 0.15
-                shadowOpacity: 1.0
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: MotionTokens.fast
-                    easing.type: MotionTokens.standard
-                }
-            }
-
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: MotionTokens.fast
-                    easing.type: MotionTokens.standard
-                }
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: MotionTokens.duration(MotionTokens.fast, root.viewModel.currentModeName)
-                easing.type: MotionTokens.press
-            }
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                easing.type: MotionTokens.enter
-            }
-        }
+        connectionStatus: root.viewModel.daemonConnectionStatus
+        connected: root.viewModel.daemonConnected
+        onPageRequested: function(pageName) { root.navigateToPage(pageName) }
     }
 
     SoundManager {
@@ -441,25 +349,6 @@ ApplicationWindow {
                         recoveryModal.close()
                     }
                 }
-            }
-        }
-    }
-
-    SentinelOverlayModal {
-        id: settingsModal
-        accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
-        modeName: root.viewModel.currentModeName
-        preferredWidth: Math.min(1040, root.width - SentinelTheme.space4Xl)
-        preferredHeight: Math.min(760, root.height - SentinelTheme.space4Xl)
-
-        contentItem: SettingsPage {
-            viewModel: root.viewModel
-            soundManager: soundManager
-            width: settingsModal.width
-            height: settingsModal.height
-            onOpenUpdateRequested: {
-                settingsModal.close()
-                root.openUpdateModal()
             }
         }
     }
@@ -621,8 +510,8 @@ ApplicationWindow {
         onActivated: {
             if (commandPalette.opened)
                 commandPalette.close()
-            else if (settingsModal.opened)
-                settingsModal.close()
+            else if (root.currentShellPage === "Settings")
+                root.currentShellPage = "Dashboard"
         }
     }
 }

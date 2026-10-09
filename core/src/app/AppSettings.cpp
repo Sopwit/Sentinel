@@ -283,6 +283,14 @@ void AppSettings::setRetentionPolicyJson(const QString& json) {
     if (store_) store_->setValue(QStringLiteral("privacy.retentionPolicy.v1"), json);
 }
 
+QStringList AppSettings::availableThemes() {
+    return {QStringLiteral("Liquid Glass Light"), QStringLiteral("Paper"), QStringLiteral("Linen"),
+            QStringLiteral("Sage Light"), QStringLiteral("Sky Light"), QStringLiteral("Solarized Light"),
+            QStringLiteral("Liquid Glass Dark"), QStringLiteral("Sentinel Classic"),
+            QStringLiteral("Midnight Blue"), QStringLiteral("Aurora Teal"), QStringLiteral("Graphite Grey"),
+            QStringLiteral("Nord Frost"), QStringLiteral("Dracula"), QStringLiteral("Tokyo Night")};
+}
+
 QString AppSettings::themeName() const {
     const auto fallback = QString::fromLatin1(defaultThemeName);
     return store_ ? store_->value(QString::fromLatin1(themeNameKey), fallback) : fallback;
@@ -1843,6 +1851,16 @@ void AppSettings::setReducedMotionEnabled(bool enabled) {
 
     store_->setValue(QString::fromLatin1(reducedMotionEnabledKey),
                      enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+bool AppSettings::reducedTransparencyEnabled() const {
+    return store_ && store_->value(QStringLiteral("reducedTransparencyEnabled"), QStringLiteral("false")) == QStringLiteral("true");
+}
+
+void AppSettings::setReducedTransparencyEnabled(bool enabled) {
+    if (!store_ || enabled == reducedTransparencyEnabled()) return;
+    store_->setValue(QStringLiteral("reducedTransparencyEnabled"), enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit productExperienceChanged();
 }
 
