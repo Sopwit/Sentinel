@@ -1,9 +1,11 @@
 #include "sentinel/core/agent/AgentHistoryCodec.h"
 #include "sentinel/core/app/AgentInspectorService.h"
 #include <QCoreApplication>
+#include <QScopedValueRollback>
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonDesktopSettings.h"
 #include "DaemonIpcServer.h"
+#include "sentinel/core/chat/ChatAttachmentLoader.h"
 #include "DaemonModelHelpers.h"
 #include "DesktopProjection.generated.h"
 #include "IpcContract.generated.h"
@@ -14,11 +16,14 @@
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/chat/ChatModeService.h"
 #include <QCoreApplication>
+#include <QScopedValueRollback>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QCryptographicHash>
+#include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTimer>
@@ -500,6 +505,7 @@ void DaemonIpcServer::handleNewConnection() {
                 m_voicePcm.clear();
                 m_controller->audioSession()->cancel();
             }
+            m_backupTransfers.remove(socket);
             m_clients.remove(socket);
             socket->deleteLater();
             qInfo("IPC client disconnected");
@@ -783,6 +789,82 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         }
         reply({{"accepted", accepted}});
         return;
+    }
+    if (name == "backup.transfer") {
+        constexpr int maximumBytes = 16 * 1024 * 1024;
+        constexpr int chunkBytes = 48 * 1024;
+        const auto action = payload.value("action").toString();
+        const auto value = payload.value("value").toObject();
+        auto respond = [&](const QJsonObject& result) { reply({{"result", result}}); };
+        auto fail = [&](const QString& code) { respond({{"succeeded", false}, {"code", code}}); };
+        const auto now = QDateTime::currentDateTimeUtc();
+        for (auto it = m_backupTransfers.begin(); it != m_backupTransfers.end();) {
+            if (it->touched.secsTo(now) > 600) it = m_backupTransfers.erase(it); else ++it;
+        }
+        if (action == "cancel") { m_backupTransfers.remove(socket); respond({{"succeeded", true}}); return; }
+        if (!m_settings || !m_controller) { fail("Unavailable"); return; }
+        if ((action == "importBegin" || action == "write" || action == "commit") &&
+            (m_state == "running" || m_state == "approval")) { fail("RuntimeBusy"); return; }
+        DaemonDesktopSettings service(*m_settings, *m_controller);
+        if (action == "export" || action == "importBegin") {
+            if (!m_backupTransfers.contains(socket) && m_backupTransfers.size() >= 4) { fail("TransferLimit"); return; }
+            QStringList domains;
+            const auto values = value.value("domains").toArray();
+            const QStringList supported{"settings", "workspaceProfiles", "extensions", "chat", "memory"};
+            for (const auto& domain : values) {
+                if (!domain.isString() || !supported.contains(domain.toString()) || domains.contains(domain.toString())) { fail("InvalidDomains"); return; }
+                domains.append(domain.toString());
+            }
+            if (domains.isEmpty()) { fail("InvalidDomains"); return; }
+            BackupTransfer transfer;
+            transfer.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            transfer.domains = domains;
+            transfer.touched = now;
+            transfer.importing = action == "importBegin";
+            if (transfer.importing) {
+                const auto size = value.value("size");
+                transfer.expected = size.toInt(-1);
+                transfer.sha256 = value.value("sha256").toString().toLatin1();
+                if (!size.isDouble() || size.toDouble() != transfer.expected || transfer.expected <= 0 || transfer.expected > maximumBytes ||
+                    !QRegularExpression("^[a-f0-9]{64}$").match(QString::fromLatin1(transfer.sha256)).hasMatch() || !value.value("replace").isBool()) { fail("InvalidManifest"); return; }
+                transfer.replace = value.value("replace").toBool();
+            } else {
+                const auto result = service.exportProductBackup(domains);
+                if (!result.value("succeeded").toBool()) { fail("ExportFailed"); return; }
+                transfer.bytes = result.value("data").toByteArray();
+                transfer.expected = transfer.bytes.size();
+                transfer.sha256 = QCryptographicHash::hash(transfer.bytes, QCryptographicHash::Sha256).toHex();
+            }
+            const QJsonObject result{{"succeeded", true}, {"transferId", transfer.id}, {"size", transfer.expected}, {"sha256", QString::fromLatin1(transfer.sha256)}};
+            m_backupTransfers[socket] = std::move(transfer);
+            respond(result); return;
+        }
+        auto it = m_backupTransfers.find(socket);
+        if (it == m_backupTransfers.end() || it->id != value.value("transferId").toString()) { fail("UnknownTransfer"); return; }
+        it->touched = now;
+        if (action == "read" && !it->importing) {
+            const auto offset = value.value("offset");
+            const int position = offset.toInt(-1);
+            if (!offset.isDouble() || position < 0 || offset.toDouble() != position || position >= it->bytes.size()) { fail("InvalidOffset"); return; }
+            const auto chunk = it->bytes.mid(position, chunkBytes);
+            respond({{"succeeded", true}, {"offset", position}, {"data", QString::fromLatin1(chunk.toBase64())}, {"nextOffset", position + chunk.size()}}); return;
+        }
+        if (action == "write" && it->importing) {
+            const auto offset = value.value("offset");
+            const auto encoded = value.value("data").toString().toLatin1();
+            const auto decoded = QByteArray::fromBase64Encoding(encoded, QByteArray::AbortOnBase64DecodingErrors);
+            if (!offset.isDouble() || offset.toDouble() != it->bytes.size() || encoded.size() > chunkBytes * 4 / 3 ||
+                !decoded || decoded.decoded.isEmpty() || decoded.decoded.size() > chunkBytes || it->bytes.size() + decoded.decoded.size() > it->expected) { fail("InvalidChunk"); return; }
+            it->bytes.append(decoded.decoded);
+            respond({{"succeeded", true}, {"nextOffset", it->bytes.size()}}); return;
+        }
+        if (action == "commit" && it->importing) {
+            if (it->bytes.size() != it->expected || QCryptographicHash::hash(it->bytes, QCryptographicHash::Sha256).toHex() != it->sha256) { fail("IntegrityFailure"); return; }
+            const auto transfer = std::move(it.value());
+            m_backupTransfers.erase(it);
+            respond(QJsonObject::fromVariantMap(service.importProductBackup(transfer.bytes, transfer.domains, transfer.replace))); return;
+        }
+        fail("InvalidTransferAction"); return;
     }
     if (name == "desktop.settings_service") {
         const auto action = payload.value("action").toString();
@@ -1382,6 +1464,21 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
               resolution.error == core::ModelBindingError::ModelNotFound ? "model-unavailable"
                                                                          : "provider-unavailable");
         return;
+    }
+    QStringList attachmentPaths;
+    const auto attachmentValues = payload.value("attachments");
+    if (!attachmentValues.isUndefined() && !attachmentValues.isArray()) { error(socket, id, "invalid-attachments"); return; }
+    for (const auto& value : attachmentValues.toArray()) {
+        if (!value.isString() || value.toString().size() > 4096) { error(socket, id, "invalid-attachments"); return; }
+        attachmentPaths.append(value.toString());
+    }
+    QScopedValueRollback<bool> loadingAttachments(m_loadingAttachments, true);
+    const auto loaded = core::loadChatAttachments(attachmentPaths);
+    if (!loaded.ok()) { error(socket, id, loaded.error); return; }
+    bool hasImages = false;
+    for (const auto& attachment : loaded.attachments) hasImages |= !attachment.imageBytes.isEmpty();
+    if (hasImages && (resolution.binding.capabilities.visionInput == core::CapabilitySupport::Unsupported)) {
+        error(socket, id, "Image attachments require a vision-capable model."); return;
     }
     m_providerId = selection.providerId;
     m_modelId = selection.modelId;

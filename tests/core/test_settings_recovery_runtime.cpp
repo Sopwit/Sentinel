@@ -38,6 +38,21 @@ private slots:
         QDir().rmdir(QFileInfo(RecoveryService::statusPath()).absolutePath());
         NetworkPolicyService::instance().setMode(NetworkMode::Online);
     }
+    void themeCatalogMatchesValidatedChoices() {
+        QTemporaryDir dir;
+        AppSettings settings(std::make_unique<JsonSettingsStore>(dir.filePath("settings.json")), inMemoryTestCredentialStore());
+        SettingsService service(settings);
+        QStringList advertised;
+        for (const auto& row : service.snapshots())
+            if (row.id == QStringLiteral("appearance.theme")) advertised = row.allowedValues;
+        QCOMPARE(advertised, AppSettings::availableThemes());
+        QCOMPARE(advertised.size(), 14);
+        for (const auto& theme : advertised) {
+            QVERIFY(service.set(QStringLiteral("appearance.theme"), theme).accepted);
+            QCOMPARE(settings.themeName(), theme);
+        }
+        QVERIFY(!service.set(QStringLiteral("appearance.theme"), QStringLiteral("Unknown theme")).accepted);
+    }
     void settingsDiskRoundTripAndReset() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
@@ -205,7 +220,7 @@ private slots:
             QVERIFY(translator.load(QStringLiteral(CERTIFICATION_TRANSLATIONS) +
                 "/sentinel_" + language + ".qm"));
             const auto settings = translator.translate("AppearanceSettingsTab", "Active Theme");
-            const auto empty = translator.translate("HomeChatSurface", "No model selected");
+            const auto empty = translator.translate("HomeChatSurface", "Choose model");
             QVERIFY(!settings.isEmpty());
             QVERIFY(!empty.isEmpty());
             const auto welcome = translator.translate("WelcomeStep", "Local-first");
@@ -214,12 +229,12 @@ private slots:
             QVERIFY(!missing.isEmpty());
             if (language == "tr") {
                 QCOMPARE(settings, QStringLiteral("Etkin Tema"));
-                QCOMPARE(empty, QStringLiteral("Model seçilmedi"));
+                QCOMPARE(empty, QStringLiteral("Model seçin"));
                 QCOMPARE(welcome, QStringLiteral("Önce yerel"));
                 QCOMPARE(missing, QStringLiteral("Göndermeden önce bir sağlayıcı ve model seçin."));
             } else {
                 QCOMPARE(settings, QStringLiteral("Active Theme"));
-                QCOMPARE(empty, QStringLiteral("No model selected"));
+                QCOMPARE(empty, QStringLiteral("Choose model"));
             }
         }
     }

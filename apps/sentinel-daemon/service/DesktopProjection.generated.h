@@ -499,6 +499,7 @@ result.insert("exportIncludeTimestamps", (s->exportIncludeTimestamps() ? QString
 result.insert("exportIncludeCitations", (s->exportIncludeCitations() ? QStringLiteral("true") : QStringLiteral("false")));
 result.insert("exportAnonymizeNames", (s->exportAnonymizeNames() ? QStringLiteral("true") : QStringLiteral("false")));
 result.insert("exportIncludeModelMetadata", (s->exportIncludeModelMetadata() ? QStringLiteral("true") : QStringLiteral("false")));
+result.insert("responseProfileInstructions", s->responseProfileInstructions());
 result.insert("selectedSkillProfile", s->selectedSkillProfile());
 result.insert("defaultPermissionPolicyState", s->defaultPermissionPolicyState());
 result.insert("updateCheckPolicy", s->updateCheckPolicy());
@@ -569,6 +570,7 @@ if (key == "exportIncludeTimestamps") { if(value != "true" && value != "false") 
 if (key == "exportIncludeCitations") { if(value != "true" && value != "false") return false; s->setExportIncludeCitations(value == "true"); return true; }
 if (key == "exportAnonymizeNames") { if(value != "true" && value != "false") return false; s->setExportAnonymizeNames(value == "true"); return true; }
 if (key == "exportIncludeModelMetadata") { if(value != "true" && value != "false") return false; s->setExportIncludeModelMetadata(value == "true"); return true; }
+if (key == "responseProfileInstructions") { s->setResponseProfileInstructions(value); return true; }
 if (key == "selectedSkillProfile") { s->setSelectedSkillProfile(value); return true; }
 if (key == "defaultPermissionPolicyState") { s->setDefaultPermissionPolicyState(value); return true; }
 if (key == "updateCheckPolicy") { s->setUpdateCheckPolicy(value); return true; }
