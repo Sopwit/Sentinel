@@ -61,10 +61,7 @@ QList<SettingSnapshot> SettingsService::snapshots() const {
     };
     add(QStringLiteral("appearance.theme"), SettingSection::Appearance, settings_.themeName(),
         QStringLiteral("Liquid Glass Light"),
-        {QStringLiteral("Liquid Glass Light"), QStringLiteral("Liquid Glass Dark"),
-         QStringLiteral("Sentinel Classic"), QStringLiteral("Midnight Blue"),
-         QStringLiteral("Aurora Teal"), QStringLiteral("Graphite Grey"),
-         QStringLiteral("Nord Frost"), QStringLiteral("Dracula")},
+        AppSettings::availableThemes(),
         {QStringLiteral("theme"), QStringLiteral("color")});
     add(QStringLiteral("general.language"), SettingSection::General, settings_.appLanguage(),
         QStringLiteral("en"), settings_.availableLanguages(), {QStringLiteral("locale")});
@@ -227,10 +224,7 @@ SettingActionResult SettingsService::set(const QString& id, const QVariant& valu
             return invalid(QStringLiteral("settings.invalid-choice"));
         settings_.setAppLanguage(text);
     } else if (id == QLatin1String("appearance.theme")) {
-        if (!QStringList{QStringLiteral("Liquid Glass Light"), QStringLiteral("Liquid Glass Dark"),
-                         QStringLiteral("Sentinel Classic"), QStringLiteral("Midnight Blue"),
-                         QStringLiteral("Aurora Teal"), QStringLiteral("Graphite Grey"),
-                         QStringLiteral("Nord Frost"), QStringLiteral("Dracula")}.contains(text))
+        if (!AppSettings::availableThemes().contains(text))
             return invalid(QStringLiteral("settings.invalid-choice"));
         settings_.setThemeName(text);
     } else if (id == QLatin1String("notifications.policy")) {

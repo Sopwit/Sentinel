@@ -868,6 +868,7 @@ void DesktopShellViewModelTest::exposesModelManagementReadinessMetadata() {
         })};
     ModeManager modeManager;
     AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    settings.setSelectedRuntimeProvider(QStringLiteral("ollama"));
     DesktopShellViewModel viewModel{controller, modeManager, settings};
 
     QCOMPARE(viewModel.modelManagementStatus(), QStringLiteral("Available"));
@@ -3469,12 +3470,34 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
 
     fixture.viewModel.setOnboardingAiProvider(QStringLiteral("llama.cpp server"));
     fixture.viewModel.setReducedMotionEnabled(true);
+    fixture.viewModel.setReducedTransparencyEnabled(true);
     fixture.viewModel.setHighContrastEnabled(true);
     fixture.viewModel.setUiDensity(QStringLiteral("Compact"));
 
     QCOMPARE(fixture.viewModel.onboardingAiProvider(), QStringLiteral("llama.cpp server"));
     QVERIFY(fixture.viewModel.reducedMotionEnabled());
     QVERIFY(fixture.viewModel.highContrastEnabled());
+    QVERIFY(fixture.viewModel.reducedTransparencyEnabled());
+    const QVariantMap important{{"category", "Security"}, {"priority", "High"}};
+    const QVariantMap ordinary{{"category", "Agent"}, {"priority", "Normal"}};
+    fixture.viewModel.setNotificationPolicy(QStringLiteral("Important Only"));
+    QVERIFY(fixture.viewModel.shouldShowNotification(important));
+    QVERIFY(!fixture.viewModel.shouldShowNotification(ordinary));
+    fixture.viewModel.setDndEnabled(true);
+    QVERIFY(fixture.viewModel.dndEnabled());
+    QVERIFY(!fixture.viewModel.shouldShowNotification(important));
+    QVERIFY(QJsonDocument::fromJson(fixture.settings.notificationCenterJson().toUtf8()).object().value("doNotDisturb").toBool());
+    fixture.viewModel.setDndEnabled(false);
+    fixture.viewModel.setChannelMuted(QStringLiteral("Security"), true);
+    QVERIFY(!fixture.viewModel.shouldShowNotification(important));
+    fixture.viewModel.setChannelMuted(QStringLiteral("Security"), false);
+    QVERIFY(fixture.viewModel.shouldShowNotification(important));
+    fixture.viewModel.setNotificationPolicy(QStringLiteral("Custom"));
+    fixture.viewModel.setNotifyAgentResponses(false);
+    QVERIFY(!fixture.viewModel.shouldShowNotification(ordinary));
+    fixture.viewModel.setNotifyAgentResponses(true);
+    QVERIFY(fixture.viewModel.shouldShowNotification(ordinary));
+    fixture.viewModel.setNotificationPolicy(QStringLiteral("All"));
     QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Compact"));
     QVERIFY(fixture.viewModel.accessibilitySummaries()
                 .join(QStringLiteral("\n"))
@@ -3491,9 +3514,15 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
     QVERIFY(fixture.viewModel.notificationFilteredSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Test security notice")));
+    fixture.viewModel.setDndEnabled(true);
+    fixture.viewModel.setChannelMuted(QStringLiteral("Workspace"), true);
     QVERIFY(fixture.viewModel.markAllNotificationsRead());
     QVERIFY(fixture.viewModel.archiveNotification(fixture.viewModel.latestNotificationId()));
     QVERIFY(fixture.viewModel.clearArchivedNotifications());
+    QVERIFY(fixture.viewModel.dndEnabled());
+    QVERIFY(fixture.viewModel.isChannelMuted(QStringLiteral("Workspace")));
+    fixture.viewModel.setDndEnabled(false);
+
     QVERIFY(fixture.viewModel.notificationLifecycleSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Persistence: local settings JSON")));

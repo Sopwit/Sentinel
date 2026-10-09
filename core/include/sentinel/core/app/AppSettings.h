@@ -180,6 +180,7 @@ public:
     AppSettings(std::unique_ptr<ISettingsStore> store, CredentialStore credentials,
                 QObject* parent = nullptr);
 
+    static QStringList availableThemes();
     QString themeName() const;
     void setThemeName(const QString& themeName);
 
@@ -333,6 +334,8 @@ public:
     void setRecoveryDraftText(const QString& text);
     bool reducedMotionEnabled() const;
     void setReducedMotionEnabled(bool enabled);
+    bool reducedTransparencyEnabled() const;
+    void setReducedTransparencyEnabled(bool enabled);
     bool highContrastEnabled() const;
     void setHighContrastEnabled(bool enabled);
     QString uiDensity() const;

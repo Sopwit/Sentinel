@@ -1,9 +1,11 @@
+#include "sentinel/desktop/DesktopBackupHelper.h"
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/desktop/DesktopShellViewModel.h"
 #include "sentinel/core/app/ControlledTaskService.h"
+#include "sentinel/core/chat/ChatAttachmentLoader.h"
 
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/AppSettings.h"
@@ -158,8 +160,8 @@ QJsonArray notificationsFromJson(const QString& json) {
     return document.object().value(QStringLiteral("notifications")).toArray();
 }
 
-QString notificationsToJson(const QJsonArray& notifications) {
-    QJsonObject root;
+QString notificationsToJson(const QJsonArray& notifications, const QString& originalJson) {
+    auto root = QJsonDocument::fromJson(originalJson.toUtf8()).object();
     root.insert(QStringLiteral("notifications"), notifications);
     return QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
@@ -189,6 +191,8 @@ QJsonObject notificationJsonObject(const QJsonObject& item) {
     obj.insert(QStringLiteral("pinned"), item.value(QStringLiteral("pinned")).toBool());
     obj.insert(QStringLiteral("archived"), item.value(QStringLiteral("archived")).toBool());
     obj.insert(QStringLiteral("read"), item.value(QStringLiteral("read")).toBool());
+    obj.insert(QStringLiteral("snoozed"), item.value(QStringLiteral("snoozed")).toBool());
+    obj.insert(QStringLiteral("snoozeUntil"), item.value(QStringLiteral("snoozeUntil")));
     return obj;
 }
 
@@ -209,7 +213,7 @@ bool updateNotification(const QString& json, const QString& notificationId,
     if (!changed) {
         return false;
     }
-    *updatedJson = notificationsToJson(notifications);
+    *updatedJson = notificationsToJson(notifications, json);
     return true;
 }
 
@@ -230,7 +234,27 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopRuntimeClient& client,
                             settings, taskbar, parent) {
     connect(&client, &DesktopRuntimeClient::changed, this,
             &DesktopShellViewModel::runtimeProjectionChanged);
+    connect(&client, &DesktopRuntimeClient::changed, this, [this, &client] {
+        if (attachmentSendPending_) {
+            const auto state = client.value("chatSendLifecycleState").toString();
+            if (state == "sending" || state == "streaming" || state == "running" || state == "completed") {
+                attachmentSendPending_ = false; clearAttachments();
+            } else if (state == "failed") attachmentSendPending_ = false;
+        }
+        const auto voice = client.voiceState();
+        const bool recording = systemDictation_.active() || voice.value("state").toString() == "Listening";
+        if (voiceRecordingActive_ != recording) { voiceRecordingActive_ = recording; emit voiceRecordingActiveChanged(); }
+        const auto transcript = voice.value("transcript").toString();
+        if (!transcript.isEmpty() && transcript != lastVoiceTranscript_) {
+            lastVoiceTranscript_ = transcript; voiceInputStatus_.clear(); emit voiceInputChanged(); deliverVoiceTranscript(transcript);
+        }
+        const auto failure = voice.value("failure").toString();
+        if (!failure.isEmpty() && failure != "None" && voice.value("state").toString() == "Failed") {
+            voiceInputStatus_ = failure; emit voiceInputChanged();
+        }
+    });
     connect(&client, &DesktopRuntimeClient::operationFailed, this, [this](const QString& code) {
+        if (attachmentSendPending_ || !attachments_.isEmpty()) { attachmentSendPending_ = false; attachmentError_ = code; emit attachmentChanged(); }
         addNotification(tr("System"), tr("Daemon request failed"), code);
     });
 }
@@ -243,6 +267,16 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source sou
       localRagStore_(source.local ? std::make_unique<core::LocalRagStore>(localRagPath())
                                   : nullptr),
       chatMessages_(this), taskbar_(taskbar) {
+    backupManager_ = new DesktopBackupHelper(controller_.remote(), this);
+    connect(&systemDictation_, &SystemDictationService::activeChanged, this, [this] {
+        voiceRecordingActive_ = systemDictation_.active(); emit voiceRecordingActiveChanged();
+    });
+    connect(&systemDictation_, &SystemDictationService::completed, this, [this](const QString& text) {
+        voiceInputStatus_.clear(); emit voiceInputChanged(); deliverVoiceTranscript(text);
+    });
+    connect(&systemDictation_, &SystemDictationService::failed, this, [this](const QString& message) {
+        voiceInputStatus_ = message; emit voiceInputChanged();
+    });
     if (!controller_.isRemote())
         controller_.attachControlledTaskSettings(settings_);
     if (auto* session = controller_.audioSession()) {
@@ -255,11 +289,11 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source sou
                     emit voiceRecordingActiveChanged();
                 });
         connect(session, &core::VoiceSessionService::finalTranscriptChanged, this,
-                &DesktopShellViewModel::voiceTranscriptionCompleted);
+                &DesktopShellViewModel::deliverVoiceTranscript);
         connect(session, &core::VoiceSessionService::failed, this,
                 [this](core::AudioFailure failure, const QString& detail) {
-                    emit voiceTranscriptionCompleted(
-                        QStringLiteral("%1: %2").arg(core::audioFailureName(failure), detail));
+                    voiceInputStatus_ = QStringLiteral("%1: %2").arg(core::audioFailureName(failure), detail);
+                    emit voiceInputChanged();
                 });
     }
     if (!controller_.isRemote())
@@ -590,7 +624,7 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source sou
             const QString id = item.value(QStringLiteral("id")).toString();
             const bool isRead = item.value(QStringLiteral("read")).toBool();
             const bool isArchived = item.value(QStringLiteral("archived")).toBool();
-            if (!isRead && !isArchived && !notifiedIds_.contains(id)) {
+            if (!isRead && !isArchived && !item.value(QStringLiteral("snoozed")).toBool() && !notifiedIds_.contains(id)) {
                 notifiedIds_.insert(id);
                 QString title = item.value(QStringLiteral("title")).toString();
                 const QString body = item.value(QStringLiteral("body")).toString();
@@ -598,42 +632,18 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source sou
                     title = QStringLiteral("Sentinel Assistant");
                 }
 
+                if (!shouldShowNotification(item.toVariantMap())) continue;
                 // Send native system notification
                 const QString policy = settings_.notificationPolicy();
                 if (policy != QLatin1String("None") && policy != QLatin1String("Disabled") &&
                     QSystemTrayIcon::isSystemTrayAvailable()) {
                     const QString category = item.value(QStringLiteral("category")).toString();
 
-                    // Custom policy filtering
-                    if (policy == QLatin1String("Custom")) {
-                        if (category == QLatin1String("Models")) {
-                            if (title.contains(QLatin1String("Removed")) ||
-                                title.contains(QLatin1String("Deleted"))) {
-                                if (!settings_.notifyModelRemovals())
-                                    continue;
-                            } else {
-                                if (!settings_.notifyModelDownloads())
-                                    continue;
-                            }
-                        } else if (category == QLatin1String("Agent")) {
-                            if (!settings_.notifyAgentResponses())
-                                continue;
-                        } else if (category == QLatin1String("Updates")) {
-                            if (!settings_.notifySystemUpdates())
-                                continue;
-                        }
-                    }
-
                     const qint64 now = QDateTime::currentMSecsSinceEpoch();
                     if (category == lastNotifiedCategory_ && (now - lastNotificationTime_) < 5000) {
                         continue;
                     }
 
-                    // Skip Low-priority notifications from system tray
-                    const QString priority = item.value(QStringLiteral("priority")).toString();
-                    if (priority == QLatin1String("Low")) {
-                        continue;
-                    }
                     lastNotifiedCategory_ = category;
                     lastNotificationTime_ = now;
 
@@ -2237,14 +2247,45 @@ QVariantMap DesktopShellViewModel::autoDetectVoicePathStatus() {
     return result;
 }
 
-void DesktopShellViewModel::startVoiceCapture() {
-    if (auto* session = controller_.audioSession())
-        session->startPushToTalk(core::VoiceInteractionMode::Dictation);
-}
+QString DesktopShellViewModel::voiceInputSource() const { return settings_.voiceInputSource(); }
 
+void DesktopShellViewModel::setVoiceInputSource(const QString& source) {
+    if (source != "local" && source != "system") return;
+    systemDictation_.cancel();
+    if (controller_.remote()) controller_.remote()->voiceAction("cancel");
+    settings_.setVoiceInputSource(source);
+    voiceInputStatus_.clear();
+    emit voiceInputChanged();
+}
+void DesktopShellViewModel::deliverVoiceTranscript(const QString& transcript) {
+    if (voiceTestOnly_) emit voiceTestTranscriptionCompleted(transcript);
+    else emit voiceTranscriptionCompleted(transcript);
+}
+void DesktopShellViewModel::startVoiceCapture(bool testOnly) {
+    if (voiceRecordingActive_ || systemDictation_.busy()) return;
+    if (auto* client = controller_.remote()) {
+        if (client->voiceState().value("state").toString() == "Transcribing") return;
+    } else if (auto* session = controller_.audioSession()) {
+        if (session->state() == core::VoiceInteractionState::Transcribing) return;
+    }
+    voiceTestOnly_ = testOnly;
+    voiceInputStatus_.clear();
+    lastVoiceTranscript_.clear();
+    if (voiceInputSource() == "system") {
+        systemDictation_.start(settings_.appLanguage());
+    } else if (auto* client = controller_.remote()) {
+        if (!client->voiceAction("start")) voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper and enable transcription in Settings → Voice & Audio, or choose system dictation.");
+    } else if (auto* session = controller_.audioSession()) {
+        session->startPushToTalk(core::VoiceInteractionMode::Dictation);
+    } else {
+        voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper or choose system dictation.");
+    }
+    emit voiceInputChanged();
+}
 void DesktopShellViewModel::stopVoiceCapture() {
-    if (auto* session = controller_.audioSession())
-        session->stopPushToTalk();
+    if (voiceInputSource() == "system") systemDictation_.stop();
+    else if (auto* client = controller_.remote()) client->voiceAction("stop");
+    else if (auto* session = controller_.audioSession()) session->stopPushToTalk();
 }
 
 void DesktopShellViewModel::transcribeAudioFile(const QString& path) {
@@ -3824,6 +3865,8 @@ QStringList DesktopShellViewModel::memoryEntries() const {
     return controller_.memoryEntries();
 }
 
+QStringList DesktopShellViewModel::availableThemes() const { return core::AppSettings::availableThemes(); }
+
 QString DesktopShellViewModel::themeName() const {
     return settings_.themeName();
 }
@@ -4375,6 +4418,8 @@ QVariantMap DesktopShellViewModel::productRecoveryState() const {
     return composedSettingsService(settings_, controller_).recoveryState().toVariantMap();
 }
 
+QObject* DesktopShellViewModel::backupManager() const { return backupManager_; }
+
 QVariantMap DesktopShellViewModel::productBackupAvailability() const {
     if (controller_.isRemote())
         return controller_.remote()
@@ -4536,6 +4581,9 @@ bool DesktopShellViewModel::reducedMotionEnabled() const {
 void DesktopShellViewModel::setReducedMotionEnabled(bool enabled) {
     settings_.setReducedMotionEnabled(enabled);
 }
+
+bool DesktopShellViewModel::reducedTransparencyEnabled() const { return settings_.reducedTransparencyEnabled(); }
+void DesktopShellViewModel::setReducedTransparencyEnabled(bool enabled) { settings_.setReducedTransparencyEnabled(enabled); }
 
 bool DesktopShellViewModel::highContrastEnabled() const {
     return settings_.highContrastEnabled();
@@ -4768,6 +4816,13 @@ QStringList DesktopShellViewModel::productPolishSummaries() const {
     };
 }
 
+QString DesktopShellViewModel::responseProfileInstructions() const {
+    return settings_.responseProfileInstructions();
+}
+void DesktopShellViewModel::setResponseProfileInstructions(const QString& instructions) {
+    settings_.setResponseProfileInstructions(instructions);
+    emit skillProfileChanged();
+}
 QString DesktopShellViewModel::selectedSkillProfile() const {
     return skillProfileService_.normalizedProfileId(settings_.selectedSkillProfile());
 }
@@ -5361,11 +5416,15 @@ QString DesktopShellViewModel::duplicateWorkspace(const QString& workspaceId) {
     return result.success ? result.selectedWorkspaceId : QString();
 }
 
-bool DesktopShellViewModel::attachFileToChat(const QString& filePath) {
+bool DesktopShellViewModel::attachFileToChat(const QString& fileValue) {
+    const QUrl url(fileValue);
+    const auto filePath = url.isLocalFile() ? url.toLocalFile() : fileValue;
     const QFileInfo info(filePath);
+    attachmentError_.clear();
     if (!info.exists() || !info.isFile()) {
         workspaceLastActionStatus_ = QStringLiteral("Refused");
         workspaceLastActionSummary_ = QStringLiteral("Attachment requires one explicit file.");
+        attachmentError_ = workspaceLastActionSummary_; emit attachmentChanged();
         emit workspaceChanged();
         return false;
     }
@@ -5373,10 +5432,16 @@ bool DesktopShellViewModel::attachFileToChat(const QString& filePath) {
     if (!supportedAttachmentType(type)) {
         workspaceLastActionStatus_ = QStringLiteral("Refused");
         workspaceLastActionSummary_ = QStringLiteral("Unsupported attachment type.");
+        attachmentError_ = workspaceLastActionSummary_; emit attachmentChanged();
         emit workspaceChanged();
         return false;
     }
-    attachments_.append({attachmentId(selectedWorkspaceId(), info.fileName(), info.size()),
+    if (attachments_.size() >= 4 || info.size() > 4 * 1024 * 1024) {
+        attachmentError_ = tr("Attach at most four files, each up to 4 MB."); emit attachmentChanged(); return false;
+    }
+    const auto id = attachmentId(selectedWorkspaceId(), info.fileName(), info.size());
+    attachmentPaths_.insert(id, info.absoluteFilePath());
+    attachments_.append({id,
                          selectedWorkspaceId(), info.fileName(), type, info.size(),
                          QStringLiteral("Attached Explicitly"),
                          QStringLiteral("Explicit user attachment; no folder import.")});
@@ -5412,6 +5477,7 @@ bool DesktopShellViewModel::pasteAttachment(const QString& name, const QString& 
 bool DesktopShellViewModel::removeAttachment(const QString& attachmentIdValue) {
     for (qsizetype index = 0; index < attachments_.size(); ++index) {
         if (attachments_.at(index).id == attachmentIdValue.trimmed()) {
+            attachmentPaths_.remove(attachments_.at(index).id);
             attachments_.removeAt(index);
             workspaceLastActionStatus_ = QStringLiteral("Attachment Removed");
             workspaceLastActionSummary_ = QStringLiteral("Removed attachment.");
@@ -5424,6 +5490,9 @@ bool DesktopShellViewModel::removeAttachment(const QString& attachmentIdValue) {
 }
 
 void DesktopShellViewModel::clearAttachments() {
+    attachmentPaths_.clear();
+    attachmentSendPending_ = false;
+    attachmentError_.clear();
     attachments_.clear();
     workspaceLastActionStatus_ = QStringLiteral("Attachments Cleared");
     workspaceLastActionSummary_ = QStringLiteral("Cleared all attachments.");
@@ -5990,10 +6059,27 @@ bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
-    if (currentModeName() == QStringLiteral("Agent")) {
-        return runAgentRequest(message);
+    QStringList paths;
+    for (const auto& attachment : attachments_) {
+        const auto path = attachmentPaths_.value(attachment.id);
+        if (path.isEmpty()) { attachmentError_ = tr("Reattach this file before sending."); emit attachmentChanged(); return false; }
+        paths.append(path);
     }
-    return controller_.sendMessage(message);
+    bool accepted = false;
+    if (auto* remote = controller_.remote()) {
+        QVariantList values;
+        for (const auto& path : paths) values.append(path);
+        accepted = paths.isEmpty() ? (currentModeName() == "Agent" ? runAgentRequest(message) : controller_.sendMessage(message))
+            : remote->dispatch(currentModeName() == "Agent" ? "runAgentRequestWithAttachments" : "sendMessageWithAttachments", {message, QVariant(values)}).toBool();
+    } else {
+        const auto loaded = core::loadChatAttachments(paths);
+        if (!loaded.ok()) { attachmentError_ = loaded.error; emit attachmentChanged(); return false; }
+        accepted = currentModeName() == "Agent" ? controller_.local()->runAgentRequestWithAttachments(message, loaded.attachments)
+            : controller_.local()->sendMessageWithAttachments(message, loaded.attachments);
+    }
+    if (accepted && controller_.isRemote() && !paths.isEmpty()) attachmentSendPending_ = true;
+    else if (accepted) clearAttachments();
+    return accepted;
 }
 
 bool DesktopShellViewModel::regenerateChatResponse(int userMessageId) {
@@ -6077,7 +6163,6 @@ bool DesktopShellViewModel::checkForUpdates() {
     connect(reply, &QNetworkReply::sslErrors, reply, [reply](const QList<QSslError>& errors) {
         for (const auto& err : errors)
             qWarning() << "SSL error:" << err.errorString();
-        reply->ignoreSslErrors();
     });
 
     QTimer::singleShot(10000, reply, [reply]() {
@@ -6210,7 +6295,7 @@ bool DesktopShellViewModel::checkForUpdates() {
                 item.insert(QStringLiteral("read"), false);
                 auto notifications = notificationsFromJson(settings_.notificationCenterJson());
                 notifications.prepend(item);
-                settings_.setNotificationCenterJson(notificationsToJson(notifications));
+                settings_.setNotificationCenterJson(notificationsToJson(notifications, settings_.notificationCenterJson()));
             } else {
                 settings_.setNotificationCenterJson(updatedJson);
             }
@@ -6493,13 +6578,14 @@ void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
 }
 
 bool DesktopShellViewModel::dndEnabled() const {
-    return dndEnabled_;
+    return QJsonDocument::fromJson(settings_.notificationCenterJson().toUtf8()).object().value(QStringLiteral("doNotDisturb")).toBool();
 }
 
 void DesktopShellViewModel::setDndEnabled(bool enabled) {
-    if (enabled == dndEnabled_)
-        return;
-    dndEnabled_ = enabled;
+    if (enabled == dndEnabled()) return;
+    auto root = QJsonDocument::fromJson(settings_.notificationCenterJson().toUtf8()).object();
+    root.insert(QStringLiteral("doNotDisturb"), enabled);
+    settings_.setNotificationCenterJson(QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
     emit dndEnabledChanged();
 }
 
@@ -6534,6 +6620,25 @@ bool DesktopShellViewModel::unsnoozeNotification(const QString& notificationId) 
     }
     settings_.setNotificationCenterJson(updatedJson);
     emit nativeExperienceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::shouldShowNotification(const QVariantMap& item) const {
+    const auto category = item.value(QStringLiteral("category")).toString();
+    const auto priority = item.value(QStringLiteral("priority"), QStringLiteral("Normal")).toString();
+    const auto policy = settings_.notificationPolicy();
+    if (dndEnabled() || isChannelMuted(category) || item.value(QStringLiteral("snoozed")).toBool() ||
+        policy == QLatin1String("Disabled") || policy == QLatin1String("None")) return false;
+    if (policy == QLatin1String("Important Only"))
+        return priority == QLatin1String("High") || priority == QLatin1String("Critical");
+    if (policy != QLatin1String("Custom")) return true;
+    if (category == QLatin1String("Agent")) return settings_.notifyAgentResponses();
+    if (category == QLatin1String("Updates")) return settings_.notifySystemUpdates();
+    if (category == QLatin1String("Models")) {
+        const auto title = item.value(QStringLiteral("title")).toString();
+        return title.contains(QLatin1String("Removed")) || title.contains(QLatin1String("Deleted"))
+            ? settings_.notifyModelRemovals() : settings_.notifyModelDownloads();
+    }
     return true;
 }
 
@@ -6667,7 +6772,7 @@ bool DesktopShellViewModel::clearArchivedNotifications() {
             kept.append(item);
         }
     }
-    settings_.setNotificationCenterJson(notificationsToJson(kept));
+    settings_.setNotificationCenterJson(notificationsToJson(kept, settings_.notificationCenterJson()));
     return true;
 }
 
@@ -6685,7 +6790,7 @@ bool DesktopShellViewModel::removeNotificationById(const QString& notificationId
     }
     if (!found)
         return false;
-    settings_.setNotificationCenterJson(notificationsToJson(kept));
+    settings_.setNotificationCenterJson(notificationsToJson(kept, settings_.notificationCenterJson()));
     emit nativeExperienceChanged();
     return true;
 }
@@ -6704,7 +6809,7 @@ bool DesktopShellViewModel::markAllNotificationsRead() {
     }
     if (!changed)
         return false;
-    settings_.setNotificationCenterJson(notificationsToJson(updated));
+    settings_.setNotificationCenterJson(notificationsToJson(updated, settings_.notificationCenterJson()));
     emit nativeExperienceChanged();
     return true;
 }

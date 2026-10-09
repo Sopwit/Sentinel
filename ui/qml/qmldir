@@ -44,7 +44,7 @@ TrayCompanionWindow 1.0 components/dialogs/TrayCompanionWindow.qml
 UpdateProgressModal 1.0 components/dialogs/UpdateProgressModal.qml
 
 # Navigation Components
-BottomDock 1.0 components/navigation/BottomDock.qml
+NavigationRail 1.0 components/navigation/NavigationRail.qml
 CommandPalette 1.0 components/navigation/CommandPalette.qml
 HeaderBar 1.0 components/navigation/HeaderBar.qml
 ShellPanel 1.0 components/navigation/ShellPanel.qml

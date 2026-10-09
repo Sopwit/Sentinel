@@ -10,6 +10,8 @@ target_link_libraries(sentinel_desktop_ipc PUBLIC Qt6::Core Qt6::Network)
 sentinel_apply_compiler_flags(sentinel_desktop_ipc)
 
 add_library(sentinel_desktop_viewmodels STATIC
+    include/sentinel/desktop/DesktopBackupHelper.h
+    src/DesktopBackupHelper.cpp
     include/sentinel/desktop/QuickPanelController.h
     src/QuickPanelController.cpp
     include/sentinel/desktop/DesktopModelHelper.h
@@ -253,7 +255,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/SplashScreen.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/TrayCompanionWindow.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/UpdateProgressModal.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/BottomDock.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/NavigationRail.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/CommandPalette.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/HeaderBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/ShellPanel.qml
@@ -470,4 +472,13 @@ if(UNIX AND NOT APPLE)
     install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dbus/dev.sentinel.Sentinel.service
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/services
     )
+endif()
+
+target_sources(sentinel_desktop_viewmodels PRIVATE include/sentinel/desktop/SystemDictationService.h)
+if(APPLE)
+    target_sources(sentinel_desktop_viewmodels PRIVATE src/MacSystemDictationService.mm)
+    set_source_files_properties(src/MacSystemDictationService.mm PROPERTIES SKIP_PRECOMPILE_HEADERS ON COMPILE_FLAGS "-fobjc-arc")
+    target_link_libraries(sentinel_desktop_viewmodels PUBLIC "-framework Speech" "-framework AVFoundation")
+else()
+    target_sources(sentinel_desktop_viewmodels PRIVATE src/SystemDictationService.cpp)
 endif()

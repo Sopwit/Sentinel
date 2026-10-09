@@ -13,6 +13,7 @@ Item {
     required property var viewModel
     readonly property bool compact: width < 900
     property bool showingDetail: false
+    property bool sidebarOpen: true
 
     onVisibleChanged: viewModel.active = visible
     Component.onCompleted: viewModel.active = visible
@@ -33,6 +34,10 @@ Item {
                 font.pixelSize: 24
                 font.bold: true
                 Layout.fillWidth: true
+            }
+            SentinelButton {
+                text: page.sidebarOpen ? qsTr("Hide history") : qsTr("Show history")
+                onClicked: page.sidebarOpen = !page.sidebarOpen
             }
             Button {
                 text: qsTr("Refresh")
@@ -88,7 +93,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.fillWidth: page.compact
                 Layout.preferredWidth: page.compact ? -1 : 330
-                visible: !page.compact || !page.showingDetail
+                visible: page.sidebarOpen && (!page.compact || !page.showingDetail)
                 color: SentinelTheme.backgroundRaised
                 radius: 6
                 border.color: SentinelTheme.accentBorderSubtle
@@ -147,7 +152,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: !page.compact || page.showingDetail
+                visible: !page.sidebarOpen || !page.compact || page.showingDetail
                 color: SentinelTheme.backgroundRaised
                 radius: 6
                 border.color: SentinelTheme.accentBorderSubtle

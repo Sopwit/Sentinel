@@ -45,6 +45,7 @@ public:
                                            "selectedSystemMode",
                                            "recoveryDraftText",
                                            "reducedMotionEnabled",
+                                           "reducedTransparencyEnabled",
                                            "highContrastEnabled",
                                            "uiDensity",
                                            "notificationCenterJson",

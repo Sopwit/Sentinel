@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include "sentinel/desktop/SystemDictationService.h"
 
 #include "sentinel/core/agent/AgentRuntimeService.h"
 #include "sentinel/core/agent/ControlledAgentTasks.h"
@@ -1653,6 +1654,13 @@ public:
     Q_INVOKABLE bool respondToDaemonApproval(bool allow);
     Q_INVOKABLE bool cancelDaemonRun();
     QVariantMap pendingDaemonApproval() const;
+    Q_PROPERTY(QString voiceInputSource READ voiceInputSource WRITE setVoiceInputSource NOTIFY voiceInputChanged)
+    Q_PROPERTY(QString voiceInputStatus READ voiceInputStatus NOTIFY voiceInputChanged)
+    Q_PROPERTY(QString attachmentError READ attachmentError NOTIFY attachmentChanged)
+    QString voiceInputSource() const;
+    void setVoiceInputSource(const QString& source);
+    QString voiceInputStatus() const { return voiceInputStatus_; }
+    QString attachmentError() const { return attachmentError_; }
     QString daemonConnectionStatus() const;
     bool daemonConnected() const;
     QString providerName() const;
@@ -2397,6 +2405,8 @@ public:
     QStringList availablePages() const;
     ChatMessageListModel* chatMessages();
     QStringList memoryEntries() const;
+    Q_PROPERTY(QStringList availableThemes READ availableThemes CONSTANT)
+    QStringList availableThemes() const;
     QString themeName() const;
     void setThemeName(const QString& themeName);
     QString configurationProfile() const;
@@ -2463,6 +2473,8 @@ public:
     Q_INVOKABLE QVariantMap securitySettingsState() const;
     Q_INVOKABLE QVariantMap productPrivacyState() const;
     Q_INVOKABLE QVariantMap productRecoveryState() const;
+    Q_PROPERTY(QObject* backupManager READ backupManager CONSTANT)
+    QObject* backupManager() const;
     Q_INVOKABLE QVariantMap productBackupAvailability() const;
     Q_INVOKABLE QVariantMap exportProductBackup(const QStringList& domains) const;
     Q_INVOKABLE QVariantMap importProductBackup(const QByteArray& data, const QStringList& domains,
@@ -2486,6 +2498,9 @@ public:
     void setRecoveryDraftText(const QString& text);
     bool reducedMotionEnabled() const;
     void setReducedMotionEnabled(bool enabled);
+    Q_PROPERTY(bool reducedTransparencyEnabled READ reducedTransparencyEnabled WRITE setReducedTransparencyEnabled NOTIFY nativeExperienceChanged)
+    bool reducedTransparencyEnabled() const;
+    void setReducedTransparencyEnabled(bool enabled);
     bool highContrastEnabled() const;
     void setHighContrastEnabled(bool enabled);
     QString uiDensity() const;
@@ -2520,6 +2535,9 @@ public:
     QStringList brainInsightSummaries() const;
     QStringList recoveryReliabilitySummaries() const;
     QStringList productPolishSummaries() const;
+    Q_PROPERTY(QString responseProfileInstructions READ responseProfileInstructions WRITE setResponseProfileInstructions NOTIFY skillProfileChanged)
+    QString responseProfileInstructions() const;
+    void setResponseProfileInstructions(const QString& instructions);
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
     QString selectedSkillProfileName() const;
@@ -2740,6 +2758,7 @@ public:
     Q_INVOKABLE void dismissGlobalError();
     Q_INVOKABLE bool snoozeNotification(const QString& notificationId, int minutes);
     Q_INVOKABLE bool unsnoozeNotification(const QString& notificationId);
+    Q_INVOKABLE bool shouldShowNotification(const QVariantMap& notification) const;
     Q_INVOKABLE bool isChannelMuted(const QString& category) const;
     Q_INVOKABLE void setChannelMuted(const QString& category, bool muted);
     Q_INVOKABLE QStringList mutedChannelNames() const;
@@ -2754,7 +2773,7 @@ public:
                                                   const QString& whisperModelPath);
     Q_INVOKABLE QString autoDetectVoicePaths();
     Q_INVOKABLE QVariantMap autoDetectVoicePathStatus();
-    Q_INVOKABLE void startVoiceCapture();
+    Q_INVOKABLE void startVoiceCapture(bool testOnly = false);
     Q_INVOKABLE void stopVoiceCapture();
     Q_INVOKABLE void transcribeAudioFile(const QString& path);
     QString selectedCloudProvider() const;
@@ -2812,8 +2831,10 @@ signals:
     void conversationStateChanged();
     void conversationRuntimeChanged();
     void conversationSearchChanged();
+    void voiceInputChanged();
     void voiceRecordingActiveChanged();
     void voiceTranscriptionCompleted(const QString& transcript);
+    void voiceTestTranscriptionCompleted(const QString& transcript);
     void conversationExportChanged();
     void conversationDuplicateChanged();
     void conversationDeleteChanged();
@@ -2856,6 +2877,7 @@ signals:
     void globalErrorChanged();
 
 private:
+    QObject* backupManager_ = nullptr;
     DesktopShellViewModel(DesktopControllerBridge::Source source, core::ModeManager& modeManager,
                           core::AppSettings& settings, core::WinTaskbarIntegration* taskbar,
                           QObject* parent);
@@ -2879,7 +2901,6 @@ private:
     QString notificationCategoryFilter_ = QStringLiteral("All");
     bool notificationCenterVisible_ = false;
     void setupBackgroundUpdateCheck();
-    bool dndEnabled_ = false;
     QString exportPreviewSource_ = QStringLiteral("conversations");
     QString exportPreviewFormat_ = QStringLiteral("Markdown");
     ChatMessageListModel chatMessages_;
@@ -2887,6 +2908,14 @@ private:
     bool companionNativeAvailable_ = false;
     bool companionPaused_ = false;
     bool companionChatVisible_ = false;
+    SystemDictationService systemDictation_{this};
+    void deliverVoiceTranscript(const QString& transcript);
+    bool voiceTestOnly_ = false;
+    QString voiceInputStatus_;
+    QString lastVoiceTranscript_;
+    QString attachmentError_;
+    QHash<QString, QString> attachmentPaths_;
+    bool attachmentSendPending_ = false;
     bool voiceRecordingActive_ = false;
 
     core::WinTaskbarIntegration* taskbar_ = nullptr;
