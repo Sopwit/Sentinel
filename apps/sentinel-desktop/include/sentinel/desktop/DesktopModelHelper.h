@@ -10,6 +10,8 @@ class DesktopModelHelper final : public QObject {
     Q_PROPERTY(bool pulling READ pulling NOTIFY changed)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY changed)
     Q_PROPERTY(bool hasPrevious READ hasPrevious NOTIFY changed)
+    Q_PROPERTY(int catalogPage READ catalogPage NOTIFY changed)
+    Q_PROPERTY(int catalogPages READ catalogPages NOTIFY changed)
     Q_PROPERTY(bool fetching READ fetching NOTIFY changed)
     Q_PROPERTY(QString activeModel READ activeModel NOTIFY changed)
     Q_PROPERTY(double progress READ progress NOTIFY changed)
@@ -39,6 +41,8 @@ public:
     bool hasMore() const {
         return m_values.value("hasMore").toBool();
     }
+    int catalogPage() const { return m_values.value("catalogPage").toInt(); }
+    int catalogPages() const { return qMax(1, m_values.value("catalogPages").toInt()); }
     bool hasPrevious() const {
         return m_values.value("hasPrevious").toBool();
     }

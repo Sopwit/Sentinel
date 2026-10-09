@@ -37,6 +37,8 @@ private:
     QString ollamaSort_ = "popular";
     bool ggufOnly_ = false;
     int catalogPage_ = 0;
+    int catalogPages_ = 1;
+    struct ModelRows { QJsonArray models; int installed; int pages; };
     QTimer refreshTimer_;
     void refreshCatalog(bool force);
     QString runtimeBinary() const;

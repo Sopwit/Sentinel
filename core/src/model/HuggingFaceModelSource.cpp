@@ -87,6 +87,34 @@ HuggingFaceModelSource::HuggingFaceModelSource(QString cachePath, QObject* paren
 HuggingFaceModelSource::Snapshot HuggingFaceModelSource::snapshot() const {
     return {cachedModels_, storageRoot_, knownStorageRoots_, catalogState(), catalogDetail()};
 }
+HuggingFaceModelSource::Snapshot HuggingFaceModelSource::pageSnapshot(
+    const Snapshot& snapshot, int page, int pageSize, int* pageCount) {
+    // Page model families, keeping size/quantization variants together.
+    static const QRegularExpression encoding("(?:[-_\\s])(?:q\\d(?:_[a-z0-9]+)*|iq\\d(?:_[a-z0-9]+)*|f16|f32|bf16|fp16|fp32)(?=$|[-_\\s])", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression size("(?:[-_\\s])\\d+(?:\\.\\d+)?[bm](?=$|[-_\\s])", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression suffix("[-_\\s]+gguf$", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression trailing("[-_\\s]+$");
+    QHash<QString, int> indices;
+    QList<int> families;
+    for (const auto& value : snapshot.models) {
+        const auto object = value.toObject();
+        auto key = object.value("id").toString(object.value("modelId").toString()).toLower();
+        key.remove(encoding).remove(size).remove(suffix).remove(trailing);
+        if (!indices.contains(key)) indices.insert(key, indices.size());
+        families.append(indices.value(key));
+    }
+    pageSize = qMax(1, pageSize);
+    const int pages = qMax(1, (indices.size() + pageSize - 1) / pageSize);
+    if (pageCount) *pageCount = pages;
+    const int first = qBound(0, page, pages - 1) * pageSize;
+    Snapshot result = snapshot;
+    result.models = {};
+    for (qsizetype i = 0; i < families.size(); ++i)
+        if (families[i] >= first && families[i] < first + pageSize)
+            result.models.append(snapshot.models.at(i));
+    return result;
+}
+
 HuggingFaceModelSource::HuggingFaceModelSource(const Snapshot& snapshot)
     : storageRoot_(snapshot.storageRoot), knownStorageRoots_(snapshot.knownStorageRoots),
       cachedModels_(snapshot.models), state_(snapshot.state), detail_(snapshot.detail) {}

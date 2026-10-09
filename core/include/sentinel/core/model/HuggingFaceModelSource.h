@@ -80,6 +80,7 @@ public:
         QString detail;
     };
     Snapshot snapshot() const;
+    static Snapshot pageSnapshot(const Snapshot& snapshot, int page, int pageSize, int* pageCount);
     static void visitSnapshot(const Snapshot& snapshot,
         const std::function<void(const HuggingFaceRepository&, const QList<ModelLibraryEntry>&)>& visitor,
         const std::function<bool()>& cancelled = {});
