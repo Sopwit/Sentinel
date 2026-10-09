@@ -23,6 +23,31 @@ Item {
     readonly property bool taskAwaitingApproval: root.viewModel.controlledTaskActiveSummary.indexOf("[Waiting Approval]") >= 0
     readonly property bool taskRunning: root.viewModel.controlledTaskActiveSummary.indexOf("[Running]") >= 0 || root.taskAwaitingApproval
 
+    property var retentionSettings: []
+    property string retentionStatus: ""
+    property string pendingPreferenceId: ""
+    property var pendingPreferenceValue: null
+    property double pendingPreferenceDeadline: 0
+    function refreshRetention() {
+        const rows = root.viewModel.productSettings().filter(function(row) { return row.id.indexOf("privacy.retention.") === 0 })
+        if (JSON.stringify(rows) !== JSON.stringify(root.retentionSettings)) root.retentionSettings = rows
+        if (root.pendingPreferenceId.length > 0) {
+            const confirmed = rows.some(function(row) { return row.id === root.pendingPreferenceId && row.value === root.pendingPreferenceValue })
+            if (confirmed || Date.now() > root.pendingPreferenceDeadline) {
+                root.retentionStatus = confirmed ? qsTr("Preference saved.") : qsTr("The change was not confirmed. The currently stored value is shown; check the connection and try again.")
+                root.pendingPreferenceId = ""
+            }
+        }
+    }
+    function retentionTitle(id) {
+        const titles = { "chat": qsTr("Chat history"), "agentRuns": qsTr("Agent runs"), "diagnostics": qsTr("Diagnostics"), "modelSourceCache": qsTr("Model catalog cache"), "modelOperations": qsTr("Model operation history") }
+        return titles[id.replace("privacy.retention.", "")] || id
+    }
+    function retentionLabel(value) {
+        return value === "Keep" ? qsTr("Keep until deleted") : qsTr("%1 days").arg(value.replace("d", ""))
+    }
+    Timer { interval: 1500; repeat: true; running: root.visible; triggeredOnStart: true; onTriggered: root.refreshRetention() }
+
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
 
@@ -40,6 +65,58 @@ Item {
         anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
+
+        SectionTitle {
+            title: qsTr("Data retention")
+            subtitle: qsTr("Choose how long local records are kept. Expired records may be permanently removed during maintenance; model weight files are not deleted by these policies.")
+            Layout.fillWidth: true
+        }
+        SettingCard {
+            Label {
+                visible: root.retentionSettings.length === 0
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                text: root.viewModel.daemonConnected ? qsTr("Loading retention policies…") : qsTr("Connect to the daemon to load retention policies.")
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
+            Repeater {
+                model: root.retentionSettings
+                SettingControlRow {
+                    id: retentionRow
+                    required property var modelData
+                    title: root.retentionTitle(modelData.id)
+                    compact: root.compact
+                    subtitle: modelData.enabled ? "" : qsTr("This policy is unavailable in the current storage configuration.")
+                    SentinelComboBox {
+                        anchors.fill: parent
+                        enabled: retentionRow.modelData.enabled
+                        model: retentionRow.modelData.allowedValues
+                        currentIndex: model.indexOf(retentionRow.modelData.value)
+                        delegateTextResolver: (value) => root.retentionLabel(value)
+                        displayText: root.retentionLabel(retentionRow.modelData.value)
+                        onActivated: (index) => {
+                            const result = root.viewModel.setProductSetting(retentionRow.modelData.id, model[index])
+                            if (result.code === "Pending") {
+                                root.pendingPreferenceId = retentionRow.modelData.id
+                                root.pendingPreferenceValue = model[index]
+                                root.pendingPreferenceDeadline = Date.now() + 10000
+                            }
+                            root.retentionStatus = result.accepted ? qsTr("Retention policy saved.") : result.code === "Pending" ? qsTr("Waiting for the daemon to confirm the change…") : qsTr("Could not save the retention policy. Check the daemon connection and try again.")
+                            root.refreshRetention()
+                        }
+                    }
+                }
+            }
+            Label {
+                visible: root.retentionStatus.length > 0
+                text: root.retentionStatus
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
+        }
 
         // ------------------------------------------------------------------
         // 1. Permissions and safety

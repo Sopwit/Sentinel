@@ -14,6 +14,27 @@ Item {
     required property var viewModel
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    property string profileDraft: ""
+    property string savedProfile: ""
+    property string profileStatus: ""
+    property string pendingProfile: ""
+    property bool profileSavePending: false
+    property double profileDeadline: 0
+    Component.onCompleted: { savedProfile = viewModel.responseProfileInstructions; profileDraft = savedProfile }
+    Timer {
+        interval: 1000; repeat: true; running: root.visible
+        onTriggered: {
+            const stored = root.viewModel.responseProfileInstructions
+            if (root.profileSavePending && stored === root.pendingProfile) {
+                root.savedProfile = stored
+                root.profileStatus = qsTr("Response profile saved. It applies to new interactive Chat and Agent requests.")
+                root.profileSavePending = false
+            } else if (root.profileSavePending && Date.now() > root.profileDeadline) {
+                root.profileStatus = qsTr("The change was not confirmed. Check the daemon connection and retry.")
+                root.profileSavePending = false
+            }
+        }
+    }
     readonly property int panelPadding: SentinelTheme.spaceLg
 
     height: implicitHeight
@@ -26,6 +47,49 @@ Item {
         anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
+
+        SettingCard {
+            title: qsTr("Response profile")
+            subtitle: qsTr("Visible instructions for answer style and working approach. Model selection and permissions remain separate. Empty instructions disable this profile. Scheduled tasks do not inherit it.")
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceMd
+                SentinelComboBox {
+                    Layout.fillWidth: true
+                    model: [qsTr("Start from a template…"), qsTr("Developer"), qsTr("Learning"), qsTr("Research"), qsTr("Planning")]
+                    onActivated: function(index) {
+                        const templates = ["", qsTr("Explain implementation choices clearly. Prefer small, maintainable changes and describe relevant verification."), qsTr("Explain concepts step by step with concrete examples. Adapt depth to my questions and make assumptions explicit."), qsTr("Separate verified facts from inference. Compare evidence and identify uncertainty. Never invent sources."), qsTr("Turn goals into practical steps. State dependencies and tradeoffs clearly. Ask before committing to external actions.")]
+                        if (index > 0) root.profileDraft = templates[index]
+                    }
+                }
+                TextArea {
+                    id: responseProfileEditor
+                    objectName: "responseProfileEditor"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 140
+                    text: root.profileDraft
+                    onTextChanged: root.profileDraft = text
+                    wrapMode: TextEdit.Wrap
+                    color: SentinelTheme.textPrimary
+                    placeholderText: qsTr("Describe how you want Sentinel to respond…")
+                    Accessible.name: qsTr("Response profile instructions")
+                    background: Rectangle { color: SentinelTheme.surface; radius: SentinelTheme.radiusSm; border.color: responseProfileEditor.activeFocus ? root.modeAccent : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.3) }
+                }
+                Label { text: qsTr("%1 / 2000 characters").arg(root.profileDraft.length); color: SentinelTheme.textMuted }
+                Button {
+                    text: root.profileSavePending ? qsTr("Saving…") : qsTr("Save response profile")
+                    enabled: !root.profileSavePending && root.profileDraft.length <= 2000 && root.profileDraft.trim() !== root.viewModel.responseProfileInstructions && root.viewModel.daemonConnected
+                    onClicked: {
+                        root.pendingProfile = root.profileDraft.trim()
+                        root.profileSavePending = true
+                        root.profileDeadline = Date.now() + 10000
+                        root.profileStatus = qsTr("Waiting for the daemon to confirm…")
+                        root.viewModel.responseProfileInstructions = root.pendingProfile
+                    }
+                }
+                Label { Layout.fillWidth: true; text: root.profileStatus; visible: text.length > 0; wrapMode: Text.Wrap; color: SentinelTheme.textMuted }
+            }
+        }
 
         SectionTitle {
             title: qsTr("Brain & Memory")
@@ -101,6 +165,40 @@ Item {
                     }
                 }
 
+                SettingControlRow {
+                    title: qsTr("Workspace name")
+                    subtitle: qsTr("Rename the selected workspace without changing its folder or permissions.")
+                    compact: root.compact
+                    SentinelTextField {
+                        anchors.fill: parent
+                        text: root.viewModel.selectedWorkspaceName
+                        Accessible.name: qsTr("Workspace name")
+                        onEditingFinished: {
+                            if (text.trim().length > 0)
+                                root.viewModel.renameWorkspace(root.viewModel.selectedWorkspaceId, text.trim())
+                            text = Qt.binding(function() { return root.viewModel.selectedWorkspaceName })
+                        }
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    SentinelTextField { id: newWorkspaceName; Layout.fillWidth: true; placeholderText: qsTr("New workspace name"); Accessible.name: placeholderText }
+                    SentinelButton {
+                        text: qsTr("Create")
+                        enabled: newWorkspaceName.text.trim().length > 0
+                        onClicked: {
+                            var id = root.viewModel.createWorkspace(newWorkspaceName.text.trim(), "Personal")
+                            if (id.length > 0) { root.viewModel.selectedWorkspaceId = id; newWorkspaceName.clear() }
+                        }
+                    }
+                }
+                SentinelButton {
+                    text: qsTr("Duplicate workspace")
+                    onClicked: {
+                        var id = root.viewModel.duplicateWorkspace(root.viewModel.selectedWorkspaceId)
+                        if (id.length > 0) root.viewModel.selectedWorkspaceId = id
+                    }
+                }
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Folder")
@@ -326,65 +424,7 @@ Item {
             }
         }
 
-        SectionTitle {
-            title: qsTr("Profiles")
-            subtitle: qsTr("Name your configuration and choose the active skill profile for agent behavior.")
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceMd
-        }
 
-        SettingCard {
-            SettingControlRow {
-                title: qsTr("Configuration Profile")
-                subtitle: qsTr("Name for the active desktop environment profile.")
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    placeholderText: "Desktop Alpha"
-                    text: root.viewModel.configurationProfile
-                    onEditingFinished: root.viewModel.configurationProfile = text
-                }
-            }
-
-            SettingControlRow {
-                title: qsTr("Skill Profile")
-                subtitle: qsTr("Active agent capabilities and prompt role profile.")
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-
-                SentinelComboBox {
-                    accent: root.modeAccent
-                    anchors.fill: parent
-                    model: root.viewModel.skillProfileNames
-                    currentIndex: root.viewModel.skillProfileNames.indexOf(root.viewModel.selectedSkillProfileName)
-                    displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedSkillProfileName
-                    onActivated: (index) => {
-                        var ids = root.viewModel.skillProfileIds
-                        if (index >= 0 && index < ids.length)
-                            root.viewModel.selectedSkillProfile = ids[index]
-                    }
-                }
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: SentinelTheme.spaceMd
-                Layout.rightMargin: SentinelTheme.spaceMd
-                Layout.topMargin: SentinelTheme.spaceSm
-                Layout.bottomMargin: SentinelTheme.spaceSm
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Skill Profile Readiness")
-                    value: root.viewModel.selectedSkillProfileReadiness
-                    Layout.fillWidth: true
-                }
-            }
-        }
     }
 
     FolderDialog {

@@ -44,42 +44,45 @@ Item {
 
         SequentialAnimation on x {
             loops: Animation.Infinite
+            running: !MotionTokens.reducedMotion
             NumberAnimation {
                 from: -atmosphere.width * 0.1
                 to: atmosphere.width * 0.6
-                duration: 16000
+                duration: MotionTokens.duration(16000)
                 easing.type: Easing.InOutSine
             }
             NumberAnimation {
                 from: atmosphere.width * 0.6
                 to: -atmosphere.width * 0.1
-                duration: 16000
+                duration: MotionTokens.duration(16000)
                 easing.type: Easing.InOutSine
             }
         }
 
         SequentialAnimation on y {
             loops: Animation.Infinite
+            running: !MotionTokens.reducedMotion
             NumberAnimation {
                 from: -atmosphere.height * 0.1
                 to: atmosphere.height * 0.5
-                duration: 22000
+                duration: MotionTokens.duration(22000)
                 easing.type: Easing.InOutSine
             }
             NumberAnimation {
                 from: atmosphere.height * 0.5
                 to: -atmosphere.height * 0.1
-                duration: 22000
+                duration: MotionTokens.duration(22000)
                 easing.type: Easing.InOutSine
             }
         }
 
         SequentialAnimation on opacity {
             loops: Animation.Infinite
-            NumberAnimation { from: 0.0; to: 0.6; duration: 6000; easing.type: Easing.InOutSine }
-            PauseAnimation { duration: 4000 }
-            NumberAnimation { from: 0.6; to: 0.0; duration: 6000; easing.type: Easing.InOutSine }
-            PauseAnimation { duration: 4000 }
+            running: !MotionTokens.reducedMotion
+            NumberAnimation { from: 0.0; to: 0.6; duration: MotionTokens.duration(6000); easing.type: Easing.InOutSine }
+            PauseAnimation { duration: MotionTokens.duration(4000) }
+            NumberAnimation { from: 0.6; to: 0.0; duration: MotionTokens.duration(6000); easing.type: Easing.InOutSine }
+            PauseAnimation { duration: MotionTokens.duration(4000) }
         }
     }
 }

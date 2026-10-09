@@ -52,7 +52,7 @@ Rectangle {
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontBody
                 font.weight: Font.Medium
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
             }
 
             Label {

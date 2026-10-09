@@ -26,22 +26,22 @@ Rectangle {
 
         SequentialAnimation on x {
             loops: Animation.Infinite
-            running: shimmer.active
+            running: shimmer.active && !MotionTokens.reducedMotion
             NumberAnimation {
                 from: -shimmerBar.width
                 to: shimmer.parent.width
-                duration: 1500
+                duration: MotionTokens.duration(1500)
                 easing.type: Easing.InOutSine
             }
-            PauseAnimation { duration: 1200 }
+            PauseAnimation { duration: MotionTokens.duration(1200) }
         }
 
         SequentialAnimation on opacity {
             loops: Animation.Infinite
-            running: shimmer.active
-            NumberAnimation { from: 0.0; to: 0.8; duration: 750; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 0.8; to: 0.0; duration: 750; easing.type: Easing.InOutSine }
-            PauseAnimation { duration: 1200 }
+            running: shimmer.active && !MotionTokens.reducedMotion
+            NumberAnimation { from: 0.0; to: 0.8; duration: MotionTokens.duration(750); easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.8; to: 0.0; duration: MotionTokens.duration(750); easing.type: Easing.InOutSine }
+            PauseAnimation { duration: MotionTokens.duration(1200) }
         }
     }
 }
