@@ -7735,7 +7735,8 @@ bool ApplicationController::requestPermanentDeleteConversation(const QString& co
 }
 
 QString ApplicationController::createConversation(const QString& title) {
-    if (chatMode_ && chatMode_->busy()) return {};
+    if ((chatMode_ && chatMode_->busy()) || agentLoopActive())
+        return {};
     if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
         return {};
     }
@@ -7764,7 +7765,8 @@ QString ApplicationController::createConversation(const QString& title) {
 }
 
 bool ApplicationController::switchConversation(const QString& conversationId) {
-    if (chatMode_ && chatMode_->busy()) return false;
+    if ((chatMode_ && chatMode_->busy()) || agentLoopActive())
+        return false;
     const auto trimmedId = conversationId.trimmed();
     if (trimmedId.isEmpty() || !conversationStore_ ||
         conversationStore_->status() != ConversationStoreStatus::Ready) {
@@ -9649,6 +9651,11 @@ void ApplicationController::refreshConversationSession() {
 }
 
 void ApplicationController::resetConversationRuntimeState() {
+    // Terminal text projection can be queued after the terminal IPC event.
+    // Once another conversation is selected, old Agent events must not append
+    // to its transcript. Active runs cannot switch/create conversations above.
+    if (!agentLoopActive())
+        activeAgentSessionId_.clear();
     if (localInferenceBusy_ && localInferenceWorker_ && !activeLocalInferenceRequestId_.isEmpty()) {
         localInferenceWorker_->cancel(activeLocalInferenceRequestId_);
     }

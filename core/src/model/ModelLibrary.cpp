@@ -163,6 +163,18 @@ bool LMStudioNativeCatalogAdapter::acceptResponse(const QByteArray& response) {
         discovered.architecture = entry.architecture;
         const auto maxContext = item.value(QStringLiteral("max_context_length")).toInt();
         if (maxContext > 0) discovered.capabilities.contextWindow = maxContext;
+        // A published maximum is not the context of a loaded inference instance.
+        // Use the smallest reported loaded window because requests use the model key.
+        for (const auto& instance : item.value(QStringLiteral("loaded_instances")).toArray()) {
+            const auto loaded = instance.toObject()
+                                    .value(QStringLiteral("config"))
+                                    .toObject()
+                                    .value(QStringLiteral("context_length"))
+                                    .toInt();
+            if (loaded > 0)
+                discovered.capabilities.contextWindow =
+                    qMin(discovered.capabilities.contextWindow.value_or(loaded), loaded);
+        }
         const auto capabilities = item.value(QStringLiteral("capabilities")).toObject();
         if (capabilities.value(QStringLiteral("vision")).isBool())
             discovered.capabilities.visionInput =
