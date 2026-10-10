@@ -35,20 +35,19 @@ ChatProviderErrorCategory categoryFromLocalInference(LocalInferenceError error,
     return ChatProviderErrorCategory::ProviderUnavailable;
 }
 
-ChatProviderReply failureReply(QString detail, ChatProviderErrorCategory category,
-                              ChatProviderReply::Error error = ChatProviderReply::Error::ProviderFailure) {
+ChatProviderReply
+failureReply(QString detail, ChatProviderErrorCategory category,
+             ChatProviderReply::Error error = ChatProviderReply::Error::ProviderFailure) {
     ChatProviderReply reply;
     reply.success = false;
     reply.errorMessage = std::move(detail);
     reply.error = error;
     reply.category = category;
-    reply.lifecycle = category == ChatProviderErrorCategory::Timeout
-                          ? ChatRequestLifecycle::TimedOut
-                      : category == ChatProviderErrorCategory::Cancelled
-                          ? ChatRequestLifecycle::Cancelled
-                      : category == ChatProviderErrorCategory::RateLimited
-                          ? ChatRequestLifecycle::RateLimited
-                          : ChatRequestLifecycle::Failed;
+    reply.lifecycle =
+        category == ChatProviderErrorCategory::Timeout       ? ChatRequestLifecycle::TimedOut
+        : category == ChatProviderErrorCategory::Cancelled   ? ChatRequestLifecycle::Cancelled
+        : category == ChatProviderErrorCategory::RateLimited ? ChatRequestLifecycle::RateLimited
+                                                             : ChatRequestLifecycle::Failed;
     return reply;
 }
 
@@ -99,12 +98,13 @@ ChatProviderReply OllamaChatProvider::sendRequest(const QString& message,
                                                   const ChatRequestOptions& options) {
     if (options.nativeToolCalling || options.structuredOutput)
         return IChatProvider::sendRequest(message, options);
-    return sendMessageWithToken(message, options.cancellationToken, options.images);
+    return sendMessageWithToken(message, options.cancellationToken, options.images,
+                                options.deadlineMs, options.maxOutputTokens);
 }
 
 ChatProviderReply OllamaChatProvider::sendMessageWithToken(
-    const QString& message,
-    const std::shared_ptr<std::atomic_bool>& cancellationToken, const QList<ChatImage>& images) {
+    const QString& message, const std::shared_ptr<std::atomic_bool>& cancellationToken,
+    const QList<ChatImage>& images, int deadlineMs, int maxOutputTokens) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty()) {
         return failureReply(QStringLiteral("Prompt is blank."),
@@ -114,8 +114,9 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
     const auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
         if (!discoverySnapshot_)
-            return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
-                                ChatProviderErrorCategory::RequestRejected);
+            return failureReply(
+                QStringLiteral("An Ollama model must be selected for direct execution."),
+                ChatProviderErrorCategory::RequestRejected);
         const auto& discovery = *discoverySnapshot_;
         if (!discovery.succeeded()) {
             auto reply = failureReply(discovery.safeDetail, discovery.errorCategory);
@@ -142,11 +143,11 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
     request.options.model = model;
     if (discoverySnapshot_)
         request.options.modelValidation = *discoverySnapshot_;
-    request.options.timeoutMs = timeoutMs_;
+    request.options.timeoutMs = deadlineMs > 0 ? deadlineMs : timeoutMs_;
     request.options.cancellationToken = cancellationToken;
     request.options.temperature = 0.7;
     request.options.topP = 0.9;
-    request.options.maxTokens = 2048;
+    request.options.maxTokens = maxOutputTokens > 0 ? maxOutputTokens : 2048;
 
     const auto response = inferenceClient.infer(request);
     if (response.status == LocalInferenceStatus::Succeeded) {
@@ -158,10 +159,11 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
         return reply;
     }
 
-    auto reply = failureReply(response.summary,
-                              response.providerErrorCategory > 0
-                                  ? static_cast<ChatProviderErrorCategory>(response.providerErrorCategory)
-                                  : categoryFromLocalInference(response.error, response.status));
+    auto reply =
+        failureReply(response.summary,
+                     response.providerErrorCategory > 0
+                         ? static_cast<ChatProviderErrorCategory>(response.providerErrorCategory)
+                         : categoryFromLocalInference(response.error, response.status));
     reply.message = response.text;
     reply.httpStatus = response.httpStatus;
     reply.attempts = response.attempts;
@@ -181,8 +183,9 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
     const auto model = selectedModel_.trimmed();
     if (model.isEmpty()) {
         if (!discoverySnapshot_)
-            return failureReply(QStringLiteral("An Ollama model must be selected for direct execution."),
-                                ChatProviderErrorCategory::RequestRejected);
+            return failureReply(
+                QStringLiteral("An Ollama model must be selected for direct execution."),
+                ChatProviderErrorCategory::RequestRejected);
         const auto& discovery = *discoverySnapshot_;
         if (!discovery.succeeded()) {
             auto reply = failureReply(discovery.safeDetail, discovery.errorCategory);
@@ -247,13 +250,13 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
         reply.requestId = result.requestId;
         return reply;
     }
-    auto reply = failureReply(
-        result.summary,
-        result.providerErrorCategory > 0
-            ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
-            : result.status == LocalInferenceStreamStatus::Cancelled
-            ? ChatProviderErrorCategory::Cancelled
-            : categoryFromLocalInference(result.error, LocalInferenceStatus::Error));
+    auto reply =
+        failureReply(result.summary,
+                     result.providerErrorCategory > 0
+                         ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+                     : result.status == LocalInferenceStreamStatus::Cancelled
+                         ? ChatProviderErrorCategory::Cancelled
+                         : categoryFromLocalInference(result.error, LocalInferenceStatus::Error));
     reply.message = result.accumulatedText;
     reply.httpStatus = result.httpStatus;
     reply.attempts = result.attempts;

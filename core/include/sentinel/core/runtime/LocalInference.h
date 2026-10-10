@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/runtime/OllamaRuntime.h"
 
-#include <QList>
 #include <QJsonObject>
+#include <QList>
 #include <QNetworkReply>
 #include <QObject>
 #include <QString>
@@ -107,6 +107,7 @@ struct LocalInferenceResponse {
     QString retrySummary;
     QString requestId;
     int providerErrorCategory = 0;
+    QJsonObject diagnostics;
 };
 
 enum class LocalInferenceStreamStatus : std::uint8_t {
@@ -246,8 +247,7 @@ private:
 
 class OllamaLocalInferenceClient final : public ILocalInferenceClient {
 public:
-    explicit OllamaLocalInferenceClient(OllamaConfig config = OllamaConfig{},
-                                        int timeoutMs = 0);
+    explicit OllamaLocalInferenceClient(OllamaConfig config = OllamaConfig{}, int timeoutMs = 0);
 
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
     QString statusSummary() const override;
@@ -352,12 +352,12 @@ public:
                                           int timeoutMs = 0);
 
     LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
-    OpenAiCompletionResult completeOpenAiChat(
-        const QJsonObject& body,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
-    OpenAiCompletionResult completeNativeChat(
-        NativeProtocol protocol, const QJsonObject& body,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
+    OpenAiCompletionResult
+    completeOpenAiChat(const QJsonObject& body,
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
+    OpenAiCompletionResult
+    completeNativeChat(NativeProtocol protocol, const QJsonObject& body,
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) const;
     QString statusSummary() const override;
 
 private:

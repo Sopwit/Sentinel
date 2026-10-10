@@ -14,8 +14,10 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLoggingCategory>
 #include <QRegularExpression>
 #include <QStandardPaths>
 
@@ -87,6 +89,7 @@ QString providerCatalogStateName(ProviderCatalogState state) {
 }
 
 namespace {
+Q_LOGGING_CATEGORY(nativeProviderDiagnostics, "sentinel.provider.diagnostics", QtWarningMsg)
 
 class HealthTrackedProvider final : public IChatProvider {
 public:
@@ -121,7 +124,7 @@ public:
     }
     ChatProviderReply
     sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
         const auto sequence = ++registry_->nextSequence;
         auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken);
         update(sequence, reply, QStringLiteral("stream"));
@@ -234,7 +237,7 @@ providerFailure(QString detail, ChatProviderErrorCategory category,
 ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol protocol,
                                       const ModelBinding& binding, const LMStudioConfig& config,
                                       int timeoutMs, const QString& message,
-    const ChatRequestOptions& options) {
+                                      const ChatRequestOptions& options) {
     const bool claude = protocol == LMStudioLocalInferenceClient::NativeProtocol::Claude;
     const auto malformed = [](const QString& detail) {
         return providerFailure(detail, ChatProviderErrorCategory::MalformedResponse,
@@ -255,8 +258,9 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
     QJsonArray initialParts{QJsonObject{{QStringLiteral("text"), message}}};
     appendGeminiImageParts(initialParts, options.images);
     if (claude) {
-        QJsonArray messages{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                                        {QStringLiteral("content"), chatImageContent(message, options.images, true)}}};
+        QJsonArray messages{QJsonObject{
+            {QStringLiteral("role"), QStringLiteral("user")},
+            {QStringLiteral("content"), chatImageContent(message, options.images, true)}}};
         if (!options.priorToolCalls.isEmpty()) {
             QJsonParseError historyError;
             const auto history = QJsonDocument::fromJson(
@@ -293,7 +297,7 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                     nativeToolDefinition(tool).value(QStringLiteral("function")).toObject();
                 tools.append(QJsonObject{
                     {QStringLiteral("name"), function.value(QStringLiteral("name"))},
-                                         {QStringLiteral("description"), function.value(QStringLiteral("description"))},
+                    {QStringLiteral("description"), function.value(QStringLiteral("description"))},
                     {QStringLiteral("input_schema"),
                      function.value(QStringLiteral("parameters"))}});
             }
@@ -303,9 +307,9 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
         if (options.structuredOutput)
             body.insert(
                 QStringLiteral("output_config"),
-                        QJsonObject{{QStringLiteral("format"),
-                                     QJsonObject{{QStringLiteral("type"), QStringLiteral("json_schema")},
-                                                 {QStringLiteral("schema"), options.structuredSchema}}}});
+                QJsonObject{{QStringLiteral("format"),
+                             QJsonObject{{QStringLiteral("type"), QStringLiteral("json_schema")},
+                                         {QStringLiteral("schema"), options.structuredSchema}}}});
     } else {
         QJsonArray contents{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
                                         {QStringLiteral("parts"), initialParts}}};
@@ -331,8 +335,8 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                     return malformed(QStringLiteral("Native function result ID mismatch."));
                 QJsonObject functionResponse{
                     {QStringLiteral("name"), nativeFunctionName(call.toolId)},
-                                             {QStringLiteral("response"),
-                                              QJsonObject{{QStringLiteral("output"), result.content.left(6800)}}}};
+                    {QStringLiteral("response"),
+                     QJsonObject{{QStringLiteral("output"), result.content.left(6800)}}}};
                 if (!call.callId.startsWith(QLatin1String("sentinel-gemini-"))) {
                     functionResponse.insert(QStringLiteral("id"), call.callId);
                 }
@@ -379,9 +383,9 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                                   : classified;
         auto reply =
             providerFailure(completion.error, category,
-                                     category == ChatProviderErrorCategory::CapabilityUnsupported
-                                         ? ChatProviderReply::Error::CapabilityRejected
-                                         : ChatProviderReply::Error::ProviderFailure,
+                            category == ChatProviderErrorCategory::CapabilityUnsupported
+                                ? ChatProviderReply::Error::CapabilityRejected
+                                : ChatProviderReply::Error::ProviderFailure,
                             completion.httpStatus, completion.attempts, completion.retrySummary);
         reply.requestId = completion.requestId;
         return reply;
@@ -420,7 +424,7 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                                          .isEmpty()) {
             auto reply =
                 providerFailure(QStringLiteral("Gemini blocked the request."),
-                                         ChatProviderErrorCategory::RequestRejected,
+                                ChatProviderErrorCategory::RequestRejected,
                                 ChatProviderReply::Error::ProviderFailure, completion.httpStatus,
                                 completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
@@ -471,11 +475,11 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
         const auto arguments =
             call.value(claude ? QStringLiteral("input") : QStringLiteral("args"));
         const auto callId = claude ? call.value(QStringLiteral("id")).toString()
-            : call.value(QStringLiteral("id")).toString().isEmpty()
+                            : call.value(QStringLiteral("id")).toString().isEmpty()
                                 ? QStringLiteral("sentinel-gemini-%1-%2")
                                       .arg(completion.requestId)
                                       .arg(++generatedId)
-                : call.value(QStringLiteral("id")).toString();
+                                : call.value(QStringLiteral("id")).toString();
         QString toolId;
         for (const auto& tool : options.tools)
             if (tool.enabled && tool.exposedToModel && nativeFunctionName(tool.id) == name) {
@@ -530,9 +534,9 @@ public:
     ChatProviderReply sendMessage(const QString& message) override {
         return sendMessageWithToken(message, {});
     }
-    ChatProviderReply
-    sendMessageWithToken(const QString& message,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken, const QList<ChatImage>& images = {}) {
+    ChatProviderReply sendMessageWithToken(
+        const QString& message, const std::shared_ptr<std::atomic_bool>& cancellationToken,
+        const QList<ChatImage>& images = {}, int deadlineMs = 0, int maxOutputTokens = 0) {
         if (!config_.isAllowedEndpoint())
             return providerFailure(
                 QStringLiteral("Selected provider '%1' is unavailable or not configured.")
@@ -542,17 +546,42 @@ public:
         request.prompt = message;
         request.images = images;
         request.options.model = binding_.modelId;
-        request.options.timeoutMs = timeoutMs_;
+        request.options.timeoutMs = deadlineMs > 0 ? deadlineMs : timeoutMs_;
+        if (maxOutputTokens > 0)
+            request.options.maxTokens = maxOutputTokens;
         request.options.cancellationToken = cancellationToken;
         LMStudioLocalInferenceClient client(config_, timeoutMs_);
+        QElapsedTimer elapsed;
+        elapsed.start();
         const auto result = client.infer(request);
+        const auto finish = [&](ChatProviderReply reply) {
+            reply.diagnostics = result.diagnostics;
+            reply.diagnostics.insert(QStringLiteral("provider_id"), binding_.providerId.left(128));
+            reply.diagnostics.insert(QStringLiteral("model_id"), binding_.modelId.left(128));
+            reply.diagnostics.insert(QStringLiteral("deadline_ms"), request.options.timeoutMs);
+            reply.diagnostics.insert(QStringLiteral("output_budget_tokens"),
+                                     request.options.maxTokens);
+            reply.diagnostics.insert(QStringLiteral("elapsed_ms"), elapsed.elapsed());
+            reply.diagnostics.insert(QStringLiteral("http_status"), result.httpStatus);
+            reply.diagnostics.insert(QStringLiteral("category"),
+                                     chatProviderErrorCategoryName(reply.category));
+            reply.diagnostics.insert(QStringLiteral("upstream_cancellation"),
+                                     QStringLiteral("unconfirmed"));
+            if (binding_.capabilities.contextWindow)
+                reply.diagnostics.insert(QStringLiteral("reported_context_tokens"),
+                                         *binding_.capabilities.contextWindow);
+            qCInfo(nativeProviderDiagnostics).noquote()
+                << QJsonDocument(reply.diagnostics).toJson(QJsonDocument::Compact);
+            return reply;
+        };
         if (result.status == LocalInferenceStatus::Succeeded) {
             ChatProviderReply reply{true, result.text, {}};
             reply.lifecycle = ChatRequestLifecycle::Completed;
             reply.attempts = result.attempts;
             reply.retrySummary = result.retrySummary;
             reply.requestId = result.requestId;
-            return reply;
+            reply.httpStatus = result.httpStatus;
+            return finish(reply);
         }
         if (result.error == LocalInferenceError::ModelUnavailable)
             return providerFailure(
@@ -561,13 +590,13 @@ public:
                 ChatProviderErrorCategory::ModelNotFound);
         auto reply = providerFailure(
             QStringLiteral("Provider '%1': %2").arg(binding_.providerId, result.summary),
-                               result.providerErrorCategory > 0
-                                   ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
-                                   : categoryFromLocalInference(result.error, result.status),
+            result.providerErrorCategory > 0
+                ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+                : categoryFromLocalInference(result.error, result.status),
             ChatProviderReply::Error::ProviderFailure, result.httpStatus, result.attempts,
             result.retrySummary);
         reply.requestId = result.requestId;
-        return reply;
+        return finish(reply);
     }
 
     ChatProviderReply sendRequest(const QString& message,
@@ -581,10 +610,11 @@ public:
                  CapabilitySupport::Supported))
             return providerFailure(
                 QStringLiteral("Selected model does not support the requested native capability."),
-                                   ChatProviderErrorCategory::CapabilityUnsupported,
-                                   ChatProviderReply::Error::CapabilityRejected);
+                ChatProviderErrorCategory::CapabilityUnsupported,
+                ChatProviderReply::Error::CapabilityRejected);
         if (!options.nativeToolCalling && !options.structuredOutput)
-            return sendMessageWithToken(message, options.cancellationToken, options.images);
+            return sendMessageWithToken(message, options.cancellationToken, options.images,
+                                        options.deadlineMs, options.maxOutputTokens);
         if (!config_.isAllowedEndpoint())
             return providerFailure(QStringLiteral("Selected endpoint is unavailable."),
                                    ChatProviderErrorCategory::ProviderUnavailable);
@@ -595,7 +625,8 @@ public:
         if (host == QLatin1String("generativelanguage.googleapis.com"))
             return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Gemini,
                                        binding_, config_, timeoutMs_, message, options);
-        QJsonArray messages{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+        QJsonArray messages{
+            QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
                         {QStringLiteral("content"), chatImageContent(message, options.images)}}};
         if (!options.priorToolCalls.isEmpty()) {
             if (options.priorToolCalls.size() != options.toolResults.size())
@@ -623,8 +654,8 @@ public:
                                            ChatProviderReply::Error::InvalidResponse);
                 messages.append(
                     QJsonObject{{QStringLiteral("role"), QStringLiteral("tool")},
-                                            {QStringLiteral("tool_call_id"), result.callId},
-                                            {QStringLiteral("content"), result.content.left(6800)}});
+                                {QStringLiteral("tool_call_id"), result.callId},
+                                {QStringLiteral("content"), result.content.left(6800)}});
             }
         }
         QJsonObject body{{QStringLiteral("model"), binding_.modelId},
@@ -650,8 +681,8 @@ public:
                 QJsonObject{{QStringLiteral("type"), QStringLiteral("json_schema")},
                             {QStringLiteral("json_schema"),
                              QJsonObject{{QStringLiteral("name"), options.structuredSchemaName},
-                                {QStringLiteral("strict"), options.strictStructuredOutput},
-                                {QStringLiteral("schema"), options.structuredSchema}}}});
+                                         {QStringLiteral("strict"), options.strictStructuredOutput},
+                                         {QStringLiteral("schema"), options.structuredSchema}}}});
         }
         // Budget the actual serialized native request, including schemas and tool
         // results omitted by ContextEngine's prompt estimate. This is an estimate,
@@ -660,51 +691,128 @@ public:
         body.insert(QStringLiteral("max_tokens"), qMax(1, outputBudget));
         const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
         const auto estimatedInput = (bytes + 2) / 3 + 256;
+        QJsonObject diagnostics{
+            {QStringLiteral("provider_id"), binding_.providerId.left(128)},
+            {QStringLiteral("model_id"), binding_.modelId.left(128)},
+            {QStringLiteral("request_bytes"), bytes},
+            {QStringLiteral("estimated_input_tokens"), estimatedInput},
+            {QStringLiteral("estimate_method"), QStringLiteral("utf8_bytes/3+256")},
+            {QStringLiteral("requested_output_tokens"), qMax(1, outputBudget)},
+            {QStringLiteral("continuation_calls"), options.priorToolCalls.size()},
+            {QStringLiteral("transport_attempted"), false}};
+        if (binding_.capabilities.contextWindow)
+            diagnostics.insert(QStringLiteral("reported_context_tokens"),
+                               *binding_.capabilities.contextWindow);
+        QJsonArray observationSizes;
+        for (const auto& observation : options.toolResults.mid(0, 8))
+            observationSizes.append(observation.content.toUtf8().size());
+        diagnostics.insert(QStringLiteral("tool_observation_bytes"), observationSizes);
+        QString diagnosticRequestId;
+        const auto finish = [&](ChatProviderReply reply, const QString& outcome) {
+            if (reply.requestId.isEmpty())
+                reply.requestId = diagnosticRequestId;
+            auto metadata = diagnostics;
+            metadata.insert(QStringLiteral("outcome"), outcome);
+            metadata.insert(QStringLiteral("http_status"), reply.httpStatus);
+            metadata.insert(QStringLiteral("attempts"), reply.attempts);
+            metadata.insert(QStringLiteral("error_category"),
+                            chatProviderErrorCategoryName(reply.category));
+            reply.diagnostics = metadata;
+            qCInfo(nativeProviderDiagnostics).noquote()
+                << QJsonDocument(metadata).toJson(QJsonDocument::Compact);
+            return reply;
+        };
         if (binding_.capabilities.contextWindow &&
             estimatedInput + outputBudget > *binding_.capabilities.contextWindow)
-            return providerFailure(
-                QStringLiteral(
-                    "Context budget exceeded (estimated input %1, output %2, reported window %3). "
-                    "No request sent; inspect partial changes and reduce task size.")
-                    .arg(estimatedInput)
-                    .arg(outputBudget)
-                    .arg(*binding_.capabilities.contextWindow),
-                ChatProviderErrorCategory::RequestRejected);
+            return finish(
+                providerFailure(
+                    QStringLiteral("Context budget exceeded (estimated input %1, output %2, "
+                                   "reported window %3). "
+                                   "No request sent; inspect partial changes and reduce task size.")
+                        .arg(estimatedInput)
+                        .arg(outputBudget)
+                        .arg(*binding_.capabilities.contextWindow),
+                    ChatProviderErrorCategory::RequestRejected),
+                QStringLiteral("context_exhausted"));
+        diagnostics.insert(QStringLiteral("transport_attempted"), true);
         LMStudioLocalInferenceClient client(config_, timeoutMs_);
         const auto completion = client.completeOpenAiChat(body, options.cancellationToken);
+        diagnosticRequestId = completion.requestId;
         if (!completion.ok) {
+            const bool contextRejected =
+                (completion.httpStatus == 400 || completion.httpStatus == 422) &&
+                (completion.error.contains(QStringLiteral("context size has been exceeded"),
+                                           Qt::CaseInsensitive) ||
+                 completion.error.contains(QStringLiteral("context length exceeded"),
+                                           Qt::CaseInsensitive) ||
+                 completion.error.contains(QStringLiteral("maximum context length"),
+                                           Qt::CaseInsensitive));
             const bool rejected = (options.nativeToolCalling || options.structuredOutput) &&
-                (completion.httpStatus == 400 || completion.httpStatus == 422 ||
-                 completion.httpStatus == 501);
+                                  (completion.httpStatus == 400 || completion.httpStatus == 422 ||
+                                   completion.httpStatus == 501);
             auto reply = providerFailure(
                 completion.error,
-                completion.cancelled ? ChatProviderErrorCategory::Cancelled
-                         : rejected ? ChatProviderErrorCategory::CapabilityUnsupported
-                         : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
-                         : completion.providerErrorCategory > 0
-                             ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
+                completion.cancelled   ? ChatProviderErrorCategory::Cancelled
+                : contextRejected      ? ChatProviderErrorCategory::RequestRejected
+                : rejected             ? ChatProviderErrorCategory::CapabilityUnsupported
+                : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                : completion.providerErrorCategory > 0
+                    ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
                     : ProviderRequestRuntime::classify(completion.httpStatus,
                                                        completion.networkError, completion.timedOut,
                                                        completion.cancelled),
-                rejected ? ChatProviderReply::Error::CapabilityRejected
-                         : ChatProviderReply::Error::ProviderFailure,
+                rejected && !contextRejected ? ChatProviderReply::Error::CapabilityRejected
+                                             : ChatProviderReply::Error::ProviderFailure,
                 completion.httpStatus, completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
-            return reply;
+            return finish(reply, contextRejected        ? QStringLiteral("context_exhausted")
+                                 : completion.malformed ? QStringLiteral("response_format_failure")
+                                 : rejected ? QStringLiteral("provider_request_rejected")
+                                 : completion.cancelled ? QStringLiteral("cancelled")
+                                 : completion.timedOut  ? QStringLiteral("timeout")
+                                                        : QStringLiteral("transport_failure"));
         }
         const auto choices = completion.body.value(QStringLiteral("choices")).toArray();
         if (choices.isEmpty()) {
             auto reply =
                 providerFailure(QStringLiteral("Chat completion has no choices."),
-                                   ChatProviderErrorCategory::MalformedResponse,
-                                   ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
-                                   completion.attempts, completion.retrySummary);
+                                ChatProviderErrorCategory::MalformedResponse,
+                                ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
+                                completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
-            return reply;
+            return finish(reply, QStringLiteral("response_format_failure"));
         }
         const auto replyMessage =
             choices.first().toObject().value(QStringLiteral("message")).toObject();
+        const auto rawFinish = choices.first().toObject().value(QStringLiteral("finish_reason"));
+        if (rawFinish.isString()) {
+            const auto reason = rawFinish.toString();
+            diagnostics.insert(QStringLiteral("finish_reason"),
+                               QStringList{QStringLiteral("stop"), QStringLiteral("length"),
+                                           QStringLiteral("tool_calls"),
+                                           QStringLiteral("content_filter")}
+                                       .contains(reason)
+                                   ? reason
+                                   : QStringLiteral("other"));
+        }
+        const auto usage = completion.body.value(QStringLiteral("usage")).toObject();
+        for (const auto& key : {"prompt_tokens", "completion_tokens", "total_tokens"}) {
+            const auto value = usage.value(QLatin1String(key));
+            if (value.isDouble() && value.toDouble() >= 0)
+                diagnostics.insert(QString::fromLatin1(key), value);
+        }
+        const auto reasoningTokens = usage.value(QStringLiteral("completion_tokens_details"))
+                                         .toObject()
+                                         .value(QStringLiteral("reasoning_tokens"));
+        if (reasoningTokens.isDouble() && reasoningTokens.toDouble() >= 0)
+            diagnostics.insert(QStringLiteral("reasoning_tokens"), reasoningTokens);
+        diagnostics.insert(
+            QStringLiteral("response_content_bytes"),
+            replyMessage.value(QStringLiteral("content")).toString().toUtf8().size());
+        diagnostics.insert(QStringLiteral("response_tool_calls"),
+                           replyMessage.value(QStringLiteral("tool_calls")).toArray().size());
         ChatProviderReply result;
+        result.httpStatus = completion.httpStatus;
         result.success = true;
         result.lifecycle = ChatRequestLifecycle::Completed;
         result.attempts = completion.attempts;
@@ -717,8 +825,18 @@ public:
                                 ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
                                 completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
-            return reply;
+            return finish(reply, QStringLiteral("response_format_failure"));
         };
+        if (rawFinish.toString() == QLatin1String("length"))
+            return finish(
+                providerFailure(
+                    QStringLiteral(
+                        "Native provider output budget exhausted (finish_reason=length). "
+                        "No tool calls accepted; inspect prior changes before a smaller retry."),
+                    ChatProviderErrorCategory::RequestRejected,
+                    ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
+                    completion.attempts, completion.retrySummary),
+                QStringLiteral("output_limit"));
         for (const auto& value : replyMessage.value(QStringLiteral("tool_calls")).toArray()) {
             const auto call = value.toObject();
             const auto function = call.value(QStringLiteral("function")).toObject();
@@ -746,13 +864,19 @@ public:
             result.structuredResult = document.object();
         }
         if (result.message.isEmpty() && result.toolCalls.isEmpty())
-            return malformed(QStringLiteral("Chat completion returned no content or tool calls."));
-        return result;
+            return finish(providerFailure(
+                              QStringLiteral("Chat completion returned no content or tool calls."),
+                              ChatProviderErrorCategory::MalformedResponse,
+                              ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
+                              completion.attempts, completion.retrySummary),
+                          QStringLiteral("empty_response"));
+        return finish(result, result.toolCalls.isEmpty() ? QStringLiteral("content")
+                                                         : QStringLiteral("tool_calls"));
     }
 
     ChatProviderReply
     sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
-        const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
         if (binding_.capabilities.streaming != CapabilitySupport::Supported)
             return providerFailure(QStringLiteral("Selected model does not support streaming."),
                                    ChatProviderErrorCategory::CapabilityUnsupported,
@@ -767,7 +891,7 @@ public:
             client.startStream(request, [&](const LocalInferenceStreamChunk& chunk) {
                 if (!chunk.text.isEmpty() && onDelta)
                     onDelta(chunk.text);
-        });
+            });
         if (result.status == LocalInferenceStreamStatus::Completed) {
             ChatProviderReply reply{true, result.accumulatedText, {}};
             reply.lifecycle = ChatRequestLifecycle::Completed;
@@ -776,11 +900,11 @@ public:
         }
         auto reply = providerFailure(
             result.summary,
-                                     result.providerErrorCategory > 0
-                                         ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
+            result.providerErrorCategory > 0
+                ? static_cast<ChatProviderErrorCategory>(result.providerErrorCategory)
             : result.cancelled
                 ? ChatProviderErrorCategory::Cancelled
-                                         : categoryFromLocalInference(result.error, LocalInferenceStatus::Error),
+                : categoryFromLocalInference(result.error, LocalInferenceStatus::Error),
             ChatProviderReply::Error::ProviderFailure, result.httpStatus, result.attempts,
             result.retrySummary);
         reply.lifecycle = result.lifecycle;
@@ -929,11 +1053,11 @@ ModelService::ModelService(AppSettings* settings, QObject* parent)
     registerProvider(
         defaultProviderId(),
         [this](const ModelBinding& binding) {
-        auto provider = std::make_shared<OllamaChatProvider>(
-            OllamaConfig::fromEndpoint(ollamaEndpoint_), localInferenceTimeoutMs_);
-        provider->setSelectedModel(binding.modelId);
-        provider->setDiscoverySnapshot(ollamaDiscovery());
-        return std::shared_ptr<IChatProvider>(std::move(provider));
+            auto provider = std::make_shared<OllamaChatProvider>(
+                OllamaConfig::fromEndpoint(ollamaEndpoint_), localInferenceTimeoutMs_);
+            provider->setSelectedModel(binding.modelId);
+            provider->setDiscoverySnapshot(ollamaDiscovery());
+            return std::shared_ptr<IChatProvider>(std::move(provider));
         },
         ollamaCapabilities);
     static const QStringList endpointProviderIds{
@@ -979,7 +1103,7 @@ void ModelService::registerProvider(const QString& providerId, ModelProviderFact
 }
 
 void ModelService::setModelCapabilities(const QString& providerId, const QString& modelId,
-                                         ModelCapabilities capabilities) {
+                                        ModelCapabilities capabilities) {
     const auto provider = normalizedProviderId(providerId);
     const auto model = modelId.trimmed();
     if (!provider.isEmpty() && !model.isEmpty()) {
@@ -989,13 +1113,13 @@ void ModelService::setModelCapabilities(const QString& providerId, const QString
 }
 
 ModelCapabilities ModelService::capabilityOverrides(const QString& providerId,
-                                                     const QString& modelId) const {
+                                                    const QString& modelId) const {
     return settings_ ? settings_->modelCapabilitiesOverride(providerId, modelId)
                      : ModelCapabilities{};
 }
 
 void ModelService::setCapabilityOverrides(const QString& providerId, const QString& modelId,
-                                           const ModelCapabilities& overrides) {
+                                          const ModelCapabilities& overrides) {
     if (!settings_ || providerId.trimmed().isEmpty() || modelId.trimmed().isEmpty())
         return;
     settings_->setModelCapabilitiesOverride(providerId, modelId, overrides);
@@ -1007,7 +1131,7 @@ void ModelService::clearCapabilityOverrides(const QString& providerId, const QSt
 }
 
 ModelCapabilities ModelService::capabilities(const QString& providerId,
-                                              const QString& modelId) const {
+                                             const QString& modelId) const {
     const auto provider = normalizedProviderId(providerId);
     const auto model = modelId.trimmed();
     auto result = mergedCapabilities({}, providerCapabilities_.value(provider),
@@ -1048,8 +1172,8 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
                 result = mergedCapabilities(
                     result, discovered.capabilities,
                     provider == QLatin1String("ollama") || provider == QLatin1String("lm-studio") ||
-                    provider == QLatin1String("llama-cpp-server") ||
-                    provider == QLatin1String("openai-compatible-local")
+                            provider == QLatin1String("llama-cpp-server") ||
+                            provider == QLatin1String("openai-compatible-local")
                         ? ModelMetadataSource::RuntimeReported
                         : ModelMetadataSource::ProviderCatalog);
                 break;
@@ -1065,7 +1189,7 @@ ModelCapabilities ModelService::capabilities(const QString& providerId,
 }
 
 CurrentModelMetadata ModelService::currentModelMetadata(const QString& providerId,
-                                                         const QString& modelId) const {
+                                                        const QString& modelId) const {
     CurrentModelMetadata metadata;
     metadata.providerId = normalizedProviderId(providerId);
     metadata.modelId = modelId.trimmed();
@@ -1219,8 +1343,8 @@ ModelBindingResolution ModelService::resolve(const QString& providerId, const QS
             resolution.error = ModelBindingError::ModelNotFound;
             resolution.reason =
                 catalog.catalog == ProviderCatalogState::Empty
-                ? catalog.safeDetail
-                : QStringLiteral("Selected model is unavailable in the provider catalog.");
+                    ? catalog.safeDetail
+                    : QStringLiteral("Selected model is unavailable in the provider catalog.");
             return resolution;
         }
     }
@@ -1269,7 +1393,7 @@ ProviderCompletenessStatus ModelService::providerStatus(const QString& providerI
             for (const auto& model : discoveredOllamaModels())
                 status.modelIds.append(model.name);
             status.catalog = status.modelIds.isEmpty() ? ProviderCatalogState::Empty
-                                                        : ProviderCatalogState::Available;
+                                                       : ProviderCatalogState::Available;
         } else if (discovery.lifecycle == ChatRequestLifecycle::Pending ||
                    discovery.lifecycle == ChatRequestLifecycle::Running) {
             status.catalog = ProviderCatalogState::Pending;
@@ -1308,11 +1432,11 @@ ProviderCompletenessStatus ModelService::providerStatus(const QString& providerI
                 status.modelIds.append(model.name);
             if (catalog.outcome.completed) {
                 status.catalog = status.modelIds.isEmpty() ? ProviderCatalogState::Empty
-                                                            : ProviderCatalogState::Available;
+                                                           : ProviderCatalogState::Available;
                 status.safeDetail =
                     status.modelIds.isEmpty()
-                    ? QStringLiteral("Provider returned an empty model catalog.")
-                    : QStringLiteral("Provider model catalog is available.");
+                        ? QStringLiteral("Provider returned an empty model catalog.")
+                        : QStringLiteral("Provider model catalog is available.");
             } else {
                 if (config.isCloud() && catalog.models.isEmpty() &&
                     catalog.outcome.httpStatus == 404) {
@@ -1333,7 +1457,7 @@ ProviderCompletenessStatus ModelService::providerStatus(const QString& providerI
                         : ProviderCatalogState::Failed;
                 status.safeDetail =
                     QStringLiteral("Provider model discovery failed (%1).")
-                                        .arg(chatProviderErrorCategoryName(catalog.outcome.category));
+                        .arg(chatProviderErrorCategoryName(catalog.outcome.category));
             }
         } else if (config.isCloud()) {
             status.catalog = ProviderCatalogState::ConfiguredModelOnly;
@@ -1468,13 +1592,13 @@ quint64 ModelService::beginProviderHealthObservation() const {
 }
 
 void ModelService::reportProviderDiscovery(const QString& providerId, quint64 sequence,
-                                            bool completed, ChatProviderErrorCategory category) {
+                                           bool completed, ChatProviderErrorCategory category) {
     reportProviderRequest(providerId, sequence, completed, category, QStringLiteral("discovery"));
 }
 
 void ModelService::reportProviderRequest(const QString& providerId, quint64 sequence,
-                                          bool completed, ChatProviderErrorCategory category,
-                                          const QString& source) {
+                                         bool completed, ChatProviderErrorCategory category,
+                                         const QString& source) {
     bool changed = false;
     {
         std::lock_guard lock(providerHealthRegistry_->mutex);

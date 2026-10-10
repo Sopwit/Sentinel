@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QString>
+#include "sentinel/core/runtime/ToolDescriptor.h"
 #include <QJsonObject>
 #include <QList>
-#include "sentinel/core/runtime/ToolDescriptor.h"
+#include <QString>
 #include <QtGlobal>
 #include <atomic>
 #include <functional>
@@ -56,22 +56,32 @@ enum class ChatProviderErrorCategory {
 
 inline QString chatProviderErrorCategoryName(ChatProviderErrorCategory category) {
     switch (category) {
-    case ChatProviderErrorCategory::None: return QStringLiteral("None");
+    case ChatProviderErrorCategory::None:
+        return QStringLiteral("None");
     case ChatProviderErrorCategory::AuthenticationRequired:
         return QStringLiteral("AuthenticationRequired");
-    case ChatProviderErrorCategory::ModelNotFound: return QStringLiteral("ModelNotFound");
+    case ChatProviderErrorCategory::ModelNotFound:
+        return QStringLiteral("ModelNotFound");
     case ChatProviderErrorCategory::ProviderUnavailable:
         return QStringLiteral("ProviderUnavailable");
-    case ChatProviderErrorCategory::ConnectionFailed: return QStringLiteral("ConnectionFailed");
-    case ChatProviderErrorCategory::Timeout: return QStringLiteral("Timeout");
-    case ChatProviderErrorCategory::RateLimited: return QStringLiteral("RateLimited");
-    case ChatProviderErrorCategory::RequestRejected: return QStringLiteral("RequestRejected");
+    case ChatProviderErrorCategory::ConnectionFailed:
+        return QStringLiteral("ConnectionFailed");
+    case ChatProviderErrorCategory::Timeout:
+        return QStringLiteral("Timeout");
+    case ChatProviderErrorCategory::RateLimited:
+        return QStringLiteral("RateLimited");
+    case ChatProviderErrorCategory::RequestRejected:
+        return QStringLiteral("RequestRejected");
     case ChatProviderErrorCategory::CapabilityUnsupported:
         return QStringLiteral("CapabilityUnsupported");
-    case ChatProviderErrorCategory::MalformedResponse: return QStringLiteral("MalformedResponse");
-    case ChatProviderErrorCategory::Cancelled: return QStringLiteral("Cancelled");
-    case ChatProviderErrorCategory::ProviderFailure: return QStringLiteral("ProviderFailure");
-    case ChatProviderErrorCategory::Offline: return QStringLiteral("Offline");
+    case ChatProviderErrorCategory::MalformedResponse:
+        return QStringLiteral("MalformedResponse");
+    case ChatProviderErrorCategory::Cancelled:
+        return QStringLiteral("Cancelled");
+    case ChatProviderErrorCategory::ProviderFailure:
+        return QStringLiteral("ProviderFailure");
+    case ChatProviderErrorCategory::Offline:
+        return QStringLiteral("Offline");
     }
     return QStringLiteral("None");
 }
@@ -104,6 +114,8 @@ struct ChatProviderReply {
     };
     QList<ToolCall> toolCalls;
     std::optional<QJsonObject> structuredResult;
+    // Allowlisted numeric/status metadata only; never prompts, credentials or reasoning.
+    QJsonObject diagnostics;
 };
 
 struct ChatImage {
@@ -114,6 +126,9 @@ struct ChatImage {
 struct ChatRequestOptions {
     QList<ChatImage> images;
     std::shared_ptr<std::atomic_bool> cancellationToken;
+    // Nonzero bounds are mandatory capabilities: providers must enforce or reject them.
+    int deadlineMs = 0;
+    int maxOutputTokens = 0;
     bool structuredOutput = false;
     bool nativeToolCalling = false;
     QString structuredSchemaName;
@@ -150,10 +165,13 @@ public:
     virtual QString name() const = 0;
     virtual ChatProviderStatus status() const = 0;
     virtual ChatProviderReply sendMessage(const QString& message) = 0;
-    virtual ChatProviderReply sendRequest(const QString& message, const ChatRequestOptions& options) {
-        if (options.structuredOutput || options.nativeToolCalling || !options.images.isEmpty()) {
+    virtual ChatProviderReply sendRequest(const QString& message,
+                                          const ChatRequestOptions& options) {
+        if (options.deadlineMs > 0 || options.maxOutputTokens > 0 || options.structuredOutput ||
+            options.nativeToolCalling || !options.images.isEmpty()) {
             ChatProviderReply reply;
-            reply.errorMessage = QStringLiteral("Requested model capability is unavailable through this provider.");
+            reply.errorMessage =
+                QStringLiteral("Requested model capability is unavailable through this provider.");
             reply.error = ChatProviderReply::Error::CapabilityRejected;
             reply.category = ChatProviderErrorCategory::CapabilityUnsupported;
             reply.lifecycle = ChatRequestLifecycle::Failed;
