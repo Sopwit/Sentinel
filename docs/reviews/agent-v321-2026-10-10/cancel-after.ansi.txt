@@ -1,0 +1,24 @@
+SENTINEL / Agent     Workspace: V321 cancellation                      Connected
+────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                       Inference unverified
+                                                                                
+                                                                                
+      **Araç / Tool:** Run Command · Risk: High                                 
+                                                                                
+      **Requested access:** Process / Execute (command details omitted)         
+                                                                                
+      Devam etmek için **onayla** (veya **approve**), bu izin kapsamını         
+    runtime boyunca kaydetmek için **her zaman onayla** (veya **always**),      
+    reddetmek için **iptal** (veya **cancel**) yazın.                           
+                                                                                
+    Assistant                                                                   
+      **Ajan İptal Edildi / Agent Run Cancelled**                               
+                                                                                
+      Agent run cancelled by user.                                              
+                                                                                
+      *1 adım çalıştırılmıştı / 1 steps executed.*                              
+  ┌ Message · Agent ─────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                             │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  /notices · Cancellation requested; waiting for the daemon's terminal state.   
+  Enter send · Shift+Enter newline · Ctrl+P commands                 cancelled  

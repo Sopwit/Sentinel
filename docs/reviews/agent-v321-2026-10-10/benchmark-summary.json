@@ -1,0 +1,257 @@
+[
+  {
+    "file": "live.json",
+    "case": "A-context",
+    "run_id": "f2a1150b-6d44-400f-ac3b-e2c0664fae02",
+    "terminal": "run.completed",
+    "seconds": 144.67,
+    "tool_results": 2,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.completed",
+        ""
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "B-reasoning",
+    "run_id": "37e2b3ac-5200-4c67-ac5a-593492e0cc15",
+    "terminal": "observer-timeout",
+    "seconds": 180.07,
+    "tool_results": 2,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "C-modify",
+    "run_id": "6ef56516-c16f-478d-9811-d94dd8693bdd",
+    "terminal": "observer-timeout",
+    "seconds": 240.03,
+    "tool_results": 3,
+    "tool_failures": 1,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "D-verify",
+    "run_id": "ae4c7c9a-7353-4442-adb2-dba044212517",
+    "terminal": "run.failed",
+    "seconds": 45.71,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.failed",
+        "Context exhausted: the selected model cannot fit this request. The run stopped; prior approved changes may remain. Inspect changes before starting a smaller task. No action was retried."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "E-pressure",
+    "run_id": "b73607ed-0fe0-4ff1-a298-8ab0c2f4f366",
+    "terminal": "observer-timeout",
+    "seconds": 180.18,
+    "tool_results": 1,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "F-process-cancel",
+    "run_id": "3d36aa26-05e0-4ba8-add0-5b21dd64ee79",
+    "terminal": "run.cancelled",
+    "seconds": 79.59,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "G-approval-cancel",
+    "run_id": "bc4e917a-e6e6-4b2c-95f5-811a9384536b",
+    "terminal": "run.cancelled",
+    "seconds": 58.84,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "live.json",
+    "case": "H-continuation-cancel",
+    "run_id": "c992055a-9db1-443c-ba92-a90ed3c6c95d",
+    "terminal": "run.cancelled",
+    "seconds": 93.5,
+    "tool_results": 1,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "extended-live.json",
+    "case": "B-direct",
+    "run_id": "483328c4-5673-4256-9f70-98f258220756",
+    "terminal": "observer-timeout",
+    "seconds": 420.04,
+    "tool_results": 11,
+    "tool_failures": 2,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "extended-live.json",
+    "case": "C-direct",
+    "run_id": "f2c1052e-5c01-4d37-a0eb-f2815f1f1818",
+    "terminal": "run.failed",
+    "seconds": 284.87,
+    "tool_results": 7,
+    "tool_failures": 2,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.failed",
+        "Agent repeated the same tool call without a changed argument or intervening observation."
+      ]
+    ]
+  },
+  {
+    "file": "extended-live.json",
+    "case": "D-direct",
+    "run_id": "54a0f10f-a3d4-444e-ba1a-73bbec3ea5b3",
+    "terminal": "run.failed",
+    "seconds": 262.72,
+    "tool_results": 3,
+    "tool_failures": 3,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.failed",
+        "User denied the required action."
+      ]
+    ]
+  },
+  {
+    "file": "cancellation-pty.json",
+    "case": "F-tui-owned-process",
+    "run_id": "0969d938-12dc-4663-a956-aa4bde0d3a84",
+    "terminal": "run.cancelled",
+    "seconds": 56.44,
+    "tool_results": 1,
+    "tool_failures": 1,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "cancellation-pty-sleep.json",
+    "case": "F-tui-owned-process",
+    "run_id": "8f2f8344-d167-42ec-8242-3f213bbb2818",
+    "terminal": "run.cancelled",
+    "seconds": 94.28,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": true,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  },
+  {
+    "file": "recovery-live.json",
+    "case": "chat-stream",
+    "run_id": "174686aa-c1cc-4efd-a3ec-4be9226b5534",
+    "terminal": "observer-timeout",
+    "seconds": 90.03,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": null,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        ""
+      ]
+    ]
+  },
+  {
+    "file": "recovery-live.json",
+    "case": "provider-unavailable-cancel",
+    "run_id": "c2131f51-5f13-4011-aa9d-2796235d4f70",
+    "terminal": "run.cancelled",
+    "seconds": 0.0,
+    "tool_results": 0,
+    "tool_failures": 0,
+    "diff_nonempty": false,
+    "unrelated_preserved": null,
+    "terminal_events": [
+      [
+        "run.cancelled",
+        "Agent run cancelled by user."
+      ]
+    ]
+  }
+]

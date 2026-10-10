@@ -1,0 +1,15 @@
+[
+  {
+    "run_id": "8f2f8344-d167-42ec-8242-3f213bbb2818",
+    "before": [
+      {
+        "pid": 72613,
+        "ppid": 72488,
+        "command": "/bin/sleep"
+      }
+    ],
+    "after": [],
+    "owned_processes_observed": true,
+    "observed_pids_remaining": []
+  }
+]

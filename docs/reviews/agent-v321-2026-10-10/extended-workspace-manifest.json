@@ -1,0 +1,42 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "bytes": 189,
+    "sha256": "8937fedd978ca0c6ff6ef3650992905ee2932ad742ff97c8524e9c8bd27f86b7"
+  },
+  {
+    "path": "config.json",
+    "bytes": 38,
+    "sha256": "abac5af2bc8c73bef45d3b0b8fb7447ca75acce1e79d7449681e274263315301"
+  },
+  {
+    "path": "unrelated.txt",
+    "bytes": 25,
+    "sha256": "a894a729440d8c3a9a1c29730fb619428527e5e227bdf5dc7cdbf10bb2a40dc2"
+  },
+  {
+    "path": "test.cpp",
+    "bytes": 61,
+    "sha256": "88ebaaf7421c728d808ebc6697b7d3be17edca285864932e89d9ac1538145c24"
+  },
+  {
+    "path": "README.md",
+    "bytes": 55,
+    "sha256": "39c4481504008e8e4d80a08a030cb104c54c911beb3f89e97b50aae929b1dfe4"
+  },
+  {
+    "path": "calc.cpp",
+    "bytes": 55,
+    "sha256": "7814f570c2dd6d9167a8889a5a7f9405e3036f848065b7502ba890a910d80936"
+  },
+  {
+    "path": "calc.h",
+    "bytes": 35,
+    "sha256": "9d958801b245cf845e2580d576ab873cc50931e25d5631e4e061f2645907b778"
+  },
+  {
+    "path": "src/main.cpp",
+    "bytes": 25,
+    "sha256": "deac66ccb79f6d31c0fa7d358de48e083c15c02ff50ec1ebd4b64314b9e6e196"
+  }
+]
