@@ -56,6 +56,58 @@ class ObservationPolicyTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void explanationReferences_data() {
+        QTest::addColumn<QString>("callId");
+        QTest::addColumn<QString>("quote");
+        QTest::addColumn<bool>("accepted");
+        QTest::newRow("observed") << "run:1" << "return a - b;" << true;
+        QTest::newRow("invented-call") << "other-run:1" << "return a - b;" << false;
+        QTest::newRow("invented-quote") << "run:1" << "return a + b;" << false;
+        QTest::newRow("empty") << "run:1" << "" << false;
+    }
+    void explanationReferences() {
+        QFETCH(QString, callId);
+        QFETCH(QString, quote);
+        QFETCH(bool, accepted);
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->kind = StructuredObservationKind::FileContent;
+        observation->data = {{"path", "/fixture/calc.cpp"},
+                             {"content", "int add(int a,int b) { return a - b; }"}};
+        EvidenceRecord evidence;
+        evidence.domain = ObservationDomain::FileSystem;
+        evidence.outcome = EvidenceOutcome::Verified;
+        evidence.toolCallId = "run:1";
+        evidence.resource = "/fixture/calc.cpp";
+        evidence.stepIndex = 1;
+        evidence.structuredObservation = observation;
+        const auto proposed = QString::fromUtf8(
+            QJsonDocument(
+                QJsonObject{
+                    {"explanations",
+                     QJsonArray{QJsonObject{
+                         {"interpretation", "add subtracts its second argument from the first."},
+                         {"evidence",
+                          QJsonArray{QJsonObject{{"call_id", callId}, {"quote", quote}}}}}}}})
+                .toJson(QJsonDocument::Compact));
+        const auto result = ClaimGroundingResolver::filesystemExplanation({}, {evidence}, proposed);
+        QCOMPARE(result.has_value(), accepted);
+        if (result) {
+            QVERIFY(result->rendered.contains("add subtracts"));
+            QVERIFY(result->rendered.contains("/fixture/calc.cpp"));
+            const auto roundtrip =
+                ClaimGroundingResolver::filesystemExplanation({}, {evidence}, result->canonical);
+            QVERIFY(roundtrip);
+            QCOMPARE(roundtrip->canonical, result->canonical);
+            auto later = evidence;
+            later.stepIndex = 2;
+            later.toolCallId = "run:2";
+            QVERIFY(
+                !ClaimGroundingResolver::filesystemExplanation({}, {evidence, later}, proposed));
+            auto denied = evidence;
+            denied.outcome = EvidenceOutcome::Denied;
+            QVERIFY(!ClaimGroundingResolver::filesystemExplanation({}, {denied}, proposed));
+        }
+    }
     void relativeReadEvidenceUsesAuthoritativeResolvedPath() {
         auto tools = BuiltInToolProvider::descriptors();
         const auto descriptor = *std::find_if(tools.begin(), tools.end(), [](const auto& t) {
@@ -299,6 +351,8 @@ private slots:
         ObservationIntentPolicy policy(&provider, token);
         const auto intent = policy.classify(QStringLiteral("List the workspace"), {}, {});
         QCOMPARE(provider.request.cancellationToken, token);
+        QCOMPARE(provider.request.deadlineMs, 30000);
+        QCOMPARE(provider.request.maxOutputTokens, 512);
         QVERIFY(intent.indeterminate);
         QCOMPARE(intent.error, QStringLiteral("Cancelled"));
         QVERIFY(provider.request.tools.isEmpty());
