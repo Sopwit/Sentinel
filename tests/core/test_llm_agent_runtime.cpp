@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <QtTest>
 #include <QJsonDocument>
+#include <QtTest>
+#include <algorithm>
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
@@ -75,6 +76,25 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void toolIndexPreservesDiscoveryUnderDetailedContractBudget() {
+        AgentContextInput input;
+        input.goal = QStringLiteral("Fix the arithmetic function");
+        input.tools = BuiltInToolProvider::descriptors();
+        std::sort(input.tools.begin(), input.tools.end(),
+                  [](const auto& a, const auto& b) { return a.id < b.id; });
+        const auto context = ContextEngine{}.build(input);
+        QString catalog;
+        for (const auto& item : context.items)
+            if (item.kind == AgentContextKind::Tool)
+                catalog += item.content + QLatin1Char('\n');
+        for (const auto& tool : input.tools)
+            QVERIFY2(catalog.contains(tool.id + QLatin1Char('(')) ||
+                         catalog.contains(tool.id + QStringLiteral(" |")),
+                     qPrintable(tool.id));
+        QVERIFY(catalog.contains(QStringLiteral("content!")));
+        QVERIFY(context.estimatedTokens < 8192);
+    }
+
     void responseProfileReachesPlannerAsPreferenceExactlyOnce() {
         FakeChatProvider provider;
         provider.scriptedReply = "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":\"Helpful answer\"}";
@@ -310,6 +330,97 @@ private slots:
         QCOMPARE(decision.arguments.first().id, QStringLiteral("path"));
         QCOMPARE(provider.prompts.size(), 2);
         QVERIFY(provider.prompts.last().contains(QStringLiteral("Invalid arguments for read-file")));
+    }
+
+    void nativeArgumentRepairDoesNotPublishUnexecutedCalls() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply invalid;
+        invalid.success = true;
+        invalid.toolCalls.append(
+            {QStringLiteral("bad-call"),
+             QStringLiteral("read-file"),
+             QJsonObject{{QStringLiteral("filename"), QStringLiteral("audit.txt")}},
+             {}});
+        ChatProviderReply corrected;
+        corrected.success = true;
+        corrected.toolCalls.append(
+            {QStringLiteral("good-call"),
+             QStringLiteral("read-file"),
+             QJsonObject{{QStringLiteral("path"), QStringLiteral("audit.txt")}},
+             {}});
+        ChatProviderReply final;
+        final.success = true;
+        final.message = QStringLiteral("Observed audit content.");
+        provider->scriptedRequests = {invalid, corrected, final};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        const auto tool = runtime.nextStep(QStringLiteral("Read audit.txt"), {});
+        QCOMPARE(tool.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(provider->requestOptions.size(), 2);
+        QVERIFY(provider->requestOptions.at(1).priorToolCalls.isEmpty());
+        QVERIFY(provider->requestOptions.at(1).toolResults.isEmpty());
+        auto record = sampleRecord();
+        record.toolId = QStringLiteral("read-file");
+        const auto answer = runtime.nextStep(QStringLiteral("Read audit.txt"), {record});
+        QCOMPARE(answer.kind, AgentStepDecision::Kind::FinalAnswer);
+        QCOMPARE(provider->requestOptions.last().toolResults.size(), 1);
+        QCOMPARE(provider->requestOptions.last().toolResults.first().callId,
+                 QStringLiteral("good-call"));
+    }
+
+    void unknownNativeCallCanRepairBeforeAnyExecution() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply invalid;
+        invalid.success = true;
+        invalid.toolCalls.append(
+            {QStringLiteral("bad-call"), QStringLiteral("invented-tool"), {}, {}});
+        ChatProviderReply corrected;
+        corrected.success = true;
+        corrected.toolCalls.append(
+            {QStringLiteral("good-call"),
+             QStringLiteral("read-file"),
+             QJsonObject{{QStringLiteral("path"), QStringLiteral("audit.txt")}},
+             {}});
+        provider->scriptedRequests = {invalid, corrected};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        const auto tool = runtime.nextStep(QStringLiteral("Read audit.txt"), {});
+        QCOMPARE(tool.kind, AgentStepDecision::Kind::ToolCall);
+        QCOMPARE(tool.toolId, QStringLiteral("read-file"));
+        QCOMPARE(provider->requestOptions.size(), 2);
+        QVERIFY(provider->requestOptions.last().priorToolCalls.isEmpty());
+    }
+
+    void invalidNativeCallsStopAfterTwoPlanningAttempts() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply invalid;
+        invalid.success = true;
+        invalid.toolCalls.append(
+            {QStringLiteral("bad-call"), QStringLiteral("invented-tool"), {}, {}});
+        provider->scriptedRequests = {invalid, invalid};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        QCOMPARE(runtime.nextStep(QStringLiteral("Read audit.txt"), {}).kind,
+                 AgentStepDecision::Kind::GiveUp);
+        QCOMPARE(provider->requestOptions.size(), 2);
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+        ChatProviderReply corrected;
+        corrected.success = true;
+        corrected.toolCalls.append(
+            {QStringLiteral("fresh-call"),
+             QStringLiteral("read-file"),
+             QJsonObject{{QStringLiteral("path"), QStringLiteral("audit.txt")}},
+             {}});
+        provider->scriptedRequests = {corrected};
+        QCOMPARE(runtime.nextStep(QStringLiteral("Read audit.txt"), {}).kind,
+                 AgentStepDecision::Kind::ToolCall);
+        QVERIFY(provider->requestOptions.last().priorToolCalls.isEmpty());
     }
 
     void normalizesOnlyRegisteredToolAction() {

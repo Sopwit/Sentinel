@@ -126,6 +126,31 @@ class AgentLoopTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void rejectedFinalReportsPolicyReasonWithoutCompleting() {
+        ScriptedPlanner planner;
+        auto answer = finalDecision(QStringLiteral("The file exists."));
+        answer.grounding = GroundingMode::Verified;
+        answer.groundingDeclared = true;
+        planner.decisions = {answer, answer};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, QStringList{});
+        auto policy = std::make_shared<FixedFilesystemIntent>();
+        policy->intent.requirements.append(
+            {ObservationDomain::FileSystem, QStringLiteral("missing.txt"),
+             EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect});
+        loop.setObservationIntentPolicy(policy);
+        const auto state =
+            loop.run(QStringLiteral("Inspect missing.txt"), QStringLiteral("diagnostic"));
+        QCOMPARE(state.phase, AgentLoopPhase::Failed);
+        QCOMPARE(state.terminalReason, AgentTerminalReason::UnableToComplete);
+        QVERIFY(state.abortReason.contains(QStringLiteral("lacks fresh")));
+        QVERIFY(state.finalAnswer.isEmpty());
+        QVERIFY(executor.requests.isEmpty());
+        QCOMPARE(planner.calls, 2);
+    }
+
     void cancellationDuringInitialClassificationIsTerminalOnce() {
         ScriptedPlanner planner;
         RecordingExecutor executor;
@@ -288,6 +313,78 @@ private slots:
         QCOMPARE(executor.requests.size(), 1);
         QCOMPARE(state.steps.first().statusText, QStringLiteral("Succeeded"));
         QVERIFY(state.steps.first().succeeded);
+    }
+
+    void repeatedReadGetsOnePlanningRepairWithoutReexecution_data() {
+        QTest::addColumn<bool>("recover");
+        QTest::addColumn<bool>("async");
+        QTest::newRow("sync-final") << true << false;
+        QTest::newRow("sync-bounded") << false << false;
+        QTest::newRow("async-final") << true << true;
+        QTest::newRow("async-bounded") << false << true;
+    }
+
+    void repeatedReadGetsOnePlanningRepairWithoutReexecution() {
+        QFETCH(bool, recover);
+        QFETCH(bool, async);
+        ScriptedPlanner planner;
+        const auto read = toolDecision(QStringLiteral("read-file"));
+        planner.decisions = {read, read,
+                             recover ? finalDecision(QStringLiteral("observed result")) : read};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox,
+                       QStringList{QStringLiteral("read-file")});
+        AgentLoopState state;
+        bool finished = false;
+        if (async) {
+            loop.runAsync(QStringLiteral("Inspect file"), QStringLiteral("read-repair"), this,
+                          [&](const AgentLoopState& result) {
+                              state = result;
+                              finished = true;
+                          });
+            QTRY_VERIFY(finished);
+        } else {
+            state = loop.run(QStringLiteral("Inspect file"));
+        }
+        QCOMPARE(state.phase, recover ? AgentLoopPhase::Completed : AgentLoopPhase::Stuck);
+        QCOMPARE(state.repeatedReadRepairs, 1);
+        QCOMPARE(executor.requests.size(), 1);
+        QCOMPARE(planner.calls, 3);
+    }
+
+    void repeatedMutationDoesNotGetReadRepair() {
+        ScriptedPlanner planner;
+        const auto write = toolDecision(QStringLiteral("write-file"));
+        planner.decisions = {write, write};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox,
+                       QStringList{QStringLiteral("write-file")});
+        const auto state = loop.run(QStringLiteral("Write file"));
+        QCOMPARE(state.phase, AgentLoopPhase::Stuck);
+        QCOMPARE(state.repeatedReadRepairs, 0);
+        QCOMPARE(executor.requests.size(), 1);
+    }
+
+    void multipleToolResultsRequireAcceptedFinal() {
+        ScriptedPlanner planner;
+        planner.decisions = {toolDecision(QStringLiteral("first")),
+                             toolDecision(QStringLiteral("second")),
+                             finalDecision(QStringLiteral("verified sequence"))};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox,
+                       QStringList{QStringLiteral("first"), QStringLiteral("second")});
+        const auto state = loop.run(QStringLiteral("Inspect two resources"));
+        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(state.steps.size(), 2);
+        QCOMPARE(executor.requests.size(), 2);
+        QCOMPARE(planner.observedHistories.at(2).size(), 2);
+        QCOMPARE(state.finalAnswer, QStringLiteral("verified sequence"));
     }
 
     void feedsObservationToNextPlanningCall() {
