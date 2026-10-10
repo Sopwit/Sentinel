@@ -12,8 +12,16 @@ struct ClaimResolution {
     StructuredFact fact;
 };
 
+struct EvidenceExplanation {
+    QString canonical;
+    QString rendered;
+};
+
 class ClaimGroundingResolver final {
 public:
+    static std::optional<EvidenceExplanation>
+    filesystemExplanation(const ObservationIntent& intent, const QList<EvidenceRecord>& evidence,
+                          const QString& proposed);
     static std::optional<QString> filesystemFinalAnswer(const ObservationIntent& intent,
                                                         const QList<EvidenceRecord>& evidence,
                                                         const QString& proposed);
