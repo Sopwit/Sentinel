@@ -1,0 +1,3 @@
+   Compiling sentinel-tui v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-tui)
+   Compiling sentinel-cli v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-cli)
+    Finished `release` profile [optimized] target(s) in 3.05s

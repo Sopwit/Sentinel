@@ -1,0 +1,3 @@
+    Checking sentinel-tui v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-tui)
+    Checking sentinel-cli v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.74s

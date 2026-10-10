@@ -1,0 +1,3000 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi",
+  "provider": "lm-studio",
+  "model": "nvidia/nemotron-3-nano-4b",
+  "context_window": 8192,
+  "cases": [
+    {
+      "label": "C-classification",
+      "goal": "What is 2 plus 2? Answer briefly; do not use tools.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/C-classification",
+      "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+      "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+      "outcome": "run.completed",
+      "terminal": {
+        "id": "",
+        "name": "run.completed",
+        "payload": {
+          "detail": "",
+          "event_sequence": 9,
+          "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+          "state": "completed",
+          "text": "4"
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 58.110157374991104,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "created_at": "2026-10-10T15:36:10.668Z",
+            "event_sequence": 1,
+            "model_id": "nvidia/nemotron-3-nano-4b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "run_type": "agent",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "state": "running",
+            "summary": "V322 C-classification / 2 messages / Active",
+            "title": "V322 C-classification",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 2,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 3,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 4,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "ModelRequestStarted",
+            "event_sequence": 5,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 1
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "ContextSnapshot",
+            "event_sequence": 6,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 1
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "ModelRequestCompleted",
+            "event_sequence": 7,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 1
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentCompleted",
+            "event_sequence": 8,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.completed",
+          "payload": {
+            "detail": "",
+            "event_sequence": 9,
+            "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+            "state": "completed",
+            "text": "4"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": [
+        {
+          "category": "None",
+          "completion_tokens": 110,
+          "deadline_ms": 30000,
+          "elapsed_ms": 8506,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 578,
+          "finish_reason": "stop",
+          "http_status": 200,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "prompt_tokens": 392,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1734,
+          "total_tokens": 502,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "category": "None",
+          "classification_result": "classified",
+          "completion_tokens": 110,
+          "deadline_ms": 30000,
+          "elapsed_ms": 8506,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 578,
+          "finish_reason": "stop",
+          "http_status": 200,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "prompt_tokens": 392,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1734,
+          "total_tokens": 502,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "attempts": 1,
+          "completion_tokens": 65,
+          "continuation_calls": 0,
+          "error_category": "None",
+          "estimate_method": "utf8_bytes/3+256",
+          "estimated_input_tokens": 5753,
+          "finish_reason": "stop",
+          "http_status": 200,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "outcome": "content",
+          "prompt_tokens": 5279,
+          "provider_id": "lm-studio",
+          "reasoning_tokens": 61,
+          "reported_context_tokens": 8192,
+          "request_bytes": 16490,
+          "requested_output_tokens": 1024,
+          "response_content_bytes": 1,
+          "response_tool_calls": 0,
+          "tool_observation_bytes": [],
+          "total_tokens": 5344,
+          "transport_attempted": true
+        },
+        {
+          "attempts": 1,
+          "completion_tokens": 65,
+          "continuation_calls": 0,
+          "error_category": "None",
+          "estimate_method": "utf8_bytes/3+256",
+          "estimated_input_tokens": 5753,
+          "finish_reason": "stop",
+          "history_steps": 0,
+          "http_status": 200,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "native_tools": true,
+          "outcome": "content",
+          "planner_estimated_tokens": 2888,
+          "prompt_tokens": 5279,
+          "provider_id": "lm-studio",
+          "reasoning_tokens": 61,
+          "recovery_attempts": 0,
+          "reported_context_tokens": 8192,
+          "request_bytes": 16490,
+          "requested_output_tokens": 1024,
+          "response_content_bytes": 1,
+          "response_tool_calls": 0,
+          "success": true,
+          "tool_observation_bytes": [],
+          "total_tokens": 5344,
+          "transport_attempted": true
+        }
+      ]
+    },
+    {
+      "label": "A-single",
+      "goal": "Read calc.cpp in the active workspace and explain the actual behavior of add. Do not modify files or run commands.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/A-single",
+      "run_id": "e389bfba-19c9-4960-9847-588145470347",
+      "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+      "outcome": "run.failed",
+      "terminal": {
+        "id": "",
+        "name": "run.failed",
+        "payload": {
+          "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+          "event_sequence": 15,
+          "run_id": "e389bfba-19c9-4960-9847-588145470347",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+          "state": "failed",
+          "text": ""
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 30.67567537497962,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "created_at": "2026-10-10T15:37:10.071Z",
+            "event_sequence": 10,
+            "model_id": "nvidia/nemotron-3-nano-4b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "run_type": "agent",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "state": "running",
+            "summary": "V322 A-single / 2 messages / Active",
+            "title": "V322 A-single",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 11,
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 12,
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 13,
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentFailed",
+            "event_sequence": 14,
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.failed",
+          "payload": {
+            "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+            "event_sequence": 15,
+            "run_id": "e389bfba-19c9-4960-9847-588145470347",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+            "state": "failed",
+            "text": ""
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": [
+        {
+          "category": "Timeout",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29832,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 619,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1855,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "category": "Timeout",
+          "classification_result": "indeterminate",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29832,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 619,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1855,
+          "upstream_cancellation": "unconfirmed"
+        }
+      ]
+    },
+    {
+      "label": "B-multifile",
+      "goal": "Inspect calc.h, calc.cpp and test.cpp in the active workspace. Explain how the interface, implementation and test relate, and identify both arithmetic errors. Do not modify files or run commands.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/B-multifile",
+      "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+      "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+      "outcome": "run.failed",
+      "terminal": {
+        "id": "",
+        "name": "run.failed",
+        "payload": {
+          "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+          "event_sequence": 21,
+          "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+          "state": "failed",
+          "text": ""
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 30.651312959002098,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "created_at": "2026-10-10T15:37:42.030Z",
+            "event_sequence": 16,
+            "model_id": "nvidia/nemotron-3-nano-4b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "run_type": "agent",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "state": "running",
+            "summary": "V322 B-multifile / 2 messages / Active",
+            "title": "V322 B-multifile",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 17,
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 18,
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 19,
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentFailed",
+            "event_sequence": 20,
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.failed",
+          "payload": {
+            "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+            "event_sequence": 21,
+            "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+            "state": "failed",
+            "text": ""
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": [
+        {
+          "category": "Timeout",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29861,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 674,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 2020,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "category": "Timeout",
+          "classification_result": "indeterminate",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29861,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 674,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 2020,
+          "upstream_cancellation": "unconfirmed"
+        }
+      ]
+    },
+    {
+      "label": "E-continuation",
+      "goal": "Read calc.h, calc.cpp and test.cpp. Explain the actual arithmetic implementation and test expectation using the observations already obtained. Do not modify files or run commands.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/E-continuation",
+      "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+      "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+      "outcome": "run.failed",
+      "terminal": {
+        "id": "",
+        "name": "run.failed",
+        "payload": {
+          "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+          "event_sequence": 27,
+          "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+          "state": "failed",
+          "text": ""
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 30.76570704198093,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "created_at": "2026-10-10T15:38:13.966Z",
+            "event_sequence": 22,
+            "model_id": "nvidia/nemotron-3-nano-4b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "run_type": "agent",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "state": "running",
+            "summary": "V322 E-continuation / 2 messages / Active",
+            "title": "V322 E-continuation",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 23,
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 24,
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 25,
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentFailed",
+            "event_sequence": 26,
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.failed",
+          "payload": {
+            "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+            "event_sequence": 27,
+            "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+            "state": "failed",
+            "text": ""
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": [
+        {
+          "category": "Timeout",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29956,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 664,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1991,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "category": "Timeout",
+          "classification_result": "indeterminate",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29956,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 664,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 1991,
+          "upstream_cancellation": "unconfirmed"
+        }
+      ]
+    },
+    {
+      "label": "F-pressure",
+      "goal": "Read README.md, config.json, CMakeLists.txt, calc.h, calc.cpp and test.cpp. Report the two exact markers and explain the relationship of the function to the test. Do not modify files or run commands.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/F-pressure",
+      "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+      "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+      "outcome": "run.failed",
+      "terminal": {
+        "id": "",
+        "name": "run.failed",
+        "payload": {
+          "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+          "event_sequence": 33,
+          "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+          "state": "failed",
+          "text": ""
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 30.690096415986773,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "created_at": "2026-10-10T15:38:46.015Z",
+            "event_sequence": 28,
+            "model_id": "nvidia/nemotron-3-nano-4b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "run_type": "agent",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "state": "running",
+            "summary": "V322 F-pressure / 2 messages / Active",
+            "title": "V322 F-pressure",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 29,
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 30,
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 31,
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentFailed",
+            "event_sequence": 32,
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.failed",
+          "payload": {
+            "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+            "event_sequence": 33,
+            "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+            "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+            "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+            "state": "failed",
+            "text": ""
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": [
+        {
+          "category": "Timeout",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29819,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 676,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 2027,
+          "upstream_cancellation": "unconfirmed"
+        },
+        {
+          "category": "Timeout",
+          "classification_result": "indeterminate",
+          "deadline_ms": 30000,
+          "elapsed_ms": 29819,
+          "estimate_method": "utf8_bytes_div_3_ceil",
+          "estimated_input_tokens": 676,
+          "http_status": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output_budget_tokens": 512,
+          "provider_id": "lm-studio",
+          "reported_context_tokens": 8192,
+          "request_bytes": 2027,
+          "upstream_cancellation": "unconfirmed"
+        }
+      ]
+    }
+  ],
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-lm-studio",
+      {
+        "id": "2",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "3",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "5",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 262144, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 8192, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "binding",
+      {
+        "id": "6",
+        "name": "model.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-session",
+      {
+        "id": "7",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+          "created_at": "2026-10-10T15:36:10.668Z",
+          "event_sequence": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+          "state": "idle",
+          "summary": "V322 C-classification / 1 message / Active",
+          "title": "V322 C-classification",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-workspace",
+      {
+        "id": "8",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-6b1b5034-78d0-4f27-9968-073ccf35e5f2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-root",
+      {
+        "id": "9",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/C-classification",
+          "workspace_id": "workspace-6b1b5034-78d0-4f27-9968-073ccf35e5f2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-select",
+      {
+        "id": "10",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-6b1b5034-78d0-4f27-9968-073ccf35e5f2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-history",
+      {
+        "id": "11",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:36:10.669Z"
+            },
+            {
+              "content": "What is 2 plus 2? Answer briefly; do not use tools.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:36:12.023Z"
+            },
+            {
+              "content": "4",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:37:09.298Z"
+            }
+          ],
+          "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "C-classification-changes",
+      {
+        "id": "12",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/C-classification",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-session",
+      {
+        "id": "13",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "444da27c-d6df-4b32-9600-46713be756ff",
+          "created_at": "2026-10-10T15:37:10.071Z",
+          "event_sequence": 9,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+          "state": "idle",
+          "summary": "V322 A-single / 1 message / Active",
+          "title": "V322 A-single",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-workspace",
+      {
+        "id": "14",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-b5941eeb-038f-45a3-9cda-7bd8dd3525b2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-root",
+      {
+        "id": "15",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/A-single",
+          "workspace_id": "workspace-b5941eeb-038f-45a3-9cda-7bd8dd3525b2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-select",
+      {
+        "id": "16",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-b5941eeb-038f-45a3-9cda-7bd8dd3525b2"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-history",
+      {
+        "id": "17",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:37:10.072Z"
+            },
+            {
+              "content": "Read calc.cpp in the active workspace and explain the actual behavior of add. Do not modify files or run commands.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:37:11.405Z"
+            },
+            {
+              "content": "**Ajan G\u00f6revi Ba\u015far\u0131s\u0131z / Agent Task Failed**\n\nObservation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.\n\n*0 ad\u0131m \u00e7al\u0131\u015ft\u0131r\u0131ld\u0131 / 0 steps executed.*",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:37:41.258Z"
+            }
+          ],
+          "session_id": "444da27c-d6df-4b32-9600-46713be756ff"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-single-changes",
+      {
+        "id": "18",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/A-single",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-session",
+      {
+        "id": "19",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+          "created_at": "2026-10-10T15:37:42.030Z",
+          "event_sequence": 15,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+          "state": "idle",
+          "summary": "V322 B-multifile / 1 message / Active",
+          "title": "V322 B-multifile",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-workspace",
+      {
+        "id": "20",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-5dbdb81d-7f5b-40af-b1c3-dfe7b427301e"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-root",
+      {
+        "id": "21",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/B-multifile",
+          "workspace_id": "workspace-5dbdb81d-7f5b-40af-b1c3-dfe7b427301e"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-select",
+      {
+        "id": "22",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-5dbdb81d-7f5b-40af-b1c3-dfe7b427301e"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-history",
+      {
+        "id": "23",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:37:42.030Z"
+            },
+            {
+              "content": "Inspect calc.h, calc.cpp and test.cpp in the active workspace. Explain how the interface, implementation and test relate, and identify both arithmetic errors. Do not modify files or run commands.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:37:43.377Z"
+            },
+            {
+              "content": "**Ajan G\u00f6revi Ba\u015far\u0131s\u0131z / Agent Task Failed**\n\nObservation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.\n\n*0 ad\u0131m \u00e7al\u0131\u015ft\u0131r\u0131ld\u0131 / 0 steps executed.*",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:38:13.253Z"
+            }
+          ],
+          "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "B-multifile-changes",
+      {
+        "id": "24",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/B-multifile",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-session",
+      {
+        "id": "25",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+          "created_at": "2026-10-10T15:38:13.966Z",
+          "event_sequence": 21,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+          "state": "idle",
+          "summary": "V322 E-continuation / 1 message / Active",
+          "title": "V322 E-continuation",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-workspace",
+      {
+        "id": "26",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-11c14a12-b501-4f0e-917d-6a844b138b9a"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-root",
+      {
+        "id": "27",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/E-continuation",
+          "workspace_id": "workspace-11c14a12-b501-4f0e-917d-6a844b138b9a"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-select",
+      {
+        "id": "28",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-11c14a12-b501-4f0e-917d-6a844b138b9a"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-history",
+      {
+        "id": "29",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:38:13.966Z"
+            },
+            {
+              "content": "Read calc.h, calc.cpp and test.cpp. Explain the actual arithmetic implementation and test expectation using the observations already obtained. Do not modify files or run commands.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:38:15.283Z"
+            },
+            {
+              "content": "**Ajan G\u00f6revi Ba\u015far\u0131s\u0131z / Agent Task Failed**\n\nObservation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.\n\n*0 ad\u0131m \u00e7al\u0131\u015ft\u0131r\u0131ld\u0131 / 0 steps executed.*",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:38:45.256Z"
+            }
+          ],
+          "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "E-continuation-changes",
+      {
+        "id": "30",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/E-continuation",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-session",
+      {
+        "id": "31",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+          "created_at": "2026-10-10T15:38:46.015Z",
+          "event_sequence": 27,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+          "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+          "state": "idle",
+          "summary": "V322 F-pressure / 1 message / Active",
+          "title": "V322 F-pressure",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-workspace",
+      {
+        "id": "32",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-24bdbd46-a513-47ef-b6bf-10c13cfbf3ed"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-root",
+      {
+        "id": "33",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/F-pressure",
+          "workspace_id": "workspace-24bdbd46-a513-47ef-b6bf-10c13cfbf3ed"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-select",
+      {
+        "id": "34",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-24bdbd46-a513-47ef-b6bf-10c13cfbf3ed"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-history",
+      {
+        "id": "35",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:38:46.016Z"
+            },
+            {
+              "content": "Read README.md, config.json, CMakeLists.txt, calc.h, calc.cpp and test.cpp. Report the two exact markers and explain the relationship of the function to the test. Do not modify files or run commands.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:38:47.418Z"
+            },
+            {
+              "content": "**Ajan G\u00f6revi Ba\u015far\u0131s\u0131z / Agent Task Failed**\n\nObservation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.\n\n*0 ad\u0131m \u00e7al\u0131\u015ft\u0131r\u0131ld\u0131 / 0 steps executed.*",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:39:17.259Z"
+            }
+          ],
+          "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "F-pressure-changes",
+      {
+        "id": "36",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g1d45awi/project/F-pressure",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ],
+  "events": [
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "created_at": "2026-10-10T15:36:10.668Z",
+        "event_sequence": 1,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "run_type": "agent",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "state": "running",
+        "summary": "V322 C-classification / 2 messages / Active",
+        "title": "V322 C-classification",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 2,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 3,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 4,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestStarted",
+        "event_sequence": 5,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ContextSnapshot",
+        "event_sequence": 6,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestCompleted",
+        "event_sequence": 7,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentCompleted",
+        "event_sequence": 8,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.completed",
+      "payload": {
+        "detail": "",
+        "event_sequence": 9,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "state": "completed",
+        "text": "4"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "created_at": "2026-10-10T15:37:10.071Z",
+        "event_sequence": 10,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "run_type": "agent",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "state": "running",
+        "summary": "V322 A-single / 2 messages / Active",
+        "title": "V322 A-single",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 11,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 12,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 13,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentFailed",
+        "event_sequence": 14,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 15,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "created_at": "2026-10-10T15:37:42.030Z",
+        "event_sequence": 16,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "run_type": "agent",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "state": "running",
+        "summary": "V322 B-multifile / 2 messages / Active",
+        "title": "V322 B-multifile",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 17,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 18,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 19,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentFailed",
+        "event_sequence": 20,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 21,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "created_at": "2026-10-10T15:38:13.966Z",
+        "event_sequence": 22,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "run_type": "agent",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "state": "running",
+        "summary": "V322 E-continuation / 2 messages / Active",
+        "title": "V322 E-continuation",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 23,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 24,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 25,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentFailed",
+        "event_sequence": 26,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 27,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "created_at": "2026-10-10T15:38:46.015Z",
+        "event_sequence": 28,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "run_type": "agent",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "state": "running",
+        "summary": "V322 F-pressure / 2 messages / Active",
+        "title": "V322 F-pressure",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 29,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 30,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 31,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentFailed",
+        "event_sequence": 32,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 33,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

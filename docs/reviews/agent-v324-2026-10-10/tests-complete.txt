@@ -1,0 +1,314 @@
+[0/2] Re-checking globbed directories...
+[1/561] Automatic MOC and UIC for target ollama_extended_plugin
+[2/561] Running AUTOMOC file extraction for target ollama_extended_plugin
+[3/561] Running moc --collect-json for target ollama_extended_plugin
+[4/561] Automatic MOC and UIC for target custom_agent_tool_plugin
+[5/561] Automatic MOC and UIC for target second_agent_tool_plugin
+[6/561] Running AUTOMOC file extraction for target custom_agent_tool_plugin
+[7/561] Running AUTOMOC file extraction for target second_agent_tool_plugin
+[8/561] Running moc --collect-json for target second_agent_tool_plugin
+[9/561] Running moc --collect-json for target custom_agent_tool_plugin
+[10/561] Automatic MOC and UIC for target sentinel_desktop_ipc
+[11/561] Automatic MOC and UIC for target broker_certification_plugin
+[12/560] Running AUTOMOC file extraction for target broker_certification_plugin
+[13/560] Running moc --collect-json for target broker_certification_plugin
+[14/560] Building CXX object plugins/samples/custom_agent_tool/CMakeFiles/custom_agent_tool_plugin.dir/custom_agent_tool_plugin_autogen/mocs_compilation.cpp.o
+[15/560] Linking CXX shared module plugins/samples/custom_agent_tool/libcustom_agent_tool_plugin.dylib
+[16/560] Building CXX object plugins/samples/custom_llm_provider/CMakeFiles/ollama_extended_plugin.dir/ollama_extended_plugin_autogen/mocs_compilation.cpp.o
+[17/560] Building CXX object plugins/samples/custom_agent_tool/CMakeFiles/second_agent_tool_plugin.dir/second_agent_tool_plugin_autogen/mocs_compilation.cpp.o
+[18/560] Linking CXX shared module plugins/samples/custom_llm_provider/libollama_extended_plugin.dylib
+[19/560] cd /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_llm_provider && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_llm_provider/libollama_extended_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_llm_provider/ollama-extended/libollama_extended_plugin.dylib
+[20/560] Linking CXX shared module plugins/samples/custom_agent_tool/libsecond_agent_tool_plugin.dylib
+[21/560] cd /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_agent_tool && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_agent_tool/libcustom_agent_tool_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_agent_tool/custom-tool/libcustom_agent_tool_plugin.dylib && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_agent_tool/libsecond_agent_tool_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/tests/plugins/samples/custom_agent_tool/second-tool/libsecond_agent_tool_plugin.dylib
+[22/560] Building CXX object tests/CMakeFiles/broker_certification_plugin.dir/helpers/broker_certification_plugin.cpp.o
+[23/560] Building CXX object apps/sentinel-desktop/CMakeFiles/sentinel_desktop_ipc.dir/sentinel_desktop_ipc_autogen/mocs_compilation.cpp.o
+[24/560] Linking CXX static library apps/sentinel-desktop/libsentinel_desktop_ipc.a
+[25/560] Linking CXX shared module tests/libbroker_certification_plugin.dylib
+[26/560] Automatic MOC and UIC for target test_graphics_backend
+[27/558] Automatic MOC and UIC for target sentinel_core
+[28/558] Building CXX object core/CMakeFiles/sentinel_core.dir/src/agent/ObservationPolicy.cpp.o
+[29/558] Building CXX object core/CMakeFiles/sentinel_core.dir/src/agent/LlmAgentRuntime.cpp.o
+[30/558] Building CXX object core/CMakeFiles/sentinel_core.dir/sentinel_core_autogen/mocs_compilation.cpp.o
+[31/558] Linking CXX static library core/libsentinel_core.a
+[32/558] Automatic MOC and UIC for target sentinel_daemon_service
+[33/558] Automatic MOC and UIC for target test_chat_session
+[34/557] Automatic MOC and UIC for target test_persistence_startup_certification
+[35/556] Automatic MOC and UIC for target test_mode_manager
+[36/555] Automatic MOC and UIC for target test_unified_audio_lifecycle
+[37/554] Automatic MOC and UIC for target sentinel_desktop_viewmodels
+[38/554] Automatic MOC and UIC for target test_chat_mode_service
+[39/553] Automatic MOC and UIC for target test_chat_attachments
+[40/552] Automatic MOC and UIC for target test_conversation_session
+[41/551] Automatic MOC and UIC for target test_chat_application_controller
+[42/550] Building CXX object apps/sentinel-daemon/CMakeFiles/sentinel_daemon_service.dir/sentinel_daemon_service_autogen/mocs_compilation.cpp.o
+[43/550] Linking CXX static library apps/sentinel-daemon/libsentinel_daemon_service.a
+[44/550] Automatic MOC and UIC for target test_local_rag_store
+[45/549] Automatic MOC and UIC for target test_context_assembly
+[46/548] Automatic MOC and UIC for target test_semantic_retrieval
+[47/547] Automatic MOC and UIC for target test_conversation_state_graph
+[48/546] Automatic MOC and UIC for target test_in_memory_conversation_store
+[49/545] Automatic MOC and UIC for target test_in_memory_store
+[50/544] Automatic MOC and UIC for target test_in_memory_memory_candidate_store
+[51/543] Automatic MOC and UIC for target test_sqlite_chat_history_store
+[52/542] Automatic MOC and UIC for target test_sqlite_conversation_store
+[53/541] Automatic MOC and UIC for target test_sqlite_memory_store
+[54/540] Building CXX object apps/sentinel-desktop/CMakeFiles/sentinel_desktop_viewmodels.dir/sentinel_desktop_viewmodels_autogen/mocs_compilation.cpp.o
+[55/540] Automatic MOC and UIC for target test_in_memory_tool_registry
+[56/539] Automatic MOC and UIC for target test_mcp_tool_provider
+[57/538] Automatic MOC and UIC for target test_mcp_integration
+[58/537] Linking CXX static library apps/sentinel-desktop/libsentinel_desktop_viewmodels.a
+[59/537] Automatic MOC and UIC for target test_plugin_tool_integration
+[60/536] Automatic MOC and UIC for target test_agent_activity_log
+[61/535] Automatic MOC and UIC for target test_agent_pipeline_result
+[62/534] Automatic MOC and UIC for target test_agent_runtime_context
+[63/533] Automatic MOC and UIC for target test_agent_task_runtime
+[64/532] Automatic MOC and UIC for target sentinel-desktop
+[65/532] Running AUTOMOC file extraction for target sentinel-desktop
+[66/532] Running moc --collect-json for target sentinel-desktop
+[67/390] Automatic MOC and UIC for target settings_ui_certification_probe
+[68/390] Automatic MOC and UIC for target test_desktop_ipc
+[69/389] Automatic MOC and UIC for target test_controlled_agent_tasks
+[70/388] Automatic MOC and UIC for target test_orchestration_snapshot
+[71/387] Automatic MOC and UIC for target test_static_orchestration_diagnostics
+[72/386] Automatic MOC and UIC for target test_static_approval_policy
+[73/385] Automatic MOC and UIC for target test_static_sandbox_policy
+[74/384] Automatic MOC and UIC for target test_static_model_router
+[75/383] Automatic MOC and UIC for target test_static_provider_catalog
+[76/382] Automatic MOC and UIC for target test_static_memory_catalog
+[77/381] Automatic MOC and UIC for target test_static_agent_registry
+[78/380] Automatic MOC and UIC for target test_static_task_planner
+[79/379] Automatic MOC and UIC for target test_static_runtime_capability_registry
+[80/378] Automatic MOC and UIC for target test_static_runtime_permission_policy
+[81/377] Automatic MOC and UIC for target test_static_runtime_safety_policy
+[82/376] Automatic MOC and UIC for target test_static_runtime_pipeline
+[83/375] Automatic MOC and UIC for target test_static_execution_lifecycle
+[84/374] Automatic MOC and UIC for target test_runtime_integration
+[85/373] Automatic MOC and UIC for target test_runtime_provider
+[86/372] Automatic MOC and UIC for target test_credential_store
+[87/371] Automatic MOC and UIC for target test_provider_credentials
+[88/370] Automatic MOC and UIC for target test_companion_service
+[89/369] Automatic MOC and UIC for target test_permission_policy_service
+[90/368] Automatic MOC and UIC for target test_tool_execution_gateway
+[91/367] Automatic MOC and UIC for target test_agent_runtime_service
+[92/366] Automatic MOC and UIC for target test_workspace_service
+[93/365] Automatic MOC and UIC for target test_worktree_service
+[94/364] Automatic MOC and UIC for target test_skill_profile_service
+[95/363] Automatic MOC and UIC for target test_model_registry
+[96/362] Automatic MOC and UIC for target test_skill_extension_runtime
+[97/361] Automatic MOC and UIC for target test_ollama_runtime
+[98/360] Automatic MOC and UIC for target test_voice
+[99/359] Automatic MOC and UIC for target test_null_tool_executor
+[100/358] Automatic MOC and UIC for target test_local_runtime
+[101/357] Automatic MOC and UIC for target test_local_runtime_session
+[102/356] Automatic MOC and UIC for target test_standard_path_provider
+[103/355] Automatic MOC and UIC for target test_storage_migration
+[104/354] Automatic MOC and UIC for target test_application_controller
+[105/353] Automatic MOC and UIC for target test_app_settings
+[106/352] Automatic MOC and UIC for target test_settings_recovery_runtime
+[107/351] Automatic MOC and UIC for target test_keyed_mutex
+[108/350] Automatic MOC and UIC for target test_json_settings_store
+[109/349] Automatic MOC and UIC for target test_scoped_transform
+[110/348] Automatic MOC and UIC for target test_token_estimator
+[111/347] Automatic MOC and UIC for target test_fnv_hash
+[112/346] Automatic MOC and UIC for target test_sampled_checksum
+[113/345] Automatic MOC and UIC for target test_lazy
+[114/344] Automatic MOC and UIC for target test_memo_map
+[115/343] Automatic MOC and UIC for target test_flock_file_lock
+[116/342] Automatic MOC and UIC for target test_runtime_feature_flags
+[117/341] Automatic MOC and UIC for target test_json_schema_validator
+[118/340] Automatic MOC and UIC for target test_tool_name_validator
+[119/339] Automatic MOC and UIC for target test_location_service_map
+[120/338] Automatic MOC and UIC for target test_plugin_hook_registry
+[121/337] Automatic MOC and UIC for target test_session_execution_patterns
+[122/336] Automatic MOC and UIC for target test_security_utilities
+[123/335] Automatic MOC and UIC for target test_config_resolver
+[124/334] Automatic MOC and UIC for target test_background_job_persistence
+[125/333] Automatic MOC and UIC for target test_codemode_interpreter
+[126/332] Automatic MOC and UIC for target test_health_service
+[127/331] Automatic MOC and UIC for target test_local_echo_provider
+[128/330] Automatic MOC and UIC for target test_null_agent_runtime
+[129/329] Automatic MOC and UIC for target test_process_executor
+[130/328] Automatic MOC and UIC for target test_real_tool_executor_tools
+[131/327] Automatic MOC and UIC for target test_agent_loop
+[132/326] Automatic MOC and UIC for target test_agent_runtime
+[133/325] Automatic MOC and UIC for target test_fuzzy_editor
+[134/324] Automatic MOC and UIC for target test_web_search_tool
+[135/323] Automatic MOC and UIC for target test_plugin_manager
+[136/322] Automatic MOC and UIC for target test_default_platform_services
+[137/321] Automatic MOC and UIC for target test_chat_message_recovery
+[138/320] Automatic MOC and UIC for target test_chat_view_model
+[139/319] Automatic MOC and UIC for target test_desktop_shell_view_model
+[140/318] Automatic MOC and UIC for target test_rag_e2e_pipeline
+[141/317] Automatic MOC and UIC for target test_startup_time
+[142/316] Automatic MOC and UIC for target bench_semantic_search
+[143/315] Automatic MOC and UIC for target bench_context_compression
+[144/314] Automatic MOC and UIC for target bench_sqlite_store
+[145/313] Automatic MOC and UIC for target test_native_integration
+[146/313] Building CXX object tests/CMakeFiles/settings_ui_certification_probe.dir/settings_ui_certification_probe_autogen/mocs_compilation.cpp.o
+[147/313] Building CXX object apps/sentinel-desktop/CMakeFiles/sentinel-desktop.dir/sentinel-desktop_autogen/mocs_compilation.cpp.o
+[148/313] Building CXX object tests/CMakeFiles/test_unified_audio_lifecycle.dir/core/test_unified_audio_lifecycle.cpp.o
+[149/313] Building CXX object tests/CMakeFiles/test_chat_session.dir/core/test_chat_session.cpp.o
+[150/313] Building CXX object tests/CMakeFiles/test_persistence_startup_certification.dir/core/test_persistence_startup_certification.cpp.o
+[151/313] Building CXX object tests/CMakeFiles/settings_ui_certification_probe.dir/helpers/settings_ui_certification_probe.cpp.o
+[152/313] Building CXX object tests/CMakeFiles/test_chat_mode_service.dir/core/test_chat_mode_service.cpp.o
+[153/313] Building CXX object tests/CMakeFiles/test_chat_attachments.dir/core/test_chat_attachments.cpp.o
+[154/313] Building CXX object tests/CMakeFiles/test_desktop_ipc.dir/desktop/test_desktop_ipc.cpp.o
+[155/313] Building CXX object tests/CMakeFiles/test_in_memory_conversation_store.dir/core/test_in_memory_conversation_store.cpp.o
+[156/313] Building CXX object tests/CMakeFiles/test_sqlite_chat_history_store.dir/core/test_sqlite_chat_history_store.cpp.o
+[157/313] Building CXX object tests/CMakeFiles/test_sqlite_conversation_store.dir/core/test_sqlite_conversation_store.cpp.o
+[158/313] Building CXX object tests/CMakeFiles/test_chat_application_controller.dir/core/test_chat_application_controller.cpp.o
+[159/313] Building CXX object tests/CMakeFiles/test_in_memory_tool_registry.dir/core/test_in_memory_tool_registry.cpp.o
+[160/313] Building CXX object tests/CMakeFiles/test_mcp_tool_provider.dir/core/test_mcp_tool_provider.cpp.o
+[161/313] Building CXX object tests/CMakeFiles/test_agent_pipeline_result.dir/core/test_agent_pipeline_result.cpp.o
+[162/313] Building CXX object tests/CMakeFiles/test_agent_runtime_context.dir/core/test_agent_runtime_context.cpp.o
+[163/313] Building CXX object tests/CMakeFiles/test_mcp_integration.dir/core/test_mcp_integration.cpp.o
+[164/313] Building CXX object tests/CMakeFiles/test_plugin_tool_integration.dir/core/test_plugin_tool_integration.cpp.o
+[165/313] Building CXX object tests/CMakeFiles/test_static_approval_policy.dir/core/test_static_approval_policy.cpp.o
+[166/313] Building CXX object tests/CMakeFiles/test_static_sandbox_policy.dir/core/test_static_sandbox_policy.cpp.o
+[167/313] Building CXX object tests/CMakeFiles/test_static_runtime_capability_registry.dir/core/test_static_runtime_capability_registry.cpp.o
+[168/313] Building CXX object tests/CMakeFiles/test_runtime_integration.dir/core/test_runtime_integration.cpp.o
+[169/313] Building CXX object tests/CMakeFiles/test_runtime_provider.dir/core/test_runtime_provider.cpp.o
+[170/313] Building CXX object tests/CMakeFiles/test_permission_policy_service.dir/core/test_permission_policy_service.cpp.o
+[171/313] Building CXX object tests/CMakeFiles/test_agent_runtime_service.dir/core/test_agent_runtime_service.cpp.o
+[172/313] Building CXX object tests/CMakeFiles/test_tool_execution_gateway.dir/core/test_tool_execution_gateway.cpp.o
+[173/313] Building CXX object tests/CMakeFiles/test_model_registry.dir/core/test_model_registry.cpp.o
+[174/313] Building CXX object tests/CMakeFiles/test_skill_extension_runtime.dir/core/test_skill_extension_runtime.cpp.o
+[175/313] Building CXX object tests/CMakeFiles/test_null_tool_executor.dir/core/test_null_tool_executor.cpp.o
+[176/313] Building CXX object tests/CMakeFiles/test_ollama_runtime.dir/core/test_ollama_runtime.cpp.o
+[177/313] Building CXX object tests/CMakeFiles/test_local_runtime.dir/core/test_local_runtime.cpp.o
+[178/313] Building CXX object tests/CMakeFiles/test_local_runtime_session.dir/core/test_local_runtime_session.cpp.o
+[179/313] Building CXX object tests/CMakeFiles/test_local_echo_provider.dir/core/test_local_echo_provider.cpp.o
+[180/313] Building CXX object tests/CMakeFiles/test_null_agent_runtime.dir/core/test_null_agent_runtime.cpp.o
+[181/313] Building CXX object tests/CMakeFiles/test_settings_recovery_runtime.dir/core/test_settings_recovery_runtime.cpp.o
+[182/313] Building CXX object tests/CMakeFiles/test_application_controller.dir/core/test_application_controller.cpp.o
+[183/313] Building CXX object tests/CMakeFiles/test_agent_loop.dir/core/test_agent_loop.cpp.o
+[184/313] Building CXX object tests/CMakeFiles/test_agent_runtime.dir/core/test_agent_runtime.cpp.o
+[185/313] Building CXX object tests/CMakeFiles/test_web_search_tool.dir/core/test_web_search_tool.cpp.o
+[186/313] Building CXX object tests/CMakeFiles/test_plugin_manager.dir/core/test_plugin_manager.cpp.o
+[187/313] Building CXX object tests/CMakeFiles/test_real_tool_executor_tools.dir/core/test_real_tool_executor_tools.cpp.o
+[188/313] Building CXX object tests/CMakeFiles/test_default_platform_services.dir/test_default_platform_services.cpp.o
+[189/313] Building CXX object tests/CMakeFiles/test_chat_message_recovery.dir/desktop/test_chat_message_recovery.cpp.o
+[190/313] Building CXX object tests/CMakeFiles/test_rag_e2e_pipeline.dir/integration/test_rag_e2e_pipeline.cpp.o
+[191/313] Building CXX object tests/CMakeFiles/test_startup_time.dir/performance/test_startup_time.cpp.o
+[192/313] Building CXX object tests/CMakeFiles/test_chat_view_model.dir/desktop/test_chat_view_model.cpp.o
+[193/313] Building CXX object tests/CMakeFiles/bench_semantic_search.dir/benchmarks/bench_semantic_search.cpp.o
+[194/313] Building CXX object tests/CMakeFiles/test_native_integration.dir/test_native_integration_autogen/mocs_compilation.cpp.o
+[195/313] Linking CXX executable apps/sentinel-cli/sentinel-cli
+[196/313] Linking CXX executable apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop
+/Users/emir/Desktop/Projects/Sentinel/build/tests/apps/sentinel-desktop/sentinel-desktop.app: replacing existing signature
+[197/313] Building CXX object tests/CMakeFiles/test_desktop_shell_view_model.dir/desktop/test_desktop_shell_view_model.cpp.o
+[198/313] Linking CXX executable apps/sentinel-daemon/sentinel-daemon
+[199/313] Linking CXX executable tests/test_mode_manager
+[200/313] Linking CXX executable tests/settings_ui_certification_probe.app/Contents/MacOS/settings_ui_certification_probe
+[201/313] Linking CXX executable tests/test_unified_audio_lifecycle
+[202/313] Linking CXX executable tests/test_chat_session
+[203/313] Linking CXX executable tests/test_persistence_startup_certification
+[204/313] Linking CXX executable tests/test_chat_mode_service
+[205/313] Linking CXX executable tests/test_chat_attachments
+[206/313] Linking CXX executable tests/test_chat_application_controller
+[207/313] Building CXX object tests/CMakeFiles/bench_context_compression.dir/benchmarks/bench_context_compression.cpp.o
+[208/313] Linking CXX executable tests/test_conversation_session
+[209/313] Linking CXX executable tests/test_conversation_state_graph
+[210/313] Linking CXX executable tests/test_context_assembly
+[211/313] Building CXX object tests/CMakeFiles/bench_sqlite_store.dir/benchmarks/bench_sqlite_store.cpp.o
+[212/313] Linking CXX executable tests/test_in_memory_conversation_store
+[213/313] Linking CXX executable tests/test_local_rag_store
+[214/313] Linking CXX executable tests/test_semantic_retrieval
+[215/313] Linking CXX executable tests/test_in_memory_memory_candidate_store
+[216/313] Linking CXX executable tests/test_in_memory_store
+[217/313] Linking CXX executable tests/test_sqlite_chat_history_store
+[218/313] Linking CXX executable tests/test_sqlite_conversation_store
+[219/313] Linking CXX executable tests/test_sqlite_memory_store
+[220/313] Linking CXX executable tests/test_in_memory_tool_registry
+[221/313] Linking CXX executable tests/test_agent_activity_log
+[222/313] Linking CXX executable tests/test_mcp_tool_provider
+[223/313] Linking CXX executable tests/test_mcp_integration
+[224/313] Linking CXX executable tests/test_plugin_tool_integration
+[225/313] Linking CXX executable tests/test_agent_pipeline_result
+[226/313] Linking CXX executable tests/test_agent_runtime_context
+[227/313] Linking CXX executable tests/test_agent_task_runtime
+[228/313] Linking CXX executable tests/test_controlled_agent_tasks
+[229/313] Linking CXX executable tests/test_orchestration_snapshot
+[230/313] Linking CXX executable tests/test_static_orchestration_diagnostics
+[231/313] Linking CXX executable tests/test_static_approval_policy
+[232/313] Linking CXX executable tests/test_static_sandbox_policy
+[233/313] Linking CXX executable tests/test_static_model_router
+[234/313] Linking CXX executable tests/test_static_memory_catalog
+[235/313] Linking CXX executable tests/test_static_provider_catalog
+[236/313] Linking CXX executable tests/test_static_agent_registry
+[237/313] Linking CXX executable tests/test_static_task_planner
+[238/313] Linking CXX executable tests/test_static_runtime_permission_policy
+[239/313] Linking CXX executable tests/test_static_runtime_safety_policy
+[240/313] Linking CXX executable tests/test_static_runtime_pipeline
+[241/313] Linking CXX executable tests/test_static_execution_lifecycle
+[242/313] Linking CXX executable tests/test_static_runtime_capability_registry
+[243/313] Linking CXX executable tests/test_credential_store
+[244/313] Linking CXX executable tests/test_provider_credentials
+[245/313] Linking CXX executable tests/test_runtime_integration
+[246/313] Linking CXX executable tests/test_runtime_provider
+[247/313] Linking CXX executable tests/test_companion_service
+[248/313] Linking CXX executable tests/test_permission_policy_service
+[249/313] Linking CXX executable tests/test_agent_runtime_service
+[250/313] Linking CXX executable tests/test_workspace_service
+[251/313] Linking CXX executable tests/test_tool_execution_gateway
+[252/313] Linking CXX executable tests/test_tool_argument_validator
+[253/313] Linking CXX executable tests/test_skill_profile_service
+[254/313] Linking CXX executable tests/test_model_registry
+[255/313] Linking CXX executable tests/test_worktree_service
+[256/313] Linking CXX executable tests/test_skill_extension_runtime
+[257/313] Linking CXX executable tests/test_ollama_runtime
+[258/313] Linking CXX executable tests/test_voice
+[259/313] Linking CXX executable tests/test_local_inference
+[260/313] Linking CXX executable tests/test_null_tool_executor
+[261/313] Linking CXX executable tests/test_standard_path_provider
+[262/313] Linking CXX executable tests/test_local_runtime_session
+[263/313] Linking CXX executable tests/test_local_runtime
+[264/313] Linking CXX executable tests/test_storage_migration
+[265/313] Linking CXX executable tests/test_application_controller
+[266/313] Linking CXX executable tests/test_json_settings_store
+[267/313] Linking CXX executable tests/test_keyed_mutex
+[268/313] Linking CXX executable tests/test_app_settings
+[269/313] Linking CXX executable tests/test_settings_recovery_runtime
+[270/313] Linking CXX executable tests/test_scoped_transform
+[271/313] Linking CXX executable tests/test_token_estimator
+[272/313] Linking CXX executable tests/test_fnv_hash
+[273/313] Linking CXX executable tests/test_sampled_checksum
+[274/313] Linking CXX executable tests/test_lazy
+[275/313] Linking CXX executable tests/test_memo_map
+[276/313] Linking CXX executable tests/test_flock_file_lock
+[277/313] Linking CXX executable tests/test_runtime_feature_flags
+[278/313] Linking CXX executable tests/test_json_schema_validator
+[279/313] Linking CXX executable tests/test_tool_name_validator
+[280/313] Linking CXX executable tests/test_plugin_hook_registry
+[281/313] Linking CXX executable tests/test_session_execution_patterns
+[282/313] Linking CXX executable tests/test_location_service_map
+[283/313] Linking CXX executable tests/test_security_utilities
+[284/313] Linking CXX executable tests/test_config_resolver
+[285/313] Linking CXX executable tests/test_codemode_interpreter
+[286/313] Linking CXX executable tests/test_health_service
+[287/313] Linking CXX executable tests/test_upgrade
+[288/313] Linking CXX executable tests/test_local_echo_provider
+[289/313] Linking CXX executable tests/test_background_job_persistence
+[290/313] Building CXX object tests/CMakeFiles/test_native_integration.dir/desktop/test_native_integration.cpp.o
+[291/313] Linking CXX executable tests/test_agent_loop
+[292/313] Linking CXX executable tests/test_null_agent_runtime
+[293/313] Linking CXX executable tests/test_agent_runtime
+[294/313] Linking CXX executable tests/test_llm_agent_runtime
+[295/313] Linking CXX executable tests/test_observation_policy
+[296/313] Linking CXX executable tests/test_real_tool_executor_tools
+[297/313] Linking CXX executable tests/test_fuzzy_editor
+[298/313] Linking CXX executable tests/test_process_executor
+[299/313] Linking CXX executable tests/test_default_platform_services
+[300/313] Linking CXX executable tests/test_web_search_tool
+[301/313] Linking CXX executable tests/test_plugin_manager
+[302/313] Linking CXX executable tests/test_desktop_shell_view_model
+[303/313] Linking CXX executable tests/test_rag_e2e_pipeline
+[304/313] Linking CXX executable tests/test_startup_time
+[305/313] Linking CXX executable tests/test_chat_view_model
+[306/313] Linking CXX executable tests/test_chat_message_recovery
+[307/313] Linking CXX executable tests/test_daemon_ipc
+[308/313] Linking CXX executable tests/bench_semantic_search
+[309/313] Linking CXX executable tests/bench_context_compression
+[310/313] Linking CXX executable tests/bench_sqlite_store
+[311/313] Linking CXX executable tests/test_desktop_ipc
+[312/313] Linking CXX executable tests/test_native_integration

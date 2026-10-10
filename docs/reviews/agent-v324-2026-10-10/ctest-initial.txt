@@ -1,0 +1,327 @@
+Test project /Users/emir/Desktop/Projects/Sentinel/build/tests
+        Start   1: test_onboarding_focus
+  1/122 Test   #1: test_onboarding_focus .....................   Passed    3.29 sec
+        Start   2: test_navigation_settings
+  2/122 Test   #2: test_navigation_settings ..................   Passed    3.34 sec
+        Start   3: test_ui_phase1
+  3/122 Test   #3: test_ui_phase1 ............................   Passed    3.55 sec
+        Start   4: test_chat_surface
+  4/122 Test   #4: test_chat_surface .........................   Passed    2.20 sec
+        Start   5: test_models_surface
+  5/122 Test   #5: test_models_surface .......................   Passed    2.56 sec
+        Start   6: test_settings_surface
+  6/122 Test   #6: test_settings_surface .....................   Passed    9.50 sec
+        Start   7: test_tray_surface
+  7/122 Test   #7: test_tray_surface .........................   Passed    2.68 sec
+        Start   8: test_mode_manager
+  8/122 Test   #8: test_mode_manager .........................   Passed    0.90 sec
+        Start   9: test_unified_audio_lifecycle
+  9/122 Test   #9: test_unified_audio_lifecycle ..............   Passed    1.05 sec
+        Start  10: test_persistence_startup_certification
+ 10/122 Test  #10: test_persistence_startup_certification ....   Passed    1.03 sec
+        Start  11: test_chat_session
+ 11/122 Test  #11: test_chat_session .........................   Passed    0.24 sec
+        Start  12: test_chat_mode_service
+ 12/122 Test  #12: test_chat_mode_service ....................   Passed    1.26 sec
+        Start  13: test_chat_attachments
+ 13/122 Test  #13: test_chat_attachments .....................   Passed    0.92 sec
+        Start  14: test_chat_application_controller
+ 14/122 Test  #14: test_chat_application_controller ..........   Passed    1.17 sec
+        Start  15: test_conversation_session
+ 15/122 Test  #15: test_conversation_session .................   Passed    0.27 sec
+        Start  16: test_conversation_state_graph
+ 16/122 Test  #16: test_conversation_state_graph .............   Passed    0.27 sec
+        Start  17: test_context_assembly
+ 17/122 Test  #17: test_context_assembly .....................   Passed    0.29 sec
+        Start  18: test_semantic_retrieval
+ 18/122 Test  #18: test_semantic_retrieval ...................   Passed    0.33 sec
+        Start  19: test_local_rag_store
+ 19/122 Test  #19: test_local_rag_store ......................   Passed    0.28 sec
+        Start  20: test_in_memory_conversation_store
+ 20/122 Test  #20: test_in_memory_conversation_store .........   Passed    0.28 sec
+        Start  21: test_in_memory_memory_candidate_store
+ 21/122 Test  #21: test_in_memory_memory_candidate_store .....   Passed    0.27 sec
+        Start  22: test_in_memory_store
+ 22/122 Test  #22: test_in_memory_store ......................   Passed    0.26 sec
+        Start  23: test_sqlite_chat_history_store
+ 23/122 Test  #23: test_sqlite_chat_history_store ............   Passed    0.32 sec
+        Start  24: test_sqlite_conversation_store
+ 24/122 Test  #24: test_sqlite_conversation_store ............   Passed    0.30 sec
+        Start  25: test_sqlite_memory_store
+ 25/122 Test  #25: test_sqlite_memory_store ..................   Passed    0.33 sec
+        Start  26: test_in_memory_tool_registry
+ 26/122 Test  #26: test_in_memory_tool_registry ..............   Passed    0.67 sec
+        Start  27: test_mcp_tool_provider
+ 27/122 Test  #27: test_mcp_tool_provider ....................   Passed    0.66 sec
+        Start  28: test_mcp_integration
+ 28/122 Test  #28: test_mcp_integration ......................   Passed   31.93 sec
+        Start  29: test_plugin_tool_integration
+ 29/122 Test  #29: test_plugin_tool_integration ..............   Passed    4.38 sec
+        Start  30: test_agent_activity_log
+ 30/122 Test  #30: test_agent_activity_log ...................   Passed    0.25 sec
+        Start  31: test_agent_pipeline_result
+ 31/122 Test  #31: test_agent_pipeline_result ................   Passed    0.23 sec
+        Start  32: test_agent_runtime_context
+ 32/122 Test  #32: test_agent_runtime_context ................   Passed    0.25 sec
+        Start  33: test_agent_task_runtime
+ 33/122 Test  #33: test_agent_task_runtime ...................   Passed    0.25 sec
+        Start  34: test_controlled_agent_tasks
+ 34/122 Test  #34: test_controlled_agent_tasks ...............   Passed    0.25 sec
+        Start  35: test_orchestration_snapshot
+ 35/122 Test  #35: test_orchestration_snapshot ...............   Passed    0.28 sec
+        Start  36: test_static_orchestration_diagnostics
+ 36/122 Test  #36: test_static_orchestration_diagnostics .....   Passed    0.27 sec
+        Start  37: test_static_approval_policy
+ 37/122 Test  #37: test_static_approval_policy ...............   Passed    0.26 sec
+        Start  38: test_static_sandbox_policy
+ 38/122 Test  #38: test_static_sandbox_policy ................   Passed    0.26 sec
+        Start  39: test_static_model_router
+ 39/122 Test  #39: test_static_model_router ..................   Passed    0.26 sec
+        Start  40: test_static_provider_catalog
+ 40/122 Test  #40: test_static_provider_catalog ..............   Passed    0.24 sec
+        Start  41: test_static_memory_catalog
+ 41/122 Test  #41: test_static_memory_catalog ................   Passed    0.24 sec
+        Start  42: test_static_agent_registry
+ 42/122 Test  #42: test_static_agent_registry ................   Passed    0.26 sec
+        Start  43: test_static_task_planner
+ 43/122 Test  #43: test_static_task_planner ..................   Passed    0.30 sec
+        Start  44: test_static_runtime_capability_registry
+ 44/122 Test  #44: test_static_runtime_capability_registry ...   Passed    0.76 sec
+        Start  45: test_static_runtime_permission_policy
+ 45/122 Test  #45: test_static_runtime_permission_policy .....   Passed    0.24 sec
+        Start  46: test_static_runtime_safety_policy
+ 46/122 Test  #46: test_static_runtime_safety_policy .........   Passed    0.33 sec
+        Start  47: test_static_runtime_pipeline
+ 47/122 Test  #47: test_static_runtime_pipeline ..............   Passed    0.26 sec
+        Start  48: test_static_execution_lifecycle
+ 48/122 Test  #48: test_static_execution_lifecycle ...........   Passed    0.26 sec
+        Start  49: test_runtime_integration
+ 49/122 Test  #49: test_runtime_integration ..................   Passed    0.74 sec
+        Start  50: test_runtime_provider
+ 50/122 Test  #50: test_runtime_provider .....................   Passed    0.76 sec
+        Start  51: test_credential_store
+ 51/122 Test  #51: test_credential_store .....................   Passed    0.36 sec
+        Start  52: test_provider_credentials
+ 52/122 Test  #52: test_provider_credentials .................   Passed    0.29 sec
+        Start  53: test_companion_service
+ 53/122 Test  #53: test_companion_service ....................   Passed    0.27 sec
+        Start  54: test_permission_policy_service
+ 54/122 Test  #54: test_permission_policy_service ............   Passed    0.32 sec
+        Start  55: test_tool_execution_gateway
+ 55/122 Test  #55: test_tool_execution_gateway ...............   Passed    0.78 sec
+        Start  56: test_tool_argument_validator
+ 56/122 Test  #56: test_tool_argument_validator ..............   Passed    0.90 sec
+        Start  57: test_agent_runtime_service
+ 57/122 Test  #57: test_agent_runtime_service ................   Passed    0.79 sec
+        Start  58: test_workspace_service
+ 58/122 Test  #58: test_workspace_service ....................   Passed    0.77 sec
+        Start  59: test_worktree_service
+ 59/122 Test  #59: test_worktree_service .....................   Passed    1.14 sec
+        Start  60: test_skill_profile_service
+ 60/122 Test  #60: test_skill_profile_service ................   Passed    0.26 sec
+        Start  61: test_skill_extension_runtime
+ 61/122 Test  #61: test_skill_extension_runtime ..............   Passed    0.86 sec
+        Start  62: test_model_registry
+ 62/122 Test  #62: test_model_registry .......................   Passed    0.27 sec
+        Start  63: test_ollama_runtime
+ 63/122 Test  #63: test_ollama_runtime .......................   Passed    1.69 sec
+        Start  64: test_local_inference
+ 64/122 Test  #64: test_local_inference ......................   Passed    1.68 sec
+        Start  65: test_voice
+ 65/122 Test  #65: test_voice ................................   Passed    0.29 sec
+        Start  66: test_null_tool_executor
+ 66/122 Test  #66: test_null_tool_executor ...................   Passed    0.85 sec
+        Start  67: test_local_runtime
+ 67/122 Test  #67: test_local_runtime ........................   Passed    0.82 sec
+        Start  68: test_local_runtime_session
+ 68/122 Test  #68: test_local_runtime_session ................   Passed    0.84 sec
+        Start  69: test_standard_path_provider
+ 69/122 Test  #69: test_standard_path_provider ...............   Passed    0.47 sec
+        Start  70: test_storage_migration
+ 70/122 Test  #70: test_storage_migration ....................   Passed    0.29 sec
+        Start  71: test_application_controller
+ 71/122 Test  #71: test_application_controller ...............   Passed    2.97 sec
+        Start  72: test_app_settings
+ 72/122 Test  #72: test_app_settings .........................   Passed    1.84 sec
+        Start  73: test_settings_recovery_runtime
+ 73/122 Test  #73: test_settings_recovery_runtime ............   Passed    1.24 sec
+        Start  74: test_json_settings_store
+ 74/122 Test  #74: test_json_settings_store ..................   Passed    0.29 sec
+        Start  75: test_keyed_mutex
+ 75/122 Test  #75: test_keyed_mutex ..........................   Passed    0.27 sec
+        Start  76: test_scoped_transform
+ 76/122 Test  #76: test_scoped_transform .....................   Passed    0.36 sec
+        Start  77: test_token_estimator
+ 77/122 Test  #77: test_token_estimator ......................   Passed    0.25 sec
+        Start  78: test_fnv_hash
+ 78/122 Test  #78: test_fnv_hash .............................   Passed    0.25 sec
+        Start  79: test_sampled_checksum
+ 79/122 Test  #79: test_sampled_checksum .....................   Passed    0.26 sec
+        Start  80: test_lazy
+ 80/122 Test  #80: test_lazy .................................   Passed    0.25 sec
+        Start  81: test_memo_map
+ 81/122 Test  #81: test_memo_map .............................   Passed    0.25 sec
+        Start  82: test_flock_file_lock
+ 82/122 Test  #82: test_flock_file_lock ......................   Passed    0.25 sec
+        Start  83: test_runtime_feature_flags
+ 83/122 Test  #83: test_runtime_feature_flags ................   Passed    0.26 sec
+        Start  84: test_json_schema_validator
+ 84/122 Test  #84: test_json_schema_validator ................   Passed    0.26 sec
+        Start  85: test_tool_name_validator
+ 85/122 Test  #85: test_tool_name_validator ..................   Passed    0.26 sec
+        Start  86: test_plugin_hook_registry
+ 86/122 Test  #86: test_plugin_hook_registry .................   Passed    0.26 sec
+        Start  87: test_location_service_map
+ 87/122 Test  #87: test_location_service_map .................   Passed    0.26 sec
+        Start  88: test_session_execution_patterns
+ 88/122 Test  #88: test_session_execution_patterns ...........   Passed    0.60 sec
+        Start  89: test_security_utilities
+ 89/122 Test  #89: test_security_utilities ...................   Passed    0.39 sec
+        Start  90: test_config_resolver
+ 90/122 Test  #90: test_config_resolver ......................   Passed    0.36 sec
+        Start  91: test_codemode_interpreter
+ 91/122 Test  #91: test_codemode_interpreter .................   Passed    0.31 sec
+        Start  92: test_background_job_persistence
+ 92/122 Test  #92: test_background_job_persistence ...........   Passed    0.98 sec
+        Start  93: test_health_service
+ 93/122 Test  #93: test_health_service .......................   Passed    0.25 sec
+        Start  94: test_upgrade
+ 94/122 Test  #94: test_upgrade ..............................   Passed    0.17 sec
+        Start  95: test_local_echo_provider
+ 95/122 Test  #95: test_local_echo_provider ..................   Passed    0.27 sec
+        Start  96: test_null_agent_runtime
+ 96/122 Test  #96: test_null_agent_runtime ...................   Passed    0.91 sec
+        Start  97: test_agent_loop
+ 97/122 Test  #97: test_agent_loop ...........................***Failed    1.20 sec
+********* Start testing of AgentLoopTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (arm64-little_endian-lp64 shared (dynamic) release build; by Apple LLVM 21.0.0 (clang-2100.3.34.2)), macos 27.0.1
+PASS   : AgentLoopTest::initTestCase()
+FAIL!  : AgentLoopTest::citedExplanationCompletesThroughReadGateway() Compared values are not the same
+   Actual   (state.phase)              : 6
+   Expected (AgentLoopPhase::Completed): 4
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_loop.cpp(161)]
+PASS   : AgentLoopTest::indeterminateClassificationNeverPlans(sync)
+PASS   : AgentLoopTest::indeterminateClassificationNeverPlans(async)
+PASS   : AgentLoopTest::rejectedFinalReportsPolicyReasonWithoutCompleting()
+PASS   : AgentLoopTest::cancellationDuringInitialClassificationIsTerminalOnce()
+PASS   : AgentLoopTest::hiddenNegativeClaimReproduction(original)
+PASS   : AgentLoopTest::hiddenNegativeClaimReproduction(universal)
+PASS   : AgentLoopTest::hiddenNegativeClaimReproduction(dotfiles)
+PASS   : AgentLoopTest::hiddenNegativeClaimReproduction(context-bypass)
+PASS   : AgentLoopTest::typedHiddenAbsenceThroughGateway(A-hidden-excluded)
+PASS   : AgentLoopTest::typedHiddenAbsenceThroughGateway(B-hidden-included-present)
+PASS   : AgentLoopTest::typedHiddenAbsenceThroughGateway(C-included-complete-absent)
+PASS   : AgentLoopTest::runsToolThenFinalAnswer()
+PASS   : AgentLoopTest::repeatedReadGetsOnePlanningRepairWithoutReexecution(sync-final)
+PASS   : AgentLoopTest::repeatedReadGetsOnePlanningRepairWithoutReexecution(sync-bounded)
+PASS   : AgentLoopTest::repeatedReadGetsOnePlanningRepairWithoutReexecution(async-final)
+PASS   : AgentLoopTest::repeatedReadGetsOnePlanningRepairWithoutReexecution(async-bounded)
+PASS   : AgentLoopTest::repeatedMutationDoesNotGetReadRepair()
+PASS   : AgentLoopTest::multipleToolResultsRequireAcceptedFinal()
+PASS   : AgentLoopTest::feedsObservationToNextPlanningCall()
+PASS   : AgentLoopTest::bindsFilesystemAuthorizationToConfiguredWorkspaceRoot()
+PASS   : AgentLoopTest::stopsAtIterationLimit()
+PASS   : AgentLoopTest::pausesForApprovalAndResumes()
+PASS   : AgentLoopTest::recordsDenialObservationWhenUserDenies()
+PASS   : AgentLoopTest::detectsDoomLoop()
+PASS   : AgentLoopTest::honorsCancelQueryBetweenSteps()
+PASS   : AgentLoopTest::recordsUnknownToolObservation()
+PASS   : AgentLoopTest::executesWithoutApprovalInAutonomousMode()
+PASS   : AgentLoopTest::truncatesLargeObservations()
+PASS   : AgentLoopTest::cleanupTestCase()
+Totals: 30 passed, 1 failed, 0 skipped, 0 blacklisted, 238ms
+********* Finished testing of AgentLoopTest *********
+
+        Start  98: test_agent_runtime
+ 98/122 Test  #98: test_agent_runtime ........................***Failed    2.25 sec
+********* Start testing of AgentRuntimeTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (arm64-little_endian-lp64 shared (dynamic) release build; by Apple LLVM 21.0.0 (clang-2100.3.34.2)), macos 27.0.1
+PASS   : AgentRuntimeTest::initTestCase()
+PASS   : AgentRuntimeTest::skillInstructionsReachContextButCannotAuthorizeProcess()
+SKIP   : AgentRuntimeTest::asyncRunCommandStreamsAndContinues() This shell fixture requires child creation; strict macOS plans deny forks. Native host lifecycle is covered by plugin integration tests.
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_runtime.cpp(203)]
+SKIP   : AgentRuntimeTest::asyncRunCommandCancellationAndTimeout() This shell fixture requires child creation; macOS strict no-detached-child plans now deny all forks. Plugin host cancellation is covered by real host integration tests.
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_runtime.cpp(264)]
+PASS   : AgentRuntimeTest::asyncApprovalKeepsToolCallId()
+SKIP   : AgentRuntimeTest::asyncDockerUsesProcessExecutorAndPreservesRestrictions() The fake Docker shell fixture requires child creation; strict macOS plans deny forks.
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_runtime.cpp(370)]
+SKIP   : AgentRuntimeTest::shutdownStopsActiveCommand() This shell fixture requires child creation; strict macOS plans deny forks. Native host shutdown is covered by plugin integration tests.
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_runtime.cpp(425)]
+PASS   : AgentRuntimeTest::asyncProcessListStreamsAndContinues()
+FAIL!  : AgentRuntimeTest::keepsPlannerProtocolPrivateWithStepCorrelation() Compared values are not the same
+   Actual   (streamingState.phase)     : 6
+   Expected (AgentLoopPhase::Completed): 4
+   Loc: [/Users/emir/Desktop/Projects/Sentinel/tests/core/test_agent_runtime.cpp(519)]
+PASS   : AgentRuntimeTest::emitsCorrelatedTerminalEventsInOrder()
+PASS   : AgentRuntimeTest::approvalEventsKeepToolCallIdentity()
+PASS   : AgentRuntimeTest::cancellingEmitsOneTerminalAndUnsubscribeStopsDelivery()
+PASS   : AgentRuntimeTest::createsIndependentSessionsAndReturnsFinalAnswer()
+PASS   : AgentRuntimeTest::cancellationDelegatesToRunningLoop()
+PASS   : AgentRuntimeTest::rejectsInvalidSessionAndResume()
+PASS   : AgentRuntimeTest::approvalDelegatesToLoop()
+PASS   : AgentRuntimeTest::propagatesPlannerFailure()
+PASS   : AgentRuntimeTest::ownsWorkerAndCompletesAsynchronously()
+PASS   : AgentRuntimeTest::cancelsActiveWorkerAndJoinsOnShutdown()
+PASS   : AgentRuntimeTest::resumesApprovalOnSameWorkerOwnedSession()
+PASS   : AgentRuntimeTest::runtimeWiresSubagentExecution()
+PASS   : AgentRuntimeTest::cleanupTestCase()
+Totals: 17 passed, 1 failed, 4 skipped, 0 blacklisted, 940ms
+********* Finished testing of AgentRuntimeTest *********
+
+        Start  99: test_llm_agent_runtime
+ 99/122 Test  #99: test_llm_agent_runtime ....................   Passed    1.72 sec
+        Start 100: test_observation_policy
+100/122 Test #100: test_observation_policy ...................   Passed    1.53 sec
+        Start 101: test_real_tool_executor_tools
+101/122 Test #101: test_real_tool_executor_tools .............   Passed    4.54 sec
+        Start 102: test_process_executor
+102/122 Test #102: test_process_executor .....................   Passed    2.86 sec
+        Start 103: test_fuzzy_editor
+103/122 Test #103: test_fuzzy_editor .........................   Passed    0.36 sec
+        Start 104: test_web_search_tool
+104/122 Test #104: test_web_search_tool ......................   Passed    2.95 sec
+        Start 105: test_plugin_manager
+105/122 Test #105: test_plugin_manager .......................   Passed    2.70 sec
+        Start 106: test_default_platform_services
+106/122 Test #106: test_default_platform_services ............   Passed    0.32 sec
+        Start 107: test_desktop_shell_view_model
+107/122 Test #107: test_desktop_shell_view_model .............   Passed    4.98 sec
+        Start 108: test_chat_view_model
+108/122 Test #108: test_chat_view_model ......................   Passed    2.40 sec
+        Start 109: test_chat_message_recovery
+109/122 Test #109: test_chat_message_recovery ................   Passed    1.49 sec
+        Start 110: test_daemon_ipc
+110/122 Test #110: test_daemon_ipc ...........................   Passed    5.65 sec
+        Start 111: test_graphics_backend
+111/122 Test #111: test_graphics_backend .....................   Passed    0.70 sec
+        Start 112: test_rag_e2e_pipeline
+112/122 Test #112: test_rag_e2e_pipeline .....................   Passed    0.38 sec
+        Start 113: test_startup_time
+113/122 Test #113: test_startup_time .........................   Passed    0.99 sec
+        Start 114: bench_semantic_search
+114/122 Test #114: bench_semantic_search .....................   Passed   10.46 sec
+        Start 115: bench_context_compression
+115/122 Test #115: bench_context_compression .................   Passed    0.97 sec
+        Start 116: bench_sqlite_store
+116/122 Test #116: bench_sqlite_store ........................   Passed    4.94 sec
+        Start 117: test_gui_components
+117/122 Test #117: test_gui_components .......................   Passed    0.83 sec
+        Start 118: test_branding_sources
+118/122 Test #118: test_branding_sources .....................   Passed    4.76 sec
+        Start 119: test_desktop_generated_contract
+119/122 Test #119: test_desktop_generated_contract ...........   Passed    0.24 sec
+        Start 120: test_ipc_generated_contract
+120/122 Test #120: test_ipc_generated_contract ...............   Passed    0.15 sec
+        Start 121: test_desktop_ipc
+121/122 Test #121: test_desktop_ipc ..........................   Passed   34.70 sec
+        Start 122: test_native_integration
+122/122 Test #122: test_native_integration ...................   Passed    4.22 sec
+
+98% tests passed, 2 tests failed out of 122
+
+Total Test time (real) = 207.87 sec
+
+The following tests FAILED:
+	 97 - test_agent_loop (Failed)
+	 98 - test_agent_runtime (Failed)
+Errors while running CTest

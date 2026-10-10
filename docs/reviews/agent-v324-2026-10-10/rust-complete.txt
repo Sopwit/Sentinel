@@ -1,0 +1,114 @@
+   Compiling sentinel-tui v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-tui)
+   Compiling sentinel-cli v1.0.0-rc.8 (/Users/emir/Desktop/Projects/Sentinel/cli/crates/sentinel-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
+     Running unittests src/main.rs (cli/target/debug/deps/sentinel-4134fa75f0c96f2d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/commands.rs (cli/target/debug/deps/commands-f8c90393f9627577)
+
+running 14 tests
+test machine_error_is_typed ... ok
+test incompatible_exit_is_distinct ... ok
+test cancelled_exit_is_distinct ... ok
+test failed_exit_is_nonzero ... ok
+test global_output_after_task_is_parsed ... ok
+test json_final ... ok
+test missing_task_is_usage_error ... ok
+test stream_json ... ok
+test unavailable_exit_is_distinct ... ok
+test stdin_task ... ok
+test text_final_not_duplicated ... ok
+test completions_are_offline ... ok
+test usage_validation_precedes_daemon_connection ... ok
+test help_is_offline_and_successful ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running unittests src/lib.rs (cli/target/debug/deps/sentinel_ipc-f7de1bc1ddfe4f43)
+
+running 11 tests
+test tests::exit_codes ... ok
+test generation_compatibility_tests::hello_generation_is_additive ... ok
+test tests::missing_daemon ... ok
+test tests::event_decoding ... ok
+test tests::rejects_oversized ... ok
+test tests::stable_error_categories ... ok
+test tests::rejects_malformed ... ok
+test tests::incompatible ... ok
+test transport_tests::typed_request_invalid_enum_or_fields ... ok
+test transport_tests::handshake_correlation_and_event_queue ... ok
+test tests::partial_frame_survives_poll_timeout ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (cli/target/debug/deps/sentinel_tui-af6a5850dc5eb13a)
+
+running 50 tests
+test editor::tests::bounded_paste ... ok
+test editor::tests::draft_restored ... ok
+test editor::tests::multiline_navigation ... ok
+test editor::tests::pasted_command_recall_stays_literal_and_restores_draft ... ok
+test editor::tests::readline_kills_respect_lines_and_utf8 ... ok
+test commands::tests::unique_names_bindings_and_enforced_plan_refusal ... ok
+test commands::tests::fuzzy_and_availability ... ok
+test editor::tests::unicode_edits ... ok
+test picker::tests::empty_picker_safe ... ok
+test picker::tests::file_search_does_not_match_explanations_or_common_roots ... ok
+test picker::tests::identities_and_long_details_are_searchable ... ok
+test picker::tests::subsequence_and_case ... ok
+test commands::tests::aliases_arguments_and_unknown_are_safe ... ok
+test tests::active_reattach_restores_task_without_replacing_stream ... ok
+test tests::approval_cancellation_and_exit_never_fake_completion ... ok
+test tests::action_invocation_is_not_operation_success ... ok
+test tests::duplicate_events_and_other_sessions_are_ignored ... ok
+test tests::draft_switching_is_bounded_and_active_runs_block_switches ... ok
+test tests::disconnected_queue_failure_and_stale_history_preserve_input ... ok
+test tests::generated_error_wrapper_is_readable_and_code_remains_literal ... ok
+test tests::keyboard_commands_share_handlers_without_readline_conflicts ... ok
+test tests::keyboard_contract_has_reliable_newline_without_flow_control ... ok
+test tests::message_roles_and_technical_details_are_distinct ... ok
+test tests::metadata_views_never_replace_streamed_text_and_details_are_bounded ... ok
+test tests::footer_does_not_duplicate_completed_and_composer_has_mode ... ok
+test tests::mode_is_explicit ... ok
+test tests::pasted_slash_and_escaped_slash_are_literal_chat ... ok
+test tests::prior_conversation_survives_send_stream_final_and_rejection ... ok
+test tests::provider_failures_are_distinct_from_daemon_disconnect ... ok
+test tests::reconnect_restores_approval_and_draft ... ok
+test tests::references_use_authorized_discovery_and_quoted_paths_only ... ok
+test tests::registry_handlers_emit_canonical_requests_and_disable_unsafe_workflows ... ok
+test tests::rejected_submission_restores_draft_and_references ... ok
+test tests::empty_composer_is_three_rows_and_unicode_cursor_is_safe ... ok
+test tests::stale_generation_and_closed_run_cannot_append_output ... ok
+test tests::system_only_history_keeps_welcome_and_notices_accessible ... ok
+test tests::terminal_cancellation_replaces_waiting_notice ... ok
+test tests::slash_completion_never_executes_partial_or_tab ... ok
+test tests::tool_activity_projects_safe_metadata_only ... ok
+test tests::trailing_newline_expands_composer ... ok
+test tests::composer_growth_keeps_cursor_inside_padded_grid ... ok
+test tests::wrapping_preserves_content_and_cell_width ... ok
+test theme::tests::aliases_and_distinct_palettes ... ok
+test tests::compact_header_centered_empty_state_and_composer ... ok
+test tests::long_response_follows_final_row_inside_reading_column ... ok
+test tests::terminal_size_matrix ... ok
+test tests::command_popup_and_help_render_at_supported_sizes ... ok
+test tests::wide_grid_themes_and_shift_enter_are_presentation_only ... ok
+test tests::v23_responsive_state_matrix ... ok
+test tests::bounded_stream_render_measurement ... ok
+
+test result: ok. 50 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.35s
+
+   Doc-tests sentinel_ipc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests sentinel_tui
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,9 @@
+[0/2] Re-checking globbed directories...
+[1/11] cd /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_llm_provider && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_llm_provider/libollama_extended_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_llm_provider/ollama-extended/libollama_extended_plugin.dylib
+[2/11] cd /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_agent_tool && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_agent_tool/libcustom_agent_tool_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_agent_tool/custom-tool/libcustom_agent_tool_plugin.dylib && /opt/homebrew/bin/cmake -E copy_if_different /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_agent_tool/libsecond_agent_tool_plugin.dylib /Users/emir/Desktop/Projects/Sentinel/build/release/plugins/samples/custom_agent_tool/second-tool/libsecond_agent_tool_plugin.dylib
+[3/11] Automatic MOC and UIC for target test_agent_loop
+[4/10] Automatic MOC and UIC for target test_agent_runtime
+[5/9] Building CXX object tests/CMakeFiles/test_agent_runtime.dir/core/test_agent_runtime.cpp.o
+[6/9] Building CXX object tests/CMakeFiles/test_agent_loop.dir/core/test_agent_loop.cpp.o
+[7/9] Linking CXX executable tests/test_agent_runtime
+[8/9] Linking CXX executable tests/test_agent_loop
