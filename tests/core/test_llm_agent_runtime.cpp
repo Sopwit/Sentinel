@@ -8,6 +8,7 @@
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/model/ModelLibrary.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 
@@ -76,6 +77,51 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void serializedNativeRequestIsBudgetedBeforeNetwork() {
+        ModelService service;
+        service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:1"));
+        ModelBinding binding;
+        binding.providerId = QStringLiteral("lm-studio");
+        binding.modelId = QStringLiteral("synthetic-budget-test");
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        binding.capabilities.contextWindow = 512;
+        auto provider = service.constructProvider(binding);
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.nativeToolCalling = true;
+        options.tools = BuiltInToolProvider::descriptors();
+        const auto reply = provider->sendRequest(QStringLiteral("Read config.json"), options);
+        QVERIFY(!reply.success);
+        QCOMPARE(reply.category, ChatProviderErrorCategory::RequestRejected);
+        QVERIFY(reply.errorMessage.startsWith(QStringLiteral("Context budget exceeded")));
+        QCOMPARE(reply.httpStatus, 0);
+    }
+    void loadedContextIsNotPublishedMaximum() {
+        LMStudioNativeCatalogAdapter catalog;
+        QVERIFY(catalog.acceptResponse(
+            R"({"models":[{"key":"m","max_context_length":1048576,"loaded_instances":[{"config":{"context_length":8192}},{"config":{"context_length":4096}}]}]})"));
+        QCOMPARE(catalog.discoveredModels().first().capabilities.contextWindow.value_or(0), 4096);
+        QVERIFY(catalog.acceptResponse(
+            R"({"models":[{"key":"m","max_context_length":1048576,"loaded_instances":[]}]})"));
+        QCOMPARE(catalog.discoveredModels().first().capabilities.contextWindow.value_or(0),
+                 1048576);
+    }
+    void contextExhaustionStopsWithoutRetryOrClaimingSuccess() {
+        // The native scripted response exercises provider context rejection.
+        auto shared = std::make_shared<FakeChatProvider>();
+        ChatProviderReply rejected;
+        rejected.errorMessage = QStringLiteral("Context size has been exceeded.");
+        rejected.category = ChatProviderErrorCategory::ProviderFailure;
+        shared->scriptedRequests.append(rejected);
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), shared.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, shared);
+        const auto decision = runtime.nextStep(QStringLiteral("Read math.h"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(decision.reason.startsWith(QStringLiteral("Context exhausted:")));
+        QCOMPARE(shared->prompts.size(), 1);
+    }
     void toolIndexPreservesDiscoveryUnderDetailedContractBudget() {
         AgentContextInput input;
         input.goal = QStringLiteral("Fix the arithmetic function");
@@ -363,11 +409,16 @@ private slots:
         QVERIFY(provider->requestOptions.at(1).toolResults.isEmpty());
         auto record = sampleRecord();
         record.toolId = QStringLiteral("read-file");
+        record.observation = QString(12000, QLatin1Char('x'));
         const auto answer = runtime.nextStep(QStringLiteral("Read audit.txt"), {record});
         QCOMPARE(answer.kind, AgentStepDecision::Kind::FinalAnswer);
         QCOMPARE(provider->requestOptions.last().toolResults.size(), 1);
         QCOMPARE(provider->requestOptions.last().toolResults.first().callId,
                  QStringLiteral("good-call"));
+        const auto excerpt = provider->requestOptions.last().toolResults.first().content;
+        QVERIFY(excerpt.size() < 2300);
+        QVERIFY(excerpt.contains(QStringLiteral("excerpt truncated")));
+        QCOMPARE(record.observation.size(), 12000); // Authoritative evidence stays intact.
     }
 
     void unknownNativeCallCanRepairBeforeAnyExecution() {

@@ -592,6 +592,34 @@ private slots:
         QCOMPARE(snapshot["state"].toString(), QString("completed"));
         QVERIFY(!snapshot["output"].toString().isEmpty());
     }
+    void cancelledProjectionCannotLeakIntoNewConversation() {
+        Harness h(test::DeterministicChatReply::Final, true);
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket s;
+        hello(s, h.path);
+        const auto id = request(s, "session.create", {{"title", "old"}})["payload"]
+                            .toObject()["session_id"]
+                            .toString();
+        request(s, "agent.start", {{"session_id", id}, {"text", "perform action"}});
+        QTRY_VERIFY_WITH_TIMEOUT(h.controller->agentAwaitingApproval(), 5000);
+        QString next;
+        const auto subscription =
+            h.controller->agentRuntime()->subscribe([&](const core::AgentEvent& event) {
+                if (event.type == core::AgentEventType::AgentCancelled)
+                    QMetaObject::invokeMethod(
+                        h.controller.get(),
+                        [&] { next = h.controller->createConversation(QStringLiteral("new")); },
+                        Qt::QueuedConnection);
+            });
+        QVERIFY(h.controller->cancelAgentRun());
+        QTRY_VERIFY_WITH_TIMEOUT(!next.isEmpty(), 5000);
+        QTest::qWait(20);
+        h.controller->agentRuntime()->unsubscribe(subscription);
+        QCOMPARE(h.controller->activeConversationId(), next);
+        for (const auto& message : h.controller->chatHistory())
+            QVERIFY2(!message.content.contains(QStringLiteral("Agent Run Cancelled")),
+                     qPrintable(message.content));
+    }
     void agentCancellationDuringApproval() {
         Harness h(test::DeterministicChatReply::Final, true);
         QVERIFY(h.server->startServer(h.path));
