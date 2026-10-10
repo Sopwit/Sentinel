@@ -1,0 +1,456 @@
+[
+  {
+    "model": "qwen",
+    "journey": "C-classification",
+    "seconds": 31.1,
+    "outcome": "run.failed",
+    "run_id": "0f21c654-be6d-4a7b-82f0-40841e24537a",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 6,
+        "run_id": "0f21c654-be6d-4a7b-82f0-40841e24537a",
+        "server_generation": "996a4be8-eebe-4622-97dc-323d9b5ae1dd",
+        "session_id": "82915dca-a733-423c-a32f-482291c502a6",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 30057,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 575,
+        "http_status": 0,
+        "model_id": "qwen/qwen3.5-9b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1724,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "qwen",
+    "journey": "A-single",
+    "seconds": 30.75,
+    "outcome": "run.failed",
+    "run_id": "deb98612-06ea-4261-b437-03926bd5394b",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 12,
+        "run_id": "deb98612-06ea-4261-b437-03926bd5394b",
+        "server_generation": "996a4be8-eebe-4622-97dc-323d9b5ae1dd",
+        "session_id": "3f2f5df4-b09a-4eb5-b1b9-67ff69a24ec4",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29738,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 614,
+        "http_status": 0,
+        "model_id": "qwen/qwen3.5-9b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1842,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "qwen",
+    "journey": "B-multifile",
+    "seconds": 31.71,
+    "outcome": "run.failed",
+    "run_id": "fe4aa3cf-4143-4108-babe-a9447f399e79",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 18,
+        "run_id": "fe4aa3cf-4143-4108-babe-a9447f399e79",
+        "server_generation": "996a4be8-eebe-4622-97dc-323d9b5ae1dd",
+        "session_id": "7876ce4d-d89d-4bce-8f4f-751a8e2e1abc",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 30264,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 669,
+        "http_status": 0,
+        "model_id": "qwen/qwen3.5-9b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 2007,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "qwen",
+    "journey": "E-continuation",
+    "seconds": 31.35,
+    "outcome": "run.failed",
+    "run_id": "c7ebf994-9a2d-4331-89de-55c5758fe252",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 24,
+        "run_id": "c7ebf994-9a2d-4331-89de-55c5758fe252",
+        "server_generation": "996a4be8-eebe-4622-97dc-323d9b5ae1dd",
+        "session_id": "8e78ab05-8d60-42fc-9f35-3770f0b3a00f",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 30411,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 660,
+        "http_status": 0,
+        "model_id": "qwen/qwen3.5-9b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1978,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "qwen",
+    "journey": "F-pressure",
+    "seconds": 30.76,
+    "outcome": "run.failed",
+    "run_id": "04b518e9-e4ed-4c5b-b8cc-b126815e5690",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 30,
+        "run_id": "04b518e9-e4ed-4c5b-b8cc-b126815e5690",
+        "server_generation": "996a4be8-eebe-4622-97dc-323d9b5ae1dd",
+        "session_id": "84898208-00bc-434e-80ab-e8f1d9e55dd0",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29815,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 672,
+        "http_status": 0,
+        "model_id": "qwen/qwen3.5-9b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 2014,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "nemotron",
+    "journey": "C-classification",
+    "seconds": 58.11,
+    "outcome": "run.completed",
+    "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+    "terminal": {
+      "id": "",
+      "name": "run.completed",
+      "payload": {
+        "detail": "",
+        "event_sequence": 9,
+        "run_id": "d7e60ef5-b53b-4503-bf9f-498da3fbd38c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "e3a7b5e5-705b-4e20-8d1e-09f7baf94464",
+        "state": "completed",
+        "text": "4"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "None",
+        "classification_result": "classified",
+        "completion_tokens": 110,
+        "deadline_ms": 30000,
+        "elapsed_ms": 8506,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 578,
+        "finish_reason": "stop",
+        "http_status": 200,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output_budget_tokens": 512,
+        "prompt_tokens": 392,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1734,
+        "total_tokens": 502,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "nemotron",
+    "journey": "A-single",
+    "seconds": 30.68,
+    "outcome": "run.failed",
+    "run_id": "e389bfba-19c9-4960-9847-588145470347",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 15,
+        "run_id": "e389bfba-19c9-4960-9847-588145470347",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "444da27c-d6df-4b32-9600-46713be756ff",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29832,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 619,
+        "http_status": 0,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1855,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "nemotron",
+    "journey": "B-multifile",
+    "seconds": 30.65,
+    "outcome": "run.failed",
+    "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 21,
+        "run_id": "54856d88-8350-4190-b0f6-71eb4e5f30a0",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "b96c070b-6595-4176-99cc-0ac947ebcccc",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29861,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 674,
+        "http_status": 0,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 2020,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "nemotron",
+    "journey": "E-continuation",
+    "seconds": 30.77,
+    "outcome": "run.failed",
+    "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 27,
+        "run_id": "1630c455-4c5d-40ef-a700-ed839b5aa51c",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "fbfdb92a-e025-427b-b8b5-e40edce37468",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29956,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 664,
+        "http_status": 0,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 1991,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  },
+  {
+    "model": "nemotron",
+    "journey": "F-pressure",
+    "seconds": 30.69,
+    "outcome": "run.failed",
+    "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+    "terminal": {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "Observation classification failed; retry after checking the provider. Provider 'lm-studio': Local LM Studio generation timed out after 30000 ms.",
+        "event_sequence": 33,
+        "run_id": "44ba7b0e-d302-41b2-a0f0-572037756e18",
+        "server_generation": "16edea3c-7ccf-4cc5-a534-9b720cbd353a",
+        "session_id": "c8c8099f-e2b1-4593-8ee6-3a9437b91e86",
+        "state": "failed",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    "classification": [
+      {
+        "category": "Timeout",
+        "classification_result": "indeterminate",
+        "deadline_ms": 30000,
+        "elapsed_ms": 29819,
+        "estimate_method": "utf8_bytes_div_3_ceil",
+        "estimated_input_tokens": 676,
+        "http_status": 0,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output_budget_tokens": 512,
+        "provider_id": "lm-studio",
+        "reported_context_tokens": 8192,
+        "request_bytes": 2027,
+        "upstream_cancellation": "unconfirmed"
+      }
+    ],
+    "tool_results": 0,
+    "unchanged": true,
+    "unrelated_preserved": true
+  }
+]

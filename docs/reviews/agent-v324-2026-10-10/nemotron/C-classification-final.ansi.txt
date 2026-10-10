@@ -1,0 +1,40 @@
+SENTINEL / Agent     Workspace: V322 C-classification                                                          Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+    > You                                                                                                               
+        What is 2 plus 2? Answer briefly; do not use tools.                                                             
+                                                                                                                        
+    Assistant                                                                                                           
+      4                                                                                                                 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                                     │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  System notices · /notices to read                                                                                     
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                         completed  
