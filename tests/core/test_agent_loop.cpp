@@ -136,6 +136,7 @@ private slots:
         QVERIFY(file.open(QIODevice::WriteOnly));
         file.write("int add(int a,int b) { return a - b; }");
         file.close();
+        const auto observedPath = QFileInfo(path).canonicalFilePath();
         ScriptedPlanner planner;
         auto read = toolDecision("read-file");
         read.arguments = {{"path", path}};
@@ -145,7 +146,7 @@ private slots:
                                                  {"interpretation", "add subtracts b from a."},
                                                  {"evidence", QJsonArray{QJsonObject{
                                                                   {"call_id", "observed"},
-                                                                  {"source", path},
+                                                                  {"source", observedPath},
                                                                   {"quote", "return a - b;"}}}}}}}})
                 .toJson(QJsonDocument::Compact)));
         final.grounding = GroundingMode::Verified;
@@ -164,12 +165,12 @@ private slots:
         context.rootPath = workspace.path();
         loop.setWorkspaceContext(context);
         const auto state = loop.run("Read calc.cpp and explain add", "fixture-explanation");
-        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QVERIFY2(state.phase == AgentLoopPhase::Completed, qPrintable(state.abortReason));
         QCOMPARE(planner.calls, 2);
         QCOMPARE(state.evidence.size(), 1);
         QVERIFY(state.finalAnswer.contains("Interpretation: add subtracts b from a."));
         QVERIFY(state.finalAnswer.contains("return a - b;"));
-        QVERIFY(state.finalAnswer.contains(path));
+        QVERIFY(state.finalAnswer.contains(observedPath));
     }
     void indeterminateClassificationNeverPlans_data() {
         QTest::addColumn<bool>("async");
