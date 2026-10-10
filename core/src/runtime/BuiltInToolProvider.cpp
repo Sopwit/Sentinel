@@ -177,8 +177,12 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                            "Use glob with includeHidden:true for recursive scope."),
             ToolRiskLevel::Low,
             ToolExecutionMode::Local,
-            {ToolParameterDescriptor{QStringLiteral("path"),
-                                     QStringLiteral("Directory path, including ~/Desktop."), true},
+            {ToolParameterDescriptor{
+                 QStringLiteral("path"),
+                 QStringLiteral(
+                     "Directory path: '.' for the active workspace root, or a workspace-relative "
+                     "directory. External paths require separate authorization."),
+                 true},
              ToolParameterDescriptor{QStringLiteral("includeHidden"),
                                      QStringLiteral("Include hidden entries (true/false)."),
                                      false}}},
@@ -191,10 +195,12 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             ToolRiskLevel::Low,
             ToolExecutionMode::Local,
             {
-                ToolParameterDescriptor{QStringLiteral("path"),
-                                        QStringLiteral("Absolute or workspace-relative "
-                                                       "file/directory path."),
-                                        true},
+                ToolParameterDescriptor{
+                    QStringLiteral("path"),
+                    QStringLiteral("Absolute or workspace-relative text file path. "
+                                   "Directories require list-directory; use actual "
+                                   "workspace paths, not invented /workspace paths."),
+                    true},
                 ToolParameterDescriptor{QStringLiteral("offset"),
                                         QStringLiteral("1-based line to start from (default 1)."),
                                         false},

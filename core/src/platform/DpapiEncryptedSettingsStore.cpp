@@ -32,8 +32,9 @@ bool isProbablySecret(const QString& key) {
 
 } // namespace
 
-DpapiEncryptedSettingsStore::DpapiEncryptedSettingsStore(std::unique_ptr<ISettingsStore> inner)
-    : inner_(std::move(inner)) {}
+DpapiEncryptedSettingsStore::DpapiEncryptedSettingsStore(std::unique_ptr<ISettingsStore> inner,
+                                                         KeySource keySource)
+    : inner_(std::move(inner)), keySource_(std::move(keySource)) {}
 
 bool DpapiEncryptedSettingsStore::isSecretKey(const QString& key) {
     return isProbablySecret(key);
@@ -90,7 +91,7 @@ QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
     return result;
 }
 
-QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) {
+QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) const {
     DATA_BLOB in;
     in.pbData = reinterpret_cast<BYTE*>(const_cast<char*>(cipherData.constData()));
     in.cbData = static_cast<DWORD>(cipherData.size());
@@ -168,7 +169,7 @@ static QByteArray getOrCreateMacKeychainKey() {
 }
 
 QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
-    const QByteArray key = getOrCreateMacKeychainKey();
+    const QByteArray key = keySource_ ? keySource_() : getOrCreateMacKeychainKey();
     if (key.isEmpty()) {
         return plainText.toUtf8();
     }
@@ -192,8 +193,8 @@ QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
     return iv + cipherText;
 }
 
-QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) {
-    const QByteArray key = getOrCreateMacKeychainKey();
+QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) const {
+    const QByteArray key = keySource_ ? keySource_() : getOrCreateMacKeychainKey();
     if (key.isEmpty() || cipherData.size() <= kCCBlockSizeAES128) {
         return QString::fromUtf8(cipherData);
     }
@@ -223,7 +224,7 @@ QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
     return plainText.toUtf8();
 }
 
-QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) {
+QString DpapiEncryptedSettingsStore::decrypt(const QByteArray& cipherData) const {
     return QString::fromUtf8(cipherData);
 }
 

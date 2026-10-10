@@ -7,13 +7,17 @@
 #include "sentinel/core/interfaces/ISettingsStore.h"
 
 #include <QString>
+#include <functional>
 #include <memory>
 
 namespace sentinel::core {
 
 class DpapiEncryptedSettingsStore final : public ISettingsStore {
 public:
-    explicit DpapiEncryptedSettingsStore(std::unique_ptr<ISettingsStore> inner);
+    // Injectable macOS key source permits hermetic encryption tests. Empty uses OS Keychain.
+    using KeySource = std::function<QByteArray()>;
+    explicit DpapiEncryptedSettingsStore(std::unique_ptr<ISettingsStore> inner,
+                                         KeySource keySource = {});
 
     QString value(const QString& key, const QString& defaultValue = QString()) const override;
     void setValue(QString key, QString value) override;
@@ -22,10 +26,11 @@ public:
 
 private:
     static bool isSecretKey(const QString& key);
-    static QByteArray encrypt(const QString& plainText);
-    static QString decrypt(const QByteArray& cipherData);
+    QByteArray encrypt(const QString& plainText);
+    QString decrypt(const QByteArray& cipherData) const;
 
     std::unique_ptr<ISettingsStore> inner_;
+    KeySource keySource_;
 };
 
 } // namespace sentinel::core

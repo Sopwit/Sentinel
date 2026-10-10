@@ -4,9 +4,9 @@
 
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/chat/ChatImageContent.h"
-#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -20,8 +20,8 @@
 #include <QTimer>
 #include <QVariant>
 
-#include <atomic>
 #include <algorithm>
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -46,8 +46,8 @@ struct JsonReply {
 };
 
 JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
-                   const QMap<QByteArray, QByteArray>& headers = {},
-                   const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+                       const QMap<QByteArray, QByteArray>& headers = {},
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
     const auto decision = NetworkPolicyService::instance().check(url);
     if (decision != NetworkDecision::Allowed) {
         JsonReply blocked;
@@ -88,22 +88,23 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
         reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() >= 400) {
         const auto networkError = reply->error();
         const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        QString error = httpStatus > 0
-                            ? QStringLiteral("HTTP %1 request failed.").arg(httpStatus)
-                            : QStringLiteral("Network request failed (%1).")
-                                  .arg(static_cast<int>(networkError));
+        QString error = httpStatus > 0 ? QStringLiteral("HTTP %1 request failed.").arg(httpStatus)
+                                       : QStringLiteral("Network request failed (%1).")
+                                             .arg(static_cast<int>(networkError));
         const auto retryAfter = QString::fromLatin1(reply->rawHeader("Retry-After"));
         const auto payload = reply->readAll();
-        const auto errorBody = QJsonDocument::fromJson(payload).object().value(QStringLiteral("error"));
-        const auto apiMessage = errorBody.isObject()
-                                    ? errorBody.toObject().value(QStringLiteral("message")).toString()
-                                    : errorBody.toString();
+        const auto errorBody =
+            QJsonDocument::fromJson(payload).object().value(QStringLiteral("error"));
+        const auto apiMessage =
+            errorBody.isObject() ? errorBody.toObject().value(QStringLiteral("message")).toString()
+                                 : errorBody.toString();
         if (!apiMessage.isEmpty())
             error = apiMessage.left(512);
         reply->deleteLater();
         return JsonReply{false, false, {}, error, networkError, httpStatus, retryAfter};
     }
 
+    const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     const auto payload = reply->readAll();
     reply->deleteLater();
 
@@ -115,25 +116,27 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
                          {},
                          QStringLiteral("Ollama local generation response was "
                                         "not valid JSON."),
-                         QNetworkReply::UnknownContentError};
+                         QNetworkReply::UnknownContentError,
+                         httpStatus};
     }
 
-    return JsonReply{true, false, document, {}, QNetworkReply::NoError};
+    return JsonReply{true, false, document, {}, QNetworkReply::NoError, httpStatus};
 }
 
 ChatProviderErrorCategory requestCategory(const JsonReply& reply) {
     if (reply.category == ChatProviderErrorCategory::Offline)
         return ChatProviderErrorCategory::Offline;
-    return ProviderRequestRuntime::classify(reply.httpStatus, reply.networkError,
-                                            reply.timedOut, reply.cancelled);
+    return ProviderRequestRuntime::classify(reply.httpStatus, reply.networkError, reply.timedOut,
+                                            reply.cancelled);
 }
 
 JsonReply executeJsonRequest(ProviderRequestMode mode,
                              const std::shared_ptr<std::atomic_bool>& cancellationToken,
-                             const std::function<JsonReply()>& send) {
+                             const std::function<JsonReply()>& send, int attemptLimit = 0) {
     const QString requestId = ProviderRequestRuntime::requestId();
     QStringList retries;
-    const int maxAttempts = mode == ProviderRequestMode::Generation ? 3 : 2;
+    const int maxAttempts =
+        attemptLimit > 0 ? attemptLimit : (mode == ProviderRequestMode::Generation ? 3 : 2);
     for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
         if (cancellationToken && cancellationToken->load()) {
             JsonReply cancelled;
@@ -155,11 +158,11 @@ JsonReply executeJsonRequest(ProviderRequestMode mode,
         transport.networkError = reply.networkError;
         transport.timedOut = reply.timedOut;
         transport.cancelled = reply.cancelled;
-        if (reply.ok || !ProviderRequestRuntime::retryable(
-                            transport, mode, false) || attempt == maxAttempts)
+        if (reply.ok || !ProviderRequestRuntime::retryable(transport, mode, false) ||
+            attempt == maxAttempts)
             return reply;
-        const int delayMs = ProviderRequestRuntime::retryDelayMs(
-            attempt - 1, reply.retryAfter, mode);
+        const int delayMs =
+            ProviderRequestRuntime::retryDelayMs(attempt - 1, reply.retryAfter, mode);
         retries.append(QStringLiteral("%1: %2 ms")
                            .arg(chatProviderErrorCategoryName(reply.category))
                            .arg(delayMs));
@@ -176,9 +179,20 @@ JsonReply executeJsonRequest(ProviderRequestMode mode,
 JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs,
                    const QMap<QByteArray, QByteArray>& headers = {},
                    const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
-    return executeJsonRequest(ProviderRequestMode::Generation, cancellationToken, [&] {
-        return postJsonOnce(url, body, timeoutMs, headers, cancellationToken);
-    });
+    QElapsedTimer lifetime;
+    lifetime.start();
+    return executeJsonRequest(
+        ProviderRequestMode::Generation, cancellationToken,
+        [&] {
+            if (timeoutMs > 0 && lifetime.elapsed() >= timeoutMs) {
+                JsonReply expired;
+                expired.timedOut = true;
+                return expired;
+            }
+            const int remaining = timeoutMs > 0 ? qMax(1, timeoutMs - int(lifetime.elapsed())) : 0;
+            return postJsonOnce(url, body, remaining, headers, cancellationToken);
+        },
+        timeoutMs > 0 ? 1 : 0);
 }
 
 bool cancellationRequested(const LocalInferenceRequest& request) {
@@ -666,34 +680,38 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
         const auto& discovery = *snapshot;
         if (!discovery.succeeded()) {
             response.httpStatus = discovery.httpStatus;
-            response.providerErrorCategory = static_cast<int>(
-                discovery.errorCategory == ChatProviderErrorCategory::None
-                    ? (discovery.lifecycle == ChatRequestLifecycle::Cancelled
-                           ? ChatProviderErrorCategory::Cancelled
-                           : ChatProviderErrorCategory::ProviderUnavailable)
-                    : discovery.errorCategory);
+            response.providerErrorCategory =
+                static_cast<int>(discovery.errorCategory == ChatProviderErrorCategory::None
+                                     ? (discovery.lifecycle == ChatRequestLifecycle::Cancelled
+                                            ? ChatProviderErrorCategory::Cancelled
+                                            : ChatProviderErrorCategory::ProviderUnavailable)
+                                     : discovery.errorCategory);
             response.requestId = discovery.requestId;
             response.attempts = discovery.attemptCount;
             response.status = discovery.lifecycle == ChatRequestLifecycle::Cancelled
-                                  ? LocalInferenceStatus::Blocked : LocalInferenceStatus::Error;
-            response.error = discovery.errorCategory == ChatProviderErrorCategory::Timeout
-                                 ? LocalInferenceError::Timeout
-                             : discovery.errorCategory == ChatProviderErrorCategory::ConnectionFailed
-                                 ? LocalInferenceError::EndpointUnreachable
-                                 : LocalInferenceError::RequestFailed;
+                                  ? LocalInferenceStatus::Blocked
+                                  : LocalInferenceStatus::Error;
+            response.error =
+                discovery.errorCategory == ChatProviderErrorCategory::Timeout
+                    ? LocalInferenceError::Timeout
+                : discovery.errorCategory == ChatProviderErrorCategory::ConnectionFailed
+                    ? LocalInferenceError::EndpointUnreachable
+                    : LocalInferenceError::RequestFailed;
             response.summary = discovery.safeDetail.isEmpty()
                                    ? QStringLiteral("Ollama model discovery did not complete.")
                                    : discovery.safeDetail;
             response.traces.append(trace(2, QStringLiteral("Model Discovery"),
                                          discovery.lifecycle == ChatRequestLifecycle::Cancelled
-                                             ? QStringLiteral("Cancelled") : QStringLiteral("Error"),
+                                             ? QStringLiteral("Cancelled")
+                                             : QStringLiteral("Error"),
                                          response.summary));
             return response;
         }
         if (discovery.models.isEmpty()) {
             response.status = LocalInferenceStatus::ModelUnavailable;
             response.error = LocalInferenceError::MissingModel;
-            response.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
+            response.providerErrorCategory =
+                static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
             response.summary = discovery.safeDetail.isEmpty()
                                    ? QStringLiteral("No Ollama model is installed.")
                                    : discovery.safeDetail;
@@ -704,7 +722,8 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
         if (response.model.isEmpty()) {
             response.status = LocalInferenceStatus::InvalidRequest;
             response.error = LocalInferenceError::MissingModel;
-            response.summary = QStringLiteral("Local inference request rejected: model is required.");
+            response.summary =
+                QStringLiteral("Local inference request rejected: model is required.");
             return response;
         }
         const bool modelAvailable = std::any_of(
@@ -713,8 +732,10 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
         if (!modelAvailable) {
             response.status = LocalInferenceStatus::ModelUnavailable;
             response.error = LocalInferenceError::ModelUnavailable;
-            response.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
-            response.summary = QStringLiteral("Local inference request rejected: selected model is unavailable.");
+            response.providerErrorCategory =
+                static_cast<int>(ChatProviderErrorCategory::ModelNotFound);
+            response.summary =
+                QStringLiteral("Local inference request rejected: selected model is unavailable.");
             response.traces.append(trace(2, QStringLiteral("Model Discovery"),
                                          QStringLiteral("Unavailable"), response.summary));
             return response;
@@ -733,7 +754,8 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
     if (!request.images.isEmpty()) {
         QJsonArray images;
-        for (const auto& image : request.images) images.append(QString::fromLatin1(image.bytes.toBase64()));
+        for (const auto& image : request.images)
+            images.append(QString::fromLatin1(image.bytes.toBase64()));
         body.insert(QStringLiteral("images"), images);
     }
     body.insert(QStringLiteral("stream"), false);
@@ -748,8 +770,8 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
                                  QStringLiteral("Calling local Ollama /api/generate without "
                                                 "streaming; timeout %1 ms.")
                                      .arg(timeoutMs)));
-    const auto reply = postJson(endpointUrl(QStringLiteral("/api/generate")), body, timeoutMs,
-                                {}, request.options.cancellationToken);
+    const auto reply = postJson(endpointUrl(QStringLiteral("/api/generate")), body, timeoutMs, {},
+                                request.options.cancellationToken);
     recordRequestMetadata(response, reply);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
@@ -874,7 +896,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
     if (!request.images.isEmpty()) {
         QJsonArray images;
-        for (const auto& image : request.images) images.append(QString::fromLatin1(image.bytes.toBase64()));
+        for (const auto& image : request.images)
+            images.append(QString::fromLatin1(image.bytes.toBase64()));
         body.insert(QStringLiteral("images"), images);
     }
     body.insert(QStringLiteral("stream"), true);
@@ -1039,8 +1062,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                                .arg(transport.httpStatus)
                                .arg(static_cast<int>(transport.networkError));
         result.status = LocalInferenceStreamStatus::Error;
-        const JsonReply failedReply{false, false, {}, error, transport.networkError,
-                                    transport.httpStatus};
+        const JsonReply failedReply{
+            false, false, {}, error, transport.networkError, transport.httpStatus};
         result.error = networkErrorCategory(failedReply);
         result.summary = safeNetworkFailureSummary(
             failedReply, QStringLiteral("Local Ollama streaming generation"), timeoutMs);
@@ -1062,7 +1085,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     if (!done || result.accumulatedText.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Error;
         result.lifecycle = ChatRequestLifecycle::Failed;
-        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::MalformedResponse);
+        result.providerErrorCategory =
+            static_cast<int>(ChatProviderErrorCategory::MalformedResponse);
         result.error =
             done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
         result.summary = QStringLiteral("Local Ollama streaming response did not complete with "
@@ -1116,8 +1140,7 @@ LMStudioLocalInferenceClient::LMStudioLocalInferenceClient(LMStudioConfig config
 
 LMStudioLocalInferenceClient::OpenAiCompletionResult
 LMStudioLocalInferenceClient::completeOpenAiChat(
-    const QJsonObject& body,
-    const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
+    const QJsonObject& body, const std::shared_ptr<std::atomic_bool>& cancellationToken) const {
     if (!endpointAllowed())
         return {false, {}, QStringLiteral("OpenAI-compatible endpoint is unavailable."), 0};
     const auto host = config_.endpoint.host().toLower();
@@ -1130,19 +1153,27 @@ LMStudioLocalInferenceClient::completeOpenAiChat(
     const auto path = config_.endpoint.path().endsWith(QLatin1String("/v1"))
                           ? QStringLiteral("/chat/completions")
                           : QStringLiteral("/v1/chat/completions");
-    const auto reply = postJson(endpointUrl(path), body,
-                                timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs, headers,
-                                cancellationToken);
+    const auto reply =
+        postJson(endpointUrl(path), body, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs, headers,
+                 cancellationToken);
     if (!reply.ok)
-        return {false, {}, safeNetworkFailureSummary(reply, QStringLiteral("Native tool request"),
-                                                      timeoutMs_), reply.httpStatus, reply.retryAfter,
-                reply.networkError, reply.timedOut,
-                reply.networkError == QNetworkReply::UnknownContentError, reply.cancelled,
-                reply.attempts, reply.retrySummary, reply.requestId,
+        return {false,
+                {},
+                safeNetworkFailureSummary(reply, QStringLiteral("Native tool request"), timeoutMs_),
+                reply.httpStatus,
+                reply.retryAfter,
+                reply.networkError,
+                reply.timedOut,
+                reply.networkError == QNetworkReply::UnknownContentError,
+                reply.cancelled,
+                reply.attempts,
+                reply.retrySummary,
+                reply.requestId,
                 static_cast<int>(reply.category)};
     OpenAiCompletionResult result;
     result.ok = true;
     result.body = reply.document.object();
+    result.httpStatus = reply.httpStatus;
     result.attempts = reply.attempts;
     result.retrySummary = reply.retrySummary;
     result.requestId = reply.requestId;
@@ -1167,23 +1198,34 @@ LMStudioLocalInferenceClient::completeNativeChat(
         const auto model = body.value(QStringLiteral("model")).toString();
         if (model.isEmpty())
             return {false, {}, QStringLiteral("Native Gemini model is missing."), 400};
-        url = QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
+        url = QUrl(QStringLiteral(
+                       "https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
                        .arg(QString::fromLatin1(QUrl::toPercentEncoding(model))));
         headers.insert("x-goog-api-key", config_.apiKey.toUtf8());
     } else {
-        return {false, {}, QStringLiteral("Native provider protocol does not match endpoint."), 501};
+        return {
+            false, {}, QStringLiteral("Native provider protocol does not match endpoint."), 501};
     }
     auto payload = body;
-    if (protocol == NativeProtocol::Gemini) payload.remove(QStringLiteral("model"));
+    if (protocol == NativeProtocol::Gemini)
+        payload.remove(QStringLiteral("model"));
     const auto reply = postJson(url, payload, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs,
                                 headers, cancellationToken);
     if (!reply.ok)
-        return {false, {}, safeNetworkFailureSummary(reply, QStringLiteral("Native provider request"),
-                                                      timeoutMs_), reply.httpStatus, reply.retryAfter,
-                reply.networkError, reply.timedOut,
-                reply.networkError == QNetworkReply::UnknownContentError, reply.cancelled,
-                reply.attempts, reply.retrySummary, reply.requestId,
-                static_cast<int>(reply.category)};
+        return {
+            false,
+            {},
+            safeNetworkFailureSummary(reply, QStringLiteral("Native provider request"), timeoutMs_),
+            reply.httpStatus,
+            reply.retryAfter,
+            reply.networkError,
+            reply.timedOut,
+            reply.networkError == QNetworkReply::UnknownContentError,
+            reply.cancelled,
+            reply.attempts,
+            reply.retrySummary,
+            reply.requestId,
+            static_cast<int>(reply.category)};
     OpenAiCompletionResult result;
     result.ok = true;
     result.body = reply.document.object();
@@ -1247,7 +1289,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         if (isAnthropic) {
             QJsonObject messageObj;
             messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-            messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images, true));
+            messageObj.insert(QStringLiteral("content"),
+                              chatImageContent(request.prompt.trimmed(), request.images, true));
             QJsonArray messagesArr;
             messagesArr.append(messageObj);
 
@@ -1313,7 +1356,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
             QJsonArray partsArr;
             partsArr.append(partObj);
-        appendGeminiImageParts(partsArr, request.images);
+            appendGeminiImageParts(partsArr, request.images);
 
             QJsonObject contentObj;
             contentObj.insert(QStringLiteral("role"), QStringLiteral("user"));
@@ -1338,8 +1381,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
                                           "%1:generateContent?key=%2")
                                .arg(modelId, config_.apiKey));
-            const auto reply = postJson(url, body, timeoutMs, {},
-                                        request.options.cancellationToken);
+            const auto reply =
+                postJson(url, body, timeoutMs, {}, request.options.cancellationToken);
             recordRequestMetadata(response, reply);
             if (!reply.ok) {
                 response.status = LocalInferenceStatus::Error;
@@ -1386,7 +1429,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         // OpenAI-compatible cloud (OpenAI, DeepSeek, Groq, Mistral).
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
+        messageObj.insert(QStringLiteral("content"),
+                          chatImageContent(request.prompt.trimmed(), request.images));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
@@ -1408,8 +1452,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         const auto reply =
             postJson(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("/v1"))
                                      ? QStringLiteral("/chat/completions")
-                                     : QStringLiteral("/v1/chat/completions")), body, timeoutMs,
-                     headers, request.options.cancellationToken);
+                                     : QStringLiteral("/v1/chat/completions")),
+                     body, timeoutMs, headers, request.options.cancellationToken);
         recordRequestMetadata(response, reply);
         if (!reply.ok) {
             response.status = LocalInferenceStatus::Error;
@@ -1459,7 +1503,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
     QJsonObject messageObj;
     messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-    messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
+    messageObj.insert(QStringLiteral("content"),
+                      chatImageContent(request.prompt.trimmed(), request.images));
 
     QJsonArray messagesArr;
     messagesArr.append(messageObj);
@@ -1468,17 +1513,23 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     body.insert(QStringLiteral("model"), response.model);
     body.insert(QStringLiteral("messages"), messagesArr);
     body.insert(QStringLiteral("stream"), false);
+    body.insert(QStringLiteral("max_tokens"), qMax(1, request.options.maxTokens));
+    const auto serializedBytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
+    response.diagnostics.insert(QStringLiteral("request_bytes"), serializedBytes);
+    response.diagnostics.insert(QStringLiteral("estimated_input_tokens"),
+                                (serializedBytes + 2) / 3);
+    response.diagnostics.insert(QStringLiteral("estimate_method"),
+                                QStringLiteral("utf8_bytes_div_3_ceil"));
 
     response.traces.append(
         trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
               QStringLiteral("Calling local LM Studio /v1/chat/completions; timeout %1 ms.")
                   .arg(timeoutMs)));
 
-    const auto reply =
-        postJson(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("/v1"))
-                                 ? QStringLiteral("/chat/completions")
-                                 : QStringLiteral("/v1/chat/completions")), body, timeoutMs,
-                 {}, request.options.cancellationToken);
+    const auto reply = postJson(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("/v1"))
+                                                ? QStringLiteral("/chat/completions")
+                                                : QStringLiteral("/v1/chat/completions")),
+                                body, timeoutMs, {}, request.options.cancellationToken);
     recordRequestMetadata(response, reply);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
@@ -1503,6 +1554,26 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     }
 
     const auto choiceObj = choices.first().toObject();
+    const auto finishReason = choiceObj.value(QStringLiteral("finish_reason")).toString();
+    response.diagnostics.insert(QStringLiteral("finish_reason"),
+                                finishReason == QLatin1String("stop") ||
+                                        finishReason == QLatin1String("length")
+                                    ? finishReason
+                                    : QStringLiteral("unknown_or_other"));
+    const auto usage = reply.document.object().value(QStringLiteral("usage")).toObject();
+    for (const auto& key : {QStringLiteral("prompt_tokens"), QStringLiteral("completion_tokens"),
+                            QStringLiteral("total_tokens")})
+        if (usage.value(key).isDouble())
+            response.diagnostics.insert(key, usage.value(key));
+    if (finishReason == QLatin1String("length")) {
+        response.status = LocalInferenceStatus::Error;
+        response.error = LocalInferenceError::InvalidResponse;
+        response.providerErrorCategory =
+            static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        response.summary =
+            QStringLiteral("Provider output limit reached; classification is indeterminate.");
+        return response;
+    }
     const auto messageVal = choiceObj.value(QStringLiteral("message")).toObject();
     const auto text = messageVal.value(QStringLiteral("content")).toString();
     if (text.isEmpty()) {
@@ -1610,7 +1681,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (!endpointAllowed()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
-        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::ProviderUnavailable);
+        result.providerErrorCategory =
+            static_cast<int>(ChatProviderErrorCategory::ProviderUnavailable);
         result.error = LocalInferenceError::EndpointBlocked;
         result.summary =
             config_.isCloud()
@@ -1639,7 +1711,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images, true));
+        messageObj.insert(QStringLiteral("content"),
+                          chatImageContent(request.prompt.trimmed(), request.images, true));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
@@ -1684,7 +1757,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
         QJsonObject messageObj;
         messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-        messageObj.insert(QStringLiteral("content"), chatImageContent(request.prompt.trimmed(), request.images));
+        messageObj.insert(QStringLiteral("content"),
+                          chatImageContent(request.prompt.trimmed(), request.images));
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
@@ -1907,7 +1981,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (!done || result.accumulatedText.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Error;
         result.lifecycle = ChatRequestLifecycle::Failed;
-        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::MalformedResponse);
+        result.providerErrorCategory =
+            static_cast<int>(ChatProviderErrorCategory::MalformedResponse);
         result.error =
             done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
         result.summary =
