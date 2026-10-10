@@ -21,15 +21,27 @@ pub(crate) fn fuzzy(query: &str, label: &str) -> bool {
 }
 impl Picker {
     pub fn visible(&self) -> Vec<&Item> {
-        self.items
+        let mut items = self
+            .items
             .iter()
             .filter(|item| {
-                fuzzy(
-                    &self.query,
-                    &format!("{} {} {}", item.label, item.id, item.extra),
-                )
+                if self.kind == "file" {
+                    // Relative names are the useful fuzzy target; common absolute roots
+                    // and explanatory prose must not crowd out a requested filename.
+                    fuzzy(&self.query, &item.label)
+                        || item.id.to_lowercase().contains(&self.query.to_lowercase())
+                } else {
+                    fuzzy(
+                        &self.query,
+                        &format!("{} {} {}", item.label, item.id, item.extra),
+                    )
+                }
             })
-            .collect()
+            .collect::<Vec<_>>();
+        if self.kind == "file" {
+            items.sort_by_key(|item| !fuzzy(&self.query, &item.label));
+        }
+        items
     }
     pub fn move_by(&mut self, down: bool) {
         let len = self.visible().len();
@@ -62,6 +74,31 @@ mod tests {
             }],
         };
         assert_eq!(p.visible().len(), 1);
+    }
+    #[test]
+    fn file_search_does_not_match_explanations_or_common_roots() {
+        let p = Picker {
+            kind: "file",
+            query: "README".into(),
+            selected: 0,
+            items: vec![
+                Item {
+                    label: "CMakeLists.txt".into(),
+                    id: "/root/README-project/CMakeLists.txt".into(),
+                    extra: "reference requires reading metadata".into(),
+                    enabled: true,
+                },
+                Item {
+                    label: "nested/README.md".into(),
+                    id: "/root/README-project/nested/README.md".into(),
+                    extra: "reference only".into(),
+                    enabled: true,
+                },
+            ],
+        };
+        // An exact substring in an absolute path remains discoverable, but
+        // filename matches should come first when selecting the first row.
+        assert_eq!(p.visible()[0].label, "nested/README.md");
     }
     #[test]
     fn empty_picker_safe() {

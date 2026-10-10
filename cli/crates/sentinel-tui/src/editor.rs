@@ -3,16 +3,32 @@
 pub(crate) struct Editor {
     pub text: String,
     pub cursor: usize,
-    history: Vec<String>,
+    pub literal: bool,
+    history: Vec<(String, bool)>,
     index: Option<usize>,
-    draft: String,
+    draft: (String, bool),
 }
 impl Editor {
     pub fn insert(&mut self, text: &str) {
+        if self.text.is_empty() {
+            self.literal = false;
+        }
         if self.text.len() + text.len() <= 65536 {
             self.text.insert_str(self.cursor, text);
             self.cursor += text.len();
         }
+    }
+    pub fn paste(&mut self, text: &str) {
+        self.insert(text);
+        if self.text.starts_with('/') {
+            self.literal = true;
+        }
+    }
+    pub fn replace(&mut self, text: String, literal: bool) {
+        self.text = text;
+        self.cursor = self.text.len();
+        self.literal = literal;
+        self.index = None;
     }
     pub fn left(&mut self) {
         self.cursor = self.text[..self.cursor]
@@ -115,34 +131,39 @@ impl Editor {
             if let Some(i) = self.index {
                 if i + 1 == self.history.len() {
                     self.index = None;
-                    self.text = self.draft.clone();
+                    self.text = self.draft.0.clone();
+                    self.literal = self.draft.1;
                 } else {
                     self.index = Some(i + 1);
-                    self.text = self.history[i + 1].clone();
+                    self.text = self.history[i + 1].0.clone();
+                    self.literal = self.history[i + 1].1;
                 }
             }
         } else {
             let i = if let Some(i) = self.index {
                 i.saturating_sub(1)
             } else {
-                self.draft = self.text.clone();
+                self.draft = (self.text.clone(), self.literal);
                 self.history.len() - 1
             };
             self.index = Some(i);
-            self.text = self.history[i].clone();
+            self.text = self.history[i].0.clone();
+            self.literal = self.history[i].1;
         }
         self.cursor = self.text.len();
     }
     pub fn take(&mut self) -> String {
         let text = std::mem::take(&mut self.text);
-        if self.history.last() != Some(&text) {
-            self.history.push(text.clone());
+        let entry = (text.clone(), self.literal);
+        if self.history.last() != Some(&entry) {
+            self.history.push(entry);
         }
         if self.history.len() > 100 {
             self.history.remove(0);
         }
         self.index = None;
-        self.draft.clear();
+        self.draft = (String::new(), false);
+        self.literal = false;
         self.cursor = 0;
         text
     }
@@ -150,6 +171,25 @@ impl Editor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn pasted_command_recall_stays_literal_and_restores_draft() {
+        let mut e = Editor::default();
+        e.paste("/exit");
+        assert_eq!(e.take(), "/exit");
+        e.insert("unfinished");
+        e.history(false);
+        assert_eq!(e.text, "/exit");
+        assert!(e.literal);
+        e.history(true);
+        assert_eq!(e.text, "unfinished");
+        assert!(!e.literal);
+        e.replace(String::new(), true);
+        e.insert("/help");
+        assert!(
+            !e.literal,
+            "clearing a pasted draft must allow fresh commands"
+        );
+    }
     #[test]
     fn unicode_edits() {
         let mut e = Editor::default();
