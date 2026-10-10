@@ -11,6 +11,7 @@
 #include "sentinel/core/model/ModelLibrary.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
+#include "sentinel/core/runtime/ToolOutputTruncator.h"
 
 using namespace sentinel::core;
 
@@ -77,6 +78,48 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void byteBoundedToolPreviewRetainsFailureTailAndUtf8() {
+        QTemporaryDir dir;
+        TruncationConfig config;
+        config.outputDir = dir.path();
+        config.maxBytes = 512;
+        config.previewLines = 50;
+        const auto original = (QStringLiteral("build started\n") + QString(4000, QChar(0x0131)) +
+                               QStringLiteral("\nTEST_FAILURE: expected 5 got -1"))
+                                  .toUtf8();
+        ToolOutputTruncator truncator(config);
+        const auto result = truncator.truncate(original, QStringLiteral("run-command"));
+        QVERIFY(result.truncated);
+        QVERIFY(result.preview.toUtf8().size() <= config.maxBytes);
+        QVERIFY(result.preview.contains(QStringLiteral("TEST_FAILURE: expected 5 got -1")));
+        QVERIFY(!result.preview.contains(QChar(0xfffd)));
+        QCOMPARE(truncator.readFullOutput(result.fullOutputPath), original);
+    }
+    void processObservationRetainsFailureTailInPlanningContext() {
+        AgentContextInput input;
+        input.goal = QStringLiteral("Diagnose the failed build");
+        AgentStepRecord step;
+        step.index = 1;
+        step.toolId = QStringLiteral("run-command");
+        step.statusText = QStringLiteral("Failed");
+        step.observation = QStringLiteral("Command execution failed. (exit=1)\n") +
+                           QString(12000, QLatin1Char('x')) +
+                           QStringLiteral("\nTEST_FAILURE: expected 5 got -1");
+        input.steps.append(step);
+        const auto context = ContextEngine{}.build(input);
+        bool found = false;
+        for (const auto& item : context.items) {
+            if (item.kind != AgentContextKind::Observation)
+                continue;
+            found = true;
+            QVERIFY(item.content.contains(QStringLiteral("exit=1")));
+            QVERIFY(item.content.contains(QStringLiteral("TEST_FAILURE: expected 5 got -1")));
+            QVERIFY(item.content.size() < 600);
+            QVERIFY(item.untrusted);
+        }
+        QVERIFY(found);
+        QCOMPARE(input.steps.first().observation, step.observation);
+    }
     void serializedNativeRequestIsBudgetedBeforeNetwork() {
         ModelService service;
         service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:1"));
@@ -409,7 +452,8 @@ private slots:
         QVERIFY(provider->requestOptions.at(1).toolResults.isEmpty());
         auto record = sampleRecord();
         record.toolId = QStringLiteral("read-file");
-        record.observation = QString(12000, QLatin1Char('x'));
+        record.observation =
+            QString(11970, QLatin1Char('x')) + QStringLiteral("\nTEST_FAILURE: expected 5 got -1");
         const auto answer = runtime.nextStep(QStringLiteral("Read audit.txt"), {record});
         QCOMPARE(answer.kind, AgentStepDecision::Kind::FinalAnswer);
         QCOMPARE(provider->requestOptions.last().toolResults.size(), 1);
@@ -418,7 +462,8 @@ private slots:
         const auto excerpt = provider->requestOptions.last().toolResults.first().content;
         QVERIFY(excerpt.size() < 2300);
         QVERIFY(excerpt.contains(QStringLiteral("excerpt truncated")));
-        QCOMPARE(record.observation.size(), 12000); // Authoritative evidence stays intact.
+        QVERIFY(excerpt.contains(QStringLiteral("TEST_FAILURE: expected 5 got -1")));
+        QVERIFY(record.observation.size() >= 12000); // Authoritative evidence stays intact.
     }
 
     void unknownNativeCallCanRepairBeforeAnyExecution() {
