@@ -7,12 +7,14 @@
 #include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/IFileSystemService.h"
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QTemporaryDir>
+#include <algorithm>
 
 using namespace sentinel::core;
 
@@ -54,6 +56,33 @@ class ObservationPolicyTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void relativeReadEvidenceUsesAuthoritativeResolvedPath() {
+        auto tools = BuiltInToolProvider::descriptors();
+        const auto descriptor = *std::find_if(tools.begin(), tools.end(), [](const auto& t) {
+            return t.id == QStringLiteral("read-file");
+        });
+        QTemporaryDir workspace;
+        const auto path = workspace.filePath(QStringLiteral("math.h"));
+        PlannedToolInvocation call;
+        call.toolId = descriptor.id;
+        call.arguments.append(
+            {QStringLiteral("path"), QStringLiteral("math.h"), QStringLiteral("math.h")});
+        auto observation = std::make_shared<const StructuredObservation>(StructuredObservation{
+            StructuredObservationKind::FileContent,
+            {{QStringLiteral("path"), path},
+             {QStringLiteral("content"), QStringLiteral("int add(int a,int b); ")}}});
+        const auto records = EvidencePolicy::record(
+            descriptor, call, ToolExecutionStatus::Succeeded, QStringLiteral("read completed"), 1,
+            QStringLiteral("call"), observation);
+        QVERIFY(!records.isEmpty());
+        QCOMPARE(records.first().resource, path);
+        auto external = descriptor;
+        external.source = ToolSource::Plugin;
+        const auto untrusted =
+            EvidencePolicy::record(external, call, ToolExecutionStatus::Succeeded, {}, 1,
+                                   QStringLiteral("other"), observation);
+        QCOMPARE(untrusted.first().resource, QStringLiteral("math.h"));
+    }
     void coverageKeepsExplicitScopeAndUsesOnlyDeclaredFallbacks() {
         StructuredObservation observation;
         observation.kind = StructuredObservationKind::DirectoryListing;
