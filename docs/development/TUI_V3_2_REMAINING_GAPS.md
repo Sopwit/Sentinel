@@ -19,3 +19,12 @@ Scope: reliability of the existing daemon Agent loop. This backlog does not enab
 See [reliability report](TUI_V3_2_AGENT_RELIABILITY_REPORT.md), [test matrix](TUI_V3_2_AGENT_TEST_MATRIX.md), and [execution failures](TUI_V3_2_EXECUTION_FAILURES.md). No V3.3 work was started.
 
 V3.2.1 closure evidence: [final report](TUI_V3_2_1_FINAL_REPORT.md), [context](TUI_V3_2_1_CONTEXT_RELIABILITY.md), [multi-file acceptance](TUI_V3_2_1_MULTIFILE_ACCEPTANCE.md), [cancellation](TUI_V3_2_1_CANCELLATION_ACCEPTANCE.md). Do not infer full acceptance from the passing regression suite.
+
+## V3.2.2 measured update
+
+[Multi-file final report](TUI_V3_2_2_MULTIFILE_FINAL_REPORT.md), [acceptance matrix](TUI_V3_2_2_AGENT_ACCEPTANCE_MATRIX.md), [execution evidence](TUI_V3_2_2_EXECUTION_EVIDENCE.md).
+
+- Output-tail preservation fixed at native continuation, planning process history and UTF-8 byte-bound preview layers; original evidence remains unchanged.
+- Natural multi-file coding remains NOT ACCEPTED: B/D changed calc.cpp but not test.cpp; no complete edit/review/build/test/accepted-final chain. C/D exhausted loaded context; A returned empty provider content; E failed repeated discovery and was cancelled. No automatic mutating retry added.
+- macOS safe build execution is BLOCKED: real gateway denies Homebrew CMake execution and process forks under required process-tree policy. PATH changes cannot resolve this. Requires authoritative platform process supervision/confinement design, not a TUI shell shortcut or relaxed permission.
+- Long raw approval JSON, stale historical approval prose and clipped notices remain presentation gaps. Physical hosts and other platforms remain NOT VALIDATED.

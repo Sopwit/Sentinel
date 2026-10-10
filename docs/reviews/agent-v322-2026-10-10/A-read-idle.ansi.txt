@@ -1,0 +1,40 @@
+SENTINEL / Agent     Workspace: V322 A-read                                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                          ◇ S ◇                                                         
+                                                                                                                        
+                                                Start a new conversation                                                
+                                  Ask a question, explore an idea, or describe a task.                                  
+                                            Ctrl+P commands  /help shortcuts                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                                     │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  System notices · /notices to read                                                                                     
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                              idle  
