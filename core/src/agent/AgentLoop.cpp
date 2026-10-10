@@ -113,6 +113,26 @@ bool repeatsFailedCycle(const AgentLoopState& state, const ToolInvocationPlan& p
            first == key(plan.invocations.first().toolId, plan.invocations.first().arguments);
 }
 
+bool repairRepeatedRead(AgentLoopState& state, const ToolInvocationPlan& plan,
+                        IAgentStepPlanner& planner) {
+    if (state.repeatedReadRepairs != 0 || plan.invocations.size() != 1 || state.steps.isEmpty() ||
+        !state.steps.last().succeeded)
+        return false;
+    const auto& id = plan.invocations.first().toolId;
+    if (id != QLatin1String("read-file") && id != QLatin1String("glob") &&
+        id != QLatin1String("grep") && id != QLatin1String("list-directory"))
+        return false;
+    ++state.repeatedReadRepairs;
+    // Nothing is executed or assumed successful here. One planning-only repair
+    // preserves the existing evidence/approval gates and the next repeat stops.
+    planner.setPlannerFeedback(QStringLiteral(
+        "Repeated observation was not executed. Review all current tool observations, not only "
+        "the latest result. If they satisfy the task, provide a verified final with the required "
+        "structured claims. Otherwise choose a different missing observation or report the "
+        "blocker. Do not repeat equivalent reads using another spelling of the same path."));
+    return true;
+}
+
 void fillRecordFromPlan(AgentStepRecord& record, const ToolInvocationPlan& plan) {
     if (plan.invocations.isEmpty()) {
         return;
@@ -543,6 +563,10 @@ void AgentLoop::advanceAsync() {
         return;
     }
     if (repeatsUnchangedStep(asyncState_, plan) || repeatsFailedCycle(asyncState_, plan)) {
+        if (repairRepeatedRead(asyncState_, plan, planner_)) {
+            scheduleAsyncAdvance();
+            return;
+        }
         asyncState_.phase = AgentLoopPhase::Stuck;
         asyncState_.terminalReason = asyncState_.steps.last().succeeded
                                          ? AgentTerminalReason::UnableToComplete
@@ -554,6 +578,10 @@ void AgentLoop::advanceAsync() {
     }
     doomDetector_.recordAction(asyncState_.sessionId, decisionActionKey(decision));
     if (doomDetector_.isStuck(asyncState_.sessionId)) {
+        if (repairRepeatedRead(asyncState_, plan, planner_)) {
+            scheduleAsyncAdvance();
+            return;
+        }
         asyncState_.phase = AgentLoopPhase::Stuck;
         asyncState_.abortReason = QStringLiteral(
             "Doom loop detected: the agent repeated the same action without progress.");
@@ -964,6 +992,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
 
         auto plan = planFromDecision(decision);
         if (repeatsUnchangedStep(state, plan) || repeatsFailedCycle(state, plan)) {
+            if (repairRepeatedRead(state, plan, planner_))
+                continue;
             state.phase = AgentLoopPhase::Stuck;
             state.terminalReason = state.steps.last().succeeded
                                        ? AgentTerminalReason::UnableToComplete
@@ -974,6 +1004,8 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
         if (doomDetector_.isStuck(state.sessionId)) {
+            if (repairRepeatedRead(state, plan, planner_))
+                continue;
             state.phase = AgentLoopPhase::Stuck;
             state.abortReason = QStringLiteral(
                 "Doom loop detected: the agent repeated the same action without progress.");
@@ -1342,7 +1374,11 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
     if (state.rejectedFinalAnswers >= 2) {
         state.phase = AgentLoopPhase::Failed;
         state.terminalReason = AgentTerminalReason::UnableToComplete;
-        state.abortReason = QStringLiteral("Agent could not determine a grounded next action.");
+        // This is a bounded policy diagnostic, not model reasoning or raw output.
+        // Keep the failed requirement observable instead of hiding every grounding
+        // failure behind the same generic terminal message.
+        state.abortReason =
+            QStringLiteral("Agent could not determine a grounded next action. %1").arg(gate.repair);
         return true;
     }
     planner_.setPlannerFeedback(gate.repair);
