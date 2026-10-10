@@ -179,7 +179,7 @@ QJsonObject nativeToolDefinition(const ToolDescriptor& tool) {
     return {{QStringLiteral("type"), QStringLiteral("function")},
             {QStringLiteral("function"),
              QJsonObject{{QStringLiteral("name"), nativeFunctionName(tool.id)},
-                         {QStringLiteral("description"), tool.description.left(1024)},
+                         {QStringLiteral("description"), tool.description.left(200)},
                          {QStringLiteral("parameters"), schema}}}};
 }
 
@@ -653,6 +653,23 @@ public:
                                 {QStringLiteral("strict"), options.strictStructuredOutput},
                                 {QStringLiteral("schema"), options.structuredSchema}}}});
         }
+        // Budget the actual serialized native request, including schemas and tool
+        // results omitted by ContextEngine's prompt estimate. This is an estimate,
+        // not a tokenizer measurement; the provider may still reject the request.
+        const int outputBudget = qMin(1024, binding_.capabilities.maxOutputTokens.value_or(1024));
+        body.insert(QStringLiteral("max_tokens"), qMax(1, outputBudget));
+        const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
+        const auto estimatedInput = (bytes + 2) / 3 + 256;
+        if (binding_.capabilities.contextWindow &&
+            estimatedInput + outputBudget > *binding_.capabilities.contextWindow)
+            return providerFailure(
+                QStringLiteral(
+                    "Context budget exceeded (estimated input %1, output %2, reported window %3). "
+                    "No request sent; inspect partial changes and reduce task size.")
+                    .arg(estimatedInput)
+                    .arg(outputBudget)
+                    .arg(*binding_.capabilities.contextWindow),
+                ChatProviderErrorCategory::RequestRejected);
         LMStudioLocalInferenceClient client(config_, timeoutMs_);
         const auto completion = client.completeOpenAiChat(body, options.cancellationToken);
         if (!completion.ok) {

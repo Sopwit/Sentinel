@@ -218,7 +218,13 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             nativeResults_.append(
                 {nativeCalls_.at(i).callId,
                  QStringLiteral("tool=%1 status=%2\n%3")
-                     .arg(record.toolId, record.statusText, record.observation.left(6800))});
+                     .arg(record.toolId, record.statusText,
+                          (record.observation.size() > 2000
+                               ? record.observation.left(2000) +
+                                     QStringLiteral(
+                                         "\n[excerpt truncated; full evidence remains in the run; "
+                                         "request a narrower observation if needed]")
+                               : record.observation))});
         }
         awaitingNativeResults_ = 0;
     }
@@ -302,6 +308,22 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                             .arg(reply.retrySummary.isEmpty()
                                      ? QString{}
                                      : QStringLiteral(" (%1)").arg(reply.retrySummary));
+            const bool contextExhausted =
+                reply.errorMessage.contains(QStringLiteral("context size has been exceeded"),
+                                            Qt::CaseInsensitive) ||
+                reply.errorMessage.contains(QStringLiteral("context length exceeded"),
+                                            Qt::CaseInsensitive) ||
+                reply.errorMessage.contains(QStringLiteral("maximum context length"),
+                                            Qt::CaseInsensitive) ||
+                reply.errorMessage.startsWith(QStringLiteral("Context budget exceeded"));
+            if (contextExhausted) {
+                failure.reason = QStringLiteral(
+                    "Context exhausted: the selected model cannot fit this request. The run "
+                    "stopped; prior approved changes may remain. Inspect changes before starting a "
+                    "smaller task. No action was retried.");
+                failure.providerFailure->category = ChatProviderErrorCategory::RequestRejected;
+                return failure;
+            }
             failure.reason = reply.error == ChatProviderReply::Error::CapabilityRejected
                                  ? QStringLiteral("Model capability rejected [%1]: %2%3")
                                        .arg(category, reply.errorMessage, retry)

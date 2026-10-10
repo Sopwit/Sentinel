@@ -377,6 +377,17 @@ QList<EvidenceRecord> EvidencePolicy::record(const ToolDescriptor& descriptor,
                 record.resource =
                     structuredObservation->data.value(QStringLiteral("path")).toString();
         }
+        // The built-in reader resolves a relative argument against the frozen
+        // authorized workspace. Do not reinterpret it against daemon process cwd.
+        // External tool payloads do not gain authority to rebind a requested path.
+        if (descriptor.source == ToolSource::BuiltIn &&
+            descriptor.id == QLatin1String("read-file") && structuredObservation &&
+            structuredObservation->kind == StructuredObservationKind::FileContent) {
+            const auto resolved =
+                structuredObservation->data.value(QStringLiteral("path")).toString();
+            if (QDir::isAbsolutePath(resolved))
+                record.resource = resolved;
+        }
         record.qualifier = argumentValue(invocation, produced.qualifierArgument);
         record.freshness = produced.freshness;
         record.scope = produced.scope;
