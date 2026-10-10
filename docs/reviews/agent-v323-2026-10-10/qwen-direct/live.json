@@ -1,0 +1,691 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-8eaelf_r",
+  "provider": "lm-studio",
+  "model": "qwen/qwen3.5-9b",
+  "context_window": 8192,
+  "cases": [
+    {
+      "label": "A-read",
+      "goal": "Inspect calc.h, calc.cpp and test.cpp in the active workspace. Explain how the interface, implementation and test relate, and identify the arithmetic bug. Do not modify files.",
+      "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-8eaelf_r/project/A-read",
+      "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+      "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+      "outcome": "observer-timeout",
+      "terminal": {
+        "id": "",
+        "name": "run.cancelled",
+        "payload": {
+          "detail": "Agent run cancelled by user.",
+          "event_sequence": 7,
+          "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+          "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+          "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+          "state": "cancelled",
+          "text": ""
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      },
+      "seconds": 240.98521245797747,
+      "decisions": [],
+      "before": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "after": {
+        "CMakeLists.txt": {
+          "bytes": 189,
+          "sha256": "01d06493e1af866dcda7c105e43876030ea6c236c1586667d58a0cc6363c017b",
+          "text": "cmake_minimum_required(VERSION 3.20)\nproject(V322 LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(check calc.cpp test.cpp)\nenable_testing()\nadd_test(NAME arithmetic COMMAND check)\n"
+        },
+        "config.json": {
+          "bytes": 39,
+          "sha256": "396dc7618e4420964d0dc08f5d08eef5f9b9347310ed5df132c1e88ffeaa9470",
+          "text": "{\"standard\":20,\"marker\":\"GLACIER-822\"}\n"
+        },
+        "unrelated.txt": {
+          "bytes": 26,
+          "sha256": "ae7427e2e88e1bd9537a6e3af645131d79e1cf51670abeaab7d6a9b9570fb0b6",
+          "text": "USER_CHANGE_PRESERVE_V322\n"
+        },
+        "test.cpp": {
+          "bytes": 148,
+          "sha256": "79d154e2cf9f9c7a3f3d6a827c763bdafd54ff341b94087b9674913992abd2c7",
+          "text": "#include \"calc.h\"\n#include <iostream>\nint main() { if (add(2,3) != 4) { std::cerr << \"expected 4 got \" << add(2,3) << \"\\n\"; return 1; } return 0; }\n"
+        },
+        "README.md": {
+          "bytes": 93,
+          "sha256": "5242af94ef7e9aa29ddf43ae555e67f3cc30cbb4cc93ebaf6cf9f0957d8c165f",
+          "text": "Synthetic arithmetic project. add must return the sum of two integers. Marker PORCELAIN-822.\n"
+        },
+        "calc.cpp": {
+          "bytes": 58,
+          "sha256": "f3e056c81e625b120d12dfd505c5c92eb0ccf238f78d9860ca23f1ded71d8582",
+          "text": "#include \"calc.h\"\nint add(int a, int b) { return a - b; }\n"
+        },
+        "calc.h": {
+          "bytes": 36,
+          "sha256": "5da331d23d6ee4886110784b5ea0407aeb84f5f07a56534376872c4a35f4ef78",
+          "text": "#pragma once\nint add(int a, int b);\n"
+        }
+      },
+      "diff": "",
+      "unrelated_preserved": true,
+      "events": [
+        {
+          "id": "",
+          "name": "run.started",
+          "payload": {
+            "approval": {},
+            "approval_id": "",
+            "archived": false,
+            "conversation_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "created_at": "2026-10-10T15:02:40.212Z",
+            "event_sequence": 1,
+            "model_id": "qwen/qwen3.5-9b",
+            "output": "",
+            "output_truncated": false,
+            "pinned": false,
+            "properties": {
+              "activeRuntimeModelLabel": "qwen/qwen3.5-9b",
+              "activeRuntimeProviderLabel": "lm-studio",
+              "activeRuntimeReadinessState": "Available",
+              "activeRuntimeReadinessSummary": "Provider model catalog is available."
+            },
+            "provider_id": "lm-studio",
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "run_type": "agent",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "state": "running",
+            "summary": "V322 A-read / 2 messages / Active",
+            "title": "V322 A-read",
+            "type": "conversation"
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "SessionCreated",
+            "event_sequence": 2,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RunStarted",
+            "event_sequence": 3,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 4,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "RuntimeStateChanged",
+            "event_sequence": 5,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "agent.activity",
+          "payload": {
+            "activity": "AgentCancelled",
+            "event_sequence": 6,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "step": 0
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "id": "",
+          "name": "run.cancelled",
+          "payload": {
+            "detail": "Agent run cancelled by user.",
+            "event_sequence": 7,
+            "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+            "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+            "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+            "state": "cancelled",
+            "text": ""
+          },
+          "type": "event",
+          "version": {
+            "major": 1,
+            "minor": 1
+          }
+        }
+      ],
+      "native_diagnostics": []
+    }
+  ],
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-lm-studio",
+      {
+        "id": "2",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "3",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "5",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 8192, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 1048576, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "binding",
+      {
+        "id": "6",
+        "name": "model.select",
+        "payload": {
+          "model_id": "qwen/qwen3.5-9b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-session",
+      {
+        "id": "7",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+          "created_at": "2026-10-10T15:02:40.212Z",
+          "event_sequence": 0,
+          "model_id": "qwen/qwen3.5-9b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "qwen/qwen3.5-9b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+          "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+          "state": "idle",
+          "summary": "V322 A-read / 1 message / Active",
+          "title": "V322 A-read",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-workspace",
+      {
+        "id": "8",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-6550f916-1217-4a17-a691-b58d6250853f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-root",
+      {
+        "id": "9",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-8eaelf_r/project/A-read",
+          "workspace_id": "workspace-6550f916-1217-4a17-a691-b58d6250853f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-select",
+      {
+        "id": "10",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-6550f916-1217-4a17-a691-b58d6250853f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-history",
+      {
+        "id": "11",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T15:02:40.213Z"
+            },
+            {
+              "content": "Inspect calc.h, calc.cpp and test.cpp in the active workspace. Explain how the interface, implementation and test relate, and identify the arithmetic bug. Do not modify files.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T15:02:41.567Z"
+            },
+            {
+              "content": "**Ajan \u0130ptal Edildi / Agent Run Cancelled**\n\nAgent run cancelled by user.\n\n*0 ad\u0131m \u00e7al\u0131\u015ft\u0131r\u0131lm\u0131\u015ft\u0131 / 0 steps executed.*",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T15:06:41.704Z"
+            }
+          ],
+          "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "A-read-changes",
+      {
+        "id": "12",
+        "name": "workspace.changes",
+        "payload": {
+          "available": true,
+          "files": [],
+          "reason": "Observed changes since this run began. Concurrent external edits may be included; this is not a rollback or Git snapshot. Deleted, binary, hidden, oversized and unreadable files may be omitted.",
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-8eaelf_r/project/A-read",
+          "truncated": false
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ],
+  "events": [
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "created_at": "2026-10-10T15:02:40.212Z",
+        "event_sequence": 1,
+        "model_id": "qwen/qwen3.5-9b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "qwen/qwen3.5-9b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "run_type": "agent",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "state": "running",
+        "summary": "V322 A-read / 2 messages / Active",
+        "title": "V322 A-read",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 2,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 3,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 4,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 5,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentCancelled",
+        "event_sequence": 6,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.cancelled",
+      "payload": {
+        "detail": "Agent run cancelled by user.",
+        "event_sequence": 7,
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "server_generation": "8e10f771-751b-49fb-9121-63070f1d28e6",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "state": "cancelled",
+        "text": ""
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

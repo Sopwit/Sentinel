@@ -721,6 +721,11 @@ impl App {
                         self.output = event.payload["text"].as_str().unwrap_or("").into();
                         self.approval = None;
                         self.approval_pending = false;
+                        self.notice = if event.name == "run.cancelled" {
+                            "Run cancelled.".into()
+                        } else {
+                            String::new()
+                        };
                         if event.name == "run.failed" {
                             self.notice = run_failure_notice(
                                 event.payload["detail"].as_str().unwrap_or("task-failed"),
@@ -3201,6 +3206,27 @@ mod tests {
         assert!(app.picker.is_none());
         assert!(app.references.is_empty());
         assert_eq!(app.editor.text, "Inspect this");
+    }
+    #[test]
+    fn terminal_cancellation_replaces_waiting_notice() {
+        let (worker, _requests) = captured_worker();
+        let mut app = ready_app();
+        app.state = "running".into();
+        app.run_id = "r".into();
+        app.notice = "Cancellation requested; waiting for terminal state.".into();
+        app.update(
+            Update::Event(Envelope {
+                version: sentinel_ipc::Version { major: 1, minor: 1 },
+                kind: sentinel_ipc::MessageType::Event,
+                id: String::new(),
+                name: "run.cancelled".into(),
+                payload: json!({"session_id":app.sid,"run_id":"r","text":""}),
+            }),
+            &worker,
+        );
+        assert_eq!(app.state, "cancelled");
+        assert_eq!(app.notice, "Run cancelled.");
+        assert!(app.approval.is_none());
     }
     #[test]
     fn approval_cancellation_and_exit_never_fake_completion() {
