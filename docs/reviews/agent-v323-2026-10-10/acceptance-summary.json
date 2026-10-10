@@ -1,0 +1,224 @@
+{
+  "nemotron": {
+    "model": "nvidia/nemotron-3-nano-4b",
+    "context_window": 8192,
+    "cases": [
+      {
+        "label": "A-read",
+        "run_id": "f757ad3f-9d41-464e-a0fc-590ce6c495af",
+        "session_id": "33c4fbf2-740b-43f2-a3e3-5e45398534a1",
+        "outcome": "run.failed",
+        "terminal_name": "run.failed",
+        "detail": "Doom loop detected: the agent repeated the same action without progress.",
+        "seconds": 130.996,
+        "tool_states": {
+          "read-file:completed": 5
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {
+          "tool_calls": 7
+        }
+      },
+      {
+        "label": "B-edit",
+        "run_id": "d44e78ab-9b2b-4f64-a165-f7249eb213fb",
+        "session_id": "012ab411-ed5c-4b46-b51c-6b41a8d78af4",
+        "outcome": "run.failed",
+        "terminal_name": "run.failed",
+        "detail": "Doom loop detected: the agent repeated the same action without progress.",
+        "seconds": 130.934,
+        "tool_states": {
+          "read-file:completed": 5
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {
+          "tool_calls": 7
+        }
+      },
+      {
+        "label": "C-complete",
+        "run_id": "afe87bbc-ca1a-4096-9514-61d98ad3c7e7",
+        "session_id": "5bee19b1-e4b2-4957-a3be-7f7862b455ec",
+        "outcome": "run.failed",
+        "terminal_name": "run.failed",
+        "detail": "Context exhausted: the selected model cannot fit this request. The run stopped; prior approved changes may remain. Inspect changes before starting a smaller task. No action was retried.",
+        "seconds": 180.526,
+        "tool_states": {
+          "list-directory:failed": 2,
+          "read-file:failed": 2,
+          "read-file:completed": 1,
+          "list-directory:completed": 1
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {
+          "tool_calls": 6,
+          "context_exhausted": 1
+        }
+      },
+      {
+        "label": "D-recovery",
+        "run_id": "0999d5a2-3615-4e1e-9a72-581bc0154a86",
+        "session_id": "b17112e9-3801-48b0-9dde-75a800e7ec61",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 240.99,
+        "tool_states": {
+          "list-directory:failed": 3,
+          "read-file:failed": 1
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {
+          "tool_calls": 4,
+          "transport_failure": 1
+        }
+      },
+      {
+        "label": "E-pressure",
+        "run_id": "43cb9354-1a7f-41b8-a40b-2b9ab53f42b6",
+        "session_id": "b688eab8-dff6-4366-af14-fc507cce4318",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 241.01,
+        "tool_states": {
+          "read-file:completed": 6
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {
+          "tool_calls": 6,
+          "content": 1,
+          "transport_failure": 1
+        }
+      }
+    ]
+  },
+  "qwen": {
+    "model": "qwen/qwen3.5-9b",
+    "context_window": 8192,
+    "cases": [
+      {
+        "label": "A-read",
+        "run_id": "e0902856-4bc3-44e1-bbd0-9ff17d72563c",
+        "session_id": "fe2683ee-f39e-4798-be99-a03b1e0c6193",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 241.232,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {}
+      },
+      {
+        "label": "B-edit",
+        "run_id": "3c12d50b-78a1-4faa-969f-171a161b8915",
+        "session_id": "1f9b792f-001b-4b4d-ab1b-ff20bd85cf91",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 240.989,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {}
+      },
+      {
+        "label": "C-complete",
+        "run_id": "15c556e1-75c6-4cca-b301-a742f6e8ad7d",
+        "session_id": "4d26f5da-7d14-43bb-a271-8399004ce2c6",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 240.939,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {}
+      },
+      {
+        "label": "D-recovery",
+        "run_id": "c9e457c8-d1ab-4f10-9ad6-65e9b3a2cd4c",
+        "session_id": "f1cb998c-6193-4919-aa7d-8151d0e0b4de",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 241.004,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {}
+      },
+      {
+        "label": "E-pressure",
+        "run_id": "99b1d0de-954e-4b3e-991c-483546dc0c39",
+        "session_id": "9a2b9801-55bc-49ff-a8e1-c3c6c8355a3b",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "detail": "Agent run cancelled by user.",
+        "seconds": 241.001,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_provider_outcomes": {}
+      }
+    ]
+  },
+  "nemotron-direct": {
+    "model": "nvidia/nemotron-3-nano-4b",
+    "context_window": 8192,
+    "cases": [
+      {
+        "label": "A-read",
+        "run_id": "e2dea31a-553a-4691-8eb6-ff73fbfca92a",
+        "session_id": "90e74384-24e4-496b-ae53-cedbe535ae60",
+        "outcome": "run.completed",
+        "terminal_name": "run.completed",
+        "seconds": 160.675,
+        "tool_states": {
+          "read-file:completed": 6
+        },
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_http_statuses": [
+          200
+        ]
+      }
+    ]
+  },
+  "qwen-direct": {
+    "model": "qwen/qwen3.5-9b",
+    "context_window": 8192,
+    "cases": [
+      {
+        "label": "A-read",
+        "run_id": "de455fa1-bf54-4662-96e7-eaef5191aeea",
+        "session_id": "2e61f5e9-0015-486c-b483-ad03be06c0fd",
+        "outcome": "observer-timeout",
+        "terminal_name": "run.cancelled",
+        "seconds": 240.985,
+        "tool_states": {},
+        "approval_decisions": [],
+        "changed_original_files": [],
+        "unrelated_preserved": true,
+        "native_http_statuses": []
+      }
+    ]
+  }
+}

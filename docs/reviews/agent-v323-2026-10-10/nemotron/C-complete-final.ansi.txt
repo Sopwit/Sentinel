@@ -1,0 +1,40 @@
+SENTINEL / Agent     Workspace: V322 C-complete                                                                Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+    > You                                                                                                               
+        Fix this C++ project so add returns the sum and its test expects add(2,3)==5. Inspect and edit the              
+    implementation and test only; preserve unrelated.txt. Review your actual changes. Verify with cmake -S . -B         
+    build, cmake --build build and ctest --test-dir build --output-on-failure. Each named command may be approved       
+    once. Report actual build/test evidence and any failure truthfully.                                                 
+                                                                                                                        
+    Assistant                                                                                                           
+      **Ajan Görevi Başarısız / Agent Task Failed**                                                                     
+                                                                                                                        
+      Context exhausted: the selected model cannot fit this request. The run stopped; prior approved changes may        
+    remain. Inspect changes before starting a smaller task. No action was retried.                                      
+                                                                                                                        
+      *6 adım çalıştırıldı / 6 steps executed.*                                                                         
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                                     │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Task failed: Context exhausted: the selected model cannot fit this request. The run stopped; prior approv  
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                            failed  

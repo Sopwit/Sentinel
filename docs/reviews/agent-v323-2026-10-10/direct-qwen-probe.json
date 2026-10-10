@@ -1,0 +1,19 @@
+{
+  "model_requested": "qwen/qwen3.5-9b",
+  "output_budget": 128,
+  "request_bytes": 125,
+  "transport": "direct local HTTP; no relay",
+  "agent_acceptance": false,
+  "http_status": 200,
+  "model_reported": "qwen/qwen3.5-9b",
+  "finish_reason": "stop",
+  "content_bytes": 4,
+  "reasoning_bytes": 340,
+  "tool_calls": 0,
+  "usage": {
+    "prompt_tokens": 14,
+    "completion_tokens": 90,
+    "total_tokens": 104
+  },
+  "seconds": 5.445
+}

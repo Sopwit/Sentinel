@@ -1,0 +1,32 @@
+[
+  {
+    "argv": [
+      "cmake",
+      "-S",
+      ".",
+      "-B",
+      "baseline-build"
+    ],
+    "returncode": 0,
+    "output": "-- The CXX compiler identification is AppleClang 21.0.0.21000334\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /opt/homebrew/opt/ccache/libexec/c++ - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done (1.1s)\n-- Generating done (0.0s)\n-- Build files have been written to: /private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-wrwalp2r/project/D-recovery/baseline-build\n"
+  },
+  {
+    "argv": [
+      "cmake",
+      "--build",
+      "baseline-build"
+    ],
+    "returncode": 0,
+    "output": "[ 33%] Building CXX object CMakeFiles/check.dir/calc.cpp.o\n[ 66%] Building CXX object CMakeFiles/check.dir/test.cpp.o\n[100%] Linking CXX executable check\n[100%] Built target check\n"
+  },
+  {
+    "argv": [
+      "ctest",
+      "--test-dir",
+      "baseline-build",
+      "--output-on-failure"
+    ],
+    "returncode": 8,
+    "output": "Test project /private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-wrwalp2r/project/D-recovery/baseline-build\n    Start 1: arithmetic\n1/1 Test #1: arithmetic .......................***Failed    0.45 sec\nexpected 4 got -1\n\n\n0% tests passed, 1 tests failed out of 1\n\nTotal Test time (real) =   0.45 sec\n\nThe following tests FAILED:\n\t  1 - arithmetic (Failed)\nErrors while running CTest\n"
+  }
+]

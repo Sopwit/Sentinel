@@ -1,0 +1,42 @@
+{
+  "frozen_comparison_daemon": {
+    "path": "/tmp/v323-frozen-daemon",
+    "sha256": "d8c1c4c45689bbff40c61821090874c0a4bbea02a664d56484641988c3d4edd0"
+  },
+  "nemotron_profile_daemon": {
+    "path": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-wrwalp2r/bin/sentinel-daemon",
+    "sha256": "d8c1c4c45689bbff40c61821090874c0a4bbea02a664d56484641988c3d4edd0"
+  },
+  "qwen_profile_daemon": {
+    "path": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-elxw5mlq/bin/sentinel-daemon",
+    "sha256": "d8c1c4c45689bbff40c61821090874c0a4bbea02a664d56484641988c3d4edd0"
+  },
+  "final_release_daemon": {
+    "path": "build/release/apps/sentinel-daemon/sentinel-daemon",
+    "sha256": "9a5932f6fff0c355a441ce088ed1822d1e86fc1565eefb8f1dbb4e88d6983f39"
+  },
+  "final_debug_daemon": {
+    "path": "build/tests/apps/sentinel-daemon/sentinel-daemon",
+    "sha256": "001e79730aa319aa70f57f925fcab273c2efb36332d8105ec0120c74f5f96b5f"
+  },
+  "release_rust_tui": {
+    "path": "cli/target/release/sentinel",
+    "sha256": "258d0b346b1396d2a652625216297e60d66a2f43cfdc41074116d78cbbfe6130"
+  },
+  "baseline_process_probe": {
+    "path": "/tmp/sentinel-v322-process-probe",
+    "sha256": "d952148374f277d515ae2604134f0b3e3efca9824250f9550b78837e22c1dc26"
+  },
+  "final_direct_control_daemon": {
+    "path": "/tmp/v323-final-control-daemon",
+    "sha256": "9a5932f6fff0c355a441ce088ed1822d1e86fc1565eefb8f1dbb4e88d6983f39"
+  },
+  "nemotron-direct_profile_daemon": {
+    "path": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-g__so8zl/bin/sentinel-daemon",
+    "sha256": "9a5932f6fff0c355a441ce088ed1822d1e86fc1565eefb8f1dbb4e88d6983f39"
+  },
+  "qwen-direct_profile_daemon": {
+    "path": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v323-isolated-8eaelf_r/bin/sentinel-daemon",
+    "sha256": "9a5932f6fff0c355a441ce088ed1822d1e86fc1565eefb8f1dbb4e88d6983f39"
+  }
+}

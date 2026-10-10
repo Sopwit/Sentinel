@@ -1,0 +1,12 @@
+{
+  "baseline": "fbfc41d84c75aef6c652ef5f0c3272b045fac052",
+  "sources": {
+    "core/include/sentinel/core/interfaces/IChatProvider.h": "b6403d0056bbd3b48ece1490ccc2b5f0955c26daf0f92b90f602ac6dad9dcd11",
+    "core/src/agent/LlmAgentRuntime.cpp": "0a1209e8f441f39930385d954c8341a63b0e81f62e8a1f5a6754b4701ff80648",
+    "core/src/model/ModelService.cpp": "b171f4e5eeec60399c7c2bfd973eab1ef11c5b4afb45a669195245a7331bf951",
+    "core/src/runtime/BuiltInToolProvider.cpp": "25ae1a395531baf65928caa7eab95758c0c4cc86c472f9bf87dcfb5ecfe7c72e",
+    "core/src/runtime/LocalInference.cpp": "e0d547ae6dc4716c25805f3baa426e8cd8051a33708769bc9c661d85fc0ef5b3",
+    "tests/core/test_llm_agent_runtime.cpp": "4619bf8c50b9e908bb680deffcb0ad0780fb899e2401f7cfd77084e9103d0bc0",
+    "tests/core/test_tool_argument_validator.cpp": "2ab959359ce7cd2cd61ae6177c9e3f1d12602d37d089e176653e84a1bdd1bdca"
+  }
+}
