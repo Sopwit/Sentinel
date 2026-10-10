@@ -1816,7 +1816,28 @@ fn transcript_lines(text: &str) -> Vec<Line<'static>> {
             if trimmed.starts_with("```") {
                 code = !code;
             }
-            Line::styled(line.to_owned(), style)
+            // Only the daemon's known failure wrapper is normalized; source/code stays literal.
+            let rendered = if !code && trimmed == "**Ajan Görevi Başarısız / Agent Task Failed**"
+            {
+                line.replacen(
+                    "**Ajan Görevi Başarısız / Agent Task Failed**",
+                    "Ajan Görevi Başarısız / Agent Task Failed",
+                    1,
+                )
+            } else if !code
+                && trimmed.starts_with('*')
+                && trimmed.ends_with(" steps executed.*")
+                && trimmed.contains(" adım çalıştırıldı / ")
+            {
+                format!(
+                    "{}{}",
+                    &line[..line.len() - trimmed.len()],
+                    &trimmed[1..trimmed.len() - 1]
+                )
+            } else {
+                line.to_owned()
+            };
+            Line::styled(rendered, style)
         })
         .collect()
 }
@@ -2253,7 +2274,10 @@ fn draw(frame: &mut Frame, app: &App) {
     let footer_rows = Layout::vertical([Constraint::Length(1), Constraint::Length(1)])
         .split(content_grid(areas[3]));
     frame.render_widget(
-        Paragraph::new(format!("{reference_hint}{notice}")),
+        Paragraph::new(fit_label(
+            &format!("{reference_hint}{notice}"),
+            footer_rows[0].width,
+        )),
         footer_rows[0],
     );
     let footer_columns =
@@ -3206,6 +3230,23 @@ mod tests {
         assert!(app.picker.is_none());
         assert!(app.references.is_empty());
         assert_eq!(app.editor.text, "Inspect this");
+    }
+    #[test]
+    fn generated_error_wrapper_is_readable_and_code_remains_literal() {
+        let text = "Assistant\n  **Ajan Görevi Başarısız / Agent Task Failed**\n  *0 adım çalıştırıldı / 0 steps executed.*";
+        let rendered = transcript_lines(text)
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(!rendered.contains("**"));
+        assert!(!rendered.contains("executed.*"));
+        let code = transcript_lines("```\n**Ajan Görevi Başarısız / Agent Task Failed**\n```");
+        assert!(code[1].to_string().contains("**"));
+        assert_eq!(
+            fit_label("/notices · A long recoverable provider error", 24),
+            "/notices · A long rec..."
+        );
     }
     #[test]
     fn terminal_cancellation_replaces_waiting_notice() {
