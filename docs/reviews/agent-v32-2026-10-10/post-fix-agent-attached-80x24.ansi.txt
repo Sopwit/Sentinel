@@ -1,0 +1,24 @@
+SENTINEL / Agent     Workspace: V32 synthetic coding                   Connected
+────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                       Inference unverified
+                                                                                
+    > You                                                                       
+        Inspect math.h and main.cpp in the active workspace. Explain what       
+    main calls and compare what add and multiply currently compute. Do not      
+    modify files.                                                               
+                                                                                
+    Agent · running                                                             
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Agent ─────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                             │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  System notices · /notices to read                                             
+  Ctrl+C cancel · /details expand · F1 help                            running  

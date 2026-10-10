@@ -1,0 +1,872 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_",
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "resume",
+      {
+        "id": "2",
+        "name": "terminal.attach",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+          "created_at": "2026-10-10T09:11:28.829Z",
+          "event_sequence": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "File: found in \"/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt\" (positive observation; no exhaustive absence inference; symbolic link targets excluded).\n{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt\"}",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "b7198407-8af4-43a7-a20e-bc0118ad2600",
+          "run_type": "agent",
+          "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f",
+          "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+          "state": "completed",
+          "summary": "V31 grounded context / 3 messages / Active",
+          "title": "V31 grounded context",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "persisted-grounded-history",
+      {
+        "id": "3",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-10T09:11:28.829Z"
+            },
+            {
+              "content": "Use read-file to inspect /var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt and report the configured C++ standard. Do not modify files. The standard must come from the file, not a guess.\nReferenced workspace files (observe through authorized tools):\n@\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt\"\n@\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/README.md\"",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-10T09:11:32.810Z"
+            },
+            {
+              "content": "File: found in \"/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt\" (positive observation; no exhaustive absence inference; symbolic link targets excluded).\n{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project/CMakeLists.txt\"}",
+              "id": 3,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "AgentLoop",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-10T09:13:10.749Z"
+            }
+          ],
+          "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "binding",
+      {
+        "id": "4",
+        "name": "model.current",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "readiness",
+      {
+        "id": "5",
+        "name": "terminal.state",
+        "payload": {
+          "properties": {
+            "activeAgentSummaries": [
+              "Atlas (Coordinator, Available, Local)",
+              "Orin (Planner, Available, Local)",
+              "Vela (Researcher, Available, Cloud)",
+              "Kaze (Builder, Available, Local)",
+              "Nyx (Guardian, Available, Local)",
+              "Sol (Companion, Available, Local)"
+            ],
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet.",
+            "active_binding": {
+              "model_id": "",
+              "provider_id": "",
+              "run_id": "",
+              "state": ""
+            },
+            "active_runs": 0,
+            "agentTaskQueueSummaries": [
+              "Plan Response [Queued/High]: Plan response metadata without provider or model execution.",
+              "Prepare Retrieval Context [Queued/High]: Prepare retrieval context metadata with deterministic authority.",
+              "Summarize Conversation [Queued/Normal]: Summarize conversation metadata for future response planning.",
+              "Inspect Memory Status [Queued/Normal]: Inspect memory status summaries without reading private payloads.",
+              "Prepare Voice Response [Queued/Low]: Prepare voice response metadata without recording or playback.",
+              "Prepare Export Action [Queued/Low]: Prepare export action metadata without executing an export."
+            ],
+            "agentTaskRuntimeSummary": "Agent task runtime is ready and executes local metadata tasks deterministically; unsafe tool, subprocess, plugin, filesystem, and cloud authority stays gated.",
+            "availableToolCount": 32,
+            "availableToolIds": [
+              "app-launch",
+              "app-quit",
+              "apply-patch",
+              "browser-pdf",
+              "browser-screenshot",
+              "cancel-alarm",
+              "clipboard-read",
+              "clipboard-write",
+              "current-time",
+              "delete-file",
+              "edit-file",
+              "glob",
+              "grep",
+              "history-search",
+              "list-alarms",
+              "list-code-definitions",
+              "list-directory",
+              "memory-search",
+              "move-file",
+              "open-url",
+              "process-list",
+              "read-file",
+              "run-command",
+              "set-alarm",
+              "spawn-agent",
+              "system-info",
+              "system-notify",
+              "voice-speak",
+              "voice-transcribe",
+              "web-fetch",
+              "web-search",
+              "write-file"
+            ],
+            "contextWindowSummary": "Workspace context window: Local Only route, Atlas (Coordinator, Available, Local), Ambient (Available, Public Metadata, Session).",
+            "currentWorkspaceName": "V31 context sandbox",
+            "effective_selection": {
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio"
+            },
+            "mcp_servers": [],
+            "memoryEntryCount": 0,
+            "memoryStatus": "Available",
+            "network_mode": "Online",
+            "permission_policy": "Disabled",
+            "permission_service_available": true,
+            "promptContextInjectionSummary": "Prompt context injection is disabled.",
+            "runtimeContextStatus": "Empty",
+            "runtimeContextSummary": "No runtime context yet."
+          },
+          "providers": [
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "claude",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "cloud-api",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "deepseek",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "gemini",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "groq",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "llama-cpp-server",
+              "reason": "Local endpoint catalog has not been observed yet."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "lm-studio",
+              "reason": "Local endpoint catalog has not been observed yet."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "mistral",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Pending",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "ollama",
+              "reason": "Ollama model discovery pending."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible-local",
+              "reason": "Local endpoint catalog has not been observed yet."
+            }
+          ],
+          "workspace": {
+            "access": "Active",
+            "archived": false,
+            "id": "workspace-d1c29f8a-4db7-4cff-8c68-f6549a4dbecd",
+            "name": "V31 context sandbox",
+            "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+            "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project"
+          },
+          "workspaces": [
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "personal",
+              "name": "Personal",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "coding",
+              "name": "Coding",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "research",
+              "name": "Research",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "writing",
+              "name": "Writing",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "student",
+              "name": "Student",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "workspace-d1c29f8a-4db7-4cff-8c68-f6549a4dbecd",
+              "name": "V31 context sandbox",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project"
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "closed-provider",
+      {
+        "id": "6",
+        "name": "desktop.setting",
+        "payload": {
+          "accepted": true
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "closed-provider-chat",
+      {
+        "id": "7",
+        "name": "chat.send",
+        "payload": {
+          "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+          "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "closed-provider-terminal",
+      {
+        "id": "",
+        "name": "run.failed",
+        "payload": {
+          "detail": "ConnectionFailed",
+          "event_sequence": 3,
+          "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+          "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f",
+          "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+          "state": "failed",
+          "text": "Generation failed before the provider returned usable assistant text."
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "restore-provider",
+      {
+        "id": "8",
+        "name": "desktop.setting",
+        "payload": {
+          "accepted": true
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-lm-studio",
+      {
+        "id": "9",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "10",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "12",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 262144, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 1048576, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "restored-binding",
+      {
+        "id": "13",
+        "name": "model.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "restored-readiness",
+      {
+        "id": "14",
+        "name": "terminal.state",
+        "payload": {
+          "properties": {
+            "activeAgentSummaries": [
+              "Atlas (Coordinator, Available, Local)",
+              "Orin (Planner, Available, Local)",
+              "Vela (Researcher, Available, Cloud)",
+              "Kaze (Builder, Available, Local)",
+              "Nyx (Guardian, Available, Local)",
+              "Sol (Companion, Available, Local)"
+            ],
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available.",
+            "active_binding": {
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+              "state": "failed"
+            },
+            "active_runs": 0,
+            "agentTaskQueueSummaries": [
+              "Plan Response [Queued/High]: Plan response metadata without provider or model execution.",
+              "Prepare Retrieval Context [Queued/High]: Prepare retrieval context metadata with deterministic authority.",
+              "Summarize Conversation [Queued/Normal]: Summarize conversation metadata for future response planning.",
+              "Inspect Memory Status [Queued/Normal]: Inspect memory status summaries without reading private payloads.",
+              "Prepare Voice Response [Queued/Low]: Prepare voice response metadata without recording or playback.",
+              "Prepare Export Action [Queued/Low]: Prepare export action metadata without executing an export."
+            ],
+            "agentTaskRuntimeSummary": "Agent task runtime is ready and executes local metadata tasks deterministically; unsafe tool, subprocess, plugin, filesystem, and cloud authority stays gated.",
+            "availableToolCount": 32,
+            "availableToolIds": [
+              "app-launch",
+              "app-quit",
+              "apply-patch",
+              "browser-pdf",
+              "browser-screenshot",
+              "cancel-alarm",
+              "clipboard-read",
+              "clipboard-write",
+              "current-time",
+              "delete-file",
+              "edit-file",
+              "glob",
+              "grep",
+              "history-search",
+              "list-alarms",
+              "list-code-definitions",
+              "list-directory",
+              "memory-search",
+              "move-file",
+              "open-url",
+              "process-list",
+              "read-file",
+              "run-command",
+              "set-alarm",
+              "spawn-agent",
+              "system-info",
+              "system-notify",
+              "voice-speak",
+              "voice-transcribe",
+              "web-fetch",
+              "web-search",
+              "write-file"
+            ],
+            "contextWindowSummary": "Workspace context window: Local Only route, Atlas (Coordinator, Available, Local), Ambient (Available, Public Metadata, Session).",
+            "currentWorkspaceName": "V31 context sandbox",
+            "effective_selection": {
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio"
+            },
+            "mcp_servers": [],
+            "memoryEntryCount": 0,
+            "memoryStatus": "Available",
+            "network_mode": "Online",
+            "permission_policy": "Disabled",
+            "permission_service_available": true,
+            "promptContextInjectionSummary": "Prompt context injection is disabled.",
+            "runtimeContextStatus": "Empty",
+            "runtimeContextSummary": "No runtime context yet."
+          },
+          "providers": [
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "claude",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "cloud-api",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "deepseek",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "gemini",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "groq",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "llama-cpp-server",
+              "reason": "Local endpoint catalog has not been observed yet."
+            },
+            {
+              "catalog": "Available",
+              "health": "Available",
+              "models": [
+                "google/gemma-4-e4b",
+                "qwen/qwen3.5-9b",
+                "nvidia/nemotron-3-nano-4b",
+                "text-embedding-nomic-embed-text-v1.5"
+              ],
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "mistral",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Available",
+              "health": "Available",
+              "models": [
+                "qwen2.5:3b"
+              ],
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible-local",
+              "reason": "Local endpoint catalog has not been observed yet."
+            }
+          ],
+          "workspace": {
+            "access": "Active",
+            "archived": false,
+            "id": "workspace-d1c29f8a-4db7-4cff-8c68-f6549a4dbecd",
+            "name": "V31 context sandbox",
+            "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+            "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project"
+          },
+          "workspaces": [
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "personal",
+              "name": "Personal",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "coding",
+              "name": "Coding",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "research",
+              "name": "Research",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "writing",
+              "name": "Writing",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "student",
+              "name": "Student",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "workspace-d1c29f8a-4db7-4cff-8c68-f6549a4dbecd",
+              "name": "V31 context sandbox",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-uc7wcwk_/project"
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ],
+  "events": [
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+        "created_at": "2026-10-10T09:11:28.829Z",
+        "event_sequence": 1,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Unknown",
+          "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+        "run_type": "chat",
+        "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f",
+        "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+        "state": "running",
+        "summary": "V31 grounded context / 5 messages / Active",
+        "title": "V31 grounded context",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "output.delta",
+      "payload": {
+        "event_sequence": 2,
+        "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+        "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f",
+        "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+        "text": "Generation failed before the provider returned usable assistant text."
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "ConnectionFailed",
+        "event_sequence": 3,
+        "run_id": "56cd59c4-6344-4480-bec0-f38054eba945",
+        "server_generation": "b263fad3-1263-4c22-b3b2-e4da61d0d98f",
+        "session_id": "7b214903-cc29-4460-83c8-dc2059e0e617",
+        "state": "failed",
+        "text": "Generation failed before the provider returned usable assistant text."
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

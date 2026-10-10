@@ -1,0 +1,24 @@
+SENTINEL / Agent     Workspace: V32 synthetic coding                   Connected
+────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                       Inference unverified
+                                                                                
+    Agent · running                                                             
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Agent ─────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                             │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  /notices · Execution details expanded · safe metadata only; raw payloads/rea  
+  Ctrl+C cancel · /details expand · F1 help                            running  

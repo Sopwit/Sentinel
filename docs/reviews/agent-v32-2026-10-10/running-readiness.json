@@ -1,0 +1,242 @@
+{
+  "id": "1",
+  "name": "terminal.state",
+  "payload": {
+    "properties": {
+      "activeAgentSummaries": [
+        "Atlas (Coordinator, Available, Local)",
+        "Orin (Planner, Available, Local)",
+        "Vela (Researcher, Available, Cloud)",
+        "Kaze (Builder, Available, Local)",
+        "Nyx (Guardian, Available, Local)",
+        "Sol (Companion, Available, Local)"
+      ],
+      "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+      "activeRuntimeProviderLabel": "lm-studio",
+      "activeRuntimeReadinessState": "Available",
+      "activeRuntimeReadinessSummary": "Provider model catalog is available.",
+      "active_binding": {
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "provider_id": "lm-studio",
+        "run_id": "32994a7d-adc3-410a-b9fb-c0894467e6c1",
+        "state": "running"
+      },
+      "active_runs": 1,
+      "agentTaskQueueSummaries": [
+        "Plan Response [Queued/High]: Plan response metadata without provider or model execution.",
+        "Prepare Retrieval Context [Queued/High]: Prepare retrieval context metadata with deterministic authority.",
+        "Summarize Conversation [Queued/Normal]: Summarize conversation metadata for future response planning.",
+        "Inspect Memory Status [Queued/Normal]: Inspect memory status summaries without reading private payloads.",
+        "Prepare Voice Response [Queued/Low]: Prepare voice response metadata without recording or playback.",
+        "Prepare Export Action [Queued/Low]: Prepare export action metadata without executing an export."
+      ],
+      "agentTaskRuntimeSummary": "Agent task runtime is ready and executes local metadata tasks deterministically; unsafe tool, subprocess, plugin, filesystem, and cloud authority stays gated.",
+      "availableToolCount": 32,
+      "availableToolIds": [
+        "app-launch",
+        "app-quit",
+        "apply-patch",
+        "browser-pdf",
+        "browser-screenshot",
+        "cancel-alarm",
+        "clipboard-read",
+        "clipboard-write",
+        "current-time",
+        "delete-file",
+        "edit-file",
+        "glob",
+        "grep",
+        "history-search",
+        "list-alarms",
+        "list-code-definitions",
+        "list-directory",
+        "memory-search",
+        "move-file",
+        "open-url",
+        "process-list",
+        "read-file",
+        "run-command",
+        "set-alarm",
+        "spawn-agent",
+        "system-info",
+        "system-notify",
+        "voice-speak",
+        "voice-transcribe",
+        "web-fetch",
+        "web-search",
+        "write-file"
+      ],
+      "contextWindowSummary": "Workspace context window: Local Only route, Atlas (Coordinator, Available, Local), Ambient (Available, Public Metadata, Session).",
+      "currentWorkspaceName": "V32 synthetic coding",
+      "effective_selection": {
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "provider_id": "lm-studio"
+      },
+      "mcp_servers": [],
+      "memoryEntryCount": 0,
+      "memoryStatus": "Available",
+      "network_mode": "Online",
+      "permission_policy": "Disabled",
+      "permission_service_available": true,
+      "promptContextInjectionSummary": "Prompt context injection is disabled.",
+      "runtimeContextStatus": "Empty",
+      "runtimeContextSummary": "No runtime context yet."
+    },
+    "providers": [
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "claude",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "cloud-api",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "deepseek",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "gemini",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "groq",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "llama-cpp-server",
+        "reason": "Local endpoint catalog has not been observed yet."
+      },
+      {
+        "catalog": "Available",
+        "health": "Available",
+        "models": [
+          "google/gemma-4-e4b",
+          "qwen/qwen3.5-9b",
+          "nvidia/nemotron-3-nano-4b",
+          "text-embedding-nomic-embed-text-v1.5"
+        ],
+        "provider_id": "lm-studio",
+        "reason": "Provider model catalog is available."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "mistral",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Available",
+        "health": "Available",
+        "models": [
+          "qwen2.5:3b"
+        ],
+        "provider_id": "ollama",
+        "reason": "Ollama models are available."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "openai",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "openai-compatible",
+        "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+      },
+      {
+        "catalog": "Unverified",
+        "health": "Unknown",
+        "models": [],
+        "provider_id": "openai-compatible-local",
+        "reason": "Local endpoint catalog has not been observed yet."
+      }
+    ],
+    "workspace": {
+      "access": "Active",
+      "archived": false,
+      "id": "workspace-561a4dfb-21e5-40e5-bafc-d890bdc77e61",
+      "name": "V32 synthetic coding",
+      "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+      "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-hlwmesdy/project"
+    },
+    "workspaces": [
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "personal",
+        "name": "Personal",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": ""
+      },
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "coding",
+        "name": "Coding",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": ""
+      },
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "research",
+        "name": "Research",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": ""
+      },
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "writing",
+        "name": "Writing",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": ""
+      },
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "student",
+        "name": "Student",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": ""
+      },
+      {
+        "access": "Active",
+        "archived": false,
+        "id": "workspace-561a4dfb-21e5-40e5-bafc-d890bdc77e61",
+        "name": "V32 synthetic coding",
+        "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+        "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v32-isolated-hlwmesdy/project"
+      }
+    ]
+  },
+  "type": "response",
+  "version": {
+    "major": 1,
+    "minor": 1
+  }
+}
