@@ -1,0 +1,37 @@
+[
+  {
+    "evidence": "live.json",
+    "daemon_sha256": "088b525e378cac993ae5318c8a4593da1da7dd2b5c2fb6d2524e587e4386dd8b",
+    "daemon_mtime": 1791626110.8814566,
+    "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v321-isolated-a1ugl74v"
+  },
+  {
+    "evidence": "extended-live.json",
+    "daemon_sha256": "4e01e670ee1a572f6f21a464ec9294cda78aaaadfb6a6209bf3299826ae9cd3a",
+    "daemon_mtime": 1791627203.7513962,
+    "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v321-isolated-8vr6s174"
+  },
+  {
+    "evidence": "cancellation-pty.json",
+    "daemon_sha256": "4e01e670ee1a572f6f21a464ec9294cda78aaaadfb6a6209bf3299826ae9cd3a",
+    "daemon_mtime": 1791627203.7513962,
+    "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v321-isolated-41gbbrtw"
+  },
+  {
+    "evidence": "cancellation-pty-sleep.json",
+    "daemon_sha256": "371280bad8e51acf5b981bbdecfcb24ebf910a5695dcf349ba060ddb92af867c",
+    "daemon_mtime": 1791627368.5942028,
+    "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v321-isolated-k7qm8pl6"
+  },
+  {
+    "evidence": "recovery-live.json",
+    "daemon_sha256": "371280bad8e51acf5b981bbdecfcb24ebf910a5695dcf349ba060ddb92af867c",
+    "daemon_mtime": 1791627368.5942028,
+    "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v321-isolated-ndiwd4te"
+  },
+  {
+    "evidence": "final validated build",
+    "daemon_sha256": "371280bad8e51acf5b981bbdecfcb24ebf910a5695dcf349ba060ddb92af867c",
+    "daemon_mtime": 1791627368.5942028
+  }
+]

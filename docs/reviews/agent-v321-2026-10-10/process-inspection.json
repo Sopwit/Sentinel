@@ -1,0 +1,283 @@
+{
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "b3847997-d87c-4083-b356-9e1f1accdb31"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "history",
+      {
+        "id": "2",
+        "name": "agent.history",
+        "payload": {
+          "history": {
+            "authorizations": [],
+            "children": [],
+            "claims": [],
+            "error": "",
+            "evidence": [],
+            "run": {
+              "capabilitySnapshot": "",
+              "contextCompacted": false,
+              "contextItems": 0,
+              "contextOmitted": 0,
+              "contextTokens": 0,
+              "delegationPurpose": "",
+              "failure": "",
+              "finalAnswer": "",
+              "finishedAt": "",
+              "goalSummary": "",
+              "groundingMode": "",
+              "modelId": "",
+              "parentRunId": "",
+              "parentToolCallId": "",
+              "presetId": "",
+              "profileVersion": "",
+              "providerAttempts": 0,
+              "providerErrorCategory": "",
+              "providerHttpStatus": 0,
+              "providerId": "",
+              "providerRecoveryAttempts": 0,
+              "providerRequestLifecycle": "",
+              "providerRetryOccurred": false,
+              "role": "",
+              "runId": "",
+              "runType": "",
+              "sessionId": "",
+              "startedAt": "",
+              "state": "",
+              "stepCount": 0,
+              "terminalReason": "",
+              "workspaceId": "",
+              "workspaceName": ""
+            },
+            "runs": [
+              {
+                "capabilitySnapshot": "Context 8192, streaming yes, structured no, native tools yes",
+                "contextCompacted": false,
+                "contextItems": 38,
+                "contextOmitted": 0,
+                "contextTokens": 2990,
+                "delegationPurpose": "",
+                "failure": "Agent run cancelled by user.",
+                "finalAnswer": "",
+                "finishedAt": "2026-10-10T10:14:46.164Z",
+                "goalSummary": "Run exactly cmake -E sleep 20 once in the active workspace using run-command. Do not modify files.",
+                "groundingMode": "context",
+                "modelId": "nvidia/nemotron-3-nano-4b",
+                "parentRunId": "",
+                "parentToolCallId": "",
+                "presetId": "",
+                "profileVersion": "1",
+                "providerAttempts": 0,
+                "providerErrorCategory": "",
+                "providerHttpStatus": 0,
+                "providerId": "lm-studio",
+                "providerRecoveryAttempts": 0,
+                "providerRequestLifecycle": "",
+                "providerRetryOccurred": false,
+                "role": "",
+                "runId": "9ff43257-5df8-4133-8083-7131267c44f8",
+                "runType": "interactive",
+                "sessionId": "a4719b03-6866-4272-990f-bcf176dad8d3",
+                "startedAt": "2026-10-10T10:13:51.953Z",
+                "state": "Cancelled",
+                "stepCount": 2,
+                "terminalReason": "Cancelled",
+                "workspaceId": "workspace-0a8009ca-d4fb-4711-ba1d-4cbc1b1acc3a",
+                "workspaceName": "V321 cancellation"
+              }
+            ],
+            "steps": [],
+            "tools": []
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "detail",
+      {
+        "id": "3",
+        "name": "agent.history",
+        "payload": {
+          "history": {
+            "authorizations": [
+              {
+                "access": "Execute",
+                "decision": "Approved",
+                "domain": "Process",
+                "resourceSummary": "fe9b598186562da1eb44bc8ad879580a8c8847b318c0ed5845e43913762062ac",
+                "scope": "",
+                "toolCallId": "a30303f2-5a44-4b2c-91bf-ca7eca41e5f1"
+              }
+            ],
+            "children": [],
+            "claims": [],
+            "error": "",
+            "evidence": [
+              {
+                "domain": "execution",
+                "freshness": 1,
+                "outcome": 3,
+                "resourceSummary": "cmake -E sleep 20",
+                "toolCallId": "a30303f2-5a44-4b2c-91bf-ca7eca41e5f1"
+              }
+            ],
+            "run": {
+              "capabilitySnapshot": "Context 8192, streaming yes, structured no, native tools yes",
+              "contextCompacted": false,
+              "contextItems": 38,
+              "contextOmitted": 0,
+              "contextTokens": 2990,
+              "delegationPurpose": "",
+              "failure": "Agent run cancelled by user.",
+              "finalAnswer": "",
+              "finishedAt": "2026-10-10T10:14:46.164Z",
+              "goalSummary": "Run exactly cmake -E sleep 20 once in the active workspace using run-command. Do not modify files.",
+              "groundingMode": "context",
+              "modelId": "nvidia/nemotron-3-nano-4b",
+              "parentRunId": "",
+              "parentToolCallId": "",
+              "presetId": "",
+              "profileVersion": "1",
+              "providerAttempts": 0,
+              "providerErrorCategory": "",
+              "providerHttpStatus": 0,
+              "providerId": "lm-studio",
+              "providerRecoveryAttempts": 0,
+              "providerRequestLifecycle": "",
+              "providerRetryOccurred": false,
+              "role": "",
+              "runId": "9ff43257-5df8-4133-8083-7131267c44f8",
+              "runType": "interactive",
+              "sessionId": "a4719b03-6866-4272-990f-bcf176dad8d3",
+              "startedAt": "2026-10-10T10:13:51.953Z",
+              "state": "Cancelled",
+              "stepCount": 2,
+              "terminalReason": "Cancelled",
+              "workspaceId": "workspace-0a8009ca-d4fb-4711-ba1d-4cbc1b1acc3a",
+              "workspaceName": "V321 cancellation"
+            },
+            "runs": [
+              {
+                "capabilitySnapshot": "Context 8192, streaming yes, structured no, native tools yes",
+                "contextCompacted": false,
+                "contextItems": 38,
+                "contextOmitted": 0,
+                "contextTokens": 2990,
+                "delegationPurpose": "",
+                "failure": "Agent run cancelled by user.",
+                "finalAnswer": "",
+                "finishedAt": "2026-10-10T10:14:46.164Z",
+                "goalSummary": "Run exactly cmake -E sleep 20 once in the active workspace using run-command. Do not modify files.",
+                "groundingMode": "context",
+                "modelId": "nvidia/nemotron-3-nano-4b",
+                "parentRunId": "",
+                "parentToolCallId": "",
+                "presetId": "",
+                "profileVersion": "1",
+                "providerAttempts": 0,
+                "providerErrorCategory": "",
+                "providerHttpStatus": 0,
+                "providerId": "lm-studio",
+                "providerRecoveryAttempts": 0,
+                "providerRequestLifecycle": "",
+                "providerRetryOccurred": false,
+                "role": "",
+                "runId": "9ff43257-5df8-4133-8083-7131267c44f8",
+                "runType": "interactive",
+                "sessionId": "a4719b03-6866-4272-990f-bcf176dad8d3",
+                "startedAt": "2026-10-10T10:13:51.953Z",
+                "state": "Cancelled",
+                "stepCount": 2,
+                "terminalReason": "Cancelled",
+                "workspaceId": "workspace-0a8009ca-d4fb-4711-ba1d-4cbc1b1acc3a",
+                "workspaceName": "V321 cancellation"
+              }
+            ],
+            "steps": [
+              {
+                "filesystemFailure": 0,
+                "finishedAt": "2026-10-10T10:14:45.100Z",
+                "observationKind": 0,
+                "runId": "9ff43257-5df8-4133-8083-7131267c44f8",
+                "sequence": 1,
+                "startedAt": "2026-10-10T10:14:12.872Z",
+                "status": "Failed",
+                "stepId": "71f428ce-5180-4ac4-8071-66f9382ea36c",
+                "stepType": "tool",
+                "toolCallId": "a30303f2-5a44-4b2c-91bf-ca7eca41e5f1"
+              },
+              {
+                "filesystemFailure": 0,
+                "finishedAt": "2026-10-10T10:14:46.164Z",
+                "observationKind": 0,
+                "runId": "9ff43257-5df8-4133-8083-7131267c44f8",
+                "sequence": 2,
+                "startedAt": "2026-10-10T10:14:45.103Z",
+                "status": "Cancelled",
+                "stepId": "387245dd-c6dd-4332-93a2-d9f852a61641",
+                "stepType": "planning",
+                "toolCallId": ""
+              }
+            ],
+            "tools": [
+              {
+                "batchId": "eed84502-9655-4231-8cfb-efc4b8b30f61",
+                "failureCategory": "",
+                "finishedAt": "2026-10-10T10:14:45.100Z",
+                "mutationSummary": "",
+                "observationSummary": "no structured observation",
+                "resourceSummary": "Process/Execute fe9b598186562da1eb44bc8ad879580a8c8847b318c0ed5845e43913762062ac",
+                "sandboxSummary": "",
+                "source": "built-in",
+                "startedAt": "2026-10-10T10:14:45.070Z",
+                "status": "Failed",
+                "stepId": "71f428ce-5180-4ac4-8071-66f9382ea36c",
+                "toolCallId": "a30303f2-5a44-4b2c-91bf-ca7eca41e5f1",
+                "toolId": "run-command"
+              }
+            ]
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ]
+}
