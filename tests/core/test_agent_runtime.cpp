@@ -72,6 +72,17 @@ public:
         // Observation classification is deliberately non-streaming.
         return {true, QStringLiteral("{\"requirements\":[]}"), {}};
     }
+    ChatProviderReply sendRequest(const QString& message,
+                                  const ChatRequestOptions& options) override {
+        if (options.cancellationToken && options.cancellationToken->load()) {
+            ChatProviderReply reply;
+            reply.category = ChatProviderErrorCategory::Cancelled;
+            reply.lifecycle = ChatRequestLifecycle::Cancelled;
+            return reply;
+        }
+        // Immediate deterministic classifier fixture implements the bounded contract.
+        return sendMessage(message);
+    }
     bool supportsStreaming() const override {
         return true;
     }
@@ -869,7 +880,6 @@ private slots:
         QCOMPARE(result.steps.size(), 1);
         QVERIFY(result.finalAnswer.contains(QStringLiteral("child answer")));
     }
-
 };
 
 QTEST_MAIN(AgentRuntimeTest)
