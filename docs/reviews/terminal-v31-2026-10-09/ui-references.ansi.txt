@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: V31 UI synthetic                                                               Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+    > You                                                                                                               
+        Reply with exactly: FIRST-ANSWER-OK                                                                             
+                                                                                                                        
+    Assistant                                                                                                           
+      FIRST-ANSWER-OK                                                                                                   
+                                                                                                                        
+    > You                                                                                                               
+        Reply w┌references · Enter select · Esc close───────────────────────────────────────────────────┐               
+               │Filter:                                                                                 │               
+    Assistant  │> 1  @"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated...│               
+      SECOND-AN│                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │0                                                                                       │               
+               │Enter removes this draft reference; /files adds a replacement.                          │               
+               │                                                                                        │               
+               │                                                                                        │               
+               └────────────────────────────────────────────────────────────────────────────────────────┘               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                                               │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  Refs: @"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-039np04y/project/CMakeLists.t  
+  Arrows select · Enter confirm · Esc close                                                                  completed  

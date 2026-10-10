@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: V31 UI synthetic                                                               Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+    > You                                                                                                               
+        nvidia                                                                                                          
+                                                                                                                        
+    Assistant                                                                                                           
+      It seems like your query is a bit brief! Could you clarify what specific information you're looking for about     
+    **NVIDIA**? For example:                                                                                            
+                                                                                                                        
+      - Are you asking about their products (e.g., GPUs, RTX cards)?                                                    
+      - Need help with technical issues (e.g., drivers, CUDA errors)?                                                   
+      - Interested in their latest news or AI/ML tools (like TensorRT or Omniverse)?                                    
+      - Or something else entirely                                                                                      
+                                                                                                                        
+    > You                                                                                                               
+        /new V31 live UIReply with exactly: FIRST-ANSWER-OKReply with exactly: SECOND-ANSWER-OK/theme glacier/theme     
+    porcelain/theme obsidianline one                                                                                    
+        /exit                                                                                                           
+        /exit                                                                                                           
+                                                                                                                        
+    Assistant · running                                                                                                 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                                               │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Connection restored; draft preserved.                                                                      
+  Ctrl+C cancel · /details expand · F1 help                                                                    running  

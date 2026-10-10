@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Sentinel                                                   Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                                                 Inference unverified
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+    ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐    
+    │   Ask a question or share an idea…                                                       │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    Search: query · Enter find / Esc close                                                          
+    Enter send · Ctrl+O newline · Ctrl+P commands                                           idle    

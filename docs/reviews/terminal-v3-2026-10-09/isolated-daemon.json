@@ -1,0 +1,691 @@
+{
+  "isolation": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v3-isolated-pa9w3z0r",
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "89976d76-bd2b-4e1a-acce-e8296f1f50df"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "state",
+      {
+        "id": "2",
+        "name": "terminal.state",
+        "payload": {
+          "properties": {
+            "activeAgentSummaries": [
+              "Atlas (Coordinator, Available, Local)",
+              "Orin (Planner, Available, Local)",
+              "Vela (Researcher, Available, Cloud)",
+              "Kaze (Builder, Available, Local)",
+              "Nyx (Guardian, Available, Local)",
+              "Sol (Companion, Available, Local)"
+            ],
+            "activeRuntimeModelLabel": "",
+            "activeRuntimeProviderLabel": "llama-cpp-server",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet.",
+            "active_binding": {
+              "model_id": "",
+              "provider_id": "",
+              "run_id": "",
+              "state": ""
+            },
+            "active_runs": 0,
+            "agentTaskQueueSummaries": [
+              "Plan Response [Queued/High]: Plan response metadata without provider or model execution.",
+              "Prepare Retrieval Context [Queued/High]: Prepare retrieval context metadata with deterministic authority.",
+              "Summarize Conversation [Queued/Normal]: Summarize conversation metadata for future response planning.",
+              "Inspect Memory Status [Queued/Normal]: Inspect memory status summaries without reading private payloads.",
+              "Prepare Voice Response [Queued/Low]: Prepare voice response metadata without recording or playback.",
+              "Prepare Export Action [Queued/Low]: Prepare export action metadata without executing an export."
+            ],
+            "agentTaskRuntimeSummary": "Agent task runtime is ready and executes local metadata tasks deterministically; unsafe tool, subprocess, plugin, filesystem, and cloud authority stays gated.",
+            "availableToolCount": 32,
+            "availableToolIds": [
+              "app-launch",
+              "app-quit",
+              "apply-patch",
+              "browser-pdf",
+              "browser-screenshot",
+              "cancel-alarm",
+              "clipboard-read",
+              "clipboard-write",
+              "current-time",
+              "delete-file",
+              "edit-file",
+              "glob",
+              "grep",
+              "history-search",
+              "list-alarms",
+              "list-code-definitions",
+              "list-directory",
+              "memory-search",
+              "move-file",
+              "open-url",
+              "process-list",
+              "read-file",
+              "run-command",
+              "set-alarm",
+              "spawn-agent",
+              "system-info",
+              "system-notify",
+              "voice-speak",
+              "voice-transcribe",
+              "web-fetch",
+              "web-search",
+              "write-file"
+            ],
+            "contextWindowSummary": "Workspace context window: Local Only route, Atlas (Coordinator, Available, Local), Ambient (Available, Public Metadata, Session).",
+            "currentWorkspaceName": "Personal",
+            "effective_selection": {
+              "model_id": "",
+              "provider_id": "llama-cpp-server"
+            },
+            "mcp_servers": [],
+            "memoryEntryCount": 0,
+            "memoryStatus": "Available",
+            "network_mode": "Online",
+            "permission_policy": "Disabled",
+            "permission_service_available": true,
+            "promptContextInjectionSummary": "Prompt context injection is disabled.",
+            "runtimeContextStatus": "Empty",
+            "runtimeContextSummary": "No runtime context yet."
+          },
+          "providers": [
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "claude",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "cloud-api",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "deepseek",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "gemini",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "groq",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "llama-cpp-server",
+              "reason": "Local endpoint catalog has not been observed yet."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "lm-studio",
+              "reason": "Local endpoint catalog has not been observed yet."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "mistral",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Pending",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "ollama",
+              "reason": "Ollama model discovery pending."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible",
+              "reason": "Catalog unverified; credentials are not inspected by terminal status. Select this provider and refresh discovery explicitly."
+            },
+            {
+              "catalog": "Unverified",
+              "health": "Unknown",
+              "models": [],
+              "provider_id": "openai-compatible-local",
+              "reason": "Local endpoint catalog has not been observed yet."
+            }
+          ],
+          "workspace": {
+            "access": "Active",
+            "archived": false,
+            "id": "personal",
+            "name": "Personal",
+            "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+            "root": ""
+          },
+          "workspaces": [
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "personal",
+              "name": "Personal",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "coding",
+              "name": "Coding",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "research",
+              "name": "Research",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "writing",
+              "name": "Writing",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            },
+            {
+              "access": "Active",
+              "archived": false,
+              "id": "student",
+              "name": "Student",
+              "permission": "Workspace-scoped metadata. No folder access, scanning, or background work.",
+              "root": ""
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "create",
+      {
+        "id": "3",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "created_at": "2026-10-09T18:22:33.815Z",
+          "event_sequence": 0,
+          "model_id": "",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "",
+            "activeRuntimeProviderLabel": "llama-cpp-server",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+          },
+          "provider_id": "llama-cpp-server",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "89976d76-bd2b-4e1a-acce-e8296f1f50df",
+          "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "state": "idle",
+          "summary": "V3 isolated continuity / 1 message / Active",
+          "title": "V3 isolated continuity",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "session.attach",
+      {
+        "id": "4",
+        "name": "session.attach",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "created_at": "2026-10-09T18:22:33.815Z",
+          "event_sequence": 0,
+          "model_id": "",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeConversationArchived": false,
+            "activeConversationStateSummary": "Active conversation selected; sending is available.",
+            "activeRuntimeModelLabel": "",
+            "activeRuntimeProviderLabel": "llama-cpp-server",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet.",
+            "agentAwaitingApproval": false,
+            "agentLoopActive": false,
+            "agentStatus": "Ready",
+            "chatInputCapabilities": {
+              "attachmentAccepted": false,
+              "audioAccepted": false,
+              "audioModelSupport": false,
+              "imageAccepted": false,
+              "imageModelSupport": false,
+              "reason": "Chat attachment transport is not implemented.",
+              "structuredInputAccepted": false,
+              "structuredModelSupport": false,
+              "text": true
+            },
+            "conversationHistoryMessageCount": 0,
+            "conversationLastRestoredStatus": "Loaded active conversation transcript.",
+            "conversationListCurrentTitle": "V3 isolated continuity",
+            "conversationSummaryGenerationStatus": "Blocked",
+            "lastAgentResponse": "No agent request yet.",
+            "latestAgentActivitySummary": "No agent activity yet.",
+            "latestApprovalSummary": "No approval decision yet.",
+            "latestToolExecutionSummary": "No tool execution boundary result yet.",
+            "localInferenceRuntimeState": "Unavailable",
+            "localInferenceStatus": "Not Requested",
+            "localInferenceStreamingText": ""
+          },
+          "provider_id": "llama-cpp-server",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "89976d76-bd2b-4e1a-acce-e8296f1f50df",
+          "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "state": "idle",
+          "summary": "V3 isolated continuity / 1 message / Active",
+          "title": "V3 isolated continuity",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "desktop.action",
+      {
+        "id": "5",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "session.list",
+      {
+        "id": "6",
+        "name": "session.list",
+        "payload": {
+          "sessions": [
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+              "created_at": "2026-10-09T18:22:33.815Z",
+              "event_sequence": 0,
+              "model_id": "",
+              "output": "",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "",
+                "activeRuntimeProviderLabel": "llama-cpp-server",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "llama-cpp-server",
+              "run_id": "",
+              "run_type": "",
+              "server_generation": "89976d76-bd2b-4e1a-acce-e8296f1f50df",
+              "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+              "state": "idle",
+              "summary": "V3 renamed / 1 message / Active",
+              "title": "V3 renamed",
+              "type": "conversation"
+            },
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "49b259fd-d4db-4fc6-87f0-e21a38fe6c3a",
+              "created_at": "2026-10-09T18:22:33.697Z",
+              "event_sequence": 0,
+              "model_id": "",
+              "output": "",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "",
+                "activeRuntimeProviderLabel": "llama-cpp-server",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "llama-cpp-server",
+              "run_id": "",
+              "run_type": "",
+              "server_generation": "89976d76-bd2b-4e1a-acce-e8296f1f50df",
+              "session_id": "49b259fd-d4db-4fc6-87f0-e21a38fe6c3a",
+              "state": "idle",
+              "summary": "Current Transcript / 1 message / Active",
+              "title": "Current Transcript",
+              "type": "conversation"
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace.files",
+      {
+        "id": "7",
+        "name": "ProtocolError",
+        "payload": {
+          "code": "permission-denied"
+        },
+        "type": "error",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "model.list",
+      {
+        "id": "8",
+        "name": "model.list",
+        "payload": {
+          "models": []
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "chat.send",
+      {
+        "id": "9",
+        "name": "ProtocolError",
+        "payload": {
+          "code": "model-unavailable"
+        },
+        "type": "error",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "session.messages",
+      {
+        "id": "10",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-09T18:22:33.815Z"
+            }
+          ],
+          "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "restarted",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "3fb70491-3e66-49c6-b4a8-b0a46b011847"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "persisted-list",
+      {
+        "id": "2",
+        "name": "session.list",
+        "payload": {
+          "sessions": [
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+              "created_at": "2026-10-09T18:22:33.815Z",
+              "event_sequence": 0,
+              "model_id": "",
+              "output": "",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "",
+                "activeRuntimeProviderLabel": "llama-cpp-server",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "llama-cpp-server",
+              "run_id": "",
+              "run_type": "",
+              "server_generation": "3fb70491-3e66-49c6-b4a8-b0a46b011847",
+              "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+              "state": "idle",
+              "summary": "V3 renamed / 1 message / Active",
+              "title": "V3 renamed",
+              "type": "conversation"
+            },
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "49b259fd-d4db-4fc6-87f0-e21a38fe6c3a",
+              "created_at": "2026-10-09T18:22:33.697Z",
+              "event_sequence": 0,
+              "model_id": "",
+              "output": "",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "",
+                "activeRuntimeProviderLabel": "llama-cpp-server",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "llama-cpp-server",
+              "run_id": "",
+              "run_type": "",
+              "server_generation": "3fb70491-3e66-49c6-b4a8-b0a46b011847",
+              "session_id": "49b259fd-d4db-4fc6-87f0-e21a38fe6c3a",
+              "state": "idle",
+              "summary": "Current Transcript / 1 message / Active",
+              "title": "Current Transcript",
+              "type": "conversation"
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "resumed",
+      {
+        "id": "3",
+        "name": "terminal.attach",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "created_at": "2026-10-09T18:22:33.815Z",
+          "event_sequence": 0,
+          "model_id": "",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "",
+            "activeRuntimeProviderLabel": "llama-cpp-server",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+          },
+          "provider_id": "llama-cpp-server",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "3fb70491-3e66-49c6-b4a8-b0a46b011847",
+          "session_id": "ac9b45c8-0b09-40bd-ad2e-a34578be0918",
+          "state": "idle",
+          "summary": "V3 renamed / 1 message / Active",
+          "title": "V3 renamed",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "archive",
+      {
+        "id": "4",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ]
+}

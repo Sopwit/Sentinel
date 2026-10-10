@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Personal                                                   Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+llama-cpp-server / Model unselected                                             Inference unverified
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+    ┌ Commands · Tab complete · Enter select · Esc dismiss ────────────────────────────────────┐    
+    │> /activity  · Inspect the bounded safe execution timeline                                │    
+    │  /agent  · Switch to authorized tool-assisted tasks                                      │    
+    │  /archive  · Archive attached session; does not delete messages                          │    
+    │  /cancel  · Request cancellation; await daemon terminal state [unavailable]              │    
+    │Example: /activity                                                                        │    
+    │Completion never executes; Enter an exact command to run it.                              │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐    
+    │   /                                                                                      │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    System notices · /notices to read                                                               
+    Enter send · Ctrl+O newline · Ctrl+P commands                                           idle    

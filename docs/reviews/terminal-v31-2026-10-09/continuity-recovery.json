@@ -1,0 +1,592 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-0_dmd190",
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "resume",
+      {
+        "id": "2",
+        "name": "terminal.attach",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+          "created_at": "2026-10-09T18:41:36.594Z",
+          "event_sequence": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-0_dmd190/project/CMakeLists.txt\"}",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Unknown",
+            "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "61d01f48-eb4e-4258-98b5-5ff04fd5098e",
+          "run_type": "agent",
+          "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+          "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+          "state": "completed",
+          "summary": "V31 synthetic Chat / 5 messages / Active",
+          "title": "V31 synthetic Chat",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "persisted-history",
+      {
+        "id": "3",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-09T18:41:36.595Z"
+            },
+            {
+              "content": "Reply with exactly: SENTINEL-LIVE-OK",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "completed",
+              "timestamp": "2026-10-09T18:41:36.599Z"
+            },
+            {
+              "content": "SENTINEL-LIVE-OK",
+              "id": 3,
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "partial": false,
+              "provider_id": "lm-studio",
+              "replaces": 0,
+              "reply_to": 2,
+              "role": "assistant",
+              "status": "completed",
+              "timestamp": "2026-10-09T18:41:36.600Z"
+            },
+            {
+              "content": "Use the read-file tool to inspect /var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-0_dmd190/project/CMakeLists.txt and report the configured C++ standard. Do not modify files. The standard must come from the file, not a guess.",
+              "id": 4,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-09T18:41:39.355Z"
+            },
+            {
+              "content": "{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-0_dmd190/project/CMakeLists.txt\"}",
+              "id": 5,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "AgentLoop",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "assistant",
+              "status": "received",
+              "timestamp": "2026-10-09T18:43:10.741Z"
+            }
+          ],
+          "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "rename",
+      {
+        "id": "4",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "sessions",
+      {
+        "id": "5",
+        "name": "session.list",
+        "payload": {
+          "sessions": [
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+              "created_at": "2026-10-09T18:41:36.594Z",
+              "event_sequence": 0,
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "output": "{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-0_dmd190/project/CMakeLists.txt\"}",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+                "activeRuntimeProviderLabel": "lm-studio",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "lm-studio",
+              "run_id": "61d01f48-eb4e-4258-98b5-5ff04fd5098e",
+              "run_type": "agent",
+              "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+              "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+              "state": "completed",
+              "summary": "V31 persisted live Chat / 5 messages / Active",
+              "title": "V31 persisted live Chat",
+              "type": "conversation"
+            },
+            {
+              "approval": {},
+              "approval_id": "",
+              "archived": false,
+              "conversation_id": "62d7fef1-a951-47ac-b65c-426f34a6ded0",
+              "created_at": "2026-10-09T18:41:36.226Z",
+              "event_sequence": 0,
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "output": "",
+              "output_truncated": false,
+              "pinned": false,
+              "properties": {
+                "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+                "activeRuntimeProviderLabel": "lm-studio",
+                "activeRuntimeReadinessState": "Unknown",
+                "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+              },
+              "provider_id": "lm-studio",
+              "run_id": "",
+              "run_type": "",
+              "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+              "session_id": "62d7fef1-a951-47ac-b65c-426f34a6ded0",
+              "state": "idle",
+              "summary": "Current Transcript / 1 message / Active",
+              "title": "Current Transcript",
+              "type": "conversation"
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-unavailable-setup",
+      {
+        "id": "6",
+        "name": "desktop.setting",
+        "payload": {
+          "accepted": true
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-unavailable-chat",
+      {
+        "id": "7",
+        "name": "chat.send",
+        "payload": {
+          "run_id": "de6124a8-d55a-4a99-b75a-66a32fe24b46",
+          "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-restore",
+      {
+        "id": "8",
+        "name": "desktop.setting",
+        "payload": {
+          "accepted": true
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-lm-studio",
+      {
+        "id": "9",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "10",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "12",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 262144, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 1048576, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "cancel-new",
+      {
+        "id": "13",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+          "created_at": "2026-10-09T18:46:48.361Z",
+          "event_sequence": 3,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+          "session_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+          "state": "idle",
+          "summary": "V31 streaming cancellation / 1 message / Active",
+          "title": "V31 streaming cancellation",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "cancel-chat",
+      {
+        "id": "14",
+        "name": "chat.send",
+        "payload": {
+          "run_id": "17b8147b-3509-4136-98ab-9ca15da4c138",
+          "session_id": "ab695226-7784-4c70-a415-5cb54541b37c"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "cancel-cancel",
+      {
+        "id": "15",
+        "name": "run.cancel",
+        "payload": {
+          "accepted": true
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "error",
+      "timed out"
+    ]
+  ],
+  "events": [
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+        "created_at": "2026-10-09T18:41:36.594Z",
+        "event_sequence": 1,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Unknown",
+          "activeRuntimeReadinessSummary": "Local endpoint catalog has not been observed yet."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "de6124a8-d55a-4a99-b75a-66a32fe24b46",
+        "run_type": "chat",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+        "state": "running",
+        "summary": "V31 persisted live Chat / 7 messages / Active",
+        "title": "V31 persisted live Chat",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "output.delta",
+      "payload": {
+        "event_sequence": 2,
+        "run_id": "de6124a8-d55a-4a99-b75a-66a32fe24b46",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+        "text": "Generation failed before the provider returned usable assistant text."
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.failed",
+      "payload": {
+        "detail": "ConnectionFailed",
+        "event_sequence": 3,
+        "run_id": "de6124a8-d55a-4a99-b75a-66a32fe24b46",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "740e4494-9b23-4921-8a4e-94eecfbb0c94",
+        "state": "failed",
+        "text": "Generation failed before the provider returned usable assistant text."
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+        "created_at": "2026-10-09T18:46:48.361Z",
+        "event_sequence": 4,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "17b8147b-3509-4136-98ab-9ca15da4c138",
+        "run_type": "chat",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+        "state": "running",
+        "summary": "V31 streaming cancellation / 3 messages / Active",
+        "title": "V31 streaming cancellation",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "output.delta",
+      "payload": {
+        "event_sequence": 5,
+        "run_id": "17b8147b-3509-4136-98ab-9ca15da4c138",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+        "text": "1"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.cancelled",
+      "payload": {
+        "detail": "",
+        "event_sequence": 6,
+        "run_id": "17b8147b-3509-4136-98ab-9ca15da4c138",
+        "server_generation": "7edbfb06-13d5-42d7-960e-21a484d08f3e",
+        "session_id": "ab695226-7784-4c70-a415-5cb54541b37c",
+        "state": "cancelled",
+        "text": "1"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

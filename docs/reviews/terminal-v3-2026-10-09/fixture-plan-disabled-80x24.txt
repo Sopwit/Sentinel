@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: unknown                                Connected
+--------------------------------------------------------------------------------
+Provider unselected / Model unselected                         Inference unknown
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                      [ S ]                                     
+                                                                                
+  + Commands · Tab complete · Enter select · Esc dismiss --------------------+  
+  |> /plan [request] · Plan needs daemon-enforced read-only tool policy; n...|  
+  |  /doctor  · Inspect full safe service diagnostics                        |  
+  |  /editor [request] · External editor integration is deferred until ter...|  
+  |  /init [request] · Project initialization needs an explicit authorized...|  
+  |Example: /plan                                                            |  
+  |Plan needs daemon-enforced read-only tool policy; no task was started.    |  
+  +--------------------------------------------------------------------------+  
+  + Message · Chat ----------------------------------------------------------+  
+  |   /plan                                                                  |  
+  +--------------------------------------------------------------------------+  
+                                                                                
+  Enter send · Ctrl+O newline · Ctrl+P commands                           idle  

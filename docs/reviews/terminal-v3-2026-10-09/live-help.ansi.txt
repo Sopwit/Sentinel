@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Personal                                                   Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+llama-cpp-server / Model unselected                                             Inference unverified
+                                                                                                    
+                                                                                                    
+                                                                                                    
+     ┌help · Enter inspect · Esc close────────────────────────────────────────────────────────┐     
+     │Filter:                                                                                 │     
+     │> /commands  · Open the unified command palette                                         │     
+     │  /search [query] · Search the currently displayed transcript                           │     
+     │  /help [query] · Search commands and keyboard reference                                │     
+     │  /new [title] · Create a session; keep the previous draft                              │     
+     │  /sessions [query] · Search and switch persisted sessions                              │     
+     │  /resume [session-id|last] · Resume a selected session or the most recent              │     
+     │  /model  · Choose a discovered model                                                   │     
+     │/commands                                                                               │     
+     │/commands                                                                               │     
+     │Open the unified command palette                                                        │     
+     │Aliases:                                                                                │     
+     │Keys: Ctrl+P / Tab                                                                      │     
+     │Security: Local                                                                         │     
+     │Backend: none                                                                           │     
+     │Example: /commands                                                                      │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+                                                                                                    
+    ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐    
+    │   Ask a question or share an idea…                                                       │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    System notices · /notices to read                                                               
+    Arrows select · Enter confirm · Esc close                                               idle    

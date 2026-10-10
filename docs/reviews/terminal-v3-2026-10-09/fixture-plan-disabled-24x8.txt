@@ -1,0 +1,8 @@
+SENTINEL /     Connected
+------------------------
+.. / . Inference unknown
+                        
+  + Message · Chat --+  
+  +------------------+  
+                        
+  Enter           idle  

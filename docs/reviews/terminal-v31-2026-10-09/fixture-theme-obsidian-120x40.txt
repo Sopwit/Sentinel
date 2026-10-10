@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: unknown                                                                        Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                                                 Inference unknown
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                          ◇ S ◇                                                         
+                                                                                                                        
+                                                Start a new conversation                                                
+                                  Ask a question, explore an idea, or describe a task.                                  
+                                            Ctrl+P commands  /help shortcuts                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Draft stays here                                                                                               │  
+  │                                                                                                                  │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Theme: obsidian · this process; SENTINEL_TUI_THEME sets the launch default.                                
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                              idle  
