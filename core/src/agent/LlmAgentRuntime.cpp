@@ -310,28 +310,32 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             return failure;
         }
         AgentStepDecision decision;
+        QString repairReason = QStringLiteral("Return one valid JSON action.");
+        bool protocolValid = true;
         if (!reply.toolCalls.isEmpty()) {
             if (!options.nativeToolCalling || reply.toolCalls.size() > 8) {
-                decision.reason = QStringLiteral("Invalid native tool-call batch.");
-                return decision;
+                protocolValid = false;
+                repairReason = QStringLiteral("Invalid native tool-call batch (maximum 8).");
+            } else {
+                for (const auto& call : reply.toolCalls) {
+                    auto item = decisionFromNativeCall(call);
+                    if (item.kind != AgentStepDecision::Kind::ToolCall) {
+                        protocolValid = false;
+                        repairReason = QStringLiteral(
+                            "Use only available native tools with object arguments.");
+                        break;
+                    }
+                    if (decision.toolBatch.isEmpty())
+                        decision = item;
+                    decision.toolBatch.append({item.toolId,
+                                               item.toolName,
+                                               item.riskLevel,
+                                               item.executionMode,
+                                               item.arguments,
+                                               {},
+                                               call.callId});
+                }
             }
-            nativeCalls_ = reply.toolCalls;
-            nativeResults_.clear();
-            for (const auto& call : reply.toolCalls) {
-                auto item = decisionFromNativeCall(call);
-                if (item.kind != AgentStepDecision::Kind::ToolCall)
-                    return item;
-                if (decision.toolBatch.isEmpty())
-                    decision = item;
-                decision.toolBatch.append({item.toolId,
-                                           item.toolName,
-                                           item.riskLevel,
-                                           item.executionMode,
-                                           item.arguments,
-                                           {},
-                                           call.callId});
-            }
-            awaitingNativeResults_ = reply.toolCalls.size();
         } else {
             nativeCalls_.clear();
             nativeResults_.clear();
@@ -378,8 +382,8 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                 }
             }
         }
-        bool valid = decision.kind != AgentStepDecision::Kind::GiveUp || !decision.reason.isEmpty();
-        QString repairReason = QStringLiteral("Return one valid JSON action.");
+        bool valid = protocolValid && (decision.kind != AgentStepDecision::Kind::GiveUp ||
+                                       !decision.reason.isEmpty());
         if (valid && decision.kind == AgentStepDecision::Kind::FinalAnswer) {
             const bool conversational = observationIntentClassified_ &&
                                         !activeIntent_.indeterminate &&
@@ -452,6 +456,14 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             }
         }
         if (valid) {
+            // Only validated calls may await execution results. A rejected call has
+            // never executed and must not appear as an unanswered native call in
+            // the repair request or poison the following continuation.
+            if (!reply.toolCalls.isEmpty()) {
+                nativeCalls_ = reply.toolCalls;
+                nativeResults_.clear();
+                awaitingNativeResults_ = reply.toolCalls.size();
+            }
             lastDecisionUsedLlm_ = true;
             return decision;
         }
@@ -461,8 +473,13 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                                  .arg(repairReason);
             return failure;
         }
-        repair = prompt +
-                 QStringLiteral("\nREPAIR: %1 Return exactly one JSON object.").arg(repairReason);
+        repair =
+            prompt + QStringLiteral("\nREPAIR: %1 %2")
+                         .arg(repairReason,
+                              options.nativeToolCalling
+                                  ? QStringLiteral("No rejected call was executed. Use the native "
+                                                   "tool protocol or give a specific final answer.")
+                                  : QStringLiteral("Return exactly one JSON object."));
     }
     AgentStepDecision failure;
     failure.kind = AgentStepDecision::Kind::GiveUp;

@@ -85,7 +85,34 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
         add({AgentContextKind::ResponseProfile, AgentContextPriority::Normal,
              QStringLiteral("user-response-profile"), input.responseProfileInstructions.left(2000), false}, 600);
 
-    // Tools remain complete and session-visible; descriptions are expendable before IDs/contracts.
+    // Detailed contracts may not all fit. Preserve bounded discovery first, so
+    // QMap ordering cannot silently hide late tools such as write-file. This is
+    // metadata only; the registered schema still validates every invocation.
+    QStringList catalog;
+    for (const auto& tool : input.tools) {
+        QStringList fields;
+        for (const auto& parameter : tool.parameters)
+            fields.append(parameter.id +
+                          (parameter.required ? QStringLiteral("!") : QStringLiteral("?")));
+        if (fields.isEmpty()) {
+            const auto required = tool.inputSchema.value(QStringLiteral("required")).toArray();
+            const auto properties = tool.inputSchema.value(QStringLiteral("properties")).toObject();
+            for (auto it = properties.begin(); it != properties.end(); ++it)
+                fields.append(it.key() + (required.contains(it.key()) ? QStringLiteral("!")
+                                                                      : QStringLiteral("?")));
+        }
+        catalog.append(tool.id + QLatin1Char('(') + fields.join(QLatin1Char(',')) +
+                       QLatin1Char(')'));
+    }
+    if (!catalog.isEmpty())
+        add({AgentContextKind::Tool, AgentContextPriority::High,
+             QStringLiteral("available-tool-index"),
+             QStringLiteral("Available registered tools (! required, ? optional; index is not a "
+                            "full schema): ") +
+                 catalog.join(QStringLiteral("; ")),
+             false},
+            1000);
+
     int toolBudget = qMin(remaining / 2, 2600);
     for (const auto& tool : input.tools) {
         QStringList authorization;
