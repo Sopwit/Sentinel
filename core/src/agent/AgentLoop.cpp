@@ -413,6 +413,19 @@ void AgentLoop::runAsync(const QString& goal, const QString& sessionId, QObject*
         return;
     if (statusCallback_)
         statusCallback_(QStringLiteral("Agent loop running for goal: %1").arg(goal));
+    if (asyncState_.observationIntent.indeterminate) {
+        asyncState_.phase =
+            cancellationRequested() ? AgentLoopPhase::Cancelled : AgentLoopPhase::Failed;
+        asyncState_.terminalReason = cancellationRequested()
+                                         ? AgentTerminalReason::Cancelled
+                                         : AgentTerminalReason::UnableToComplete;
+        asyncState_.abortReason =
+            QStringLiteral(
+                "Observation classification failed; retry after checking the provider. ") +
+            asyncState_.observationIntent.error;
+        completeAsync();
+        return;
+    }
     scheduleAsyncAdvance();
 }
 
@@ -875,6 +888,16 @@ AgentLoopState AgentLoop::run(const QString& goal, const QString& sessionId) {
     state.goal = goal;
     state.phase = AgentLoopPhase::Running;
     initializeObservationIntent(state);
+    if (state.observationIntent.indeterminate) {
+        state.phase = cancellationRequested() ? AgentLoopPhase::Cancelled : AgentLoopPhase::Failed;
+        state.terminalReason = cancellationRequested() ? AgentTerminalReason::Cancelled
+                                                       : AgentTerminalReason::UnableToComplete;
+        state.abortReason =
+            QStringLiteral(
+                "Observation classification failed; retry after checking the provider. ") +
+            state.observationIntent.error;
+        return state;
+    }
     return advance(std::move(state));
 }
 
@@ -1366,6 +1389,9 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
         state.finalGrounding = std::move(gate.grounding);
         state.finalClaims = decision.claims;
         state.finalAnswer = gate.answerOverride.isEmpty() ? decision.answer : gate.answerOverride;
+        if (const auto explanation = ClaimGroundingResolver::filesystemExplanation(
+                state.observationIntent, state.evidence, state.finalAnswer))
+            state.finalAnswer = explanation->rendered;
         state.phase = AgentLoopPhase::Completed;
         state.terminalReason = AgentTerminalReason::Completed;
         return true;

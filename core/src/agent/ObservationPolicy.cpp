@@ -11,13 +11,16 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLoggingCategory>
 #include <QRegularExpression>
+#include <QScopeGuard>
 #include <QSet>
 #include <QStandardPaths>
 #include <QUrl>
 
 namespace sentinel::core {
 namespace {
+Q_LOGGING_CATEGORY(classificationDiagnostics, "sentinel.classification.diagnostics", QtWarningMsg)
 QString argumentValue(const PlannedToolInvocation& invocation, const QString& id) {
     for (const auto& argument : invocation.arguments)
         if (argument.id == id)
@@ -254,7 +257,28 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
             .arg(capabilities.join(QLatin1Char(',')), conversationContext.left(1500), goal);
     ChatRequestOptions options;
     options.cancellationToken = cancellationToken_;
+    options.deadlineMs = 30000;
+    options.maxOutputTokens = 512;
     const auto reply = provider_->sendRequest(prompt, options);
+    const auto recordOutcome = qScopeGuard([&] {
+        QJsonObject diagnostic;
+        for (const auto& key :
+             {"provider_id", "model_id", "deadline_ms", "output_budget_tokens", "elapsed_ms",
+              "http_status", "category", "upstream_cancellation", "reported_context_tokens",
+              "request_bytes", "estimated_input_tokens", "estimate_method", "finish_reason",
+              "prompt_tokens", "completion_tokens", "total_tokens"}) {
+            const auto value = reply.diagnostics.value(QLatin1String(key));
+            if (value.isDouble() || value.isBool() || value.isString())
+                diagnostic.insert(QLatin1String(key), value.isString()
+                                                          ? QJsonValue(value.toString().left(128))
+                                                          : value);
+        }
+        diagnostic.insert(QStringLiteral("classification_result"),
+                          intent.indeterminate ? QStringLiteral("indeterminate")
+                                               : QStringLiteral("classified"));
+        qCInfo(classificationDiagnostics).noquote()
+            << QJsonDocument(diagnostic).toJson(QJsonDocument::Compact);
+    });
     if (!reply.success) {
         intent.indeterminate = true;
         intent.error = reply.errorMessage;

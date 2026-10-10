@@ -264,10 +264,93 @@ QList<StructuredFact> ClaimGroundingResolver::facts(const ObservationIntent& int
     }
     return result;
 }
+std::optional<EvidenceExplanation>
+ClaimGroundingResolver::filesystemExplanation(const ObservationIntent& intent,
+                                              const QList<EvidenceRecord>& evidence,
+                                              const QString& proposed) {
+    if (intent.indeterminate || proposed.size() > 16384)
+        return {};
+    // Symbolic existence/absence claims retain the stricter fact projection.
+    for (const auto& requirement : intent.requirements)
+        if (requirement.claimType != ClaimType::None ||
+            requirement.purpose == ObservationPurpose::Operate)
+            return {};
+    for (const auto& item : evidence)
+        if (item.scope == EvidenceScope::Operation)
+            return {};
+    const auto document = QJsonDocument::fromJson(proposed.toUtf8());
+    if (!document.isObject() || document.object().size() != 1 ||
+        !document.object().value(QStringLiteral("explanations")).isArray())
+        return {};
+    const auto blocks = document.object().value(QStringLiteral("explanations")).toArray();
+    if (blocks.isEmpty() || blocks.size() > 8)
+        return {};
+    QJsonArray canonical;
+    QStringList rendered;
+    for (const auto& value : blocks) {
+        const auto block = value.toObject();
+        const auto interpretation =
+            block.value(QStringLiteral("interpretation")).toString().trimmed();
+        const auto sources = block.value(QStringLiteral("evidence")).toArray();
+        if (block.size() != 2 || interpretation.isEmpty() || interpretation.size() > 1500 ||
+            sources.isEmpty() || sources.size() > 4)
+            return {};
+        for (const auto ch : interpretation)
+            if (ch.unicode() < 32 && ch != QLatin1Char('\n') && ch != QLatin1Char('\t'))
+                return {};
+        QJsonArray citations;
+        QStringList sourceText;
+        for (const auto& sourceValue : sources) {
+            const auto source = sourceValue.toObject();
+            const auto id = source.value(QStringLiteral("call_id")).toString();
+            const auto quote = source.value(QStringLiteral("quote")).toString();
+            if (source.size() < 2 || source.size() > 3 || id.isEmpty() ||
+                quote.trimmed().isEmpty() || quote.size() > 512)
+                return {};
+            const EvidenceRecord* matched = nullptr;
+            for (const auto& item : evidence)
+                if (item.toolCallId == id && item.outcome == EvidenceOutcome::Verified &&
+                    item.structuredObservation &&
+                    item.structuredObservation->kind == StructuredObservationKind::FileContent &&
+                    (item.domain == ObservationDomain::FileSystem ||
+                     item.domain == ObservationDomain::Workspace))
+                    matched = &item;
+            if (!matched)
+                return {};
+            // Do not cite an old read when a later observation changed that resource.
+            for (const auto& item : evidence)
+                if (item.resource == matched->resource && item.stepIndex > matched->stepIndex)
+                    return {};
+            const auto data = matched->structuredObservation->data;
+            const auto resource = data.value(QStringLiteral("path")).toString();
+            if (resource.isEmpty() ||
+                !data.value(QStringLiteral("content")).toString().contains(quote) ||
+                (source.contains(QStringLiteral("source")) &&
+                 source.value(QStringLiteral("source")).toString() != resource))
+                return {};
+            citations.append(QJsonObject{{QStringLiteral("call_id"), id},
+                                         {QStringLiteral("source"), resource},
+                                         {QStringLiteral("quote"), quote}});
+            sourceText.append(QStringLiteral("Source %1 [%2], observed quote: %3")
+                                  .arg(literal(resource), literal(id), literal(quote)));
+        }
+        canonical.append(QJsonObject{{QStringLiteral("interpretation"), interpretation},
+                                     {QStringLiteral("evidence"), citations}});
+        rendered.append(QStringLiteral("Interpretation: %1\n%2")
+                            .arg(interpretation, sourceText.join(QLatin1Char('\n'))));
+    }
+    return EvidenceExplanation{
+        QString::fromUtf8(QJsonDocument(QJsonObject{{QStringLiteral("explanations"), canonical}})
+                              .toJson(QJsonDocument::Compact)),
+        rendered.join(QStringLiteral("\n\n"))};
+}
+
 std::optional<QString>
 ClaimGroundingResolver::filesystemFinalAnswer(const ObservationIntent& intent,
                                               const QList<EvidenceRecord>& evidence,
                                               const QString& proposed) {
+    if (const auto explanation = filesystemExplanation(intent, evidence, proposed))
+        return explanation->canonical;
     QStringList facts;
     QStringList supportingCalls;
     for (const auto& requirement : intent.requirements) {
