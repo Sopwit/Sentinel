@@ -5,12 +5,44 @@
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
 #include <QtTest>
+#include <algorithm>
 
 using namespace sentinel::core;
 
 class ToolArgumentValidatorTest final : public QObject {
     Q_OBJECT
 private slots:
+    void directoryContractExplainsWorkspaceRoot() {
+        for (const auto& tool : BuiltInToolProvider::descriptors()) {
+            if (tool.id != QLatin1String("list-directory"))
+                continue;
+            const auto description = tool.inputSchema.value(QStringLiteral("properties"))
+                                         .toObject()
+                                         .value(QStringLiteral("path"))
+                                         .toObject()
+                                         .value(QStringLiteral("description"))
+                                         .toString();
+            QVERIFY(description.contains(QStringLiteral("workspace-relative")));
+            QVERIFY(description.contains(QStringLiteral("'.'")));
+            return;
+        }
+        QFAIL("list-directory contract missing");
+    }
+    void readFileContractDoesNotAdvertiseDirectories() {
+        const auto descriptors = BuiltInToolProvider::descriptors();
+        const auto found =
+            std::find_if(descriptors.begin(), descriptors.end(),
+                         [](const auto& tool) { return tool.id == QLatin1String("read-file"); });
+        QVERIFY(found != descriptors.end());
+        const auto path = found->inputSchema.value(QStringLiteral("properties"))
+                              .toObject()
+                              .value(QStringLiteral("path"))
+                              .toObject();
+        QVERIFY(!path.value(QStringLiteral("description"))
+                     .toString()
+                     .contains(QStringLiteral("file/directory")));
+    }
+
     void builtInContractsAreComplete() {
         for (const auto& tool : BuiltInToolProvider::descriptors()) {
             QVERIFY2(!tool.inputSchema.isEmpty(), qPrintable(tool.id));

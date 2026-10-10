@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <QJsonDocument>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
 #include <algorithm>
 
@@ -78,6 +80,133 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void nativeOutputLimitIsNotAnEmptyResponse() {
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+        connect(&server, &QTcpServer::newConnection, &server, [&] {
+            auto* socket = server.nextPendingConnection();
+            connect(socket, &QTcpSocket::readyRead, socket, [socket] {
+                socket->readAll();
+                const QByteArray body =
+                    R"({"model":"fixture","choices":[{"finish_reason":"length","message":{"content":"","reasoning_content":"PRIVATE_REASONING","tool_calls":[]}}],"usage":{"prompt_tokens":123,"completion_tokens":1024,"completion_tokens_details":{"reasoning_tokens":1024}}})";
+                socket->write(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " +
+                    QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+                socket->disconnectFromHost();
+            });
+        });
+        ModelService service;
+        service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+        ModelBinding binding;
+        binding.providerId = QStringLiteral("lm-studio");
+        binding.modelId = QStringLiteral("fixture");
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        binding.capabilities.contextWindow = 8192;
+        auto provider = service.constructProvider(binding);
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.nativeToolCalling = true;
+        const auto reply = provider->sendRequest(QStringLiteral("PRIVATE_PROMPT"), options);
+        QVERIFY(!reply.success);
+        QCOMPARE(reply.category, ChatProviderErrorCategory::RequestRejected);
+        QVERIFY(reply.errorMessage.contains(QStringLiteral("output budget")));
+        QVERIFY(!reply.errorMessage.contains(QStringLiteral("PRIVATE_REASONING")));
+        QVERIFY(reply.toolCalls.isEmpty());
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("finish_reason")).toString(),
+                 QStringLiteral("length"));
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("completion_tokens")).toInt(), 1024);
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("reasoning_tokens")).toInt(), 1024);
+    }
+    void nativeDiagnostics_data() {
+        QTest::addColumn<QByteArray>("body");
+        QTest::addColumn<int>("httpStatus");
+        QTest::addColumn<QString>("outcome");
+        QTest::addColumn<bool>("success");
+        QTest::newRow("content-usage")
+            << QByteArray(
+                   R"({"choices":[{"finish_reason":"stop","message":{"content":"answer","reasoning_content":"PRIVATE_REASONING"}}],"usage":{"prompt_tokens":12,"completion_tokens":3,"total_tokens":15,"private_field":"PRIVATE_SECRET"}})")
+            << 200 << QStringLiteral("content") << true;
+        QTest::newRow("empty-without-usage")
+            << QByteArray(
+                   R"({"choices":[{"finish_reason":"stop","message":{"content":"","reasoning_content":"PRIVATE_REASONING"}}]})")
+            << 200 << QStringLiteral("empty_response") << false;
+        QTest::newRow("malformed-tool")
+            << QByteArray(
+                   R"({"choices":[{"finish_reason":"tool_calls","message":{"tool_calls":[{"id":"x","function":{"name":"read-file","arguments":"invalid"}}]}}]})")
+            << 200 << QStringLiteral("response_format_failure") << false;
+        QTest::newRow("length-with-call")
+            << QByteArray(
+                   R"({"choices":[{"finish_reason":"length","message":{"tool_calls":[{"id":"x","function":{"name":"read-file","arguments":"{}"}}]}}]})")
+            << 200 << QStringLiteral("output_limit") << false;
+        QTest::newRow("context-http400")
+            << QByteArray(R"({"error":{"message":"Context size has been exceeded."}})") << 400
+            << QStringLiteral("context_exhausted") << false;
+        QTest::newRow("schema-http400")
+            << QByteArray(R"({"error":{"message":"Invalid tool schema for get_context."}})") << 400
+            << QStringLiteral("provider_request_rejected") << false;
+    }
+    void nativeDiagnostics() {
+        QFETCH(QByteArray, body);
+        QFETCH(int, httpStatus);
+        QFETCH(QString, outcome);
+        QFETCH(bool, success);
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+        connect(&server, &QTcpServer::newConnection, &server, [&] {
+            auto* socket = server.nextPendingConnection();
+            connect(socket, &QTcpSocket::readyRead, socket, [socket, body, httpStatus] {
+                socket->readAll();
+                socket->write("HTTP/1.1 " + QByteArray::number(httpStatus) +
+                              " Reply\r\nContent-Type: application/json\r\nContent-Length: " +
+                              QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" +
+                              body);
+                socket->disconnectFromHost();
+            });
+        });
+        ModelService service;
+        service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+        ModelBinding binding;
+        binding.providerId = QStringLiteral("lm-studio");
+        binding.modelId = QStringLiteral("fixture");
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        binding.capabilities.contextWindow = 8192;
+        auto provider = service.constructProvider(binding);
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.nativeToolCalling = true;
+        options.tools = BuiltInToolProvider::descriptors();
+        options.priorToolCalls.append(
+            {QStringLiteral("call-1"), QStringLiteral("read-file"),
+             QJsonObject{{QStringLiteral("path"), QStringLiteral("PRIVATE_PATH")}}});
+        options.toolResults.append(
+            {QStringLiteral("call-1"), QStringLiteral("PRIVATE_OBSERVATION")});
+        const auto reply = provider->sendRequest(QStringLiteral("PRIVATE_PROMPT"), options);
+        QCOMPARE(reply.success, success);
+        QCOMPARE(reply.httpStatus, httpStatus);
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("outcome")).toString(), outcome);
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("reported_context_tokens")).toInt(), 8192);
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("requested_output_tokens")).toInt(), 1024);
+        QCOMPARE(reply.diagnostics.value(QStringLiteral("continuation_calls")).toInt(), 1);
+        const auto sizes =
+            reply.diagnostics.value(QStringLiteral("tool_observation_bytes")).toArray();
+        QCOMPARE(sizes.size(), 1);
+        QCOMPARE(sizes.first().toInt(), int(QByteArray("PRIVATE_OBSERVATION").size()));
+        if (!success)
+            QVERIFY(reply.toolCalls.isEmpty());
+        const auto encoded = QJsonDocument(reply.diagnostics).toJson();
+        QVERIFY(!encoded.contains("PRIVATE_"));
+        QVERIFY(!encoded.contains("private_field"));
+        if (success) {
+            QCOMPARE(reply.diagnostics.value(QStringLiteral("prompt_tokens")).toInt(), 12);
+            QCOMPARE(reply.diagnostics.value(QStringLiteral("total_tokens")).toInt(), 15);
+        } else if (httpStatus == 200) {
+            QVERIFY(!reply.diagnostics.contains(QStringLiteral("prompt_tokens")));
+        }
+        if (outcome == QLatin1String("context_exhausted"))
+            QCOMPARE(reply.category, ChatProviderErrorCategory::RequestRejected);
+        else if (httpStatus == 400)
+            QCOMPARE(reply.category, ChatProviderErrorCategory::CapabilityUnsupported);
+    }
     void byteBoundedToolPreviewRetainsFailureTailAndUtf8() {
         QTemporaryDir dir;
         TruncationConfig config;
@@ -138,6 +267,8 @@ private slots:
         QCOMPARE(reply.category, ChatProviderErrorCategory::RequestRejected);
         QVERIFY(reply.errorMessage.startsWith(QStringLiteral("Context budget exceeded")));
         QCOMPARE(reply.httpStatus, 0);
+        QVERIFY(!reply.diagnostics.value(QStringLiteral("transport_attempted")).toBool());
+        QVERIFY(!reply.diagnostics.contains(QStringLiteral("prompt_tokens")));
     }
     void loadedContextIsNotPublishedMaximum() {
         LMStudioNativeCatalogAdapter catalog;

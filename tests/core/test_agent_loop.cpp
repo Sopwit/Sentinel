@@ -16,6 +16,8 @@
 #include <QFile>
 
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QTemporaryDir>
 #include <functional>
 
@@ -126,6 +128,85 @@ class AgentLoopTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void citedExplanationCompletesThroughReadGateway() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto path = workspace.filePath("calc.cpp");
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("int add(int a,int b) { return a - b; }");
+        file.close();
+        ScriptedPlanner planner;
+        auto read = toolDecision("read-file");
+        read.arguments = {{"path", path}};
+        auto final = finalDecision(QString::fromUtf8(
+            QJsonDocument(
+                QJsonObject{{"explanations", QJsonArray{QJsonObject{
+                                                 {"interpretation", "add subtracts b from a."},
+                                                 {"evidence", QJsonArray{QJsonObject{
+                                                                  {"call_id", "observed"},
+                                                                  {"source", path},
+                                                                  {"quote", "return a - b;"}}}}}}}})
+                .toJson(QJsonDocument::Compact)));
+        final.grounding = GroundingMode::Verified;
+        final.groundingDeclared = true;
+        planner.decisions = {read, final};
+        RealToolExecutor executor;
+        InMemoryToolRegistry registry;
+        QVERIFY(BuiltInToolProvider::registerTools(registry, executor));
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, {"read-file"});
+        loop.setToolRegistry(&registry);
+        loop.setResourceScope(workspace.path());
+        loop.setToolCallIdProvider([](int) { return QStringLiteral("observed"); });
+        AgentContextInput::WorkspaceContext context;
+        context.rootPath = workspace.path();
+        loop.setWorkspaceContext(context);
+        const auto state = loop.run("Read calc.cpp and explain add", "fixture-explanation");
+        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(planner.calls, 2);
+        QCOMPARE(state.evidence.size(), 1);
+        QVERIFY(state.finalAnswer.contains("Interpretation: add subtracts b from a."));
+        QVERIFY(state.finalAnswer.contains("return a - b;"));
+        QVERIFY(state.finalAnswer.contains(path));
+    }
+    void indeterminateClassificationNeverPlans_data() {
+        QTest::addColumn<bool>("async");
+        QTest::newRow("sync") << false;
+        QTest::newRow("async") << true;
+    }
+    void indeterminateClassificationNeverPlans() {
+        QFETCH(bool, async);
+        ScriptedPlanner planner;
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, QStringList{});
+        auto policy = std::make_shared<FixedFilesystemIntent>();
+        policy->intent.indeterminate = true;
+        policy->intent.error =
+            QStringLiteral("Client deadline expired; upstream cancellation unconfirmed.");
+        loop.setObservationIntentPolicy(policy);
+        AgentLoopState result;
+        int terminals = 0;
+        if (async) {
+            loop.runAsync(QStringLiteral("Inspect workspace"), QStringLiteral("bounded"), this,
+                          [&](const AgentLoopState& state) {
+                              result = state;
+                              ++terminals;
+                          });
+            QTest::qWait(25);
+            QCOMPARE(terminals, 1);
+        } else {
+            result = loop.run(QStringLiteral("Inspect workspace"), QStringLiteral("bounded"));
+        }
+        QCOMPARE(result.phase, AgentLoopPhase::Failed);
+        QVERIFY(result.finalAnswer.isEmpty());
+        QVERIFY(result.abortReason.contains(QStringLiteral("deadline")));
+        QCOMPARE(planner.calls, 0);
+        QVERIFY(executor.requests.isEmpty());
+    }
     void rejectedFinalReportsPolicyReasonWithoutCompleting() {
         ScriptedPlanner planner;
         auto answer = finalDecision(QStringLiteral("The file exists."));

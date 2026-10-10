@@ -46,7 +46,8 @@ void UpgradeTest::settingsBackwardCompatible() {
     }
 
     // Load with current store chain (DpapiEncryptedSettingsStore + JsonSettingsStore)
-    DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath));
+    DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath),
+                                      [] { return QByteArray(32, 'K'); });
 
     // Non-secret keys should read normally
     QCOMPARE(store.value(QStringLiteral("themeName")), QStringLiteral("Sentinel Dark"));
@@ -67,7 +68,8 @@ void UpgradeTest::settingsForwardCompatible() {
 
     // Write settings using the current encrypted store
     {
-        DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath));
+        DpapiEncryptedSettingsStore store(std::make_unique<JsonSettingsStore>(filePath),
+                                          [] { return QByteArray(32, 'K'); });
         store.setValue(QStringLiteral("themeName"), QStringLiteral("Sentinel Light"));
         store.setValue(QStringLiteral("openAiApiKey"), QStringLiteral("sk-new-key"));
         store.setValue(QStringLiteral("ollamaEndpoint"), QStringLiteral("http://localhost:11434"));
@@ -82,9 +84,15 @@ void UpgradeTest::settingsForwardCompatible() {
     // The API key should be $dpapi$ prefixed and base64 encoded in the raw JSON
     const QString rawApiKey = plainStore.value(QStringLiteral("openAiApiKey"));
     QVERIFY(rawApiKey.startsWith(QStringLiteral("$dpapi$")));
+#if defined(Q_OS_MACOS)
+    const auto cipher = QByteArray::fromBase64(rawApiKey.mid(7).toLatin1());
+    QVERIFY(!cipher.contains("sk-new-key"));
+    QVERIFY(cipher.size() >= 32); // IV plus padded AES ciphertext; real crypto, fake key retrieval.
+#endif
 
     // Verify encrypted store can decrypt it
-    DpapiEncryptedSettingsStore encryptedStore(std::make_unique<JsonSettingsStore>(filePath));
+    DpapiEncryptedSettingsStore encryptedStore(std::make_unique<JsonSettingsStore>(filePath),
+                                               [] { return QByteArray(32, 'K'); });
     QCOMPARE(encryptedStore.value(QStringLiteral("openAiApiKey")), QStringLiteral("sk-new-key"));
 }
 

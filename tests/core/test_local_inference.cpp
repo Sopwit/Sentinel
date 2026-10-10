@@ -43,6 +43,8 @@ private slots:
     void cloudOpenAiCompatibleRequestCarriesBearerKey();
     void completedReasoningOnlyIsInvalid();
     void zeroTimeoutCancelsOutstandingRequest();
+    void boundedPlainRequest_data();
+    void boundedPlainRequest();
 };
 
 void LocalInferenceTest::nullClientDeterministicallyRefuses() {
@@ -102,7 +104,8 @@ void LocalInferenceTest::unavailableModelRejectedBeforeGeneration() {
         QStringLiteral("request-1"),
         QStringLiteral("hello"),
         {.model = QStringLiteral("__sentinel_missing_model__"),
-         .modelValidation = discovery, .timeoutMs = 1},
+         .modelValidation = discovery,
+         .timeoutMs = 1},
     });
 
     QCOMPARE(response.status, LocalInferenceStatus::ModelUnavailable);
@@ -135,8 +138,7 @@ void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
         LocalInferenceRequest{
             QStringLiteral("stream-request-1"),
             QStringLiteral("hello"),
-            {.model = QStringLiteral("llama3.2"), .timeoutMs = 1,
-             .streamingRequested = true},
+            {.model = QStringLiteral("llama3.2"), .timeoutMs = 1, .streamingRequested = true},
         },
         {});
 
@@ -440,6 +442,56 @@ void LocalInferenceTest::zeroTimeoutCancelsOutstandingRequest() {
     QVERIFY(elapsed.elapsed() < 1000);
     QCOMPARE(response.providerErrorCategory,
              static_cast<int>(sentinel::core::ChatProviderErrorCategory::Cancelled));
+    QVERIFY(response.text.isEmpty());
+}
+
+void LocalInferenceTest::boundedPlainRequest_data() {
+    QTest::addColumn<bool>("stall");
+    QTest::newRow("stall") << true;
+    QTest::newRow("length") << false;
+}
+
+void LocalInferenceTest::boundedPlainRequest() {
+    QFETCH(bool, stall);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    QByteArray captured;
+    connect(&server, &QTcpServer::newConnection, &server, [&] {
+        auto* socket = server.nextPendingConnection();
+        connect(socket, &QTcpSocket::readyRead, socket, [&, socket] {
+            captured += socket->readAll();
+            if (stall)
+                return;
+            const QByteArray body =
+                R"({"choices":[{"finish_reason":"length","message":{"content":"{\"requirements\":[]}"}}],"usage":{"completion_tokens":7}})";
+            socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " +
+                          QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+            socket->disconnectFromHost();
+        });
+    });
+    LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+    LMStudioLocalInferenceClient client(config);
+    LocalInferenceRequest request;
+    request.prompt = QStringLiteral("Classify synthetic goal");
+    request.options.model = QStringLiteral("fixture");
+    request.options.maxTokens = 512;
+    request.options.timeoutMs = 100;
+    QElapsedTimer elapsed;
+    elapsed.start();
+    const auto response = client.infer(request);
+    QVERIFY(captured.contains("\"max_tokens\":512"));
+    QVERIFY(elapsed.elapsed() < 1500);
+    QCOMPARE(response.status, LocalInferenceStatus::Error);
+    QCOMPARE(response.attempts, 1);
+    QCOMPARE(response.providerErrorCategory,
+             static_cast<int>(stall ? sentinel::core::ChatProviderErrorCategory::Timeout
+                                    : sentinel::core::ChatProviderErrorCategory::RequestRejected));
+    if (!stall) {
+        QCOMPARE(response.httpStatus, 200);
+        QCOMPARE(response.diagnostics.value("finish_reason").toString(), QStringLiteral("length"));
+        QCOMPARE(response.diagnostics.value("completion_tokens").toInt(), 7);
+    }
     QVERIFY(response.text.isEmpty());
 }
 
