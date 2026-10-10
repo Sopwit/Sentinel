@@ -1,0 +1,8 @@
+{
+  "note": "Isolated copied daemon ran live acceptance before final byte-bound fix. Checkout release daemon includes final fix; unchanged Rust release client used for both.",
+  "sha256": {
+    "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v322-isolated-_0xiwd44/bin/sentinel-daemon": "cee1a7278199a59f2ff4d763d72ee0a9f1a675a20ca8f361f600afbe14f3a127",
+    "build/release/apps/sentinel-daemon/sentinel-daemon": "d381d396c8e35257cc2329399f89c7162e9332ae603a76d47f8c36cdbdef4e32",
+    "cli/target/release/sentinel": "258d0b346b1396d2a652625216297e60d66a2f43cfdc41074116d78cbbfe6130"
+  }
+}
