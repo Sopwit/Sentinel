@@ -47,14 +47,28 @@ TruncationResult ToolOutputTruncator::truncate(const QByteArray& output,
                           .arg(result.totalBytes);
     result.preview += tail.join('\n');
 
-    // Enforce the byte bound without splitting UTF-8 characters.
-    if (result.preview.toUtf8().size() > m_config.maxBytes) {
-        QByteArray previewBytes = result.preview.toUtf8().left(static_cast<int>(m_config.maxBytes));
-        while (!previewBytes.isEmpty() &&
-               (static_cast<unsigned char>(previewBytes.back()) & 0xc0) == 0x80) {
-            previewBytes.chop(1);
+    // Keep both ends within the byte budget, cutting only at UTF-8 boundaries.
+    const QByteArray bytes = result.preview.toUtf8();
+    const qsizetype limit = qMax<qsizetype>(0, m_config.maxBytes);
+    if (bytes.size() > limit) {
+        const QByteArray marker("\n... [middle omitted; byte limit] ...\n");
+        if (limit <= marker.size()) {
+            result.preview = QString::fromLatin1(marker.left(limit));
+        } else {
+            const qsizetype available = limit - marker.size();
+            qsizetype headEnd = available / 2;
+            qsizetype tailStart = bytes.size() - (available - headEnd);
+            const auto continuation = [](char byte) {
+                return (static_cast<unsigned char>(byte) & 0xc0) == 0x80;
+            };
+            while (headEnd > 0 && continuation(bytes.at(headEnd))) {
+                --headEnd;
+            }
+            while (tailStart < bytes.size() && continuation(bytes.at(tailStart))) {
+                ++tailStart;
+            }
+            result.preview = QString::fromUtf8(bytes.left(headEnd) + marker + bytes.mid(tailStart));
         }
-        result.preview = QString::fromUtf8(previewBytes);
     }
 
     QDir().mkpath(m_config.outputDir);
