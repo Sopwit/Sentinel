@@ -98,3 +98,9 @@ Previous messages remain visible while a new response starts and streams. The cu
 Use `/theme` for the theme picker or `/theme glacier`, `/theme obsidian`, `/theme porcelain`, `/theme terminal`. For the next launch, set the existing `SENTINEL_TUI_THEME` environment variable. `NO_COLOR` disables palette colors even when a theme is selected; remove that variable at launch if color is wanted. The default terminal theme preserves the emulator background. Theme changes never change daemon permissions.
 
 Shift+Enter is the primary newline hint. Enhanced keyboard reporting is requested and restored on exit; terminals that cannot distinguish it should use Alt+Enter or the retained Ctrl+O alternative. Physical Shift+Enter acceptance must be tested in the actual terminal host. See [V3.1 acceptance](../development/TUI_V3_1_LIVE_ACCEPTANCE.md) for actual live workflow evidence and limits.
+
+## Agent continuity and reliability
+
+Reattaching an active session restores its current task and preceding conversation without replacing newer streamed output. System notices remain available separately. Technical detail stays behind `/details`; a reconnect does not replay the complete historical tool timeline.
+
+A successful tool is not a completed Agent task. Completion requires an accepted daemon final answer. A failed run may have already changed an approved file; inspect `/diff` before deciding what to do next. Sentinel does not automatically retry a mutation after interruption. V3.2 live acceptance, including remaining context-capacity and multi-file limitations, is recorded in the [reliability report](../development/TUI_V3_2_AGENT_RELIABILITY_REPORT.md).

@@ -295,6 +295,8 @@ impl App {
         if value["run_id"].as_str().unwrap_or("") != self.run_id {
             if self.state != "starting" {
                 self.latest_user.clear();
+                self.prior_transcript.clear();
+                self.turn_visible = false;
             }
             self.activity.clear();
         }
@@ -532,19 +534,37 @@ impl App {
                         {
                             return;
                         }
-                        if !self.active() {
+                        let messages = value["messages"].as_array().cloned().unwrap_or_default();
+                        self.system_notices = messages
+                            .iter()
+                            .filter(|m| m["role"].as_str() == Some("system"))
+                            .map(|m| message_block("system", m["content"].as_str().unwrap_or("")))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        if self.active() && !self.turn_visible {
+                            // Reattaching an active run has no local send buffer. Restore
+                            // the task and prior conversation without replacing newer
+                            // snapshot/stream output with a possibly older history reply.
+                            if let Some(index) = messages.iter().rposition(|m| m["role"] == "user")
+                            {
+                                self.latest_user =
+                                    messages[index]["content"].as_str().unwrap_or("").into();
+                                self.prior_transcript = messages[..index]
+                                    .iter()
+                                    .filter(|m| m["role"].as_str() != Some("system"))
+                                    .map(|m| {
+                                        message_block(
+                                            m["role"].as_str().unwrap_or("message"),
+                                            m["content"].as_str().unwrap_or(""),
+                                        )
+                                    })
+                                    .collect::<Vec<_>>()
+                                    .join("\n");
+                                self.turn_visible = true;
+                            }
+                        } else if !self.active() {
                             self.prior_transcript.clear();
                             self.turn_visible = false;
-                            let messages =
-                                value["messages"].as_array().cloned().unwrap_or_default();
-                            self.system_notices = messages
-                                .iter()
-                                .filter(|m| m["role"].as_str() == Some("system"))
-                                .map(|m| {
-                                    message_block("system", m["content"].as_str().unwrap_or(""))
-                                })
-                                .collect::<Vec<_>>()
-                                .join("\n");
                             self.output = messages
                                 .iter()
                                 .filter(|m| m["role"].as_str() != Some("system"))
@@ -667,6 +687,14 @@ impl App {
                 }
                 if event.name == "run.started" {
                     self.snapshot(event.payload);
+                    if !self.turn_visible {
+                        self.request(
+                            worker,
+                            "session.messages",
+                            json!({"session_id":self.sid}),
+                            "messages",
+                        );
+                    }
                     return;
                 }
                 if event.payload["run_id"].as_str() != Some(self.run_id.as_str())
@@ -3285,6 +3313,34 @@ mod tests {
             rx,
             stop: Arc::new(AtomicBool::new(false)),
         }
+    }
+    #[test]
+    fn active_reattach_restores_task_without_replacing_stream() {
+        let mut app = App::default();
+        app.snapshot(json!({"session_id":"s", "run_id":"r", "state":"running", "run_type":"agent", "output":"newer streamed output"}));
+        let worker = test_worker();
+        let history = json!({"session_id":"s", "messages":[
+            {"role":"system","content":"notice"},
+            {"role":"user","content":"old question"},
+            {"role":"assistant","content":"old answer"},
+            {"role":"user","content":"current task"},
+            {"role":"assistant","content":"older partial output"}]});
+        app.update(Update::Reply("messages".into(), history.clone()), &worker);
+        let visible = conversation_text(&app);
+        for text in [
+            "old question",
+            "old answer",
+            "current task",
+            "newer streamed output",
+        ] {
+            assert_eq!(visible.matches(text).count(), 1);
+        }
+        assert!(!visible.contains("older partial output"));
+        assert!(!visible.contains("notice"));
+        assert!(app.system_notices.contains("notice"));
+        app.update(Update::Reply("messages".into(), history), &worker);
+        assert_eq!(conversation_text(&app), visible);
+        assert_eq!(app.output, "newer streamed output");
     }
     #[test]
     fn reconnect_restores_approval_and_draft() {
