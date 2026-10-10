@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Sentinel                               Connected
+────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                             Inference unverified
+                                                                                
+    > You                                                                       
+        Explain the layout                                                      
+                                                                                
+    Assistant                                                                   
+      A centered reading column.                                                
+      ```rust                                                                   
+      let ready = false;                                                        
+      ```                                                                       
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Chat ──────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                       │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  No discovered models · /model or /doctor                                      
+  Enter send · Ctrl+O newline · Ctrl+P commands                           idle  

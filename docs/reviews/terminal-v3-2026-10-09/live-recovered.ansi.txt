@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Personal                                                   Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+llama-cpp-server / Model unselected                                             Inference unverified
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+    ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐    
+    │   Hello isolated model check                                                             │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    /notices · Connection restored; draft preserved.                                                
+    Enter send · Ctrl+O newline · Ctrl+P commands                                           idle    

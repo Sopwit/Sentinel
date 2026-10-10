@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Workspace-name-Workspace-name-Workspace-name-Works...      Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider-name-Provider-... / Model-name-Model-name-Model-name-Model-name-Mod... Inference unverified
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+    ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐    
+    │   Ask a question or share an idea…                                                       │    
+    └──────────────────────────────────────────────────────────────────────────────────────────┘    
+    No discovered models · /model or /doctor                                                        
+    Enter send · Ctrl+O newline · Ctrl+P commands                                           idle    

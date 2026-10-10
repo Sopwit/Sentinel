@@ -1,0 +1,161 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-039np04y",
+  "results": [
+    [
+      "provider-lm-studio",
+      {
+        "id": "2",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "3",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "5",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 262144, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 1048576, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "select",
+      {
+        "id": "6",
+        "name": "model.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-create",
+      {
+        "id": "7",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-e0aaee75-7dd2-4de3-afef-7c132ab41592"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-root",
+      {
+        "id": "8",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-039np04y/project",
+          "workspace_id": "workspace-e0aaee75-7dd2-4de3-afef-7c132ab41592"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-select",
+      {
+        "id": "9",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-e0aaee75-7dd2-4de3-afef-7c132ab41592"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "ui-exit",
+      0
+    ]
+  ]
+}

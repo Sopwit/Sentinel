@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: Sentinel                                                                    Disconnected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                                                                        Inference unknown
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                          ◇ S ◇                                                         
+                                                                                                                        
+                                                Start a new conversation                                                
+                                  Ask a question, explore an idea, or describe a task.                                  
+                                            Ctrl+P commands  /help shortcuts                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+              ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐              
+              │   Ask a question or share an idea…                                                       │              
+              └──────────────────────────────────────────────────────────────────────────────────────────┘              
+              Daemon disconnected · /reconnect retries · draft preserved                                                
+              Enter send · Ctrl+O newline · Ctrl+P commands                                           idle              

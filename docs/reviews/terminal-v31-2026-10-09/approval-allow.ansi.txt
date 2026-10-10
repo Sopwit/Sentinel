@@ -1,0 +1,30 @@
+SENTINEL / Agent     Workspace: V31 approval sandbox                                       Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                           Inference unverified
+                                                                                                    
+    Agent · approval                                                                                
+                                                                                                    
+     ┌Approval required───────────────────────────────────────────────────────────────────────┐     
+     │Tool: write-file · risk 2                                                               │     
+     │Resources:                                                                              │     
+     │[{"access":1,"domain":0,"resource":"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000│     
+     │gn/T/sentinel-v31-isolated-eiec12n_/project/allow.txt"}]                                │     
+     │Tool authorization requires an explicit user decision.                                  │     
+     │Session: bef2da83-325a-4a28-b34c-f5c681136fac                                           │     
+     │Run: df72d130-b45a-4c38-ab9d-75ba5117927d                                               │     
+     │Scope: this pending operation only                                                      │     
+     │y Allow Once · n Deny · Esc keeps approval open                                         │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+                                                                                                    
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                 │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  y Allow Once · n Deny · Ctrl+C cancel                                                   approval  

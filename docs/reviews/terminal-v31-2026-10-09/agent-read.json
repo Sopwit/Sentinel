@@ -1,0 +1,707 @@
+{
+  "root": "/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq",
+  "provider": "lm-studio",
+  "model": "nvidia/nemotron-3-nano-4b",
+  "results": [
+    [
+      "hello",
+      {
+        "id": "1",
+        "name": "hello",
+        "payload": {
+          "capabilities": [
+            "chat",
+            "agent",
+            "approval",
+            "sessions",
+            "events",
+            "desktop-projection",
+            "model-selection",
+            "session-messages",
+            "terminal-state",
+            "workspace-files",
+            "workspace-changes"
+          ],
+          "daemon_version": "1.0.0-rc.8",
+          "major": 1,
+          "minor": 1,
+          "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "provider-lm-studio",
+      {
+        "id": "2",
+        "name": "provider.select",
+        "payload": {
+          "model_id": "",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "discover-lm-studio",
+      {
+        "id": "3",
+        "name": "desktop.action",
+        "payload": {
+          "accepted": true,
+          "result": {
+            "value": true
+          }
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "catalog-lm-studio",
+      {
+        "id": "5",
+        "name": "model.list",
+        "payload": {
+          "models": [
+            {
+              "capabilities": "Context 131072, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "google/gemma-4-e4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 262144, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen/qwen3.5-9b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 1048576, streaming yes, structured no, native tools yes",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "nvidia/nemotron-3-nano-4b",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context 2048, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "text-embedding-nomic-embed-text-v1.5",
+              "provider_id": "lm-studio",
+              "reason": "Provider model catalog is available."
+            },
+            {
+              "capabilities": "Context unknown, streaming yes, structured no, native tools no",
+              "catalog": "Available",
+              "health": "Available",
+              "model_id": "qwen2.5:3b",
+              "provider_id": "ollama",
+              "reason": "Ollama models are available."
+            }
+          ]
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "binding",
+      {
+        "id": "6",
+        "name": "model.select",
+        "payload": {
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "provider_id": "lm-studio"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-create",
+      {
+        "id": "7",
+        "name": "workspace.create",
+        "payload": {
+          "workspace_id": "workspace-c3d780f1-ec35-4109-9c46-978c67722f9f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-root",
+      {
+        "id": "8",
+        "name": "workspace.root",
+        "payload": {
+          "root": "/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project",
+          "workspace_id": "workspace-c3d780f1-ec35-4109-9c46-978c67722f9f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "workspace-select",
+      {
+        "id": "9",
+        "name": "workspace.select",
+        "payload": {
+          "workspace_id": "workspace-c3d780f1-ec35-4109-9c46-978c67722f9f"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "new",
+      {
+        "id": "10",
+        "name": "session.create",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+          "created_at": "2026-10-09T18:49:13.050Z",
+          "event_sequence": 0,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "",
+          "run_type": "",
+          "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+          "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+          "state": "idle",
+          "summary": "V31 bounded Agent read / 1 message / Active",
+          "title": "V31 bounded Agent read",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "agent",
+      {
+        "id": "11",
+        "name": "agent.start",
+        "payload": {
+          "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+          "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "agent-terminal",
+      {
+        "id": "",
+        "name": "run.completed",
+        "payload": {
+          "detail": "",
+          "event_sequence": 19,
+          "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+          "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+          "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+          "state": "completed",
+          "text": "File: found in \"/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\" (positive observation; no exhaustive absence inference; symbolic link targets excluded).\n{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\"}"
+        },
+        "type": "event",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "history",
+      {
+        "id": "12",
+        "name": "session.messages",
+        "payload": {
+          "messages": [
+            {
+              "content": "Sentinel Core online.",
+              "id": 1,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "system",
+              "status": "received",
+              "timestamp": "2026-10-09T18:49:13.051Z"
+            },
+            {
+              "content": "Read /var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt using read-file and report the C++ standard setting. Do not modify files.",
+              "id": 2,
+              "model_id": "",
+              "partial": false,
+              "provider_id": "",
+              "replaces": 0,
+              "reply_to": 0,
+              "role": "user",
+              "status": "sent",
+              "timestamp": "2026-10-09T18:49:13.071Z"
+            }
+          ],
+          "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ],
+    [
+      "state",
+      {
+        "id": "13",
+        "name": "terminal.attach",
+        "payload": {
+          "approval": {},
+          "approval_id": "",
+          "archived": false,
+          "conversation_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+          "created_at": "2026-10-09T18:49:13.050Z",
+          "event_sequence": 19,
+          "model_id": "nvidia/nemotron-3-nano-4b",
+          "output": "File: found in \"/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\" (positive observation; no exhaustive absence inference; symbolic link targets excluded).\n{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\"}",
+          "output_truncated": false,
+          "pinned": false,
+          "properties": {
+            "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+            "activeRuntimeProviderLabel": "lm-studio",
+            "activeRuntimeReadinessState": "Available",
+            "activeRuntimeReadinessSummary": "Provider model catalog is available."
+          },
+          "provider_id": "lm-studio",
+          "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+          "run_type": "agent",
+          "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+          "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+          "state": "completed",
+          "summary": "V31 bounded Agent read / 3 messages / Active",
+          "title": "V31 bounded Agent read",
+          "type": "conversation"
+        },
+        "type": "response",
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
+    ]
+  ],
+  "events": [
+    {
+      "id": "",
+      "name": "run.started",
+      "payload": {
+        "approval": {},
+        "approval_id": "",
+        "archived": false,
+        "conversation_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "created_at": "2026-10-09T18:49:13.050Z",
+        "event_sequence": 1,
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "output": "",
+        "output_truncated": false,
+        "pinned": false,
+        "properties": {
+          "activeRuntimeModelLabel": "nvidia/nemotron-3-nano-4b",
+          "activeRuntimeProviderLabel": "lm-studio",
+          "activeRuntimeReadinessState": "Available",
+          "activeRuntimeReadinessSummary": "Provider model catalog is available."
+        },
+        "provider_id": "lm-studio",
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "run_type": "agent",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "state": "running",
+        "summary": "V31 bounded Agent read / 2 messages / Active",
+        "title": "V31 bounded Agent read",
+        "type": "conversation"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "SessionCreated",
+        "event_sequence": 2,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RunStarted",
+        "event_sequence": 3,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "RuntimeStateChanged",
+        "event_sequence": 4,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestStarted",
+        "event_sequence": 5,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ContextSnapshot",
+        "event_sequence": 6,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestCompleted",
+        "event_sequence": 7,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ToolRequested",
+        "event_sequence": 8,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "tool.requested",
+      "payload": {
+        "detail": "Tool requested",
+        "event_sequence": 9,
+        "resources": [],
+        "risk": 0,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "state": "requested",
+        "timestamp": "2026-10-09T18:49:55.406Z",
+        "tool": "read-file",
+        "tool_call_id": "b77b243d-8b89-405d-84ca-2b65b37e15d4"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ToolExecutionStarted",
+        "event_sequence": 10,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "tool.running",
+      "payload": {
+        "detail": "Tool running",
+        "event_sequence": 11,
+        "resources": [],
+        "risk": 0,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "state": "running",
+        "timestamp": "2026-10-09T18:49:55.410Z",
+        "tool": "read-file",
+        "tool_call_id": "b77b243d-8b89-405d-84ca-2b65b37e15d4"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ToolExecutionCompleted",
+        "event_sequence": 12,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "tool.result",
+      "payload": {
+        "detail": "Tool completed",
+        "duration_ms": 6,
+        "event_sequence": 13,
+        "resources": [],
+        "risk": 0,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "state": "completed",
+        "timestamp": "2026-10-09T18:49:55.416Z",
+        "tool": "read-file",
+        "tool_call_id": "b77b243d-8b89-405d-84ca-2b65b37e15d4"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentStepCompleted",
+        "event_sequence": 14,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 1
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestStarted",
+        "event_sequence": 15,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 2
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ContextSnapshot",
+        "event_sequence": 16,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 2
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "ModelRequestCompleted",
+        "event_sequence": 17,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 2
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "agent.activity",
+      "payload": {
+        "activity": "AgentCompleted",
+        "event_sequence": 18,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "step": 0
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    },
+    {
+      "id": "",
+      "name": "run.completed",
+      "payload": {
+        "detail": "",
+        "event_sequence": 19,
+        "run_id": "6608682f-1b4d-4098-8415-b1f2c51e1f95",
+        "server_generation": "a843d08e-7817-44eb-ace9-dcc3a131dddf",
+        "session_id": "ba2fe68c-2157-4b43-b710-b8d7621048e8",
+        "state": "completed",
+        "text": "File: found in \"/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\" (positive observation; no exhaustive absence inference; symbolic link targets excluded).\n{\"observed_text\":\"cmake_minimum_required(VERSION 3.20)\\nproject(SyntheticAcceptance LANGUAGES CXX)\\nset(CMAKE_CXX_STANDARD 20)\\n\",\"source\":\"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-a6md6_kq/project/CMakeLists.txt\"}"
+      },
+      "type": "event",
+      "version": {
+        "major": 1,
+        "minor": 1
+      }
+    }
+  ]
+}

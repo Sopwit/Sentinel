@@ -99,3 +99,9 @@ sentinel completions fish > sentinel.fish
 For zsh, place `_sentinel` in a directory on `fpath` before `compinit`. For bash, source `sentinel.bash`. For fish, place `sentinel.fish` in the user's fish completions directory. Install/configure these files manually.
 
 Change review observes authorized text state since a run began, including possible concurrent external edits. It labels changes **Applied**, does not attribute every edit to Agent, does not offer accept/revert, and explicitly reports truncation. Baselines are bounded (8 sessions, 32 files, 8192 characters per file, 32768 characters per baseline), exclude hidden/denied/binary/oversized resources, and do not survive daemon restart. Deleted/unreadable resources are omitted rather than inferred. Diffs use a valid whole-file replacement hunk, not a minimal Git diff.
+
+## TUI V3 workflow consistency
+
+`sentinel tui` and existing attach/model/workspace/session CLI commands retain their flags and script behavior. TUI slash commands reuse existing IPC semantics; they are not new shell subcommands. `/status` uses daemon status, `/doctor` inspects safe terminal diagnostics, `/model` selects an accepted daemon binding, and `/resume` attaches an existing conversation. See [TUI commands](TUI.md) and the [complete registry](../development/TUI_V3_COMMAND_SPEC.md). Unsupported Plan/rollback/compaction commands do not imply corresponding CLI functionality.
+
+V3.1 adds the TUI-only `/theme` command; it does not add a CLI subcommand or change existing flags. `SENTINEL_TUI_THEME` accepts terminal, obsidian, glacier and porcelain (dark/light aliases retained); `NO_COLOR` overrides color. See [live acceptance](../development/TUI_V3_1_LIVE_ACCEPTANCE.md).

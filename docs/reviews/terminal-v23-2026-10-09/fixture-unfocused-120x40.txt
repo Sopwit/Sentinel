@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: Sentinel                                                                       Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                                                                     Inference unverified
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+               ┌command · Enter select · Esc cancel─────────────────────────────────────────────────────┐               
+               │Filter:                                                                                 │               
+               │> /reconnect  Reconnect without replaying work                                          │               
+               │  /remove  Remove last selected file reference                                          │               
+               │  /model  Select a discovered model                                                     │               
+               │  /provider  Inspect providers and select a model                                       │               
+               │  /workspace  Select a daemon-owned workspace                                           │               
+               │  /sessions  Attach a session                                                           │               
+               │  /new  Create a session                                                                │               
+               │  /chat  Switch explicitly to Chat                                                      │               
+               │  /agent  Switch explicitly to Agent                                                    │               
+               │  /tools  Tool registry state                                                           │               
+               │  /mcp  MCP state                                                                       │               
+               │  /permissions  Permission service state                                                │               
+               │  /context  Authoritative context state                                                 │               
+               │  /memory  Memory state                                                                 │               
+               │/reconnect ·                                                                            │               
+               └────────────────────────────────────────────────────────────────────────────────────────┘               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+              ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐              
+              │   Ask a question or share an idea…                                                       │              
+              └──────────────────────────────────────────────────────────────────────────────────────────┘              
+              No discovered models · /model or /doctor                                                                  
+              Arrows select · Enter confirm · Esc close                                               idle              

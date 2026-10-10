@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: unknown                                                                                                             Disconnected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                                                                                         Inference unknown
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                              ◇ S ◇                                                                             
+                                                                                                                                                                
+                                                                    Start a new conversation                                                                    
+                                                      Ask a question, explore an idea, or describe a task.                                                      
+                                                                Ctrl+P commands  /help shortcuts                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────┐                                  
+                                  │   Ask a question or share an idea…                                                       │                                  
+                                  └──────────────────────────────────────────────────────────────────────────────────────────┘                                  
+                                  /notices · Cannot connect to the Sentinel daemon: No such file or directory (os error 2). St                                  
+                                  Enter send · Ctrl+O newline · Ctrl+P commands                                           idle                                  

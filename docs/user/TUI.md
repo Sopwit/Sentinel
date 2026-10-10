@@ -2,14 +2,14 @@
 
 Launch with `sentinel tui`, `sentinel attach SESSION_ID`, or `sentinel tui --session SESSION_ID`. The canonical CLI launches the `sentinel-tui` library. An interactive terminal is required; the daemon remains authoritative.
 
-The compact header shows **CHAT** or **AGENT**, session title, connection/run state, selected provider/model readiness, and workspace name/root. The main area contains the transcript/output. A multiline composer and footer remain visible at narrow sizes. Searchable pickers and approvals overlay the main area; no permanent extra panes are required. Terminal default backgrounds are preserved. Input/history/drafts are kept only in memory.
+The compact header shows **CHAT** or **AGENT**, session title, connection/run state, selected provider/model readiness, and workspace name/root. The main area contains the transcript/output. A multiline composer and footer remain visible at narrow sizes. Searchable pickers and approvals overlay the main area; no permanent extra panes are required. Terminal default backgrounds are preserved. Input recall and per-session drafts are kept only in memory; canonical conversations remain daemon-persisted.
 
 ## Keys
 
 | Key | Action |
 | --- | --- |
 | Enter | Send when idle and non-empty; disconnected drafts are preserved |
-| Ctrl+O | Insert newline; Alt/Shift+Enter aliases depend on terminal support |
+| Shift+Enter | Insert newline when the terminal distinguishes it; Alt+Enter / Ctrl+O remain compatibility alternatives |
 | Ctrl+G | Explicitly switch Chat/Agent while idle |
 | Left/Right, Home/End, Up/Down | Cursor and line editing; Up/Down recall history in a single-line draft |
 | Ctrl+Left/Right | Word movement |
@@ -38,29 +38,30 @@ Pickers support case-insensitive subsequence search, Up/Down selection, Enter, a
 
 ## Slash commands
 
-Type a command and press Enter, or choose it through Ctrl+P.
+Type `/` for fuzzy discovery. Up/Down selects; Tab completes without execution; Enter completes an incomplete name and executes an exact command only after validation. Escape dismisses discovery and preserves input. Type `//` for literal leading slash text. Pasted slash content stays literal through prompt recall and failed sends. Unknown commands offer suggestions and never become Agent tasks.
 
-| Command | Behavior |
-| --- | --- |
-| `/model` | Model picker |
-| `/provider` | Provider readiness/picker and discovered models |
-| `/workspace` | Workspace picker; create/attach custom roots with CLI workspace commands |
-| `/sessions`, `/new` | Attach/create daemon conversations |
-| `/chat`, `/agent` | Explicit mode switch only; `/agent task` is not interpreted as execution |
-| `/tools` | Read-only authoritative registry state |
-| `/mcp` | Read-only safe MCP connection state |
-| `/permissions` | Permission service/policy diagnostics; no persistent grant mutation |
-| `/context` | Backend context status; no invented token precision |
-| `/memory` | Read-only memory availability/count; no memory-content dump |
-| `/tasks` | Backend task/runtime summaries |
-| `/status`, `/doctor` | Daemon status / refreshed safe diagnostics |
-| `/compact` | Explains that no authoritative compaction operation is available; changes no history |
-| `/help` | Commands and keys |
-| `/activity` | Inspect bounded safe structured run/tool/subagent activity |
-| `/files` | File picker through registered filesystem tool and gateway |
-| `/diff` | Changed-file picker and unified whole-file diffs, labelled Applied |
+Ctrl+P opens the same command catalog. `/help [query]` searches descriptions and actual keyboard bindings; Enter inspects full help without executing the selected command. Disabled rows show their reason.
 
-Unknown slash commands are not sent to Agent or shell. Model/provider configuration uses existing authority; no selection or fallback is invented.
+| Command family | Actual behavior |
+|---|---|
+| `/new [title]`, `/sessions [query]`, `/resume [id\|last]` | Create, search/switch, resume persisted daemon sessions |
+| `/rename <title>`, `/archive` | Existing daemon metadata actions; archive requires no unsent draft/references |
+| `/model`, `/provider`, `/workspace` | Existing authoritative pickers; no implicit model fallback |
+| `/mode [chat\|agent]`, `/chat`, `/agent` | Explicit mode selection, idle only; no permission changes |
+| `/status`, `/doctor`, `/reconnect` | Real status/diagnostics and safe reconnect |
+| `/details`, `/activity`, `/notices` | Toggle safe timeline details; inspect bounded activity or system notices |
+| `/tools`, `/permissions`, `/mcp`, `/tasks`, `/context`, `/memory` | Fresh read-only safe daemon projections; no grant mutation or memory payload dump |
+| `/history [query]`, `/search [query]` | Current-session history refresh/search, or displayed text search |
+| `/export [markdown\|json\|text]` | Existing controlled daemon export action; actual result reported |
+| `/files`, `/references`, `/remove [index]` | Authorized paths and selected-reference removal; no eager file contents |
+| `/diff`, `/review` | Existing Applied workspace evidence; no autonomous review or rollback |
+| `/settings`, `/theme [name]` | Inspect preferences / choose terminal, obsidian, glacier or porcelain for this process |
+| `/cancel`, `/exit` | Request authoritative cancellation; exit only idle with no unsent content |
+| `/plan`, `/compact`, `/undo`, `/redo`, `/skills`, `/init`, `/grill-me`, `/editor` | Explicitly unavailable; explain required backend/safe lifecycle contracts and do nothing |
+
+Aliases and exact availability are in the [complete V3 registry](../development/TUI_V3_COMMAND_SPEC.md). `/clear` is an alias for a new session, not deletion; `/agents` inspects task summaries, not spawning. `/quit` and `/q` alias safe exit. Session switching retains up to 32 memory-only drafts with cursor/mode/reference state and refuses overflow rather than dropping drafts. Active/busy operations block session/model/workspace changes. `/resume last` uses the latest cached daemon list; `/sessions` refreshes it.
+
+Metadata inspection views do not replace a streaming response; Escape returns to the conversation. Native terminal copy/selection remains available. No shell shortcut, external editor, persistent key remapping or guaranteed Plan mode is implemented.
 
 ## Files and changes
 
@@ -79,3 +80,21 @@ Approvals show operation, resource, risk, run/session identities, and the pendin
 IPC runs on a background worker. The rendering loop does not enumerate providers or synchronously wait for daemon replies. On connection loss, the worker retries and reattaches the same session, replacing the snapshot and using sequence/generation metadata to avoid replay duplication. Pending approval comes from the authoritative attach snapshot. Disconnect never cancels or replays an Agent mutation. Daemon restart recovers persisted conversations but does not restart interrupted runs or retain change baselines.
 
 See the [V2 keyboard contract](../development/TUI_KEYBINDING_CONTRACT.md) for context precedence and Ctrl+A/E/U/K editing. Ctrl+S is no longer Send.
+
+## V2.3 welcome and alignment
+
+An empty conversation shows a centered Sentinel symbol, welcome text and command/help hints, including while disconnected or without discovered models. Persisted system messages stay separate from conversation messages; the footer points to `/notices` for their full text and runtime notices. Commands such as `/help`, `/doctor` and `/notices` remain inspectable in the viewport.
+
+The transcript and composer share a centered grid, with responsive width and a maximum 180-cell outer grid (V3.1 expands the former 88-cell reading cap) and the input aligned to assistant body text. The composer grows for explicit newlines, including a trailing newline, and retains horizontal scrolling for long input. Picker, approval and search focus quiet the composer border; closing the overlay restores input focus and the draft.
+
+The model row reserves space for a short readiness label rather than the verbose diagnostic explanation. Provider health `Available` is shown as `Inference unverified`: catalog/provider health does not attest to successful inference initialization. Use `/doctor` for the full daemon-supplied readiness summary. Long workspace/provider/model names are bounded with `...` so they cannot overwrite connection/readiness labels; the existing workspace/model pickers retain full selection details.
+
+See the [V3 implementation report](../development/TUI_V3_IMPLEMENTATION_REPORT.md) for measured tests, terminal evidence and live acceptance limits.
+
+## V3.1 streaming and themes
+
+Previous messages remain visible while a new response starts and streams. The current user turn appears immediately below the history; final canonical history replaces this presentation without duplication. A rejected submission restores the draft and history. Provider failure after accepted submission remains a failed persisted turn, available through prompt recall; it is not replayed automatically.
+
+Use `/theme` for the theme picker or `/theme glacier`, `/theme obsidian`, `/theme porcelain`, `/theme terminal`. For the next launch, set the existing `SENTINEL_TUI_THEME` environment variable. `NO_COLOR` disables palette colors even when a theme is selected; remove that variable at launch if color is wanted. The default terminal theme preserves the emulator background. Theme changes never change daemon permissions.
+
+Shift+Enter is the primary newline hint. Enhanced keyboard reporting is requested and restored on exit; terminals that cannot distinguish it should use Alt+Enter or the retained Ctrl+O alternative. Physical Shift+Enter acceptance must be tested in the actual terminal host. See [V3.1 acceptance](../development/TUI_V3_1_LIVE_ACCEPTANCE.md) for actual live workflow evidence and limits.

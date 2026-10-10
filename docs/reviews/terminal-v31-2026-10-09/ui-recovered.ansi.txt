@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: V31 UI synthetic                                                               Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                                               Inference unverified
+                                                                                                                        
+    > You                                                                                                               
+        Reply with exactly: FIRST-ANSWER-OK                                                                             
+                                                                                                                        
+    Assistant                                                                                                           
+      FIRST-ANSWER-OK                                                                                                   
+                                                                                                                        
+    > You                                                                                                               
+        Reply with exactly: SECOND-ANSWER-OK                                                                            
+                                                                                                                        
+    Assistant                                                                                                           
+      SECOND-ANSWER-OK                                                                                                  
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Preserve this recovery draft                                                                                   │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Connection restored; draft preserved.                                                                      
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                         completed  

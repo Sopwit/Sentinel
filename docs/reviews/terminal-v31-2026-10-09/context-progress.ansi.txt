@@ -1,0 +1,30 @@
+SENTINEL / Agent     Workspace: V31 context sandbox                                        Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / nvidia/nemotron-3-nano-4b                                           Inference unverified
+                                                                                                    
+    > You                                                                                           
+        Read the referenced CMakeLists.txt with read-file and report the C++ standard setting.      
+    Do not modify any files.                                                                        
+                                                                                                    
+    Agent · running                                                                                 
+                                                                                                    
+                                                                                                    
+    Execution timeline · /activity for details                                                      
+      step 1 · AgentStepCompleted                                                                   
+      step 2 · ModelRequestStarted                                                                  
+      step 2 · ContextSnapshot                                                                      
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                 │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Reference already selected or 16-reference limit reached.                              
+  Ctrl+C cancel · /details expand · F1 help                                                running  

@@ -1,0 +1,40 @@
+SENTINEL / Agent     Workspace: Sentinel                                                                       Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                                                                     Inference unverified
+                                                                                                                        
+                > You                                                                                                   
+                    Inspect the workspace                                                                               
+                                                                                                                        
+                Agent · running                                                                                         
+                  Reading authorized context                                                                            
+                                                                                                                        
+                Execution timeline · /activity for details                                                              
+                  step 1 · tool requested                                                                               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+              ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────┐              
+              │   Describe a task for Agent…                                                             │              
+              └──────────────────────────────────────────────────────────────────────────────────────────┘              
+              No discovered models · /model or /doctor                                                                  
+              Ctrl+C cancel · /activity details · F1 help                                          running              

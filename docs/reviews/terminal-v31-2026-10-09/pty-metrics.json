@@ -1,0 +1,55 @@
+[
+  {
+    "size": [
+      80,
+      24
+    ],
+    "interval_seconds": 5.019484000018565,
+    "before_cpu_time_rss_kib": "0:00.04   8240",
+    "after_cpu_time_rss_kib": "0:00.04   8240"
+  },
+  {
+    "size": [
+      80,
+      24
+    ],
+    "exit": 0,
+    "enhancement_push": true,
+    "enhancement_pop": true,
+    "bracketed_paste_disabled": true,
+    "alternate_screen_restored": true
+  },
+  {
+    "size": [
+      100,
+      30
+    ],
+    "exit": 0,
+    "enhancement_push": true,
+    "enhancement_pop": true,
+    "bracketed_paste_disabled": true,
+    "alternate_screen_restored": true
+  },
+  {
+    "size": [
+      120,
+      40
+    ],
+    "exit": 0,
+    "enhancement_push": true,
+    "enhancement_pop": true,
+    "bracketed_paste_disabled": true,
+    "alternate_screen_restored": true
+  },
+  {
+    "size": [
+      160,
+      48
+    ],
+    "exit": 0,
+    "enhancement_push": true,
+    "enhancement_pop": true,
+    "bracketed_paste_disabled": true,
+    "alternate_screen_restored": true
+  }
+]

@@ -1,0 +1,48 @@
+SENTINEL / Agent     Workspace: Sentinel                                                                                                               Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Local provider / Selected model                                                                                                             Inference unverified
+                                                                                                                                                                
+                                    > You                                                                                                                       
+                                        Inspect the workspace                                                                                                   
+                                                                                                                                                                
+                                    Agent · approval                                                                                                            
+                                      Reading authorized context                                                                                                
+                                                                                                                                                                
+                                    Execution timeline · /activity for details                                                                                  
+                                      step 1 · tool requested                                                                                                   
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                   ┌Approval required───────────────────────────────────────────────────────────────────────┐                                   
+                                   │Tool: file.write · risk "medium"                                                        │                                   
+                                   │Resources: ["example.txt"]                                                              │                                   
+                                   │Write requested file                                                                    │                                   
+                                   │Session:                                                                                │                                   
+                                   │Run:                                                                                    │                                   
+                                   │Scope: this pending operation only                                                      │                                   
+                                   │y Allow Once · n Deny · Esc keeps approval open                                         │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   │                                                                                        │                                   
+                                   └────────────────────────────────────────────────────────────────────────────────────────┘                                   
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────┐                                  
+                                  │   Describe a task for Agent…                                                             │                                  
+                                  └──────────────────────────────────────────────────────────────────────────────────────────┘                                  
+                                  No discovered models · /model or /doctor                                                                                      
+                                  y Allow Once · n Deny · Ctrl+C cancel                                               approval                                  

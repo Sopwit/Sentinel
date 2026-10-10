@@ -1,0 +1,30 @@
+SENTINEL / Agent     Workspace: V31 context sandbox                                        Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+lm-studio / Model unselected                                                       Provider degraded
+                                                                                                    
+                                                                                                    
+                                                                                                    
+     ┌references · Enter select · Esc close───────────────────────────────────────────────────┐     
+     │Filter:                                                                                 │     
+     │> 1  @"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated...│     
+     │  2  @"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated...│     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │0                                                                                       │     
+     │Enter removes this draft reference; /files adds a replacement.                          │     
+     │                                                                                        │     
+     │                                                                                        │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+                                                                                                    
+  ┌ Message · Agent ─────────────────────────────────────────────────────────────────────────────┐  
+  │   Describe a task for Agent…                                                                 │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+  Refs: @"/private/var/folders/jn/rtnh3wpd52537ppg_tls1nm40000gn/T/sentinel-v31-isolated-ae27j1km/  
+  Arrows select · Enter confirm · Esc close                                                   idle  

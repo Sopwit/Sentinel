@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: unknown                                                                        Connected
+------------------------------------------------------------------------------------------------------------------------
+Provider unselected / Model unselected                                                                 Inference unknown
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                          [ S ]                                                         
+                                                                                                                        
+                                                Start a new conversation                                                
+                                  Ask a question, explore an idea, or describe a task.                                  
+                                            Ctrl+P commands  /help shortcuts                                            
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+              + Commands · Tab complete · Enter select · Esc dismiss ------------------------------------+              
+              |> /plan [request] · Plan needs daemon-enforced read-only tool policy; no task was start...|              
+              |  /doctor  · Inspect full safe service diagnostics                                        |              
+              |  /editor [request] · External editor integration is deferred until terminal suspension...|              
+              |  /init [request] · Project initialization needs an explicit authorized workspace write...|              
+              |Example: /plan                                                                            |              
+              |Plan needs daemon-enforced read-only tool policy; no task was started.                    |              
+              +------------------------------------------------------------------------------------------+              
+              + Message · Chat --------------------------------------------------------------------------+              
+              |   /plan                                                                                  |              
+              +------------------------------------------------------------------------------------------+              
+                                                                                                                        
+              Enter send · Ctrl+O newline · Ctrl+P commands                                           idle              

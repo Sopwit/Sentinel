@@ -1,0 +1,11 @@
+# Sentinel TUI V2.3 evidence
+
+`before-*.ansi` and `after-*.ansi` are actual disconnected PTY recordings at 80×24, 100×30, 120×40 and 160×48. Before uses the pre-V2.3 working-tree debug binary; after uses the final optimized release binary. Both point to an unused temporary socket, with TERM=xterm-256color and SENTINEL_TUI_THEME=dark. No real daemon, personal history, provider or tool was contacted. Recordings contain raw ANSI control sequences; do not execute their contents as commands. They are terminal output, not native screenshots.
+
+The before output has the disconnected instructions occupying the empty viewport and a full-width composer. After shows the centered welcome, separate connection notice and centered padded composer. The wide-terminal composer now follows the capped content grid; header readiness remains explicitly unknown when disconnected.
+
+`fixture-*.txt` are explicit synthetic Ratatui TestBackend renders, not live runtime observations. They cover eight scenarios at all four dimensions: connected/disconnected empty Chat, populated Chat, long names, running Agent, approval, picker focus and search focus. Provider/model/workspace values in these fixtures are test data only. Deterministic checks verify welcome centering, content/input alignment, reserved header state space, focus styles and restored cursor position. Approval rendering does not establish that any real tool ran or permission was granted.
+
+`tests.log` records the successful final workspace run: 14 CLI tests, 11 IPC tests and 27 TUI tests (52 total). Additional completed checks: cargo fmt --all -- --check; workspace Clippy with --all-targets and -D warnings; cargo build --workspace --release; the responsive matrix with SENTINEL_TUI_ASCII=1 and NO_COLOR=1. All used cli/Cargo.toml.
+
+Visual limitations: reference screenshot attachments were unavailable in this execution context. Native Ghostty/macOS Terminal observation was not performed; previous computer-use access to Ghostty was refused. No native emulator, tmux/SSH or live inference acceptance is claimed. ASCII fallback remains the existing border fallback plus the welcome symbol, not full text transliteration. No commit, push or merge was performed.
