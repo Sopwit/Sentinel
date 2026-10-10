@@ -220,10 +220,11 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
                  QStringLiteral("tool=%1 status=%2\n%3")
                      .arg(record.toolId, record.statusText,
                           (record.observation.size() > 2000
-                               ? record.observation.left(2000) +
-                                     QStringLiteral(
-                                         "\n[excerpt truncated; full evidence remains in the run; "
-                                         "request a narrower observation if needed]")
+                               ? record.observation.left(1000) +
+                                     QStringLiteral("\n[excerpt truncated; showing beginning and "
+                                                    "end; full evidence remains in the run; "
+                                                    "request a narrower observation if needed]\n") +
+                                     record.observation.right(1000)
                                : record.observation))});
         }
         awaitingNativeResults_ = 0;

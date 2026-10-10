@@ -20,6 +20,15 @@ QString bounded(QString text, int limit) {
     return text.left(limit) + QStringLiteral(" [excerpt; more available via tool]");
 }
 
+QString boundedProcessOutput(QString text, int limit) {
+    text = text.simplified();
+    if (text.size() <= limit)
+        return text;
+    return text.left(limit / 2) +
+           QStringLiteral(" [excerpt; beginning and end; more available via tool] ") +
+           text.right(limit - limit / 2);
+}
+
 int cost(const AgentContextItem& item) {
     return (item.content.size() + item.source.size() + 3) / 4 + 16;
 }
@@ -210,7 +219,9 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
                                                                  : QString::number(step.index),
                               QStringLiteral("tool=%1 resource=%2 status=%3 result=%4")
                                   .arg(step.toolId, resource, step.statusText,
-                                       bounded(excerpt, important ? 320 : 500)),
+                                       step.toolId == QLatin1String("run-command")
+                                           ? boundedProcessOutput(excerpt, important ? 320 : 500)
+                                           : bounded(excerpt, important ? 320 : 500)),
                               true};
         if (add(std::move(item), observationBudget))
             observationBudget -= cost(result.items.last());
