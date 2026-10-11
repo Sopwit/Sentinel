@@ -23,98 +23,105 @@ Item {
         return root.currentProvider === "ollama" || root.currentProvider === "lm-studio" || root.currentProvider === "llama-cpp-server"
     }
 
-    ColumnLayout {
+    ScrollView {
+        id: stepScroll
         anchors.fill: parent
-        spacing: SentinelTheme.spaceLg
+        contentWidth: availableWidth
+        clip: true
+        ColumnLayout {
+            width: stepScroll.availableWidth
+            height: Math.max(implicitHeight, stepScroll.availableHeight)
+            spacing: SentinelTheme.spaceLg
 
-        SectionTitle {
-            title: qsTr("AI Model")
-            subtitle: qsTr("Select your default AI model to get started.")
-            Layout.fillWidth: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                Layout.preferredWidth: 132
-                Layout.alignment: Qt.AlignVCenter
-                text: qsTr("Model")
-                color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
+            SectionTitle {
+                title: qsTr("AI Model")
+                subtitle: qsTr("Select your default AI model to get started.")
+                Layout.fillWidth: true
             }
 
-            SentinelComboBox {
-                id: modelCombo
-                accent: root.brandAccent
+            RowLayout {
                 Layout.fillWidth: true
-                implicitHeight: 38
-                enabled: root.hasLocalModels() && root.modelList.length > 0
-                model: root.modelList
-                currentIndex: root.modelList.indexOf(root.viewModel.selectedLocalModel)
-                displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedLocalModel
-                onActivated: (index) => {
-                    if (index >= 0 && index < root.modelList.length) {
-                        root.viewModel.selectedLocalModel = root.modelList[index]
+                spacing: SentinelTheme.spaceMd
+
+                Label {
+                    Layout.preferredWidth: 132
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Model")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                SentinelComboBox {
+                    id: modelCombo
+                    accent: root.brandAccent
+                    Layout.fillWidth: true
+                    implicitHeight: 38
+                    enabled: root.hasLocalModels() && root.modelList.length > 0
+                    model: root.modelList
+                    currentIndex: root.modelList.indexOf(root.viewModel.selectedLocalModel)
+                    displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedLocalModel
+                    onActivated: (index) => {
+                        if (index >= 0 && index < root.modelList.length) {
+                            root.viewModel.selectedLocalModel = root.modelList[index]
+                        }
                     }
                 }
             }
-        }
-
-        Label {
-            Layout.fillWidth: true
-            visible: root.hasLocalModels() && root.modelList.length === 0
-            text: qsTr("No local models found. Download one from the Models page after setup.")
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
-        }
-
-        InfoRow {
-            compact: false
-            label: qsTr("Active Model")
-            value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
-            Layout.fillWidth: true
-        }
-
-        InfoRow {
-            compact: false
-            label: qsTr("Model Status")
-            value: root.viewModel.selectedLocalModelSummary ? root.viewModel.selectedLocalModelSummary : qsTr("No model selected")
-            Layout.fillWidth: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
 
             Label {
-                Layout.preferredWidth: 132
-                text: qsTr("Temperature (%1)").arg(root.viewModel.localInferenceTemperature.toFixed(2))
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-            }
-
-            Slider {
                 Layout.fillWidth: true
-                from: 0.0
-                to: 1.5
-                stepSize: 0.05
-                value: root.viewModel.localInferenceTemperature
-                onValueChanged: root.viewModel.localInferenceTemperature = value
+                visible: root.hasLocalModels() && root.modelList.length === 0
+                text: qsTr("No local models found. Download one from the Models page after setup.")
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
             }
-        }
 
-        Label {
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceSm
-            text: qsTr("Higher temperature produces more creative output; lower is more focused.")
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
+            InfoRow {
+                compact: false
+                label: qsTr("Active Model")
+                value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: false
+                label: qsTr("Model Status")
+                value: root.viewModel.selectedLocalModelSummary ? root.viewModel.selectedLocalModelSummary : qsTr("No model selected")
+                Layout.fillWidth: true
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceMd
+
+                Label {
+                    Layout.preferredWidth: 132
+                    text: qsTr("Temperature (%1)").arg(root.viewModel.localInferenceTemperature.toFixed(2))
+                    color: SentinelTheme.textPrimary
+                    font.pixelSize: SentinelTheme.fontBody
+                }
+
+                Slider {
+                    Layout.fillWidth: true
+                    from: 0.0
+                    to: 1.5
+                    stepSize: 0.05
+                    value: root.viewModel.localInferenceTemperature
+                    onValueChanged: root.viewModel.localInferenceTemperature = value
+                }
+            }
+
+            Label {
+                Layout.fillWidth: true
+                Layout.topMargin: SentinelTheme.spaceSm
+                text: qsTr("Higher temperature produces more creative output; lower is more focused.")
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
+            }
         }
     }
 }

@@ -22,120 +22,127 @@ Item {
         { icon: "world", title: qsTr("Cross-platform"), caption: qsTr("A portable Qt experience across Linux, Windows, and macOS.") }
     ]
 
-    ColumnLayout {
+    ScrollView {
+        id: stepScroll
         anchors.fill: parent
-        spacing: SentinelTheme.spaceLg
+        contentWidth: availableWidth
+        clip: true
+        ColumnLayout {
+            width: stepScroll.availableWidth
+            height: Math.max(implicitHeight, stepScroll.availableHeight)
+            spacing: SentinelTheme.spaceLg
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 0
-        }
-
-        Image {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 220
-            Layout.preferredHeight: 48
-            source: "qrc:/branding/sentinel-lockup.svg"
-            fillMode: Image.PreserveAspectFit
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                colorization: 1.0
-                colorizationColor: SentinelTheme.textPrimary
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
             }
-        }
 
-        Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: qsTr("Welcome to Sentinel")
-            color: SentinelTheme.textPrimary
-            font.pixelSize: SentinelTheme.fontDisplay
-            font.bold: true
-        }
+            Image {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 220
+                Layout.preferredHeight: 48
+                source: "qrc:/branding/sentinel-lockup.svg"
+                fillMode: Image.PreserveAspectFit
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: SentinelTheme.textPrimary
+                }
+            }
 
-        Label {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: 560
-            horizontalAlignment: Text.AlignHCenter
-            text: qsTr("A calm, private AI assistant built directly into your desktop environment.")
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontBody
-            wrapMode: Text.WordWrap
-        }
+            Label {
+                Layout.alignment: Qt.AlignHCenter
+                text: qsTr("Welcome to Sentinel")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontDisplay
+                font.bold: true
+            }
 
-        Flow {
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceLg
-            spacing: SentinelTheme.spaceMd
-            Layout.alignment: Qt.AlignHCenter
+            Label {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: 560
+                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("A calm, private AI assistant built directly into your desktop environment.")
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontBody
+                wrapMode: Text.WordWrap
+            }
 
-            Repeater {
-                model: root.features
+            Flow {
+                Layout.fillWidth: true
+                Layout.topMargin: SentinelTheme.spaceLg
+                spacing: SentinelTheme.spaceMd
+                Layout.alignment: Qt.AlignHCenter
 
-                delegate: Rectangle {
-        id: delegateScope1
-                    required property var modelData
-                    readonly property int cardWidth: 240
+                Repeater {
+                    model: root.features
 
-                    width: root.width < 640 ? 200 : cardWidth
-                    implicitHeight: 132
-                    radius: SentinelTheme.radiusLg
-                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
-                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                    border.width: 1
+                    delegate: Rectangle {
+            id: delegateScope1
+                        required property var modelData
+                        readonly property int cardWidth: 240
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: SentinelTheme.spaceLg
-                        spacing: SentinelTheme.spaceSm
+                        width: root.width < 640 ? 200 : cardWidth
+                        implicitHeight: 132
+                        radius: SentinelTheme.radiusLg
+                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        border.width: 1
 
-                        Image {
-                            source: "qrc:/icons/tabler/" + delegateScope1.modelData.icon + ".svg"
-                            sourceSize.width: 22
-                            sourceSize.height: 22
-                            Layout.preferredWidth: 22
-                            Layout.preferredHeight: 22
-                        }
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: SentinelTheme.spaceLg
+                            spacing: SentinelTheme.spaceSm
 
-                        Label {
-                            text: delegateScope1.modelData.title
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontBody
-                            font.bold: true
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                        }
+                            Image {
+                                source: "qrc:/icons/tabler/" + delegateScope1.modelData.icon + ".svg"
+                                sourceSize.width: 22
+                                sourceSize.height: 22
+                                Layout.preferredWidth: 22
+                                Layout.preferredHeight: 22
+                            }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: delegateScope1.modelData.caption
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 3
-                            elide: Text.ElideRight
+                            Label {
+                                text: delegateScope1.modelData.title
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: delegateScope1.modelData.caption
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 3
+                                elide: Text.ElideRight
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Label {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: 560
-            horizontalAlignment: Text.AlignHCenter
-            text: qsTr("A few quick steps will tailor Sentinel to how you work.")
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
-        }
+            Label {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: 560
+                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("A few quick steps will tailor Sentinel to how you work.")
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
+            }
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 0
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+            }
         }
     }
 }

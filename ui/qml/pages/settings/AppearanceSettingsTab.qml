@@ -43,6 +43,43 @@ Item {
         spacing: SentinelTheme.spaceMd
 
         SectionTitle {
+            visible: !root.showGeneral
+            title: qsTr("Core Warden")
+            subtitle: qsTr("Local Desktop preference. Reduced motion uses a static frame.")
+            Layout.fillWidth: true
+        }
+        SettingCard {
+            visible: !root.showGeneral
+            SettingControlRow {
+                title: qsTr("Mascot presentation")
+                subtitle: qsTr("Auto animates verified activity; inactive and disconnected remain static.")
+                compact: root.compact
+                SentinelComboBox {
+                    anchors.fill: parent
+                    model: ["off", "static", "animated", "auto"]
+                    currentIndex: model.indexOf(coreWardenPreferences.mode)
+                    onActivated: (index) => coreWardenPreferences.mode = model[index]
+                }
+            }
+            SettingControlRow {
+                title: qsTr("Synthetic artwork preview")
+                subtitle: qsTr("Preview only — does not indicate Agent or voice activity.")
+                compact: root.compact
+                SentinelComboBox {
+                    id: wardenPreview
+                    anchors.fill: parent
+                    model: ["none", "idle", "listening", "thinking", "processing", "tool_running", "approval", "speaking", "success", "warning", "error"]
+                }
+            }
+            CoreWarden {
+                viewModel: root.viewModel
+                previewState: wardenPreview.currentIndex > 0 ? wardenPreview.currentText : ""
+                visible: wardenPreview.currentIndex > 0
+                Layout.fillWidth: true
+                imageSize: 128
+            }
+        }
+        SectionTitle {
             visible: root.showGeneral
             title: qsTr("Language")
             subtitle: qsTr("Desktop shell and localization preferences.")

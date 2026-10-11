@@ -37,106 +37,113 @@ Item {
         }
     }
 
-    ColumnLayout {
+    ScrollView {
+        id: stepScroll
         anchors.fill: parent
-        spacing: SentinelTheme.spaceLg
-
-        SectionTitle {
-            title: qsTr("AI Provider")
-            subtitle: qsTr("Connect to local runtimes like Ollama or LM Studio, or a cloud provider API.")
-            Layout.fillWidth: true
-        }
-
+        contentWidth: availableWidth
+        clip: true
         ColumnLayout {
-            Layout.fillWidth: true
-            visible: root.viewModel.selectedRuntimeProvider === "llama-cpp-server"
-            Label { Layout.fillWidth: true; text: qsTr("llama.cpp is the default local engine. If it is missing, Sentinel can install it with Homebrew or build the official sources with Git, CMake and a C++ compiler."); wrapMode: Text.WordWrap; color: SentinelTheme.textMuted }
-            SentinelButton { text: qsTr("Set up llama.cpp"); enabled: !ggufLibraryFetcher.setupBusy; onClicked: ggufLibraryFetcher.setupRuntime() }
-            Label { Layout.fillWidth: true; text: ggufLibraryFetcher.setupStatus; wrapMode: Text.WrapAnywhere; color: SentinelTheme.textPrimary }
-        }
+            width: stepScroll.availableWidth
+            height: Math.max(implicitHeight, stepScroll.availableHeight)
+            spacing: SentinelTheme.spaceLg
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                Layout.preferredWidth: 132
-                Layout.alignment: Qt.AlignVCenter
-                text: qsTr("Provider")
-                color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
+            SectionTitle {
+                title: qsTr("AI Provider")
+                subtitle: qsTr("Connect to local runtimes like Ollama or LM Studio, or a cloud provider API.")
+                Layout.fillWidth: true
             }
 
-            SentinelComboBox {
-                id: providerCombo
-                accent: root.brandAccent
+            ColumnLayout {
                 Layout.fillWidth: true
-                implicitHeight: 38
-                model: root.viewModel.selectableRuntimeProviderLabels
-                currentIndex: root.providerIds.indexOf(root.viewModel.selectedRuntimeProvider) >= 0
-                              ? root.providerIds.indexOf(root.viewModel.selectedRuntimeProvider)
-                              : 0
-                displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedRuntimeProvider
-                onActivated: (index) => {
-                    var id = root.providerIdAt(index)
-                    root.viewModel.selectedRuntimeProvider = id
+                visible: root.viewModel.selectedRuntimeProvider === "llama-cpp-server"
+                Label { Layout.fillWidth: true; text: qsTr("llama.cpp is the default local engine. If it is missing, Sentinel can install it with Homebrew or build the official sources with Git, CMake and a C++ compiler."); wrapMode: Text.WordWrap; color: SentinelTheme.textMuted }
+                SentinelButton { text: qsTr("Set up llama.cpp"); enabled: !ggufLibraryFetcher.setupBusy; onClicked: ggufLibraryFetcher.setupRuntime() }
+                Label { Layout.fillWidth: true; text: ggufLibraryFetcher.setupStatus; wrapMode: Text.WrapAnywhere; color: SentinelTheme.textPrimary }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceMd
+
+                Label {
+                    Layout.preferredWidth: 132
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Provider")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                SentinelComboBox {
+                    id: providerCombo
+                    accent: root.brandAccent
+                    Layout.fillWidth: true
+                    implicitHeight: 38
+                    model: root.viewModel.selectableRuntimeProviderLabels
+                    currentIndex: root.providerIds.indexOf(root.viewModel.selectedRuntimeProvider) >= 0
+                                  ? root.providerIds.indexOf(root.viewModel.selectedRuntimeProvider)
+                                  : 0
+                    displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedRuntimeProvider
+                    onActivated: (index) => {
+                        var id = root.providerIdAt(index)
+                        root.viewModel.selectedRuntimeProvider = id
+                    }
                 }
             }
-        }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceMd
+
+                Label {
+                    Layout.preferredWidth: 132
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Endpoint")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                SentinelTextField {
+                    Layout.fillWidth: true
+                    placeholderText: "http://127.0.0.1:11434"
+                    text: root.endpointFor(root.providerIdAt(providerCombo.currentIndex))
+                    enabled: providerCombo.currentIndex >= 0
+                    onEditingFinished: root.setEndpointFor(root.providerIdAt(providerCombo.currentIndex), text)
+                }
+            }
+
+            InfoRow {
+                compact: false
+                label: qsTr("Runtime Status")
+                value: root.viewModel.localInferenceRuntimeState + " (" + root.viewModel.localInferenceHealthSummary + ")"
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: false
+                label: qsTr("Active Provider")
+                value: root.viewModel.activeRuntimeProviderLabel ? root.viewModel.activeRuntimeProviderLabel : qsTr("Not configured")
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: false
+                label: qsTr("Readiness")
+                value: root.viewModel.activeRuntimeReadinessSummary ? root.viewModel.activeRuntimeReadinessSummary : qsTr("Checking runtime availability…")
+                Layout.fillWidth: true
+            }
 
             Label {
-                Layout.preferredWidth: 132
-                Layout.alignment: Qt.AlignVCenter
-                text: qsTr("Endpoint")
+                Layout.fillWidth: true
+                Layout.topMargin: SentinelTheme.spaceSm
+                text: qsTr("You can change the provider or endpoints later in Settings > Model Settings.")
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.WordWrap
             }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "http://127.0.0.1:11434"
-                text: root.endpointFor(root.providerIdAt(providerCombo.currentIndex))
-                enabled: providerCombo.currentIndex >= 0
-                onEditingFinished: root.setEndpointFor(root.providerIdAt(providerCombo.currentIndex), text)
-            }
-        }
-
-        InfoRow {
-            compact: false
-            label: qsTr("Runtime Status")
-            value: root.viewModel.localInferenceRuntimeState + " (" + root.viewModel.localInferenceHealthSummary + ")"
-            Layout.fillWidth: true
-        }
-
-        InfoRow {
-            compact: false
-            label: qsTr("Active Provider")
-            value: root.viewModel.activeRuntimeProviderLabel ? root.viewModel.activeRuntimeProviderLabel : qsTr("Not configured")
-            Layout.fillWidth: true
-        }
-
-        InfoRow {
-            compact: false
-            label: qsTr("Readiness")
-            value: root.viewModel.activeRuntimeReadinessSummary ? root.viewModel.activeRuntimeReadinessSummary : qsTr("Checking runtime availability…")
-            Layout.fillWidth: true
-        }
-
-        Label {
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceSm
-            text: qsTr("You can change the provider or endpoints later in Settings > Model Settings.")
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
         }
     }
 }

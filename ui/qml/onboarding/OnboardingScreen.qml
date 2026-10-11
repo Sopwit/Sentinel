@@ -67,7 +67,7 @@ FocusScope {
         { key: "model",        title: qsTr("AI Model"),     caption: qsTr("Choose and download a model.") },
         { key: "voice",        title: qsTr("Voice Setup"),  caption: qsTr("Configure voice engines and models.") },
         { key: "privacy",      title: qsTr("Privacy"),      caption: qsTr("Review processing and permissions.") },
-        { key: "ready",        title: qsTr("Ready"),        caption: qsTr("You can begin without optional integrations.") }
+        { key: "ready",        title: qsTr("Finish"),        caption: qsTr("Save preferences; inference availability is checked separately.") }
     ]
 
     // ── Ambient background ──────────────────────────────────────────────────
@@ -157,11 +157,14 @@ FocusScope {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceMd
 
-            Image {
-                Layout.preferredWidth: 44
-                Layout.preferredHeight: 44
-                source: "qrc:/icons/dev.sentinel.Sentinel.png"
-                fillMode: Image.PreserveAspectFit
+            CoreWarden {
+                id: onboardingWarden
+                viewModel: onboarding.viewModel
+                imageSize: onboarding.height < 700 ? 96 : 128
+                neutral: true
+                showStatus: false
+                surfaceActive: onboarding.active
+                presentationEnabled: [0, 2, 3, 6].indexOf(onboarding.step) >= 0
             }
 
             ColumnLayout {
@@ -173,7 +176,9 @@ FocusScope {
                     font.bold: true
                 }
                 Label {
-                    text: qsTr("Welcome & Setup")
+                    text: [2, 3, 6].indexOf(onboarding.step) >= 0 ? onboardingWarden.readinessSummary() : qsTr("Welcome & Setup")
+                    Layout.maximumWidth: Math.max(160, onboarding.width - 400)
+                    wrapMode: Text.WordWrap
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                 }

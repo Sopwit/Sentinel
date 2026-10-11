@@ -150,7 +150,7 @@ Item {
             Label {
                 Layout.fillWidth: true
                 objectName: "onboardingReadinessSummary"
-                text: root.inferenceReady ? qsTr("The daemon confirms the selected provider and model are ready for inference.") : qsTr("Preferences are saved. Inference is not ready yet. Connect the daemon and configure a runnable model in Settings → Models & Providers.")
+                text: root.inferenceReady ? qsTr("The daemon reports the selected provider and model available. Send your first message to verify inference.") : qsTr("Preferences are saved. Inference is not ready yet. Connect the daemon and configure a runnable model in Settings → Models & Providers.")
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontBody
                 wrapMode: Text.WordWrap
