@@ -1,0 +1,51 @@
+{
+  "png_frames": {
+    "192": 44,
+    "128": 44,
+    "96": 44
+  },
+  "total_png_files": 132,
+  "bytes_before_optimization": 3736945,
+  "bytes_after_optimization": 2950619,
+  "bytes_saved": 786326,
+  "saved_percent": 21.041947366097173,
+  "duplicates_within_states": {
+    "idle": 0,
+    "thinking": 0,
+    "tool_running": 0
+  },
+  "render_seconds_total": 11.813559000031091,
+  "render_seconds_average": 0.2684899772734339,
+  "render_seconds_min": 0.2450027089798823,
+  "render_seconds_max": 0.33401358302216977,
+  "decoded_rgba_bytes_by_resolution": {
+    "96": 1622016,
+    "128": 2883584,
+    "192": 6488064
+  },
+  "decoded_all_variants_bytes": 10993664,
+  "seam_pixel_deltas": {
+    "idle": {
+      "last_to_first_mean_absolute_luma_delta": 2.4344075520833335,
+      "adjacent_min": 0.5814073350694444,
+      "adjacent_max": 2.4344075520833335,
+      "adjacent_mean": 1.5917697482638888
+    },
+    "thinking": {
+      "last_to_first_mean_absolute_luma_delta": 1.6791720920138888,
+      "adjacent_min": 0.7437879774305556,
+      "adjacent_max": 1.7604709201388888,
+      "adjacent_mean": 1.2474009195963542
+    },
+    "tool_running": {
+      "last_to_first_mean_absolute_luma_delta": 2.0760362413194446,
+      "adjacent_min": 0.9299587673611112,
+      "adjacent_max": 2.293185763888889,
+      "adjacent_mean": 1.6096236617476851
+    }
+  },
+  "alpha_and_dimensions_valid": true,
+  "compression_pixel_exact": true,
+  "all_manifest_paths_resolve": true,
+  "preview_bytes": 3283403
+}

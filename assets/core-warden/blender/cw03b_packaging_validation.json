@@ -1,0 +1,79 @@
+{
+  "png_frames": {
+    "192": 110,
+    "128": 110,
+    "96": 110
+  },
+  "total_png_files": 330,
+  "bytes_before_optimization": 9334974,
+  "bytes_after_optimization": 7369693,
+  "bytes_saved": 1965281,
+  "saved_percent": 21.052881347071775,
+  "duplicates_within_states": {
+    "listening": 0,
+    "processing": 1,
+    "approval": 0,
+    "speaking": 0,
+    "success": 3,
+    "warning": 0,
+    "error": 4
+  },
+  "render_seconds_total": 30.129515125154285,
+  "render_seconds_average": 0.27390468295594805,
+  "render_seconds_min": 0.237547333992552,
+  "render_seconds_max": 0.4433375420048833,
+  "decoded_rgba_bytes_by_resolution": {
+    "96": 4055040,
+    "128": 7208960,
+    "192": 16220160
+  },
+  "decoded_all_variants_bytes": 27484160,
+  "seam_pixel_deltas": {
+    "listening": {
+      "last_to_first_mean_absolute_luma_delta": 1.7502983940972223,
+      "adjacent_min": 0.4852430555555556,
+      "adjacent_max": 1.7643771701388888,
+      "adjacent_mean": 1.211732652452257
+    },
+    "processing": {
+      "last_to_first_mean_absolute_luma_delta": 2.4576551649305554,
+      "adjacent_min": 2.0874837239583335,
+      "adjacent_max": 2.585205078125,
+      "adjacent_mean": 2.3685144495081016
+    },
+    "approval": {
+      "last_to_first_mean_absolute_luma_delta": 0.3999294704861111,
+      "adjacent_min": 0.3123372395833333,
+      "adjacent_max": 0.4418131510416667,
+      "adjacent_mean": 0.37720291702835645
+    },
+    "speaking": {
+      "last_to_first_mean_absolute_luma_delta": 2.2718098958333335,
+      "adjacent_min": 0.9205457899305556,
+      "adjacent_max": 2.3350965711805554,
+      "adjacent_mean": 1.6390313042534723
+    },
+    "success": {
+      "last_to_first_mean_absolute_luma_delta": 0.0,
+      "adjacent_min": 0.0,
+      "adjacent_max": 3.0438910590277777,
+      "adjacent_mean": 1.8838620960202992
+    },
+    "warning": {
+      "last_to_first_mean_absolute_luma_delta": 1.6518283420138888,
+      "adjacent_min": 0.5009765625,
+      "adjacent_max": 1.6518283420138888,
+      "adjacent_mean": 1.1462843153211806
+    },
+    "error": {
+      "last_to_first_mean_absolute_luma_delta": 0.0,
+      "adjacent_min": 0.0,
+      "adjacent_max": 2.9965277777777777,
+      "adjacent_mean": 1.8497116219284186
+    }
+  },
+  "alpha_and_dimensions_valid": true,
+  "compression_pixel_exact": true,
+  "all_manifest_paths_resolve": true,
+  "preview_bytes": 7129966
+}

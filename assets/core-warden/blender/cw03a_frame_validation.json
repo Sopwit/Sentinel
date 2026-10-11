@@ -1,0 +1,24 @@
+{
+  "states": {
+    "idle": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "thinking": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "tool_running": {
+      "frames_per_resolution": 12,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 1500
+    }
+  },
+  "frame_files": 132,
+  "RGBA_dimensions_alpha_frame_counts_paths_pass": true
+}

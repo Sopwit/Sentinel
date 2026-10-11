@@ -78,7 +78,7 @@ ShellPanel {
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
     property bool showSuggestions: true
     property bool _suggestionsDismissed: false
-    property var activeGreeting: ({ title: qsTr("Merhaba, Operator"), subtitle: isCloud ? qsTr("Sentinel bulut yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") : qsTr("Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") })
+    property var activeGreeting: ({ title: qsTr("Welcome to Sentinel") })
 
     Timer {
         id: dismissSuggestionsTimer
@@ -113,53 +113,10 @@ ShellPanel {
     border.color: "transparent"
 
     function selectRandomGreeting() {
-        var hour = new Date().getHours();
-        var morningGreetings = [
-            { title: qsTr("Günaydın, Operator"), subtitle: qsTr("Bugün yeni projeler üretmek ve hedeflerine ulaşmak için harika bir gün. Nasıl yardımcı olabilirim?") },
-            { title: qsTr("Güzel Bir Sabah"), subtitle: qsTr("Zihnini taze tut, üretkenlik senin elinde. Bugün birlikte ne inşa edelim?") },
-            { title: qsTr("Günaydın, Sentinel Hazır"), subtitle: qsTr("Yeni bir güne başlarken tüm yerel arama, analiz ve yapay zeka araçlarınla yanındayım.") },
-            { title: qsTr("Sabah Odaklanması Başladı"), subtitle: qsTr("Taze bir zihinle günlük planları yapmaya, işleri organize etmeye veya yeni araştırmalara başlamaya hazırız.") },
-            { title: qsTr("Günaydın! Yeni Hedefler"), subtitle: qsTr("Günün ilk saatlerinde zihnindeki o parlak fikri birlikte hayata geçirelim mi?") },
-            { title: qsTr("Harika Bir Sabah Başlangıcı"), subtitle: qsTr("Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel zekamızla harmanlayalım.") }
-        ];
-        var afternoonGreetings = [
-            { title: qsTr("İyi Günler, Operator"), subtitle: qsTr("İş akışını hızlandırmak ve operasyonlarını yönetmek için hazır mıyım? Nasıl destek olabilirim?") },
-            { title: qsTr("Tünaydın! Üretkenliğe Devam"), subtitle: qsTr("Günün en verimli saatindeyiz. Projelerindeki tıkanıklıkları birlikte çözelim mi?") },
-            { title: qsTr("Verimli Bir Gün"), subtitle: qsTr("Kişisel ve profesyonel hedeflerini gerçekleştirelim. Yazılarında, planlarında veya analizlerinde yardım etmeye hazırım.") },
-            { title: qsTr("Tünaydın! Odaklanma Zamanı"), subtitle: qsTr("Hız kesmeden projelere devam ediyoruz. Metin yazma, araştırma yapma veya analiz süreçlerinde yanındayım.") },
-            { title: qsTr("Tünaydın! Sentinel Göreve Hazır"), subtitle: qsTr("Günün temposunu yakalamışken, yerel yapay zeka gücüyle iş akışını bir üst seviyeye taşıyalım.") },
-            { title: qsTr("Öğleden Sonra Sinerjisi"), subtitle: qsTr("Yaratıcı fikirleri, raporları ve doküman analizlerini birlikte çözmenin tam vakti.") }
-        ];
-        var eveningGreetings = [
-            { title: qsTr("İyi Akşamlar, Operator"), subtitle: qsTr("Günün geri kalanını başarılı ve verimli bir şekilde kapatmana nasıl yardımcı olabilirim?") },
-            { title: qsTr("Keyifli Bir Akşam Seansı"), subtitle: qsTr("Günün yorgunluğunu hafifletelim. Sentinel tüm yerel zekasıyla seni destekliyor.") },
-            { title: qsTr("İyi Akşamlar! Fikirler Canlansın"), subtitle: qsTr("Günün hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.") },
-            { title: qsTr("Akşam Saatleri ve Odaklanma"), subtitle: qsTr("Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri hayata geçirelim.") },
-            { title: qsTr("İyi Akşamlar! Sentinel Yanında"), subtitle: qsTr("Sakin bir akşam seansında, en karmaşık problemleri adım adım analiz etmek için buradayım.") },
-            { title: qsTr("Akşam Üretkenliği"), subtitle: qsTr("Günün son adımlarını atarken yerel arama gücüyle en kritik belgelere ve bilgilere ulaş.") }
-        ];
-        var nightGreetings = [
-            { title: qsTr("İyi Geceler, Operator"), subtitle: qsTr("Son detayları gözden geçirmek, planlarını hazırlamak veya yaratıcı yazılar yazmak için burayım.") },
-            { title: qsTr("Gece Sessizliği ve Odaklanma"), subtitle: qsTr("Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri hayata geçirelim mi?") },
-            { title: qsTr("İyi Geceler! Sentinel Aktif"), subtitle: qsTr("Günü kapatmadan önce yarım kalan işleri veya yarına dair planları organize edebiliriz.") },
-            { title: qsTr("Gece Boyu Üretkenlik"), subtitle: qsTr("Gece sessizliğinin getirdiği o benzersiz odakla, en karmaşık soruları ve projeleri birlikte analiz edelim.") },
-            { title: qsTr("İyi Geceler! Gece Seansı Başladı"), subtitle: qsTr("Uykudan önce son bir okuma mı? Yoksa yarına dair hedeflerin yapılandırılması mı?") },
-            { title: qsTr("Gece Yarısı Yaratıcılığı"), subtitle: qsTr("Herkes uyurken yeni projelerin temellerini yerel yapay zeka asistanınla güvenle at.") }
-        ];
-
-        var list;
-        if (hour >= 6 && hour < 12) {
-            list = morningGreetings;
-        } else if (hour >= 12 && hour < 18) {
-            list = afternoonGreetings;
-        } else if (hour >= 18 && hour < 22) {
-            list = eveningGreetings;
-        } else {
-            list = nightGreetings;
-        }
-
-        var index = Math.floor(Math.random() * list.length);
-        activeGreeting = list[index];
+        const hour = new Date().getHours();
+        activeGreeting = { title: hour >= 6 && hour < 12 ? qsTr("Good Morning, Operator")
+            : hour >= 12 && hour < 18 ? qsTr("Good Afternoon, Operator")
+            : hour >= 18 && hour < 22 ? qsTr("Good Evening, Operator") : qsTr("Good Night, Operator") };
     }
 
     function formatAttachmentSummary(summary) {
@@ -865,6 +822,14 @@ if (homeChat.compact)
                     width: Math.min(parent.width, 720 * homeChat.resolutionScale)
                     spacing: SentinelTheme.spaceMd * 1.5 * homeChat.resolutionScale
 
+                    CoreWarden {
+                        id: homeWarden
+                        viewModel: homeChat.viewModel
+                        imageSize: homeChat.height < 650 ? 96 : 144
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+
                     Item {
                         id: greetingAreaWrapper
                         Layout.fillWidth: true
@@ -914,7 +879,7 @@ if (homeChat.compact)
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
                                 horizontalAlignment: Text.AlignHCenter
-                                text: homeChat.activeGreeting.subtitle
+                                text: homeWarden.readinessSummary()
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontCard) * homeChat.resolutionScale
                                 wrapMode: Text.WordWrap
@@ -1087,6 +1052,13 @@ if (homeChat.compact)
 
                 }
 
+                CoreWarden {
+                    viewModel: homeChat.viewModel
+                    imageSize: 48
+                    visible: homeChat.inChatMode && homeChat.sendBusy
+                             && coreWardenPreferences.mode !== "off" && homeChat.height >= 600
+                    Layout.alignment: Qt.AlignHCenter
+                }
                 RuntimeStateStrip {
                     Layout.fillWidth: true
                     visible: homeChat.inChatMode && (homeChat.sendBusy || homeChat.agentAwaitingApproval)

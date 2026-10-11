@@ -1,0 +1,5 @@
+# Blender backups and reproducible execution logs
+blender/*.blend[0-9]*
+blender/*.log
+blender/*.crash.txt
+__pycache__/

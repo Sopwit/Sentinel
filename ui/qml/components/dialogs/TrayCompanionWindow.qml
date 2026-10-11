@@ -84,7 +84,17 @@ Window {
             spacing: 8
             RowLayout {
                 Layout.fillWidth: true
-                Label { text: "Sentinel"; color: SentinelTheme.textPrimary; font.pixelSize: 17; font.bold: true }
+                CoreWarden {
+                    id: panelWarden
+                    viewModel: panel.viewModel
+                    imageSize: 48
+                    Layout.maximumWidth: 48
+                    showStatus: false
+                    surfaceActive: panel.visible && !panel.detailPopupVisible
+                    presentationEnabled: panel.snapshot.busy || panel.snapshot.approvalCount > 0
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                Label { visible: !panelWarden.visible; text: "Sentinel"; color: SentinelTheme.textPrimary; font.pixelSize: 17; font.bold: true }
                 IconAction {
                     objectName: "quickPanelStatus"
                     glyph: "circle"

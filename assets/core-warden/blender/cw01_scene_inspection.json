@@ -1,0 +1,661 @@
+{
+  "version": "5.2.2 LTS",
+  "objects": [
+    {
+      "name": "Camera_back",
+      "type": "CAMERA",
+      "location": [
+        0.0,
+        6.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": 3.6500000953674316
+    },
+    {
+      "name": "Camera_front",
+      "type": "CAMERA",
+      "location": [
+        0.0,
+        -6.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": 3.6500000953674316
+    },
+    {
+      "name": "Camera_hero",
+      "type": "CAMERA",
+      "location": [
+        2.4000000953674316,
+        -6.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": 3.6500000953674316
+    },
+    {
+      "name": "Camera_side",
+      "type": "CAMERA",
+      "location": [
+        6.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": 3.6500000953674316
+    },
+    {
+      "name": "Camera_three_quarter",
+      "type": "CAMERA",
+      "location": [
+        3.0,
+        -6.0,
+        1.2000000476837158
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": 3.6500000953674316
+    },
+    {
+      "name": "Core_Head",
+      "type": "MESH",
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 1490,
+      "materials": [
+        "Obsidian #151719"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Face",
+      "type": "MESH",
+      "location": [
+        -3.2782554626464844e-07,
+        -0.36000025272369385,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 1490,
+      "materials": [
+        "Obsidian #151719"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Fill",
+      "type": "LIGHT",
+      "location": [
+        4.0,
+        -2.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Floating_V_Component",
+      "type": "MESH",
+      "location": [
+        0.0,
+        -0.16056111454963684,
+        -1.3324931859970093
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 36,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Floating_V_Glacier_Accent",
+      "type": "MESH",
+      "location": [
+        0.0,
+        -0.24276310205459595,
+        -1.3818317651748657
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 36,
+      "materials": [
+        "Glacier #A9CAD3 emissive"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Key",
+      "type": "LIGHT",
+      "location": [
+        -3.0,
+        -4.0,
+        5.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Left_Eye",
+      "type": "MESH",
+      "location": [
+        -0.3903985619544983,
+        -0.8934791684150696,
+        0.029798932373523712
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 300,
+      "materials": [
+        "Glacier #A9CAD3 emissive.001"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Left_Mechanical_Hinge",
+      "type": "MESH",
+      "location": [
+        -0.9600000381469727,
+        0.059999894350767136,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 1490,
+      "materials": [
+        "Graphite #303438"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Left_Plate_Glacier_Edge",
+      "type": "MESH",
+      "location": [
+        -1.2676464319229126,
+        -0.019999999552965164,
+        -0.1397763192653656
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Glacier #A9CAD3 emissive"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Left_Protective_Plate",
+      "type": "MESH",
+      "location": [
+        -1.2607553005218506,
+        0.22499999403953552,
+        -0.15411853790283203
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Lower_Armor",
+      "type": "MESH",
+      "location": [
+        0.0,
+        -0.550000011920929,
+        -0.7371751666069031
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_00",
+      "type": "MESH",
+      "location": [
+        -0.4332900047302246,
+        0.699999988079071,
+        0.5527779459953308
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_01",
+      "type": "MESH",
+      "location": [
+        0.4332900047302246,
+        0.699999988079071,
+        0.5527779459953308
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_02",
+      "type": "MESH",
+      "location": [
+        0.6117836833000183,
+        0.699999988079071,
+        -0.030162811279296875
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_03",
+      "type": "MESH",
+      "location": [
+        0.41636377573013306,
+        0.699999988079071,
+        -0.5615428686141968
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_04",
+      "type": "MESH",
+      "location": [
+        -0.41636377573013306,
+        0.699999988079071,
+        -0.5615428686141968
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rear_Armor_05",
+      "type": "MESH",
+      "location": [
+        -0.6117836833000183,
+        0.699999988079071,
+        -0.030162811279296875
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Right_Eye",
+      "type": "MESH",
+      "location": [
+        0.3903985619544983,
+        -0.8934791684150696,
+        0.029798932373523712
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 300,
+      "materials": [
+        "Glacier #A9CAD3 emissive.002"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Right_Mechanical_Hinge",
+      "type": "MESH",
+      "location": [
+        0.9599999189376831,
+        0.059999894350767136,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 1490,
+      "materials": [
+        "Graphite #303438"
+      ],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Right_Plate_Glacier_Edge",
+      "type": "MESH",
+      "location": [
+        1.2676464319229126,
+        -0.019999999552965164,
+        -0.1397763192653656
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Glacier #A9CAD3 emissive"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Right_Protective_Plate",
+      "type": "MESH",
+      "location": [
+        1.2607553005218506,
+        0.22499999403953552,
+        -0.15411853790283203
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Rim",
+      "type": "LIGHT",
+      "location": [
+        0.0,
+        3.0,
+        4.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": null,
+      "materials": [],
+      "modifiers": [],
+      "camera_scale": null
+    },
+    {
+      "name": "Upper_Armor_Crown",
+      "type": "MESH",
+      "location": [
+        -0.09766023606061935,
+        -0.11999999731779099,
+        1.0315035581588745
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Upper_Armor_Left",
+      "type": "MESH",
+      "location": [
+        -0.7275600433349609,
+        -0.11999999731779099,
+        0.7775462865829468
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    },
+    {
+      "name": "Upper_Armor_Right",
+      "type": "MESH",
+      "location": [
+        0.7544681429862976,
+        -0.06000000238418579,
+        0.6826026439666748
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent": null,
+      "vertices": 84,
+      "materials": [
+        "Porcelain #ECEFEE"
+      ],
+      "modifiers": [
+        "BEVEL",
+        "WEIGHTED_NORMAL"
+      ],
+      "camera_scale": null
+    }
+  ]
+}

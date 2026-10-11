@@ -9,6 +9,15 @@ target_include_directories(sentinel_desktop_ipc PUBLIC
 target_link_libraries(sentinel_desktop_ipc PUBLIC Qt6::Core Qt6::Network)
 sentinel_apply_compiler_flags(sentinel_desktop_ipc)
 
+qt_add_qml_module(sentinel_warden STATIC
+    URI Sentinel.Warden VERSION 1.0 NO_PLUGIN
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Sentinel/Warden"
+    SOURCES include/sentinel/desktop/CoreWardenItem.h src/CoreWardenItem.cpp)
+target_include_directories(sentinel_warden PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sentinel/desktop)
+target_link_libraries(sentinel_warden PUBLIC sentinel_core Qt6::Quick Qt6::Concurrent)
+sentinel_apply_compiler_flags(sentinel_warden)
+
 add_library(sentinel_desktop_viewmodels STATIC
     include/sentinel/desktop/DesktopBackupHelper.h
     src/DesktopBackupHelper.cpp
@@ -57,8 +66,11 @@ target_link_libraries(sentinel_desktop_viewmodels
     PUBLIC
         sentinel_core
         sentinel_desktop_ipc
+        sentinel_warden
         Qt6::Core
         Qt6::Widgets
+        Qt6::Quick
+        Qt6::Concurrent
         Qt6::Network
 )
 
@@ -222,6 +234,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/InteractionTokens.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/Atmosphere.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/CoreWarden.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/EmptyState.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/ErrorBanner.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/GlowSurface.qml
@@ -486,3 +499,21 @@ if(APPLE)
 else()
     target_sources(sentinel_desktop_viewmodels PRIVATE src/SystemDictationService.cpp)
 endif()
+
+# Core Warden runtime assets: no Blender or preview/source resources.
+file(GLOB_RECURSE SENTINEL_WARDEN_PNG CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/assets/core-warden/animations/*.png")
+set(SENTINEL_WARDEN_ASSETS ${SENTINEL_WARDEN_PNG}
+    "${CMAKE_SOURCE_DIR}/assets/core-warden/animations/manifest.json"
+    "${CMAKE_SOURCE_DIR}/assets/core-warden/state-contract.json")
+foreach(asset IN LISTS SENTINEL_WARDEN_ASSETS)
+    file(RELATIVE_PATH relative "${CMAKE_SOURCE_DIR}/assets/core-warden" "${asset}")
+    get_filename_component(directory "${relative}" DIRECTORY)
+    if(APPLE)
+        set_source_files_properties("${asset}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/core-warden/${directory}")
+        target_sources(sentinel-desktop PRIVATE "${asset}")
+    elseif(WIN32)
+        install(FILES "${asset}" DESTINATION "core-warden/${directory}")
+    else()
+        install(FILES "${asset}" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/sentinel/core-warden/${directory}")
+    endif()
+endforeach()

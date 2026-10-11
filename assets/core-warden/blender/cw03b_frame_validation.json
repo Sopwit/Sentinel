@@ -1,0 +1,78 @@
+{
+  "states": {
+    "idle": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "thinking": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "tool_running": {
+      "frames_per_resolution": 12,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 1500
+    },
+    "listening": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "processing": {
+      "frames_per_resolution": 12,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 18,
+      "webp_duration_ms": 1500
+    },
+    "approval": {
+      "frames_per_resolution": 24,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 18,
+      "webp_duration_ms": 3000
+    },
+    "speaking": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 2000
+    },
+    "success": {
+      "frames_per_resolution": 13,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 17,
+      "webp_duration_ms": 1625
+    },
+    "warning": {
+      "frames_per_resolution": 16,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 18,
+      "webp_duration_ms": 2000
+    },
+    "error": {
+      "frames_per_resolution": 13,
+      "96px_two_eye_islands_every_frame": true,
+      "96px_eye_pixel_area_min": 15,
+      "webp_duration_ms": 1625
+    }
+  },
+  "frame_files": 462,
+  "RGBA_dimensions_alpha_frame_counts_paths_pass": true,
+  "protected_hashes_unchanged": 155,
+  "old_descriptors_and_mappings_unchanged": true,
+  "review_metadata_matches_manifest": true,
+  "new_96px_sequence_signatures": {
+    "listening": "fb5cac6b8eb42d5bf357be5431ff55696ca183d8e5822f30f588b3185bd90d29",
+    "processing": "ce6ad7223b1c4b0a89f08a3aef1852223c585244a802ca2c16920c2cf32e9c94",
+    "approval": "887eab6bac1af0aa07c06aafa3eea376b8e944b829fe2eb6c1a282ff3fbb63f6",
+    "speaking": "b1ba9a58764530bc4b7f80868fad80c17533bf4a3f4f9a9d04486109f5f0ef4d",
+    "success": "d2603f7f730a145c327a9f70439daf2f3b01efa9cd6dbd34dba04f214aa6479a",
+    "warning": "f2b22e9947088144e475faf4e7fac8dae7768d177a66e1154da6f81963c157d4",
+    "error": "00e2bc9fc7a62126d3c8e2652860754d3f415595e521debce72a35804ad1a81e"
+  }
+}

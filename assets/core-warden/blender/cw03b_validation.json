@@ -1,0 +1,83 @@
+{
+  "reopened": true,
+  "states": {
+    "listening": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": true,
+      "hold_frame": null,
+      "clearance_samples": 33,
+      "eye_drivers_functional": true
+    },
+    "processing": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": true,
+      "hold_frame": null,
+      "clearance_samples": 25,
+      "eye_drivers_functional": true
+    },
+    "approval": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": true,
+      "hold_frame": null,
+      "clearance_samples": 49,
+      "eye_drivers_functional": true
+    },
+    "speaking": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": true,
+      "hold_frame": null,
+      "clearance_samples": 33,
+      "eye_drivers_functional": true
+    },
+    "success": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": false,
+      "hold_frame": 13,
+      "clearance_samples": 25,
+      "eye_drivers_functional": true
+    },
+    "warning": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": true,
+      "hold_frame": null,
+      "clearance_samples": 33,
+      "eye_drivers_functional": true
+    },
+    "error": {
+      "slots": 8,
+      "fcurves": 75,
+      "neutral_endpoints_and_seam_velocity": true,
+      "loop": false,
+      "hold_frame": 13,
+      "clearance_samples": 25,
+      "eye_drivers_functional": true
+    }
+  },
+  "surface_crossings": [],
+  "topology_names_pivots_parenting_collections_preserved": true,
+  "obsidian_shader_unchanged": true,
+  "rest_armor_contact_pairs": [],
+  "new_armor_crossings": [],
+  "three_independent_emission_controls_functional": true,
+  "meshes": 29,
+  "controls": 8,
+  "geometry_unchanged": true,
+  "protected_masters_unchanged": true,
+  "neutral_return": true,
+  "independent_controls_functional": true,
+  "transparent": true,
+  "engine": "BLENDER_EEVEE",
+  "samples": 32
+}

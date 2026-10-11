@@ -1,0 +1,1566 @@
+{
+  "asset_id": "sentinel_core_warden",
+  "version": "CW03B",
+  "source": "CW02.1",
+  "blender_version": "5.2.2 LTS",
+  "engine": "BLENDER_EEVEE",
+  "samples": 32,
+  "camera": "Camera_hero",
+  "ortho_scale": 3.6500000953674316,
+  "canvas": [
+    192,
+    192
+  ],
+  "resolutions": [
+    96,
+    128,
+    192
+  ],
+  "protected_sha256": {
+    "blender/core_warden_cw01.blend": "d3e8af57b1f9d9ef5e2a44ecdb8c5ea25826b1c06700abb96e6ba3a30a13d570",
+    "blender/core_warden_cw02.blend": "6d96743e2159e9e86c73c71490f39545b1c1cf007827f0ddad397b49d98cea37",
+    "blender/core_warden_cw02_1.blend": "69557b09856e824932dc19b6c39dc10e4e829532a1e7e6c9286b2bccae65c410"
+  },
+  "geometry_sha256": {
+    "Core_Head": "c7eaebc95506f76f50fe83bf9ac20f00abb6c6e196b4611beb15173d1ecb2cbc",
+    "Face": "50d40944c03b70e65f29b0202d93cee568a746da3a77e5f6db7b799f3b5e7d39",
+    "Left_Eye": "0d9861f4edf03d44cbd731497640686b3f3944ca6a927ba0977b78ec3585e096",
+    "Right_Eye": "f0fe344885c9893c9648949d4ca0b763644091aef2964a21ac53d03dc4066831",
+    "Upper_Armor_Left": "72c61cd74764dd960106a26daa98e4a850ab2d00bcda8c7409da9edf89d29ad6",
+    "Upper_Armor_Crown": "6a61259c2c39202eeb9420aef9c4ccdfc9d2394995b445b9e578cdaee1e1073e",
+    "Upper_Armor_Right": "aee3214cf536e9e29f19d40cda26c65c59c6deacd7016e2334b757f4afbb6b90",
+    "Left_Protective_Plate": "2834d9ec36b44f3422b1125197dc75d5da640ec3f0eab4434fbe3ae23565dd07",
+    "Right_Protective_Plate": "180109531d1f2e235ed7a0d5fb75abbe0d652c4d6e6f52c62f94fa6e651186c8",
+    "Lower_Armor": "6a49194f70250b39bac5292cfcd2b35d6c8be2f550ac36ff8688797ade22e382",
+    "Lower_Cheek_Right": "94bc7b424e6a0bd1fd427decd42f508d00918aeeeca130f75182c148160d33c1",
+    "Lower_Cheek_Left": "8ef9b45b7267cfcc4c4301853904a000d16b9c797cd70f51da893e89f2354bc0",
+    "Rear_Armor_00": "7518fa1286ee6eb1f070e2038435f6170332f079c1a891cdd333242abde2a2d6",
+    "Rear_Armor_01": "1a83069bc133b4c78d84c9d67737c2b28848e0c9c3fc7fa6d2a1068dfddbb688",
+    "Rear_Armor_02": "4ed645a9b0ca2d26d787d741ba74522b33303ac9ee64fe76f761f8380c0b3fe2",
+    "Rear_Armor_03": "4b941e2457952b9ea9f4f0c75e7190433fec9aec357c5001352c0b84c22c48b8",
+    "Rear_Armor_04": "5f149de332b662ec3bc974cde2b958f82c724fcddaa061e331a67247d61ab7d6",
+    "Rear_Armor_05": "e95d58cb63ddcbf644644463cb0f460b20e7bfdc45ea4091a2d781d91f6a6548",
+    "Floating_V_Component": "9222a296d012c64087668e93c3fbd8b61ab7231a62374a2facd37f27086e66f6",
+    "Left_Mechanical_Hinge": "8be9d1ef0953b334fe0b095a84858624e98cbd5f5ab5d30c3e7f49f292ac6182",
+    "Right_Mechanical_Hinge": "8be9d1ef0953b334fe0b095a84858624e98cbd5f5ab5d30c3e7f49f292ac6182",
+    "Left_Shell_Inner_Support": "56e489bea13de659ffc0432a2bea0292b6be32e15db0b13e053bb68f012cd9bf",
+    "Right_Shell_Inner_Support": "fd17046dafa2299b9e9ed5aa66ffd4da95ef7b736e4c4e68fdeb0d60298fa4d9",
+    "Floating_V_Inner_Support": "61a17e3a36119719f4911c28593e4dece0356f4898630e89c5d7189fedc94dee",
+    "Core_Orbital_Support": "83a2d79609b1fdda86f74e0ecfa3559b0ce5e78dd7c74808dfcfd5742f7c09ee",
+    "Left_Plate_Glacier_Edge": "97b558fa1032aed871fe0d77254fbff0a2603063fc87d6e77d4d4a9442f5e2d2",
+    "Right_Plate_Glacier_Edge": "eef8dda4ab75f888f54bc86563ee8c317635978fef3f9cabeafed231b923a27c",
+    "Floating_V_Glacier_Accent": "61288981d8e488887fc74a361758430bd74ecad562a1d7929ffc8fb23240686c",
+    "Crown_Glacier_Edge": "964bf1ee70321b09174d955b7b58fa3e36b87c613302d751f4c64d56f0d5be62"
+  },
+  "states": {
+    "idle": {
+      "action": "CW03A_IDLE",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 16,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 2.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        16
+      ],
+      "closing_keyframe": 17,
+      "frames": {
+        "192": [
+          "animations/idle/192/frame_000.png",
+          "animations/idle/192/frame_001.png",
+          "animations/idle/192/frame_002.png",
+          "animations/idle/192/frame_003.png",
+          "animations/idle/192/frame_004.png",
+          "animations/idle/192/frame_005.png",
+          "animations/idle/192/frame_006.png",
+          "animations/idle/192/frame_007.png",
+          "animations/idle/192/frame_008.png",
+          "animations/idle/192/frame_009.png",
+          "animations/idle/192/frame_010.png",
+          "animations/idle/192/frame_011.png",
+          "animations/idle/192/frame_012.png",
+          "animations/idle/192/frame_013.png",
+          "animations/idle/192/frame_014.png",
+          "animations/idle/192/frame_015.png"
+        ],
+        "128": [
+          "animations/idle/128/frame_000.png",
+          "animations/idle/128/frame_001.png",
+          "animations/idle/128/frame_002.png",
+          "animations/idle/128/frame_003.png",
+          "animations/idle/128/frame_004.png",
+          "animations/idle/128/frame_005.png",
+          "animations/idle/128/frame_006.png",
+          "animations/idle/128/frame_007.png",
+          "animations/idle/128/frame_008.png",
+          "animations/idle/128/frame_009.png",
+          "animations/idle/128/frame_010.png",
+          "animations/idle/128/frame_011.png",
+          "animations/idle/128/frame_012.png",
+          "animations/idle/128/frame_013.png",
+          "animations/idle/128/frame_014.png",
+          "animations/idle/128/frame_015.png"
+        ],
+        "96": [
+          "animations/idle/96/frame_000.png",
+          "animations/idle/96/frame_001.png",
+          "animations/idle/96/frame_002.png",
+          "animations/idle/96/frame_003.png",
+          "animations/idle/96/frame_004.png",
+          "animations/idle/96/frame_005.png",
+          "animations/idle/96/frame_006.png",
+          "animations/idle/96/frame_007.png",
+          "animations/idle/96/frame_008.png",
+          "animations/idle/96/frame_009.png",
+          "animations/idle/96/frame_010.png",
+          "animations/idle/96/frame_011.png",
+          "animations/idle/96/frame_012.png",
+          "animations/idle/96/frame_013.png",
+          "animations/idle/96/frame_014.png",
+          "animations/idle/96/frame_015.png"
+        ]
+      },
+      "animation_id": "core_warden_idle",
+      "state": "idle",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03a/idle.webp"
+    },
+    "thinking": {
+      "action": "CW03A_THINKING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 16,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 2.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        16
+      ],
+      "closing_keyframe": 17,
+      "frames": {
+        "192": [
+          "animations/thinking/192/frame_000.png",
+          "animations/thinking/192/frame_001.png",
+          "animations/thinking/192/frame_002.png",
+          "animations/thinking/192/frame_003.png",
+          "animations/thinking/192/frame_004.png",
+          "animations/thinking/192/frame_005.png",
+          "animations/thinking/192/frame_006.png",
+          "animations/thinking/192/frame_007.png",
+          "animations/thinking/192/frame_008.png",
+          "animations/thinking/192/frame_009.png",
+          "animations/thinking/192/frame_010.png",
+          "animations/thinking/192/frame_011.png",
+          "animations/thinking/192/frame_012.png",
+          "animations/thinking/192/frame_013.png",
+          "animations/thinking/192/frame_014.png",
+          "animations/thinking/192/frame_015.png"
+        ],
+        "128": [
+          "animations/thinking/128/frame_000.png",
+          "animations/thinking/128/frame_001.png",
+          "animations/thinking/128/frame_002.png",
+          "animations/thinking/128/frame_003.png",
+          "animations/thinking/128/frame_004.png",
+          "animations/thinking/128/frame_005.png",
+          "animations/thinking/128/frame_006.png",
+          "animations/thinking/128/frame_007.png",
+          "animations/thinking/128/frame_008.png",
+          "animations/thinking/128/frame_009.png",
+          "animations/thinking/128/frame_010.png",
+          "animations/thinking/128/frame_011.png",
+          "animations/thinking/128/frame_012.png",
+          "animations/thinking/128/frame_013.png",
+          "animations/thinking/128/frame_014.png",
+          "animations/thinking/128/frame_015.png"
+        ],
+        "96": [
+          "animations/thinking/96/frame_000.png",
+          "animations/thinking/96/frame_001.png",
+          "animations/thinking/96/frame_002.png",
+          "animations/thinking/96/frame_003.png",
+          "animations/thinking/96/frame_004.png",
+          "animations/thinking/96/frame_005.png",
+          "animations/thinking/96/frame_006.png",
+          "animations/thinking/96/frame_007.png",
+          "animations/thinking/96/frame_008.png",
+          "animations/thinking/96/frame_009.png",
+          "animations/thinking/96/frame_010.png",
+          "animations/thinking/96/frame_011.png",
+          "animations/thinking/96/frame_012.png",
+          "animations/thinking/96/frame_013.png",
+          "animations/thinking/96/frame_014.png",
+          "animations/thinking/96/frame_015.png"
+        ]
+      },
+      "animation_id": "core_warden_thinking",
+      "state": "thinking",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03a/thinking.webp"
+    },
+    "tool_running": {
+      "action": "CW03A_TOOL_RUNNING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 12,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 1.5,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        12
+      ],
+      "closing_keyframe": 13,
+      "frames": {
+        "192": [
+          "animations/tool_running/192/frame_000.png",
+          "animations/tool_running/192/frame_001.png",
+          "animations/tool_running/192/frame_002.png",
+          "animations/tool_running/192/frame_003.png",
+          "animations/tool_running/192/frame_004.png",
+          "animations/tool_running/192/frame_005.png",
+          "animations/tool_running/192/frame_006.png",
+          "animations/tool_running/192/frame_007.png",
+          "animations/tool_running/192/frame_008.png",
+          "animations/tool_running/192/frame_009.png",
+          "animations/tool_running/192/frame_010.png",
+          "animations/tool_running/192/frame_011.png"
+        ],
+        "128": [
+          "animations/tool_running/128/frame_000.png",
+          "animations/tool_running/128/frame_001.png",
+          "animations/tool_running/128/frame_002.png",
+          "animations/tool_running/128/frame_003.png",
+          "animations/tool_running/128/frame_004.png",
+          "animations/tool_running/128/frame_005.png",
+          "animations/tool_running/128/frame_006.png",
+          "animations/tool_running/128/frame_007.png",
+          "animations/tool_running/128/frame_008.png",
+          "animations/tool_running/128/frame_009.png",
+          "animations/tool_running/128/frame_010.png",
+          "animations/tool_running/128/frame_011.png"
+        ],
+        "96": [
+          "animations/tool_running/96/frame_000.png",
+          "animations/tool_running/96/frame_001.png",
+          "animations/tool_running/96/frame_002.png",
+          "animations/tool_running/96/frame_003.png",
+          "animations/tool_running/96/frame_004.png",
+          "animations/tool_running/96/frame_005.png",
+          "animations/tool_running/96/frame_006.png",
+          "animations/tool_running/96/frame_007.png",
+          "animations/tool_running/96/frame_008.png",
+          "animations/tool_running/96/frame_009.png",
+          "animations/tool_running/96/frame_010.png",
+          "animations/tool_running/96/frame_011.png"
+        ]
+      },
+      "animation_id": "core_warden_tool_running",
+      "state": "tool_running",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03a/tool_running.webp"
+    },
+    "listening": {
+      "action": "CW03B_LISTENING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 16,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 2.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        16
+      ],
+      "closing_keyframe": 17,
+      "hold_frame": null,
+      "frames": {
+        "192": [
+          "animations/listening/192/frame_000.png",
+          "animations/listening/192/frame_001.png",
+          "animations/listening/192/frame_002.png",
+          "animations/listening/192/frame_003.png",
+          "animations/listening/192/frame_004.png",
+          "animations/listening/192/frame_005.png",
+          "animations/listening/192/frame_006.png",
+          "animations/listening/192/frame_007.png",
+          "animations/listening/192/frame_008.png",
+          "animations/listening/192/frame_009.png",
+          "animations/listening/192/frame_010.png",
+          "animations/listening/192/frame_011.png",
+          "animations/listening/192/frame_012.png",
+          "animations/listening/192/frame_013.png",
+          "animations/listening/192/frame_014.png",
+          "animations/listening/192/frame_015.png"
+        ],
+        "128": [
+          "animations/listening/128/frame_000.png",
+          "animations/listening/128/frame_001.png",
+          "animations/listening/128/frame_002.png",
+          "animations/listening/128/frame_003.png",
+          "animations/listening/128/frame_004.png",
+          "animations/listening/128/frame_005.png",
+          "animations/listening/128/frame_006.png",
+          "animations/listening/128/frame_007.png",
+          "animations/listening/128/frame_008.png",
+          "animations/listening/128/frame_009.png",
+          "animations/listening/128/frame_010.png",
+          "animations/listening/128/frame_011.png",
+          "animations/listening/128/frame_012.png",
+          "animations/listening/128/frame_013.png",
+          "animations/listening/128/frame_014.png",
+          "animations/listening/128/frame_015.png"
+        ],
+        "96": [
+          "animations/listening/96/frame_000.png",
+          "animations/listening/96/frame_001.png",
+          "animations/listening/96/frame_002.png",
+          "animations/listening/96/frame_003.png",
+          "animations/listening/96/frame_004.png",
+          "animations/listening/96/frame_005.png",
+          "animations/listening/96/frame_006.png",
+          "animations/listening/96/frame_007.png",
+          "animations/listening/96/frame_008.png",
+          "animations/listening/96/frame_009.png",
+          "animations/listening/96/frame_010.png",
+          "animations/listening/96/frame_011.png",
+          "animations/listening/96/frame_012.png",
+          "animations/listening/96/frame_013.png",
+          "animations/listening/96/frame_014.png",
+          "animations/listening/96/frame_015.png"
+        ]
+      },
+      "animation_id": "core_warden_listening",
+      "state": "listening",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/listening.webp"
+    },
+    "processing": {
+      "action": "CW03B_PROCESSING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 12,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 1.5,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        12
+      ],
+      "closing_keyframe": 13,
+      "hold_frame": null,
+      "frames": {
+        "192": [
+          "animations/processing/192/frame_000.png",
+          "animations/processing/192/frame_001.png",
+          "animations/processing/192/frame_002.png",
+          "animations/processing/192/frame_003.png",
+          "animations/processing/192/frame_004.png",
+          "animations/processing/192/frame_005.png",
+          "animations/processing/192/frame_006.png",
+          "animations/processing/192/frame_007.png",
+          "animations/processing/192/frame_008.png",
+          "animations/processing/192/frame_009.png",
+          "animations/processing/192/frame_010.png",
+          "animations/processing/192/frame_011.png"
+        ],
+        "128": [
+          "animations/processing/128/frame_000.png",
+          "animations/processing/128/frame_001.png",
+          "animations/processing/128/frame_002.png",
+          "animations/processing/128/frame_003.png",
+          "animations/processing/128/frame_004.png",
+          "animations/processing/128/frame_005.png",
+          "animations/processing/128/frame_006.png",
+          "animations/processing/128/frame_007.png",
+          "animations/processing/128/frame_008.png",
+          "animations/processing/128/frame_009.png",
+          "animations/processing/128/frame_010.png",
+          "animations/processing/128/frame_011.png"
+        ],
+        "96": [
+          "animations/processing/96/frame_000.png",
+          "animations/processing/96/frame_001.png",
+          "animations/processing/96/frame_002.png",
+          "animations/processing/96/frame_003.png",
+          "animations/processing/96/frame_004.png",
+          "animations/processing/96/frame_005.png",
+          "animations/processing/96/frame_006.png",
+          "animations/processing/96/frame_007.png",
+          "animations/processing/96/frame_008.png",
+          "animations/processing/96/frame_009.png",
+          "animations/processing/96/frame_010.png",
+          "animations/processing/96/frame_011.png"
+        ]
+      },
+      "animation_id": "core_warden_processing",
+      "state": "processing",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/processing.webp"
+    },
+    "approval": {
+      "action": "CW03B_APPROVAL",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 24,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 3.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        24
+      ],
+      "closing_keyframe": 25,
+      "hold_frame": null,
+      "frames": {
+        "192": [
+          "animations/approval/192/frame_000.png",
+          "animations/approval/192/frame_001.png",
+          "animations/approval/192/frame_002.png",
+          "animations/approval/192/frame_003.png",
+          "animations/approval/192/frame_004.png",
+          "animations/approval/192/frame_005.png",
+          "animations/approval/192/frame_006.png",
+          "animations/approval/192/frame_007.png",
+          "animations/approval/192/frame_008.png",
+          "animations/approval/192/frame_009.png",
+          "animations/approval/192/frame_010.png",
+          "animations/approval/192/frame_011.png",
+          "animations/approval/192/frame_012.png",
+          "animations/approval/192/frame_013.png",
+          "animations/approval/192/frame_014.png",
+          "animations/approval/192/frame_015.png",
+          "animations/approval/192/frame_016.png",
+          "animations/approval/192/frame_017.png",
+          "animations/approval/192/frame_018.png",
+          "animations/approval/192/frame_019.png",
+          "animations/approval/192/frame_020.png",
+          "animations/approval/192/frame_021.png",
+          "animations/approval/192/frame_022.png",
+          "animations/approval/192/frame_023.png"
+        ],
+        "128": [
+          "animations/approval/128/frame_000.png",
+          "animations/approval/128/frame_001.png",
+          "animations/approval/128/frame_002.png",
+          "animations/approval/128/frame_003.png",
+          "animations/approval/128/frame_004.png",
+          "animations/approval/128/frame_005.png",
+          "animations/approval/128/frame_006.png",
+          "animations/approval/128/frame_007.png",
+          "animations/approval/128/frame_008.png",
+          "animations/approval/128/frame_009.png",
+          "animations/approval/128/frame_010.png",
+          "animations/approval/128/frame_011.png",
+          "animations/approval/128/frame_012.png",
+          "animations/approval/128/frame_013.png",
+          "animations/approval/128/frame_014.png",
+          "animations/approval/128/frame_015.png",
+          "animations/approval/128/frame_016.png",
+          "animations/approval/128/frame_017.png",
+          "animations/approval/128/frame_018.png",
+          "animations/approval/128/frame_019.png",
+          "animations/approval/128/frame_020.png",
+          "animations/approval/128/frame_021.png",
+          "animations/approval/128/frame_022.png",
+          "animations/approval/128/frame_023.png"
+        ],
+        "96": [
+          "animations/approval/96/frame_000.png",
+          "animations/approval/96/frame_001.png",
+          "animations/approval/96/frame_002.png",
+          "animations/approval/96/frame_003.png",
+          "animations/approval/96/frame_004.png",
+          "animations/approval/96/frame_005.png",
+          "animations/approval/96/frame_006.png",
+          "animations/approval/96/frame_007.png",
+          "animations/approval/96/frame_008.png",
+          "animations/approval/96/frame_009.png",
+          "animations/approval/96/frame_010.png",
+          "animations/approval/96/frame_011.png",
+          "animations/approval/96/frame_012.png",
+          "animations/approval/96/frame_013.png",
+          "animations/approval/96/frame_014.png",
+          "animations/approval/96/frame_015.png",
+          "animations/approval/96/frame_016.png",
+          "animations/approval/96/frame_017.png",
+          "animations/approval/96/frame_018.png",
+          "animations/approval/96/frame_019.png",
+          "animations/approval/96/frame_020.png",
+          "animations/approval/96/frame_021.png",
+          "animations/approval/96/frame_022.png",
+          "animations/approval/96/frame_023.png"
+        ]
+      },
+      "animation_id": "core_warden_approval",
+      "state": "approval",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/approval.webp"
+    },
+    "speaking": {
+      "action": "CW03B_SPEAKING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 16,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 2.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        16
+      ],
+      "closing_keyframe": 17,
+      "hold_frame": null,
+      "frames": {
+        "192": [
+          "animations/speaking/192/frame_000.png",
+          "animations/speaking/192/frame_001.png",
+          "animations/speaking/192/frame_002.png",
+          "animations/speaking/192/frame_003.png",
+          "animations/speaking/192/frame_004.png",
+          "animations/speaking/192/frame_005.png",
+          "animations/speaking/192/frame_006.png",
+          "animations/speaking/192/frame_007.png",
+          "animations/speaking/192/frame_008.png",
+          "animations/speaking/192/frame_009.png",
+          "animations/speaking/192/frame_010.png",
+          "animations/speaking/192/frame_011.png",
+          "animations/speaking/192/frame_012.png",
+          "animations/speaking/192/frame_013.png",
+          "animations/speaking/192/frame_014.png",
+          "animations/speaking/192/frame_015.png"
+        ],
+        "128": [
+          "animations/speaking/128/frame_000.png",
+          "animations/speaking/128/frame_001.png",
+          "animations/speaking/128/frame_002.png",
+          "animations/speaking/128/frame_003.png",
+          "animations/speaking/128/frame_004.png",
+          "animations/speaking/128/frame_005.png",
+          "animations/speaking/128/frame_006.png",
+          "animations/speaking/128/frame_007.png",
+          "animations/speaking/128/frame_008.png",
+          "animations/speaking/128/frame_009.png",
+          "animations/speaking/128/frame_010.png",
+          "animations/speaking/128/frame_011.png",
+          "animations/speaking/128/frame_012.png",
+          "animations/speaking/128/frame_013.png",
+          "animations/speaking/128/frame_014.png",
+          "animations/speaking/128/frame_015.png"
+        ],
+        "96": [
+          "animations/speaking/96/frame_000.png",
+          "animations/speaking/96/frame_001.png",
+          "animations/speaking/96/frame_002.png",
+          "animations/speaking/96/frame_003.png",
+          "animations/speaking/96/frame_004.png",
+          "animations/speaking/96/frame_005.png",
+          "animations/speaking/96/frame_006.png",
+          "animations/speaking/96/frame_007.png",
+          "animations/speaking/96/frame_008.png",
+          "animations/speaking/96/frame_009.png",
+          "animations/speaking/96/frame_010.png",
+          "animations/speaking/96/frame_011.png",
+          "animations/speaking/96/frame_012.png",
+          "animations/speaking/96/frame_013.png",
+          "animations/speaking/96/frame_014.png",
+          "animations/speaking/96/frame_015.png"
+        ]
+      },
+      "animation_id": "core_warden_speaking",
+      "state": "speaking",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/speaking.webp"
+    },
+    "success": {
+      "action": "CW03B_SUCCESS",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 13,
+      "fps": 8,
+      "loop": false,
+      "duration_seconds": 1.625,
+      "playback_mode": "once_then_hold",
+      "source_scene_frames": [
+        1,
+        13
+      ],
+      "closing_keyframe": 13,
+      "hold_frame": 13,
+      "frames": {
+        "192": [
+          "animations/success/192/frame_000.png",
+          "animations/success/192/frame_001.png",
+          "animations/success/192/frame_002.png",
+          "animations/success/192/frame_003.png",
+          "animations/success/192/frame_004.png",
+          "animations/success/192/frame_005.png",
+          "animations/success/192/frame_006.png",
+          "animations/success/192/frame_007.png",
+          "animations/success/192/frame_008.png",
+          "animations/success/192/frame_009.png",
+          "animations/success/192/frame_010.png",
+          "animations/success/192/frame_011.png",
+          "animations/success/192/frame_012.png"
+        ],
+        "128": [
+          "animations/success/128/frame_000.png",
+          "animations/success/128/frame_001.png",
+          "animations/success/128/frame_002.png",
+          "animations/success/128/frame_003.png",
+          "animations/success/128/frame_004.png",
+          "animations/success/128/frame_005.png",
+          "animations/success/128/frame_006.png",
+          "animations/success/128/frame_007.png",
+          "animations/success/128/frame_008.png",
+          "animations/success/128/frame_009.png",
+          "animations/success/128/frame_010.png",
+          "animations/success/128/frame_011.png",
+          "animations/success/128/frame_012.png"
+        ],
+        "96": [
+          "animations/success/96/frame_000.png",
+          "animations/success/96/frame_001.png",
+          "animations/success/96/frame_002.png",
+          "animations/success/96/frame_003.png",
+          "animations/success/96/frame_004.png",
+          "animations/success/96/frame_005.png",
+          "animations/success/96/frame_006.png",
+          "animations/success/96/frame_007.png",
+          "animations/success/96/frame_008.png",
+          "animations/success/96/frame_009.png",
+          "animations/success/96/frame_010.png",
+          "animations/success/96/frame_011.png",
+          "animations/success/96/frame_012.png"
+        ]
+      },
+      "animation_id": "core_warden_success",
+      "state": "success",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/success.webp"
+    },
+    "warning": {
+      "action": "CW03B_WARNING",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 16,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 2.0,
+      "playback_mode": "loop",
+      "source_scene_frames": [
+        1,
+        16
+      ],
+      "closing_keyframe": 17,
+      "hold_frame": null,
+      "frames": {
+        "192": [
+          "animations/warning/192/frame_000.png",
+          "animations/warning/192/frame_001.png",
+          "animations/warning/192/frame_002.png",
+          "animations/warning/192/frame_003.png",
+          "animations/warning/192/frame_004.png",
+          "animations/warning/192/frame_005.png",
+          "animations/warning/192/frame_006.png",
+          "animations/warning/192/frame_007.png",
+          "animations/warning/192/frame_008.png",
+          "animations/warning/192/frame_009.png",
+          "animations/warning/192/frame_010.png",
+          "animations/warning/192/frame_011.png",
+          "animations/warning/192/frame_012.png",
+          "animations/warning/192/frame_013.png",
+          "animations/warning/192/frame_014.png",
+          "animations/warning/192/frame_015.png"
+        ],
+        "128": [
+          "animations/warning/128/frame_000.png",
+          "animations/warning/128/frame_001.png",
+          "animations/warning/128/frame_002.png",
+          "animations/warning/128/frame_003.png",
+          "animations/warning/128/frame_004.png",
+          "animations/warning/128/frame_005.png",
+          "animations/warning/128/frame_006.png",
+          "animations/warning/128/frame_007.png",
+          "animations/warning/128/frame_008.png",
+          "animations/warning/128/frame_009.png",
+          "animations/warning/128/frame_010.png",
+          "animations/warning/128/frame_011.png",
+          "animations/warning/128/frame_012.png",
+          "animations/warning/128/frame_013.png",
+          "animations/warning/128/frame_014.png",
+          "animations/warning/128/frame_015.png"
+        ],
+        "96": [
+          "animations/warning/96/frame_000.png",
+          "animations/warning/96/frame_001.png",
+          "animations/warning/96/frame_002.png",
+          "animations/warning/96/frame_003.png",
+          "animations/warning/96/frame_004.png",
+          "animations/warning/96/frame_005.png",
+          "animations/warning/96/frame_006.png",
+          "animations/warning/96/frame_007.png",
+          "animations/warning/96/frame_008.png",
+          "animations/warning/96/frame_009.png",
+          "animations/warning/96/frame_010.png",
+          "animations/warning/96/frame_011.png",
+          "animations/warning/96/frame_012.png",
+          "animations/warning/96/frame_013.png",
+          "animations/warning/96/frame_014.png",
+          "animations/warning/96/frame_015.png"
+        ]
+      },
+      "animation_id": "core_warden_warning",
+      "state": "warning",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/warning.webp"
+    },
+    "error": {
+      "action": "CW03B_ERROR",
+      "slots": {
+        "CTRL_Float": "OBCTRL_Float",
+        "CTRL_HeadMotion": "OBCTRL_HeadMotion",
+        "CTRL_LeftShell": "OBCTRL_LeftShell",
+        "CTRL_LowerV": "OBCTRL_LowerV",
+        "CTRL_RightShell": "OBCTRL_RightShell",
+        "CTRL_Upper_Armor_Crown": "OBCTRL_Upper_Armor_Crown",
+        "CTRL_Upper_Armor_Left": "OBCTRL_Upper_Armor_Left",
+        "CTRL_Upper_Armor_Right": "OBCTRL_Upper_Armor_Right"
+      },
+      "frame_count": 13,
+      "fps": 8,
+      "loop": false,
+      "duration_seconds": 1.625,
+      "playback_mode": "once_then_hold",
+      "source_scene_frames": [
+        1,
+        13
+      ],
+      "closing_keyframe": 13,
+      "hold_frame": 13,
+      "frames": {
+        "192": [
+          "animations/error/192/frame_000.png",
+          "animations/error/192/frame_001.png",
+          "animations/error/192/frame_002.png",
+          "animations/error/192/frame_003.png",
+          "animations/error/192/frame_004.png",
+          "animations/error/192/frame_005.png",
+          "animations/error/192/frame_006.png",
+          "animations/error/192/frame_007.png",
+          "animations/error/192/frame_008.png",
+          "animations/error/192/frame_009.png",
+          "animations/error/192/frame_010.png",
+          "animations/error/192/frame_011.png",
+          "animations/error/192/frame_012.png"
+        ],
+        "128": [
+          "animations/error/128/frame_000.png",
+          "animations/error/128/frame_001.png",
+          "animations/error/128/frame_002.png",
+          "animations/error/128/frame_003.png",
+          "animations/error/128/frame_004.png",
+          "animations/error/128/frame_005.png",
+          "animations/error/128/frame_006.png",
+          "animations/error/128/frame_007.png",
+          "animations/error/128/frame_008.png",
+          "animations/error/128/frame_009.png",
+          "animations/error/128/frame_010.png",
+          "animations/error/128/frame_011.png",
+          "animations/error/128/frame_012.png"
+        ],
+        "96": [
+          "animations/error/96/frame_000.png",
+          "animations/error/96/frame_001.png",
+          "animations/error/96/frame_002.png",
+          "animations/error/96/frame_003.png",
+          "animations/error/96/frame_004.png",
+          "animations/error/96/frame_005.png",
+          "animations/error/96/frame_006.png",
+          "animations/error/96/frame_007.png",
+          "animations/error/96/frame_008.png",
+          "animations/error/96/frame_009.png",
+          "animations/error/96/frame_010.png",
+          "animations/error/96/frame_011.png",
+          "animations/error/96/frame_012.png"
+        ]
+      },
+      "animation_id": "core_warden_error",
+      "state": "error",
+      "canvas_dimensions": {
+        "96": [
+          96,
+          96
+        ],
+        "128": [
+          128,
+          128
+        ],
+        "192": [
+          192,
+          192
+        ]
+      },
+      "available_resolutions": [
+        96,
+        128,
+        192
+      ],
+      "preview": "previews/cw03b/error.webp"
+    }
+  },
+  "rest": {
+    "controls": {
+      "CTRL_Float": {
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_HeadMotion": {
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_LeftShell": {
+        "location": [
+          -1.2699999809265137,
+          0.05000000074505806,
+          0.0
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_LowerV": {
+        "location": [
+          0.0,
+          -0.23999999463558197,
+          -1.4199999570846558
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_RightShell": {
+        "location": [
+          1.2699999809265137,
+          0.05000000074505806,
+          0.0
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_Upper_Armor_Crown": {
+        "location": [
+          -0.04666666314005852,
+          -0.0038749962113797665,
+          1.4199999570846558
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_Upper_Armor_Left": {
+        "location": [
+          -0.7679999470710754,
+          -0.07987498492002487,
+          0.8619999289512634
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "CTRL_Upper_Armor_Right": {
+        "location": [
+          0.7839999794960022,
+          0.0351249985396862,
+          0.825999915599823
+        ],
+        "rotation_euler": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "properties": {
+      "eye_left_intensity": 4.8,
+      "eye_right_intensity": 4.8,
+      "accent_intensity": 1.8
+    }
+  },
+  "render_timings": [
+    {
+      "state": "idle",
+      "frame": 0,
+      "seconds": 0.33401358302216977
+    },
+    {
+      "state": "idle",
+      "frame": 1,
+      "seconds": 0.3163717919960618
+    },
+    {
+      "state": "idle",
+      "frame": 2,
+      "seconds": 0.2860703330079559
+    },
+    {
+      "state": "idle",
+      "frame": 3,
+      "seconds": 0.30435495800338686
+    },
+    {
+      "state": "idle",
+      "frame": 4,
+      "seconds": 0.2778833750053309
+    },
+    {
+      "state": "idle",
+      "frame": 5,
+      "seconds": 0.27358720800839365
+    },
+    {
+      "state": "idle",
+      "frame": 6,
+      "seconds": 0.2778117500129156
+    },
+    {
+      "state": "idle",
+      "frame": 7,
+      "seconds": 0.2709362500172574
+    },
+    {
+      "state": "idle",
+      "frame": 8,
+      "seconds": 0.27941899999859743
+    },
+    {
+      "state": "idle",
+      "frame": 9,
+      "seconds": 0.2788931670074817
+    },
+    {
+      "state": "idle",
+      "frame": 10,
+      "seconds": 0.289167582988739
+    },
+    {
+      "state": "idle",
+      "frame": 11,
+      "seconds": 0.2736542499915231
+    },
+    {
+      "state": "idle",
+      "frame": 12,
+      "seconds": 0.28220387498731725
+    },
+    {
+      "state": "idle",
+      "frame": 13,
+      "seconds": 0.26153383299242705
+    },
+    {
+      "state": "idle",
+      "frame": 14,
+      "seconds": 0.260153832990909
+    },
+    {
+      "state": "idle",
+      "frame": 15,
+      "seconds": 0.2685046670085285
+    },
+    {
+      "state": "thinking",
+      "frame": 0,
+      "seconds": 0.2769057499826886
+    },
+    {
+      "state": "thinking",
+      "frame": 1,
+      "seconds": 0.26643233399954624
+    },
+    {
+      "state": "thinking",
+      "frame": 2,
+      "seconds": 0.2611300830030814
+    },
+    {
+      "state": "thinking",
+      "frame": 3,
+      "seconds": 0.25838145799934864
+    },
+    {
+      "state": "thinking",
+      "frame": 4,
+      "seconds": 0.27314629199099727
+    },
+    {
+      "state": "thinking",
+      "frame": 5,
+      "seconds": 0.2599835000000894
+    },
+    {
+      "state": "thinking",
+      "frame": 6,
+      "seconds": 0.24613445799332112
+    },
+    {
+      "state": "thinking",
+      "frame": 7,
+      "seconds": 0.26434966700617224
+    },
+    {
+      "state": "thinking",
+      "frame": 8,
+      "seconds": 0.268964250019053
+    },
+    {
+      "state": "thinking",
+      "frame": 9,
+      "seconds": 0.2693675000045914
+    },
+    {
+      "state": "thinking",
+      "frame": 10,
+      "seconds": 0.25153208398842253
+    },
+    {
+      "state": "thinking",
+      "frame": 11,
+      "seconds": 0.2548704580112826
+    },
+    {
+      "state": "thinking",
+      "frame": 12,
+      "seconds": 0.26652254100190476
+    },
+    {
+      "state": "thinking",
+      "frame": 13,
+      "seconds": 0.2563345840026159
+    },
+    {
+      "state": "thinking",
+      "frame": 14,
+      "seconds": 0.25284354100585915
+    },
+    {
+      "state": "thinking",
+      "frame": 15,
+      "seconds": 0.2506430000066757
+    },
+    {
+      "state": "tool_running",
+      "frame": 0,
+      "seconds": 0.25201445899438113
+    },
+    {
+      "state": "tool_running",
+      "frame": 1,
+      "seconds": 0.2605377919971943
+    },
+    {
+      "state": "tool_running",
+      "frame": 2,
+      "seconds": 0.2592667090066243
+    },
+    {
+      "state": "tool_running",
+      "frame": 3,
+      "seconds": 0.26516941699082963
+    },
+    {
+      "state": "tool_running",
+      "frame": 4,
+      "seconds": 0.2626496249868069
+    },
+    {
+      "state": "tool_running",
+      "frame": 5,
+      "seconds": 0.2676136659865733
+    },
+    {
+      "state": "tool_running",
+      "frame": 6,
+      "seconds": 0.2450027089798823
+    },
+    {
+      "state": "tool_running",
+      "frame": 7,
+      "seconds": 0.2571451250114478
+    },
+    {
+      "state": "tool_running",
+      "frame": 8,
+      "seconds": 0.26215083300485276
+    },
+    {
+      "state": "tool_running",
+      "frame": 9,
+      "seconds": 0.25528645800659433
+    },
+    {
+      "state": "tool_running",
+      "frame": 10,
+      "seconds": 0.25645283301128075
+    },
+    {
+      "state": "tool_running",
+      "frame": 11,
+      "seconds": 0.25816841699997894
+    }
+  ],
+  "metrics": {
+    "png_frames": {
+      "192": 44,
+      "128": 44,
+      "96": 44
+    },
+    "total_png_files": 132,
+    "bytes_before_optimization": 3736945,
+    "bytes_after_optimization": 2950619,
+    "bytes_saved": 786326,
+    "saved_percent": 21.041947366097173,
+    "duplicates_within_states": {
+      "idle": 0,
+      "thinking": 0,
+      "tool_running": 0
+    },
+    "render_seconds_total": 11.813559000031091,
+    "render_seconds_average": 0.2684899772734339,
+    "render_seconds_min": 0.2450027089798823,
+    "render_seconds_max": 0.33401358302216977,
+    "decoded_rgba_bytes_by_resolution": {
+      "96": 1622016,
+      "128": 2883584,
+      "192": 6488064
+    },
+    "decoded_all_variants_bytes": 10993664,
+    "seam_pixel_deltas": {
+      "idle": {
+        "last_to_first_mean_absolute_luma_delta": 2.4344075520833335,
+        "adjacent_min": 0.5814073350694444,
+        "adjacent_max": 2.4344075520833335,
+        "adjacent_mean": 1.5917697482638888
+      },
+      "thinking": {
+        "last_to_first_mean_absolute_luma_delta": 1.6791720920138888,
+        "adjacent_min": 0.7437879774305556,
+        "adjacent_max": 1.7604709201388888,
+        "adjacent_mean": 1.2474009195963542
+      },
+      "tool_running": {
+        "last_to_first_mean_absolute_luma_delta": 2.0760362413194446,
+        "adjacent_min": 0.9299587673611112,
+        "adjacent_max": 2.293185763888889,
+        "adjacent_mean": 1.6096236617476851
+      }
+    },
+    "alpha_and_dimensions_valid": true,
+    "compression_pixel_exact": true,
+    "all_manifest_paths_resolve": true,
+    "preview_bytes": 3283403
+  },
+  "memory_note": "Decode one chosen resolution and state as needed. Disk PNG size is not decoded RGBA memory. No terminal runtime performance measured.",
+  "cw03b": {
+    "source_master": "blender/core_warden_cw03b.blend",
+    "review_only_states": [
+      "listening",
+      "processing",
+      "approval",
+      "speaking",
+      "success",
+      "warning",
+      "error"
+    ],
+    "metrics": {
+      "png_frames": {
+        "192": 110,
+        "128": 110,
+        "96": 110
+      },
+      "total_png_files": 330,
+      "bytes_before_optimization": 9334974,
+      "bytes_after_optimization": 7369693,
+      "bytes_saved": 1965281,
+      "saved_percent": 21.052881347071775,
+      "duplicates_within_states": {
+        "listening": 0,
+        "processing": 1,
+        "approval": 0,
+        "speaking": 0,
+        "success": 3,
+        "warning": 0,
+        "error": 4
+      },
+      "render_seconds_total": 30.129515125154285,
+      "render_seconds_average": 0.27390468295594805,
+      "render_seconds_min": 0.237547333992552,
+      "render_seconds_max": 0.4433375420048833,
+      "decoded_rgba_bytes_by_resolution": {
+        "96": 4055040,
+        "128": 7208960,
+        "192": 16220160
+      },
+      "decoded_all_variants_bytes": 27484160,
+      "seam_pixel_deltas": {
+        "listening": {
+          "last_to_first_mean_absolute_luma_delta": 1.7502983940972223,
+          "adjacent_min": 0.4852430555555556,
+          "adjacent_max": 1.7643771701388888,
+          "adjacent_mean": 1.211732652452257
+        },
+        "processing": {
+          "last_to_first_mean_absolute_luma_delta": 2.4576551649305554,
+          "adjacent_min": 2.0874837239583335,
+          "adjacent_max": 2.585205078125,
+          "adjacent_mean": 2.3685144495081016
+        },
+        "approval": {
+          "last_to_first_mean_absolute_luma_delta": 0.3999294704861111,
+          "adjacent_min": 0.3123372395833333,
+          "adjacent_max": 0.4418131510416667,
+          "adjacent_mean": 0.37720291702835645
+        },
+        "speaking": {
+          "last_to_first_mean_absolute_luma_delta": 2.2718098958333335,
+          "adjacent_min": 0.9205457899305556,
+          "adjacent_max": 2.3350965711805554,
+          "adjacent_mean": 1.6390313042534723
+        },
+        "success": {
+          "last_to_first_mean_absolute_luma_delta": 0.0,
+          "adjacent_min": 0.0,
+          "adjacent_max": 3.0438910590277777,
+          "adjacent_mean": 1.8838620960202992
+        },
+        "warning": {
+          "last_to_first_mean_absolute_luma_delta": 1.6518283420138888,
+          "adjacent_min": 0.5009765625,
+          "adjacent_max": 1.6518283420138888,
+          "adjacent_mean": 1.1462843153211806
+        },
+        "error": {
+          "last_to_first_mean_absolute_luma_delta": 0.0,
+          "adjacent_min": 0.0,
+          "adjacent_max": 2.9965277777777777,
+          "adjacent_mean": 1.8497116219284186
+        }
+      },
+      "alpha_and_dimensions_valid": true,
+      "compression_pixel_exact": true,
+      "all_manifest_paths_resolve": true,
+      "preview_bytes": 7129966
+    }
+  }
+}

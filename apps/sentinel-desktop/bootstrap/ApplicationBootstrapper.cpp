@@ -1,9 +1,12 @@
+void qml_register_types_Sentinel_Warden();
 #include "sentinel/desktop/RemoteAgentInspectorService.h"
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "ApplicationBootstrapper.h"
+#include "sentinel/desktop/CoreWardenItem.h"
+#include <qqml.h>
 
 #include "GraphicsInitializer.h"
 #include "LoggingInitializer.h"
@@ -187,9 +190,13 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                                            : m_parser.value(QStringLiteral("daemon-socket")),
                                        10000, 1000, this);
     m_runtimeClient = std::make_unique<DesktopRuntimeClient>(*m_daemonClient, this);
+    auto desktopStore = std::make_unique<DesktopSettingsStore>(*m_runtimeClient,
+        m_pathProvider.settingsFilePath() + QStringLiteral(".desktop"));
+    auto* wardenPreferences = new CoreWardenPreferences(*desktopStore, this);
+    qml_register_types_Sentinel_Warden();
+    m_engine.rootContext()->setContextProperty("coreWardenPreferences", wardenPreferences);
     m_settings = std::make_unique<sentinel::core::AppSettings>(
-        std::make_unique<DesktopSettingsStore>(*m_runtimeClient, m_pathProvider.settingsFilePath() +
-                                                                     QStringLiteral(".desktop")),
+        std::move(desktopStore),
         sentinel::core::CredentialStore(std::shared_ptr<sentinel::core::ICredentialBackend>{}));
     const auto settingsError = m_settings->storageErrorCode();
     if (settingsError == QLatin1String("CorruptState") ||

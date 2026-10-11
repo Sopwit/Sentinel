@@ -1,0 +1,446 @@
+{
+  "blender_version": "5.2.2 LTS",
+  "baseline_preserved": true,
+  "meshes": {
+    "Core_Head": {
+      "vertices": 1490,
+      "faces": 1536,
+      "manifold": true,
+      "signed_volume": 3.583437,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Face": {
+      "vertices": 1490,
+      "faces": 1536,
+      "manifold": true,
+      "signed_volume": 1.797452,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Left_Eye": {
+      "vertices": 242,
+      "faces": 280,
+      "manifold": true,
+      "signed_volume": 0.0008154,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Right_Eye": {
+      "vertices": 242,
+      "faces": 280,
+      "manifold": true,
+      "signed_volume": 0.0008154,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Upper_Armor_Left": {
+      "vertices": 40,
+      "faces": 38,
+      "manifold": true,
+      "signed_volume": 0.0202424,
+      "parent": "CTRL_Upper_Armor_Left"
+    },
+    "Upper_Armor_Crown": {
+      "vertices": 24,
+      "faces": 22,
+      "manifold": true,
+      "signed_volume": 0.0087417,
+      "parent": "CTRL_Upper_Armor_Crown"
+    },
+    "Upper_Armor_Right": {
+      "vertices": 40,
+      "faces": 38,
+      "manifold": true,
+      "signed_volume": 0.0087503,
+      "parent": "CTRL_Upper_Armor_Right"
+    },
+    "Left_Protective_Plate": {
+      "vertices": 250,
+      "faces": 248,
+      "manifold": true,
+      "signed_volume": 0.0845777,
+      "parent": "CTRL_LeftShell"
+    },
+    "Right_Protective_Plate": {
+      "vertices": 250,
+      "faces": 248,
+      "manifold": true,
+      "signed_volume": 0.0845777,
+      "parent": "CTRL_RightShell"
+    },
+    "Lower_Armor": {
+      "vertices": 104,
+      "faces": 102,
+      "manifold": true,
+      "signed_volume": 0.0141529,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Lower_Cheek_Right": {
+      "vertices": 104,
+      "faces": 102,
+      "manifold": true,
+      "signed_volume": 0.0177653,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Lower_Cheek_Left": {
+      "vertices": 104,
+      "faces": 102,
+      "manifold": true,
+      "signed_volume": 0.01771,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_00": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0318313,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_01": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0318784,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_02": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0096973,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_03": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0097165,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_04": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0319956,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Rear_Armor_05": {
+      "vertices": 146,
+      "faces": 162,
+      "manifold": true,
+      "signed_volume": 0.0319173,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Floating_V_Component": {
+      "vertices": 20,
+      "faces": 12,
+      "manifold": true,
+      "signed_volume": 0.0248742,
+      "parent": "CTRL_LowerV"
+    },
+    "Left_Mechanical_Hinge": {
+      "vertices": 1490,
+      "faces": 1536,
+      "manifold": true,
+      "signed_volume": 0.0217715,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Right_Mechanical_Hinge": {
+      "vertices": 1490,
+      "faces": 1536,
+      "manifold": true,
+      "signed_volume": 0.0217715,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Left_Shell_Inner_Support": {
+      "vertices": 250,
+      "faces": 248,
+      "manifold": true,
+      "signed_volume": 0.0455186,
+      "parent": "CTRL_LeftShell"
+    },
+    "Right_Shell_Inner_Support": {
+      "vertices": 250,
+      "faces": 248,
+      "manifold": true,
+      "signed_volume": 0.0455186,
+      "parent": "CTRL_RightShell"
+    },
+    "Floating_V_Inner_Support": {
+      "vertices": 20,
+      "faces": 12,
+      "manifold": true,
+      "signed_volume": 0.0155917,
+      "parent": "CTRL_LowerV"
+    },
+    "Core_Orbital_Support": {
+      "vertices": 960,
+      "faces": 960,
+      "manifold": true,
+      "signed_volume": 0.0117754,
+      "parent": "CTRL_HeadMotion"
+    },
+    "Left_Plate_Glacier_Edge": {
+      "vertices": 230,
+      "faces": 236,
+      "manifold": true,
+      "signed_volume": 0.0004958,
+      "parent": "CTRL_LeftShell"
+    },
+    "Right_Plate_Glacier_Edge": {
+      "vertices": 230,
+      "faces": 236,
+      "manifold": true,
+      "signed_volume": 0.0004958,
+      "parent": "CTRL_RightShell"
+    },
+    "Floating_V_Glacier_Accent": {
+      "vertices": 30,
+      "faces": 36,
+      "manifold": true,
+      "signed_volume": 0.0003373,
+      "parent": "CTRL_LowerV"
+    },
+    "Crown_Glacier_Edge": {
+      "vertices": 30,
+      "faces": 36,
+      "manifold": true,
+      "signed_volume": 0.0001266,
+      "parent": "CTRL_Upper_Armor_Left"
+    }
+  },
+  "controls": {
+    "CTRL_Float": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Core_Head",
+        "Face",
+        "Left_Eye",
+        "Right_Eye",
+        "Upper_Armor_Left",
+        "Upper_Armor_Crown",
+        "Upper_Armor_Right",
+        "Left_Protective_Plate",
+        "Right_Protective_Plate",
+        "Lower_Armor",
+        "Lower_Cheek_Right",
+        "Lower_Cheek_Left",
+        "Rear_Armor_00",
+        "Rear_Armor_01",
+        "Rear_Armor_02",
+        "Rear_Armor_03",
+        "Rear_Armor_04",
+        "Rear_Armor_05",
+        "Floating_V_Component",
+        "Left_Mechanical_Hinge",
+        "Right_Mechanical_Hinge",
+        "Left_Shell_Inner_Support",
+        "Right_Shell_Inner_Support",
+        "Floating_V_Inner_Support",
+        "Core_Orbital_Support",
+        "Left_Plate_Glacier_Edge",
+        "Right_Plate_Glacier_Edge",
+        "Floating_V_Glacier_Accent",
+        "Crown_Glacier_Edge"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_HeadMotion": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Core_Head",
+        "Face",
+        "Left_Eye",
+        "Right_Eye",
+        "Upper_Armor_Left",
+        "Upper_Armor_Crown",
+        "Upper_Armor_Right",
+        "Lower_Armor",
+        "Lower_Cheek_Right",
+        "Lower_Cheek_Left",
+        "Rear_Armor_00",
+        "Rear_Armor_01",
+        "Rear_Armor_02",
+        "Rear_Armor_03",
+        "Rear_Armor_04",
+        "Rear_Armor_05",
+        "Left_Mechanical_Hinge",
+        "Right_Mechanical_Hinge",
+        "Core_Orbital_Support",
+        "Crown_Glacier_Edge"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_LeftShell": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Left_Protective_Plate",
+        "Left_Shell_Inner_Support",
+        "Left_Plate_Glacier_Edge"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_RightShell": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Right_Protective_Plate",
+        "Right_Shell_Inner_Support",
+        "Right_Plate_Glacier_Edge"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_Upper_Armor_Left": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Upper_Armor_Left",
+        "Crown_Glacier_Edge"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_Upper_Armor_Crown": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Upper_Armor_Crown"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_Upper_Armor_Right": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Upper_Armor_Right"
+      ],
+      "independent_rotation_test": true
+    },
+    "CTRL_LowerV": {
+      "independent_transform_test": true,
+      "affected_parts": [
+        "Floating_V_Component",
+        "Floating_V_Inner_Support",
+        "Floating_V_Glacier_Accent"
+      ],
+      "independent_rotation_test": true
+    }
+  },
+  "previews": {
+    "front": {
+      "size": 512,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    },
+    "three_quarter": {
+      "size": 512,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    },
+    "side": {
+      "size": 512,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    },
+    "hero": {
+      "size": 768,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    },
+    "size_96": {
+      "size": 96,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    },
+    "size_128": {
+      "size": 128,
+      "RGBA": true,
+      "transparent": true,
+      "frame_clear": true
+    }
+  },
+  "surface_crossings": [],
+  "exact_structure_preserved": true,
+  "obsidian_unchanged": true,
+  "official_materials": {
+    "CW02 Face | Obsidian #151719": {
+      "srgb_hex": "#151719",
+      "roughness": 0.3199999928474426,
+      "metallic": 0.18000000715255737
+    },
+    "CW02 Left Eye | Glacier #A9CAD3": {
+      "srgb_hex": "#A9CAD3",
+      "roughness": 0.3799999952316284,
+      "metallic": 0.0
+    },
+    "CW02 Right Eye | Glacier #A9CAD3": {
+      "srgb_hex": "#A9CAD3",
+      "roughness": 0.3799999952316284,
+      "metallic": 0.0
+    },
+    "Glacier #A9CAD3 emissive": {
+      "srgb_hex": "#A9CAD3",
+      "roughness": 0.30000001192092896,
+      "metallic": 0.05000000074505806
+    },
+    "Graphite #303438": {
+      "srgb_hex": "#303438",
+      "roughness": 0.3400000035762787,
+      "metallic": 0.6200000047683716
+    },
+    "Obsidian #151719": {
+      "srgb_hex": "#151719",
+      "roughness": 0.3700000047683716,
+      "metallic": 0.18000000715255737
+    },
+    "Porcelain #ECEFEE": {
+      "srgb_hex": "#ECEFEE",
+      "roughness": 0.28999999165534973,
+      "metallic": 0.11999999731779099
+    }
+  },
+  "all_emission_channels_functional": true,
+  "independent_eye_emission": true,
+  "cameras": {
+    "Camera_back": {
+      "location": [
+        0.0,
+        6.0,
+        0.0
+      ],
+      "ortho_scale": 3.6500000953674316
+    },
+    "Camera_front": {
+      "location": [
+        0.0,
+        -6.0,
+        0.0
+      ],
+      "ortho_scale": 3.6500000953674316
+    },
+    "Camera_hero": {
+      "location": [
+        2.4000000953674316,
+        -6.0,
+        0.8500000238418579
+      ],
+      "ortho_scale": 3.6500000953674316
+    },
+    "Camera_side": {
+      "location": [
+        6.0,
+        0.0,
+        0.0
+      ],
+      "ortho_scale": 3.6500000953674316
+    },
+    "Camera_three_quarter": {
+      "location": [
+        3.0,
+        -6.0,
+        0.8500000238418579
+      ],
+      "ortho_scale": 3.6500000953674316
+    }
+  },
+  "external_file_dependencies": [],
+  "base_vertices": 10256,
+  "evaluated_triangles": 32220
+}

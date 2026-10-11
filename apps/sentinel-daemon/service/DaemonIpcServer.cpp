@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonDesktopSettings.h"
 #include "DaemonIpcServer.h"
-#include "sentinel/core/chat/ChatAttachmentLoader.h"
 #include "DaemonModelHelpers.h"
 #include "DesktopProjection.generated.h"
 #include "IpcContract.generated.h"
@@ -14,16 +13,18 @@
 #include "sentinel/core/app/AppMetadata.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/chat/ChatAttachmentLoader.h"
 #include "sentinel/core/chat/ChatModeService.h"
 #include <QCoreApplication>
-#include <QScopedValueRollback>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QCryptographicHash>
+#include <QLoggingCategory>
 #include <QRegularExpression>
+#include <QScopedValueRollback>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTimer>
@@ -35,6 +36,7 @@
 #endif
 namespace sentinel::daemon {
 namespace {
+Q_LOGGING_CATEGORY(ipcAgentDiagnostics, "sentinel.agent.ipc.diagnostics", QtWarningMsg)
 QJsonObject envelope(const QString& type, const QString& id, const QString& name,
                      const QJsonObject& payload) {
     return {{"version", QJsonObject{{"major", protocol::major}, {"minor", protocol::minor}}},
@@ -1720,6 +1722,16 @@ void DaemonIpcServer::onAgentEvent(const core::AgentEvent& e) {
             "AgentFailed",          "AgentCancelled",       "RuntimeStateChanged"};
         const int index = static_cast<int>(e.type);
         if (index >= 0 && index < names.size()) {
+            qCInfo(ipcAgentDiagnostics).noquote()
+                << QJsonDocument(QJsonObject{{"activity", names.at(index)},
+                                             {"session_id", m_sessionId},
+                                             {"run_id", m_runId},
+                                             {"runtime_session_id", e.sessionId},
+                                             {"turn_id", e.turnId},
+                                             {"tool_call_id", e.toolCallId},
+                                             {"step", qMax(0, e.stepIndex)},
+                                             {"utc", e.timestamp.toString(Qt::ISODateWithMs)}})
+                       .toJson(QJsonDocument::Compact);
             QJsonObject activity{{"activity", names.at(index)}, {"step", qMax(0, e.stepIndex)}};
             if (e.type == AgentEventType::ToolApprovalResolved) {
                 if (const auto* decision = std::get_if<core::AgentTextEvent>(&e.payload)) {

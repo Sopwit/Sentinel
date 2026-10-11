@@ -1,0 +1,38 @@
+{
+  "sizes": {
+    "96": {
+      "before_bright_glacier_pixels": [
+        24,
+        26
+      ],
+      "after_bright_glacier_pixels": [
+        35,
+        36
+      ],
+      "two_distinct_regions": true
+    },
+    "128": {
+      "before_bright_glacier_pixels": [
+        41,
+        46
+      ],
+      "after_bright_glacier_pixels": [
+        58,
+        60
+      ],
+      "two_distinct_regions": true
+    }
+  },
+  "face_readability": {
+    "before": {
+      "mean_display_luminance_0_255": 14.75,
+      "p95_display_luminance": 67.86,
+      "note": "Matched front-view face region excluding eyes; lighting proxy, not a quality score"
+    },
+    "after": {
+      "mean_display_luminance_0_255": 22.03,
+      "p95_display_luminance": 77.65,
+      "note": "Matched front-view face region excluding eyes; lighting proxy, not a quality score"
+    }
+  }
+}

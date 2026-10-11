@@ -1,0 +1,26 @@
+{
+  "96": {
+    "distinct_eye_regions": 2,
+    "bright_glacier_pixels_per_eye": [
+      24,
+      26
+    ],
+    "native_pixel_size": true
+  },
+  "128": {
+    "distinct_eye_regions": 2,
+    "bright_glacier_pixels_per_eye": [
+      41,
+      46
+    ],
+    "native_pixel_size": true
+  },
+  "192": {
+    "distinct_eye_regions": 2,
+    "bright_glacier_pixels_per_eye": [
+      85,
+      91
+    ],
+    "native_pixel_size": true
+  }
+}

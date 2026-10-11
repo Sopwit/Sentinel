@@ -29,7 +29,7 @@ public:
         return m_preferences.errorCode();
     }
     static bool presentationKey(const QString& key) {
-        static const QSet<QString> keys = {"themeName",
+        static const QSet<QString> keys = {"themeName", "coreWardenMode",
                                            "appLanguage",
                                            "activeConversationId",
                                            "companionEnabled",
