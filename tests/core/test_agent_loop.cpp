@@ -208,6 +208,30 @@ private slots:
         QCOMPARE(planner.calls, 0);
         QVERIFY(executor.requests.isEmpty());
     }
+    void classifiedObservationDoesNotCompleteWithoutEvidence() {
+        ScriptedPlanner planner;
+        auto final = finalDecision("Invented file explanation");
+        final.grounding = GroundingMode::Verified;
+        final.groundingDeclared = true;
+        planner.decisions = {final};
+        planner.repeatLast = true;
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        AgentLoop loop(planner, executor, approval, sandbox, {});
+        auto policy = std::make_shared<FixedFilesystemIntent>();
+        ObservationRequirement requirement;
+        requirement.domain = ObservationDomain::FileSystem;
+        requirement.resourceHint = "/fixture/calc.cpp";
+        policy->intent.requirements.append(requirement);
+        loop.setObservationIntentPolicy(policy);
+        const auto state = loop.run("Explain calc.cpp", "classified-no-evidence");
+        QVERIFY(planner.calls > 0);
+        QVERIFY(state.phase != AgentLoopPhase::Completed);
+        QVERIFY(state.finalAnswer.isEmpty());
+        QVERIFY(executor.requests.isEmpty());
+    }
+
     void rejectedFinalReportsPolicyReasonWithoutCompleting() {
         ScriptedPlanner planner;
         auto answer = finalDecision(QStringLiteral("The file exists."));

@@ -62,6 +62,7 @@ public:
 
 class StreamingPlannerProvider final : public IChatProvider {
 public:
+    int boundedPlannerRequests = 0;
     QString name() const override {
         return QStringLiteral("streaming-test");
     }
@@ -80,7 +81,14 @@ public:
             reply.lifecycle = ChatRequestLifecycle::Cancelled;
             return reply;
         }
-        // Immediate deterministic classifier fixture implements the bounded contract.
+        // Both immediate fixtures implement the requested bounded contract.
+        if (options.deadlineMs == 120000) {
+            ++boundedPlannerRequests;
+            return {true,
+                    QStringLiteral("{\"action\":\"final\",\"grounding\":\"context\","
+                                   "\"answer\":\"A specific contextual answer.\"}"),
+                    {}};
+        }
         return sendMessage(message);
     }
     bool supportsStreaming() const override {
@@ -528,6 +536,7 @@ private slots:
         const auto session = runtime.createSession();
         const auto streamingState = runtime.submit(session, QStringLiteral("task"));
         QCOMPARE(streamingState.phase, AgentLoopPhase::Completed);
+        QCOMPARE(provider.boundedPlannerRequests, 1);
         const auto events = runtime.eventHistory(session);
         QString stepId;
         QString turnId;

@@ -1,3 +1,5 @@
+void qml_register_types_Sentinel_Warden();
+#include "sentinel/desktop/CoreWardenItem.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Opt-in UI harness: production QML and viewmodel, disposable disk stores,
 // explicitly injected in-memory credential backend. No provider success is faked.
@@ -27,6 +29,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QTranslator>
 
 // Deterministic catalog data only; the harness does not simulate provider success.
@@ -97,7 +100,11 @@ int main(int argc, char** argv) {
             profile.filePath("chat.sqlite3")));
     auto controller = builder.build();
     sentinel::core::ModeManager modes;
+    sentinel::core::JsonSettingsStore presentationStore(profile.filePath("warden-harness.json"));
+    sentinel::desktop::CoreWardenPreferences wardenPreferences(presentationStore);
+    qml_register_types_Sentinel_Warden();
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("coreWardenPreferences", &wardenPreferences);
     engine.rootContext()->setContextProperty("navigationSmoke", navigationSmoke);
     QObject::connect(&engine, &QQmlApplicationEngine::exit, &app, &QApplication::exit);
     if (phase1Smoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke) settings.setOnboardingComplete(true);
@@ -338,6 +345,25 @@ int main(int argc, char** argv) {
             fixture->setProperty("state", state);
             QApplication::processEvents();
             if (prompt->isEnabled() || provider->isEnabled() || !send->isEnabled()) { app.exit(76); return; }
+            auto* warden = qobject_cast<sentinel::desktop::CoreWardenItem*>(find(find, panel->contentItem(), "coreWardenPlayer"));
+            if (!warden || !warden->isVisible()) { app.exit(83); return; }
+            // The fixture changes only panel UI state; no provider/runtime event is injected.
+            warden->setAnimationState("thinking");
+            warden->setAnimate(true);
+            QElapsedTimer loadDeadline; loadDeadline.start();
+            while (!warden->playing() && loadDeadline.elapsed() < 3000) QTest::qWait(10);
+            if (!warden->playing()) { app.exit(84); return; }
+            panel->hide();
+            QTest::qWait(300);
+            if (warden->playing() || warden->cachedFrames() != 0) { app.exit(85); return; }
+            panel->show();
+            loadDeadline.restart();
+            while (!warden->playing() && loadDeadline.elapsed() < 3000) QTest::qWait(10);
+            if (!warden->playing()) { app.exit(86); return; }
+            wardenPreferences.setMode("off"); QTest::qWait(100);
+            if (warden->isVisible() || warden->cachedFrames() != 0) { app.exit(87); return; }
+            wardenPreferences.setMode("auto");
+            warden->setAnimationState("idle"); warden->setAnimate(false);
             fixture->setProperty("error", "Fixture connection error");
             QApplication::processEvents();
             auto* error = find(find, panel->contentItem(), "quickPanelError");
@@ -581,6 +607,24 @@ int main(int argc, char** argv) {
             auto* composer = findItem(findItem, window->contentItem(), "chatComposer");
             auto* input = findItem(findItem, window->contentItem(), "chatPromptInput");
             if (!greeting || !composer || !input || !greeting->isVisible() || composer->height() < 100) { app.exit(30); return; }
+            const auto evidence = qEnvironmentVariable("SENTINEL_WARDEN_UI_EVIDENCE");
+            if (!evidence.isEmpty()) {
+                QDir().mkpath(evidence);
+                for (const auto size : {QSize(1100, 780), QSize(780, 640), QSize(560, 640), QSize(1600, 960)}) {
+                    window->resize(size);
+                    QTest::qWait(150);
+                    auto* mascot = findItem(findItem, greeting, "coreWardenPlayer");
+                    const auto greetingBottom = greeting->mapToScene(QPointF(0, greeting->height())).y();
+                    const auto composerTop = composer->mapToScene(QPointF()).y();
+                    if (!mascot || mascot->property("cachedFrames").toInt() != 1 || greetingBottom > composerTop + 1) {
+                        qWarning() << "Warden layout failure" << size << greetingBottom << composerTop;
+                        app.exit(36); return;
+                    }
+                    window->grabWindow().save(evidence + QString("/chat-%1x%2.png").arg(size.width()).arg(size.height()));
+                }
+                window->resize(QSize(1100, 780));
+                QTest::qWait(100);
+            }
             const auto first = viewModel.createConversation("Empty one");
             const auto second = viewModel.createConversation("Empty two");
             viewModel.switchConversation(first);
@@ -593,9 +637,13 @@ int main(int argc, char** argv) {
             viewModel.sendMessage("Test message for alignment");
             QApplication::processEvents();
             QTimer::singleShot(200, &app, [&, window, findItem, greeting, composer, input] {
+                const bool rowsReady = QTest::qWaitFor([&] {
+                    return findItem(findItem, window->contentItem(), "userMessageBubble")
+                        && findItem(findItem, window->contentItem(), "assistantMessageBubble");
+                }, 2000);
                 auto* user = findItem(findItem, window->contentItem(), "userMessageBubble");
                 auto* assistant = findItem(findItem, window->contentItem(), "assistantMessageBubble");
-                if (!user || !assistant || greeting->isVisible() || user->x() <= assistant->x()) { qWarning() << "Alignment failure" << user << assistant << greeting->isVisible() << viewModel.conversationHistoryMessageCount() << (user ? user->x() : -1) << (assistant ? assistant->x() : -1); app.exit(33); return; }
+                if (!rowsReady || !user || !assistant || greeting->isVisible() || user->x() <= assistant->x()) { qWarning() << "Alignment failure" << user << assistant << greeting->isVisible() << viewModel.conversationHistoryMessageCount() << (user ? user->x() : -1) << (assistant ? assistant->x() : -1); app.exit(33); return; }
                 window->setWidth(780); window->setHeight(640);
                 QApplication::processEvents();
                 auto* attach = findItem(findItem, window->contentItem(), "chatAttachButton");
@@ -634,6 +682,7 @@ int main(int argc, char** argv) {
     }
     if (focusSmoke) {
         auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        if (qEnvironmentVariableIsSet("SENTINEL_ONBOARDING_COMPACT")) window->resize(780, 640);
         auto* onboarding = window->findChild<QQuickItem*>("sentinelOnboarding");
         auto* next = window->findChild<QQuickItem*>("onboardingNext");
         auto* back = window->findChild<QQuickItem*>("onboardingBack");
@@ -663,6 +712,15 @@ int main(int argc, char** argv) {
                 window->requestActivate();
                 QApplication::processEvents();
                 next->forceActiveFocus(Qt::TabFocusReason);
+                const auto evidence = qEnvironmentVariable("SENTINEL_ONBOARDING_EVIDENCE_DIR");
+                if (!evidence.isEmpty()) {
+                    QDir().mkpath(evidence);
+                    for (const auto& theme : {QStringLiteral("Paper"), QStringLiteral("Liquid Glass Dark")}) {
+                        viewModel.setThemeName(theme);
+                        QTest::qWait(100);
+                        window->grabWindow().save(evidence + QString("/step-%1-%2.png").arg(step).arg(theme == "Paper" ? "light" : "dark"));
+                    }
+                }
                 QSet<QQuickItem*> visited;
                 for (int i = 0; i < 24; ++i) {
                     key(Qt::Key_Tab);

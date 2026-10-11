@@ -80,6 +80,37 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void nativeRequestHonorsPerRequestDeadline() {
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+        QList<QTcpSocket*> sockets;
+        connect(&server, &QTcpServer::newConnection, &server, [&] {
+            auto* socket = server.nextPendingConnection();
+            sockets.append(socket); // Accept and deliberately never respond.
+        });
+        ModelService service;
+        service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
+        ModelBinding binding;
+        binding.providerId = "lm-studio";
+        binding.modelId = "fixture";
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        binding.capabilities.contextWindow = 8192;
+        auto provider = service.constructProvider(binding);
+        ChatRequestOptions options;
+        options.nativeToolCalling = true;
+        options.deadlineMs = 100;
+        options.maxOutputTokens = 128;
+        QElapsedTimer timer;
+        timer.start();
+        const auto reply = provider->sendRequest("Synthetic stall", options);
+        QVERIFY(!reply.success);
+        QCOMPARE(reply.category, ChatProviderErrorCategory::Timeout);
+        QCOMPARE(reply.attempts, 1);
+        QVERIFY(timer.elapsed() < 2000);
+        QCOMPARE(reply.diagnostics.value("requested_output_tokens").toInt(), 128);
+        QCOMPARE(sockets.size(), 1);
+    }
+
     void nativeOutputLimitIsNotAnEmptyResponse() {
         QTcpServer server;
         QVERIFY(server.listen(QHostAddress::LocalHost, 0));

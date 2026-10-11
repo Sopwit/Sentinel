@@ -7,6 +7,7 @@
 #include "sentinel/core/agent/ClaimGroundingResolver.h"
 #include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/model/ModelService.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/IFileSystemService.h"
 #include <QDir>
@@ -56,6 +57,30 @@ class ObservationPolicyTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void optInLiveClassification() {
+        const auto model = qEnvironmentVariable("SENTINEL_LIVE_CLASSIFIER_MODEL");
+        if (model.isEmpty())
+            QSKIP("Explicit opt-in required for production local-provider probe");
+        ModelService service;
+        ModelBinding binding;
+        binding.providerId = "lm-studio";
+        binding.modelId = model;
+        binding.capabilities.contextWindow = 8192;
+        auto provider = service.constructProvider(binding);
+        QVERIFY(provider);
+        ObservationIntentPolicy policy(provider.get());
+        const auto intent = policy.classify(
+            "Read calc.cpp in the active workspace and explain the actual behavior of add. "
+            "Do not modify files or run commands.",
+            "\nACTIVE WORKSPACE ROOT: /tmp/sentinel-v325-fixture",
+            BuiltInToolProvider::descriptors());
+        qInfo() << "Live classification indeterminate:" << intent.indeterminate
+                << "requirements:" << intent.requirements.size();
+        QVERIFY2(!intent.indeterminate, qPrintable(intent.error));
+        QVERIFY(!intent.requirements.isEmpty());
+        QCOMPARE(intent.requirements.first().claimType, ClaimType::None);
+    }
+
     void explanationReferences_data() {
         QTest::addColumn<QString>("callId");
         QTest::addColumn<QString>("quote");
@@ -363,6 +388,18 @@ private slots:
         QVERIFY(provider.prompt.contains(QStringLiteral("Return ONLY JSON")));
     }
 
+    void classifierPreservesWorkspaceAfterLongConversation() {
+        FixedReplyProvider provider;
+        provider.reply = QStringLiteral("{\"requirements\":[]}");
+        ObservationIntentPolicy policy(&provider);
+        policy.classify(
+            "Explain calc.cpp",
+            QString(4000, QLatin1Char('x')) + "\nACTIVE WORKSPACE ROOT: /fixture/current", {});
+        QVERIFY(provider.prompt.contains("ACTIVE WORKSPACE ROOT: /fixture/current"));
+        QVERIFY(provider.prompt.contains("operation:none, never exists"));
+        QVERIFY(provider.prompt.size() < 2500);
+    }
+
     void responseContract_data() {
         QTest::addColumn<QString>("reply");
         QTest::addColumn<bool>("accepted");
@@ -416,6 +453,6 @@ private slots:
     }
 };
 
-QTEST_APPLESS_MAIN(ObservationPolicyTest)
+QTEST_GUILESS_MAIN(ObservationPolicyTest)
 
 #include "test_observation_policy.moc"
