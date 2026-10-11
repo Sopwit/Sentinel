@@ -459,7 +459,7 @@ pub(crate) const COMMANDS: &[Command] = &[
     cmd!(
         Archive,
         "/archive",
-        "Archive attached session; does not delete messages",
+        "Confirm archive of attached session; messages are retained",
         [],
         None,
         IdleSession,
@@ -485,14 +485,14 @@ pub(crate) const COMMANDS: &[Command] = &[
     cmd!(
         Settings,
         "/settings",
-        "Inspect effective TUI preferences and their sources",
+        "Inspect effective preferences; change theme, mascot or details",
         [],
-        None,
+        OptionalText,
         Any,
         Local,
         [],
         "existing environment / local details toggle",
-        "",
+        "[theme [name] | mascot off|static|animated|auto | details]",
         "/settings"
     ),
     cmd!(

@@ -21,6 +21,20 @@ pub(crate) fn fuzzy(query: &str, label: &str) -> bool {
 }
 impl Picker {
     pub fn visible(&self) -> Vec<&Item> {
+        if matches!(self.kind, "command" | "help") {
+            let mut items = crate::commands::matching(self.query.trim_start_matches('/'))
+                .iter()
+                .filter_map(|command| self.items.iter().find(|item| item.id == command.name))
+                .collect::<Vec<_>>();
+            if self.kind == "help" {
+                items.extend(
+                    self.items.iter().filter(|item| {
+                        item.id.starts_with("key-") && fuzzy(&self.query, &item.label)
+                    }),
+                );
+            }
+            return items;
+        }
         let mut items = self
             .items
             .iter()
@@ -40,6 +54,12 @@ impl Picker {
             .collect::<Vec<_>>();
         if self.kind == "file" {
             items.sort_by_key(|item| !fuzzy(&self.query, &item.label));
+        } else if matches!(self.kind, "model" | "session") && !self.query.is_empty() {
+            let query = self.query.to_lowercase();
+            items.sort_by_key(|item| {
+                let id = item.id.to_lowercase();
+                (id != query, !id.starts_with(&query), !id.contains(&query))
+            });
         }
         items
     }
@@ -99,6 +119,24 @@ mod tests {
         // An exact substring in an absolute path remains discoverable, but
         // filename matches should come first when selecting the first row.
         assert_eq!(p.visible()[0].label, "nested/README.md");
+    }
+    #[test]
+    fn exact_model_identity_precedes_fuzzy_explanatory_matches() {
+        let p = Picker {
+            kind: "model",
+            query: "model-beta".into(),
+            selected: 0,
+            items: ["model-alpha", "model-beta"]
+                .iter()
+                .map(|id| Item {
+                    id: (*id).into(),
+                    label: format!("fixture / {id} · Available · chat"),
+                    extra: "fixture".into(),
+                    enabled: true,
+                })
+                .collect(),
+        };
+        assert_eq!(p.visible()[0].id, "model-beta");
     }
     #[test]
     fn empty_picker_safe() {

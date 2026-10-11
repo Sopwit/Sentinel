@@ -19,7 +19,8 @@ impl Editor {
         }
     }
     pub fn paste(&mut self, text: &str) {
-        self.insert(text);
+        let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
+        self.insert(&normalized);
         if self.text.starts_with('/') {
             self.literal = true;
         }
@@ -237,6 +238,15 @@ mod tests {
         e.home();
         e.kill_to_end();
         assert_eq!(e.text, "first\n");
+    }
+    #[test]
+    fn pasted_line_endings_are_editable_newlines() {
+        let mut e = Editor::default();
+        e.paste("/literal\r\nTürkçe\rnext");
+        assert_eq!(e.text, "/literal\nTürkçe\nnext");
+        assert!(e.literal);
+        e.home();
+        assert_eq!(&e.text[e.cursor..], "next");
     }
     #[test]
     fn bounded_paste() {

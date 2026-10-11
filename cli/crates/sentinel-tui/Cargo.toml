@@ -10,3 +10,7 @@ sentinel-ipc.workspace = true
 serde_json.workspace = true
 ratatui.workspace = true
 crossterm.workspace = true
+sentinel-mascot = { path = "../sentinel-mascot" }
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.3"

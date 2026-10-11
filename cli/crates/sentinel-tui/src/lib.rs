@@ -1,7 +1,11 @@
 mod commands;
 mod editor;
+mod mascot;
+mod mascot_output;
 mod picker;
+mod termination;
 mod theme;
+mod transcript_cache;
 use commands::{COMMANDS, CommandId, Context};
 use crossterm::{
     event::{
@@ -17,13 +21,14 @@ use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Modifier, Style},
-    text::Line,
+    text::{Line, Span},
     widgets::{Block, Clear, Padding, Paragraph, Wrap},
 };
 use sentinel_ipc::{Client, Envelope, Error};
+use sentinel_mascot::{DisplayMode, Player, Projection};
 use serde_json::{Value, json};
 use std::{
-    cell::Cell,
+    cell::{Cell, RefCell},
     path::Path,
     sync::{
         Arc,
@@ -33,7 +38,7 @@ use std::{
     time::{Duration, Instant},
 };
 use theme::Theme;
-const HELP: &str = "Enter: send · Shift+Enter: newline · Alt+Enter / Ctrl+O: compatibility alternatives\nCtrl+P / Tab: commands · Ctrl+L: models · Ctrl+W: workspaces\n/sessions: sessions · Ctrl+N: new · /reconnect: reconnect\nCtrl+R / Ctrl+F: transcript search · F1 or /help: help\nCtrl+A/E: line start/end · Ctrl+U/K: erase to start/end\nArrows: edit · Alt+Up/Down: draft history · Ctrl+Left/Right: word\nPgUp/PgDn: scroll · Ctrl+B: follow latest · /activity: tool details\nCtrl+C: cancel run; idle draft is preserved · Ctrl+D: exit only idle/empty\n/remove: remove last file reference · @: authorized file picker\nPicker: type to filter, Up/Down or Tab/Shift+Tab, Enter, Esc\nApproval: y Allow Once / n Deny; Esc preserves pending approval\nSlash: / discovery, Tab completes, Enter exact executes, Esc dismisses; // sends literal slash text.\nPasted slash text stays literal. /references removes selected paths. Input recall is memory-only; sessions belong to daemon.";
+const HELP: &str = "Enter: send · Shift+Enter: newline · Alt+Enter / Ctrl+O: compatibility alternatives\nCtrl+P / Tab: commands · Ctrl+L: models · Ctrl+W: workspaces\n/sessions: sessions · Ctrl+N: new · /reconnect: reconnect\nCtrl+R / Ctrl+F: transcript search · F1 or /help: help\nCtrl+A/E: line start/end · Ctrl+U/K: erase to start/end\nArrows: edit · Alt+Up/Down: draft history · Ctrl+Left/Right: word\nPgUp/PgDn: scroll · Ctrl+B: follow latest · /activity: tool details\nCtrl+C: cancel run; idle draft is preserved · Ctrl+D: exit only idle/empty\n/remove: remove last file reference · @: authorized file picker\nPicker: type to filter, Up/Down or Tab/Shift+Tab, Enter, Esc\nApproval: y Allow Once / n Deny; Esc preserves pending approval\nSlash: / discovery, Tab completes, Enter exact executes, Esc dismisses; // sends literal slash text.\nSingle-line slash commands stay local, including paste; invalid names show feedback. Multiline slash text stays literal; // escapes a command. /references removes selected paths. Input recall is memory-only; sessions belong to daemon.";
 
 // A guard complements Ratatui's panic hook on recoverable error/early-return paths.
 struct TerminalCleanup;
@@ -197,6 +202,15 @@ fn worker(path: &Path) -> Worker {
     });
     Worker { tx, rx, stop }
 }
+fn preference_source(overridden: bool, variable: &str) -> &'static str {
+    if overridden {
+        "this process (temporary override)"
+    } else if std::env::var_os(variable).is_some() {
+        "launch environment (invalid values use default)"
+    } else {
+        "built-in default"
+    }
+}
 #[derive(Clone)]
 struct SessionDraft {
     text: String,
@@ -207,6 +221,14 @@ struct SessionDraft {
 }
 #[derive(Default)]
 struct App {
+    transcript_cache: RefCell<transcript_cache::TranscriptCache>,
+    mascot: Projection,
+    mascot_mode: DisplayMode,
+    mascot_override: bool,
+    theme_override: bool,
+    models_loading: bool,
+    sessions_loading: bool,
+    archive_confirm: Option<String>,
     cancel_after_start: bool,
     pending_text: String,
     pending_literal: bool,
@@ -239,6 +261,7 @@ struct App {
     connected: bool,
     output: String,
     view: Option<String>,
+    view_position: Option<(bool, u16)>,
     system_notices: String,
     activity: Vec<String>,
     approval: Option<Value>,
@@ -261,6 +284,12 @@ impl App {
         ["starting", "running", "approval", "cancelling"].contains(&self.state.as_str())
     }
     fn request(&mut self, worker: &Worker, name: &'static str, payload: Value, tag: &str) {
+        if tag == "models" {
+            self.models_loading = true;
+        }
+        if tag == "sessions" {
+            self.sessions_loading = true;
+        }
         if worker
             .tx
             .try_send(Request {
@@ -271,6 +300,12 @@ impl App {
             .is_err()
         {
             self.request_failed = true;
+            if tag == "models" {
+                self.models_loading = false;
+            }
+            if tag == "sessions" {
+                self.sessions_loading = false;
+            }
             self.busy = false;
             self.notice =
                 "Connection queue unavailable. Draft preserved; wait for connection recovery."
@@ -292,6 +327,7 @@ impl App {
         self.request(worker, "session.list", json!({}), "sessions");
     }
     fn snapshot(&mut self, value: Value) {
+        self.mascot.snapshot(&value);
         if value["run_id"].as_str().unwrap_or("") != self.run_id {
             if self.state != "starting" {
                 self.latest_user.clear();
@@ -304,6 +340,10 @@ impl App {
         let next_sid = value["session_id"].as_str().unwrap_or("");
         let switching = next_sid != self.sid;
         if switching {
+            self.view_position = None;
+            self.follow = true;
+            self.scroll = 0;
+            self.archive_confirm = None;
             self.prior_transcript.clear();
             self.turn_visible = false;
             self.system_notices.clear();
@@ -364,6 +404,12 @@ impl App {
                 let recovered = connected && !self.connected;
                 self.connected = connected;
                 if recovered {
+                    self.mascot.ready();
+                }
+                if !connected {
+                    self.mascot.disconnected();
+                }
+                if recovered {
                     self.refresh(worker);
                 }
             }
@@ -374,7 +420,19 @@ impl App {
                 ) {
                     self.connected = false;
                 }
-                self.notice = error.to_string();
+                if tag == "models" {
+                    self.models_loading = false;
+                }
+                if tag == "sessions" {
+                    self.sessions_loading = false;
+                }
+                self.notice = if tag == "model-selection" {
+                    format!(
+                        "Model selection failed: {error}. /model retries; /doctor inspects provider status."
+                    )
+                } else {
+                    error.to_string()
+                };
                 self.busy = false;
                 if tag == "approval" {
                     self.approval_pending = false;
@@ -396,6 +454,9 @@ impl App {
                 }
             }
             Update::Reply(tag, value) => {
+                if !self.connected {
+                    self.mascot.ready();
+                }
                 self.connected = true;
                 match tag.as_str() {
                     "inspect" => {
@@ -405,19 +466,19 @@ impl App {
                         }
                     }
                     "doctor" => {
-                        self.view = Some(serde_json::to_string_pretty(&value).unwrap_or_default());
+                        self.show_view(serde_json::to_string_pretty(&value).unwrap_or_default());
                         self.diagnostics = value;
                     }
                     "diagnostics" => {
                         self.diagnostics = value;
-                        for kind in ["provider", "workspace"] {
+                        for kind in ["provider", "workspace", "model"] {
                             self.refresh_picker(kind);
                         }
                     }
                     "changes" => {
                         self.busy = false;
                         self.changes = value["files"].as_array().cloned().unwrap_or_default();
-                        self.view = Some(format!(
+                        self.show_view(format!(
                             "{}\n{}",
                             value["reason"]
                                 .as_str()
@@ -487,10 +548,12 @@ impl App {
                         }
                     }
                     "models" => {
+                        self.models_loading = false;
                         self.models = value["models"].as_array().cloned().unwrap_or_default();
                         self.refresh_picker("model");
                     }
                     "sessions" => {
+                        self.sessions_loading = false;
                         self.sessions = value["sessions"].as_array().cloned().unwrap_or_default();
                         self.refresh_picker("session");
                         if self.sid.is_empty() {
@@ -517,7 +580,7 @@ impl App {
                         }
                     }
                     "attach" | "new" => {
-                        self.view = None;
+                        self.close_view();
                         self.snapshot(value);
                         self.request(
                             worker,
@@ -528,10 +591,7 @@ impl App {
                         self.refresh(worker);
                     }
                     "messages" => {
-                        if value["session_id"]
-                            .as_str()
-                            .is_some_and(|sid| sid != self.sid)
-                        {
+                        if value["session_id"].as_str() != Some(self.sid.as_str()) {
                             return;
                         }
                         let messages = value["messages"].as_array().cloned().unwrap_or_default();
@@ -596,10 +656,11 @@ impl App {
                         self.busy = false;
                         self.output.clear();
                         self.view = None;
+                        self.view_position = None;
                         self.activity.clear();
                         self.follow = true;
                     }
-                    "cancel" => {
+                    "cancel" if self.active() => {
                         self.state = "cancelling".into();
                         self.notice =
                             "Cancellation requested; waiting for the daemon's terminal state."
@@ -626,12 +687,12 @@ impl App {
                         self.request(worker,"desktop.action",json!({"action":"refreshModelDiscovery","arguments":[],"session_id":""}),"refresh-provider");
                     }
                     "refresh-provider" => self.refresh(worker),
-                    "selection" => {
+                    "selection" | "model-selection" => {
                         self.busy = false;
                         if value.get("accepted") == Some(&json!(false)) {
-                            self.notice = "Daemon refused selection.".into();
+                            self.notice = "Daemon refused selection. /model retries; /doctor inspects provider status.".into();
                         } else {
-                            self.notice = "Selection updated for future requests.".into();
+                            self.notice = "Selection reported by daemon; refreshing state. Inference readiness is not verified by selection.".into();
                         }
                         self.refresh(worker);
                     }
@@ -654,7 +715,7 @@ impl App {
                         self.refresh(worker);
                     }
                     "status" => {
-                        self.view = Some(serde_json::to_string_pretty(&value).unwrap_or_default());
+                        self.show_view(serde_json::to_string_pretty(&value).unwrap_or_default());
                     }
                     _ => {}
                 }
@@ -702,6 +763,7 @@ impl App {
                 {
                     return;
                 }
+                self.mascot.event(&event.name);
                 match event.name.as_str() {
                     "output.delta" => {
                         let text = event.payload["text"].as_str().unwrap_or("");
@@ -794,6 +856,44 @@ impl App {
             }
         }
     }
+    fn show_view(&mut self, text: String) {
+        if self.view.is_none() {
+            self.view_position = Some((self.follow, self.scroll));
+        }
+        self.view = Some(text);
+        self.follow = false;
+        self.scroll = 0;
+    }
+    fn close_view(&mut self) {
+        if self.view.take().is_some() {
+            if let Some((follow, scroll)) = self.view_position.take() {
+                self.follow = follow;
+                self.scroll = scroll;
+            }
+        } else {
+            self.view_position = None;
+        }
+    }
+    fn picker_empty_message(&self, picker: &Picker) -> String {
+        if matches!(picker.kind, "model" | "session" | "provider" | "workspace") {
+            if !self.connected {
+                return "Disconnected. Esc returns; /reconnect retries. Draft preserved.".into();
+            }
+            if (picker.kind == "model" && self.models_loading)
+                || (picker.kind == "session" && self.sessions_loading)
+            {
+                return "Loading from daemon… Esc returns; draft preserved.".into();
+            }
+            if picker.items.is_empty() {
+                return match picker.kind {
+                    "model" => "No discovered models. Esc returns; /provider or /doctor inspects configuration.",
+                    "session" => "No sessions returned. Esc returns; /new creates a session.",
+                    _ => "No entries returned by daemon. Esc returns; /doctor inspects status.",
+                }.into();
+            }
+        }
+        "No matches. Change filter or Esc to return; draft preserved.".into()
+    }
     fn open_picker(&mut self, kind: &'static str) {
         let items = match kind {
             "model" => self
@@ -806,20 +906,20 @@ impl App {
                 })
                 .map(|m| Item {
                     label: format!(
-                        "{} / {} · {} · {}{}",
-                        m["provider_id"].as_str().unwrap_or("?"),
-                        m["model_id"].as_str().unwrap_or("?"),
-                        m["health"].as_str().unwrap_or("unknown"),
-                        m["capabilities"].as_str().unwrap_or("capabilities unknown"),
+                        "{}{} / {} · {} · {}",
                         if m["provider_id"]
                             == self.diagnostics["properties"]["effective_selection"]["provider_id"]
                             && m["model_id"]
                                 == self.diagnostics["properties"]["effective_selection"]["model_id"]
                         {
-                            " · active"
+                            "Selected · "
                         } else {
                             ""
-                        }
+                        },
+                        m["provider_id"].as_str().unwrap_or("?"),
+                        m["model_id"].as_str().unwrap_or("?"),
+                        m["health"].as_str().unwrap_or("unknown"),
+                        m["capabilities"].as_str().unwrap_or("capabilities unknown")
                     ),
                     id: m["model_id"].as_str().unwrap_or("").into(),
                     extra: m["provider_id"].as_str().unwrap_or("").into(),
@@ -867,7 +967,12 @@ impl App {
                 .iter()
                 .map(|s| Item {
                     label: format!(
-                        "{} · {} · {}{}{}",
+                        "{}{} · {} · {}{}{}",
+                        if s["session_id"].as_str() == Some(self.sid.as_str()) {
+                            "Active · "
+                        } else {
+                            ""
+                        },
                         s["title"].as_str().unwrap_or("Untitled"),
                         s["run_type"].as_str().unwrap_or("chat"),
                         s["state"].as_str().unwrap_or("idle"),
@@ -884,7 +989,9 @@ impl App {
                     ),
                     id: s["session_id"].as_str().unwrap_or("").into(),
                     extra: format!(
-                        "{} · {}/{}",
+                        "Session: {}
+{} · {}/{}",
+                        s["session_id"].as_str().unwrap_or("unknown"),
                         s["created_at"].as_str().unwrap_or(""),
                         s["provider_id"].as_str().unwrap_or(""),
                         s["model_id"].as_str().unwrap_or("")
@@ -1118,9 +1225,8 @@ impl App {
             Status => self.request(worker, "daemon.status", json!({}), "status"),
             Doctor => self.request(worker, "terminal.state", json!({}), "doctor"),
             Exit => {
-                let is_exit_command = commands::parse(self.editor.text.trim())
-                    .is_ok_and(|(c, _)| c.id == Exit)
-                    && !self.editor.literal;
+                let is_exit_command =
+                    commands::parse(self.editor.text.trim()).is_ok_and(|(c, _)| c.id == Exit);
                 if (!self.editor.text.is_empty() && !is_exit_command) || !self.references.is_empty()
                 {
                     self.notice =
@@ -1132,7 +1238,7 @@ impl App {
             }
             Cancel => self.request_cancel(worker),
             Details => {
-                self.view = None;
+                self.close_view();
                 self.show_details = !self.show_details;
                 self.notice = format!(
                     "Execution details {} · safe metadata only; raw payloads/reasoning unavailable.",
@@ -1144,7 +1250,7 @@ impl App {
                 );
             }
             History => {
-                self.view = None;
+                self.close_view();
                 if argument.is_empty() {
                     self.request(
                         worker,
@@ -1165,6 +1271,13 @@ impl App {
                         "Archive requires an empty draft and no references; draft preserved."
                             .into();
                     return false;
+                }
+                if command.id == Archive
+                    && self.archive_confirm.take().as_deref() != Some(self.sid.as_str())
+                {
+                    self.archive_confirm = Some(self.sid.clone());
+                    self.close_view();
+                    return true;
                 }
                 let (action, args) = match command.id {
                     Export => (
@@ -1199,6 +1312,7 @@ impl App {
                     self.open_picker("theme");
                 } else if let Some(selected) = theme::Theme::parse(argument) {
                     self.theme = selected;
+                    self.theme_override = true;
                     self.notice = format!(
                         "Theme: {} · {}",
                         selected.name(),
@@ -1215,9 +1329,39 @@ impl App {
                 }
             }
             Settings => {
-                self.view = Some(format!(
-                    "TUI preferences (inspection)\nTheme: {} (/theme changes this process; SENTINEL_TUI_THEME sets launch default)\nNO_COLOR: {}\nASCII borders: {} (SENTINEL_TUI_ASCII)\nExecution details: {} (this TUI process; /details toggles)\nBindings: fixed V2 contract; /help is generated from the command registry.\nNo duplicate configuration file; persistent customization is deferred.",
+                if argument == "theme" || argument.starts_with("theme ") {
+                    return self.command(
+                        &format!("/theme {}", argument.strip_prefix("theme").unwrap().trim()),
+                        worker,
+                    );
+                }
+                if argument == "details" {
+                    return self.command("/details", worker);
+                }
+                if !argument.is_empty() {
+                    let mode = argument
+                        .strip_prefix("mascot ")
+                        .and_then(DisplayMode::parse);
+                    let Some(mode) = mode else {
+                        self.notice = "Usage: /settings [theme [name] | mascot off|static|animated|auto | details]".into();
+                        return false;
+                    };
+                    self.mascot_mode = mode;
+                    self.mascot_override = true;
+                    self.notice = format!(
+                        "Mascot: {} (this process; SENTINEL_TUI_MASCOT sets launch default)",
+                        mode.name()
+                    );
+                    self.close_view();
+                    return true;
+                }
+                self.show_view(format!(
+                    "TUI preferences · no persistent writes\nTheme: {} · {}\n/theme [name] or /settings theme [name]\nMascot preference: {} · {}\n/settings mascot off|static|animated|auto\nReduced motion: {} · launch environment SENTINEL_TUI_REDUCED_MOTION\nReduced motion keeps images static; safety/terminal support can require text fallback. Disconnected presentation is static.\nNO_COLOR: {} · launch environment\nASCII borders: {} · launch environment SENTINEL_TUI_ASCII\nExecution details: {} · this process; /settings details toggles\nEnter sends; Shift+Enter / Alt+Enter / Ctrl+O inserts a newline.\n/help: registered commands and keyboard help; Esc returns.\nAll TUI changes are temporary; no new configuration storage.",
                     self.theme.name(),
+                    preference_source(self.theme_override, "SENTINEL_TUI_THEME"),
+                    self.mascot_mode.name(),
+                    preference_source(self.mascot_override, "SENTINEL_TUI_MASCOT"),
+                    std::env::var_os("SENTINEL_TUI_REDUCED_MOTION").is_some(),
                     std::env::var_os("NO_COLOR").is_some(),
                     std::env::var_os("SENTINEL_TUI_ASCII").is_some(),
                     self.show_details
@@ -1228,13 +1372,13 @@ impl App {
                 self.request(worker, "terminal.state", json!({}), "inspect");
             }
             Activity => {
-                self.view = Some(format!(
+                self.show_view(format!(
                     "Execution detail · safe metadata\n{}",
                     self.activity.join("\n")
                 ));
             }
             Notices => {
-                self.view = Some(format!(
+                self.show_view(format!(
                     "System notices\n{}\n{}",
                     self.system_notices, self.notice
                 ));
@@ -1281,7 +1425,6 @@ impl App {
                 unreachable!("unavailable commands are rejected before dispatch")
             }
         }
-        self.follow = true;
         !self.request_failed
     }
     fn inspect_projection(&mut self, command: CommandId) {
@@ -1302,7 +1445,7 @@ impl App {
                     .collect::<serde_json::Map<_, _>>()
             })
             .unwrap_or_default();
-        self.view = Some(if properties.is_empty() {
+        self.show_view(if properties.is_empty() {
             format!(
                 "No {needle} metadata is exposed by the daemon. /doctor shows full supported diagnostics."
             )
@@ -1314,7 +1457,8 @@ impl App {
         });
     }
     fn slash_open(&self) -> bool {
-        self.picker.is_none()
+        self.archive_confirm.is_none()
+            && self.picker.is_none()
             && self.search.is_none()
             && self.approval.is_none()
             && !self.editor.literal
@@ -1327,7 +1471,9 @@ impl App {
         let matches = commands::matching(self.editor.text.trim_start_matches('/'));
         if let Some(command) = matches.get(self.slash_selected.min(matches.len().saturating_sub(1)))
         {
-            if execute_exact && commands::find(&self.editor.text).is_some() {
+            if execute_exact
+                && commands::find(&self.editor.text).is_some_and(|exact| exact.id == command.id)
+            {
                 self.send(worker);
                 return;
             }
@@ -1388,7 +1534,7 @@ impl App {
                     worker,
                     "model.select",
                     json!({"provider_id":item.extra,"model_id":item.id}),
-                    "selection",
+                    "model-selection",
                 );
             }
             "workspace" => {
@@ -1453,7 +1599,7 @@ impl App {
                 if let Ok(i) = item.id.parse::<usize>()
                     && let Some(file) = self.changes.get(i)
                 {
-                    self.view = Some(format!(
+                    self.show_view(format!(
                         "{} · Applied\n{}",
                         file["path"].as_str().unwrap_or("?"),
                         file["diff"].as_str().unwrap_or("")
@@ -1463,7 +1609,7 @@ impl App {
                 }
             }
             "help" => {
-                self.view = Some(item.extra);
+                self.show_view(item.extra);
             }
             _ => {
                 self.command(&item.id, worker);
@@ -1471,7 +1617,11 @@ impl App {
         }
     }
     fn paste(&mut self, text: &str) {
-        if self.picker.is_none() && self.approval.is_none() && self.search.is_none() {
+        if self.archive_confirm.is_none()
+            && self.picker.is_none()
+            && self.approval.is_none()
+            && self.search.is_none()
+        {
             self.editor.paste(text);
         }
     }
@@ -1483,6 +1633,7 @@ impl App {
             if app.active() {
                 app.command("/cancel", worker);
             } else if app.editor.text.is_empty()
+                && app.archive_confirm.is_none()
                 && app.picker.is_none()
                 && app.search.is_none()
                 && app.references.is_empty()
@@ -1492,6 +1643,7 @@ impl App {
                 return;
             } else {
                 app.picker = None;
+                app.archive_confirm = None;
                 app.search = None;
                 app.notice = "Draft preserved. Ctrl+D exits only with an empty composer.".into();
             }
@@ -1504,6 +1656,28 @@ impl App {
                 app.approval_pending = true;
                 app.approval_allow = Some(key.code == KeyCode::Char('y'));
                 app.request(worker, "approval.respond", payload, "approval");
+            }
+            return;
+        }
+        if app.archive_confirm.is_some() {
+            match key.code {
+                KeyCode::Char('y') if !ctrl => {
+                    if app.archive_confirm.as_deref() == Some(app.sid.as_str())
+                        && app.connected
+                        && !app.active()
+                        && !app.busy
+                    {
+                        app.command("/archive", worker);
+                    } else {
+                        app.archive_confirm = None;
+                        app.notice = "Session changed or unavailable; archive cancelled.".into();
+                    }
+                }
+                KeyCode::Esc | KeyCode::Char('n') => {
+                    app.archive_confirm = None;
+                    app.notice = "Archive cancelled; session preserved.".into();
+                }
+                _ => {}
             }
             return;
         }
@@ -1603,7 +1777,7 @@ impl App {
         }
         match key.code {
             KeyCode::Esc => {
-                app.view = None;
+                app.close_view();
                 app.slash_dismissed = Some(app.editor.text.clone());
             }
             KeyCode::Char('a') if ctrl => app.editor.home(),
@@ -1618,11 +1792,11 @@ impl App {
                     app.scroll = app.viewport_bottom.get();
                 }
                 app.follow = false;
-                app.scroll = app.scroll.saturating_sub(10);
+                app.scroll = app.scroll.min(app.viewport_bottom.get()).saturating_sub(10);
             }
             KeyCode::PageDown => {
                 app.follow = false;
-                app.scroll = app.scroll.saturating_add(10);
+                app.scroll = app.scroll.saturating_add(10).min(app.viewport_bottom.get());
             }
             KeyCode::Enter => app.send(worker),
             KeyCode::Left if ctrl => app.editor.word(false),
@@ -1667,11 +1841,11 @@ impl App {
         if self.editor.text.trim().is_empty() {
             return;
         }
-        if self.editor.text.starts_with('/')
-            && !self.editor.text.starts_with("//")
-            && !self.editor.literal
-        {
-            let command = self.editor.text.clone();
+        // Single-line slash input always uses local validation, including paste.
+        // Multiline prose and explicit // escaping retain literal chat semantics.
+        let text = self.editor.text.trim();
+        if !text.contains(['\n', '\r']) && text.starts_with('/') && !text.starts_with("//") {
+            let command = text.to_owned();
             if self.command(&command, worker) {
                 self.editor.take();
             }
@@ -1703,6 +1877,7 @@ impl App {
         self.prior_transcript = std::mem::take(&mut self.output);
         self.turn_visible = true;
         self.view = None;
+        self.view_position = None;
         self.pending_references = self.references.clone();
         let mut text = self.editor.take();
         if !self.pending_literal && text.starts_with("//") {
@@ -1717,6 +1892,7 @@ impl App {
             }
         }
         self.state = "starting".into();
+        self.mascot.model_pending();
         self.busy = true;
         self.request(
             worker,
@@ -1813,33 +1989,80 @@ fn transcript_lines(text: &str) -> Vec<Line<'static>> {
             } else {
                 Style::default()
             };
-            if trimmed.starts_with("```") {
+            if trimmed.starts_with("```") && !detail && !line.starts_with("    ") {
                 code = !code;
+                let label = trimmed.trim_start_matches('`');
+                return Line::styled(
+                    if code {
+                        format!("  Code · {}", if label.is_empty() { "text" } else { label })
+                    } else {
+                        String::new()
+                    },
+                    style,
+                );
             }
-            // Only the daemon's known failure wrapper is normalized; source/code stays literal.
-            let rendered = if !code && trimmed == "**Ajan Görevi Başarısız / Agent Task Failed**"
-            {
-                line.replacen(
-                    "**Ajan Görevi Başarısız / Agent Task Failed**",
-                    "Ajan Görevi Başarısız / Agent Task Failed",
-                    1,
-                )
-            } else if !code
-                && trimmed.starts_with('*')
-                && trimmed.ends_with(" steps executed.*")
-                && trimmed.contains(" adım çalıştırıldı / ")
-            {
-                format!(
-                    "{}{}",
-                    &line[..line.len() - trimmed.len()],
-                    &trimmed[1..trimmed.len() - 1]
-                )
+            if heading || code || detail || trimmed.starts_with("```") || line.starts_with("    ") {
+                Line::styled(line.to_owned(), style)
             } else {
-                line.to_owned()
-            };
-            Line::styled(rendered, style)
+                inline_markdown(line, style)
+            }
         })
         .collect()
+}
+
+// Balanced inline markup only. Unmatched/unsupported syntax stays copyable verbatim.
+fn inline_markdown(text: &str, style: Style) -> Line<'static> {
+    if ["***", "``", "\\*", "\\`"]
+        .iter()
+        .any(|syntax| text.contains(syntax))
+    {
+        return Line::styled(text.to_owned(), style);
+    }
+    let mut spans = Vec::new();
+    let mut rest = text;
+    while !rest.is_empty() {
+        let marker = ["`", "**", "*"].into_iter().find(|m| rest.starts_with(m));
+        if let Some(marker) = marker
+            && let Some(end) = rest[marker.len()..].find(marker).filter(|&i| i > 0)
+        {
+            let content = &rest[marker.len()..marker.len() + end];
+            let modifier = match marker {
+                "**" => Modifier::BOLD,
+                "*" => Modifier::ITALIC,
+                _ => Modifier::REVERSED,
+            };
+            spans.push(Span::styled(
+                content.to_owned(),
+                style.add_modifier(modifier),
+            ));
+            rest = &rest[2 * marker.len() + end..];
+            continue;
+        }
+        let end = rest
+            .char_indices()
+            .skip(1)
+            .find(|(_, c)| matches!(c, '*' | '`'))
+            .map_or(rest.len(), |(i, _)| i);
+        spans.push(Span::styled(rest[..end].to_owned(), style));
+        rest = &rest[end..];
+    }
+    Line::from(spans).style(style)
+}
+
+// Slice by UTF-8 byte offsets established by the cell-width wrapper, retaining spans.
+fn styled_slice(line: &Line<'static>, start: usize, end: usize) -> Line<'static> {
+    let mut offset = 0;
+    let mut spans = Vec::new();
+    for span in &line.spans {
+        let next = offset + span.content.len();
+        let a = start.saturating_sub(offset).min(span.content.len());
+        let b = end.saturating_sub(offset).min(span.content.len());
+        if a < b {
+            spans.push(Span::styled(span.content[a..b].to_owned(), span.style));
+        }
+        offset = next;
+    }
+    Line::from(spans).style(line.style)
 }
 
 // Wrap once so scrolling and follow-latest use the same rows that are rendered.
@@ -1847,8 +2070,8 @@ fn transcript_lines(text: &str) -> Vec<Line<'static>> {
 fn wrap_transcript(lines: Vec<Line<'static>>, width: usize) -> Vec<Line<'static>> {
     let mut rows = Vec::new();
     for line in lines {
-        let style = line.style;
         let text = line.to_string();
+        let mut offset = 0;
         let mut remaining = text.as_str();
         while !remaining.is_empty() {
             let mut cells = 0;
@@ -1877,7 +2100,8 @@ fn wrap_transcript(lines: Vec<Line<'static>>, width: usize) -> Vec<Line<'static>
             if end < remaining.len() && word_end > 0 {
                 end = word_end;
             }
-            rows.push(Line::styled(remaining[..end].to_owned(), style));
+            rows.push(styled_slice(&line, offset, offset + end));
+            offset += end;
             remaining = &remaining[end..];
         }
         if text.is_empty() {
@@ -2010,7 +2234,11 @@ fn secondary_style() -> Style {
     theme::secondary()
 }
 
+#[cfg(test)]
 fn draw(frame: &mut Frame, app: &App) {
+    draw_with_mascot(frame, app, None);
+}
+fn draw_with_mascot(frame: &mut Frame, app: &App, mut player: Option<&mut Player>) {
     app.theme.apply();
     frame.render_widget(Block::default().style(theme::base()), frame.area());
     if frame.area().width < 24 || frame.area().height < 8 {
@@ -2037,6 +2265,10 @@ fn draw(frame: &mut Frame, app: &App) {
         Constraint::Length(2),
     ])
     .split(frame.area());
+    let slot = player
+        .as_ref()
+        .and_then(|p| mascot::slot(app, frame.area(), p.cell_size()));
+    let compact = slot.filter(|p| p.area.y == frame.area().y);
     let properties = &app.diagnostics["properties"];
     let header_rows = Layout::vertical([
         Constraint::Length(1),
@@ -2046,29 +2278,39 @@ fn draw(frame: &mut Frame, app: &App) {
     .split(areas[0]);
     let header_columns =
         Layout::horizontal([Constraint::Min(1), Constraint::Length(14)]).split(header_rows[0]);
+    let header_left = compact
+        .map(|p| {
+            Rect::new(
+                header_columns[0].x,
+                header_columns[0].y,
+                p.area.x.saturating_sub(header_columns[0].x + 1),
+                1,
+            )
+        })
+        .unwrap_or(header_columns[0]);
     frame.render_widget(
         Paragraph::new(format!(
             "SENTINEL / {}",
             if app.agent { "Agent" } else { "Chat" }
         ))
         .style(header_style()),
-        header_columns[0],
+        header_left,
     );
     let workspace = app.diagnostics["workspace"]["name"]
         .as_str()
         .unwrap_or("unknown");
-    let workspace_x = header_columns[0].x + 21;
-    if header_columns[0].width > 40 {
+    let workspace_x = header_left.x + 21;
+    if header_left.width > 40 {
         frame.render_widget(
             Paragraph::new(fit_label(
                 &format!("Workspace: {workspace}"),
-                header_columns[0].width.saturating_sub(22),
+                header_left.width.saturating_sub(22),
             ))
             .style(secondary_style()),
             Rect::new(
                 workspace_x,
                 header_rows[0].y,
-                header_columns[0].width.saturating_sub(22),
+                header_left.width.saturating_sub(22),
                 1,
             ),
         );
@@ -2093,7 +2335,9 @@ fn draw(frame: &mut Frame, app: &App) {
         Constraint::Length(readiness_label(app).len() as u16 + 1),
     ])
     .split(header_rows[2]);
-    let identity_width = info_columns[0].width;
+    let identity_width = compact
+        .map(|p| p.area.x.saturating_sub(info_columns[0].x + 1))
+        .unwrap_or(info_columns[0].width);
     let provider = properties["activeRuntimeProviderLabel"]
         .as_str()
         .filter(|s| !s.is_empty())
@@ -2111,7 +2355,7 @@ fn draw(frame: &mut Frame, app: &App) {
     );
     frame.render_widget(
         Paragraph::new(identity).style(secondary_style()),
-        info_columns[0],
+        Rect::new(info_columns[0].x, info_columns[0].y, identity_width, 1),
     );
     frame.render_widget(
         Paragraph::new(readiness_label(app))
@@ -2138,31 +2382,19 @@ fn draw(frame: &mut Frame, app: &App) {
     app.reading_width.set(width);
     let empty = app.view.is_none() && app.output.is_empty() && !app.active() && !app.turn_visible;
     let transcript = conversation_text(app);
-    let styled_lines = wrap_transcript(
-        if empty {
-            transcript
-                .lines()
-                .map(|line| {
-                    Line::styled(
-                        line.to_owned(),
-                        if line == "Start a new conversation" || line.contains(" S ") {
-                            header_style()
-                        } else {
-                            secondary_style()
-                        },
-                    )
-                })
-                .collect()
-        } else {
-            transcript_lines(&transcript)
-        },
-        width,
-    );
-    let lines = styled_lines.len();
-    let scroll = if app.follow {
-        lines.saturating_sub(height).min(u16::MAX as usize) as u16
+    let transcript = if empty && slot.is_some() {
+        transcript.lines().skip(2).collect::<Vec<_>>().join("\n")
     } else {
-        app.scroll
+        transcript
+    };
+    let mut transcript_cache = app.transcript_cache.borrow_mut();
+    transcript_cache.update(transcript, width, app.theme, empty);
+    let lines = transcript_cache.rows().len();
+    let max_scroll = lines.saturating_sub(height).min(u16::MAX as usize) as u16;
+    let scroll = if app.follow {
+        max_scroll
+    } else {
+        app.scroll.min(max_scroll)
     };
     app.viewport_bottom
         .set(lines.saturating_sub(height).min(u16::MAX as usize) as u16);
@@ -2170,7 +2402,8 @@ fn draw(frame: &mut Frame, app: &App) {
         let content_height = lines.min(u16::MAX as usize) as u16;
         Rect::new(
             reading_area.x,
-            reading_area.y + reading_area.height.saturating_sub(content_height) / 2,
+            slot.map(|p| p.area.bottom() + 1)
+                .unwrap_or(reading_area.y + reading_area.height.saturating_sub(content_height) / 2),
             reading_area.width,
             content_height.min(reading_area.height),
         )
@@ -2178,15 +2411,27 @@ fn draw(frame: &mut Frame, app: &App) {
         reading_area
     };
     frame.render_widget(
-        Paragraph::new(styled_lines)
-            .alignment(if empty {
-                Alignment::Center
-            } else {
-                Alignment::Left
-            })
-            .scroll((if empty { 0 } else { scroll }, 0)),
+        Paragraph::new(
+            transcript_cache
+                .rows()
+                .iter()
+                .skip(if empty { 0 } else { scroll as usize })
+                .take(height)
+                .cloned()
+                .collect::<Vec<_>>(),
+        )
+        .alignment(if empty {
+            Alignment::Center
+        } else {
+            Alignment::Left
+        }),
         transcript_area,
     );
+    drop(transcript_cache);
+    if let (Some(player), Some(slot)) = (player.as_mut(), slot) {
+        frame.render_widget(Clear, slot.area);
+        player.render(frame, slot.area, app.mascot.state);
+    }
     let before = &app.editor.text[..app.editor.cursor];
     let row = before.chars().filter(|&c| c == '\n').count();
     let col = Line::raw(before.rsplit('\n').next().unwrap_or("")).width();
@@ -2215,7 +2460,11 @@ fn draw(frame: &mut Frame, app: &App) {
         .block(
             panel_block()
                 .border_style(
-                    if app.picker.is_none() && app.approval.is_none() && app.search.is_none() {
+                    if app.archive_confirm.is_none()
+                        && app.picker.is_none()
+                        && app.approval.is_none()
+                        && app.search.is_none()
+                    {
                         header_style()
                     } else {
                         Style::default().add_modifier(Modifier::DIM)
@@ -2230,7 +2479,8 @@ fn draw(frame: &mut Frame, app: &App) {
         ),
         composer_area,
     );
-    if app.picker.is_none()
+    if app.archive_confirm.is_none()
+        && app.picker.is_none()
         && app.approval.is_none()
         && app.search.is_none()
         && composer_inner.width > 0
@@ -2256,7 +2506,9 @@ fn draw(frame: &mut Frame, app: &App) {
                 .join(", ")
         )
     };
-    let notice = if !app.follow && lines > height + app.scroll as usize {
+    let notice = if app.view.is_some() && lines > height + scroll as usize {
+        "PgUp/PgDn scroll · Esc returns to conversation".to_owned()
+    } else if !app.follow && lines > height + scroll as usize {
         "Viewing earlier output · new content below · Ctrl+B follows latest".to_owned()
     } else if let Some(search) = &app.search {
         format!("Search: {search} · Enter find / Esc close")
@@ -2282,25 +2534,50 @@ fn draw(frame: &mut Frame, app: &App) {
     );
     let footer_columns =
         Layout::horizontal([Constraint::Min(1), Constraint::Length(14)]).split(footer_rows[1]);
-    frame.render_widget(
-        Paragraph::new(if app.approval.is_some() {
-            "y Allow Once · n Deny · Ctrl+C cancel"
-        } else if app.picker.is_some() {
-            "Arrows select · Enter confirm · Esc close"
-        } else if app.view.is_some() {
-            "Esc conversation · Ctrl+P commands · F1 help"
-        } else if app.active() || app.busy {
-            "Ctrl+C cancel · /details expand · F1 help"
+    let compact_hints = footer_columns[0].width < 48;
+    let hints = if app.approval.is_some() {
+        if compact_hints {
+            "y Allow · n Deny · Ctrl+C cancel"
         } else {
-            "Enter send · Shift+Enter newline · Ctrl+P commands"
-        })
-        .style(secondary_style()),
+            "y Allow Once · n Deny · Ctrl+C cancel"
+        }
+    } else if app.archive_confirm.is_some() {
+        "y archive · n / Esc cancel"
+    } else if app.picker.is_some() {
+        if compact_hints {
+            "Arrows · Enter · Esc"
+        } else {
+            "Arrows select · Enter confirm · Esc close"
+        }
+    } else if app.view.is_some() {
+        if compact_hints {
+            "Esc back · PgUp/PgDn scroll"
+        } else {
+            "Esc conversation · Ctrl+P commands · F1 help"
+        }
+    } else if app.active() || app.busy {
+        if compact_hints {
+            "Ctrl+C cancel · F1 help"
+        } else {
+            "Ctrl+C cancel · /details expand · F1 help"
+        }
+    } else if compact_hints {
+        "Enter send · Ctrl+O newline · F1 help"
+    } else {
+        "Enter send · Shift+Enter newline · Ctrl+P commands"
+    };
+    frame.render_widget(
+        Paragraph::new(fit_label(hints, footer_columns[0].width)).style(secondary_style()),
         footer_columns[0],
     );
     frame.render_widget(
-        Paragraph::new(app.state.as_str())
-            .alignment(Alignment::Right)
-            .style(header_style()),
+        Paragraph::new(if app.mascot.state == sentinel_mascot::State::ToolRunning {
+            "Tool running"
+        } else {
+            app.state.as_str()
+        })
+        .alignment(Alignment::Right)
+        .style(header_style()),
         footer_columns[1],
     );
     if app.slash_open() {
@@ -2410,7 +2687,21 @@ fn draw(frame: &mut Frame, app: &App) {
         .split(inner);
         frame.render_widget(
             Paragraph::new(fit_label(
-                &format!("Filter: {}", picker.query),
+                &format!(
+                    "Filter: {}{}",
+                    picker.query,
+                    if matches!(picker.kind, "model" | "session" | "provider" | "workspace")
+                        && !app.connected
+                    {
+                        " · disconnected; cached entries"
+                    } else if (picker.kind == "model" && app.models_loading)
+                        || (picker.kind == "session" && app.sessions_loading)
+                    {
+                        " · refreshing"
+                    } else {
+                        ""
+                    }
+                ),
                 sections[0].width,
             )),
             sections[0],
@@ -2446,6 +2737,10 @@ fn draw(frame: &mut Frame, app: &App) {
         let detail = visible
             .get(picker.selected)
             .map(|item| {
+                if picker.kind == "model" {
+                    let model = app.models.iter().find(|m| m["provider_id"] == item.extra && m["model_id"] == item.id);
+                    return format!("{} / {}\n{}\nCatalog health is not verified inference readiness. /doctor inspects status.", item.extra, item.id, model.and_then(|m| m["reason"].as_str()).unwrap_or("No provider detail supplied."));
+                }
                 format!(
                     "{}\n{}",
                     if picker.kind == "file" {
@@ -2456,15 +2751,18 @@ fn draw(frame: &mut Frame, app: &App) {
                     item.extra
                 )
             })
-            .unwrap_or_else(|| {
-                "No matches. Change filter or Esc to return; draft preserved.".into()
-            });
+            .unwrap_or_else(|| app.picker_empty_message(picker));
         frame.render_widget(
             Paragraph::new(detail)
                 .wrap(Wrap { trim: false })
                 .style(secondary_style()),
             sections[2],
         );
+    }
+    if let Some(sid) = &app.archive_confirm {
+        let area = modal(frame.area());
+        frame.render_widget(Clear, area);
+        frame.render_widget(Paragraph::new(format!("Archive {}?\nSession: {}\nMessages are retained by the daemon.\ny confirms · n / Esc cancels", app.title, sid)).wrap(Wrap { trim: false }).block(panel_block().title("Confirm archive")), area);
     }
     if let Some(p) = &app.approval {
         let area = modal(frame.area());
@@ -2473,37 +2771,121 @@ fn draw(frame: &mut Frame, app: &App) {
     }
 }
 pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
+    // Registered before raw mode; dropped after the player and terminal guard.
+    // The existing bounded input wait observes notification within 50 ms.
+    let termination = termination::Termination::new()
+        .map_err(|e| Error::Failed(format!("TUI signal registration failed: {e}")))?;
+    termination.check()?;
     let worker = worker(path);
     let mut app = App {
         state: "idle".into(),
+        mascot_mode: DisplayMode::from_env(),
         follow: true,
         attach: attach.map(str::to_owned),
         ..App::default()
     };
     app.refresh(&worker);
-    let mut terminal = ratatui::try_init().map_err(|e| Error::Unavailable(e.to_string()))?;
     let _cleanup = TerminalCleanup;
+    let initialized = ratatui::try_init()
+        .map_err(|e| Error::Failed(format!("Terminal initialization failed: {e}")))?;
+    drop(initialized);
+    termination.check()?;
+    let output_trace =
+        mascot_output::Trace::new(std::env::var_os("SENTINEL_TUI_MASCOT_DIAGNOSTICS").is_some());
+    let mut terminal = ratatui::Terminal::new(ratatui::backend::CrosstermBackend::new(
+        mascot_output::Output::new(std::io::stdout(), output_trace.clone()),
+    ))
+    .map_err(|e| Error::Unavailable(e.to_string()))?;
     let _ = execute!(
         std::io::stdout(),
         EnableBracketedPaste,
         PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES)
     );
+    let (mut mascot, mut mascot_diagnostics) = mascot::player(app.mascot_mode);
+    let mut projected_state = String::new();
+    let mut previous_diagnostic_buffer: Option<ratatui::buffer::Buffer> = None;
     (|| -> Result<(), Error> {
         let mut dirty = true;
         loop {
+            termination.check()?;
             while let Ok(update) = worker.rx.try_recv() {
                 app.update(update, &worker);
                 dirty = true;
             }
-            if dirty {
+            if !app.connected {
+                app.mascot.disconnected();
+            } else if !app.mascot.connected {
+                app.mascot.ready();
+            }
+            if projected_state != app.state {
+                if !(app.state == "running"
+                    && app.mascot.state == sentinel_mascot::State::ToolRunning)
+                {
+                    app.mascot.snapshot(&json!({"state":app.state}));
+                }
+                projected_state.clone_from(&app.state);
+            }
+            mascot.set_mode(app.mascot_mode);
+            let now = Instant::now();
+            let size = terminal
+                .size()
+                .map_err(|e| Error::Protocol(e.to_string()))?;
+            let screen = Rect::new(0, 0, size.width, size.height);
+            dirty |= mascot.update(
+                app.mascot.state,
+                mascot::slot(&app, screen, mascot.cell_size()),
+                app.connected,
+                now,
+            );
+            if mascot.take_full_redraw() {
                 terminal
-                    .draw(|frame| draw(frame, &app))
+                    .clear()
                     .map_err(|e| Error::Protocol(e.to_string()))?;
+                dirty = true;
+            }
+            if dirty {
+                mascot_diagnostics.boundary("draw_started", &output_trace, None, None);
+                let completed = terminal
+                    .draw(|frame| draw_with_mascot(frame, &app, Some(&mut mascot)))
+                    .map_err(|e| Error::Protocol(e.to_string()))?;
+                if output_trace.enabled() {
+                    let image_cells = completed
+                        .buffer
+                        .content
+                        .iter()
+                        .filter(|cell| cell.symbol().contains('\u{10eeee}'))
+                        .count();
+                    let changes = previous_diagnostic_buffer
+                        .as_ref()
+                        .filter(|b| b.area == completed.buffer.area)
+                        .map_or(completed.buffer.content.len(), |b| {
+                            b.diff(completed.buffer).len()
+                        });
+                    previous_diagnostic_buffer = Some(completed.buffer.clone());
+                    mascot_diagnostics.boundary(
+                        "draw_completed",
+                        &output_trace,
+                        Some(image_cells),
+                        Some(changes),
+                    );
+                }
+                mascot
+                    .present(terminal.backend_mut())
+                    .map_err(|e| Error::Protocol(e.to_string()))?;
+                mascot_diagnostics.boundary("graphics_presented", &output_trace, None, None);
+                mascot_diagnostics.observe(&app, &mascot, screen, true);
                 dirty = false;
             }
-            if !event::poll(Duration::from_millis(50))
-                .map_err(|e| Error::Protocol(e.to_string()))?
-            {
+            let input_ready = sentinel_mascot::poll_terminal_event(
+                mascot
+                    .next_wake(Instant::now())
+                    .unwrap_or(Duration::from_millis(50))
+                    .min(Duration::from_millis(50)),
+            );
+            // A signal can interrupt polling: prefer the external termination
+            // reason over an incidental Interrupted I/O error.
+            termination.check()?;
+            if !input_ready.map_err(|e| Error::Protocol(e.to_string()))? {
                 continue;
             }
             dirty = true;
@@ -2512,6 +2894,7 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
                     app.paste(&text);
                 }
                 Event::Key(key) if key.kind == KeyEventKind::Press => {
+                    mascot_diagnostics.first_key(&output_trace);
                     app.handle_key(key, &worker);
                     if app.exit_requested {
                         break;
@@ -2527,6 +2910,223 @@ pub fn run(path: &Path, attach: Option<&str>) -> Result<(), Error> {
 mod tests {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend};
+    fn mascot_event(name: &str, payload: Value) -> Envelope {
+        Envelope {
+            version: sentinel_ipc::Version { major: 1, minor: 1 },
+            kind: sentinel_ipc::MessageType::Event,
+            id: String::new(),
+            name: name.into(),
+            payload,
+        }
+    }
+
+    #[test]
+    fn production_mascot_render_preserves_composer_and_modal_focus() {
+        use sentinel_mascot::{Assets, Capabilities};
+        for (w, h) in [(80, 24), (100, 30), (120, 40), (160, 48)] {
+            let mut app = App {
+                state: "idle".into(),
+                connected: true,
+                ..App::default()
+            };
+            app.mascot.ready();
+            app.editor.insert("Türkçe draft");
+            let assets = Assets::load(
+                &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../assets/core-warden"),
+            );
+            let mut player = Player::new(
+                assets,
+                Capabilities::from_responses(true, false, Some((8, 16))),
+                DisplayMode::Static,
+                false,
+            );
+            let screen = Rect::new(0, 0, w, h);
+            let place = mascot::slot(&app, screen, player.cell_size());
+            assert!(place.is_some());
+            for _ in 0..100 {
+                player.update(app.mascot.state, place, true, Instant::now());
+                if player.frame_count() > 0 {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            assert_eq!(player.frame_count(), 1);
+            let mut terminal = Terminal::new(TestBackend::new(w, h)).unwrap();
+            terminal
+                .draw(|f| draw_with_mascot(f, &app, Some(&mut player)))
+                .unwrap();
+            let rows = rendered_rows(&terminal);
+            assert!(rows.iter().any(|r| r.contains("Start a new conversation")));
+            assert!(rows.iter().any(|r| r.contains("Türkçe draft")));
+            if let Ok(dir) = std::env::var("SENTINEL_CW04_PRODUCTION_EVIDENCE") {
+                std::fs::write(format!("{dir}/empty-{w}x{h}.txt"), rows.join("\n")).unwrap();
+            }
+            app.output = "Assistant\n  Existing transcript".into();
+            let populated = mascot::slot(&app, screen, player.cell_size());
+            player.update(app.mascot.state, populated, true, Instant::now());
+            terminal
+                .draw(|f| draw_with_mascot(f, &app, Some(&mut player)))
+                .unwrap();
+            let rows = rendered_rows(&terminal);
+            assert!(rows.iter().any(|r| r.contains("Existing transcript")));
+            assert!(rows[0].contains("Connected"));
+            assert!(rows[2].contains("Inference unknown"));
+            assert!(rows.iter().any(|r| r.contains("Türkçe draft")));
+            if let Ok(dir) = std::env::var("SENTINEL_CW04_PRODUCTION_EVIDENCE") {
+                std::fs::write(format!("{dir}/populated-{w}x{h}.txt"), rows.join("\n")).unwrap();
+            }
+            app.search = Some("draft".into());
+            assert!(mascot::slot(&app, screen, player.cell_size()).is_none());
+            player.update(app.mascot.state, None, true, Instant::now());
+            assert_eq!(player.frame_count(), 0);
+            terminal
+                .draw(|f| draw_with_mascot(f, &app, Some(&mut player)))
+                .unwrap();
+            assert!(
+                rendered_rows(&terminal)
+                    .iter()
+                    .any(|r| r.contains("Search: draft"))
+            );
+        }
+    }
+
+    #[test]
+    fn mascot_settings_and_layout_follow_real_app() {
+        let mut app = App {
+            state: "idle".into(),
+            ..App::default()
+        };
+        let worker = test_worker();
+        assert!(app.command("/settings mascot animated", &worker));
+        assert_eq!(app.mascot_mode, DisplayMode::Animated);
+        let screen = Rect::new(0, 0, 120, 40);
+        let empty = mascot::slot(&app, screen, Some((8, 16))).unwrap();
+        assert_eq!(empty.resolution, 128);
+        app.output = "Assistant\n  Existing transcript".into();
+        let compact = mascot::slot(&app, screen, Some((8, 16))).unwrap();
+        assert_eq!(compact.area.y, 0);
+        assert!(compact.area.right() < screen.right() - readiness_label(&app).len() as u16);
+        app.search = Some(String::new());
+        assert!(mascot::slot(&app, screen, Some((8, 16))).is_none());
+        app.search = None;
+        assert!(mascot::slot(&app, Rect::new(0, 0, 60, 20), Some((8, 16))).is_none());
+        assert!(app.command("/settings mascot off", &worker));
+        assert!(mascot::slot(&app, screen, Some((8, 16))).is_none());
+        assert!(!app.command("/settings mascot invalid", &worker));
+        assert_eq!(app.mascot_mode, DisplayMode::Off);
+    }
+
+    #[test]
+    fn mascot_ignores_foreign_and_stale_events() {
+        let worker = test_worker();
+        let mut app = App {
+            connected: true,
+            sid: "s".into(),
+            run_id: "r".into(),
+            state: "running".into(),
+            generation: "g".into(),
+            last_sequence: 5,
+            ..App::default()
+        };
+        app.mascot.ready();
+        app.mascot.model_pending();
+        for (session, run, seq) in [("foreign", "r", 6), ("s", "foreign", 6), ("s", "r", 5)] {
+            app.update(Update::Event(mascot_event("tool.running", json!({"session_id":session,"run_id":run,"server_generation":"g","event_sequence":seq}))), &worker);
+            assert_eq!(app.mascot.state, sentinel_mascot::State::Thinking);
+        }
+        app.update(
+            Update::Event(mascot_event(
+                "tool.running",
+                json!({"session_id":"s","run_id":"r","server_generation":"g","event_sequence":7}),
+            )),
+            &worker,
+        );
+        assert_eq!(app.mascot.state, sentinel_mascot::State::ToolRunning);
+        app.update(Update::Connection(false), &worker);
+        assert_eq!(app.mascot.state, sentinel_mascot::State::Error);
+    }
+
+    #[test]
+    fn ux_evidence_matrix() {
+        for (w, h) in [(80, 24), (100, 30), (120, 40), (160, 48)] {
+            for theme in [
+                Theme::Terminal,
+                Theme::Obsidian,
+                Theme::Glacier,
+                Theme::Porcelain,
+            ] {
+                let mut app = App {
+                    state: "cancelled".into(),
+                    theme,
+                    output: message_block("user", "Türkçe: ıİşğüöç — inspect this snippet")
+                        + &message_block(
+                            "assistant",
+                            "**Ajan İptal Edildi / Agent Run Cancelled**\n*1 adım çalıştırılmıştı / 1 steps executed.*\n**Bold** and *italic* with `inline_code` — İstanbul\n```rust\nlet literal = \"**keep**\";\n```\nUnmatched ** remains readable.",
+                        ),
+                    notice: "Run cancelled. Long diagnostic remains accessible through /notices."
+                        .into(),
+                    ..App::default()
+                };
+                app.editor.insert("draft preserved: ü\nsecond line");
+                let mut terminal = Terminal::new(TestBackend::new(w, h)).unwrap();
+                terminal.draw(|f| draw(f, &app)).unwrap();
+                if let Ok(dir) = std::env::var("SENTINEL_V33_EVIDENCE") {
+                    std::fs::write(
+                        format!("{dir}/{}-{w}x{h}.txt", theme.name()),
+                        rendered_rows(&terminal).join("\n"),
+                    )
+                    .unwrap();
+                }
+            }
+        }
+    }
+    #[test]
+    fn inline_styles_survive_wrapping_and_code_is_literal() {
+        let lines = transcript_lines(
+            "Assistant\n  **Türkçe bold** *italic* `x*y`\n  ```rs\n  **literal**\n  ```\n  unmatched **",
+        );
+        assert_eq!(lines[1].to_string(), "  Türkçe bold italic x*y");
+        assert_eq!(lines[3].to_string(), "  **literal**");
+        assert_eq!(lines[5].to_string(), "  unmatched **");
+        for unsupported in [
+            "***nested***",
+            "``code ` tick``",
+            r"\*literal*",
+            r"\`literal`",
+        ] {
+            assert_eq!(
+                inline_markdown(unsupported, Style::default()).to_string(),
+                unsupported
+            );
+        }
+        let rows = wrap_transcript(vec![lines[1].clone()], 6);
+        assert_eq!(
+            rows.iter().map(Line::to_string).collect::<String>(),
+            lines[1].to_string()
+        );
+        assert!(
+            rows.iter()
+                .flat_map(|l| &l.spans)
+                .any(|s| s.style.add_modifier.contains(Modifier::BOLD))
+        );
+        assert_eq!(
+            transcript_lines(&message_block("user", "**literal user**"))[1].to_string(),
+            "    **literal user**"
+        );
+    }
+    #[test]
+    fn late_cancel_ack_keeps_terminal_state() {
+        for state in ["completed", "failed", "cancelled"] {
+            let mut app = App {
+                state: state.into(),
+                notice: "terminal notice".into(),
+                ..App::default()
+            };
+            app.update(Update::Reply("cancel".into(), json!({})), &test_worker());
+            assert_eq!(app.state, state);
+            assert_eq!(app.notice, "terminal notice");
+        }
+    }
     #[test]
     fn compact_header_centered_empty_state_and_composer() {
         for (width, height) in [(80, 24), (100, 30), (120, 40), (160, 48)] {
@@ -2826,7 +3426,7 @@ mod tests {
         app.update(
             Update::Reply(
                 "messages".into(),
-                json!({"messages":[{"role":"system","content":"Authoritative system notice"}]}),
+                json!({"session_id":"", "messages":[{"role":"system","content":"Authoritative system notice"}]}),
             ),
             &test_worker(),
         );
@@ -2836,7 +3436,7 @@ mod tests {
         assert!(conversation_text(&app).contains("System notice\n  Authoritative system notice"));
         assert!(!conversation_text(&app).contains("Assistant"));
         app.view = None;
-        app.update(Update::Reply("messages".into(), json!({"messages":[{"role":"user","content":"Hello"},{"role":"assistant","content":"Response"}]})), &test_worker());
+        app.update(Update::Reply("messages".into(), json!({"session_id":"", "messages":[{"role":"user","content":"Hello"},{"role":"assistant","content":"Response"}]})), &test_worker());
         assert!(!conversation_text(&app).contains("Start a new conversation"));
         assert!(app.system_notices.is_empty());
     }
@@ -2893,6 +3493,246 @@ mod tests {
         crossterm::event::KeyEvent::new(code, modifiers)
     }
     #[test]
+    fn palette_uses_registry_ranking_and_slash_arrows_complete_selected_command() {
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        app.editor.insert("draft retained");
+        app.open_picker("command");
+        app.picker.as_mut().unwrap().query = "sessions".into();
+        assert_eq!(app.picker.as_ref().unwrap().visible()[0].id, "/sessions");
+        app.select_picker(&worker);
+        assert_eq!(app.picker.as_ref().unwrap().kind, "session");
+        assert_eq!(app.editor.text, "draft retained");
+        assert_eq!(requests.try_recv().unwrap().name, "session.list");
+        app.picker = None;
+        app.editor.replace("/m".into(), false);
+        app.handle_key(key(KeyCode::Down, KeyModifiers::NONE), &worker);
+        let expected = commands::matching("m")[1].name;
+        app.handle_key(key(KeyCode::Enter, KeyModifiers::NONE), &worker);
+        assert_eq!(app.editor.text.trim(), expected);
+        assert!(requests.try_recv().is_err());
+    }
+    #[test]
+    fn registered_pastes_stay_local_and_multiline_slashes_stay_prose() {
+        for command in [
+            "/theme glacier",
+            "/settings",
+            "/settings theme obsidian",
+            "/settings details",
+            "/model",
+            "/exit",
+        ] {
+            let (worker, requests) = captured_worker();
+            let mut app = ready_app();
+            app.paste(command);
+            app.send(&worker);
+            assert!(
+                requests
+                    .try_iter()
+                    .all(|r| r.name != "chat.send" && r.name != "agent.start"),
+                "{command}"
+            );
+            assert!(app.editor.text.is_empty(), "{command}");
+        }
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        app.paste("/not-a-command");
+        app.send(&worker);
+        assert!(app.notice.contains("Unknown command"));
+        assert!(requests.try_recv().is_err());
+        assert_eq!(app.editor.text, "/not-a-command");
+        for pasted in [true, false] {
+            let (worker, requests) = captured_worker();
+            let mut app = ready_app();
+            let prose = "/model\nThis is ordinary multiline text with /paths";
+            if pasted {
+                app.paste(prose);
+            } else {
+                app.editor.insert(prose);
+            }
+            app.send(&worker);
+            let request = requests.try_recv().unwrap();
+            assert_eq!(request.name, "chat.send");
+            assert_eq!(request.payload["text"], prose);
+        }
+    }
+    #[test]
+    fn session_identity_switch_restores_drafts_and_rejects_stale_history() {
+        let (worker, _requests) = captured_worker();
+        let mut app = ready_app();
+        app.output = "OLD SESSION CONTENT".into();
+        app.editor.insert("first\nsecond /path");
+        let original = app.sid.clone();
+        app.sessions
+            .push(json!({"session_id":"other-session","title":"Same title"}));
+        app.snapshot(
+            json!({"session_id":"other-session","title":"Other","state":"idle","output":""}),
+        );
+        assert!(app.output.is_empty());
+        assert!(app.editor.text.is_empty());
+        app.update(
+            Update::Reply(
+                "messages".into(),
+                json!({"session_id":original,"messages":[{"role":"assistant","content":"STALE"}]}),
+            ),
+            &worker,
+        );
+        app.update(
+            Update::Reply(
+                "messages".into(),
+                json!({"messages":[{"role":"assistant","content":"UNSCOPED"}]}),
+            ),
+            &worker,
+        );
+        assert!(app.output.is_empty());
+        app.open_picker("session");
+        let active = app
+            .picker
+            .as_ref()
+            .unwrap()
+            .items
+            .iter()
+            .find(|i| i.id == "other-session")
+            .unwrap();
+        assert!(active.label.starts_with("Active · "));
+        assert!(active.extra.contains("other-session"));
+        app.snapshot(json!({"session_id":original,"title":"First","state":"idle","output":""}));
+        assert_eq!(app.editor.text, "first\nsecond /path");
+    }
+    #[test]
+    fn model_selection_waits_for_authoritative_diagnostics_and_reports_failure() {
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        app.editor.insert("draft\nretained");
+        app.open_picker("model");
+        assert!(
+            !app.picker.as_ref().unwrap().items[0]
+                .label
+                .starts_with("Selected")
+        );
+        app.select_picker(&worker);
+        let request = requests.try_recv().unwrap();
+        assert_eq!(request.name, "model.select");
+        assert_eq!(request.payload["model_id"], "fixture-model");
+        app.update(
+            Update::Reply(
+                request.tag,
+                json!({"provider_id":"fixture-provider","model_id":"fixture-model"}),
+            ),
+            &worker,
+        );
+        assert!(app.notice.contains("Inference readiness is not verified"));
+        app.open_picker("model");
+        assert!(
+            !app.picker.as_ref().unwrap().items[0]
+                .label
+                .starts_with("Selected")
+        );
+        app.update(Update::Reply("diagnostics".into(), json!({"properties":{"effective_selection":{"provider_id":"fixture-provider","model_id":"fixture-model"}}})), &worker);
+        assert!(
+            app.picker.as_ref().unwrap().items[0]
+                .label
+                .starts_with("Selected")
+        );
+        app.update(
+            Update::Failure(
+                "model-selection".into(),
+                Error::Remote("model-unavailable".into()),
+            ),
+            &worker,
+        );
+        assert!(app.notice.contains("/model retries"));
+        assert_eq!(app.editor.text, "draft\nretained");
+    }
+    #[test]
+    fn settings_delegate_and_preserve_mascot_preference() {
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        app.command("/settings mascot animated", &worker);
+        app.command("/settings theme glacier", &worker);
+        app.command("/settings details", &worker);
+        app.command("/settings", &worker);
+        assert_eq!(app.theme, Theme::Glacier);
+        assert_eq!(app.mascot_mode, DisplayMode::Animated);
+        assert!(app.show_details);
+        let view = app.view.as_ref().unwrap();
+        assert!(view.contains("temporary override"));
+        assert!(view.contains("Reduced motion:"));
+        assert!(view.contains("no persistent writes"));
+        assert!(requests.try_recv().is_err());
+    }
+    #[test]
+    fn archive_confirmation_is_local_cancellable_and_scoped() {
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        assert!(app.command("/archive", &worker));
+        assert!(requests.try_recv().is_err());
+        app.paste("not inserted into draft while modal");
+        assert!(app.editor.text.is_empty());
+        app.handle_key(key(KeyCode::Esc, KeyModifiers::NONE), &worker);
+        assert!(app.archive_confirm.is_none());
+        app.command("/archive", &worker);
+        app.handle_key(key(KeyCode::Char('y'), KeyModifiers::NONE), &worker);
+        let request = requests.try_recv().unwrap();
+        assert_eq!(request.name, "desktop.action");
+        assert_eq!(request.payload["action"], "archiveConversation");
+        assert_eq!(request.payload["session_id"], app.sid);
+        app.busy = false;
+        app.command("/archive", &worker);
+        app.connected = false;
+        app.handle_key(key(KeyCode::Char('y'), KeyModifiers::NONE), &worker);
+        assert!(requests.try_recv().is_err());
+        assert!(app.archive_confirm.is_none());
+    }
+    #[test]
+    fn picker_loading_empty_error_and_focus_matrix() {
+        for (width, height) in [(80, 24), (100, 30), (120, 40), (160, 48)] {
+            for kind in ["model", "session"] {
+                let mut app = App {
+                    connected: true,
+                    ..App::default()
+                };
+                app.editor.insert("draft\nkeep /path");
+                app.open_picker(kind);
+                assert!(
+                    app.picker_empty_message(app.picker.as_ref().unwrap())
+                        .contains(if kind == "model" {
+                            "No discovered models"
+                        } else {
+                            "No sessions"
+                        })
+                );
+                app.models_loading = true;
+                app.sessions_loading = true;
+                let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+                terminal.draw(|f| draw(f, &app)).unwrap();
+                assert!(
+                    rendered_rows(&terminal)
+                        .join("\n")
+                        .contains("Loading from daemon")
+                );
+                app.connected = false;
+                terminal.draw(|f| draw(f, &app)).unwrap();
+                assert!(rendered_rows(&terminal).join("\n").contains("Disconnected"));
+                app.handle_key(key(KeyCode::Esc, KeyModifiers::NONE), &test_worker());
+                assert_eq!(app.editor.text, "draft\nkeep /path");
+                app.connected = true;
+                app.sid = "session-id".into();
+                app.editor.replace(String::new(), false);
+                app.archive_confirm = Some(app.sid.clone());
+                terminal.draw(|f| draw(f, &app)).unwrap();
+                assert!(
+                    rendered_rows(&terminal)
+                        .join("\n")
+                        .contains("Confirm archive")
+                );
+                assert!(
+                    mascot::slot(&app, Rect::new(0, 0, width, height), Some((8, 16))).is_none()
+                );
+            }
+        }
+    }
+    #[test]
     fn slash_completion_never_executes_partial_or_tab() {
         let (worker, requests) = captured_worker();
         let mut app = ready_app();
@@ -2921,9 +3761,38 @@ mod tests {
         assert_eq!(app.editor.text, "/");
     }
     #[test]
+    fn typed_and_pasted_mascot_settings_never_request_inference() {
+        for mode in ["off", "static", "animated", "auto", "invalid"] {
+            for pasted in [false, true] {
+                let (worker, requests) = captured_worker();
+                let mut app = ready_app();
+                let command = format!("/settings mascot {mode}");
+                if pasted {
+                    app.paste(&command);
+                } else {
+                    app.editor.insert(&command);
+                }
+                app.handle_key(key(KeyCode::Enter, KeyModifiers::NONE), &worker);
+                assert!(requests.try_recv().is_err(), "{mode}, pasted={pasted}");
+                if let Some(expected) = DisplayMode::parse(mode) {
+                    assert_eq!(app.mascot_mode, expected);
+                    assert!(app.editor.text.is_empty());
+                } else {
+                    assert!(app.notice.contains("Usage:"));
+                    assert_eq!(app.editor.text, command);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn pasted_slash_and_escaped_slash_are_literal_chat() {
         for (input, paste, expected) in [
-            ("/exit", true, "/exit"),
+            (
+                "/path\nordinary pasted prose",
+                true,
+                "/path\nordinary pasted prose",
+            ),
             ("//model", false, "/model"),
             ("!echo should-not-run", false, "!echo should-not-run"),
         ] {
@@ -3443,6 +4312,131 @@ mod tests {
         assert!(app.activity[0].contains("12 ms"));
         assert!(app.activity[0].contains("Tool completed"));
         assert!(!app.activity[0].contains("secret-must-not-be-projected"));
+    }
+    #[test]
+    fn inspection_starts_at_top_and_restores_conversation_scroll() {
+        let (worker, _) = captured_worker();
+        for (width, height) in [
+            (60, 20),
+            (80, 24),
+            (100, 30),
+            (120, 40),
+            (160, 48),
+            (180, 48),
+        ] {
+            let mut app = ready_app();
+            app.output = message_block("assistant", &"Previous transcript row\n".repeat(500));
+            app.editor.insert("Türkçe draft\nsecond /path");
+            app.follow = false;
+            app.scroll = 100;
+            app.open_picker("command");
+            assert_eq!(app.scroll, 100);
+            app.picker = None;
+            app.command("/settings", &worker);
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            terminal.draw(|f| draw(f, &app)).unwrap();
+            let text = rendered_rows(&terminal).join("\n");
+            assert!(text.contains("TUI preferences"), "{width}x{height}");
+            assert_eq!(app.scroll, 0);
+            app.handle_key(key(KeyCode::Esc, KeyModifiers::NONE), &worker);
+            assert!(!app.follow);
+            assert_eq!(app.scroll, 100);
+            assert_eq!(app.editor.text, "Türkçe draft\nsecond /path");
+            app.scroll = u16::MAX;
+            terminal.draw(|f| draw(f, &app)).unwrap();
+            app.handle_key(key(KeyCode::PageDown, KeyModifiers::NONE), &worker);
+            assert_eq!(app.scroll, app.viewport_bottom.get());
+            app.handle_key(key(KeyCode::PageUp, KeyModifiers::NONE), &worker);
+            assert_eq!(app.scroll, app.viewport_bottom.get().saturating_sub(10));
+        }
+    }
+    #[test]
+    fn resizing_scrolled_transcript_never_leaves_an_empty_viewport() {
+        let mut app = App {
+            output: message_block(
+                "assistant",
+                &format!(
+                    "{}\nFINAL TRANSCRIPT ROW",
+                    "A wrapped line with words. ".repeat(300)
+                ),
+            ),
+            follow: true,
+            ..App::default()
+        };
+        app.editor.insert("Türkçe draft\nsecond /path");
+        let mut narrow = Terminal::new(TestBackend::new(60, 20)).unwrap();
+        narrow.draw(|f| draw(f, &app)).unwrap();
+        app.scroll = app.viewport_bottom.get();
+        app.follow = false;
+        for (width, height) in [(80, 24), (100, 30), (120, 40), (160, 48), (180, 48)] {
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            terminal.draw(|f| draw(f, &app)).unwrap();
+            let text = rendered_rows(&terminal).join("\n");
+            assert!(text.contains("FINAL TRANSCRIPT ROW"), "{width}x{height}");
+            assert_eq!(app.editor.text, "Türkçe draft\nsecond /path");
+            assert!(!app.follow);
+        }
+    }
+    #[test]
+    fn stabilization_six_size_overlay_and_draft_matrix() {
+        for (width, height) in [
+            (60, 20),
+            (80, 24),
+            (100, 30),
+            (120, 40),
+            (160, 48),
+            (180, 48),
+        ] {
+            for scenario in [
+                "welcome",
+                "transcript",
+                "slash",
+                "session",
+                "model",
+                "help",
+                "settings",
+                "archive",
+            ] {
+                let (worker, _) = captured_worker();
+                let mut app = ready_app();
+                app.editor.insert("Türkçe draft\nsecond /path");
+                app.output = if scenario == "welcome" {
+                    String::new()
+                } else {
+                    message_block(
+                        "assistant",
+                        "**Bold** response\n```rust\nlet a = 1;\n```\nFinal row",
+                    )
+                };
+                match scenario {
+                    "slash" => app.editor.replace("/m".into(), false),
+                    "session" | "model" | "help" => app.open_picker(scenario),
+                    "settings" => {
+                        app.command("/settings", &worker);
+                    }
+                    "archive" => app.archive_confirm = Some(app.sid.clone()),
+                    _ => {}
+                }
+                let original = app.editor.text.clone();
+                let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+                terminal.draw(|f| draw(f, &app)).unwrap();
+                let rows = rendered_rows(&terminal);
+                assert_eq!(rows.len(), height as usize);
+                assert_eq!(app.editor.text, original);
+                assert!(
+                    rows.iter()
+                        .all(|r| Line::raw(r.clone()).width() <= width as usize)
+                );
+                let text = rows.join("\n");
+                if scenario == "archive" {
+                    assert!(text.contains("Confirm archive"));
+                    assert!(text.contains("n / Esc cancels"));
+                }
+                if let Ok(dir) = std::env::var("SENTINEL_V33C_EVIDENCE") {
+                    std::fs::write(format!("{dir}/{scenario}-{width}x{height}.txt"), text).unwrap();
+                }
+            }
+        }
     }
     #[test]
     fn bounded_stream_render_measurement() {
