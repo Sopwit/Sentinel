@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: unknown                                Connected
+────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                         Inference unknown
+                                                                                
+    Assistant                                                                   
+      Existing transcript                                                       
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Chat ──────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                           │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  No discovered models · /model or /doctor                                      
+  Enter send · Shift+Enter newline · Ctrl+P commands                      idle  

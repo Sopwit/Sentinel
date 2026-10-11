@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Fixture                                Connected
+────────────────────────────────────────────────────────────────────────────────
+fixture / model-alpha                                       Inference unverified
+  ┌session · Enter select · Esc close────────────────────────────────────────┐  
+  │Filter: session-a                                                         │  
+  │> Alpha conversation · chat · idle                                        │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │session-a                                                                 │  
+  │Session: session-a                                                        │  
+  │ · /                                                                      │  
+  │                                                                          │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  └──────────────────────────────────────────────────────────────────────────┘  
+                                                                                
+  Arrows select · Enter confirm · Esc close                               idle  

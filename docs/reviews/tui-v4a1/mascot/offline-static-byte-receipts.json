@@ -1,0 +1,16 @@
+[
+  {
+    "monotonic_ms": 10.422541003208607,
+    "bytes": 8,
+    "uploads": 0,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 125.61149999964982,
+    "bytes": 3961,
+    "uploads": 1,
+    "placeholders": 0,
+    "user_input_sent": false
+  }
+]

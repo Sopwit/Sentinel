@@ -1,0 +1,9 @@
+Executable=<LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/sentinel
+Identifier=sentinel-7436f64dfb3b229a
+Format=Mach-O thin (arm64)
+CodeDirectory v=20400 size=38040 flags=0x20002(adhoc,linker-signed) hashes=1185+0 location=embedded
+Signature=adhoc
+Info.plist=not bound
+TeamIdentifier=not set
+Sealed Resources=none
+Internal requirements=none

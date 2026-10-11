@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: unknown                                                 Disconnected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                             Inference unknown
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Mascot: static (this process; SENTINEL_TUI_MASCOT sets launch default)                 
+  Enter send · Shift+Enter newline · Ctrl+P commands                                          idle  

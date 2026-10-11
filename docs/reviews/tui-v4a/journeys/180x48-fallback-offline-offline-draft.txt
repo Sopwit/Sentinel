@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: unknown                                                                                                                                 Disconnected
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Provider unselected / Model unselected                                                                                                                             Inference unknown
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                        [ S ]                                                                                       
+                                                                                                                                                                                    
+                                                                              Start a new conversation                                                                              
+                                                                Ask a question, explore an idea, or describe a task.                                                                
+                                                                          Ctrl+P commands  /help shortcuts                                                                          
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+  + Message · Chat --------------------------------------------------------------------------------------------------------------------------------------------------------------+  
+  |   offline                                                                                                                                                                    |  
+  |   second /path                                                                                                                                                               |  
+  +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+  
+  /notices · Cannot connect to the Sentinel daemon: No such file or directory (os error 2). Start sentinel-daemon externally; use --socket for a custom endpoint.                   
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                                                                                          idle  

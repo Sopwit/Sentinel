@@ -1,0 +1,2048 @@
+{
+  "version": "1.0.0-rc.8",
+  "architecture": "Mach-O 64-bit executable arm64",
+  "executable_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+  "files": [
+    {
+      "path": "DISTRIBUTION_GATES.md",
+      "bytes": 1671,
+      "sha256": "83666298463dc681485f53bdeb37cf4cf9679209e279358c6d3154ee3f53fed4",
+      "mode": "0644"
+    },
+    {
+      "path": "README.txt",
+      "bytes": 1066,
+      "sha256": "ef1ac112c9d0fa4c8319a8e8fa4c56c5ac3ba4bc6d7de7a25311e60e7c9b3fd8",
+      "mode": "0644"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 34945,
+      "sha256": "0ca02f41b43a3cedc09963984137797ab7f64bde6a3eaf8f7d27bf8ddd0bf576",
+      "mode": "0644"
+    },
+    {
+      "path": "bin/sentinel",
+      "bytes": 4890880,
+      "sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "mode": "0755"
+    },
+    {
+      "path": "dependency-licenses.json",
+      "bytes": 68578,
+      "sha256": "40f0a99cc4c42fe2090f6f14c9f6b5dfc38461bbab2c57dfa1b8d92f0e170c6b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/doc/sentinel/CLI.md",
+      "bytes": 3030,
+      "sha256": "0b28794c95d0324493591c3439f8d4e59eddd3e03ced496a5a0823536a5700f9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/doc/sentinel/CORE_WARDEN.md",
+      "bytes": 3706,
+      "sha256": "af08cee1c56ecb5cbf8183c7ae8635618d9034d67543d0e5183f94012236e1bb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/sentinel/LICENSE",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/adler2-2.0.1/LICENSE-0BSD",
+      "bytes": 665,
+      "sha256": "861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/adler2-2.0.1/LICENSE-APACHE",
+      "bytes": 10860,
+      "sha256": "8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/adler2-2.0.1/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/allocator-api2-0.2.21/LICENSE-APACHE",
+      "bytes": 9899,
+      "sha256": "20fe7b00e904ed690e3b9fd6073784d3fc428141dbd10b81c01fd143d0797f58",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/allocator-api2-0.2.21/LICENSE-MIT",
+      "bytes": 1046,
+      "sha256": "36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstream-1.0.0/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstream-1.0.0/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-1.0.14/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-1.0.14/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-parse-1.0.0/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-parse-1.0.0/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-query-1.1.5/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/anstyle-query-1.1.5/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/autocfg-1.5.1/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/autocfg-1.5.1/LICENSE-MIT",
+      "bytes": 1054,
+      "sha256": "27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/bitflags-2.13.2/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/bitflags-2.13.2/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/bytemuck-1.25.2/LICENSE-APACHE",
+      "bytes": 10398,
+      "sha256": "e3ba223bb1423f0aad8c3dfce0fe3148db48926d41e6fbc3afbbf5ff9e1c89cb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/bytemuck-1.25.2/LICENSE-MIT",
+      "bytes": 1110,
+      "sha256": "9df9ba60a11af705f2e451b53762686e615d86f76b169cf075c3237730dbd7e2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/bytemuck-1.25.2/LICENSE-ZLIB",
+      "bytes": 851,
+      "sha256": "84b34dd7608f7fb9b17bd588a6bf392bf7de504e2716f024a77d89f1b145a151",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/byteorder-lite-0.1.0/LICENSE-MIT",
+      "bytes": 1081,
+      "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/byteorder-lite-0.1.0/UNLICENSE",
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/cassowary-0.3.0/LICENSE-APACHE",
+      "bytes": 11558,
+      "sha256": "38b4da6afcf8d01bf9fae5b09dc5446a4e166556b7d66f3ba03305f6c05188ed",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/cassowary-0.3.0/LICENSE-MIT",
+      "bytes": 1097,
+      "sha256": "190ca8d01e23551e4f49e9601a2ca1a740a4a3a9270ad3b5c70f044b8972ef50",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/castaway-0.2.4/LICENSE",
+      "bytes": 1075,
+      "sha256": "f98e09091d5ae02b2f2ec1ead4f7f28c4c44d1cb98b078739ba67091637e170c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/cfg-if-1.0.5/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/cfg-if-1.0.5/LICENSE-MIT",
+      "bytes": 1057,
+      "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/cfg_aliases-0.2.2/LICENSE",
+      "bytes": 1076,
+      "sha256": "31b94860253d8ec7b4529f51901044d3b459d6292d996504a36b1bae3a36a812",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap-4.6.7/LICENSE-APACHE",
+      "bytes": 11349,
+      "sha256": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap-4.6.7/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_builder-4.6.7/LICENSE-APACHE",
+      "bytes": 11349,
+      "sha256": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_builder-4.6.7/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_complete-4.6.11/LICENSE-APACHE",
+      "bytes": 11349,
+      "sha256": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_complete-4.6.11/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_derive-4.6.7/LICENSE-APACHE",
+      "bytes": 11349,
+      "sha256": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_derive-4.6.7/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_lex-1.1.1/LICENSE-APACHE",
+      "bytes": 11349,
+      "sha256": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/clap_lex-1.1.1/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/colorchoice-1.0.5/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/colorchoice-1.0.5/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/compact_str-0.8.2/LICENSE",
+      "bytes": 1073,
+      "sha256": "0d52feec79589df30138dad3800323fe5686b764b73347330a2dfef8ac83efe8",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/crc32fast-1.5.2/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/crc32fast-1.5.2/LICENSE-MIT",
+      "bytes": 1097,
+      "sha256": "61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/crossterm-0.28.1/LICENSE",
+      "bytes": 1083,
+      "sha256": "aca4760f2a5eba9ce9d4448fe7cd3fcf98245a8315ede59ebd0c6085dd542e61",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ctrlc-3.5.2/LICENSE-APACHE",
+      "bytes": 10836,
+      "sha256": "3481c338b8e2760b5a58e129339501c01e640f7597767f91d1a84e25e68fbdb4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ctrlc-3.5.2/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/darling-0.24.1/LICENSE",
+      "bytes": 1067,
+      "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/darling_core-0.24.1/LICENSE",
+      "bytes": 1067,
+      "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/darling_macro-0.24.1/LICENSE",
+      "bytes": 1067,
+      "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/either-1.18.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/either-1.18.0/LICENSE-MIT",
+      "bytes": 1043,
+      "sha256": "7576269ea71f767b99297934c0b2367532690f8c4badc695edf8e04ab6a1e545",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/equivalent-1.0.2/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/equivalent-1.0.2/LICENSE-MIT",
+      "bytes": 1049,
+      "sha256": "7365cc8878a1d7ce155a58c4ca09c3d7a6be413efa5334a80ea842912b669349",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/errno-0.3.14/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/errno-0.3.14/LICENSE-MIT",
+      "bytes": 1054,
+      "sha256": "8764a597675778ddfd4e25f81b08a05dbcf089ac05662df7613fe67f150e3aa2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/fdeflate-0.3.7/LICENSE-APACHE",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/fdeflate-0.3.7/LICENSE-MIT",
+      "bytes": 1036,
+      "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/flate2-1.1.10/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/flate2-1.1.10/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/foldhash-0.1.5/LICENSE",
+      "bytes": 856,
+      "sha256": "b1181a40b2a7b25cf66fd01481713bc1005df082c53ef73e851e55071b102744",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/getrandom-0.2.17/LICENSE-APACHE",
+      "bytes": 10849,
+      "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/getrandom-0.2.17/LICENSE-MIT",
+      "bytes": 1130,
+      "sha256": "42fa16951ce7f24b5a467a40e5b449a1d41e662f97ca779864f053f39e097737",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/hashbrown-0.15.5/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/hashbrown-0.15.5/LICENSE-MIT",
+      "bytes": 1060,
+      "sha256": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/heck-0.5.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/heck-0.5.0/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/icy_sixel-0.1.3/LICENSE",
+      "bytes": 1061,
+      "sha256": "f719f01f57fec5dea2103ce3b2443b0d457bac44dcb8989f08885116bae12d18",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ident_case-1.0.1/LICENSE",
+      "bytes": 1036,
+      "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/image-0.25.10/LICENSE-APACHE",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/image-0.25.10/LICENSE-MIT",
+      "bytes": 1036,
+      "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/indoc-2.0.7/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/indoc-2.0.7/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/instability-0.3.14/LICENSE.md",
+      "bytes": 1114,
+      "sha256": "0352320d9929e862c1f07b59caacc3cd1bbacfec0ad4136bf4c89d4ca8939781",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/is_terminal_polyfill-1.70.2/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/is_terminal_polyfill-1.70.2/LICENSE-MIT",
+      "bytes": 1062,
+      "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/itertools-0.13.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/itertools-0.13.0/LICENSE-MIT",
+      "bytes": 1043,
+      "sha256": "7576269ea71f767b99297934c0b2367532690f8c4badc695edf8e04ab6a1e545",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/itoa-1.0.18/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/itoa-1.0.18/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/libc-0.2.190/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/libc-0.2.190/LICENSE-MIT",
+      "bytes": 1066,
+      "sha256": "123a331b5dbf04c30097fa43b8f858bc85df671fe776de498d01f3d6b7c1f69e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/lock_api-0.4.14/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/lock_api-0.4.14/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/log-0.4.34/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/log-0.4.34/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/lru-0.12.5/LICENSE",
+      "bytes": 1071,
+      "sha256": "061dc50af2cd9340703daf61978af3200cf681b12ea67a323c33ba109a23a45e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/memchr-2.8.3/COPYING",
+      "bytes": 126,
+      "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/memchr-2.8.3/LICENSE-MIT",
+      "bytes": 1081,
+      "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/memchr-2.8.3/UNLICENSE",
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.8.9/LICENSE",
+      "bytes": 1213,
+      "sha256": "4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.8.9/LICENSE-APACHE.md",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.8.9/LICENSE-MIT.md",
+      "bytes": 1212,
+      "sha256": "799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.8.9/LICENSE-ZLIB.md",
+      "bytes": 984,
+      "sha256": "0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.9.1/LICENSE",
+      "bytes": 1213,
+      "sha256": "4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.9.1/LICENSE-APACHE.md",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.9.1/LICENSE-MIT.md",
+      "bytes": 1212,
+      "sha256": "799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/miniz_oxide-0.9.1/LICENSE-ZLIB.md",
+      "bytes": 984,
+      "sha256": "0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/mio-1.2.4/LICENSE",
+      "bytes": 1082,
+      "sha256": "07919255c7e04793d8ea760d6c2ce32d19f9ff02bdbdde3ce90b1e1880929a9b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/moxcms-0.8.1/LICENSE-APACHE.md",
+      "bytes": 11348,
+      "sha256": "90bf2d659c43045111b65c733ab2a6d4cbcb422a098368c8c58a9ba3db4ed0c5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/moxcms-0.8.1/LICENSE.md",
+      "bytes": 1506,
+      "sha256": "2aa92cada6431e75615e3fe6cb1a9082c98f777d48ae1c087c0da0e37f7b8bff",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/nix-0.31.3/LICENSE",
+      "bytes": 1097,
+      "sha256": "66e3ee1fa7f909ad3c612d556f2a0cdabcd809ad6e66f3b0605015ac64841b70",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/num-traits-0.2.19/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/num-traits-0.2.19/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/outref-0.5.2/LICENSE",
+      "bytes": 1062,
+      "sha256": "a00511478c83ebb464ef19d840f061c7444adc4636bb561900e75c5808cfc6cc",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/parking_lot-0.12.5/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/parking_lot-0.12.5/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/parking_lot_core-0.9.12/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/parking_lot_core-0.9.12/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/paste-1.0.15/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/paste-1.0.15/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/png-0.18.1/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/png-0.18.1/LICENSE-MIT",
+      "bytes": 1048,
+      "sha256": "eaf40297c75da471f7cda1f3458e8d91b4b2ec866e609527a13acfa93b638652",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ppv-lite86-0.2.21/LICENSE-APACHE",
+      "bytes": 10854,
+      "sha256": "0218327e7a480793ffdd4eb792379a9709e5c135c7ba267f709d6f6d4d70af0a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ppv-lite86-0.2.21/LICENSE-MIT",
+      "bytes": 1076,
+      "sha256": "4cada0bd02ea3692eee6f16400d86c6508bbd3bafb2b65fed0419f36d4f83e8f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/proc-macro2-1.0.107/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/proc-macro2-1.0.107/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/pxfm-0.1.30/LICENSE-APACHE.md",
+      "bytes": 11348,
+      "sha256": "90bf2d659c43045111b65c733ab2a6d4cbcb422a098368c8c58a9ba3db4ed0c5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/pxfm-0.1.30/LICENSE.md",
+      "bytes": 1506,
+      "sha256": "2aa92cada6431e75615e3fe6cb1a9082c98f777d48ae1c087c0da0e37f7b8bff",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/quote-1.0.47/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/quote-1.0.47/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand-0.8.8/COPYRIGHT",
+      "bytes": 569,
+      "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand-0.8.8/LICENSE-APACHE",
+      "bytes": 9724,
+      "sha256": "35242e7a83f69875e6edeff02291e688c97caafe2f8902e4e19b49d3e78b4cab",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand-0.8.8/LICENSE-MIT",
+      "bytes": 1117,
+      "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_chacha-0.3.1/COPYRIGHT",
+      "bytes": 569,
+      "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_chacha-0.3.1/LICENSE-APACHE",
+      "bytes": 10849,
+      "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_chacha-0.3.1/LICENSE-MIT",
+      "bytes": 1117,
+      "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_core-0.6.4/COPYRIGHT",
+      "bytes": 569,
+      "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_core-0.6.4/LICENSE-APACHE",
+      "bytes": 10282,
+      "sha256": "6df43f6f4b5d4587f3d8d71e45532c688fd168afa5fe89d571cb32fa09c4ef51",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rand_core-0.6.4/LICENSE-MIT",
+      "bytes": 1117,
+      "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ratatui-0.29.0/LICENSE",
+      "bytes": 1132,
+      "sha256": "6cfda12c40ae6c1175a0d1798c56e4d7089d9c781a2dbe29a53076defde829d0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ratatui-image-8.0.2/LICENSE",
+      "bytes": 1271,
+      "sha256": "574aea66c44d72b259f7c5f30a3408ccc9c839867361424815cffe17dc870d54",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustix-0.38.44/COPYRIGHT",
+      "bytes": 853,
+      "sha256": "377c2e7c53250cc5905c0b0532d35973392af16ffb9596a41d99d202cf3617c9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustix-0.38.44/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustix-0.38.44/LICENSE-Apache-2.0_WITH_LLVM-exception",
+      "bytes": 12243,
+      "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustix-0.38.44/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustversion-1.0.23/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/rustversion-1.0.23/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ryu-1.0.23/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/ryu-1.0.23/LICENSE-BOOST",
+      "bytes": 1338,
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/scopeguard-1.2.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/scopeguard-1.2.0/LICENSE-MIT",
+      "bytes": 1097,
+      "sha256": "fb77f0a9c53e473abe5103c8632ef9f0f2874d4fb3f17cb2d8c661aab9cee9d7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde-1.0.229/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde-1.0.229/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_core-1.0.229/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_core-1.0.229/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_derive-1.0.229/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_derive-1.0.229/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_json-1.0.151/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/serde_json-1.0.151/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-0.3.18/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-0.3.18/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "503558bfefe66ca15e4e3f7955b3cb0ec87fd52f29bf24b336af7bd00e946d5c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-mio-0.2.5/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-mio-0.2.5/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "503558bfefe66ca15e4e3f7955b3cb0ec87fd52f29bf24b336af7bd00e946d5c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-registry-1.4.8/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/signal-hook-registry-1.4.8/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "503558bfefe66ca15e4e3f7955b3cb0ec87fd52f29bf24b336af7bd00e946d5c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/simd-adler32-0.3.10/LICENSE.md",
+      "bytes": 1078,
+      "sha256": "42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/smallvec-1.16.2/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/smallvec-1.16.2/LICENSE-MIT",
+      "bytes": 1072,
+      "sha256": "0b28172679e0009b655da42797c03fd163a3379d5cfa67ba1f1655e974a2a1a9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/static_assertions-1.1.0/LICENSE-APACHE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/static_assertions-1.1.0/LICENSE-MIT",
+      "bytes": 1072,
+      "sha256": "ea084a2373ebc1f0902c09266e7bf25a05ab3814c1805bb017ffa7308f90c061",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/strsim-0.11.1/LICENSE",
+      "bytes": 1166,
+      "sha256": "1e697ce8d21401fbf1bddd9b5c3fd4c4c79ae1e3bdf51f81761c85e11d5a89cd",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/strum-0.26.3/LICENSE",
+      "bytes": 1072,
+      "sha256": "8bce3b45e49ecd1461f223b46de133d8f62cd39f745cfdaf81bee554b908bd42",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/strum_macros-0.26.4/LICENSE",
+      "bytes": 1072,
+      "sha256": "8bce3b45e49ecd1461f223b46de133d8f62cd39f745cfdaf81bee554b908bd42",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/syn-2.0.119/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/syn-2.0.119/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/syn-3.0.6/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/syn-3.0.6/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/thiserror-1.0.69/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/thiserror-1.0.69/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/thiserror-impl-1.0.69/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/thiserror-impl-1.0.69/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-ident-1.0.26/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-ident-1.0.26/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-ident-1.0.26/LICENSE-UNICODE",
+      "bytes": 1995,
+      "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-segmentation-1.13.3/COPYRIGHT",
+      "bytes": 321,
+      "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-segmentation-1.13.3/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-segmentation-1.13.3/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-truncate-1.1.0/COPYRIGHT",
+      "bytes": 321,
+      "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-truncate-1.1.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-truncate-1.1.0/LICENSE-MIT",
+      "bytes": 1085,
+      "sha256": "fa226a5c235dafc28fc9303b03f6bf5f7483c31d8355a031ebd6963ffeb65b95",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.1.14/COPYRIGHT",
+      "bytes": 321,
+      "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.1.14/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.1.14/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.2.0/COPYRIGHT",
+      "bytes": 321,
+      "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.2.0/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/unicode-width-0.2.0/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/utf8parse-0.2.2/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/utf8parse-0.2.2/LICENSE-MIT",
+      "bytes": 1052,
+      "sha256": "e4c9b06fa850cb9b540a5e400e9f6394cf15efcf4098144de477d1d3dae10150",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zerocopy-0.8.62/LICENSE-APACHE",
+      "bytes": 11350,
+      "sha256": "9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zerocopy-0.8.62/LICENSE-BSD",
+      "bytes": 1275,
+      "sha256": "83c1763356e822adde0a2cae748d938a73fdc263849ccff6b27776dff213bd32",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zerocopy-0.8.62/LICENSE-MIT",
+      "bytes": 1060,
+      "sha256": "1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zmij-1.0.23/LICENSE-MIT",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-core-0.5.3/LICENSE-APACHE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-core-0.5.3/LICENSE-MIT",
+      "bytes": 1073,
+      "sha256": "d30047bca3b516639339a3c279bb84c3483124fb5a9dafe3c75056a85090e745",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-core-0.5.3/LICENSE-ZLIB",
+      "bytes": 859,
+      "sha256": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-jpeg-0.5.15/LICENSE-APACHE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-jpeg-0.5.15/LICENSE-MIT",
+      "bytes": 1073,
+      "sha256": "d30047bca3b516639339a3c279bb84c3483124fb5a9dafe3c75056a85090e745",
+      "mode": "0644"
+    },
+    {
+      "path": "share/licenses/third-party/zune-jpeg-0.5.15/LICENSE-ZLIB",
+      "bytes": 859,
+      "sha256": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_000.png",
+      "bytes": 19057,
+      "sha256": "360866716264c97b54b5ba35abb73264e3def1499b23305685ab57eb16ee3af5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_001.png",
+      "bytes": 19161,
+      "sha256": "593336b0eb2b63b1513a5a7323b2c8a053250636e7925380a6278ec51d358116",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_002.png",
+      "bytes": 19102,
+      "sha256": "c2779b3397f3d61f9805d5d097d172b71ae74f30bfd39e6e64c8e398b59ba1ba",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_003.png",
+      "bytes": 19228,
+      "sha256": "0e2c1de841ba28823e528876f8e1ee725c709b8f59ae203332e1750b57696433",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_004.png",
+      "bytes": 19150,
+      "sha256": "9bce25fdbb7c6ae0f7467c5f1bd2868d7ebe279dd34ec1c0e1e48417d67c8f30",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_005.png",
+      "bytes": 19168,
+      "sha256": "b8e4ad584a5a2ce03608c563973112e18b0f256f616cc13ebc5a5ce042c3ca5a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_006.png",
+      "bytes": 19157,
+      "sha256": "eee3abfa7c6ede312551ba53ae94fe0d69ccebba6c6a56e897f47955cf3308a7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_007.png",
+      "bytes": 19236,
+      "sha256": "01bf3a257efbf2f0cd74434d97441ca6aaf90fcb224c2ef121a6f0af488d5f01",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_008.png",
+      "bytes": 19100,
+      "sha256": "612471bd75f2efb4a3d1c6cab6931e495090d2607b7f80f0e80e84b92143caca",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_009.png",
+      "bytes": 19059,
+      "sha256": "4f5eda11344fb4bcf339a4aaf238f3c5c9163d2e0539c9cfc3911c5370eb3af1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_010.png",
+      "bytes": 19019,
+      "sha256": "4a0f84d50ad2beeadb773802d06eb1bd0e8ddf8a8d69759a3edd6454e2779f31",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_011.png",
+      "bytes": 19041,
+      "sha256": "e2ea17ceb937641e39eb54749d323893720e203f45d40c0a6c105fc790d08e0a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_012.png",
+      "bytes": 19008,
+      "sha256": "c93956b912f85d78c9415abf52d49cba394a972b508003ffecd1de858239d415",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_013.png",
+      "bytes": 19059,
+      "sha256": "66f3104bd3028b4df60954fa7ece9ad29e4d997071096c6c721433253b3e9789",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_014.png",
+      "bytes": 19013,
+      "sha256": "8072e98bdfb37d8ec63969ec2bbe49dddf83e0667dd48df25ae1846322cfe61e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/128/frame_015.png",
+      "bytes": 19048,
+      "sha256": "39209fca42dacf7a7adb302aa6b0d5b0cc865900010c7cc885fea3d11568c8e7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_000.png",
+      "bytes": 35205,
+      "sha256": "cc62aa66878bfb19b7dd8d664fd15dd994c93f3ba4d72d0d7753e356923abcc5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_001.png",
+      "bytes": 35339,
+      "sha256": "46be742a8161f256bea4f79ced7618b52b8e97e4af91c35e8020637e8e8427ca",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_002.png",
+      "bytes": 35267,
+      "sha256": "c79f925b98e46695781b2b49fa7d89b6b9e02d18e736a1dcbbee59d32923dac3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_003.png",
+      "bytes": 35326,
+      "sha256": "cc9ad76690dfecb152e0aa10e3632ce295765cbaf5da643c5aa315a0891e41a6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_004.png",
+      "bytes": 35323,
+      "sha256": "08d269a146aaa53bc1c816b39a482d3a6d55018fe1b3af704f5902d1ea939717",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_005.png",
+      "bytes": 35319,
+      "sha256": "1eb299c096c6b6ed90d3254a38dbf21681970aa8e8927b9a35526ff8dc80b312",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_006.png",
+      "bytes": 35399,
+      "sha256": "2c752caa234551205c6d32d2b3171e3fa938a587a68f39f90aa7fc70f9f424c9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_007.png",
+      "bytes": 35213,
+      "sha256": "4a7a1a7b8023fda7b83ce32f58d818226ed656c098f3317506a41931559cf2fd",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_008.png",
+      "bytes": 35389,
+      "sha256": "e4400bd092588dbe440836586382bffe62911cc845c0f43d01a761c107081a5e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_009.png",
+      "bytes": 35298,
+      "sha256": "aaee609528c105a327c9d5a4cd358dbf9d1ee32f8c62ce93d5c155b0c4d2a460",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_010.png",
+      "bytes": 35164,
+      "sha256": "8a6a8003a780bf107b94b6e1c6b1c54d31d608cbdb670ff5baf96b0989ffe062",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_011.png",
+      "bytes": 35183,
+      "sha256": "f96641d30c81a8f1ea665e4aef5a733190e670b203087554a4e3327c835388a7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_012.png",
+      "bytes": 35201,
+      "sha256": "038947527481556c40a6c9ee94a9c634e13c62016ea779edb6e05b4ea840d30e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_013.png",
+      "bytes": 35110,
+      "sha256": "5f012c4bac407bb675706333b24db121f58a3bc0bd0ee1bba143f396c526668e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_014.png",
+      "bytes": 35259,
+      "sha256": "7e7b49f49f6b432aead5f363c3f1ffbe0570d41e5c52b44bb0e362db0aaca69d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/192/frame_015.png",
+      "bytes": 35213,
+      "sha256": "88b49900bd454793352c96f3623c01bfcf32711ea359d9586833e7b9bf84ada2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_000.png",
+      "bytes": 12567,
+      "sha256": "17f6dd118aacb025f2b0d0ae9b42db016a2f4df4d50eb281bfa9fea1f8b8d998",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_001.png",
+      "bytes": 12676,
+      "sha256": "b1a0387a673784de2302559b5e44ce9dbc4196a3a10f8d00335a808e3f07dac2",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_002.png",
+      "bytes": 12549,
+      "sha256": "8e436363b3aa0dbea43d4af59e76c826196be945bb37c55b4eb8bd8eac6fbbb4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_003.png",
+      "bytes": 12628,
+      "sha256": "43c21b53a3dc11e5b79d617fdf9c631e20180aa4f40c7d197268480070d1c1b6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_004.png",
+      "bytes": 12608,
+      "sha256": "f8a2fd68b479a92074ef577324af758f81d32cb0f18134fb79801cb46988ffd6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_005.png",
+      "bytes": 12642,
+      "sha256": "3bd852c121eec49219676ee8ee00b0ec14082d0c7f13de0132947f43504b7387",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_006.png",
+      "bytes": 12530,
+      "sha256": "9057c95f524094cd2ea8fa23413f5211b141c138acddbf6fa05672c81e99da16",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_007.png",
+      "bytes": 12645,
+      "sha256": "e46b52e8b130c5cf43e3dba2eaa44f16b68d4225d1e1bebf46a9f9d4ba06b8dc",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_008.png",
+      "bytes": 12593,
+      "sha256": "2ed9f43e7bdbc3d60a61ea5232174ccc1a773304252ea2723c30e68e96b1f94e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_009.png",
+      "bytes": 12593,
+      "sha256": "8e96c9f28fabc997524ff0b617665657a65e28943eb066997fc9f97b615732a5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_010.png",
+      "bytes": 12507,
+      "sha256": "2611ac59464999447007c945f15fb562086db984827ac1e57423acfd4011e360",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_011.png",
+      "bytes": 12572,
+      "sha256": "00b35e53de00d8664c3b515558de3dc3fd92de66b3008d968afccfe0780c1254",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_012.png",
+      "bytes": 12634,
+      "sha256": "79109546fff0fc463883af2c463a4ff8a84eaf7aa2ab5deafda9b1f5c3f45948",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_013.png",
+      "bytes": 12517,
+      "sha256": "d9009a1a6874abce00b60c1f7caf2b02d39a36f620f9258625865f8edb988356",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_014.png",
+      "bytes": 12607,
+      "sha256": "502bc69de041e414769434847b4f179f45ff232d0222f0fd9a851c4acf3bbe11",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/idle/96/frame_015.png",
+      "bytes": 12553,
+      "sha256": "65d9e54401a77f19aae348408938005cdc1012a0b2c62ffc89560629d6134016",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/manifest.json",
+      "bytes": 22176,
+      "sha256": "7141dc05cc51553ff35b4897131c6204b8ed513594fe306525433e770ce06c2d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_000.png",
+      "bytes": 19058,
+      "sha256": "e1243d8bd20e797bf4af9911688e9cfc7fce316189a7b1e2156ab47935f03a1b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_001.png",
+      "bytes": 19061,
+      "sha256": "d014350aec8672fdc83f9247d197ae00a0b59665f16336c68a4d2dab65918349",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_002.png",
+      "bytes": 19089,
+      "sha256": "efb3e00d8d35a50428041747a24b6fd657faef72463541eca571420348b8b6d4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_003.png",
+      "bytes": 19090,
+      "sha256": "ece7db8b1e4aa4f3041a34cccdc6e1a54cff0c61ed809d25f68026fea662150e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_004.png",
+      "bytes": 19296,
+      "sha256": "1efd535754698c9bbe0c9de8ab46ec13e22b2a0009bfcdc5e7e18ba5f1ce413b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_005.png",
+      "bytes": 19310,
+      "sha256": "14452f80d6e9b46a5c47cc244f2f930657623ea3cc7e45633bcfd9b6b0d5e834",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_006.png",
+      "bytes": 19285,
+      "sha256": "8ee53fc4e93ed5f6da8771e2522b5e46beff4ceba3dde0c6b0bf316414f927c1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_007.png",
+      "bytes": 19203,
+      "sha256": "a431bb92d4597a8db96b416d892915712c9dd2c6c2ea7882683b09bc336d19dd",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_008.png",
+      "bytes": 19291,
+      "sha256": "9254770ccfefa4a1b39a5bf5d2336602d2e05e5882639cc6f4d2dda19d9dab1f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_009.png",
+      "bytes": 19180,
+      "sha256": "ec3917178176170479f3a4807345f79fec44952901def8236a05b2b83dacd302",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_010.png",
+      "bytes": 19220,
+      "sha256": "08939e43e71c46753306e01b7e692464a7047b4a4a70c6e662049479330489bf",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_011.png",
+      "bytes": 19090,
+      "sha256": "088cf914dd05b18d6a8093d18c5b380236789f771a7c28c1567caaaf67710688",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_012.png",
+      "bytes": 19132,
+      "sha256": "a657a33899219d640bf2b973a59a1b098d72272f99ab6f7e922d5c690b4ff2c7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_013.png",
+      "bytes": 19058,
+      "sha256": "99d62a50656033be9b2e09b5abda0c8e367a4849ed281dfcffd9f394505c401d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_014.png",
+      "bytes": 18990,
+      "sha256": "ab849f04d1bfe1421730294adea0e2c0a3e78e4157b8e44f5f970b82b9b1e0e9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/128/frame_015.png",
+      "bytes": 19078,
+      "sha256": "d2cc1970638517a8e724af8f095c314af24400b60160e10f57238e06c2cda3f9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_000.png",
+      "bytes": 35206,
+      "sha256": "0e4dc9c49ffaf14f7f1e9b300c53e8b6466a1f08a79d545d2845cbc9e3383719",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_001.png",
+      "bytes": 35184,
+      "sha256": "bf4ff1d92b7e82c93265033ae4b33e382860a63d96e6bd76334a17ca766f5dd9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_002.png",
+      "bytes": 35230,
+      "sha256": "7c261d84db2b7af4043aa80d6559e8ee04075935cc3b152944334d027331f699",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_003.png",
+      "bytes": 35353,
+      "sha256": "f4fc5d6629f4fa4c5aa2ba7817925f411cc54e2e7ce17d1a3bdba8ed9ff818b1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_004.png",
+      "bytes": 35406,
+      "sha256": "56b1063bf5b7c0c44c62c46a3fefdd29ff0df380ae60f53303caf65da572a54b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_005.png",
+      "bytes": 35560,
+      "sha256": "5267c96d5d5e50d372a221f3f74ba7dcd8bbdcaf09bcae66b70b01d48108e28b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_006.png",
+      "bytes": 35576,
+      "sha256": "5037472cf50560c538c4bf38adadab38107ba7e2726e3036a11fe69aeeedef4e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_007.png",
+      "bytes": 35498,
+      "sha256": "23a2697ebf1acc4c8007d8914ba529fd6c2d7610e3496b2749779b8d9e07765d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_008.png",
+      "bytes": 35696,
+      "sha256": "28874c1f7051349d5570ba435945d7eb92d5d7190be6a90e84feb0910628ed36",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_009.png",
+      "bytes": 35489,
+      "sha256": "65e169aa6bfa10e8a9352f7021041ded62c4346cdbd1591f592fb29dbab1e4ac",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_010.png",
+      "bytes": 35613,
+      "sha256": "84e77ef6546ffb480f0fa940a7515237c002622e57c07d8cb6fa089832539f7e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_011.png",
+      "bytes": 35595,
+      "sha256": "358f6edc5ef7423aa3ab167c2a107d74627f3c9aea5cf9a50b3e0bb2404908b9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_012.png",
+      "bytes": 35257,
+      "sha256": "a5de6bb06fad1ae2e004d176df85f8e6cb16fadef5c88c5b4eda253c58493bff",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_013.png",
+      "bytes": 35253,
+      "sha256": "c30cbf5a88fe6e00c6569e7597783297ea22d673fa0396ac8ccd308ed97121a7",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_014.png",
+      "bytes": 35211,
+      "sha256": "87b8ea620aea548b5fa18946a70c9ab278d6764c05353c560dbe99cef3831e1a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/192/frame_015.png",
+      "bytes": 35244,
+      "sha256": "a4803acca5b19af62459fa09e7526d02ffa50fe69b42ee6780034650bb5ed743",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_000.png",
+      "bytes": 12567,
+      "sha256": "17f6dd118aacb025f2b0d0ae9b42db016a2f4df4d50eb281bfa9fea1f8b8d998",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_001.png",
+      "bytes": 12545,
+      "sha256": "2afffbe340816c5ddf89d467a07178aebb27d4f8a4fa2ae93ed9f2c7bf4fc418",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_002.png",
+      "bytes": 12569,
+      "sha256": "fb962e36af433d31a130d7c738114f89e2d2695cb1835c9b85e5da733aaa37e6",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_003.png",
+      "bytes": 12658,
+      "sha256": "bdd0dd4d1c93fd2a1dda10480a3873c299a29a737ffb2b0eb498087d4d6ad403",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_004.png",
+      "bytes": 12585,
+      "sha256": "9c66b831661310f693cb643570405bee252a45fbc2f738089ba86f3a7f0170f3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_005.png",
+      "bytes": 12635,
+      "sha256": "9807e8e34bcb011ed7a39716d61335a84cb43853d1c19b8ae23edf2f05917b14",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_006.png",
+      "bytes": 12682,
+      "sha256": "3c02696ceead3923ea68925db66fc1b43b60af11d978b3ea7e67c976bc45cfe8",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_007.png",
+      "bytes": 12620,
+      "sha256": "85551b131816b24aa59db9b3ef72dce10b99dc57ee16f706ad93596d50ead96e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_008.png",
+      "bytes": 12736,
+      "sha256": "b31b0d7a4329b0e1ea190bbb7d1407df28ad128ad876a76cfdf5358cbea7dcb1",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_009.png",
+      "bytes": 12646,
+      "sha256": "b3a11a084248c09ccdcb9acd5c30e5ac4fe06ec1aa2d6d07f587f4a0ffdca5b3",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_010.png",
+      "bytes": 12593,
+      "sha256": "900ef433f05a30fd3181b76232d2220e897eb0db331fe10265bb8f97c6da589d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_011.png",
+      "bytes": 12598,
+      "sha256": "4d4c28a959521892da121c9d4717f1f11dafc4888e2a29aeb103ee4c63fa1cd0",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_012.png",
+      "bytes": 12575,
+      "sha256": "df2c9e456d4c0dd153a3f85ae22883bdf0d42a0f71d8d1642b293824a6a0cbfb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_013.png",
+      "bytes": 12535,
+      "sha256": "e89a6b0ced17dc487767fcfb8de0d21748d5d2f9364443270454447715314230",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_014.png",
+      "bytes": 12490,
+      "sha256": "822aeadeea305b79bf3d5833d09e34b14c95397593a4ed15de680660551bd430",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/thinking/96/frame_015.png",
+      "bytes": 12559,
+      "sha256": "27ee63956688e1353824513e43801b4cec0163b5b0acd95a98cb809a7d316e29",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_000.png",
+      "bytes": 19059,
+      "sha256": "c453913665257c9ae88245db42359b3974a8feecbf1c80e395aabc6e07244e2b",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_001.png",
+      "bytes": 19082,
+      "sha256": "af89430c436d6fcdc0bd74390a4d98a48eb2f63fea8223f06d22b502e9358d2f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_002.png",
+      "bytes": 19166,
+      "sha256": "340a8715e7d1c1d6318a77014d76800d5d531be51e606bc1b9d1dde18fd6df87",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_003.png",
+      "bytes": 19148,
+      "sha256": "a950f906a9adc7cdc582d70bb464cace055f64a4e8038100bb60e42b0f2b0e63",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_004.png",
+      "bytes": 19198,
+      "sha256": "eecaeafbea158eab59a87f1614e7025155d6e6605ea715b3af3161a29a60b50d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_005.png",
+      "bytes": 19281,
+      "sha256": "782a8345001c032c80d4ed18ce2264e2d266ad5c5ff542cbaee2e175389b42f9",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_006.png",
+      "bytes": 19109,
+      "sha256": "fd5d7b50fbf52680d69c195849ff782f7648a0bc326a71ddcd822bb79cff192d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_007.png",
+      "bytes": 19173,
+      "sha256": "58ae32e2bc2e67c99a3674fdf5284eb7fcee48c68049eade16c2e7e0d5fcd9dd",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_008.png",
+      "bytes": 19124,
+      "sha256": "42fb30778814b093b921defa63c7b278ec65ba4e65216f757f8d1c327578ac60",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_009.png",
+      "bytes": 18974,
+      "sha256": "598a3935e56d49f92dc73642935636a25dc3f7090c33933ddf70d32fdbcd8897",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_010.png",
+      "bytes": 19055,
+      "sha256": "ab11f336840d17f1963a869a202e11ecf950b06610141e21ceacf863b8532f03",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/128/frame_011.png",
+      "bytes": 19059,
+      "sha256": "a4d7056e31567cb92efa5c74a933d731069449bae283d0d8537cbe537aceb76c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_000.png",
+      "bytes": 35206,
+      "sha256": "bf7a889ffb34b2c9796d8e4394c2af636d229816922e52df191c519aedf2d266",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_001.png",
+      "bytes": 35185,
+      "sha256": "f6061d65f4af5fbbef2950497197282d52965ed6927129b4fa31be4eaa4ca07d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_002.png",
+      "bytes": 35372,
+      "sha256": "cd14b82844278d4db16a739b91a9a40dddfaa50ad22300016df352fd67a05137",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_003.png",
+      "bytes": 35439,
+      "sha256": "158e4902c6bb5fb9822d0c9ca992e4f6f8745f63b58a73e061851a590722d779",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_004.png",
+      "bytes": 35573,
+      "sha256": "6f03d9f3a4e3a8df816376c48659355afbbb97dc25a34667904ea85952868fa8",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_005.png",
+      "bytes": 35463,
+      "sha256": "266558ea9e21cc495367af9f35158ed22f8b0ea51d3b0e53138a9a49ea9213ae",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_006.png",
+      "bytes": 35521,
+      "sha256": "388b4d1d3fdc34f3f66c2e761ae652c5219c5778fd0355f5f9b651657ca4aaee",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_007.png",
+      "bytes": 35454,
+      "sha256": "80b182e3e30cdb8e49ffe9238d7130ebb74c0d04c022eb6573da558302c9710d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_008.png",
+      "bytes": 35323,
+      "sha256": "ec6b497f8fd0b8e9835d3da69ff991f28e51a432c446e01fee27f86113ba8dfd",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_009.png",
+      "bytes": 35336,
+      "sha256": "78c9dc07f7080590819ec1c8f5f23119aa5838c189cabb002a199e6153ef0547",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_010.png",
+      "bytes": 35160,
+      "sha256": "d03e9b15755e0a9cb35644b79331eb040c9d8dd3343c1920c4a84e7106c836c4",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/192/frame_011.png",
+      "bytes": 35267,
+      "sha256": "574de8c103a5a19f93571612383840c1315c4489c51a8c0b248566741a9ae11d",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_000.png",
+      "bytes": 12567,
+      "sha256": "17f6dd118aacb025f2b0d0ae9b42db016a2f4df4d50eb281bfa9fea1f8b8d998",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_001.png",
+      "bytes": 12584,
+      "sha256": "7a834d46a3a40561bfba3033b969a209b80e5d35995cff7333cd549397d8449c",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_002.png",
+      "bytes": 12571,
+      "sha256": "282c5e9f59acf6a99a63c925926559df9ec83575ecca3cd622dfaa9030c957d5",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_003.png",
+      "bytes": 12719,
+      "sha256": "ecddda7976e0333154cc71a54542fd74061efa9b98ca2fd8e68ad5fc2f4fc352",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_004.png",
+      "bytes": 12592,
+      "sha256": "453e8d017d6151878cae9fc13323818e74e6f970e183c3a77d70c0af9dba0fbb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_005.png",
+      "bytes": 12705,
+      "sha256": "bb565c681e88c37a4f5bc21a953a14253aa1e77a2879f3d534a56645ffa75a2a",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_006.png",
+      "bytes": 12696,
+      "sha256": "038ebafc39d4f595287fdda8331fd5389018c860f1fd0b23eabaad60b718efbb",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_007.png",
+      "bytes": 12652,
+      "sha256": "48d835ef5fc154035fddddfa499c4ab8643ad4b3d6bcd03782a2a8e1a7110648",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_008.png",
+      "bytes": 12522,
+      "sha256": "a2c4bc8796c11e9a95b0e7adbf2c4c53a9e7097e899595331b48f8abff3b7e48",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_009.png",
+      "bytes": 12560,
+      "sha256": "37f783a4c03bfe8a28bbdc0ce1934dddecbc140dc68c065ca227781aa2ada768",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_010.png",
+      "bytes": 12521,
+      "sha256": "68d11f0013c7ae1f2cb72918303aa140528668575e45b6e8f9016a20374fc24e",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/animations/tool_running/96/frame_011.png",
+      "bytes": 12573,
+      "sha256": "12865bf1f9ea56c8a02860c6c32c3f4d6be752008f38399b9dc591835754765f",
+      "mode": "0644"
+    },
+    {
+      "path": "share/sentinel/core-warden/state-contract.json",
+      "bytes": 1277,
+      "sha256": "e8513564fee17db0361dd998ddd727d06368031d1f09146d2e11d7366b48e505",
+      "mode": "0644"
+    }
+  ],
+  "excludes_self": true
+}

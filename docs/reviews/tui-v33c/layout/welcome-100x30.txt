@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: unknown                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                             Inference unknown
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                ◇ S ◇                                               
+                                                                                                    
+                                      Start a new conversation                                      
+                        Ask a question, explore an idea, or describe a task.                        
+                                  Ctrl+P commands  /help shortcuts                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                                               │  
+  │   second /path                                                                               │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  Enter send · Shift+Enter newline · Ctrl+P commands                                          idle  

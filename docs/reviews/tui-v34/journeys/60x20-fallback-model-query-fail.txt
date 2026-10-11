@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+--+model · Enter select · Esc close----------------------+--
+fi|Filter: model-beta                                    |ed
+  |> fixture / model-beta · Available · chat             |  
+  |  Selected · fixture / model-alpha · Available · chat |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |fixture / model-beta                                  |  
+  |Discovered; inference not attested                    |  
+  |Catalog health is not verified inference readiness.   |  
+  |/doctor inspects status.                              |  
+  +------------------------------------------------------+  
+  Arrows · Enter · Esc                                idle  

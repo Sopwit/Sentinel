@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+------------------------------------------------------------
+fixture / model-alpha                   Inference unverified
+                                                            
+    TUI preferences · no persistent writes                  
+    Theme: glacier · this process (temporary override)      
+    /theme [name] or /settings theme [name]                 
+    Mascot preference: static · this process (temporary     
+    override)                                               
+    /settings mascot off|static|animated|auto               
+    Reduced motion: false · launch environment              
+    SENTINEL_TUI_REDUCED_MOTION                             
+    Reduced motion keeps images static; safety/terminal     
+    support can require text fallback. Disconnected         
+    presentation is static.                                 
+  + Message · Chat --------------------------------------+  
+  |   Ask a question or share an idea…                   |  
+  +------------------------------------------------------+  
+  PgUp/PgDn scroll · Esc returns to conversation            
+  Esc back · PgUp/PgDn scroll                         idle  

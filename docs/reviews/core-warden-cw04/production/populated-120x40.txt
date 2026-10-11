@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: unknown                                                        [ S ]           Connected
+────────────────────────────────────────────────────────────────────────────────────────────── Ready────────────────────
+Provider unselected / Model unselected                                                                 Inference unknown
+                                                                                                                        
+    Assistant                                                                                                           
+      Existing transcript                                                                                               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                                                                   │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  No discovered models · /model or /doctor                                                                              
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                              idle  

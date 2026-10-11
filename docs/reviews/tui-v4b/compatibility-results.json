@@ -1,0 +1,988 @@
+[
+  {
+    "name": "apple-no-images-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=7; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.8417499996722,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "silent-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.8668340090662,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "negative-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No confirmed image protocol; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=26; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1306.5603339928202,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "kitty-fragmented-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=43; bounded_end=complete",
+    "probe_ms": 43,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.319708015304,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "sixel-fragmented-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "sixel",
+    "reason": "Confirmed terminal response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=true; cell=Some((8, 16)); response_bytes=16; budget_ms=300; elapsed_ms=31; bounded_end=complete",
+    "probe_ms": 31,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1300.9522080246825,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "late-da-cell-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1301.3327500084415,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "near-budget-kitty-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=281; bounded_end=complete",
+    "probe_ms": 281,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1302.181417006068,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "missing-cell-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=12; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1303.6655419855379,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "invalid-cell-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=20; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1304.2691660230048,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "ssh-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1306.6514999954961,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "tmux-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1307.2860419924837,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "screen-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1302.9031250043772,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "no-color-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.2345839969348,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "ascii-60x20",
+    "initial_size": [
+      60,
+      20
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1304.42945798859,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "apple-no-images-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=7; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1306.1125410022214,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "silent-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=299; bounded_end=timeout_or_read_end",
+    "probe_ms": 299,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.56916599744,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "negative-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No confirmed image protocol; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=26; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1309.8398330039345,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "kitty-fragmented-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=43; bounded_end=complete",
+    "probe_ms": 43,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1335.868499998469,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "sixel-fragmented-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "sixel",
+    "reason": "Confirmed terminal response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=true; cell=Some((8, 16)); response_bytes=16; budget_ms=300; elapsed_ms=31; bounded_end=complete",
+    "probe_ms": 31,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1415.3397920017596,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "late-da-cell-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1303.7926249962766,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "near-budget-kitty-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=284; bounded_end=complete",
+    "probe_ms": 284,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1331.096499983687,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "missing-cell-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=12; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1302.9308750119526,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "invalid-cell-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=20; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.5190420127474,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "ssh-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1303.9645419921726,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "tmux-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1303.648290981073,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "screen-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1304.9598329816945,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "no-color-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1304.7009999863803,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "ascii-120x40",
+    "initial_size": [
+      120,
+      40
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "text",
+    "reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "probe_ms": 0,
+    "probe_sent": false,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1306.4528339891694,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  },
+  {
+    "name": "disconnected",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": true,
+    "protocol": "text",
+    "reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "probe_ms": 300,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.210457998328,
+    "checks": [
+      "Disconnected",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "Disconnected"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c"
+  }
+]

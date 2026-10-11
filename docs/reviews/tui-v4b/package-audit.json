@@ -1,0 +1,19 @@
+{
+  "version": "sentinel 1.0.0-rc.8",
+  "architecture": "Mach-O 64-bit executable arm64",
+  "archive_sha256": "a0ca836726364dd9e4c72eaad83c5081b4c005c58d1417b5bfcb476e14b0a33f",
+  "canonical_png_count": 132,
+  "canonical_assets_unchanged": true,
+  "no_blender_resources": true,
+  "dependency_graph": "locked macOS arm64 normal + build",
+  "third_party_packages": 106,
+  "missing_license_texts": [
+    "base64-simd 0.8.0",
+    "block2 0.6.2",
+    "dispatch2 0.3.1",
+    "objc2 0.6.4",
+    "objc2-encode 4.1.0",
+    "vsimd 0.8.0"
+  ],
+  "code_signing": "linker ad-hoc; no TeamIdentifier, not Developer ID signed/notarized"
+}

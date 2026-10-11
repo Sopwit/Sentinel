@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: unknown                                                    Connected
+----------------------------------------------------------------------------------------------------
+Provider unselected / Model unselected                                             Inference unknown
+                                                                                                    
+    Assistant                                                                                       
+      AUTOMATIC UPDATE Türkçe                                                                       
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  + Message · Chat ------------------------------------------------------------------------------+  
+  |   Ask a question or share an idea…                                                           |  
+  +----------------------------------------------------------------------------------------------+  
+  /notices · Mascot: static (this process; SENTINEL_TUI_MASCOT sets launch default)                 
+  Enter send · Shift+Enter newline · Ctrl+P commands                                          idle  

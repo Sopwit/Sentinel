@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: unknown                                                                                                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                                                                                                             Inference unknown
+                                                                                                                                                                                    
+    Assistant                                                                                                                                                                       
+      Bold response                                                                                                                                                                 
+      Code · rust                                                                                                                                                                   
+      let a = 1;                                                                                                                                                                    
+                                                                                                                                                                                    
+      Final row                                                                                                                                                                     
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                             ┌help · Enter inspect · Esc close────────────────────────────────────────────────────────┐                                             
+                                             │Filter:                                                                                 │                                             
+                                             │> /activity  · Inspect the bounded safe execution timeline                              │                                             
+                                             │  /agent  · Switch to authorized tool-assisted tasks                                    │                                             
+                                             │  /archive  · Confirm archive of attached session; messages are retained                │                                             
+                                             │  /cancel  · Request cancellation; await daemon terminal state                          │                                             
+                                             │  /chat  · Switch to conversation without Agent tools                                   │                                             
+                                             │  /commands  · Open the unified command palette                                         │                                             
+                                             │  /compact [request] · Context compaction needs an authoritative conversation/context...│                                             
+                                             │/activity                                                                               │                                             
+                                             │/activity                                                                               │                                             
+                                             │Inspect the bounded safe execution timeline                                             │                                             
+                                             │Aliases:                                                                                │                                             
+                                             │Keys:                                                                                   │                                             
+                                             │Security: Local                                                                         │                                             
+                                             │Backend: existing bounded activity                                                      │                                             
+                                             │Example: /activity                                                                      │                                             
+                                             └────────────────────────────────────────────────────────────────────────────────────────┘                                             
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                                                                                                                               │  
+  │   second /path                                                                                                                                                               │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                                                                                                    
+  Arrows select · Enter confirm · Esc close                                                                                                                                   idle  

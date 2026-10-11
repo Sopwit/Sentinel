@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: Fixture                                                                        Connected
+───────────────────────────────────────────────────────────────────────────────────────────      ───────────────────────
+fixture / model-alpha                                                                               Inference unverified
+                                                                                                                        
+    Assistant                                                                                                           
+      History session-a                                                                                                 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   /Gq=2,i=2784769599,a=t,f=32,t=d,s=48,v=48,m=1;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+/ysxNf9DSk/+bnZ7/I+Wmu2Hj5LAZ21wd21xc1zJzM7S297f/uHl5v7R1dflYWRrSENEUA9BRUdXeRwfISN0ISUozSElKPQeIiX+HCAj/h0hJP8fIyb/Iicq

@@ -1,0 +1,20 @@
+{"detail":{"capability":{"cell":[16,34],"kitty_ack":true,"source":"SIMULATED PTY RECEIPT — NOT physical support evidence"},"keyboard_reads":false,"stage":"raw"},"operation":"stage.begin","us":1}
+{"detail":null,"operation":"raw.enable.begin","us":99}
+{"detail":null,"operation":"raw.enable.completed","us":139}
+{"detail":{"format":"PNG/f=100","id":5329677,"wire_bytes":16845},"operation":"upload.begin","us":146}
+{"detail":{"bytes":16845,"cumulative_bytes":16845},"operation":"stdout.write.completed","us":350}
+{"detail":{"id":5329677},"operation":"upload.write_all.completed","us":359}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329677,"rect":[5,5,16,8]},"operation":"placement.begin","us":364}
+{"detail":{"bytes":17,"cumulative_bytes":16862},"operation":"stdout.write.completed","us":371}
+{"detail":{"bytes":7,"cumulative_bytes":16869},"operation":"stdout.write.completed","us":375}
+{"detail":{"bytes":29,"cumulative_bytes":16898},"operation":"stdout.write.completed","us":379}
+{"detail":{"bytes":16898,"flushes":1},"operation":"stdout.flush.completed","us":386}
+{"detail":{"id":5329677},"operation":"placement.flush.completed","us":390}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":394}
+{"detail":null,"operation":"observation.end","us":5005468}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5005676}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5005725}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5005745}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5005787}
+{"detail":{"id":5329677},"operation":"owned_image.deleted","us":5005811}
+{"detail":{"success":true},"operation":"raw.disabled","us":5005948}

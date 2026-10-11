@@ -1,0 +1,226 @@
+[
+  {
+    "monotonic_ms": 10.140833008335903,
+    "bytes": 8,
+    "uploads": 0,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 70.38787499186583,
+    "bytes": 3634,
+    "uploads": 1,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 151.19041700381786,
+    "bytes": 375319,
+    "uploads": 1,
+    "placeholders": 16,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 151.57262500724755,
+    "bytes": 376343,
+    "uploads": 1,
+    "placeholders": 64,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 151.97199999238364,
+    "bytes": 377367,
+    "uploads": 1,
+    "placeholders": 128,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 155.7150000007823,
+    "bytes": 383856,
+    "uploads": 1,
+    "placeholders": 192,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 156.1201250005979,
+    "bytes": 384880,
+    "uploads": 1,
+    "placeholders": 247,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 156.51662499294616,
+    "bytes": 385904,
+    "uploads": 1,
+    "placeholders": 256,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 247.4749170069117,
+    "bytes": 392755,
+    "uploads": 2,
+    "placeholders": 256,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 258.0767920007929,
+    "bytes": 410163,
+    "uploads": 2,
+    "placeholders": 262,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 264.5821670012083,
+    "bytes": 420697,
+    "uploads": 2,
+    "placeholders": 268,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 374.43950001033954,
+    "bytes": 431311,
+    "uploads": 3,
+    "placeholders": 268,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 391.6818329889793,
+    "bytes": 448719,
+    "uploads": 3,
+    "placeholders": 274,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 499.5739170117304,
+    "bytes": 459259,
+    "uploads": 4,
+    "placeholders": 274,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 518.2382919883821,
+    "bytes": 476667,
+    "uploads": 4,
+    "placeholders": 280,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 623.8783329899888,
+    "bytes": 487209,
+    "uploads": 5,
+    "placeholders": 280,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 640.4747919877991,
+    "bytes": 504617,
+    "uploads": 5,
+    "placeholders": 286,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 749.5212919893675,
+    "bytes": 515158,
+    "uploads": 6,
+    "placeholders": 286,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 769.2107080074493,
+    "bytes": 532566,
+    "uploads": 6,
+    "placeholders": 292,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 874.6135419933125,
+    "bytes": 543106,
+    "uploads": 7,
+    "placeholders": 292,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 895.2740000095218,
+    "bytes": 560514,
+    "uploads": 7,
+    "placeholders": 298,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 999.9549170024693,
+    "bytes": 571053,
+    "uploads": 8,
+    "placeholders": 298,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1020.3601669927593,
+    "bytes": 588461,
+    "uploads": 8,
+    "placeholders": 304,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1124.0789580042474,
+    "bytes": 599003,
+    "uploads": 9,
+    "placeholders": 304,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1140.6769169843756,
+    "bytes": 616411,
+    "uploads": 9,
+    "placeholders": 310,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1248.420541989617,
+    "bytes": 626949,
+    "uploads": 10,
+    "placeholders": 310,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1260.1837079855613,
+    "bytes": 644357,
+    "uploads": 10,
+    "placeholders": 316,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1373.0150829942431,
+    "bytes": 654897,
+    "uploads": 11,
+    "placeholders": 316,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1385.2693749940954,
+    "bytes": 672305,
+    "uploads": 11,
+    "placeholders": 322,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1498.5866250062827,
+    "bytes": 682840,
+    "uploads": 12,
+    "placeholders": 322,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1563.2073750020936,
+    "bytes": 700248,
+    "uploads": 12,
+    "placeholders": 328,
+    "user_input_sent": true
+  },
+  {
+    "monotonic_ms": 1574.01454198407,
+    "bytes": 710488,
+    "uploads": 12,
+    "placeholders": 334,
+    "user_input_sent": true
+  }
+]

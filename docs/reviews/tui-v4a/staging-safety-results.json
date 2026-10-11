@@ -1,0 +1,6 @@
+{
+  "shell_syntax": "PASS",
+  "existing_destination_exit": 2,
+  "message": "Output already exists; use a new directory.",
+  "existing_stage_preserved": true
+}

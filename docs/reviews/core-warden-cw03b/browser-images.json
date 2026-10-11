@@ -1,0 +1,182 @@
+[
+  {
+    "alt": "Idle 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Idle 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Idle 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Thinking 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Thinking 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Thinking 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Tool Running 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Tool Running 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Tool Running 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Listening 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Listening 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Listening 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Processing 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Processing 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Processing 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Approval 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Approval 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Approval 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Speaking 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Speaking 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Speaking 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Success 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Success 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Success 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Warning 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Warning 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Warning 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  },
+  {
+    "alt": "Error 192px",
+    "height": 192,
+    "loaded": true,
+    "width": 192
+  },
+  {
+    "alt": "Error 128px",
+    "height": 128,
+    "loaded": true,
+    "width": 128
+  },
+  {
+    "alt": "Error 96px",
+    "height": 96,
+    "loaded": true,
+    "width": 96
+  }
+]

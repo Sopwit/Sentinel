@@ -1,0 +1,274 @@
+diff --git a/core/src/agent/AgentLoop.cpp b/core/src/agent/AgentLoop.cpp
+index 01f01bd8..2d41eb0a 100644
+--- a/core/src/agent/AgentLoop.cpp
++++ b/core/src/agent/AgentLoop.cpp
+@@ -16,6 +16,11 @@
+ #include "sentinel/core/security/ISandboxPolicy.h"
+ #include "sentinel/core/security/PathGuard.h"
+ #include "sentinel/core/security/PermissionService.h"
++#include <QDateTime>
++#include <QJsonDocument>
++#include <QJsonObject>
++#include <QLoggingCategory>
++#include <QScopeGuard>
+ #include <QDir>
+ #include <QFileInfo>
+ 
+@@ -26,6 +31,20 @@
+ #include <utility>
+ 
+ namespace sentinel::core {
++namespace {
++Q_LOGGING_CATEGORY(loopDiagnostics, "sentinel.agent.loop.diagnostics", QtWarningMsg)
++void traceStage(const AgentLoopState& state, const char* stage, const char* event,
++                const AgentStepDecision* decision = nullptr) {
++    QJsonObject record{{"session_id", state.sessionId}, {"stage", stage}, {"event", event},
++                       {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
++                       {"step", state.steps.size() + 1},
++                       {"classification_indeterminate", state.observationIntent.indeterminate}};
++    if (decision)
++        record.insert("tool_requested", !decision->toolId.isEmpty() || !decision->toolBatch.isEmpty());
++    qCInfo(loopDiagnostics).noquote() << QJsonDocument(record).toJson(QJsonDocument::Compact);
++}
++}
++
+ 
+ QString AgentLoop::workingDirectory() const {
+     if (!workspaceContext_.rootPath.trimmed().isEmpty())
+@@ -524,7 +543,9 @@ void AgentLoop::advanceAsync() {
+             ClaimGroundingResolver::facts(asyncState_.observationIntent, asyncState_.evidence));
+         preparePlanningContext(asyncState_);
+         planner_.setEvidence(asyncState_.evidence);
++        traceStage(asyncState_, "planning", "enter");
+         decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
++        traceStage(asyncState_, "planning", "exit", &decision);
+         asyncState_.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+     } catch (...) {
+         if (planningCallback_)
+@@ -961,7 +982,9 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
+                 ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
+             preparePlanningContext(state);
+             planner_.setEvidence(state.evidence);
++            traceStage(state, "planning", "enter");
+             decision = planner_.nextStep(state.goal, state.steps);
++            traceStage(state, "planning", "exit", &decision);
+             state.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+         } catch (...) {
+             if (planningCallback_)
+@@ -1265,6 +1288,8 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
+ }
+ 
+ void AgentLoop::initializeObservationIntent(AgentLoopState& state) {
++    traceStage(state, "classification", "enter");
++    const auto traceExit = qScopeGuard([&] { traceStage(state, "classification", "exit"); });
+     if (observationIntentPolicy_) {
+         if (statusCallback_)
+             statusCallback_(QStringLiteral("Determining required observations."));
+diff --git a/core/src/agent/LlmAgentRuntime.cpp b/core/src/agent/LlmAgentRuntime.cpp
+index e7dd8cae..42fb2dca 100644
+--- a/core/src/agent/LlmAgentRuntime.cpp
++++ b/core/src/agent/LlmAgentRuntime.cpp
+@@ -239,6 +239,8 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
+         const auto request = attempt == 0 ? (repair.isEmpty() ? prompt : repair) : repair;
+         ChatRequestOptions options;
+         options.cancellationToken = streamCancellationToken_;
++        options.deadlineMs = 120000;
++        options.maxOutputTokens = 1024;
+         options.images = inputImages_;
+         options.structuredOutput =
+             modelBinding_.capabilities.structuredOutput == CapabilitySupport::Supported;
+@@ -256,7 +258,7 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
+         }
+         bool outputEmitted = false;
+         const auto send = [&]() {
+-            return attempt == 0 && options.images.isEmpty() && !options.structuredOutput && !options.nativeToolCalling &&
++            return options.deadlineMs == 0 && attempt == 0 && options.images.isEmpty() && !options.structuredOutput && !options.nativeToolCalling &&
+                            modelBinding_.capabilities.streaming == CapabilitySupport::Supported &&
+                            streamObserver_
+                        ? provider_->sendMessageStreaming(
+diff --git a/core/src/agent/ObservationPolicy.cpp b/core/src/agent/ObservationPolicy.cpp
+index 38199d07..bf9f0c8f 100644
+--- a/core/src/agent/ObservationPolicy.cpp
++++ b/core/src/agent/ObservationPolicy.cpp
+@@ -6,6 +6,9 @@
+ #include "sentinel/core/interfaces/IChatProvider.h"
+ #include "sentinel/core/security/ExternalDirectoryGate.h"
+ 
++#include <QDateTime>
++#include <QElapsedTimer>
++#include <QUuid>
+ #include <QDir>
+ #include <QFileInfo>
+ #include <QJsonArray>
+@@ -235,33 +238,49 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
+             if (!capabilities.contains(name))
+                 capabilities.append(name);
+         }
++    // AgentLoop appends trusted workspace context after recent conversation. Keep
++    // that suffix even when the conversation exceeds the classifier's budget.
++    const auto marker = QStringLiteral("\nACTIVE WORKSPACE ROOT: ");
++    const auto rootOffset = conversationContext.lastIndexOf(marker);
++    const auto context = rootOffset < 0
++                             ? conversationContext.left(1500)
++                             : conversationContext.left(qMin(rootOffset, 1000)) +
++                                   conversationContext.mid(rootOffset).left(600);
+     const auto prompt =
+         QStringLiteral(
+-            "Classify the USER GOAL, independently of any proposed answer. Does completing it "
+-            "require observing current external state? Distinguish inspecting/verifying a resource "
+-            "from merely mentioning it in a hypothetical or writing task. Conversation text "
+-            "already visible is context; older history requires lookup. Return ONLY JSON: "
+-            "{\"requirements\":[{\"domain\":\"filesystem|workspace|process|system|"
+-            "clipboard|network|browser|memory|history|external|application|execution\","
+-            "\"resource\":\"absolute path, ~/path, URL, or empty\","
+-            "\"purpose\":\"inspect|operate\",\"operation\":\"exists|contains|search_matches|hidden_"
+-            "entries|path_pattern|none\",\"query\":\"exact text or search pattern if "
+-            "applicable\",\"recursive\":true|false}]}. Use hidden_entries for questions about "
+-            "hidden files, dotfiles or hidden directories; use path_pattern for workspace-wide "
+-            "named-file absence/search questions (e.g. .env). Set recursive:true for "
+-            "workspace-wide or anywhere-under scope. The resource must be the absolute workspace "
+-            "root from context; never guess cwd/home. Use exists for concrete file existence "
+-            "questions and a full target path. Use an empty array for general knowledge, "
+-            "rewriting, or conversation-only reasoning. Multiple domains are allowed. "
+-            "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
+-            .arg(capabilities.join(QLatin1Char(',')), conversationContext.left(1500), goal);
++            "Classify the USER GOAL. Return ONLY JSON: {\"requirements\":[{\"domain\":\"filesystem\","
++            "\"resource\":\"\",\"purpose\":\"inspect\",\"operation\":\"none\",\"query\":\"\","
++            "\"recursive\":false}]}. At most 4 entries. Domains: %1. "
++            "Require evidence for current external state; [] for general knowledge, writing, "
++            "hypotheticals or reasoning from visible conversation. Older history needs history. "
++            "purpose is inspect or operate. Reading/explaining/comparing file CONTENT uses "
++            "operation:none, never exists. Only existence questions use exists with full target path. "
++            "Text checks use contains; search uses search_matches. Hidden-file questions use "
++            "hidden_entries; named-file search/absence uses path_pattern. For workspace-wide "
++            "search use the ACTIVE WORKSPACE ROOT and recursive:true. query is exact text/pattern. "
++            "Resolve relative files against that root; never guess cwd/home. "
++            "CONTEXT: %2\nUSER GOAL: %3")
++            .arg(capabilities.join(QLatin1Char(',')), context, goal);
++    const auto traceId = QUuid::createUuid().toString(QUuid::WithoutBraces);
++    QElapsedTimer elapsed;
++    elapsed.start();
++    qCInfo(classificationDiagnostics).noquote()
++        << QJsonDocument(QJsonObject{{"stage", "classification"}, {"event", "enter"},
++                                     {"trace_id", traceId},
++                                     {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)}})
++               .toJson(QJsonDocument::Compact);
+     ChatRequestOptions options;
+     options.cancellationToken = cancellationToken_;
+     options.deadlineMs = 30000;
+     options.maxOutputTokens = 512;
+     const auto reply = provider_->sendRequest(prompt, options);
+     const auto recordOutcome = qScopeGuard([&] {
+-        QJsonObject diagnostic;
++        QJsonObject diagnostic{{"stage", "classification"}, {"event", "exit"},
++                               {"trace_id", traceId}, {"request_id", reply.requestId.left(128)},
++                               {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
++                               {"wall_elapsed_ms", elapsed.elapsed()},
++                               {"cancelled", cancellationToken_ && cancellationToken_->load()},
++                               {"error_category", chatProviderErrorCategoryName(reply.category)}};
+         for (const auto& key :
+              {"provider_id", "model_id", "deadline_ms", "output_budget_tokens", "elapsed_ms",
+               "http_status", "category", "upstream_cancellation", "reported_context_tokens",
+diff --git a/core/src/model/ModelService.cpp b/core/src/model/ModelService.cpp
+index 8464f842..84b542da 100644
+--- a/core/src/model/ModelService.cpp
++++ b/core/src/model/ModelService.cpp
+@@ -621,10 +621,12 @@ public:
+         const auto host = config_.endpoint.host().toLower();
+         if (host == QLatin1String("api.anthropic.com"))
+             return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Claude,
+-                                       binding_, config_, timeoutMs_, message, options);
++                                       binding_, config_, options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_,
++                                       message, options);
+         if (host == QLatin1String("generativelanguage.googleapis.com"))
+             return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Gemini,
+-                                       binding_, config_, timeoutMs_, message, options);
++                                       binding_, config_, options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_,
++                                       message, options);
+         QJsonArray messages{
+             QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+                         {QStringLiteral("content"), chatImageContent(message, options.images)}}};
+@@ -687,7 +689,8 @@ public:
+         // Budget the actual serialized native request, including schemas and tool
+         // results omitted by ContextEngine's prompt estimate. This is an estimate,
+         // not a tokenizer measurement; the provider may still reject the request.
+-        const int outputBudget = qMin(1024, binding_.capabilities.maxOutputTokens.value_or(1024));
++        const int outputBudget = qMin(options.maxOutputTokens > 0 ? options.maxOutputTokens : 1024,
++                                      binding_.capabilities.maxOutputTokens.value_or(1024));
+         body.insert(QStringLiteral("max_tokens"), qMax(1, outputBudget));
+         const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
+         const auto estimatedInput = (bytes + 2) / 3 + 256;
+@@ -735,7 +738,8 @@ public:
+                     ChatProviderErrorCategory::RequestRejected),
+                 QStringLiteral("context_exhausted"));
+         diagnostics.insert(QStringLiteral("transport_attempted"), true);
+-        LMStudioLocalInferenceClient client(config_, timeoutMs_);
++        LMStudioLocalInferenceClient client(
++            config_, options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_);
+         const auto completion = client.completeOpenAiChat(body, options.cancellationToken);
+         diagnosticRequestId = completion.requestId;
+         if (!completion.ok) {
+diff --git a/tests/core/test_llm_agent_runtime.cpp b/tests/core/test_llm_agent_runtime.cpp
+index c49b79cb..0c25cb18 100644
+--- a/tests/core/test_llm_agent_runtime.cpp
++++ b/tests/core/test_llm_agent_runtime.cpp
+@@ -80,6 +80,37 @@ class LlmAgentRuntimeTest final : public QObject {
+     Q_OBJECT
+ 
+ private slots:
++    void nativeRequestHonorsPerRequestDeadline() {
++        QTcpServer server;
++        QVERIFY(server.listen(QHostAddress::LocalHost, 0));
++        QList<QTcpSocket*> sockets;
++        connect(&server, &QTcpServer::newConnection, &server, [&] {
++            auto* socket = server.nextPendingConnection();
++            sockets.append(socket); // Accept and deliberately never respond.
++        });
++        ModelService service;
++        service.setLmStudioEndpoint(QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()));
++        ModelBinding binding;
++        binding.providerId = "lm-studio";
++        binding.modelId = "fixture";
++        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
++        binding.capabilities.contextWindow = 8192;
++        auto provider = service.constructProvider(binding);
++        ChatRequestOptions options;
++        options.nativeToolCalling = true;
++        options.deadlineMs = 100;
++        options.maxOutputTokens = 128;
++        QElapsedTimer timer;
++        timer.start();
++        const auto reply = provider->sendRequest("Synthetic stall", options);
++        QVERIFY(!reply.success);
++        QCOMPARE(reply.category, ChatProviderErrorCategory::Timeout);
++        QCOMPARE(reply.attempts, 1);
++        QVERIFY(timer.elapsed() < 2000);
++        QCOMPARE(reply.diagnostics.value("requested_output_tokens").toInt(), 128);
++        QCOMPARE(sockets.size(), 1);
++    }
++
+     void nativeOutputLimitIsNotAnEmptyResponse() {
+         QTcpServer server;
+         QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+diff --git a/tests/core/test_observation_policy.cpp b/tests/core/test_observation_policy.cpp
+index 3d3a7fa4..db036cf6 100644
+--- a/tests/core/test_observation_policy.cpp
++++ b/tests/core/test_observation_policy.cpp
+@@ -363,6 +363,17 @@ private slots:
+         QVERIFY(provider.prompt.contains(QStringLiteral("Return ONLY JSON")));
+     }
+ 
++    void classifierPreservesWorkspaceAfterLongConversation() {
++        FixedReplyProvider provider;
++        provider.reply = QStringLiteral("{\"requirements\":[]}");
++        ObservationIntentPolicy policy(&provider);
++        policy.classify("Explain calc.cpp", QString(4000, QLatin1Char('x')) +
++                            "\nACTIVE WORKSPACE ROOT: /fixture/current", {});
++        QVERIFY(provider.prompt.contains("ACTIVE WORKSPACE ROOT: /fixture/current"));
++        QVERIFY(provider.prompt.contains("operation:none, never exists"));
++        QVERIFY(provider.prompt.size() < 2500);
++    }
++
+     void responseContract_data() {
+         QTest::addColumn<QString>("reply");
+         QTest::addColumn<bool>("accepted");

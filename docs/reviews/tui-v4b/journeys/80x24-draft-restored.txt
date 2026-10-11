@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Fixture                                Connected
+────────────────────────────────────────────────────────────────────────────────
+fixture / model-alpha                                       Inference unverified
+                                                                                
+    Assistant                                                                   
+      History session-a                                                         
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Chat ──────────────────────────────────────────────────────────┐  
+  │   first line                                                             │  
+  │   second /path                                                           │  
+  │   third                                                                  │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+                                                                                
+  Enter send · Shift+Enter newline · Ctrl+P commands                      idle  

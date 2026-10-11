@@ -1,0 +1,44 @@
+[
+  {
+    "stage": "stdout",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "stdout-alt",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "raw",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "raw-alt",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "ratatui-before",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "ratatui-after",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "player",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  }
+]

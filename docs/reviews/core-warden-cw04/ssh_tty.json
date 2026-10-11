@@ -1,0 +1,29 @@
+{
+  "asset_status": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+  "draws": 2,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 0.0,
+  "max_input_dispatch_us": 42,
+  "peak_retained_source_rgba_bytes": 0,
+  "probe_ms": 0.0,
+  "protocol": "text",
+  "state_log": [],
+  "wall_seconds": 3.00102775,
+  "cpu_seconds": 0.009552,
+  "cpu_percent_one_core": 0.31584425848207726,
+  "peak_rss_bytes": 2932736,
+  "name": "ssh_tty",
+  "dimensions": [
+    80,
+    24
+  ],
+  "capability_source": "no image capability response",
+  "bytes_written": 1352,
+  "kitty_transmit_packets": 0,
+  "kitty_deletions": 0,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 0.4717080155387521,
+  "exit_status": 0
+}

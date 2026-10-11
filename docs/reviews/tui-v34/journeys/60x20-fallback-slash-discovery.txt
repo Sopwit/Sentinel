@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+------------------------------------------------------------
+fixture / model-alpha                   Inference unverified
+                                                            
+    Assistant                                               
+      History session-a                                     
+                                                            
+  + Commands · Tab complete · Enter select · Esc dismiss +  
+  |> /activity  · Inspect the bounded safe execution t...|  
+  |  /agent  · Switch to authorized tool-assisted tasks  |  
+  |  /archive  · Confirm archive of attached session; ...|  
+  |  /cancel  · Request cancellation; await daemon ter...|  
+  |Example: /activity                                    |  
+  |Completion never executes; Enter an exact command t...|  
+  +------------------------------------------------------+  
+  + Message · Chat --------------------------------------+  
+  |   /                                                  |  
+  +------------------------------------------------------+  
+                                                            
+  Enter send · Ctrl+O newline · F1 help               idle  

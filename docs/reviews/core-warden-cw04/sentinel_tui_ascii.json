@@ -1,0 +1,29 @@
+{
+  "asset_status": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+  "draws": 2,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 0.0,
+  "max_input_dispatch_us": 38,
+  "peak_retained_source_rgba_bytes": 0,
+  "probe_ms": 0.0,
+  "protocol": "text",
+  "state_log": [],
+  "wall_seconds": 3.005914917,
+  "cpu_seconds": 0.010565999999999999,
+  "cpu_percent_one_core": 0.34844843963193245,
+  "peak_rss_bytes": 2883584,
+  "name": "sentinel_tui_ascii",
+  "dimensions": [
+    80,
+    24
+  ],
+  "capability_source": "no image capability response",
+  "bytes_written": 1353,
+  "kitty_transmit_packets": 0,
+  "kitty_deletions": 0,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 1.387707976391539,
+  "exit_status": 0
+}

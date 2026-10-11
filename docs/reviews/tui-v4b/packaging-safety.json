@@ -1,0 +1,5 @@
+{
+  "existing_output_rejected": true,
+  "exit": 2,
+  "message": "usage: package-evaluation.py [-h] output\npackage-evaluation.py: error: Output already exists; use a new directory"
+}

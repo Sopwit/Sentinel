@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: Fixture                                                                                                                                    Connected
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────      ───────────────────────
+fixture / model-alpha                                                                                                                                           Inference unverified
+                                                                                                                                                                                    
+    Assistant                                                                                                                                                                       
+      History session-a                                                                                                                                                             
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                                                                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Model selection failed: Selected model is unavailable. Use sentinel models and sentinel model select <provider> <model> [model-unavailable]. /model retries; /doct...  
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                                                                                          idle  

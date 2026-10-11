@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+──┌Confirm archive───────────────────────────────────────┐──
+Pr│Archive ?                                             │wn
+  │Session: fixture-session                              │  
+  │Messages are retained by the daemon.                  │  
+  │y confirms · n / Esc cancels                          │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  └──────────────────────────────────────────────────────┘  
+  y archive · n / Esc cancel                          idle  

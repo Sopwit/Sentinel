@@ -1,0 +1,29 @@
+{
+  "asset_status": "No valid cell-size response",
+  "draws": 2,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 0.0,
+  "max_input_dispatch_us": 5,
+  "peak_retained_source_rgba_bytes": 0,
+  "probe_ms": 300.079125,
+  "protocol": "text",
+  "state_log": [],
+  "wall_seconds": 3.001056417,
+  "cpu_seconds": 0.021447,
+  "cpu_percent_one_core": 0.6433485923773674,
+  "peak_rss_bytes": 2998272,
+  "name": "probe-timeout",
+  "dimensions": [
+    80,
+    24
+  ],
+  "capability_source": "no image capability response",
+  "bytes_written": 1371,
+  "kitty_transmit_packets": 0,
+  "kitty_deletions": 0,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 0.9442500013392419,
+  "exit_status": 0
+}

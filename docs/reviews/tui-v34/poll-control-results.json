@@ -1,0 +1,23 @@
+[
+  {
+    "adapter": false,
+    "initial_nonblocking": false,
+    "key_recovery_required": true,
+    "output": "READY\r\nelapsed_ms=599 ready=true\n",
+    "restored_termios_and_nonblocking_flag": true
+  },
+  {
+    "adapter": true,
+    "initial_nonblocking": false,
+    "key_recovery_required": false,
+    "output": "READY\r\nelapsed_ms=51 ready=false\n",
+    "restored_termios_and_nonblocking_flag": true
+  },
+  {
+    "adapter": true,
+    "initial_nonblocking": true,
+    "key_recovery_required": false,
+    "output": "READY\r\nelapsed_ms=50 ready=false\n",
+    "restored_termios_and_nonblocking_flag": true
+  }
+]

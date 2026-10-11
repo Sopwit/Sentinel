@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: Fixture                                                                                                                Connected
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+fixture / model-alpha                                                                                                                       Inference unverified
+                                                                                                                                                                
+    Assistant                                                                                                                                                   
+      History session-b                                                                                                                                         
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                   +command · Enter select · Esc close------------------------------------------------------+                                   
+                                   |Filter: sessions                                                                        |                                   
+                                   |> /sessions [query] · Search and switch persisted sessions                              |                                   
+                                   |  /archive  · Confirm archive of attached session; messages are retained                |                                   
+                                   |  /editor [request] · External editor integration is deferred until terminal suspensi...|                                   
+                                   |  /new [title] · Create a session; keep the previous draft                              |                                   
+                                   |  /permissions  · Inspect permission policy; grants remain daemon-owned                 |                                   
+                                   |  /resume [session-id|last] · Resume a selected session or the most recent              |                                   
+                                   |  /skills [request] · Executable skill discovery/activation is not exposed by termina...|                                   
+                                   |  /undo [request] · Rollback needs durable snapshots, conflict detection and authoriz...|                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |/sessions                                                                               |                                   
+                                   |/sessions [query]                                                                       |                                   
+                                   |Search and switch persisted sessions                                                    |                                   
+                                   |Aliases:                                                                                |                                   
+                                   +----------------------------------------------------------------------------------------+                                   
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+  + Message · Chat ------------------------------------------------------------------------------------------------------------------------------------------+  
+  |   Ask a question or share an idea…                                                                                                                       |  
+  +----------------------------------------------------------------------------------------------------------------------------------------------------------+  
+                                                                                                                                                                
+  Arrows select · Enter confirm · Esc close                                                                                                               idle  

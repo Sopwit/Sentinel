@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+──┌command · Enter select · Esc close────────────────────┐──
+fi│Filter: sessions                                      │ed
+  │> /sessions [query] · Search and switch persisted s...│  
+  │  /archive  · Confirm archive of attached session; ...│  
+  │  /editor [request] · External editor integration i...│  
+  │  /new [title] · Create a session; keep the previou...│  
+  │  /permissions  · Inspect permission policy; grants...│  
+  │  /resume [session-id|last] · Resume a selected ses...│  
+  │  /skills [request] · Executable skill discovery/ac...│  
+  │  /undo [request] · Rollback needs durable snapshot...│  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │/sessions                                             │  
+  │/sessions [query]                                     │  
+  │Search and switch persisted sessions                  │  
+  │Aliases:                                              │  
+  └──────────────────────────────────────────────────────┘  
+  Arrows · Enter · Esc                                idle  

@@ -1,0 +1,26 @@
+{
+  "nemotron": {
+    "terminal_runs": 15,
+    "late_results_or_duplicate_terminals": [],
+    "cross_run_tool_ids": [],
+    "replayed_events": 0,
+    "all_fixture_hashes_unchanged": true,
+    "allow_decisions": []
+  },
+  "nemotron-final": {
+    "terminal_runs": 3,
+    "late_results_or_duplicate_terminals": [],
+    "cross_run_tool_ids": [],
+    "replayed_events": 0,
+    "all_fixture_hashes_unchanged": true,
+    "allow_decisions": []
+  },
+  "qwen": {
+    "terminal_runs": 17,
+    "late_results_or_duplicate_terminals": [],
+    "cross_run_tool_ids": [],
+    "replayed_events": 0,
+    "all_fixture_hashes_unchanged": true,
+    "allow_decisions": []
+  }
+}

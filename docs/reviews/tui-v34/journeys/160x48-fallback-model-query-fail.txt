@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: Fixture                                                                                                                Connected
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+fixture / model-alpha                                                                                                                       Inference unverified
+                                                                                                                                                                
+    Assistant                                                                                                                                                   
+      History session-a                                                                                                                                         
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                   +model · Enter select · Esc close--------------------------------------------------------+                                   
+                                   |Filter: model-beta                                                                      |                                   
+                                   |> fixture / model-beta · Available · chat                                               |                                   
+                                   |  Selected · fixture / model-alpha · Available · chat                                   |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |                                                                                        |                                   
+                                   |fixture / model-beta                                                                    |                                   
+                                   |Discovered; inference not attested                                                      |                                   
+                                   |Catalog health is not verified inference readiness. /doctor inspects status.            |                                   
+                                   |                                                                                        |                                   
+                                   +----------------------------------------------------------------------------------------+                                   
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+  + Message · Chat ------------------------------------------------------------------------------------------------------------------------------------------+  
+  |   Ask a question or share an idea…                                                                                                                       |  
+  +----------------------------------------------------------------------------------------------------------------------------------------------------------+  
+  /notices · Theme: glacier · NO_COLOR disables color; launch without NO_COLOR to see the palette.                                                              
+  Arrows select · Enter confirm · Esc close                                                                                                               idle  

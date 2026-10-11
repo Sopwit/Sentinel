@@ -1,0 +1,612 @@
+[
+  {
+    "name": "offline-cold",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 601.9172079977579,
+    "first_direct_placement_before_input_ms": 756.3715830037836,
+    "transmissions_before_input": 1,
+    "placement_refresh_seen": false,
+    "max_frames": 1,
+    "kitty_transmits": 1,
+    "direct_placements": 1,
+    "unicode_placeholders": 0,
+    "owned_deletes": 1,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 375703
+  },
+  {
+    "name": "offline-warm",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 74.69550002133474,
+    "first_direct_placement_before_input_ms": 324.73741701687686,
+    "transmissions_before_input": 1,
+    "placement_refresh_seen": false,
+    "max_frames": 1,
+    "kitty_transmits": 1,
+    "direct_placements": 1,
+    "unicode_placeholders": 0,
+    "owned_deletes": 1,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 375738
+  },
+  {
+    "name": "offline-static",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 58.15383401932195,
+    "first_direct_placement_before_input_ms": 190.0090000126511,
+    "transmissions_before_input": 1,
+    "placement_refresh_seen": false,
+    "max_frames": 1,
+    "kitty_transmits": 1,
+    "direct_placements": 1,
+    "unicode_placeholders": 0,
+    "owned_deletes": 1,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [],
+    "modes": [
+      "static"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 375738
+  },
+  {
+    "name": "offline-auto",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 58.35791601566598,
+    "first_direct_placement_before_input_ms": 190.89125000755303,
+    "transmissions_before_input": 1,
+    "placement_refresh_seen": false,
+    "max_frames": 1,
+    "kitty_transmits": 1,
+    "direct_placements": 1,
+    "unicode_placeholders": 0,
+    "owned_deletes": 1,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [],
+    "modes": [
+      "auto"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 375732
+  },
+  {
+    "name": "animated",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 58.4153329837136,
+    "first_direct_placement_before_input_ms": 190.33170799957588,
+    "transmissions_before_input": 4,
+    "placement_refresh_seen": false,
+    "max_frames": 16,
+    "kitty_transmits": 5,
+    "direct_placements": 5,
+    "unicode_placeholders": 0,
+    "owned_deletes": 16,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 1866743
+  },
+  {
+    "name": "static",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 58.09187499107793,
+    "first_direct_placement_before_input_ms": 189.98820800334215,
+    "transmissions_before_input": 1,
+    "placement_refresh_seen": false,
+    "max_frames": 1,
+    "kitty_transmits": 1,
+    "direct_placements": 1,
+    "unicode_placeholders": 0,
+    "owned_deletes": 1,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "static"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 375634
+  },
+  {
+    "name": "off",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "text",
+    "capability_reason": "Disabled at launch; restart to negotiate graphics",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "off"
+    ],
+    "hidden_reasons": [
+      "off"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2836
+  },
+  {
+    "name": "auto",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 66.35816700872965,
+    "first_direct_placement_before_input_ms": 197.85833402420394,
+    "transmissions_before_input": 4,
+    "placement_refresh_seen": false,
+    "max_frames": 16,
+    "kitty_transmits": 5,
+    "direct_placements": 5,
+    "unicode_placeholders": 0,
+    "owned_deletes": 16,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "auto"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 1866753
+  },
+  {
+    "name": "populated",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 68.13120798324235,
+    "first_direct_placement_before_input_ms": 200.65024998621084,
+    "transmissions_before_input": 9,
+    "placement_refresh_seen": false,
+    "max_frames": 16,
+    "kitty_transmits": 9,
+    "direct_placements": 9,
+    "unicode_placeholders": 0,
+    "owned_deletes": 32,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": true,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 872848
+  },
+  {
+    "name": "timeout",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "text",
+    "capability_reason": "No valid cell-size response; kitty_ack=false (expected APC _Gi=31;OK ST); sixel_ack=false; cell=None; response_bytes=0; budget_ms=300; elapsed_ms=300; bounded_end=timeout_or_read_end",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "no confirmed graphics/cell response"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2674
+  },
+  {
+    "name": "missing",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Err": "No such file or directory (os error 2)"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2938
+  },
+  {
+    "name": "no-color",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "text",
+    "capability_reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "no confirmed graphics/cell response"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2794
+  },
+  {
+    "name": "ssh",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "text",
+    "capability_reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "no confirmed graphics/cell response"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2836
+  },
+  {
+    "name": "tmux",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "text",
+    "capability_reason": "Images suppressed: non-TTY, ASCII/NO_COLOR, SSH or multiplexer",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": null,
+    "first_direct_placement_before_input_ms": null,
+    "transmissions_before_input": 0,
+    "placement_refresh_seen": false,
+    "max_frames": 0,
+    "kitty_transmits": 0,
+    "direct_placements": 0,
+    "unicode_placeholders": 0,
+    "owned_deletes": 0,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated"
+    ],
+    "hidden_reasons": [
+      "no confirmed graphics/cell response"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2836
+  },
+  {
+    "name": "scenario",
+    "scope": "production release TUI; simulated Kitty + IPC fixtures; NOT physical Ghostty",
+    "exit": 0,
+    "capability": "kitty",
+    "capability_reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((16, 34)); response_bytes=33; budget_ms=300; elapsed_ms=0; bounded_end=complete",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    },
+    "first_image_before_input_ms": 72.04475000617094,
+    "first_direct_placement_before_input_ms": 205.63829099410214,
+    "transmissions_before_input": 2,
+    "placement_refresh_seen": false,
+    "max_frames": 16,
+    "kitty_transmits": 7,
+    "direct_placements": 7,
+    "unicode_placeholders": 0,
+    "owned_deletes": 48,
+    "restored_alt": true,
+    "restored_termios": true,
+    "requests": [
+      "hello",
+      "terminal.state",
+      "model.list",
+      "session.list",
+      "terminal.attach",
+      "session.messages",
+      "terminal.state",
+      "model.list",
+      "session.list"
+    ],
+    "modes": [
+      "animated",
+      "auto",
+      "off",
+      "static"
+    ],
+    "hidden_reasons": [
+      "off",
+      "overlay or insufficient layout space",
+      "visible slot"
+    ],
+    "draft_echo": false,
+    "populated_state_observed": false,
+    "populated_visible_raw_contiguous": false,
+    "welcome_visible": true,
+    "bytes": 2622029
+  }
+]

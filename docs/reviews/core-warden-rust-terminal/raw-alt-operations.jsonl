@@ -1,0 +1,27 @@
+{"detail":{"capability":{"cell":[16,34],"kitty_ack":true,"source":"SIMULATED PTY RECEIPT — NOT physical support evidence"},"keyboard_reads":false,"stage":"raw-alt"},"operation":"stage.begin","us":4}
+{"detail":null,"operation":"raw.enable.begin","us":271}
+{"detail":null,"operation":"raw.enable.completed","us":338}
+{"detail":null,"operation":"alternate.enter.begin","us":355}
+{"detail":{"bytes":8,"cumulative_bytes":8},"operation":"stdout.write.completed","us":372}
+{"detail":{"bytes":8,"flushes":1},"operation":"stdout.flush.completed","us":408}
+{"detail":null,"operation":"alternate.enter.completed","us":422}
+{"detail":{"format":"PNG/f=100","id":5329698,"wire_bytes":16845},"operation":"upload.begin","us":436}
+{"detail":{"bytes":16845,"cumulative_bytes":16853},"operation":"stdout.write.completed","us":894}
+{"detail":{"id":5329698},"operation":"upload.write_all.completed","us":913}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329698,"rect":[5,5,16,8]},"operation":"placement.begin","us":926}
+{"detail":{"bytes":17,"cumulative_bytes":16870},"operation":"stdout.write.completed","us":942}
+{"detail":{"bytes":7,"cumulative_bytes":16877},"operation":"stdout.write.completed","us":955}
+{"detail":{"bytes":29,"cumulative_bytes":16906},"operation":"stdout.write.completed","us":967}
+{"detail":{"bytes":16906,"flushes":2},"operation":"stdout.flush.completed","us":985}
+{"detail":{"id":5329698},"operation":"placement.flush.completed","us":997}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":1009}
+{"detail":null,"operation":"observation.end","us":5006089}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5006233}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5006267}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5006325}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5006367}
+{"detail":{"id":5329698},"operation":"owned_image.deleted","us":5006384}
+{"detail":{"bytes":8,"cumulative_bytes":34},"operation":"stdout.write.completed","us":5006400}
+{"detail":{"bytes":34,"flushes":2},"operation":"stdout.flush.completed","us":5006426}
+{"detail":null,"operation":"alternate.left","us":5006441}
+{"detail":{"success":true},"operation":"raw.disabled","us":5006576}

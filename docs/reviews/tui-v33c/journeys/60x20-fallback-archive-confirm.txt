@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+--+Confirm archive---------------------------------------+--
+fi|Archive Alpha conversation?                           |ed
+  |Session: session-a                                    |  
+  |Messages are retained by the daemon.                  |  
+  |y confirms · n / Esc cancels                          |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  +------------------------------------------------------+  
+  y archive · n / Esc cancel                          idle  

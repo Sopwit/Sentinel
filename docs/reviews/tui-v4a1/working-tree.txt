@@ -1,0 +1,59 @@
+ M apps/sentinel-daemon/service/DaemonIpcServer.cpp
+ M cli/Cargo.lock
+ M cli/Cargo.toml
+ M cli/crates/sentinel-tui/Cargo.toml
+ M cli/crates/sentinel-tui/src/commands.rs
+ M cli/crates/sentinel-tui/src/editor.rs
+ M cli/crates/sentinel-tui/src/lib.rs
+ M cli/crates/sentinel-tui/src/picker.rs
+ M core/src/agent/AgentLoop.cpp
+ M core/src/agent/LlmAgentRuntime.cpp
+ M core/src/agent/ObservationPolicy.cpp
+ M core/src/model/ModelService.cpp
+ M docs/development/TUI_V3_2_REMAINING_GAPS.md
+ M docs/development/TUI_V3_COMMAND_SPEC.md
+ M docs/interfaces/CLI.md
+ M tests/core/test_agent_loop.cpp
+ M tests/core/test_agent_runtime.cpp
+ M tests/core/test_llm_agent_runtime.cpp
+ M tests/core/test_observation_policy.cpp
+?? assets/
+?? cli/crates/sentinel-mascot/
+?? cli/crates/sentinel-tui/src/mascot.rs
+?? cli/crates/sentinel-tui/src/mascot_output.rs
+?? cli/crates/sentinel-tui/src/termination.rs
+?? cli/crates/sentinel-tui/src/transcript_cache.rs
+?? docs/development/CORE_WARDEN_CW01_MODEL_REPORT.md
+?? docs/development/CORE_WARDEN_CW02_1_POLISH_REPORT.md
+?? docs/development/CORE_WARDEN_CW02_REFINEMENT_REPORT.md
+?? docs/development/CORE_WARDEN_CW03A_ANIMATION_REPORT.md
+?? docs/development/CORE_WARDEN_CW04_1_GHOSTTY_REPORT.md
+?? docs/development/CORE_WARDEN_CW04_2_STARTUP_REPORT.md
+?? docs/development/CORE_WARDEN_CW04_3_PRESENTATION_REPORT.md
+?? docs/development/CORE_WARDEN_CW04_4_PRESENTATION_REPORT.md
+?? docs/development/CORE_WARDEN_CW04_TUI_INTEGRATION.md
+?? docs/development/CORE_WARDEN_SHARED_ASSET_CONTRACT.md
+?? docs/development/TUI_V3_2_5_AGENT_CONTINUATION.md
+?? docs/development/TUI_V3_2_5_CLASSIFICATION_ROOT_CAUSE.md
+?? docs/development/TUI_V3_2_5_FINAL_REPORT.md
+?? docs/development/TUI_V3_2_5_LIVE_ACCEPTANCE.md
+?? docs/development/TUI_V3_3_A_UX_REPORT.md
+?? docs/development/TUI_V3_3_B_REPORT.md
+?? docs/development/TUI_V3_3_C_REPORT.md
+?? docs/development/TUI_V3_4_TERMINAL_COMPATIBILITY_REPORT.md
+?? docs/development/TUI_V4_A_RELEASE_READINESS_REPORT.md
+?? docs/reviews/agent-v325-2026-10-10/
+?? docs/reviews/core-warden-cw04/
+?? docs/reviews/core-warden-cw041/
+?? docs/reviews/core-warden-cw042/
+?? docs/reviews/core-warden-cw043/
+?? docs/reviews/core-warden-cw044/
+?? docs/reviews/core-warden-cw045/
+?? docs/reviews/core-warden-rust-terminal/
+?? docs/reviews/tui-v33a/
+?? docs/reviews/tui-v33b/
+?? docs/reviews/tui-v33c/
+?? docs/reviews/tui-v34/
+?? docs/reviews/tui-v4a/
+?? docs/reviews/tui-v4a1/
+?? tools/terminal/stage-release.sh

@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "settings_command_visible": true,
+  "settings_mode_static": true,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "kitty_transmissions": 0,
+  "bytes": 14957,
+  "scope": "Real sentinel tui, PTY, NO_COLOR text fallback, no daemon; not physical Ghostty"
+}

@@ -1,0 +1,302 @@
+{
+  "archive_verified": true,
+  "inventory_verified": true,
+  "no_archive_symlinks_or_traversal": true,
+  "read_only_package_unchanged": true,
+  "cases": [
+    {
+      "name": "spaces-relocated",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+      "probe_ms": 25,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1334.6164999820758,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Ok": "validated manifest and 132 required PNG files"
+      },
+      "frames_loaded": 16,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    },
+    {
+      "name": "read-only",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+      "probe_ms": 25,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1340.1142079965211,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/Read Only Installation/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Ok": "validated manifest and 132 required PNG files"
+      },
+      "frames_loaded": 16,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": true
+    },
+    {
+      "name": "missing-assets",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=23; bounded_end=complete",
+      "probe_ms": 23,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1303.5837920033373,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/missing-assets/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Err": "No such file or directory (os error 2)"
+      },
+      "frames_loaded": 0,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    },
+    {
+      "name": "corrupt-manifest",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=23; bounded_end=complete",
+      "probe_ms": 23,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1305.031541007338,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/corrupt-manifest/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Err": "expected value at line 1 column 1"
+      },
+      "frames_loaded": 0,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    },
+    {
+      "name": "corrupt-png",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+      "probe_ms": 25,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1304.2695419862866,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/corrupt-png/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Ok": "validated manifest and 132 required PNG files"
+      },
+      "frames_loaded": 0,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    },
+    {
+      "name": "traversal",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+      "probe_ms": 25,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1304.3007920205127,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/traversal/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Err": "Frame path must stay within asset root"
+      },
+      "frames_loaded": 0,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    },
+    {
+      "name": "symlink-escape",
+      "initial_size": [
+        80,
+        24
+      ],
+      "resized_size": [
+        100,
+        30
+      ],
+      "offline": false,
+      "protocol": "kitty",
+      "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=24; bounded_end=complete",
+      "probe_ms": 24,
+      "probe_sent": true,
+      "automatic_update_before_input": true,
+      "no_input_deadline_seconds": 3,
+      "observation_window_ms": 1304.363832983654,
+      "checks": [
+        "AUTOMATIC UPDATE",
+        "command \u00b7 Enter",
+        "help \u00b7 Enter",
+        "second",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "\u00fc\u00e7\u00fcnc\u00fc",
+        "static",
+        "AUTOMATIC UPDATE"
+      ],
+      "restored_termios": true,
+      "restored_alt": true,
+      "no_inference": true,
+      "status_query_sent": false,
+      "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+      "asset_root": "/private/tmp/Sentinel package with spaces 9jvs3yk1/symlink-escape/bin/../share/sentinel/core-warden",
+      "assets": {
+        "Err": "Frame symlink escapes asset root"
+      },
+      "frames_loaded": 0,
+      "cwd_outside_repository": true,
+      "path_contains_spaces": true,
+      "read_only": false
+    }
+  ]
+}

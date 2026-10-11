@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+────────────────────────────────────────────────────────────
+fixture / model-beta                    Inference unverified
+                                                            
+    Assistant                                               
+      History created-1                                     
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+  ┌ Message · Chat ──────────────────────────────────────┐  
+  │   /not-a-command                                     │  
+  └──────────────────────────────────────────────────────┘  
+  /notices · Unknown command /not-a-command. Type / to ...  
+  Enter send · Ctrl+O newline · F1 help               idle  

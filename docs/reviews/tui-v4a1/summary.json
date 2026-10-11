@@ -1,0 +1,10 @@
+{
+  "release_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+  "rust_tests": 121,
+  "signal_scenarios": 18,
+  "compatibility_scenarios": 29,
+  "mascot_scenarios": 15,
+  "physical_latest_candidate": "PENDING",
+  "sigterm_blocker": "CORRECTED",
+  "recommendation": "Ready for V4-B evaluation subject to existing gates"
+}

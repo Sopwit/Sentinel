@@ -1,0 +1,165 @@
+{
+  "asset_status": "Confirmed terminal response",
+  "cache_log": [
+    {
+      "frames": 0,
+      "seconds": 7.7792e-05,
+      "state": "idle"
+    },
+    {
+      "frames": 16,
+      "seconds": 0.051759667,
+      "state": "idle"
+    },
+    {
+      "frames": 0,
+      "seconds": 0.390277417,
+      "state": "idle"
+    },
+    {
+      "frames": 16,
+      "seconds": 0.743597083,
+      "state": "idle"
+    },
+    {
+      "frames": 0,
+      "seconds": 1.091742125,
+      "state": "thinking"
+    },
+    {
+      "frames": 16,
+      "seconds": 1.1445489580000001,
+      "state": "thinking"
+    },
+    {
+      "frames": 0,
+      "seconds": 1.7874111670000001,
+      "state": "tool_running"
+    },
+    {
+      "frames": 12,
+      "seconds": 1.839813208,
+      "state": "tool_running"
+    },
+    {
+      "frames": 0,
+      "seconds": 2.492590958,
+      "state": "tool_running"
+    },
+    {
+      "frames": 12,
+      "seconds": 2.544394542,
+      "state": "tool_running"
+    },
+    {
+      "frames": 0,
+      "seconds": 2.9929099580000003,
+      "state": "tool_running"
+    },
+    {
+      "frames": 12,
+      "seconds": 3.04470625,
+      "state": "tool_running"
+    },
+    {
+      "frames": 0,
+      "seconds": 3.396111958,
+      "state": "tool_running"
+    },
+    {
+      "frames": 12,
+      "seconds": 3.942425792,
+      "state": "tool_running"
+    }
+  ],
+  "draws": 44,
+  "fixture_only": true,
+  "inputs": 7,
+  "last_clip_load_ms": 10.109667,
+  "max_input_dispatch_us": 7,
+  "peak_retained_source_rgba_bytes": 1048576,
+  "probe_ms": 0.280666,
+  "protocol": "kitty",
+  "state_log": [
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 1.625e-06,
+      "state": "idle"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": true,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 0.389978792,
+      "state": "idle"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 0.692642542,
+      "state": "idle"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 1.0912785,
+      "state": "thinking"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 1.787116833,
+      "state": "tool_running"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": true,
+      "reduced_motion": false,
+      "seconds": 2.4924243329999998,
+      "state": "tool_running"
+    },
+    {
+      "connected": true,
+      "mode": "auto",
+      "overlay": false,
+      "populated": false,
+      "reduced_motion": false,
+      "seconds": 2.992597458,
+      "state": "tool_running"
+    }
+  ],
+  "wall_seconds": 5.000778208,
+  "cpu_seconds": 0.18642999999999998,
+  "cpu_percent_one_core": 3.494122157550544,
+  "peak_rss_bytes": 11436032,
+  "name": "overlay-resize-states",
+  "dimensions": [
+    120,
+    40
+  ],
+  "capability_source": "simulated Kitty + cell response",
+  "bytes_written": 2882970,
+  "kitty_transmit_packets": 34,
+  "kitty_deletions": 96,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 1.7434160108678043,
+  "exit_status": 0
+}

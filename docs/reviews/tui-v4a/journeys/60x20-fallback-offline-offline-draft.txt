@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown         Disconnected
+------------------------------------------------------------
+Provider un... / Model unselected          Inference unknown
+                                                            
+                                                            
+                                                            
+                            [ S ]                           
+                                                            
+                  Start a new conversation                  
+    Ask a question, explore an idea, or describe a task.    
+              Ctrl+P commands  /help shortcuts              
+                                                            
+                                                            
+                                                            
+  + Message · Chat --------------------------------------+  
+  |   offline                                            |  
+  |   second /path                                       |  
+  +------------------------------------------------------+  
+  /notices · Cannot connect to the Sentinel daemon: No ...  
+  Enter send · Ctrl+O newline · F1 help               idle  

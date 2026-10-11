@@ -1,0 +1,29 @@
+{
+  "asset_status": "Confirmed terminal response",
+  "draws": 26,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 5.895875,
+  "max_input_dispatch_us": 9,
+  "peak_retained_source_rgba_bytes": 589824,
+  "probe_ms": 0.103791,
+  "protocol": "kitty",
+  "state_log": [],
+  "wall_seconds": 3.000094584,
+  "cpu_seconds": 0.060451,
+  "cpu_percent_one_core": 1.9925210829418958,
+  "peak_rss_bytes": 5996544,
+  "name": "animated-100x30",
+  "dimensions": [
+    100,
+    30
+  ],
+  "capability_source": "simulated Kitty + cell response",
+  "bytes_written": 855600,
+  "kitty_transmit_packets": 16,
+  "kitty_deletions": 16,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 1.385207986459136,
+  "exit_status": 0
+}

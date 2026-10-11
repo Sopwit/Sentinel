@@ -1,0 +1,21 @@
+{
+  "status": "assets_complete_visual_approval_pending",
+  "new_states": [
+    "listening",
+    "processing",
+    "approval",
+    "speaking",
+    "success",
+    "warning",
+    "error"
+  ],
+  "new_pngs": 330,
+  "total_pngs": 462,
+  "fps": 8,
+  "new_png_bytes": 7369693,
+  "protected_files_unchanged": 155,
+  "rust_tests": 122,
+  "production_new_state_integration": false,
+  "v4b_artifact_unchanged": true,
+  "cw05_started": false
+}

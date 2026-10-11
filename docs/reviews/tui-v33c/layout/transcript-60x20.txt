@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+────────────────────────────────────────────────────────────
+Provider un... / Model unselected          Inference unknown
+                                                            
+    Assistant                                               
+      Bold response                                         
+      Code · rust                                           
+      let a = 1;                                            
+                                                            
+      Final row                                             
+                                                            
+                                                            
+                                                            
+                                                            
+  ┌ Message · Chat ──────────────────────────────────────┐  
+  │   Türkçe draft                                       │  
+  │   second /path                                       │  
+  └──────────────────────────────────────────────────────┘  
+                                                            
+  Enter send · Ctrl+O newline · F1 help               idle  

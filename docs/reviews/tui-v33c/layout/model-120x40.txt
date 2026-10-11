@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: unknown                                                                        Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                                                 Inference unknown
+                                                                                                                        
+    Assistant                                                                                                           
+      Bold response                                                                                                     
+      Code · rust                                                                                                       
+      let a = 1;                                                                                                        
+                                                                                                                        
+      Final row                                                                                                         
+                                                                                                                        
+               ┌model · Enter select · Esc close────────────────────────────────────────────────────────┐               
+               │Filter:                                                                                 │               
+               │> fixture-provider / fixture-model · Available · capabilities unknown                   │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │                                                                                        │               
+               │fixture-provider / fixture-model                                                        │               
+               │No provider detail supplied.                                                            │               
+               │Catalog health is not verified inference readiness. /doctor inspects status.            │               
+               │                                                                                        │               
+               └────────────────────────────────────────────────────────────────────────────────────────┘               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                                                                   │  
+  │   second /path                                                                                                   │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                                        
+  Arrows select · Enter confirm · Esc close                                                                       idle  

@@ -1,0 +1,192 @@
+[
+  {
+    "name": "installed",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=24; bounded_end=complete",
+    "probe_ms": 24,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1342.7822919911705,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+    "asset_root": "<LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4a/rc-stage/bin/../share/sentinel/core-warden",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    }
+  },
+  {
+    "name": "relocated",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+    "probe_ms": 25,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1333.491541998228,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+    "asset_root": "/private/tmp/v4a-relocation-37evfubz/moved/bin/../share/sentinel/core-warden",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    }
+  },
+  {
+    "name": "binary-only",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+    "probe_ms": 25,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1305.763125012163,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+    "asset_root": "/private/tmp/v4a-relocation-37evfubz/alone/../share/sentinel/core-warden",
+    "assets": {
+      "Err": "No such file or directory (os error 2)"
+    }
+  },
+  {
+    "name": "override-missing",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=25; bounded_end=complete",
+    "probe_ms": 25,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1302.2725000046194,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+    "asset_root": "/private/tmp/v4a-relocation-37evfubz/missing",
+    "assets": {
+      "Err": "No such file or directory (os error 2)"
+    }
+  },
+  {
+    "name": "checkout-outside-cwd",
+    "initial_size": [
+      80,
+      24
+    ],
+    "resized_size": [
+      100,
+      30
+    ],
+    "offline": false,
+    "protocol": "kitty",
+    "reason": "Confirmed terminal response; kitty_ack=true (expected APC _Gi=31;OK ST); sixel_ack=false; cell=Some((8, 16)); response_bytes=21; budget_ms=300; elapsed_ms=24; bounded_end=complete",
+    "probe_ms": 24,
+    "probe_sent": true,
+    "automatic_update_before_input": true,
+    "no_input_deadline_seconds": 3,
+    "observation_window_ms": 1332.2045000095386,
+    "checks": [
+      "AUTOMATIC UPDATE",
+      "command \u00b7 Enter",
+      "help \u00b7 Enter",
+      "second",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "\u00fc\u00e7\u00fcnc\u00fc",
+      "static",
+      "AUTOMATIC UPDATE"
+    ],
+    "restored_termios": true,
+    "restored_alt": true,
+    "no_inference": true,
+    "status_query_sent": false,
+    "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+    "asset_root": "<LOCAL_HOME>/Desktop/Projects/Sentinel/assets/core-warden",
+    "assets": {
+      "Ok": "validated manifest and 132 required PNG files"
+    }
+  }
+]

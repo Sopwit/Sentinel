@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+------------------------------------------------------------
+fixture / model-beta                    Inference unverified
+                                                            
+    Assistant                                               
+      History created-1                                     
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+  + Message · Chat --------------------------------------+  
+  |   Ask a question or share an idea…                   |  
+  +------------------------------------------------------+  
+  /notices · Archive cancelled; session preserved.          
+  Enter send · Ctrl+O newline · F1 help               idle  

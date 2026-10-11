@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Fixture                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+fixture / model-beta                                                            Inference unverified
+                                                                                                    
+    Assistant                                                                                       
+      History session-a                                                                             
+     ┌Confirm archive─────────────────────────────────────────────────────────────────────────┐     
+     │Archive Alpha conversation?                                                             │     
+     │Session: session-a                                                                      │     
+     │Messages are retained by the daemon.                                                    │     
+     │y confirms · n / Esc cancels                                                            │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Selection reported by daemon; refreshing state. Inference readiness is not verifie...  
+  y archive · n / Esc cancel                                                                  idle  

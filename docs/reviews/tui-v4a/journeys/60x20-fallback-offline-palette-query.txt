@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown         Disconnected
+--+command · Enter select · Esc close--------------------+--
+Pr|Filter: help                                          |wn
+  |> /help [query] · Search commands and keyboard refe...|  
+  |  /export [markdown|json|text] · Save transcript in...|  
+  |  /search [query] · Search the currently displayed ...|  
+  |  /theme [name] · Choose terminal, obsidian, glacie...|  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |/help                                                 |  
+  |/help [query]                                         |  
+  |Search commands and keyboard reference                |  
+  |Aliases: /h                                           |  
+  +------------------------------------------------------+  
+  Arrows · Enter · Esc                                idle  

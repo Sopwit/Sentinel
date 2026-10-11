@@ -1,0 +1,38 @@
+[
+  {
+    "label": "minimal",
+    "deadline_seconds": 30,
+    "bytes": 160,
+    "http": 200,
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 27,
+      "completion_tokens": 75,
+      "total_tokens": 102,
+      "completion_tokens_details": {
+        "reasoning_tokens": 66
+      }
+    },
+    "content": "{\"requirements\":[]}",
+    "reasoning_characters": 290,
+    "seconds": 6.011242333013797
+  },
+  {
+    "label": "revised-30",
+    "deadline_seconds": 30,
+    "bytes": 1215,
+    "http": 200,
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 253,
+      "completion_tokens": 320,
+      "total_tokens": 573,
+      "completion_tokens_details": {
+        "reasoning_tokens": 272
+      }
+    },
+    "content": "{\"requirements\":[{\"domain\":\"filesystem\",\"resource\":\"/tmp/sentinel-v325-fixture/calc.cpp\",\"purpose\":\"inspect\",\"operation\":\"none\",\"query\":\"\",\"recursive\":false}]}",
+    "reasoning_characters": 1214,
+    "seconds": 23.499118708015885
+  }
+]

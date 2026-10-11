@@ -1,0 +1,60 @@
+[
+  {
+    "asset_status": "Display off; no probe",
+    "draws": 2,
+    "fixture_only": true,
+    "inputs": 1,
+    "last_clip_load_ms": 0.0,
+    "max_input_dispatch_us": 1,
+    "peak_retained_source_rgba_bytes": 0,
+    "probe_ms": 0.0,
+    "protocol": "text",
+    "state_log": [],
+    "wall_seconds": 12.001069459,
+    "cpu_seconds": 0.021517999999999995,
+    "cpu_percent_one_core": 0.17122329922570004,
+    "peak_rss_bytes": 2899968,
+    "name": "steady-off-80x24",
+    "dimensions": [
+      80,
+      24
+    ],
+    "capability_source": "no image capability response",
+    "bytes_written": 1273,
+    "kitty_transmit_packets": 0,
+    "kitty_deletions": 0,
+    "alternate_screen_restored": true,
+    "termios_restored": true,
+    "input_to_first_visible_echo_ms": 0.12479099677875638,
+    "exit_status": 0
+  },
+  {
+    "asset_status": "Confirmed terminal response",
+    "draws": 98,
+    "fixture_only": true,
+    "inputs": 1,
+    "last_clip_load_ms": 8.521042,
+    "max_input_dispatch_us": 3,
+    "peak_retained_source_rgba_bytes": 589824,
+    "probe_ms": 0.198209,
+    "protocol": "kitty",
+    "state_log": [],
+    "wall_seconds": 12.001035125,
+    "cpu_seconds": 0.091386,
+    "cpu_percent_one_core": 0.7593169543187597,
+    "peak_rss_bytes": 5996544,
+    "name": "steady-animated-80x24",
+    "dimensions": [
+      80,
+      24
+    ],
+    "capability_source": "simulated Kitty + cell response",
+    "bytes_written": 901256,
+    "kitty_transmit_packets": 16,
+    "kitty_deletions": 16,
+    "alternate_screen_restored": true,
+    "termios_restored": true,
+    "input_to_first_visible_echo_ms": 0.5729160038754344,
+    "exit_status": 0
+  }
+]

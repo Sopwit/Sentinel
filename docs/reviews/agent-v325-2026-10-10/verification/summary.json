@@ -1,0 +1,39 @@
+{
+  "baseline_head": "695244b73b49395a4383f45ae2376164f1d3d0f7",
+  "daemon_version": "1.0.0-rc.8",
+  "cli_version": "1.0.0-rc.8",
+  "ipc_version": "1.1",
+  "cpp_ctest": {
+    "passed_executables": 121,
+    "total_executables": 122,
+    "failed": [
+      "test_branding_sources"
+    ],
+    "cause": "unrelated externally added assets/core-warden; checker unchanged"
+  },
+  "rust": {
+    "tests_passed": 75,
+    "fmt_all_check": "pass",
+    "clippy_all_targets_D_warnings": "pass",
+    "debug_build": "pass",
+    "release_build": "pass"
+  },
+  "cpp": {
+    "configure_tests": "pass",
+    "tests_build": "pass",
+    "debug_build": "pass",
+    "release_build": "pass",
+    "changed_range_clang_format": "pass",
+    "git_diff_check": "pass"
+  },
+  "focused_initial": {
+    "passed": 8,
+    "total": 9,
+    "failed": "streaming fixture returned classifier JSON for bounded planner call"
+  },
+  "focused_fix": "bounded fixture updated; targeted correlation test passes; full suite AgentRuntime passes",
+  "personal_brain": "CLI unavailable",
+  "native_terminal_host": "not validated",
+  "macos_safe_build_execution": "separate blocked acceptance gate",
+  "linux_comparison": "not validated"
+}

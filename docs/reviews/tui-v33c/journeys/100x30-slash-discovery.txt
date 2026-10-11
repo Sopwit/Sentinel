@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Fixture                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+fixture / model-alpha                                                           Inference unverified
+                                                                                                    
+    Assistant                                                                                       
+      History session-a                                                                             
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  ┌ Commands · Tab complete · Enter select · Esc dismiss ────────────────────────────────────────┐  
+  │> /activity  · Inspect the bounded safe execution timeline                                    │  
+  │  /agent  · Switch to authorized tool-assisted tasks                                          │  
+  │  /archive  · Confirm archive of attached session; messages are retained                      │  
+  │  /cancel  · Request cancellation; await daemon terminal state [unavailable]                  │  
+  │Example: /activity                                                                            │  
+  │Completion never executes; Enter an exact command to run it.                                  │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   /                                                                                          │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  Enter send · Shift+Enter newline · Ctrl+P commands                                          idle  

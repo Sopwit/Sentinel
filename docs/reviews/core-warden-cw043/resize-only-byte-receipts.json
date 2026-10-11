@@ -1,0 +1,72 @@
+[
+  {
+    "monotonic_ms": 3.4814589889720082,
+    "bytes": 8,
+    "uploads": 0,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 58.932459010975435,
+    "bytes": 3890,
+    "uploads": 1,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 138.06741699227132,
+    "bytes": 375573,
+    "uploads": 1,
+    "placeholders": 16,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 138.46175000071526,
+    "bytes": 376597,
+    "uploads": 1,
+    "placeholders": 64,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 138.87512500514276,
+    "bytes": 377621,
+    "uploads": 1,
+    "placeholders": 128,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 142.8183339885436,
+    "bytes": 384104,
+    "uploads": 1,
+    "placeholders": 192,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 143.23808401240967,
+    "bytes": 385128,
+    "uploads": 1,
+    "placeholders": 249,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 143.65712500875816,
+    "bytes": 386152,
+    "uploads": 1,
+    "placeholders": 256,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 2011.6352920013014,
+    "bytes": 392078,
+    "uploads": 1,
+    "placeholders": 272,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 2012.4717919970863,
+    "bytes": 393102,
+    "uploads": 1,
+    "placeholders": 384,
+    "user_input_sent": false
+  }
+]

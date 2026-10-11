@@ -1,0 +1,25 @@
+{
+  "scope": "independent direct Ratatui/Kitty; simulated capability response, NOT physical Ghostty",
+  "exit": 0,
+  "keyboard_input": false,
+  "graphics_headers": [
+    "q=2,i=4186884260,a=T,U=1,f=32,t=d,s=256,v=272,m=1",
+    "a=d,d=I,i=4186884260,q=2"
+  ],
+  "direct_cursor_anchor_emitted": true,
+  "placement_rectangle": [
+    5,
+    5,
+    16,
+    8
+  ],
+  "first_upload_ms": 7.199125015176833,
+  "variant": "A-unicode",
+  "uploads": 1,
+  "direct_placements": 0,
+  "owned_deletes": 1,
+  "placeholders": 128,
+  "restored_alt": true,
+  "restored_termios_excluding_kernel_PENDIN": true,
+  "kernel_PENDIN": true
+}

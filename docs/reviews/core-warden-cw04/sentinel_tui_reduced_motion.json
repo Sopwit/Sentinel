@@ -1,0 +1,29 @@
+{
+  "asset_status": "Confirmed terminal response",
+  "draws": 3,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 0.28825,
+  "max_input_dispatch_us": 5,
+  "peak_retained_source_rgba_bytes": 36864,
+  "probe_ms": 0.04775,
+  "protocol": "kitty",
+  "state_log": [],
+  "wall_seconds": 3.001034834,
+  "cpu_seconds": 0.018098,
+  "cpu_percent_one_core": 0.5976699770240008,
+  "peak_rss_bytes": 3637248,
+  "name": "sentinel_tui_reduced_motion",
+  "dimensions": [
+    80,
+    24
+  ],
+  "capability_source": "simulated Kitty + cell response",
+  "bytes_written": 55640,
+  "kitty_transmit_packets": 1,
+  "kitty_deletions": 1,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 1.2052909878548235,
+  "exit_status": 0
+}

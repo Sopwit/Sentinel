@@ -1,0 +1,1862 @@
+[
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:34:23.928Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "8618965b-ff1b-4f62-a570-e27fb78546ad",
+      "utc": "2026-10-10T20:34:23.929Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "None",
+      "completion_tokens": 321,
+      "deadline_ms": 30000,
+      "elapsed_ms": 25124,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 485,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 331,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1453,
+      "total_tokens": 652,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "None",
+      "classification_result": "classified",
+      "completion_tokens": 321,
+      "deadline_ms": 30000,
+      "elapsed_ms": 25124,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 485,
+      "event": "exit",
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 331,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1453,
+      "request_id": "e320b9cc-a6ef-486f-8d26-39d5bc16af9d",
+      "stage": "classification",
+      "total_tokens": 652,
+      "trace_id": "8618965b-ff1b-4f62-a570-e27fb78546ad",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:34:49.054Z",
+      "wall_elapsed_ms": 25125
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:34:49.055Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 1,
+      "utc": "2026-10-10T20:34:49.084Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 80,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 5831,
+      "finish_reason": "tool_calls",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "tool_calls",
+      "prompt_tokens": 5319,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 30,
+      "reported_context_tokens": 8192,
+      "request_bytes": 16723,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "tool_observation_bytes": [],
+      "total_tokens": 5399,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 80,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 5831,
+      "finish_reason": "tool_calls",
+      "history_steps": 0,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "tool_calls",
+      "planner_estimated_tokens": 2946,
+      "prompt_tokens": 5319,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 30,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 16723,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "success": true,
+      "tool_observation_bytes": [],
+      "total_tokens": 5399,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 1,
+      "tool_requested": true,
+      "utc": "2026-10-10T20:35:33.658Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 2,
+      "utc": "2026-10-10T20:35:33.696Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 363,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6443,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "content",
+      "prompt_tokens": 5861,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 283,
+      "reported_context_tokens": 8192,
+      "request_bytes": 18560,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 208,
+      "response_tool_calls": 0,
+      "tool_observation_bytes": [
+        99
+      ],
+      "total_tokens": 6224,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 363,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6443,
+      "finish_reason": "stop",
+      "history_steps": 1,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "content",
+      "planner_estimated_tokens": 3029,
+      "prompt_tokens": 5861,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 283,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 18560,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 208,
+      "response_tool_calls": 0,
+      "success": true,
+      "tool_observation_bytes": [
+        99
+      ],
+      "total_tokens": 6224,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 2,
+      "tool_requested": false,
+      "utc": "2026-10-10T20:36:17.432Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 2,
+      "utc": "2026-10-10T20:36:17.464Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "continuation_calls": 0,
+      "error_category": "Cancelled",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6349,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "cancelled",
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 18279,
+      "requested_output_tokens": 1024,
+      "tool_observation_bytes": [],
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "continuation_calls": 0,
+      "error_category": "Cancelled",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6349,
+      "history_steps": 1,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "cancelled",
+      "planner_estimated_tokens": 3029,
+      "provider_id": "lm-studio",
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 18279,
+      "requested_output_tokens": 1024,
+      "success": false,
+      "tool_observation_bytes": [],
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "300d118a-3163-472b-9dfa-cc3fc8b5f973",
+      "stage": "planning",
+      "step": 2,
+      "tool_requested": false,
+      "utc": "2026-10-10T20:36:53.962Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "9b0f4385-53ad-4a15-972a-a9315874a7fe",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:36:56.314Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "ae542e8b-05a4-4f6f-9059-2a2f75c29956",
+      "utc": "2026-10-10T20:36:56.315Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29928,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 519,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1555,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29928,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 519,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1555,
+      "request_id": "19470cb4-480b-4d65-96e6-2321c0958647",
+      "stage": "classification",
+      "trace_id": "ae542e8b-05a4-4f6f-9059-2a2f75c29956",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:37:26.244Z",
+      "wall_elapsed_ms": 29929
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "9b0f4385-53ad-4a15-972a-a9315874a7fe",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:37:26.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "bfa81582-a582-4f05-839e-691b15ad2ff8",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:37:28.506Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "54f85401-e06c-43ea-9e98-32d0fa8f0ab5",
+      "utc": "2026-10-10T20:37:28.506Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29735,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 505,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1514,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29735,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 505,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1514,
+      "request_id": "d4c0c1a3-7baa-452d-be89-7c2572d34d05",
+      "stage": "classification",
+      "trace_id": "54f85401-e06c-43ea-9e98-32d0fa8f0ab5",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:37:58.242Z",
+      "wall_elapsed_ms": 29736
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "bfa81582-a582-4f05-839e-691b15ad2ff8",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:37:58.242Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d79a7ce9-7831-424b-b2bb-45523a5c75c9",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:38:00.485Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "cb736c58-21ef-4af2-bf10-30746ed4646c",
+      "utc": "2026-10-10T20:38:00.485Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29760,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 494,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1480,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29760,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 494,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1480,
+      "request_id": "3b7281eb-01ab-4c33-9526-49948c39f805",
+      "stage": "classification",
+      "trace_id": "cb736c58-21ef-4af2-bf10-30746ed4646c",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:38:30.246Z",
+      "wall_elapsed_ms": 29760
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "d79a7ce9-7831-424b-b2bb-45523a5c75c9",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:38:30.253Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:38:32.485Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "e905f740-fd8a-4593-b8f0-a84da0be5d6a",
+      "utc": "2026-10-10T20:38:32.486Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "None",
+      "completion_tokens": 178,
+      "deadline_ms": 30000,
+      "elapsed_ms": 18788,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 519,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 351,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1556,
+      "total_tokens": 529,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "None",
+      "classification_result": "classified",
+      "completion_tokens": 178,
+      "deadline_ms": 30000,
+      "elapsed_ms": 18788,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 519,
+      "event": "exit",
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 351,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1556,
+      "request_id": "6298d029-482c-43ef-bb29-bf1a27a1a1a4",
+      "stage": "classification",
+      "total_tokens": 529,
+      "trace_id": "e905f740-fd8a-4593-b8f0-a84da0be5d6a",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:38:51.274Z",
+      "wall_elapsed_ms": 18788
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:38:51.274Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 1,
+      "utc": "2026-10-10T20:38:51.309Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 220,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 5866,
+      "finish_reason": "tool_calls",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "tool_calls",
+      "prompt_tokens": 5335,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 174,
+      "reported_context_tokens": 8192,
+      "request_bytes": 16829,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "tool_observation_bytes": [],
+      "total_tokens": 5555,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 220,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 5866,
+      "finish_reason": "tool_calls",
+      "history_steps": 0,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "tool_calls",
+      "planner_estimated_tokens": 2973,
+      "prompt_tokens": 5335,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 174,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 16829,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "success": true,
+      "tool_observation_bytes": [],
+      "total_tokens": 5555,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 1,
+      "tool_requested": true,
+      "utc": "2026-10-10T20:39:16.347Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 2,
+      "utc": "2026-10-10T20:39:16.403Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 67,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6191,
+      "finish_reason": "tool_calls",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "tool_calls",
+      "prompt_tokens": 5672,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 32,
+      "reported_context_tokens": 8192,
+      "request_bytes": 17805,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "tool_observation_bytes": [
+        182
+      ],
+      "total_tokens": 5739,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 67,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6191,
+      "finish_reason": "tool_calls",
+      "history_steps": 1,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "tool_calls",
+      "planner_estimated_tokens": 3101,
+      "prompt_tokens": 5672,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 32,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 17805,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "success": true,
+      "tool_observation_bytes": [
+        182
+      ],
+      "total_tokens": 5739,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 2,
+      "tool_requested": true,
+      "utc": "2026-10-10T20:39:30.050Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 3,
+      "utc": "2026-10-10T20:39:30.110Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 118,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6720,
+      "finish_reason": "tool_calls",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "tool_calls",
+      "prompt_tokens": 6118,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 83,
+      "reported_context_tokens": 8192,
+      "request_bytes": 19391,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "tool_observation_bytes": [
+        819
+      ],
+      "total_tokens": 6236,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 118,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6720,
+      "finish_reason": "tool_calls",
+      "history_steps": 2,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "tool_calls",
+      "planner_estimated_tokens": 3274,
+      "prompt_tokens": 6118,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 83,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 19391,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "success": true,
+      "tool_observation_bytes": [
+        819
+      ],
+      "total_tokens": 6236,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 3,
+      "tool_requested": true,
+      "utc": "2026-10-10T20:39:52.671Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 4,
+      "utc": "2026-10-10T20:39:52.734Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 91,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6719,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "content",
+      "prompt_tokens": 6115,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 64,
+      "reported_context_tokens": 8192,
+      "request_bytes": 19389,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 112,
+      "response_tool_calls": 0,
+      "tool_observation_bytes": [
+        818
+      ],
+      "total_tokens": 6206,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 91,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6719,
+      "finish_reason": "stop",
+      "history_steps": 3,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "content",
+      "planner_estimated_tokens": 3274,
+      "prompt_tokens": 6115,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 64,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 19389,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 112,
+      "response_tool_calls": 0,
+      "success": true,
+      "tool_observation_bytes": [
+        818
+      ],
+      "total_tokens": 6206,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "40715314-49c9-4c3e-84cd-979c40773581",
+      "stage": "planning",
+      "step": 4,
+      "tool_requested": false,
+      "utc": "2026-10-10T20:40:13.042Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "c7a0b528-dae8-4f2a-9a5a-69a472bdc47b",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:40:15.252Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "52f72207-454a-4de6-a0bc-a6ef33166e08",
+      "utc": "2026-10-10T20:40:15.253Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29989,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 567,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1699,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29989,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 567,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1699,
+      "request_id": "faebce93-25ce-4ef3-b347-d37088da4a55",
+      "stage": "classification",
+      "trace_id": "52f72207-454a-4de6-a0bc-a6ef33166e08",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:40:45.243Z",
+      "wall_elapsed_ms": 29990
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "c7a0b528-dae8-4f2a-9a5a-69a472bdc47b",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:40:45.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "b72a01c2-b09d-4052-9dee-18d9b022d99d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:40:47.473Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "b481aa38-7291-4498-8dcb-8568aa8426b5",
+      "utc": "2026-10-10T20:40:47.473Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29770,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 601,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1801,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29770,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 601,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1801,
+      "request_id": "9588637e-537d-4f8d-8f5c-d721038f2549",
+      "stage": "classification",
+      "trace_id": "b481aa38-7291-4498-8dcb-8568aa8426b5",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:41:17.243Z",
+      "wall_elapsed_ms": 29770
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "b72a01c2-b09d-4052-9dee-18d9b022d99d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:41:17.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "5e4d4229-b977-46d4-ad29-c1f86960b912",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:41:19.422Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "44dca370-880f-4394-afd0-3c981d35a20d",
+      "utc": "2026-10-10T20:41:19.422Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29879,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 587,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1760,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29879,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 587,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1760,
+      "request_id": "a3fcb849-6c69-4ab8-8272-d74003199a6c",
+      "stage": "classification",
+      "trace_id": "44dca370-880f-4394-afd0-3c981d35a20d",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:41:49.302Z",
+      "wall_elapsed_ms": 29879
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "5e4d4229-b977-46d4-ad29-c1f86960b912",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:41:49.302Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "2e1e6f53-3c62-4d39-90b0-bdf07b2e15da",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:41:51.602Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "0d829844-a695-4d4d-9803-a3a717c1d5f2",
+      "utc": "2026-10-10T20:41:51.602Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29641,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 576,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1726,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29641,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 576,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1726,
+      "request_id": "adcf6eb0-f264-401e-81b2-cb0c9f5d85e1",
+      "stage": "classification",
+      "trace_id": "0d829844-a695-4d4d-9803-a3a717c1d5f2",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:42:21.243Z",
+      "wall_elapsed_ms": 29641
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "2e1e6f53-3c62-4d39-90b0-bdf07b2e15da",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:42:21.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:42:23.453Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "79ad1620-2a3c-4ca7-9413-b97b17ae4265",
+      "utc": "2026-10-10T20:42:23.453Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "None",
+      "completion_tokens": 248,
+      "deadline_ms": 30000,
+      "elapsed_ms": 27496,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 601,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 431,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1802,
+      "total_tokens": 679,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "None",
+      "classification_result": "classified",
+      "completion_tokens": 248,
+      "deadline_ms": 30000,
+      "elapsed_ms": 27496,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 601,
+      "event": "exit",
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "prompt_tokens": 431,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1802,
+      "request_id": "50f86020-1aff-4993-b959-a5f77fb9da86",
+      "stage": "classification",
+      "total_tokens": 679,
+      "trace_id": "79ad1620-2a3c-4ca7-9413-b97b17ae4265",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:42:50.950Z",
+      "wall_elapsed_ms": 27496
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:42:50.950Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "planning",
+      "step": 1,
+      "utc": "2026-10-10T20:42:50.967Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 145,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6011,
+      "finish_reason": "tool_calls",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "tool_calls",
+      "prompt_tokens": 5465,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 99,
+      "reported_context_tokens": 8192,
+      "request_bytes": 17264,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "tool_observation_bytes": [],
+      "total_tokens": 5610,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 145,
+      "continuation_calls": 0,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6011,
+      "finish_reason": "tool_calls",
+      "history_steps": 0,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "tool_calls",
+      "planner_estimated_tokens": 3071,
+      "prompt_tokens": 5465,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 99,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 17264,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 0,
+      "response_tool_calls": 1,
+      "success": true,
+      "tool_observation_bytes": [],
+      "total_tokens": 5610,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "planning",
+      "step": 1,
+      "tool_requested": true,
+      "utc": "2026-10-10T20:43:12.927Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "planning",
+      "step": 2,
+      "utc": "2026-10-10T20:43:13.057Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 118,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6336,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "outcome": "content",
+      "prompt_tokens": 5803,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 48,
+      "reported_context_tokens": 8192,
+      "request_bytes": 18240,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 310,
+      "response_tool_calls": 0,
+      "tool_observation_bytes": [
+        182
+      ],
+      "total_tokens": 5921,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.diagnostics",
+    "data": {
+      "attempts": 1,
+      "completion_tokens": 118,
+      "continuation_calls": 1,
+      "error_category": "None",
+      "estimate_method": "utf8_bytes/3+256",
+      "estimated_input_tokens": 6336,
+      "finish_reason": "stop",
+      "history_steps": 1,
+      "http_status": 200,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "native_tools": true,
+      "outcome": "content",
+      "planner_estimated_tokens": 3199,
+      "prompt_tokens": 5803,
+      "provider_id": "lm-studio",
+      "reasoning_tokens": 48,
+      "recovery_attempts": 0,
+      "reported_context_tokens": 8192,
+      "request_bytes": 18240,
+      "requested_output_tokens": 1024,
+      "response_content_bytes": 310,
+      "response_tool_calls": 0,
+      "success": true,
+      "tool_observation_bytes": [
+        182
+      ],
+      "total_tokens": 5921,
+      "transport_attempted": true
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "exit",
+      "session_id": "d6bdf1ef-bd64-45e2-9e60-21f808e7ed93",
+      "stage": "planning",
+      "step": 2,
+      "tool_requested": false,
+      "utc": "2026-10-10T20:43:34.416Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d67dedcc-0221-47cd-a853-cefc594957ed",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:43:37.120Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "dc2bd27f-7c6a-46f3-b598-7aaad7a3daea",
+      "utc": "2026-10-10T20:43:37.120Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30122,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 566,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1697,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30122,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 566,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1697,
+      "request_id": "dfffc250-aa53-4288-b7d0-0ec6872c5266",
+      "stage": "classification",
+      "trace_id": "dc2bd27f-7c6a-46f3-b598-7aaad7a3daea",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:44:07.242Z",
+      "wall_elapsed_ms": 30122
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "d67dedcc-0221-47cd-a853-cefc594957ed",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:44:07.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "c539f641-4333-4392-abd0-e4b700d3a78a",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:44:09.845Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "63cefbc2-d095-448c-b915-b3692eff56e1",
+      "utc": "2026-10-10T20:44:09.846Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30396,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 600,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1799,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30396,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 600,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1799,
+      "request_id": "f4ff36d1-ce16-40ed-bef5-b7ffa0e98163",
+      "stage": "classification",
+      "trace_id": "63cefbc2-d095-448c-b915-b3692eff56e1",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:44:40.243Z",
+      "wall_elapsed_ms": 30397
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "c539f641-4333-4392-abd0-e4b700d3a78a",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:44:40.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "a41e5a4b-84ca-40e0-b170-b2ad37959fa5",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:44:42.517Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "16319653-9676-44cd-8e16-043949208ab5",
+      "utc": "2026-10-10T20:44:42.517Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29949,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 586,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1758,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29949,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 586,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1758,
+      "request_id": "35949df0-fdde-4b29-adad-1de30b712b5e",
+      "stage": "classification",
+      "trace_id": "16319653-9676-44cd-8e16-043949208ab5",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:45:12.619Z",
+      "wall_elapsed_ms": 30110
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "a41e5a4b-84ca-40e0-b170-b2ad37959fa5",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:45:12.627Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "b6f52cec-6334-4d64-a17c-0c912ba34eeb",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:45:15.525Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "0683033e-8575-443d-a4c6-55e333ee140f",
+      "utc": "2026-10-10T20:45:15.525Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29930,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 575,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1724,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29930,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 575,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1724,
+      "request_id": "1d501e26-7bd1-463f-8c90-9ceb9ac13a49",
+      "stage": "classification",
+      "trace_id": "0683033e-8575-443d-a4c6-55e333ee140f",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:45:45.461Z",
+      "wall_elapsed_ms": 29935
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "b6f52cec-6334-4d64-a17c-0c912ba34eeb",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:45:45.462Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d4d610fc-8237-4b87-a4e0-24d080902573",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:45:48.527Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "15b69938-f977-4cba-ad20-d008606e017c",
+      "utc": "2026-10-10T20:45:48.527Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29734,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 600,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1800,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29734,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 600,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1800,
+      "request_id": "2cbffb7d-7816-411a-ab9b-333a10470530",
+      "stage": "classification",
+      "trace_id": "15b69938-f977-4cba-ad20-d008606e017c",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:46:18.264Z",
+      "wall_elapsed_ms": 29736
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "d4d610fc-8237-4b87-a4e0-24d080902573",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:46:18.282Z"
+    }
+  }
+]

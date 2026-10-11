@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Fixture                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+fixture / model-alpha                                                           Inference unverified
+                                                                                                    
+    Assistant                                                                                       
+      History session-a                                                                             
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   /                                                                                          │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  Enter send · Shift+Enter newline · Ctrl+P commands                                          idle  

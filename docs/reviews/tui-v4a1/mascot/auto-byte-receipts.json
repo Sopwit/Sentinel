@@ -1,0 +1,44 @@
+[
+  {
+    "monotonic_ms": 9.40466599422507,
+    "bytes": 8,
+    "uploads": 0,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 118.91204098355956,
+    "bytes": 3616,
+    "uploads": 1,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 307.1875000023283,
+    "bytes": 376299,
+    "uploads": 2,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 713.3465000079013,
+    "bytes": 749011,
+    "uploads": 3,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 1317.4010000075214,
+    "bytes": 1121723,
+    "uploads": 4,
+    "placeholders": 0,
+    "user_input_sent": false
+  },
+  {
+    "monotonic_ms": 2011.8372910073958,
+    "bytes": 1493435,
+    "uploads": 5,
+    "placeholders": 0,
+    "user_input_sent": true
+  }
+]

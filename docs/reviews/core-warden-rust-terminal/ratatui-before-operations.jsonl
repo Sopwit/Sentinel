@@ -1,0 +1,32 @@
+{"detail":{"capability":{"cell":[16,34],"kitty_ack":true,"source":"SIMULATED PTY RECEIPT — NOT physical support evidence"},"keyboard_reads":false,"stage":"ratatui-before"},"operation":"stage.begin","us":4}
+{"detail":null,"operation":"raw.enable.begin","us":248}
+{"detail":null,"operation":"raw.enable.completed","us":307}
+{"detail":null,"operation":"alternate.enter.begin","us":323}
+{"detail":{"bytes":8,"cumulative_bytes":8},"operation":"stdout.write.completed","us":340}
+{"detail":{"bytes":8,"flushes":1},"operation":"stdout.flush.completed","us":372}
+{"detail":null,"operation":"alternate.enter.completed","us":385}
+{"detail":null,"operation":"ratatui.terminal.new.begin","us":396}
+{"detail":null,"operation":"ratatui.terminal.new.completed","us":761}
+{"detail":{"format":"PNG/f=100","id":5329711,"wire_bytes":16845},"operation":"upload.begin","us":776}
+{"detail":{"bytes":16845,"cumulative_bytes":16853},"operation":"stdout.write.completed","us":1195}
+{"detail":{"id":5329711},"operation":"upload.write_all.completed","us":1224}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329711,"rect":[5,5,16,8]},"operation":"placement.begin","us":1238}
+{"detail":{"bytes":17,"cumulative_bytes":16870},"operation":"stdout.write.completed","us":1254}
+{"detail":{"bytes":7,"cumulative_bytes":16877},"operation":"stdout.write.completed","us":1272}
+{"detail":{"bytes":29,"cumulative_bytes":16906},"operation":"stdout.write.completed","us":1283}
+{"detail":{"bytes":16906,"flushes":2},"operation":"stdout.flush.completed","us":1300}
+{"detail":{"id":5329711},"operation":"placement.flush.completed","us":1310}
+{"detail":null,"operation":"first_draw.not_called","us":1320}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":1329}
+{"detail":null,"operation":"observation.end","us":5006411}
+{"detail":{"bytes":6,"cumulative_bytes":16912},"operation":"stdout.write.completed","us":5006464}
+{"detail":{"bytes":16912,"flushes":3},"operation":"stdout.flush.completed","us":5006487}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5006589}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5006600}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5006607}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5006618}
+{"detail":{"id":5329711},"operation":"owned_image.deleted","us":5006625}
+{"detail":{"bytes":8,"cumulative_bytes":34},"operation":"stdout.write.completed","us":5006633}
+{"detail":{"bytes":34,"flushes":2},"operation":"stdout.flush.completed","us":5006643}
+{"detail":null,"operation":"alternate.left","us":5006650}
+{"detail":{"success":true},"operation":"raw.disabled","us":5006707}

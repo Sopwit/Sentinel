@@ -1,0 +1,23 @@
+{
+  "path": "<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel",
+  "sha256": "04ac8203350fe9c585fdda151decb753d5bacb750ab76f6a2801aef223c2241c",
+  "size": 4826512,
+  "mtime_ns": 1791671242206907931,
+  "prior_release": {
+    "sha256": "8c894c995fa29186513375222770cff72828bd0aa848670766f29a5d4680f986",
+    "mtime_local": "2026-10-11 00:43:59",
+    "mascot_marker_present": false
+  },
+  "environment_current_agent": {
+    "TERM": "dumb",
+    "TERM_PROGRAM": null,
+    "SENTINEL_TUI_MASCOT": null,
+    "NO_COLOR": "1",
+    "SENTINEL_TUI_ASCII": null,
+    "SENTINEL_TUI_REDUCED_MOTION": null,
+    "SSH_TTY": null,
+    "TMUX": null,
+    "SENTINEL_CORE_WARDEN_ASSETS": null
+  },
+  "note": "Agent environment is not the physical Ghostty shell environment."
+}

@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: unknown                             Disconnected
+--------------------------------------------------------------------------------
+Provider unselected / Model unselected                         Inference unknown
+  +command · Enter select · Esc close----------------------------------------+  
+  |Filter: help                                                              |  
+  |> /help [query] · Search commands and keyboard reference                  |  
+  |  /export [markdown|json|text] · Save transcript in the daemon controll...|  
+  |  /search [query] · Search the currently displayed transcript             |  
+  |  /theme [name] · Choose terminal, obsidian, glacier or porcelain         |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |/help                                                                     |  
+  |/help [query]                                                             |  
+  |Search commands and keyboard reference                                    |  
+  |Aliases: /h                                                               |  
+  +--------------------------------------------------------------------------+  
+  +--------------------------------------------------------------------------+  
+  /notices · Cannot connect to the Sentinel daemon: No such file or directo...  
+  Arrows select · Enter confirm · Esc close                               idle  

@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+──┌help · Enter inspect · Esc close──────────────────────┐──
+Pr│Filter:                                               │wn
+  │> /activity  · Inspect the bounded safe execution t...│  
+  │  /agent  · Switch to authorized tool-assisted tasks  │  
+  │  /archive  · Confirm archive of attached session; ...│  
+  │  /cancel  · Request cancellation; await daemon ter...│  
+  │  /chat  · Switch to conversation without Agent tools │  
+  │  /commands  · Open the unified command palette       │  
+  │  /compact [request] · Context compaction needs an ...│  
+  │/activity                                             │  
+  │/activity                                             │  
+  │Inspect the bounded safe execution timeline           │  
+  │Aliases:                                              │  
+  │Keys:                                                 │  
+  │Security: Local                                       │  
+  │Backend: existing bounded activity                    │  
+  │Example: /activity                                    │  
+  └──────────────────────────────────────────────────────┘  
+  Arrows · Enter · Esc                                idle  

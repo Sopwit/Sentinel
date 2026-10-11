@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+──┌session · Enter select · Esc close────────────────────┐──
+Pr│Filter:                                               │wn
+  │> Active · Fixture · chat · idle                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │                                                      │  
+  │fixture-session                                       │  
+  │Session: fixture-session                              │  
+  │ · /                                                  │  
+  │                                                      │  
+  └──────────────────────────────────────────────────────┘  
+  Arrows · Enter · Esc                                idle  

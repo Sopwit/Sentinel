@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+────────────────────────────────────────────────────────────
+Provider un... / Model unselected          Inference unknown
+                                                            
+    TUI preferences · no persistent writes                  
+    Theme: terminal · built-in default                      
+    /theme [name] or /settings theme [name]                 
+    Mascot preference: auto · built-in default              
+    /settings mascot off|static|animated|auto               
+    Reduced motion: false · launch environment              
+    SENTINEL_TUI_REDUCED_MOTION                             
+    Reduced motion keeps images static; safety/terminal     
+    support can require text fallback. Disconnected         
+    presentation is static.                                 
+  ┌ Message · Chat ──────────────────────────────────────┐  
+  │   Türkçe draft                                       │  
+  │   second /path                                       │  
+  └──────────────────────────────────────────────────────┘  
+  PgUp/PgDn scroll · Esc returns to conversation            
+  Esc back · PgUp/PgDn scroll                         idle  

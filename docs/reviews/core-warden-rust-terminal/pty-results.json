@@ -1,0 +1,156 @@
+[
+  {
+    "stage": "stdout",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 219.19279199209996,
+    "first_placement_ms": 220.0883339974098,
+    "headers": [
+      "a=t,f=100,t=d,i=5329315,q=2,m=1",
+      "a=p,i=5329315,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329315,q=2"
+    ],
+    "alternate_entries": 0,
+    "alternate_exits": 0,
+    "cursor_hide": 0,
+    "cursor_show": 0,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 17,
+    "bytes": 16924
+  },
+  {
+    "stage": "stdout-alt",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 7.224125001812354,
+    "first_placement_ms": 27.324374997988343,
+    "headers": [
+      "a=t,f=100,t=d,i=5329564,q=2,m=1",
+      "a=p,i=5329564,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329564,q=2"
+    ],
+    "alternate_entries": 1,
+    "alternate_exits": 1,
+    "cursor_hide": 0,
+    "cursor_show": 0,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 24,
+    "bytes": 16940
+  },
+  {
+    "stage": "raw",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 2.6150000048801303,
+    "first_placement_ms": 2.826167008606717,
+    "headers": [
+      "a=t,f=100,t=d,i=5329677,q=2,m=1",
+      "a=p,i=5329677,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329677,q=2"
+    ],
+    "alternate_entries": 0,
+    "alternate_exits": 0,
+    "cursor_hide": 0,
+    "cursor_show": 0,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 20,
+    "bytes": 16924
+  },
+  {
+    "stage": "raw-alt",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 6.887874973472208,
+    "first_placement_ms": 7.430375000694767,
+    "headers": [
+      "a=t,f=100,t=d,i=5329698,q=2,m=1",
+      "a=p,i=5329698,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329698,q=2"
+    ],
+    "alternate_entries": 1,
+    "alternate_exits": 1,
+    "cursor_hide": 0,
+    "cursor_show": 0,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 27,
+    "bytes": 16940
+  },
+  {
+    "stage": "ratatui-before",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 6.1927500064484775,
+    "first_placement_ms": 6.696625001495704,
+    "headers": [
+      "a=t,f=100,t=d,i=5329711,q=2,m=1",
+      "a=p,i=5329711,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329711,q=2"
+    ],
+    "alternate_entries": 1,
+    "alternate_exits": 1,
+    "cursor_hide": 0,
+    "cursor_show": 1,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 32,
+    "bytes": 16946
+  },
+  {
+    "stage": "ratatui-after",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 6.7824170109815896,
+    "first_placement_ms": 7.239084021421149,
+    "headers": [
+      "a=t,f=100,t=d,i=5329720,q=2,m=1",
+      "a=p,i=5329720,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=5329720,q=2"
+    ],
+    "alternate_entries": 1,
+    "alternate_exits": 1,
+    "cursor_hide": 1,
+    "cursor_show": 2,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 100,
+    "bytes": 17031
+  },
+  {
+    "stage": "player",
+    "scope": "PTY bytes only, no physical visibility claim",
+    "exit": 0,
+    "keyboard_input_sent": false,
+    "first_upload_ms": 72.77649999014102,
+    "first_placement_ms": 136.8294169951696,
+    "headers": [
+      "q=2,i=1539208638,a=t,f=32,t=d,s=256,v=272,m=1",
+      "a=p,i=1539208638,p=1,c=16,r=8,C=1,z=1,q=2",
+      "a=d,d=I,i=1539208638,q=2"
+    ],
+    "alternate_entries": 1,
+    "alternate_exits": 1,
+    "cursor_hide": 3,
+    "cursor_show": 2,
+    "global_clears": 0,
+    "termios_restored_excluding_PENDIN": true,
+    "output_operations_during_hold": 0,
+    "trace_records": 241,
+    "bytes": 372969
+  }
+]

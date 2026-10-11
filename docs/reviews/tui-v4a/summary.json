@@ -1,0 +1,14 @@
+{
+  "release_sha256": "6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81",
+  "rust_tests_passed": 120,
+  "simulated_terminal_passed": 29,
+  "interaction_journeys_passed": 14,
+  "mascot_regressions_passed": 15,
+  "startup_cases_passed": 14,
+  "relocation_cases_passed": 5,
+  "recovery_journeys_passed": 1,
+  "performance_samples": 4,
+  "external_sigterm_cleanup": "FAIL",
+  "physical_latest_candidate": "PENDING",
+  "recommendation": "Needs targeted correction"
+}

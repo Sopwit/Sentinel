@@ -1,0 +1,26 @@
+[
+  {
+    "stage": "player-probe",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "player-poll",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "player-probe-poll",
+    "exit": 0,
+    "visible_without_input": false,
+    "termios_restored_excluding_PENDIN": true
+  },
+  {
+    "stage": "player-probe-poll-no-status",
+    "exit": 0,
+    "visible_without_input": true,
+    "termios_restored_excluding_PENDIN": true
+  }
+]

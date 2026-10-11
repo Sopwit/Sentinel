@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: Fixture                                                                        Connected
+------------------------------------------------------------------------------------------------------------------------
+fixture / model-alpha                                                                               Inference unverified
+                                                                                                                        
+    TUI preferences · no persistent writes                                                                              
+    Theme: glacier · this process (temporary override)                                                                  
+    /theme [name] or /settings theme [name]                                                                             
+    Mascot preference: static · this process (temporary override)                                                       
+    /settings mascot off|static|animated|auto                                                                           
+    Reduced motion: false · launch environment SENTINEL_TUI_REDUCED_MOTION                                              
+    Reduced motion keeps images static; safety/terminal support can require text fallback. Disconnected                 
+    presentation is static.                                                                                             
+    NO_COLOR: true · launch environment                                                                                 
+    ASCII borders: true · launch environment SENTINEL_TUI_ASCII                                                         
+    Execution details: false · this process; /settings details toggles                                                  
+    Enter sends; Shift+Enter / Alt+Enter / Ctrl+O inserts a newline.                                                    
+    /help: registered commands and keyboard help; Esc returns.                                                          
+    All TUI changes are temporary; no new configuration storage.                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  + Message · Chat --------------------------------------------------------------------------------------------------+  
+  |   Ask a question or share an idea…                                                                               |  
+  +------------------------------------------------------------------------------------------------------------------+  
+  /notices · Theme: glacier · NO_COLOR disables color; launch without NO_COLOR to see the palette.                      
+  Esc conversation · Ctrl+P commands · F1 help                                                                    idle  

@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Fixture                                Connected
+--------------------------------------------------------------------------------
+fixture / model-beta                                        Inference unverified
+  +Confirm archive-----------------------------------------------------------+  
+  |Archive Alpha conversation?                                               |  
+  |Session: session-a                                                        |  
+  |Messages are retained by the daemon.                                      |  
+  |y confirms · n / Esc cancels                                              |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  +--------------------------------------------------------------------------+  
+  +--------------------------------------------------------------------------+  
+  /notices · Selection reported by daemon; refreshing state. Inference read...  
+  y archive · n / Esc cancel                                              idle  

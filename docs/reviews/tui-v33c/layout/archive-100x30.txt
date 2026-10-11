@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: unknown                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                             Inference unknown
+                                                                                                    
+    Assistant                                                                                       
+      Bold response                                                                                 
+     ┌Confirm archive─────────────────────────────────────────────────────────────────────────┐     
+     │Archive ?                                                                               │     
+     │Session: fixture-session                                                                │     
+     │Messages are retained by the daemon.                                                    │     
+     │y confirms · n / Esc cancels                                                            │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   Türkçe draft                                                                               │  
+  │   second /path                                                                               │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  y archive · n / Esc cancel                                                                  idle  

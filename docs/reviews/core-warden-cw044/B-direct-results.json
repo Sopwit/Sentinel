@@ -1,0 +1,26 @@
+{
+  "scope": "independent direct Ratatui/Kitty; simulated capability response, NOT physical Ghostty",
+  "exit": 0,
+  "keyboard_input": false,
+  "graphics_headers": [
+    "q=2,i=2372488177,a=t,f=32,t=d,s=256,v=272,m=1",
+    "a=p,i=2372488177,p=1,c=16,r=8,C=1,z=1,q=2",
+    "a=d,d=I,i=2372488177,q=2"
+  ],
+  "direct_cursor_anchor_emitted": true,
+  "placement_rectangle": [
+    5,
+    5,
+    16,
+    8
+  ],
+  "first_upload_ms": 4.014709003968164,
+  "variant": "B-direct",
+  "uploads": 1,
+  "direct_placements": 1,
+  "owned_deletes": 1,
+  "placeholders": 0,
+  "restored_alt": true,
+  "restored_termios_excluding_kernel_PENDIN": true,
+  "kernel_PENDIN": true
+}

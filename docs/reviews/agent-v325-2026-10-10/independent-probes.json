@@ -1,0 +1,56 @@
+[
+  {
+    "label": "minimal",
+    "deadline_seconds": 30,
+    "bytes": 160,
+    "http": 200,
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 27,
+      "completion_tokens": 36,
+      "total_tokens": 63,
+      "completion_tokens_details": {
+        "reasoning_tokens": 27
+      }
+    },
+    "content": "{\"requirements\":[]}",
+    "reasoning_characters": 119,
+    "seconds": 2.3924574999837205
+  },
+  {
+    "label": "exact-30",
+    "deadline_seconds": 30,
+    "bytes": 1616,
+    "http": 200,
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 331,
+      "completion_tokens": 437,
+      "total_tokens": 768,
+      "completion_tokens_details": {
+        "reasoning_tokens": 366
+      }
+    },
+    "content": "{\n  \"requirements\": [\n    {\n      \"domain\": \"filesystem\",\n      \"resource\": \"/tmp/sentinel-v325-fixture/calc.cpp\",\n      \"purpose\": \"inspect\",\n      \"operation\": \"exists\",\n      \"query\": \"\",\n      \"recursive\": false\n    }\n  ]\n}",
+    "reasoning_characters": 1666,
+    "seconds": 28.271727792016463
+  },
+  {
+    "label": "exact-90",
+    "deadline_seconds": 90,
+    "bytes": 1616,
+    "http": 200,
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 331,
+      "completion_tokens": 296,
+      "total_tokens": 627,
+      "completion_tokens_details": {
+        "reasoning_tokens": 237
+      }
+    },
+    "content": "{\n  \"requirements\": [\n    {\n      \"domain\": \"filesystem\",\n      \"resource\": \"/tmp/sentinel-v325-fixture/calc.cpp\",\n      \"purpose\": \"inspect\",\n      \"operation\": \"exists\"\n    }\n  ]\n}",
+    "reasoning_characters": 1058,
+    "seconds": 16.74050258297939
+  }
+]

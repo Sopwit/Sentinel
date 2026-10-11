@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: Fixture            Connected
+--+session · Enter select · Esc close--------------------+--
+fi|Filter: session-a                                     |ed
+  |> Alpha conversation · chat · idle                    |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |                                                      |  
+  |session-a                                             |  
+  |Session: session-a                                    |  
+  | · /                                                  |  
+  |                                                      |  
+  +------------------------------------------------------+  
+  Arrows · Enter · Esc                                idle  

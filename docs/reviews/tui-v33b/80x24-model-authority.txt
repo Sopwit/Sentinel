@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Fixture                                Connected
+────────────────────────────────────────────────────────────────────────────────
+fixture / model-beta                                        Inference unverified
+  ┌model · Enter select · Esc close──────────────────────────────────────────┐  
+  │Filter: model-beta                                                        │  
+  │> Selected · fixture / model-beta · Available · chat                      │  
+  │  fixture / model-alpha · Available · chat                                │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │fixture / model-beta                                                      │  
+  │Discovered; inference not attested                                        │  
+  │Catalog health is not verified inference readiness. /doctor inspects      │  
+  │status.                                                                   │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  /notices · Selection reported by daemon; refreshing state. Inference read...  
+  Arrows select · Enter confirm · Esc close                               idle  

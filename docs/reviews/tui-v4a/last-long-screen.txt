@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: Fixture                                                                                                                                    Connected
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────      ───────────────────────
+fixture / fixture                                                                                                                                               Inference unverified
+                                                                                                                                                                                    
+      Line 1462: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1463: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1464: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1465: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1466: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1467: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1468: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1469: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1470: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1471: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1472: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1473: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1474: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1475: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1476: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1477: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1478: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1479: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1480: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1481: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1482: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1483: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1484: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1485: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1486: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1487: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1488: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1489: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1490: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1491: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1492: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1493: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1494: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1495: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1496: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1497: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1498: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      Line 1499: Sentinel Türkçe response with /paths and bounded rendering. more text more text more text more text more text                                                      
+      FINAL TRANSCRIPT ROW                                                                                                                                                          
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                                                                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                                                                                                    
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                                                                                          idle  

@@ -1,0 +1,87 @@
+[
+  {
+    "name": "version",
+    "exit": 0,
+    "stdout": "sentinel 1.0.0-rc.8\n",
+    "stderr": ""
+  },
+  {
+    "name": "help",
+    "exit": 0,
+    "stdout": "Sentinel terminal client for the authoritative local daemon\n\nUsage: sentinel [OPTIONS] [COMMAND]\n\nCommands:\n  status       Connection, daemon version, uptime and runtime status\n  models       Discover models through the daemon's ModelService\n  model        Inspect or explicitly select the model for future requests\n  sessions     List resumable daemon-owned conversations\n  workspace    List, select or attach a root through daemon-owned workspace authority\n  changes      Review observed workspace changes since an Agent run began\n  provider     Provider readiness and discovery controls\n  chat         Send a Chat message (no Agent execution)\n  agent        Execute a task through AgentRuntime\n  run          Execute an Agent task; alias for agent\n  attach       Attach the TUI to an existing session\n  tui          Open the interactive terminal interface\n  doctor       Inspect installation, providers, workspace, tools and service readiness\n  completions  Print shell completions; redirect to a file and install manually\n  shutdown     Request authoritative daemon shutdown\n  help         Print this message or the help of the given subcommand(s)\n\nOptions:\n      --output <OUTPUT>  Output format; machine formats contain no human prose on stdout [default: text] [possible values: text, json, stream-json]\n      --socket <SOCKET>  Local daemon socket endpoint [default: <LOCAL_HOME>/.sentinel/run/daemon.sock]\n  -h, --help             Print help\n  -V, --version          Print version\n\nExamples:\n  sentinel status --output json\n  echo 'inspect this repository' | sentinel run --output stream-json\n  sentinel model select ollama <installed-model>\n  sentinel tui\n\nStart sentinel-daemon externally before runtime commands. No daemon or provider fallback is launched.\n",
+    "stderr": ""
+  },
+  {
+    "name": "invalid-command",
+    "exit": 2,
+    "stdout": "",
+    "stderr": "error: unrecognized subcommand 'unknown-command'\n\nUsage: sentinel [OPTIONS] [COMMAND]\n\nFor more information, try '--help'.\n"
+  },
+  {
+    "name": "missing-daemon",
+    "exit": 3,
+    "stdout": "",
+    "stderr": "sentinel: Cannot connect to the Sentinel daemon: No such file or directory (os error 2). Start sentinel-daemon externally; use --socket for a custom endpoint.\n"
+  },
+  {
+    "name": "tui-invalid-output",
+    "exit": 2,
+    "stdout": "{\"error\":{\"code\":\"cli-usage\",\"message\":\"tui requires --output text\"},\"exit_code\":2,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: tui requires --output text\n"
+  },
+  {
+    "name": "empty-run",
+    "exit": 2,
+    "stdout": "",
+    "stderr": "sentinel: Task must contain 1..65536 UTF-8 bytes. Supply text or pipe stdin; positional text takes precedence.\n"
+  },
+  {
+    "name": "valid",
+    "exit": 0,
+    "stdout": "{\"active_runs\":0,\"daemon_version\":\"release-fixture\",\"running\":true,\"sessions\":0,\"uptime_ms\":0}\n",
+    "stderr": ""
+  },
+  {
+    "name": "malformed",
+    "exit": 4,
+    "stdout": "{\"error\":{\"code\":\"protocol-invalid\",\"message\":\"Invalid daemon protocol data: expected ident at line 1 column 2\"},\"exit_code\":4,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Invalid daemon protocol data: expected ident at line 1 column 2\n"
+  },
+  {
+    "name": "incompatible",
+    "exit": 4,
+    "stdout": "{\"error\":{\"code\":\"protocol-mismatch\",\"message\":\"Incompatible IPC version. Install matching Sentinel CLI and daemon versions.\"},\"exit_code\":4,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Incompatible IPC version. Install matching Sentinel CLI and daemon versions.\n"
+  },
+  {
+    "name": "array-payload",
+    "exit": 4,
+    "stdout": "{\"error\":{\"code\":\"protocol-invalid\",\"message\":\"Invalid daemon protocol data: payload must be an object\"},\"exit_code\":4,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Invalid daemon protocol data: payload must be an object\n"
+  },
+  {
+    "name": "missing-fields",
+    "exit": 4,
+    "stdout": "{\"error\":{\"code\":\"protocol-invalid\",\"message\":\"Invalid daemon protocol data: missing field `major`\"},\"exit_code\":4,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Invalid daemon protocol data: missing field `major`\n"
+  },
+  {
+    "name": "oversized",
+    "exit": 4,
+    "stdout": "{\"error\":{\"code\":\"protocol-invalid\",\"message\":\"Invalid daemon protocol data: oversized frame\"},\"exit_code\":4,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Invalid daemon protocol data: oversized frame\n"
+  },
+  {
+    "name": "peer-closed",
+    "exit": 3,
+    "stdout": "{\"error\":{\"code\":\"disconnected\",\"message\":\"Daemon connection lost. Use sentinel attach <session-id> to restore the authoritative session; disconnect does not cancel a run.\"},\"exit_code\":3,\"schema_version\":1,\"type\":\"error\"}\n",
+    "stderr": "sentinel: Daemon connection lost. Use sentinel attach <session-id> to restore the authoritative session; disconnect does not cancel a run.\n"
+  },
+  {
+    "name": "tui-broken-output",
+    "exit": 1,
+    "macos_pending_retype_flag": true,
+    "termios_restored": true,
+    "stderr": "Failed to restore terminal: Broken pipe (os error 32)\nsentinel: Task failed: Terminal initialization failed: Broken pipe (os error 32)\n"
+  }
+]

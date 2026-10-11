@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: unknown                             Disconnected
+────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                         Inference unknown
+                                                                                
+    > You                                                                       
+        Türkçe: ıİşğüöç — inspect this snippet                                  
+    Assistant                                                                   
+      **Ajan İptal Edildi / Agent Run Cancelled**                               
+      *1 adım çalıştırılmıştı / 1 steps executed.*                              
+      **Bold** and *italic* with `inline_code` — İstanbul                       
+      ```rust                                                                   
+      let literal = "**keep**";                                                 
+      ```                                                                       
+      Unmatched ** remains readable.                                            
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+  ┌ Message · Chat ──────────────────────────────────────────────────────────┐  
+  │   draft preserved: ü                                                     │  
+  │   second line                                                            │  
+  └──────────────────────────────────────────────────────────────────────────┘  
+  /notices · Run cancelled. Long diagnostic remains accessible through /not...  
+  Enter send · Shift+Enter newline · Ctrl+P commands                 cancelled  

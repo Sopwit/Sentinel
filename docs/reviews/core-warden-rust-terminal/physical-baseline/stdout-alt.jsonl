@@ -1,0 +1,24 @@
+{"detail":{"capability":{"cell":[16,34],"elapsed_ms":0.18366699805483225,"kitty_ack":true,"response_bytes":22,"source":"actual terminal response; preflight restored before Rust child"},"keyboard_reads":false,"stage":"stdout-alt"},"operation":"stage.begin","us":9}
+{"detail":null,"operation":"alternate.enter.begin","us":279}
+{"detail":{"bytes":8,"cumulative_bytes":8},"operation":"stdout.write.completed","us":305}
+{"detail":{"bytes":8,"flushes":1},"operation":"stdout.flush.completed","us":338}
+{"detail":null,"operation":"alternate.enter.completed","us":356}
+{"detail":{"format":"PNG/f=100","id":5329901,"wire_bytes":16845},"operation":"upload.begin","us":368}
+{"detail":{"bytes":16845,"cumulative_bytes":16853},"operation":"stdout.write.completed","us":1112}
+{"detail":{"id":5329901},"operation":"upload.write_all.completed","us":1144}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329901,"rect":[5,5,16,8]},"operation":"placement.begin","us":1161}
+{"detail":{"bytes":17,"cumulative_bytes":16870},"operation":"stdout.write.completed","us":1181}
+{"detail":{"bytes":7,"cumulative_bytes":16877},"operation":"stdout.write.completed","us":1195}
+{"detail":{"bytes":29,"cumulative_bytes":16906},"operation":"stdout.write.completed","us":1206}
+{"detail":{"bytes":16906,"flushes":2},"operation":"stdout.flush.completed","us":1221}
+{"detail":{"id":5329901},"operation":"placement.flush.completed","us":1246}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":1262}
+{"detail":null,"operation":"observation.end","us":5006345}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5006531}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5006591}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5006625}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5006685}
+{"detail":{"id":5329901},"operation":"owned_image.deleted","us":5006715}
+{"detail":{"bytes":8,"cumulative_bytes":34},"operation":"stdout.write.completed","us":5006743}
+{"detail":{"bytes":34,"flushes":2},"operation":"stdout.flush.completed","us":5006787}
+{"detail":null,"operation":"alternate.left","us":5006816}

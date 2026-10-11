@@ -1,0 +1,24 @@
+{"detail":{"capability":{"cell":[16,34],"kitty_ack":true,"source":"SIMULATED PTY RECEIPT — NOT physical support evidence"},"keyboard_reads":false,"stage":"stdout-alt"},"operation":"stage.begin","us":1}
+{"detail":null,"operation":"alternate.enter.begin","us":116}
+{"detail":{"bytes":8,"cumulative_bytes":8},"operation":"stdout.write.completed","us":131}
+{"detail":{"bytes":8,"flushes":1},"operation":"stdout.flush.completed","us":149}
+{"detail":null,"operation":"alternate.enter.completed","us":158}
+{"detail":{"format":"PNG/f=100","id":5329564,"wire_bytes":16845},"operation":"upload.begin","us":164}
+{"detail":{"bytes":16845,"cumulative_bytes":16853},"operation":"stdout.write.completed","us":21302}
+{"detail":{"id":5329564},"operation":"upload.write_all.completed","us":21383}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329564,"rect":[5,5,16,8]},"operation":"placement.begin","us":21407}
+{"detail":{"bytes":17,"cumulative_bytes":16870},"operation":"stdout.write.completed","us":21424}
+{"detail":{"bytes":7,"cumulative_bytes":16877},"operation":"stdout.write.completed","us":21436}
+{"detail":{"bytes":29,"cumulative_bytes":16906},"operation":"stdout.write.completed","us":21447}
+{"detail":{"bytes":16906,"flushes":2},"operation":"stdout.flush.completed","us":21463}
+{"detail":{"id":5329564},"operation":"placement.flush.completed","us":21503}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":21515}
+{"detail":null,"operation":"observation.end","us":5025883}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5025923}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5025934}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5025939}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5025953}
+{"detail":{"id":5329564},"operation":"owned_image.deleted","us":5025958}
+{"detail":{"bytes":8,"cumulative_bytes":34},"operation":"stdout.write.completed","us":5025962}
+{"detail":{"bytes":34,"flushes":2},"operation":"stdout.flush.completed","us":5025968}
+{"detail":null,"operation":"alternate.left","us":5025972}

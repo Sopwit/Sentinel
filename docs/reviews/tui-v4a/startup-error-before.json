@@ -1,0 +1,5 @@
+{
+  "exit": 3,
+  "termios_restored": false,
+  "stderr": "sentinel: Cannot connect to the Sentinel daemon: Broken pipe (os error 32). Start sentinel-daemon externally; use --socket for a custom endpoint.\n"
+}

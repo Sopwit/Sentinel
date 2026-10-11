@@ -1,0 +1,2667 @@
+{
+  "executable": "<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel",
+  "sha256": "4e565fcc173d81d9900550b8bb90c097737ccb56e2945fbcfdb33ebbb4b398fc",
+  "scope": "production release + disposable IPC/terminal fixtures; not physical acceptance",
+  "cases": [
+    {
+      "size": [
+        60,
+        20
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        80,
+        24
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 1,
+      "owned_deletes": 16
+    },
+    {
+      "size": [
+        100,
+        30
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 1,
+      "owned_deletes": 16
+    },
+    {
+      "size": [
+        120,
+        40
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 40,
+      "owned_deletes": 135
+    },
+    {
+      "size": [
+        160,
+        48
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 40,
+      "owned_deletes": 135
+    },
+    {
+      "size": [
+        180,
+        48
+      ],
+      "fallback": false,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 40,
+      "owned_deletes": 135
+    },
+    {
+      "size": [
+        60,
+        20
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        80,
+        24
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        100,
+        30
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        120,
+        40
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        160,
+        48
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        180,
+        48
+      ],
+      "fallback": true,
+      "offline": false,
+      "checks": [
+        "initial-history",
+        "slash-discovery",
+        "slash-dismiss",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "session-identity",
+        "session-switched",
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "return-query",
+        "draft-restored",
+        "multiline-retained",
+        "settings-mascot",
+        "settings-scope",
+        "model-query-fail",
+        "model-error",
+        "model-query-success",
+        "model-authority",
+        "archive-confirm",
+        "new-session",
+        "settings-auto",
+        "invalid-local",
+        "invalid-pasted-local"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [
+        {
+          "name": "hello",
+          "payload": {
+            "capabilities": [
+              "chat",
+              "agent",
+              "approval",
+              "sessions",
+              "events",
+              "desktop-projection",
+              "model-selection",
+              "session-messages",
+              "terminal-state",
+              "workspace-files",
+              "workspace-changes"
+            ],
+            "client_id": "sentinel-tui",
+            "major": 1,
+            "minor": 1
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-b"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "terminal.attach",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "session-a"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "model.select",
+          "payload": {
+            "model_id": "model-beta",
+            "provider_id": "fixture"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.create",
+          "payload": {
+            "title": "Created via TUI"
+          }
+        },
+        {
+          "name": "session.messages",
+          "payload": {
+            "session_id": "created-1"
+          }
+        },
+        {
+          "name": "terminal.state",
+          "payload": {}
+        },
+        {
+          "name": "model.list",
+          "payload": {}
+        },
+        {
+          "name": "session.list",
+          "payload": {}
+        }
+      ],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        60,
+        20
+      ],
+      "fallback": true,
+      "offline": true,
+      "checks": [
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "offline-draft",
+        "offline-settings"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    },
+    {
+      "size": [
+        180,
+        48
+      ],
+      "fallback": true,
+      "offline": true,
+      "checks": [
+        "palette-open",
+        "palette-query",
+        "palette-selected",
+        "offline-draft",
+        "offline-settings"
+      ],
+      "clean_exit": true,
+      "termios_restored": true,
+      "alt_restored": true,
+      "no_inference": true,
+      "requests": [],
+      "graphics_uploads": 0,
+      "owned_deletes": 0
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "executable": "<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel",
+  "sha256": "8c894c995fa29186513375222770cff72828bd0aa848670766f29a5d4680f986",
+  "cases": [
+    {
+      "size": [
+        80,
+        24
+      ],
+      "fallback": false,
+      "clean_exit": true,
+      "capture": "pty-80x24.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        100,
+        30
+      ],
+      "fallback": false,
+      "clean_exit": true,
+      "capture": "pty-100x30.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        120,
+        40
+      ],
+      "fallback": false,
+      "clean_exit": true,
+      "capture": "pty-120x40.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        160,
+        48
+      ],
+      "fallback": false,
+      "clean_exit": true,
+      "capture": "pty-160x48.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        80,
+        24
+      ],
+      "fallback": true,
+      "clean_exit": true,
+      "capture": "pty-80x24-fallback.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        100,
+        30
+      ],
+      "fallback": true,
+      "clean_exit": true,
+      "capture": "pty-100x30-fallback.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        120,
+        40
+      ],
+      "fallback": true,
+      "clean_exit": true,
+      "capture": "pty-120x40-fallback.ansi",
+      "draft_visible": true
+    },
+    {
+      "size": [
+        160,
+        48
+      ],
+      "fallback": true,
+      "clean_exit": true,
+      "capture": "pty-160x48-fallback.ansi",
+      "draft_visible": true
+    }
+  ]
+}

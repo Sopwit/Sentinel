@@ -1,0 +1,17 @@
+{"detail":{"capability":{"cell":[16,34],"elapsed_ms":0.18366699805483225,"kitty_ack":true,"response_bytes":22,"source":"actual terminal response; preflight restored before Rust child"},"keyboard_reads":false,"stage":"stdout"},"operation":"stage.begin","us":8}
+{"detail":{"format":"PNG/f=100","id":5329891,"wire_bytes":16845},"operation":"upload.begin","us":255}
+{"detail":{"bytes":16845,"cumulative_bytes":16845},"operation":"stdout.write.completed","us":970}
+{"detail":{"id":5329891},"operation":"upload.write_all.completed","us":1010}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329891,"rect":[5,5,16,8]},"operation":"placement.begin","us":1025}
+{"detail":{"bytes":17,"cumulative_bytes":16862},"operation":"stdout.write.completed","us":1041}
+{"detail":{"bytes":7,"cumulative_bytes":16869},"operation":"stdout.write.completed","us":1054}
+{"detail":{"bytes":29,"cumulative_bytes":16898},"operation":"stdout.write.completed","us":1064}
+{"detail":{"bytes":16898,"flushes":1},"operation":"stdout.flush.completed","us":1081}
+{"detail":{"id":5329891},"operation":"placement.flush.completed","us":1091}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":1102}
+{"detail":null,"operation":"observation.end","us":5006174}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5006411}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5006520}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5006559}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5006628}
+{"detail":{"id":5329891},"operation":"owned_image.deleted","us":5006660}

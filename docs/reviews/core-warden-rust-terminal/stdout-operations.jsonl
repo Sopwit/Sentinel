@@ -1,0 +1,17 @@
+{"detail":{"capability":{"cell":[16,34],"kitty_ack":true,"source":"SIMULATED PTY RECEIPT — NOT physical support evidence"},"keyboard_reads":false,"stage":"stdout"},"operation":"stage.begin","us":1}
+{"detail":{"format":"PNG/f=100","id":5329315,"wire_bytes":16845},"operation":"upload.begin","us":491}
+{"detail":{"bytes":16845,"cumulative_bytes":16845},"operation":"stdout.write.completed","us":1139}
+{"detail":{"id":5329315},"operation":"upload.write_all.completed","us":1202}
+{"detail":{"cursor":"save; CSI 6;6H; placement C=1; restore","id":5329315,"rect":[5,5,16,8]},"operation":"placement.begin","us":1219}
+{"detail":{"bytes":17,"cumulative_bytes":16862},"operation":"stdout.write.completed","us":1234}
+{"detail":{"bytes":7,"cumulative_bytes":16869},"operation":"stdout.write.completed","us":1247}
+{"detail":{"bytes":29,"cumulative_bytes":16898},"operation":"stdout.write.completed","us":1399}
+{"detail":{"bytes":16898,"flushes":1},"operation":"stdout.flush.completed","us":1425}
+{"detail":{"id":5329315},"operation":"placement.flush.completed","us":1438}
+{"detail":{"no_draws_or_flushes_during_hold":true,"no_input_reads":true,"seconds":5},"operation":"observation.begin","us":1450}
+{"detail":null,"operation":"observation.end","us":5003846}
+{"detail":{"bytes":13,"cumulative_bytes":13},"operation":"stdout.write.completed","us":5003920}
+{"detail":{"bytes":7,"cumulative_bytes":20},"operation":"stdout.write.completed","us":5003940}
+{"detail":{"bytes":6,"cumulative_bytes":26},"operation":"stdout.write.completed","us":5003953}
+{"detail":{"bytes":26,"flushes":1},"operation":"stdout.flush.completed","us":5003979}
+{"detail":{"id":5329315},"operation":"owned_image.deleted","us":5003991}

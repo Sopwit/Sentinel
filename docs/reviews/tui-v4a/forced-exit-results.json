@@ -1,0 +1,8 @@
+{
+  "signal": "external SIGTERM",
+  "subprocess_returncode": -15,
+  "echo_restored": false,
+  "canonical_restored": false,
+  "alternate_screen_left": false,
+  "fixture_restored_terminal_after_measurement": true
+}

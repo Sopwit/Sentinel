@@ -1,0 +1,393 @@
+[
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:47:53.445Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "676c6a36-26bc-4223-b6ec-e68ca29719d4",
+      "utc": "2026-10-10T20:47:53.445Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "c6c73028-a7b5-4e62-9953-f3729cddda86",
+      "runtime_session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "session_id": "64ac9845-4dcb-434f-a3d4-93758ae4fe20",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:47:53.332Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "c6c73028-a7b5-4e62-9953-f3729cddda86",
+      "runtime_session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "session_id": "64ac9845-4dcb-434f-a3d4-93758ae4fe20",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "dfc9215c-d862-4534-a9be-cb376f8aab1a",
+      "utc": "2026-10-10T20:47:53.332Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "c6c73028-a7b5-4e62-9953-f3729cddda86",
+      "runtime_session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "session_id": "64ac9845-4dcb-434f-a3d4-93758ae4fe20",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "dfc9215c-d862-4534-a9be-cb376f8aab1a",
+      "utc": "2026-10-10T20:47:53.439Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "c6c73028-a7b5-4e62-9953-f3729cddda86",
+      "runtime_session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "session_id": "64ac9845-4dcb-434f-a3d4-93758ae4fe20",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "dfc9215c-d862-4534-a9be-cb376f8aab1a",
+      "utc": "2026-10-10T20:47:53.706Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentCancelled",
+      "run_id": "c6c73028-a7b5-4e62-9953-f3729cddda86",
+      "runtime_session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "session_id": "64ac9845-4dcb-434f-a3d4-93758ae4fe20",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "dfc9215c-d862-4534-a9be-cb376f8aab1a",
+      "utc": "2026-10-10T20:47:53.707Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Cancelled",
+      "deadline_ms": 30000,
+      "elapsed_ms": 276,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 457,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1370,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": true,
+      "category": "Cancelled",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 276,
+      "error_category": "Cancelled",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 457,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1370,
+      "request_id": "504c00f3-ddb3-4a6d-ae0c-586569f75385",
+      "stage": "classification",
+      "trace_id": "676c6a36-26bc-4223-b6ec-e68ca29719d4",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:47:53.723Z",
+      "wall_elapsed_ms": 277
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "40ba2ddf-98a7-49f1-a086-0420dc109ae3",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:47:53.723Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:47:55.982Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "2914c92d-7065-4e78-bf71-f8f0022a1699",
+      "utc": "2026-10-10T20:47:55.982Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "9079cbed-3fff-40d6-abbb-e702f823cf24",
+      "runtime_session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "session_id": "7d87b49d-c3c9-46f5-8916-5ed6537d202b",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:47:55.933Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "9079cbed-3fff-40d6-abbb-e702f823cf24",
+      "runtime_session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "session_id": "7d87b49d-c3c9-46f5-8916-5ed6537d202b",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "c917fd5e-fafb-4ff6-a56e-b49197c2f3ba",
+      "utc": "2026-10-10T20:47:55.933Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "9079cbed-3fff-40d6-abbb-e702f823cf24",
+      "runtime_session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "session_id": "7d87b49d-c3c9-46f5-8916-5ed6537d202b",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "c917fd5e-fafb-4ff6-a56e-b49197c2f3ba",
+      "utc": "2026-10-10T20:47:55.953Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30268,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 458,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1373,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30268,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 458,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1373,
+      "request_id": "6d1f588d-2995-4e14-ac8e-9bb519958917",
+      "stage": "classification",
+      "trace_id": "2914c92d-7065-4e78-bf71-f8f0022a1699",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:48:26.251Z",
+      "wall_elapsed_ms": 30268
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:48:26.251Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "9079cbed-3fff-40d6-abbb-e702f823cf24",
+      "runtime_session_id": "bc8930fa-2db8-497e-8831-c89e9c9b6a1d",
+      "session_id": "7d87b49d-c3c9-46f5-8916-5ed6537d202b",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "c917fd5e-fafb-4ff6-a56e-b49197c2f3ba",
+      "utc": "2026-10-10T20:48:26.252Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:48:28.978Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "f6ebee59-a695-42c7-85bd-7a7e89adc172",
+      "utc": "2026-10-10T20:48:28.978Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "6510785e-9167-4471-9963-0026b90148b9",
+      "runtime_session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "session_id": "3524196e-b187-412f-824f-0e480c25fd67",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:48:28.962Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "6510785e-9167-4471-9963-0026b90148b9",
+      "runtime_session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "session_id": "3524196e-b187-412f-824f-0e480c25fd67",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a8abe6d-5778-4766-9a45-0ffa6d4d78cc",
+      "utc": "2026-10-10T20:48:28.962Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "6510785e-9167-4471-9963-0026b90148b9",
+      "runtime_session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "session_id": "3524196e-b187-412f-824f-0e480c25fd67",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a8abe6d-5778-4766-9a45-0ffa6d4d78cc",
+      "utc": "2026-10-10T20:48:28.971Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30322,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 485,
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1453,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30322,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 485,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "nvidia/nemotron-3-nano-4b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1453,
+      "request_id": "2a2835c7-c52b-4e4b-8de5-9e6e1d9f6779",
+      "stage": "classification",
+      "trace_id": "f6ebee59-a695-42c7-85bd-7a7e89adc172",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:48:59.302Z",
+      "wall_elapsed_ms": 30324
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:48:59.322Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "6510785e-9167-4471-9963-0026b90148b9",
+      "runtime_session_id": "e61a9fa1-7a2a-42a5-acdc-eac5accf1eea",
+      "session_id": "3524196e-b187-412f-824f-0e480c25fd67",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a8abe6d-5778-4766-9a45-0ffa6d4d78cc",
+      "utc": "2026-10-10T20:48:59.323Z"
+    }
+  }
+]

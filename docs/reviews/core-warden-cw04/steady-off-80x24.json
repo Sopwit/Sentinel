@@ -1,0 +1,29 @@
+{
+  "asset_status": "Display off; no probe",
+  "draws": 2,
+  "fixture_only": true,
+  "inputs": 1,
+  "last_clip_load_ms": 0.0,
+  "max_input_dispatch_us": 1,
+  "peak_retained_source_rgba_bytes": 0,
+  "probe_ms": 0.0,
+  "protocol": "text",
+  "state_log": [],
+  "wall_seconds": 12.001069459,
+  "cpu_seconds": 0.021517999999999995,
+  "cpu_percent_one_core": 0.17122329922570004,
+  "peak_rss_bytes": 2899968,
+  "name": "steady-off-80x24",
+  "dimensions": [
+    80,
+    24
+  ],
+  "capability_source": "no image capability response",
+  "bytes_written": 1273,
+  "kitty_transmit_packets": 0,
+  "kitty_deletions": 0,
+  "alternate_screen_restored": true,
+  "termios_restored": true,
+  "input_to_first_visible_echo_ms": 0.12479099677875638,
+  "exit_status": 0
+}

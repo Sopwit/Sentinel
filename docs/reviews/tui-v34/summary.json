@@ -1,0 +1,16 @@
+{
+  "release_sha256": "f72a3d1ff11fbc13b521981860a32cf3ff0ccc72a70121c81dacd1001afa4b15",
+  "rust_tests": 119,
+  "capability_pty": 29,
+  "interaction_pty": 14,
+  "mascot_pty": 15,
+  "performance_runs": 4,
+  "fmt": "PASS",
+  "clippy": "PASS",
+  "debug_build": "PASS",
+  "release_build": "PASS",
+  "prior_cw045_physical_ghostty": "user-confirmed PASS",
+  "v34_physical_ghostty": "PENDING",
+  "physical_terminal_app": "PENDING; tool access blocked, user reports text fallback only",
+  "physical_linux_windows": "PENDING; unavailable"
+}

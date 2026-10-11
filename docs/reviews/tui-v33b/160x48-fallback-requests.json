@@ -1,0 +1,177 @@
+[
+  {
+    "name": "hello",
+    "payload": {
+      "capabilities": [
+        "chat",
+        "agent",
+        "approval",
+        "sessions",
+        "events",
+        "desktop-projection",
+        "model-selection",
+        "session-messages",
+        "terminal-state",
+        "workspace-files",
+        "workspace-changes"
+      ],
+      "client_id": "sentinel-tui",
+      "major": 1,
+      "minor": 1
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "terminal.attach",
+    "payload": {
+      "session_id": "session-a"
+    }
+  },
+  {
+    "name": "session.messages",
+    "payload": {
+      "session_id": "session-a"
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "terminal.attach",
+    "payload": {
+      "session_id": "session-b"
+    }
+  },
+  {
+    "name": "session.messages",
+    "payload": {
+      "session_id": "session-b"
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "terminal.attach",
+    "payload": {
+      "session_id": "session-a"
+    }
+  },
+  {
+    "name": "session.messages",
+    "payload": {
+      "session_id": "session-a"
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "model.select",
+    "payload": {
+      "model_id": "model-beta",
+      "provider_id": "fixture"
+    }
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "model.select",
+    "payload": {
+      "model_id": "model-beta",
+      "provider_id": "fixture"
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.create",
+    "payload": {
+      "title": "Created via TUI"
+    }
+  },
+  {
+    "name": "session.messages",
+    "payload": {
+      "session_id": "created-1"
+    }
+  },
+  {
+    "name": "terminal.state",
+    "payload": {}
+  },
+  {
+    "name": "model.list",
+    "payload": {}
+  },
+  {
+    "name": "session.list",
+    "payload": {}
+  }
+]

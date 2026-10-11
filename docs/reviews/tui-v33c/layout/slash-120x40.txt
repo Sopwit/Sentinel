@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: unknown                                                                        Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Provider unselected / Model unselected                                                                 Inference unknown
+                                                                                                                        
+    Assistant                                                                                                           
+      Bold response                                                                                                     
+      Code · rust                                                                                                       
+      let a = 1;                                                                                                        
+                                                                                                                        
+      Final row                                                                                                         
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  ┌ Commands · Tab complete · Enter select · Esc dismiss ────────────────────────────────────────────────────────────┐  
+  │> /mcp  · Inspect configured MCP metadata                                                                         │  
+  │  /memory  · Inspect safe memory service metadata                                                                 │  
+  │  /mode [chat|agent] · Choose Chat or authorized Agent                                                            │  
+  │  /model  · Choose a discovered model                                                                             │  
+  │Example: /mcp                                                                                                     │  
+  │Completion never executes; Enter an exact command to run it.                                                      │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   /m                                                                                                             │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                                        
+  Enter send · Shift+Enter newline · Ctrl+P commands                                                              idle  

@@ -1,0 +1,13 @@
+{
+  "release_sha256": "4e565fcc173d81d9900550b8bb90c097737ccb56e2945fbcfdb33ebbb4b398fc",
+  "rust_tests": 117,
+  "interaction_pty": 14,
+  "mascot_pty": 15,
+  "layout_snapshots": 48,
+  "production_performance_runs": 18,
+  "fmt": "PASS",
+  "clippy_all_targets_deny_warnings": "PASS",
+  "debug_build": "PASS",
+  "release_build": "PASS",
+  "physical_ghostty": "PENDING"
+}

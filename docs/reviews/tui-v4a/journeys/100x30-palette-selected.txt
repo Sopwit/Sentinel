@@ -1,0 +1,30 @@
+SENTINEL / Chat      Workspace: Fixture                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────
+fixture / model-alpha                                                           Inference unverified
+                                                                                                    
+    Assistant                                                                                       
+      History session-b                                                                             
+     ┌session · Enter select · Esc close──────────────────────────────────────────────────────┐     
+     │Filter:                                                                                 │     
+     │> Alpha conversation · chat · idle                                                      │     
+     │  Active · Beta conversation · chat · idle                                              │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │                                                                                        │     
+     │session-a                                                                               │     
+     │Session: session-a                                                                      │     
+     │ · /                                                                                    │     
+     │                                                                                        │     
+     └────────────────────────────────────────────────────────────────────────────────────────┘     
+                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+  Arrows select · Enter confirm · Esc close                                                   idle  

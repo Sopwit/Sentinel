@@ -1,0 +1,11 @@
+{
+  "scope": "independent direct Ratatui/Kitty; simulated capability response, NOT physical Ghostty",
+  "exit": 0,
+  "keyboard_input": false,
+  "first_upload_ms": 4.360541992355138,
+  "uploads": 1,
+  "placeholders": 128,
+  "restored_alt": true,
+  "restored_termios_excluding_kernel_PENDIN": true,
+  "kernel_PENDIN": true
+}

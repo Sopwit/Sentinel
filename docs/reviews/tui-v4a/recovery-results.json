@@ -1,0 +1,28 @@
+{
+  "checks": [
+    "Disconnected",
+    "RECOVERY HISTORY 1",
+    "Disconnected",
+    "RECOVERY HISTORY 2"
+  ],
+  "no_keyboard_before_reconnection": true,
+  "no_inference": true,
+  "restored_termios": true,
+  "restored_alt": true,
+  "exit": 0,
+  "requests": [
+    "hello",
+    "terminal.state",
+    "model.list",
+    "session.list",
+    "terminal.attach",
+    "session.messages",
+    "terminal.state",
+    "model.list",
+    "session.list",
+    "hello",
+    "terminal.attach",
+    "session.messages",
+    "terminal.state"
+  ]
+}

@@ -1,0 +1,24 @@
+SENTINEL / Chat      Workspace: Fixture                                Connected
+--------------------------------------------------------------------------------
+fixture / model-alpha                                       Inference unverified
+  +session · Enter select · Esc close----------------------------------------+  
+  |Filter: session-b                                                         |  
+  |> Beta conversation · chat · idle                                         |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |                                                                          |  
+  |session-b                                                                 |  
+  |Session: session-b                                                        |  
+  | · /                                                                      |  
+  |                                                                          |  
+  +--------------------------------------------------------------------------+  
+  +--------------------------------------------------------------------------+  
+                                                                                
+  Arrows select · Enter confirm · Esc close                               idle  

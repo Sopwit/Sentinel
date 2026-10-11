@@ -1,0 +1,40 @@
+SENTINEL / Chat      Workspace: Fixture                                                                        Connected
+------------------------------------------------------------------------------------------------------------------------
+fixture / model-alpha                                                                               Inference unverified
+                                                                                                                        
+    Assistant                                                                                                           
+      History session-b                                                                                                 
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+               +command · Enter select · Esc close------------------------------------------------------+               
+               |Filter:                                                                                 |               
+               |> /activity  · Inspect the bounded safe execution timeline                              |               
+               |  /agent  · Switch to authorized tool-assisted tasks                                    |               
+               |  /archive  · Confirm archive of attached session; messages are retained                |               
+               |  /cancel  · Request cancellation; await daemon terminal state [unavailable]            |               
+               |  /chat  · Switch to conversation without Agent tools                                   |               
+               |  /commands  · Open the unified command palette                                         |               
+               |  /compact [request] · Context compaction needs an authoritative conversation/context...|               
+               |  /context  · Inspect authoritative context metadata                                    |               
+               |  /details  · Show/hide safe execution metadata                                         |               
+               |  /diff  · Review bounded Applied workspace diffs                                       |               
+               |  /doctor  · Inspect full safe service diagnostics                                      |               
+               |/activity                                                                               |               
+               |/activity                                                                               |               
+               |Inspect the bounded safe execution timeline                                             |               
+               |Aliases:                                                                                |               
+               +----------------------------------------------------------------------------------------+               
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+  + Message · Chat --------------------------------------------------------------------------------------------------+  
+  |   Ask a question or share an idea…                                                                               |  
+  +------------------------------------------------------------------------------------------------------------------+  
+                                                                                                                        
+  Arrows select · Enter confirm · Esc close                                                                       idle  

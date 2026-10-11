@@ -1,0 +1,21 @@
+[
+  {
+    "label": "minimal",
+    "deadline_seconds": 30,
+    "bytes": 150,
+    "http": 200,
+    "finish": "length",
+    "usage": {
+      "prompt_tokens": 18,
+      "completion_tokens": 511,
+      "total_tokens": 529,
+      "completion_tokens_details": {
+        "reasoning_tokens": 511
+      }
+    },
+    "content_characters": 0,
+    "reasoning_characters": 2171,
+    "valid_requirements_json": false,
+    "seconds": 28.27543062501354
+  }
+]

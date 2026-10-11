@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "asset_id": "sentinel_core_warden",
+  "animation_manifest": "animations/manifest.json",
+  "states": {
+    "idle": {"animation": "idle", "static_frame": "animations/idle/96/frame_000.png", "label": "Ready"},
+    "listening": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Listening"},
+    "thinking": {"animation": "thinking", "static_frame": "animations/idle/96/frame_000.png", "label": "Thinking"},
+    "processing": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Processing"},
+    "tool_running": {"animation": "tool_running", "static_frame": "animations/idle/96/frame_000.png", "label": "Tool running"},
+    "approval": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Approval required"},
+    "speaking": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Speaking"},
+    "success": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Completed"},
+    "warning": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Attention required"},
+    "error": {"animation": null, "static_frame": "animations/idle/96/frame_000.png", "label": "Unavailable"}
+  }
+}

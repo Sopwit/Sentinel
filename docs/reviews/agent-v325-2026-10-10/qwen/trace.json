@@ -1,0 +1,2157 @@
+[
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:51:01.127Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "5d8aa1dd-019b-4249-b0b6-991bd34b916f",
+      "utc": "2026-10-10T20:51:01.127Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "1412912a-300a-4e0e-9be4-45b146559a43",
+      "runtime_session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "session_id": "079cdbf0-361c-4e13-a803-e0df97b20503",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:51:01.110Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "1412912a-300a-4e0e-9be4-45b146559a43",
+      "runtime_session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "session_id": "079cdbf0-361c-4e13-a803-e0df97b20503",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "2205312b-c2ef-4bfc-a589-edab399631b8",
+      "utc": "2026-10-10T20:51:01.110Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "1412912a-300a-4e0e-9be4-45b146559a43",
+      "runtime_session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "session_id": "079cdbf0-361c-4e13-a803-e0df97b20503",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "2205312b-c2ef-4bfc-a589-edab399631b8",
+      "utc": "2026-10-10T20:51:01.123Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "1412912a-300a-4e0e-9be4-45b146559a43",
+      "runtime_session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "session_id": "079cdbf0-361c-4e13-a803-e0df97b20503",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "2205312b-c2ef-4bfc-a589-edab399631b8",
+      "utc": "2026-10-10T20:51:01.592Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Cancelled",
+      "deadline_ms": 30000,
+      "elapsed_ms": 465,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 454,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1360,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": true,
+      "category": "Cancelled",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 465,
+      "error_category": "Cancelled",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 454,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1360,
+      "request_id": "4cb45ac4-3e04-4527-80da-518b61271291",
+      "stage": "classification",
+      "trace_id": "5d8aa1dd-019b-4249-b0b6-991bd34b916f",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:51:01.593Z",
+      "wall_elapsed_ms": 465
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:51:01.593Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentCancelled",
+      "run_id": "1412912a-300a-4e0e-9be4-45b146559a43",
+      "runtime_session_id": "1236d305-1f3e-4225-ba7b-2cbdae27ba36",
+      "session_id": "079cdbf0-361c-4e13-a803-e0df97b20503",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "2205312b-c2ef-4bfc-a589-edab399631b8",
+      "utc": "2026-10-10T20:51:01.593Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:51:03.800Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "d356b9a2-81e0-458a-904c-d484b889ad9c",
+      "utc": "2026-10-10T20:51:03.800Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "46eb3724-57a4-48b2-b454-7dc35544effd",
+      "runtime_session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "session_id": "ebc03943-faa3-4cb5-b903-9d3f16d98302",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:51:03.785Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "46eb3724-57a4-48b2-b454-7dc35544effd",
+      "runtime_session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "session_id": "ebc03943-faa3-4cb5-b903-9d3f16d98302",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a053b24-065f-4275-8bf1-0261bb495be3",
+      "utc": "2026-10-10T20:51:03.785Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "46eb3724-57a4-48b2-b454-7dc35544effd",
+      "runtime_session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "session_id": "ebc03943-faa3-4cb5-b903-9d3f16d98302",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a053b24-065f-4275-8bf1-0261bb495be3",
+      "utc": "2026-10-10T20:51:03.794Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30475,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 455,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1363,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30475,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 455,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1363,
+      "request_id": "33aafb42-2d91-49a8-94f9-5e17c4ec2038",
+      "stage": "classification",
+      "trace_id": "d356b9a2-81e0-458a-904c-d484b889ad9c",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:51:34.276Z",
+      "wall_elapsed_ms": 30475
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:51:34.276Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "46eb3724-57a4-48b2-b454-7dc35544effd",
+      "runtime_session_id": "f536f36d-b548-44ba-836c-f300cd88fab9",
+      "session_id": "ebc03943-faa3-4cb5-b903-9d3f16d98302",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "4a053b24-065f-4275-8bf1-0261bb495be3",
+      "utc": "2026-10-10T20:51:34.276Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "a13b452f-b141-4f0a-b969-f0ec1586f6ce",
+      "runtime_session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "session_id": "9fcf8fdd-7522-408b-bc07-7c6f859f8293",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:51:36.749Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "a13b452f-b141-4f0a-b969-f0ec1586f6ce",
+      "runtime_session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "session_id": "9fcf8fdd-7522-408b-bc07-7c6f859f8293",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "1adfbfbd-4eed-4c03-9020-a38303aaa354",
+      "utc": "2026-10-10T20:51:36.750Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "a13b452f-b141-4f0a-b969-f0ec1586f6ce",
+      "runtime_session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "session_id": "9fcf8fdd-7522-408b-bc07-7c6f859f8293",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "1adfbfbd-4eed-4c03-9020-a38303aaa354",
+      "utc": "2026-10-10T20:51:36.759Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:51:36.776Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "391ac2e3-58b1-41bf-a2df-7b6e37471aec",
+      "utc": "2026-10-10T20:51:36.776Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30491,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 30491,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "request_id": "c7d3952d-4b8b-40df-bb18-233429ce2ffd",
+      "stage": "classification",
+      "trace_id": "391ac2e3-58b1-41bf-a2df-7b6e37471aec",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:52:07.268Z",
+      "wall_elapsed_ms": 30492
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:52:07.269Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "a13b452f-b141-4f0a-b969-f0ec1586f6ce",
+      "runtime_session_id": "dcbbe604-75a2-4cd9-b2df-9ad1566fb5c1",
+      "session_id": "9fcf8fdd-7522-408b-bc07-7c6f859f8293",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "1adfbfbd-4eed-4c03-9020-a38303aaa354",
+      "utc": "2026-10-10T20:52:07.269Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:52:09.737Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "d33a01a9-0e4f-4851-b758-6f0c4d6a86c1",
+      "utc": "2026-10-10T20:52:09.738Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "dd6b2dbd-b727-4f01-b3ba-e1ea5ab204e8",
+      "runtime_session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "session_id": "83ab2693-02d6-49d4-98a9-6f84548e229d",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:52:09.718Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "dd6b2dbd-b727-4f01-b3ba-e1ea5ab204e8",
+      "runtime_session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "session_id": "83ab2693-02d6-49d4-98a9-6f84548e229d",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "ccee1605-6170-40ed-934e-36d094daafd4",
+      "utc": "2026-10-10T20:52:09.718Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "dd6b2dbd-b727-4f01-b3ba-e1ea5ab204e8",
+      "runtime_session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "session_id": "83ab2693-02d6-49d4-98a9-6f84548e229d",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "ccee1605-6170-40ed-934e-36d094daafd4",
+      "utc": "2026-10-10T20:52:09.729Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29506,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29506,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "request_id": "e6bcd10a-5691-46eb-93c7-afcb13a70146",
+      "stage": "classification",
+      "trace_id": "d33a01a9-0e4f-4851-b758-6f0c4d6a86c1",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:52:39.244Z",
+      "wall_elapsed_ms": 29506
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:52:39.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "dd6b2dbd-b727-4f01-b3ba-e1ea5ab204e8",
+      "runtime_session_id": "a6759173-bcae-4232-babd-9ef8dfccd4b2",
+      "session_id": "83ab2693-02d6-49d4-98a9-6f84548e229d",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "ccee1605-6170-40ed-934e-36d094daafd4",
+      "utc": "2026-10-10T20:52:39.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:52:41.590Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "832087eb-b896-4b7d-911b-5dcf98d94731",
+      "utc": "2026-10-10T20:52:41.591Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "cb0200fb-6386-4519-9941-4655b8e2dccf",
+      "runtime_session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "session_id": "e08ce073-1f0c-4944-b893-fe8869171a9f",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:52:41.572Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "cb0200fb-6386-4519-9941-4655b8e2dccf",
+      "runtime_session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "session_id": "e08ce073-1f0c-4944-b893-fe8869171a9f",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "03d1033c-9218-450e-8a3f-cb5abf419230",
+      "utc": "2026-10-10T20:52:41.572Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "cb0200fb-6386-4519-9941-4655b8e2dccf",
+      "runtime_session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "session_id": "e08ce073-1f0c-4944-b893-fe8869171a9f",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "03d1033c-9218-450e-8a3f-cb5abf419230",
+      "utc": "2026-10-10T20:52:41.585Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29655,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29655,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "request_id": "3e6df2cc-40b7-4138-afb4-cd99da7d1d34",
+      "stage": "classification",
+      "trace_id": "832087eb-b896-4b7d-911b-5dcf98d94731",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:53:11.247Z",
+      "wall_elapsed_ms": 29656
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:53:11.248Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "cb0200fb-6386-4519-9941-4655b8e2dccf",
+      "runtime_session_id": "d2ab1529-210c-420c-bcca-a778644318e4",
+      "session_id": "e08ce073-1f0c-4944-b893-fe8869171a9f",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "03d1033c-9218-450e-8a3f-cb5abf419230",
+      "utc": "2026-10-10T20:53:11.251Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:53:13.439Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "9ff8498f-f61a-406d-8d32-aec16375092d",
+      "utc": "2026-10-10T20:53:13.439Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "a9732404-1138-426a-98d4-bdde3040e6cf",
+      "runtime_session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "session_id": "02b9769c-a1c2-48b6-aa96-a76ed30cbf54",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:53:13.427Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "a9732404-1138-426a-98d4-bdde3040e6cf",
+      "runtime_session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "session_id": "02b9769c-a1c2-48b6-aa96-a76ed30cbf54",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "55b14641-9028-4b16-ae98-c5caaa017b23",
+      "utc": "2026-10-10T20:53:13.427Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "a9732404-1138-426a-98d4-bdde3040e6cf",
+      "runtime_session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "session_id": "02b9769c-a1c2-48b6-aa96-a76ed30cbf54",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "55b14641-9028-4b16-ae98-c5caaa017b23",
+      "utc": "2026-10-10T20:53:13.435Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29812,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29812,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "request_id": "52c1060e-268d-4b40-b56e-519bb16f9283",
+      "stage": "classification",
+      "trace_id": "9ff8498f-f61a-406d-8d32-aec16375092d",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:53:43.254Z",
+      "wall_elapsed_ms": 29814
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:53:43.254Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "a9732404-1138-426a-98d4-bdde3040e6cf",
+      "runtime_session_id": "91656d65-482f-40e8-a6c1-be66eeed7e90",
+      "session_id": "02b9769c-a1c2-48b6-aa96-a76ed30cbf54",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "55b14641-9028-4b16-ae98-c5caaa017b23",
+      "utc": "2026-10-10T20:53:43.260Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:53:45.553Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "9358e882-4215-4e08-88c8-cd5b7602bef3",
+      "utc": "2026-10-10T20:53:45.553Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "3367a9d5-1bf2-4706-87a2-6daa910292b0",
+      "runtime_session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "session_id": "b7e74c69-89c5-4b66-a679-ae642b813ab8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:53:45.544Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "3367a9d5-1bf2-4706-87a2-6daa910292b0",
+      "runtime_session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "session_id": "b7e74c69-89c5-4b66-a679-ae642b813ab8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "566e9c20-43a7-4228-b415-4521515c8525",
+      "utc": "2026-10-10T20:53:45.544Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "3367a9d5-1bf2-4706-87a2-6daa910292b0",
+      "runtime_session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "session_id": "b7e74c69-89c5-4b66-a679-ae642b813ab8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "566e9c20-43a7-4228-b415-4521515c8525",
+      "utc": "2026-10-10T20:53:45.550Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29690,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29690,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "request_id": "9e557017-6ad6-4ad8-92e0-f589bbf688f3",
+      "stage": "classification",
+      "trace_id": "9358e882-4215-4e08-88c8-cd5b7602bef3",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:54:15.243Z",
+      "wall_elapsed_ms": 29690
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:54:15.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "3367a9d5-1bf2-4706-87a2-6daa910292b0",
+      "runtime_session_id": "bc195871-f8db-409a-bf0e-b3b054b1989c",
+      "session_id": "b7e74c69-89c5-4b66-a679-ae642b813ab8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "566e9c20-43a7-4228-b415-4521515c8525",
+      "utc": "2026-10-10T20:54:15.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:54:17.326Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "c3b4973d-f3b1-46d4-befd-5ced1e3739f5",
+      "utc": "2026-10-10T20:54:17.326Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "681add2b-36af-486d-909e-d61c7ae50cf8",
+      "runtime_session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "session_id": "7056d51c-72b6-4f0c-b841-64c3751b32b8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:54:17.314Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "681add2b-36af-486d-909e-d61c7ae50cf8",
+      "runtime_session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "session_id": "7056d51c-72b6-4f0c-b841-64c3751b32b8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "85fd44e3-a261-4209-bfdd-a4e662437be3",
+      "utc": "2026-10-10T20:54:17.314Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "681add2b-36af-486d-909e-d61c7ae50cf8",
+      "runtime_session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "session_id": "7056d51c-72b6-4f0c-b841-64c3751b32b8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "85fd44e3-a261-4209-bfdd-a4e662437be3",
+      "utc": "2026-10-10T20:54:17.322Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29917,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29917,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "request_id": "0a71bdb8-1aa7-43a0-bc70-78f1067fae68",
+      "stage": "classification",
+      "trace_id": "c3b4973d-f3b1-46d4-befd-5ced1e3739f5",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:54:47.244Z",
+      "wall_elapsed_ms": 29917
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:54:47.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "681add2b-36af-486d-909e-d61c7ae50cf8",
+      "runtime_session_id": "389b5b09-755f-4325-953f-f21e64cb063d",
+      "session_id": "7056d51c-72b6-4f0c-b841-64c3751b32b8",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "85fd44e3-a261-4209-bfdd-a4e662437be3",
+      "utc": "2026-10-10T20:54:47.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:54:49.322Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "b870d501-9304-4b4e-bc77-2187f5a7597a",
+      "utc": "2026-10-10T20:54:49.322Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "24356f45-a193-4fce-9e80-315d3ecfa573",
+      "runtime_session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "session_id": "61567d62-eeef-435c-a255-f337bf50cc7a",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:54:49.315Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "24356f45-a193-4fce-9e80-315d3ecfa573",
+      "runtime_session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "session_id": "61567d62-eeef-435c-a255-f337bf50cc7a",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d3f9d80e-95be-41ce-9288-80ad809b968c",
+      "utc": "2026-10-10T20:54:49.315Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "24356f45-a193-4fce-9e80-315d3ecfa573",
+      "runtime_session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "session_id": "61567d62-eeef-435c-a255-f337bf50cc7a",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d3f9d80e-95be-41ce-9288-80ad809b968c",
+      "utc": "2026-10-10T20:54:49.320Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29920,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29920,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "request_id": "69684a1e-f17c-4b55-aaf2-a08b43365e3c",
+      "stage": "classification",
+      "trace_id": "b870d501-9304-4b4e-bc77-2187f5a7597a",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:55:19.243Z",
+      "wall_elapsed_ms": 29921
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:55:19.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "24356f45-a193-4fce-9e80-315d3ecfa573",
+      "runtime_session_id": "38449c21-2f45-4cb6-9260-674af46edacc",
+      "session_id": "61567d62-eeef-435c-a255-f337bf50cc7a",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d3f9d80e-95be-41ce-9288-80ad809b968c",
+      "utc": "2026-10-10T20:55:19.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:55:21.378Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "0b9bacd5-08a1-48b7-b071-0c46761f250e",
+      "utc": "2026-10-10T20:55:21.378Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "38ff4cdb-2b51-4037-b906-d587d04e793a",
+      "runtime_session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "session_id": "a5c8d19c-8118-4996-9152-50d7b6889559",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:55:21.370Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "38ff4cdb-2b51-4037-b906-d587d04e793a",
+      "runtime_session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "session_id": "a5c8d19c-8118-4996-9152-50d7b6889559",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "43d4978d-4126-4fd2-80e8-f0c3d82ef04a",
+      "utc": "2026-10-10T20:55:21.370Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "38ff4cdb-2b51-4037-b906-d587d04e793a",
+      "runtime_session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "session_id": "a5c8d19c-8118-4996-9152-50d7b6889559",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "43d4978d-4126-4fd2-80e8-f0c3d82ef04a",
+      "utc": "2026-10-10T20:55:21.375Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29865,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29865,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "request_id": "8460329d-90c8-4382-bf49-1284456815fa",
+      "stage": "classification",
+      "trace_id": "0b9bacd5-08a1-48b7-b071-0c46761f250e",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:55:51.244Z",
+      "wall_elapsed_ms": 29865
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:55:51.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "38ff4cdb-2b51-4037-b906-d587d04e793a",
+      "runtime_session_id": "8c269ee6-a133-4ce0-bf9e-e557e21f40ad",
+      "session_id": "a5c8d19c-8118-4996-9152-50d7b6889559",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "43d4978d-4126-4fd2-80e8-f0c3d82ef04a",
+      "utc": "2026-10-10T20:55:51.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:55:53.390Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "e5c24024-28c5-4ce2-b1f8-2d8348ec6f18",
+      "utc": "2026-10-10T20:55:53.390Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "af4a194e-6a59-4855-ae8d-08559967c98e",
+      "runtime_session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "session_id": "3e03d8b7-80ff-497e-a8b6-fbfea13496e4",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:55:53.385Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "af4a194e-6a59-4855-ae8d-08559967c98e",
+      "runtime_session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "session_id": "3e03d8b7-80ff-497e-a8b6-fbfea13496e4",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "eceef0ff-5528-46e1-a7a6-2eb3088cade9",
+      "utc": "2026-10-10T20:55:53.385Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "af4a194e-6a59-4855-ae8d-08559967c98e",
+      "runtime_session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "session_id": "3e03d8b7-80ff-497e-a8b6-fbfea13496e4",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "eceef0ff-5528-46e1-a7a6-2eb3088cade9",
+      "utc": "2026-10-10T20:55:53.388Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29853,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29853,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "request_id": "a0a70477-9aec-46d4-b166-231966911495",
+      "stage": "classification",
+      "trace_id": "e5c24024-28c5-4ce2-b1f8-2d8348ec6f18",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:56:23.244Z",
+      "wall_elapsed_ms": 29853
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:56:23.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "af4a194e-6a59-4855-ae8d-08559967c98e",
+      "runtime_session_id": "d5572ff2-551d-4dba-9f93-b2d7cd784054",
+      "session_id": "3e03d8b7-80ff-497e-a8b6-fbfea13496e4",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "eceef0ff-5528-46e1-a7a6-2eb3088cade9",
+      "utc": "2026-10-10T20:56:23.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:56:25.349Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "bebc8c23-c278-424d-bd25-412d81b2b8e6",
+      "utc": "2026-10-10T20:56:25.349Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "1eed9c81-db06-457e-97e1-71fda45c1c41",
+      "runtime_session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "session_id": "1d5df3b3-5ffe-44ad-854f-501cb48ceb7e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:56:25.344Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "1eed9c81-db06-457e-97e1-71fda45c1c41",
+      "runtime_session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "session_id": "1d5df3b3-5ffe-44ad-854f-501cb48ceb7e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "33c4f003-3925-48eb-b0c4-dc1701e2e6ce",
+      "utc": "2026-10-10T20:56:25.345Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "1eed9c81-db06-457e-97e1-71fda45c1c41",
+      "runtime_session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "session_id": "1d5df3b3-5ffe-44ad-854f-501cb48ceb7e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "33c4f003-3925-48eb-b0c4-dc1701e2e6ce",
+      "utc": "2026-10-10T20:56:25.348Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29894,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29894,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "request_id": "0af75a15-6c1c-4c55-b04d-d8095f12c26e",
+      "stage": "classification",
+      "trace_id": "bebc8c23-c278-424d-bd25-412d81b2b8e6",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:56:55.244Z",
+      "wall_elapsed_ms": 29894
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:56:55.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "1eed9c81-db06-457e-97e1-71fda45c1c41",
+      "runtime_session_id": "ddc981ab-6d02-4c42-8e29-2aac47943c95",
+      "session_id": "1d5df3b3-5ffe-44ad-854f-501cb48ceb7e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "33c4f003-3925-48eb-b0c4-dc1701e2e6ce",
+      "utc": "2026-10-10T20:56:55.245Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:56:57.316Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "3c0bd109-1866-44b5-b141-1d6ada9f2d2e",
+      "utc": "2026-10-10T20:56:57.316Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "5af1bada-81c8-4925-99b6-03e37b733a6a",
+      "runtime_session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "session_id": "29327aa0-7ed1-49de-8c17-bac4f0f5dc4e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:56:57.309Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "5af1bada-81c8-4925-99b6-03e37b733a6a",
+      "runtime_session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "session_id": "29327aa0-7ed1-49de-8c17-bac4f0f5dc4e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d1a8e46f-e97d-4a0b-80da-538bc3d84b08",
+      "utc": "2026-10-10T20:56:57.309Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "5af1bada-81c8-4925-99b6-03e37b733a6a",
+      "runtime_session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "session_id": "29327aa0-7ed1-49de-8c17-bac4f0f5dc4e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d1a8e46f-e97d-4a0b-80da-538bc3d84b08",
+      "utc": "2026-10-10T20:56:57.313Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29926,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29926,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 481,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1443,
+      "request_id": "b01b5c7c-de0b-49d1-80f8-bbb9c9df4df7",
+      "stage": "classification",
+      "trace_id": "3c0bd109-1866-44b5-b141-1d6ada9f2d2e",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:57:27.243Z",
+      "wall_elapsed_ms": 29927
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:57:27.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "5af1bada-81c8-4925-99b6-03e37b733a6a",
+      "runtime_session_id": "3e02c394-8f6a-4bff-9030-6061e33157a2",
+      "session_id": "29327aa0-7ed1-49de-8c17-bac4f0f5dc4e",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "d1a8e46f-e97d-4a0b-80da-538bc3d84b08",
+      "utc": "2026-10-10T20:57:27.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:57:29.361Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "9153857c-7b86-4c00-9e7c-5dfbdb852591",
+      "utc": "2026-10-10T20:57:29.361Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "dd4dadbb-c623-496e-b130-e82882b9d33d",
+      "runtime_session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "session_id": "3455bbad-14d8-448b-b4b6-338274a6b278",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:57:29.354Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "dd4dadbb-c623-496e-b130-e82882b9d33d",
+      "runtime_session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "session_id": "3455bbad-14d8-448b-b4b6-338274a6b278",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "9401f133-bb17-46f4-87eb-cbb0ff37f5ca",
+      "utc": "2026-10-10T20:57:29.354Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "dd4dadbb-c623-496e-b130-e82882b9d33d",
+      "runtime_session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "session_id": "3455bbad-14d8-448b-b4b6-338274a6b278",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "9401f133-bb17-46f4-87eb-cbb0ff37f5ca",
+      "utc": "2026-10-10T20:57:29.359Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29882,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29882,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 515,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1545,
+      "request_id": "caface65-2b22-48c5-b70e-429541c707cc",
+      "stage": "classification",
+      "trace_id": "9153857c-7b86-4c00-9e7c-5dfbdb852591",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:57:59.243Z",
+      "wall_elapsed_ms": 29882
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:57:59.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "dd4dadbb-c623-496e-b130-e82882b9d33d",
+      "runtime_session_id": "69037a5f-187a-4f3f-9e73-9f5a89eb0cb2",
+      "session_id": "3455bbad-14d8-448b-b4b6-338274a6b278",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "9401f133-bb17-46f4-87eb-cbb0ff37f5ca",
+      "utc": "2026-10-10T20:57:59.243Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:58:01.483Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "b957c127-e4b8-4833-85da-311c188a60bc",
+      "utc": "2026-10-10T20:58:01.483Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "8a2c25ee-68c6-4ae1-825f-f3fa8b26f0ae",
+      "runtime_session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "session_id": "60b3d92b-f7f4-48ba-aab2-fb05e6da8624",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:58:01.472Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "8a2c25ee-68c6-4ae1-825f-f3fa8b26f0ae",
+      "runtime_session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "session_id": "60b3d92b-f7f4-48ba-aab2-fb05e6da8624",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "f47e75c9-1856-47a6-ba1d-4e5024692ad6",
+      "utc": "2026-10-10T20:58:01.472Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "8a2c25ee-68c6-4ae1-825f-f3fa8b26f0ae",
+      "runtime_session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "session_id": "60b3d92b-f7f4-48ba-aab2-fb05e6da8624",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "f47e75c9-1856-47a6-ba1d-4e5024692ad6",
+      "utc": "2026-10-10T20:58:01.479Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29760,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29760,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 502,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1504,
+      "request_id": "682773f0-6115-442c-9280-3beefd12d524",
+      "stage": "classification",
+      "trace_id": "b957c127-e4b8-4833-85da-311c188a60bc",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:58:31.244Z",
+      "wall_elapsed_ms": 29760
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:58:31.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "8a2c25ee-68c6-4ae1-825f-f3fa8b26f0ae",
+      "runtime_session_id": "98713f3b-508c-41b3-9395-e7dc4e2ba4b2",
+      "session_id": "60b3d92b-f7f4-48ba-aab2-fb05e6da8624",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "f47e75c9-1856-47a6-ba1d-4e5024692ad6",
+      "utc": "2026-10-10T20:58:31.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:58:33.303Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "cf9fd408-85ba-4614-92c6-e51ca840fe3a",
+      "utc": "2026-10-10T20:58:33.303Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "f926dea8-be6e-4e15-9ca7-9cdb2e088ee9",
+      "runtime_session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "session_id": "37cba299-80b2-4ff6-88be-e6830dc244ab",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:58:33.295Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "f926dea8-be6e-4e15-9ca7-9cdb2e088ee9",
+      "runtime_session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "session_id": "37cba299-80b2-4ff6-88be-e6830dc244ab",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "330f1623-4ae1-42ec-ba7a-e7ca948c0ca3",
+      "utc": "2026-10-10T20:58:33.295Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "f926dea8-be6e-4e15-9ca7-9cdb2e088ee9",
+      "runtime_session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "session_id": "37cba299-80b2-4ff6-88be-e6830dc244ab",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "330f1623-4ae1-42ec-ba7a-e7ca948c0ca3",
+      "utc": "2026-10-10T20:58:33.300Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29940,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29940,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 490,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1470,
+      "request_id": "cbf20a5b-0fa9-4100-8a17-e6de2d32610e",
+      "stage": "classification",
+      "trace_id": "cf9fd408-85ba-4614-92c6-e51ca840fe3a",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:59:03.243Z",
+      "wall_elapsed_ms": 29940
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:59:03.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "f926dea8-be6e-4e15-9ca7-9cdb2e088ee9",
+      "runtime_session_id": "4a8a3551-26ed-4217-9827-c18126459069",
+      "session_id": "37cba299-80b2-4ff6-88be-e6830dc244ab",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "330f1623-4ae1-42ec-ba7a-e7ca948c0ca3",
+      "utc": "2026-10-10T20:59:03.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": false,
+      "event": "enter",
+      "session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:59:05.335Z"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "event": "enter",
+      "stage": "classification",
+      "trace_id": "4b450ecd-f23d-4b60-8f9a-4a13b8901b66",
+      "utc": "2026-10-10T20:59:05.335Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "SessionCreated",
+      "run_id": "59a8ca81-712a-4f3a-9312-d06fe0f46258",
+      "runtime_session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "session_id": "63968f60-8e54-4ce6-9188-5cf9fb458a90",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "",
+      "utc": "2026-10-10T20:59:05.328Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RunStarted",
+      "run_id": "59a8ca81-712a-4f3a-9312-d06fe0f46258",
+      "runtime_session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "session_id": "63968f60-8e54-4ce6-9188-5cf9fb458a90",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "e44cca19-813c-40f7-bf7a-8ffa6a464ddc",
+      "utc": "2026-10-10T20:59:05.328Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "RuntimeStateChanged",
+      "run_id": "59a8ca81-712a-4f3a-9312-d06fe0f46258",
+      "runtime_session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "session_id": "63968f60-8e54-4ce6-9188-5cf9fb458a90",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "e44cca19-813c-40f7-bf7a-8ffa6a464ddc",
+      "utc": "2026-10-10T20:59:05.332Z"
+    }
+  },
+  {
+    "category": "sentinel.provider.diagnostics",
+    "data": {
+      "category": "Timeout",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29907,
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "upstream_cancellation": "unconfirmed"
+    }
+  },
+  {
+    "category": "sentinel.classification.diagnostics",
+    "data": {
+      "cancelled": false,
+      "category": "Timeout",
+      "classification_result": "indeterminate",
+      "deadline_ms": 30000,
+      "elapsed_ms": 29907,
+      "error_category": "Timeout",
+      "estimate_method": "utf8_bytes_div_3_ceil",
+      "estimated_input_tokens": 516,
+      "event": "exit",
+      "http_status": 0,
+      "model_id": "qwen/qwen3.5-9b",
+      "output_budget_tokens": 512,
+      "provider_id": "lm-studio",
+      "reported_context_tokens": 8192,
+      "request_bytes": 1546,
+      "request_id": "c1553fbe-f434-48c7-b504-f89182bfc346",
+      "stage": "classification",
+      "trace_id": "4b450ecd-f23d-4b60-8f9a-4a13b8901b66",
+      "upstream_cancellation": "unconfirmed",
+      "utc": "2026-10-10T20:59:35.244Z",
+      "wall_elapsed_ms": 29908
+    }
+  },
+  {
+    "category": "sentinel.agent.loop.diagnostics",
+    "data": {
+      "classification_indeterminate": true,
+      "event": "exit",
+      "session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "stage": "classification",
+      "step": 1,
+      "utc": "2026-10-10T20:59:35.244Z"
+    }
+  },
+  {
+    "category": "sentinel.agent.ipc.diagnostics",
+    "data": {
+      "activity": "AgentFailed",
+      "run_id": "59a8ca81-712a-4f3a-9312-d06fe0f46258",
+      "runtime_session_id": "2d8f549b-b4b9-4b2d-a9af-95bb8cf7c890",
+      "session_id": "63968f60-8e54-4ce6-9188-5cf9fb458a90",
+      "step": 0,
+      "tool_call_id": "",
+      "turn_id": "e44cca19-813c-40f7-bf7a-8ffa6a464ddc",
+      "utc": "2026-10-10T20:59:35.244Z"
+    }
+  }
+]

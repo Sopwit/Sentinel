@@ -24,6 +24,10 @@ def check():
     files = source_files()
     for file in files:
         relative = file.relative_to(ROOT).as_posix()
+        # Accepted Core Warden artwork is a presentation mascot, not an application/tray icon.
+        # Its runtime inventory is validated separately; FA-3 hashes below stay authoritative.
+        if relative.startswith('assets/core-warden/'):
+            continue
         if relative.startswith(('docs/', 'tests/', 'tools/branding/', 'resources/branding/')):
             continue  # History and the frozen provenance package are not production selectors.
         if file.suffix.lower() in VISUAL:

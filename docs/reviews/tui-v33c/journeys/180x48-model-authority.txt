@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: Fixture                                                                                                                                    Connected
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+fixture / model-beta                                                                                                                                            Inference unverified
+                                                                                                                                                                                    
+    Assistant                                                                                                                                                                       
+      History session-a                                                                                                                                                             
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                             ┌model · Enter select · Esc close────────────────────────────────────────────────────────┐                                             
+                                             │Filter: model-beta                                                                      │                                             
+                                             │> Selected · fixture / model-beta · Available · chat                                    │                                             
+                                             │  fixture / model-alpha · Available · chat                                              │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │                                                                                        │                                             
+                                             │fixture / model-beta                                                                    │                                             
+                                             │Discovered; inference not attested                                                      │                                             
+                                             │Catalog health is not verified inference readiness. /doctor inspects status.            │                                             
+                                             │                                                                                        │                                             
+                                             └────────────────────────────────────────────────────────────────────────────────────────┘                                             
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+  ┌ Message · Chat ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  
+  │   Ask a question or share an idea…                                                                                                                                           │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  
+  /notices · Selection reported by daemon; refreshing state. Inference readiness is not verified by selection.                                                                      
+  Arrows select · Enter confirm · Esc close                                                                                                                                   idle  

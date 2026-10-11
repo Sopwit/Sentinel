@@ -1,0 +1,48 @@
+SENTINEL / Chat      Workspace: unknown                                                                                                                                 Disconnected
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Provider unselected / Model unselected                                                                                                                             Inference unknown
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                             +command · Enter select · Esc close------------------------------------------------------+                                             
+                                             |Filter:                                                                                 |                                             
+                                             |> /activity  · Inspect the bounded safe execution timeline                              |                                             
+                                             |  /agent  · Switch to authorized tool-assisted tasks                                    |                                             
+                                             |  /archive  · Confirm archive of attached session; messages are retained [unavailable]  |                                             
+                                             |  /cancel  · Request cancellation; await daemon terminal state [unavailable]            |                                             
+                                             |  /chat  · Switch to conversation without Agent tools                                   |                                             
+                                             |  /commands  · Open the unified command palette                                         |                                             
+                                             |  /compact [request] · Context compaction needs an authoritative conversation/context...|                                             
+                                             |  /context  · Inspect authoritative context metadata [unavailable]                      |                                             
+                                             |  /details  · Show/hide safe execution metadata                                         |                                             
+                                             |  /diff  · Review bounded Applied workspace diffs [unavailable]                         |                                             
+                                             |  /doctor  · Inspect full safe service diagnostics [unavailable]                        |                                             
+                                             |/activity                                                                               |                                             
+                                             |/activity                                                                               |                                             
+                                             |Inspect the bounded safe execution timeline                                             |                                             
+                                             |Aliases:                                                                                |                                             
+                                             +----------------------------------------------------------------------------------------+                                             
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+  + Message · Chat --------------------------------------------------------------------------------------------------------------------------------------------------------------+  
+  |   offline                                                                                                                                                                    |  
+  |   second /path                                                                                                                                                               |  
+  +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+  
+  /notices · Cannot connect to the Sentinel daemon: No such file or directory (os error 2). Start sentinel-daemon externally; use --socket for a custom endpoint.                   
+  Arrows select · Enter confirm · Esc close                                                                                                                                   idle  

@@ -1,0 +1,19 @@
+{
+  "archive": "sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation.tar.gz",
+  "archive_sha256": "a0ca836726364dd9e4c72eaad83c5081b4c005c58d1417b5bfcb476e14b0a33f",
+  "archive_bytes": 4791016,
+  "unpacked_bytes": 9074528,
+  "files": 342,
+  "executable_sha256": "45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c",
+  "version": "1.0.0-rc.8",
+  "third_party_packages": 106,
+  "missing_license_texts": [
+    "base64-simd 0.8.0",
+    "block2 0.6.2",
+    "dispatch2 0.3.1",
+    "objc2 0.6.4",
+    "objc2-encode 4.1.0",
+    "vsimd 0.8.0"
+  ],
+  "reproducibility": "sorted normalized archive metadata; independent bit-for-bit build reproducibility not verified"
+}

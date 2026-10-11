@@ -1,0 +1,20 @@
+SENTINEL / Chat      Workspace: unknown            Connected
+────────────────────────────────────────────────────────────
+Provider un... / Model unselected          Inference unknown
+                                                            
+    Assistant                                               
+      Bold response                                         
+      Code · rust                                           
+  ┌ Commands · Tab complete · Enter select · Esc dismiss ┐  
+  │> /mcp  · Inspect configured MCP metadata             │  
+  │  /memory  · Inspect safe memory service metadata     │  
+  │  /mode [chat|agent] · Choose Chat or authorized Agent│  
+  │  /model  · Choose a discovered model                 │  
+  │Example: /mcp                                         │  
+  │Completion never executes; Enter an exact command t...│  
+  └──────────────────────────────────────────────────────┘  
+  ┌ Message · Chat ──────────────────────────────────────┐  
+  │   /m                                                 │  
+  └──────────────────────────────────────────────────────┘  
+                                                            
+  Enter send · Ctrl+O newline · F1 help               idle  

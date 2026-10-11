@@ -1,0 +1,14 @@
+--- a/cli/crates/sentinel-mascot/src/capability.rs
++++ b/cli/crates/sentinel-mascot/src/capability.rs
+@@ -110,6 +110,11 @@
+             text_sizing_protocol: false,
+         },
+     );
++    // Our reader is already bounded. Do not leave a late DSR response for
++    // Crossterm after graphics and cell-size discovery completes.
++    let Some(query) = query.strip_suffix("\x1b[5n") else {
++        return Capabilities::text("Unexpected capability query format");
++    };
+     if output
+         .write_all(query.as_bytes())
+         .and_then(|_| output.flush())
