@@ -6,7 +6,9 @@
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/security/ExternalDirectoryGate.h"
 
+#include <QDateTime>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -17,6 +19,7 @@
 #include <QSet>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QUuid>
 
 namespace sentinel::core {
 namespace {
@@ -235,33 +238,54 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
             if (!capabilities.contains(name))
                 capabilities.append(name);
         }
+    // AgentLoop appends trusted workspace context after recent conversation. Keep
+    // that suffix even when the conversation exceeds the classifier's budget.
+    const auto marker = QStringLiteral("\nACTIVE WORKSPACE ROOT: ");
+    const auto rootOffset = conversationContext.lastIndexOf(marker);
+    const auto context = rootOffset < 0 ? conversationContext.left(1500)
+                                        : conversationContext.left(qMin(rootOffset, 1000)) +
+                                              conversationContext.mid(rootOffset).left(600);
     const auto prompt =
         QStringLiteral(
-            "Classify the USER GOAL, independently of any proposed answer. Does completing it "
-            "require observing current external state? Distinguish inspecting/verifying a resource "
-            "from merely mentioning it in a hypothetical or writing task. Conversation text "
-            "already visible is context; older history requires lookup. Return ONLY JSON: "
-            "{\"requirements\":[{\"domain\":\"filesystem|workspace|process|system|"
-            "clipboard|network|browser|memory|history|external|application|execution\","
-            "\"resource\":\"absolute path, ~/path, URL, or empty\","
-            "\"purpose\":\"inspect|operate\",\"operation\":\"exists|contains|search_matches|hidden_"
-            "entries|path_pattern|none\",\"query\":\"exact text or search pattern if "
-            "applicable\",\"recursive\":true|false}]}. Use hidden_entries for questions about "
-            "hidden files, dotfiles or hidden directories; use path_pattern for workspace-wide "
-            "named-file absence/search questions (e.g. .env). Set recursive:true for "
-            "workspace-wide or anywhere-under scope. The resource must be the absolute workspace "
-            "root from context; never guess cwd/home. Use exists for concrete file existence "
-            "questions and a full target path. Use an empty array for general knowledge, "
-            "rewriting, or conversation-only reasoning. Multiple domains are allowed. "
-            "Available evidence domains: %1. RECENT CONVERSATION: %2. GOAL: %3")
-            .arg(capabilities.join(QLatin1Char(',')), conversationContext.left(1500), goal);
+            "Classify the USER GOAL. Return ONLY JSON: "
+            "{\"requirements\":[{\"domain\":\"filesystem\","
+            "\"resource\":\"\",\"purpose\":\"inspect\",\"operation\":\"none\",\"query\":\"\","
+            "\"recursive\":false}]}. At most 4 entries. Domains: %1. "
+            "Require evidence for current external state; [] for general knowledge, writing, "
+            "hypotheticals or reasoning from visible conversation. Older history needs history. "
+            "purpose is inspect or operate. Reading/explaining/comparing file CONTENT uses "
+            "operation:none, never exists. Only existence questions use exists with full target "
+            "path. "
+            "Text checks use contains; search uses search_matches. Hidden-file questions use "
+            "hidden_entries; named-file search/absence uses path_pattern. For workspace-wide "
+            "search use the ACTIVE WORKSPACE ROOT and recursive:true. query is exact text/pattern. "
+            "Resolve relative files against that root; never guess cwd/home. "
+            "CONTEXT: %2\nUSER GOAL: %3")
+            .arg(capabilities.join(QLatin1Char(',')), context, goal);
+    const auto traceId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QElapsedTimer elapsed;
+    elapsed.start();
+    qCInfo(classificationDiagnostics).noquote()
+        << QJsonDocument(
+               QJsonObject{{"stage", "classification"},
+                           {"event", "enter"},
+                           {"trace_id", traceId},
+                           {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)}})
+               .toJson(QJsonDocument::Compact);
     ChatRequestOptions options;
     options.cancellationToken = cancellationToken_;
     options.deadlineMs = 30000;
     options.maxOutputTokens = 512;
     const auto reply = provider_->sendRequest(prompt, options);
     const auto recordOutcome = qScopeGuard([&] {
-        QJsonObject diagnostic;
+        QJsonObject diagnostic{{"stage", "classification"},
+                               {"event", "exit"},
+                               {"trace_id", traceId},
+                               {"request_id", reply.requestId.left(128)},
+                               {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
+                               {"wall_elapsed_ms", elapsed.elapsed()},
+                               {"cancelled", cancellationToken_ && cancellationToken_->load()},
+                               {"error_category", chatProviderErrorCategoryName(reply.category)}};
         for (const auto& key :
              {"provider_id", "model_id", "deadline_ms", "output_budget_tokens", "elapsed_ms",
               "http_status", "category", "upstream_cancellation", "reported_context_tokens",

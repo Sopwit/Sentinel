@@ -239,6 +239,8 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
         const auto request = attempt == 0 ? (repair.isEmpty() ? prompt : repair) : repair;
         ChatRequestOptions options;
         options.cancellationToken = streamCancellationToken_;
+        options.deadlineMs = 120000;
+        options.maxOutputTokens = 1024;
         options.images = inputImages_;
         options.structuredOutput =
             modelBinding_.capabilities.structuredOutput == CapabilitySupport::Supported;
@@ -256,7 +258,8 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
         }
         bool outputEmitted = false;
         const auto send = [&]() {
-            return attempt == 0 && options.images.isEmpty() && !options.structuredOutput && !options.nativeToolCalling &&
+            return options.deadlineMs == 0 && attempt == 0 && options.images.isEmpty() &&
+                           !options.structuredOutput && !options.nativeToolCalling &&
                            modelBinding_.capabilities.streaming == CapabilitySupport::Supported &&
                            streamObserver_
                        ? provider_->sendMessageStreaming(
@@ -303,6 +306,19 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             metadata.insert(QStringLiteral("provider_id"), modelBinding_.providerId.left(128));
             metadata.insert(QStringLiteral("model_id"), modelBinding_.modelId.left(128));
             metadata.insert(QStringLiteral("history_steps"), history.size());
+            QSet<QString> readResources;
+            int verifiedReads = 0;
+            for (const auto& evidence : activeEvidence_) {
+                if (evidence.outcome == EvidenceOutcome::Verified &&
+                    evidence.structuredObservation &&
+                    evidence.structuredObservation->kind ==
+                        StructuredObservationKind::FileContent) {
+                    ++verifiedReads;
+                    readResources.insert(evidence.resource);
+                }
+            }
+            metadata.insert(QStringLiteral("verified_reads"), verifiedReads);
+            metadata.insert(QStringLiteral("repeated_reads"), verifiedReads - readResources.size());
             metadata.insert(QStringLiteral("planner_estimated_tokens"),
                             planningContext_.estimatedTokens);
             metadata.insert(QStringLiteral("native_tools"), options.nativeToolCalling);

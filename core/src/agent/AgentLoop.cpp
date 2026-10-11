@@ -16,8 +16,13 @@
 #include "sentinel/core/security/ISandboxPolicy.h"
 #include "sentinel/core/security/PathGuard.h"
 #include "sentinel/core/security/PermissionService.h"
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLoggingCategory>
+#include <QScopeGuard>
 
 #include <QTimer>
 #include <QUuid>
@@ -26,6 +31,22 @@
 #include <utility>
 
 namespace sentinel::core {
+namespace {
+Q_LOGGING_CATEGORY(loopDiagnostics, "sentinel.agent.loop.diagnostics", QtWarningMsg)
+void traceStage(const AgentLoopState& state, const char* stage, const char* event,
+                const AgentStepDecision* decision = nullptr) {
+    QJsonObject record{{"session_id", state.sessionId},
+                       {"stage", stage},
+                       {"event", event},
+                       {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
+                       {"step", state.steps.size() + 1},
+                       {"classification_indeterminate", state.observationIntent.indeterminate}};
+    if (decision)
+        record.insert("tool_requested",
+                      !decision->toolId.isEmpty() || !decision->toolBatch.isEmpty());
+    qCInfo(loopDiagnostics).noquote() << QJsonDocument(record).toJson(QJsonDocument::Compact);
+}
+} // namespace
 
 QString AgentLoop::workingDirectory() const {
     if (!workspaceContext_.rootPath.trimmed().isEmpty())
@@ -524,7 +545,9 @@ void AgentLoop::advanceAsync() {
             ClaimGroundingResolver::facts(asyncState_.observationIntent, asyncState_.evidence));
         preparePlanningContext(asyncState_);
         planner_.setEvidence(asyncState_.evidence);
+        traceStage(asyncState_, "planning", "enter");
         decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
+        traceStage(asyncState_, "planning", "exit", &decision);
         asyncState_.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
     } catch (...) {
         if (planningCallback_)
@@ -961,7 +984,9 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
                 ClaimGroundingResolver::facts(state.observationIntent, state.evidence));
             preparePlanningContext(state);
             planner_.setEvidence(state.evidence);
+            traceStage(state, "planning", "enter");
             decision = planner_.nextStep(state.goal, state.steps);
+            traceStage(state, "planning", "exit", &decision);
             state.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
         } catch (...) {
             if (planningCallback_)
@@ -1265,6 +1290,8 @@ void AgentLoop::appendBlockedStep(AgentLoopState& state, const ToolInvocationPla
 }
 
 void AgentLoop::initializeObservationIntent(AgentLoopState& state) {
+    traceStage(state, "classification", "enter");
+    const auto traceExit = qScopeGuard([&] { traceStage(state, "classification", "exit"); });
     if (observationIntentPolicy_) {
         if (statusCallback_)
             statusCallback_(QStringLiteral("Determining required observations."));
@@ -1385,6 +1412,7 @@ bool AgentLoop::acceptFinalAnswer(AgentLoopState& state, const AgentStepDecision
         gate.repair = QStringLiteral("You declared that observation is needed. Use an "
                                      "appropriate tool before answering.");
     }
+    traceStage(state, "final_gate", gate.accepted ? "accepted" : "rejected");
     if (gate.accepted) {
         state.finalGrounding = std::move(gate.grounding);
         state.finalClaims = decision.claims;

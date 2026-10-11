@@ -13,6 +13,7 @@
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QJsonArray>
@@ -287,7 +288,8 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                                         {QStringLiteral("content"), results}});
         }
         body.insert(QStringLiteral("messages"), messages);
-        body.insert(QStringLiteral("max_tokens"), 2048);
+        body.insert(QStringLiteral("max_tokens"),
+                    options.maxOutputTokens > 0 ? options.maxOutputTokens : 2048);
         if (options.nativeToolCalling) {
             QJsonArray tools;
             for (const auto& tool : options.tools) {
@@ -358,11 +360,16 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                             QJsonArray{QJsonObject{
                                 {QStringLiteral("functionDeclarations"), declarations}}});
         }
-        if (options.structuredOutput)
-            body.insert(QStringLiteral("generationConfig"),
-                        QJsonObject{{QStringLiteral("responseMimeType"),
-                                     QStringLiteral("application/json")},
-                                    {QStringLiteral("responseSchema"), options.structuredSchema}});
+        QJsonObject generationConfig;
+        if (options.maxOutputTokens > 0)
+            generationConfig.insert(QStringLiteral("maxOutputTokens"), options.maxOutputTokens);
+        if (options.structuredOutput) {
+            generationConfig.insert(QStringLiteral("responseMimeType"),
+                                    QStringLiteral("application/json"));
+            generationConfig.insert(QStringLiteral("responseSchema"), options.structuredSchema);
+        }
+        if (!generationConfig.isEmpty())
+            body.insert(QStringLiteral("generationConfig"), generationConfig);
     }
 
     LMStudioLocalInferenceClient client(config, timeoutMs);
@@ -620,11 +627,13 @@ public:
                                    ChatProviderErrorCategory::ProviderUnavailable);
         const auto host = config_.endpoint.host().toLower();
         if (host == QLatin1String("api.anthropic.com"))
-            return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Claude,
-                                       binding_, config_, timeoutMs_, message, options);
+            return nativeEndpointReply(
+                LMStudioLocalInferenceClient::NativeProtocol::Claude, binding_, config_,
+                options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_, message, options);
         if (host == QLatin1String("generativelanguage.googleapis.com"))
-            return nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtocol::Gemini,
-                                       binding_, config_, timeoutMs_, message, options);
+            return nativeEndpointReply(
+                LMStudioLocalInferenceClient::NativeProtocol::Gemini, binding_, config_,
+                options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_, message, options);
         QJsonArray messages{
             QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
                         {QStringLiteral("content"), chatImageContent(message, options.images)}}};
@@ -687,7 +696,8 @@ public:
         // Budget the actual serialized native request, including schemas and tool
         // results omitted by ContextEngine's prompt estimate. This is an estimate,
         // not a tokenizer measurement; the provider may still reject the request.
-        const int outputBudget = qMin(1024, binding_.capabilities.maxOutputTokens.value_or(1024));
+        const int outputBudget = qMin(options.maxOutputTokens > 0 ? options.maxOutputTokens : 1024,
+                                      binding_.capabilities.maxOutputTokens.value_or(1024));
         body.insert(QStringLiteral("max_tokens"), qMax(1, outputBudget));
         const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
         const auto estimatedInput = (bytes + 2) / 3 + 256;
@@ -707,12 +717,24 @@ public:
         for (const auto& observation : options.toolResults.mid(0, 8))
             observationSizes.append(observation.content.toUtf8().size());
         diagnostics.insert(QStringLiteral("tool_observation_bytes"), observationSizes);
+        QElapsedTimer requestElapsed;
+        requestElapsed.start();
+        diagnostics.insert(QStringLiteral("entered_utc"),
+                           QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+        diagnostics.insert(QStringLiteral("deadline_ms"),
+                           options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_);
         QString diagnosticRequestId;
         const auto finish = [&](ChatProviderReply reply, const QString& outcome) {
             if (reply.requestId.isEmpty())
                 reply.requestId = diagnosticRequestId;
             auto metadata = diagnostics;
             metadata.insert(QStringLiteral("outcome"), outcome);
+            metadata.insert(QStringLiteral("request_id"), reply.requestId.left(128));
+            metadata.insert(QStringLiteral("exited_utc"),
+                            QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+            metadata.insert(QStringLiteral("elapsed_ms"), requestElapsed.elapsed());
+            metadata.insert(QStringLiteral("cancelled"),
+                            options.cancellationToken && options.cancellationToken->load());
             metadata.insert(QStringLiteral("http_status"), reply.httpStatus);
             metadata.insert(QStringLiteral("attempts"), reply.attempts);
             metadata.insert(QStringLiteral("error_category"),
@@ -735,7 +757,8 @@ public:
                     ChatProviderErrorCategory::RequestRejected),
                 QStringLiteral("context_exhausted"));
         diagnostics.insert(QStringLiteral("transport_attempted"), true);
-        LMStudioLocalInferenceClient client(config_, timeoutMs_);
+        LMStudioLocalInferenceClient client(config_, options.deadlineMs > 0 ? options.deadlineMs
+                                                                            : timeoutMs_);
         const auto completion = client.completeOpenAiChat(body, options.cancellationToken);
         diagnosticRequestId = completion.requestId;
         if (!completion.ok) {
