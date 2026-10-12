@@ -1,0 +1,11 @@
+{
+  "protected_hash_contract": "PASS",
+  "current_manifest_protected_entries": 20,
+  "eight_original_hashes_preserved_in_provenance": true,
+  "exact_manifest_derivative_approved": true,
+  "historical_validator_scripts_identical": true,
+  "previous_protected_baseline_files": 651,
+  "byte_identical_to_baseline": 636,
+  "metadata_only_PIXEL_equal_changes": 14,
+  "approved_manifest_changes": 1
+}

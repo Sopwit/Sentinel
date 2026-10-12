@@ -1,0 +1,15 @@
+{
+  "probe-test": {
+    "exit": 0,
+    "pass": true
+  },
+  "FA3-branding": {
+    "exit": 0,
+    "pass": true
+  },
+  "Core_Warden_existing_Qt_binary": {
+    "exit": 0,
+    "pass": true,
+    "scope": "existing compiled binary with original unchanged animation root; not a fresh C++ rebuild"
+  }
+}

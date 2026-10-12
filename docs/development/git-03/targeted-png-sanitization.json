@@ -1,0 +1,338 @@
+[
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "sanitized_git_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "representative_path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_0994ac9b798c491d89a1d17b743dbe88",
+    "sanitized_sha256": "0bf35c6df645793abb83c45ce88f3c7277814317ade40c4da220fdd37b11a428",
+    "original_bytes": 303847,
+    "sanitized_bytes": 303784,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      640,
+      640
+    ],
+    "RGBA_sha256": "3e8b4d85a847780020c0871422c01365ed8ae9f2858adfec3a9ca64b2e47f749",
+    "RGBA_bytes": 1638400,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "sanitized_git_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "representative_path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_6a36899172714e368030d3a2fcc2bc18",
+    "sanitized_sha256": "2d230d4547115359f9827820658580082daf5471a75bdc3780e19bc12ab93172",
+    "original_bytes": 328915,
+    "sanitized_bytes": 328852,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      640,
+      640
+    ],
+    "RGBA_sha256": "ced898ba9a1f275de8cb1ea37b3a6a8d759afb96d1983f83ee306bc7ad9ab5ac",
+    "RGBA_bytes": 1638400,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "sanitized_git_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "representative_path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_8cf72d93384344f3ad631227ee4c510d",
+    "sanitized_sha256": "16017d53be314b4ae188a6c5a2c054b978da36feaad4a0b42916b4ff6502cf0d",
+    "original_bytes": 473284,
+    "sanitized_bytes": 473221,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      640,
+      640
+    ],
+    "RGBA_sha256": "b474ff5212dafa78f3d9a6d01a3b0d1d0a3526d9f205ad769b6573da43f6dcf7",
+    "RGBA_bytes": 1638400,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "sanitized_git_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "representative_path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_92469a549c894917aa20fb2d25dd592a",
+    "sanitized_sha256": "efddcf2e729feec3e177c1f9d549ff12907ecb560604d5bbe7eeeaad968e53d0",
+    "original_bytes": 257047,
+    "sanitized_bytes": 256984,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      640,
+      640
+    ],
+    "RGBA_sha256": "f28c386667e1e30cfaa0cda2e979e04a326431af748f93d3eb671297a555078e",
+    "RGBA_bytes": 1638400,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "sanitized_git_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "representative_path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_8cca0a3bf4dc4e7a8283b86229ebc24c",
+    "sanitized_sha256": "b033995d4ce1c2090ae92dec4d81ad673d2a7341c4b83b89a570610a3faf9c1f",
+    "original_bytes": 22395,
+    "sanitized_bytes": 22332,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      128,
+      128
+    ],
+    "RGBA_sha256": "04045669d61e4658fcf67486d9f7a8ac3ae611c0e7cfa31b4dd76c72cc6eccde",
+    "RGBA_bytes": 65536,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "sanitized_git_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "representative_path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_dcaa4ab7c9d947ce973d67b5cdeae13f",
+    "sanitized_sha256": "f6af25b6a67b2abd54784cb4f8d630f4e70d44648bef8be352b03ef1e4e18ec4",
+    "original_bytes": 43368,
+    "sanitized_bytes": 43305,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      192,
+      192
+    ],
+    "RGBA_sha256": "0d7bd5bbd8bacf2c25bf81b7f23301336ca6327862019349d57330ae12545e32",
+    "RGBA_bytes": 147456,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "sanitized_git_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "representative_path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_3d548d371b154aaa95da8aff2eaf2636",
+    "sanitized_sha256": "a1d74fc2ccc79e44d5f12c5b7e5010e1065eb3b576d46453d56c3b8aa88d9bc8",
+    "original_bytes": 14286,
+    "sanitized_bytes": 14223,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      96,
+      96
+    ],
+    "RGBA_sha256": "aa1de7cf9d491fa63aa947a427d4bcb0e48bbb75683a3ee95e982c4d843e7d67",
+    "RGBA_bytes": 36864,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "sanitized_git_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "representative_path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_7ad13e67458e436abcae59aafda849d7",
+    "sanitized_sha256": "ae39be1b17240b257479ede4934b1dd75932639f342afb1cbf723cf851c40762",
+    "original_bytes": 327686,
+    "sanitized_bytes": 327623,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      640,
+      640
+    ],
+    "RGBA_sha256": "799c88a4a4fc4db05210b0105175f5b3062696b217badf6cf8e3e047019a76c1",
+    "RGBA_bytes": 1638400,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "sanitized_git_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "representative_path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_c83979540dae44bdb04f6ec7042929a0",
+    "sanitized_sha256": "a253904dc23e0c716630891402d07df96afdd7d026c615679cd68c3506e79858",
+    "original_bytes": 230630,
+    "sanitized_bytes": 230565,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      512,
+      512
+    ],
+    "RGBA_sha256": "1c3aa41ece6d29787325ee594bb513dca268ddcfb66fbb1a320052b803c754cd",
+    "RGBA_bytes": 1048576,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "sanitized_git_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "representative_path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_53b20650fb4c4a79be5748f8239de2a7",
+    "sanitized_sha256": "7288f03096c065a62d5624d964d5802b57962de375c28b8b67e6676366f55346",
+    "original_bytes": 475470,
+    "sanitized_bytes": 475405,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      768,
+      768
+    ],
+    "RGBA_sha256": "188c42a82d4c138fae8977461350bc658b4d545c27ccf07955809ea278217530",
+    "RGBA_bytes": 2359296,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "sanitized_git_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "representative_path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_1f4abaf757cc485d9739c2cfe1d11e88",
+    "sanitized_sha256": "b396da08ce2a6d70948268d650ea846aefd8f3078f6b1e3e3338c9e13cd75f2d",
+    "original_bytes": 176268,
+    "sanitized_bytes": 176203,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      512,
+      512
+    ],
+    "RGBA_sha256": "2c14034be127eec662397213af44e5ac744cbb1e307cd78659155113182b8767",
+    "RGBA_bytes": 1048576,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "sanitized_git_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "representative_path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_fa6f9b093f224e8daec5c8dcdb3d43f6",
+    "sanitized_sha256": "81f2d29b3051526f3dd3d317cfed1c164fe5839ad7771801f7c767ccaf3dda40",
+    "original_bytes": 22823,
+    "sanitized_bytes": 22758,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      128,
+      128
+    ],
+    "RGBA_sha256": "04d87671914eb5a58b0d2e3fbbe4706e258adc862f7df159eb8bc2400d6a13f3",
+    "RGBA_bytes": 65536,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "sanitized_git_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "representative_path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_a99eeef8b6e6459e816130d9aaeda410",
+    "sanitized_sha256": "b1edae0d00e7ebcdb85b2daea32588d3ba42d91cbc1908f90894c6a0a47d5b48",
+    "original_bytes": 14503,
+    "sanitized_bytes": 14438,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      96,
+      96
+    ],
+    "RGBA_sha256": "54ef1801d25e9fd5c1df766f62593064bc52768b9ecb420287db7bb141d0bc70",
+    "RGBA_bytes": 36864,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "original_git_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "baseline_candidate_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "sanitized_git_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "representative_path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "original_sha256": "PRIVATE_REFERENCE_f649014e82654055b5e81676a177e90b",
+    "sanitized_sha256": "fa57d35db76621292b08d36ff8c6ca2aa89ffbe57fa91d072f76b7f4fa0a0ca0",
+    "original_bytes": 229900,
+    "sanitized_bytes": 229835,
+    "changed_chunks": [
+      "File"
+    ],
+    "all_other_chunks_byte_identical": true,
+    "chunk_CRCs_valid": true,
+    "decoded_RGBA_equal": true,
+    "dimensions": [
+      512,
+      512
+    ],
+    "RGBA_sha256": "731fec8e899ccd69a558e1be1c21fa44d057043335202dfc1fb778641082b6bb",
+    "RGBA_bytes": 1048576,
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  }
+]

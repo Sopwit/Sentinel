@@ -1,25 +1,25 @@
 {
-  "objects": 16365,
+  "objects": 16433,
   "types": {
-    "commit": 499,
-    "tree": 6162,
-    "blob": 9704
+    "commit": 502,
+    "tree": 6176,
+    "blob": 9755
   },
-  "blob_bytes": 581336766,
+  "blob_bytes": 582172577,
   "patterns": {
     "home_paths": {
-      "matching_blobs": 19,
-      "occurrences": 20,
+      "matching_blobs": 5,
+      "occurrences": 6,
       "generated_matching_blobs": 0
     },
     "machine_temp": {
-      "matching_blobs": 239,
-      "occurrences": 1185,
+      "matching_blobs": 242,
+      "occurrences": 1188,
       "generated_matching_blobs": 0
     },
     "external_volumes": {
-      "matching_blobs": 9,
-      "occurrences": 56,
+      "matching_blobs": 16,
+      "occurrences": 65,
       "generated_matching_blobs": 0
     },
     "private_key_headers": {
@@ -43,8 +43,8 @@
       "generated_matching_blobs": 0
     },
     "reviewed_personal_model_alias": {
-      "matching_blobs": 9,
-      "occurrences": 15,
+      "matching_blobs": 0,
+      "occurrences": 0,
       "generated_matching_blobs": 0
     }
   },

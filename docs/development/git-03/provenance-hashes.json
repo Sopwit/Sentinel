@@ -1,7 +1,9 @@
 {
-  "private_seven_report_provenance_sha256": "PRIVATE_REFERENCE_aaed3cb1000649a3b2279e7a665d43fa",
-  "private_complete_selected_derivative_receipt_sha256": "8e41a6f48a956b3b232d1be3959477ac70e62da3428507cc638bdd124829a9c3",
-  "private_fresh_commit_map_sha256": "3742a2aca81466c93b1bafd6acf6ff07f6f71a66ee0e4b6fa1d19840e9dc2dab",
-  "public_ref_map_sha256": "d63a6f42ab4d31ce18be6f8221839f5f701b1705ab0c015a33ab60d4c0e4e8e0",
+  "targeted_private_ledger_sha256": "PRIVATE_REFERENCE_dcefc711d83c44109d0255078fd364b3",
+  "complete_selected_private_ledger_sha256": "PRIVATE_REFERENCE_5939391d326d4fbeb84f339d261427a1",
+  "prior_seven_report_private_ledger_sha256": "PRIVATE_REFERENCE_aaed3cb1000649a3b2279e7a665d43fa",
+  "fresh_commit_map_sha256": "a2c6a2686a5e76b50675da7b2ba130aeed75db35ac8cb69b7a3569c49de4305d",
+  "fresh_public_ref_map_sha256": "b606e1054935bcca27df65ae0b90be80f8b0bddff46728962505f44b011a5625",
+  "original_values_and_byte_spans": "private recovery package only",
   "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
 }

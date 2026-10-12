@@ -1,16 +1,11 @@
 {
-  "primary_current_entries": 5136,
-  "candidate_current_entries": 5133,
-  "approved_three_path_deletions": [
-    "PRIVATE_REFERENCE_37c3bc0c2c7949bba23d5daab6a2d592",
-    "PRIVATE_REFERENCE_d7bf4fda6eda4dada71f4b1b2406d194",
-    "PRIVATE_REFERENCE_7f6fffe2b7a84ff3a791de6daa3e300d"
-  ],
-  "exact_allowed_blob_changes": 374,
-  "unchanged_file_sha256_checks": 4759,
-  "current_three_report_versions_precisely_redacted": true,
-  "all_retained_file_modes_preserved": true,
-  "tracked_asset_resource_hashes": 677,
-  "previous_651_baseline_hashes_verified": true,
-  "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  "primary_entries": 5188,
+  "candidate_entries": 5185,
+  "removed_live_paths": 3,
+  "allowed_blob_changes": 396,
+  "other_SHA256_identical_files": 4789,
+  "assets_resources_files": 742,
+  "metadata_only_artwork_changes": 14,
+  "approved_manifest_changes": 1,
+  "identical_source_and_build_inputs": 961
 }

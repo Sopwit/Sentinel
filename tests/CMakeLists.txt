@@ -327,3 +327,11 @@ target_link_libraries(test_extensions_hub PRIVATE sentinel_desktop_viewmodels)
 
 add_test(NAME test_extensions_surface COMMAND $<TARGET_FILE:settings_ui_certification_probe> --extensions-smoke)
 set_tests_properties(test_extensions_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# Local explicit-root contract; no live provider or stored credentials are used.
+add_executable(test_provider_certification_root
+    core/test_provider_certification_root.cpp
+    ${PROJECT_SOURCE_DIR}/core/src/security/ExternalDirectoryGate.cpp)
+target_include_directories(test_provider_certification_root PRIVATE ${PROJECT_SOURCE_DIR}/core/include)
+target_link_libraries(test_provider_certification_root PRIVATE Qt6::Core)
+add_test(NAME test_provider_certification_root COMMAND test_provider_certification_root)

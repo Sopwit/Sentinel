@@ -1,0 +1,35 @@
+{
+  "status": "CONTENT_GIT_AND_ISOLATED_RESTORATION_PASS",
+  "head": "485b181fbeb0fa39cc997eb17468dfc02dba9381",
+  "payload_regular_files": 5521,
+  "payload_directories": 315,
+  "payload_symlinks": 0,
+  "payload_logical_bytes": 998261285,
+  "metadata_exception_count": 0,
+  "metadata_exception_fields": [],
+  "native_metadata_corrections": {
+    "birthtime": 5802
+  },
+  "paths_types_all_regular_sha256_and_link_targets_match": true,
+  "source_stable_during_copy": true,
+  "latest_all_private_and_public_local_refs_covered": true,
+  "new_candidate_and_maps_hash_verified": true,
+  "original_three_bodies_hash_verified_in_new_private_git": true,
+  "restored_tracked_hashes": 5188,
+  "restored_untracked_hashes": 0,
+  "restored_head_refs_status_match": true,
+  "primary_candidate_and_restored_fsck": "pass",
+  "ignored_build_outputs_restored_by_this_package": false,
+  "all_existing_backups_preserved": true,
+  "all_417_original_and_derivative_blobs_hash_verified": true,
+  "targeted_original_derivative_pairs": 24,
+  "plaintext": true,
+  "admin_or_remote_operations": 0,
+  "destination": "OWNER_APPROVED_TARGETED_PRIVACY_RECOVERY",
+  "native_ACL_verification": {
+    "native_acl_entries_compared": 5836,
+    "differences": 0,
+    "entries_with_extended_acl": 0,
+    "isolated_restoration_worktree_independent": true
+  }
+}

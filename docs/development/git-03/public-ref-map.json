@@ -24,49 +24,49 @@
     "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
     "expected_remote": "04e1511ec54b6925960c2b6056696bba5926ac54",
     "source": "04e1511ec54b6925960c2b6056696bba5926ac54",
-    "candidate": "945dd8fb186ca7fc02c79e989ace8293d641b4a0",
+    "candidate": "f3d6e64d6457e04ec3a95b3ca52a1772fdb40b45",
     "remote_update": true
   },
   {
     "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
     "expected_remote": "9ccf33b208521471fff07c54de59936b43c62b57",
     "source": "9ccf33b208521471fff07c54de59936b43c62b57",
-    "candidate": "1df4e33cb7e525a95623555c48e0369e6c7625d0",
+    "candidate": "e88dd95a5726b9aa7bad9e490026c43d4f5fad05",
     "remote_update": true
   },
   {
     "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
     "expected_remote": "772816eb8092e6a1754ff7d726f37677a4876d66",
     "source": "772816eb8092e6a1754ff7d726f37677a4876d66",
-    "candidate": "3da993beceeda7761f3ed4d283af7994b1e6bdba",
+    "candidate": "a0746e2959d88a611858c850607a43397ac4c451",
     "remote_update": true
   },
   {
     "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
     "expected_remote": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
     "source": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
-    "candidate": "f95bf9f154cbfba08bca2156e1a59391b8e8b12a",
+    "candidate": "d9933293205318d0c6413b10f346ccd971823478",
     "remote_update": true
   },
   {
     "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
     "expected_remote": "e23f98cc2ba385c4931be41606fc6db133b4b891",
     "source": "e23f98cc2ba385c4931be41606fc6db133b4b891",
-    "candidate": "e29003bb58b07e33efb447e3172983897c292c84",
+    "candidate": "f7150c3bff415bf01f9c88f216f98cb64f86e789",
     "remote_update": true
   },
   {
     "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
     "expected_remote": "365434e462a92fb5f5d8ee1dbce03772e88c99b3",
     "source": "365434e462a92fb5f5d8ee1dbce03772e88c99b3",
-    "candidate": "92cf19bf0a94a9eb158e075d8b0baf2ef8e0f381",
+    "candidate": "0771b1083dad36a50e77673869c031acbc7b00f9",
     "remote_update": true
   },
   {
     "ref": "refs/heads/main",
     "expected_remote": "c35a9aedff5832bd0704bbb164f4b25f9a7bff2d",
-    "source": "d72ac588775a6ab84db5e60100e0d341f3280336",
-    "candidate": "df5457adfbf73a3f63ca9ba3c1440522ead054fb",
+    "source": "485b181fbeb0fa39cc997eb17468dfc02dba9381",
+    "candidate": "a6db643d38958ee4b891d8f90162981c45806b1c",
     "remote_update": true
   },
   {

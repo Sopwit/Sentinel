@@ -1,0 +1,49 @@
+# ILLUSTRATIVE REDACTED PATCH — NON-EXECUTABLE.
+# REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive.
+--- a/assets/core-warden/blender/cw02_1_manifest.json
++++ b/assets/core-warden/blender/cw02_1_manifest.json
+@@ -12,15 +12,15 @@
+     "renders/preview/cw01_hero.png": "619d4a90ebcb44c433f0ee04889743f0d59a27fadd6b463080b94d236d1692ab",
+     "renders/preview/cw01_side.png": "bd795e8b2c30c69eb517e73a929abcd0f5840337abf60a7a709263e6dbc972eb",
+     "renders/preview/cw01_three_quarter.png": "1f26c9dfead0d3c2c99542c57bca271da43f7eb9516efff43fafc9ddff62739f",
+-    "renders/cw02/back.png": "PRIVATE_REFERENCE_0994ac9b798c491d89a1d17b743dbe88",
++    "renders/cw02/back.png": "0bf35c6df645793abb83c45ce88f3c7277814317ade40c4da220fdd37b11a428",
+     "renders/cw02/comparison.png": "a3179b919b4c9dc37c2044ac467b56ffdadbfe27eca88514a3b1b22fa03a1bba",
+-    "renders/cw02/front.png": "PRIVATE_REFERENCE_6a36899172714e368030d3a2fcc2bc18",
+-    "renders/cw02/hero.png": "PRIVATE_REFERENCE_8cf72d93384344f3ad631227ee4c510d",
+-    "renders/cw02/side.png": "PRIVATE_REFERENCE_92469a549c894917aa20fb2d25dd592a",
+-    "renders/cw02/size_128.png": "PRIVATE_REFERENCE_8cca0a3bf4dc4e7a8283b86229ebc24c",
+-    "renders/cw02/size_192.png": "PRIVATE_REFERENCE_dcaa4ab7c9d947ce973d67b5cdeae13f",
+-    "renders/cw02/size_96.png": "PRIVATE_REFERENCE_3d548d371b154aaa95da8aff2eaf2636",
+-    "renders/cw02/three_quarter.png": "PRIVATE_REFERENCE_7ad13e67458e436abcae59aafda849d7"
++    "renders/cw02/front.png": "2d230d4547115359f9827820658580082daf5471a75bdc3780e19bc12ab93172",
++    "renders/cw02/hero.png": "16017d53be314b4ae188a6c5a2c054b978da36feaad4a0b42916b4ff6502cf0d",
++    "renders/cw02/side.png": "efddcf2e729feec3e177c1f9d549ff12907ecb560604d5bbe7eeeaad968e53d0",
++    "renders/cw02/size_128.png": "b033995d4ce1c2090ae92dec4d81ad673d2a7341c4b83b89a570610a3faf9c1f",
++    "renders/cw02/size_192.png": "f6af25b6a67b2abd54784cb4f8d630f4e70d44648bef8be352b03ef1e4e18ec4",
++    "renders/cw02/size_96.png": "a1d74fc2ccc79e44d5f12c5b7e5010e1065eb3b576d46453d56c3b8aa88d9bc8",
++    "renders/cw02/three_quarter.png": "ae39be1b17240b257479ede4934b1dd75932639f342afb1cbf723cf851c40762"
+   },
+   "baseline_structure": {
+     "CTRL_Float": {
+@@ -3085,5 +3085,19 @@
+     "size_96",
+     "size_128"
+   ],
+-  "script_sha256": "047f0f7ebe59e97ddb5d9e11d824fe7c0c5cc52a9e8e939c3007e9c92ea8e299"
+-}+  "script_sha256": "047f0f7ebe59e97ddb5d9e11d824fe7c0c5cc52a9e8e939c3007e9c92ea8e299",
++  "GIT03_metadata_privacy_provenance": {
++    "scope": "eight CW02 PNG File tEXt paths only; rendering chunks and decoded RGBA unchanged",
++    "original_protected_sha256": {
++      "renders/cw02/back.png": "PRIVATE_REFERENCE_0994ac9b798c491d89a1d17b743dbe88",
++      "renders/cw02/front.png": "PRIVATE_REFERENCE_6a36899172714e368030d3a2fcc2bc18",
++      "renders/cw02/hero.png": "PRIVATE_REFERENCE_8cf72d93384344f3ad631227ee4c510d",
++      "renders/cw02/side.png": "PRIVATE_REFERENCE_92469a549c894917aa20fb2d25dd592a",
++      "renders/cw02/size_128.png": "PRIVATE_REFERENCE_8cca0a3bf4dc4e7a8283b86229ebc24c",
++      "renders/cw02/size_192.png": "PRIVATE_REFERENCE_dcaa4ab7c9d947ce973d67b5cdeae13f",
++      "renders/cw02/size_96.png": "PRIVATE_REFERENCE_3d548d371b154aaa95da8aff2eaf2636",
++      "renders/cw02/three_quarter.png": "PRIVATE_REFERENCE_7ad13e67458e436abcae59aafda849d7"
++    },
++    "historical_acceptance": "original results concern original hashes; derivative hashes are only current sanitized-byte integrity expectations"
++  }
++}

@@ -1,6 +1,8 @@
 {
-  "original_hash_references": 22,
-  "original_hashes_validate_private_originals_only": true,
-  "historical_measurements_and_outcomes_recomputed": false,
-  "detailed_hash_reference_receipts_private": true
+  "targeted_original_hash_references": 28,
+  "unique_referencing_blobs": 5,
+  "PNG_hash_references": 22,
+  "historical_original_hashes_retained": true,
+  "owner_approved_current_PNG_hash_expectations_updated": 8,
+  "acceptance_measurements_results_unchanged": true
 }

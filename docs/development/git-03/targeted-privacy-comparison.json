@@ -1,0 +1,127 @@
+{
+  "same_current_source_ref_baseline": {
+    "objects": 16433,
+    "types": {
+      "commit": 502,
+      "tree": 6176,
+      "blob": 9755
+    },
+    "blob_bytes": 582172358,
+    "patterns": {
+      "home_paths": {
+        "matching_blobs": 19,
+        "occurrences": 20,
+        "generated_matching_blobs": 0
+      },
+      "machine_temp": {
+        "matching_blobs": 242,
+        "occurrences": 1188,
+        "generated_matching_blobs": 0
+      },
+      "external_volumes": {
+        "matching_blobs": 17,
+        "occurrences": 66,
+        "generated_matching_blobs": 0
+      },
+      "private_key_headers": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "provider_token_forms": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "reviewed_real_correlation_values": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "configured_credential_inventory": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "reviewed_personal_model_alias": {
+        "matching_blobs": 9,
+        "occurrences": 15,
+        "generated_matching_blobs": 0
+      }
+    },
+    "metadata_matching_commits_or_tags": {
+      "home_paths": 0,
+      "machine_temp": 0,
+      "external_volumes": 0,
+      "private_key_headers": 0,
+      "provider_token_forms": 0,
+      "reviewed_real_correlation_values": 0,
+      "configured_credential_inventory": 0,
+      "reviewed_personal_model_alias": 0
+    }
+  },
+  "final_candidate": {
+    "objects": 16433,
+    "types": {
+      "commit": 502,
+      "tree": 6176,
+      "blob": 9755
+    },
+    "blob_bytes": 582172577,
+    "patterns": {
+      "home_paths": {
+        "matching_blobs": 5,
+        "occurrences": 6,
+        "generated_matching_blobs": 0
+      },
+      "machine_temp": {
+        "matching_blobs": 242,
+        "occurrences": 1188,
+        "generated_matching_blobs": 0
+      },
+      "external_volumes": {
+        "matching_blobs": 16,
+        "occurrences": 65,
+        "generated_matching_blobs": 0
+      },
+      "private_key_headers": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "provider_token_forms": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "reviewed_real_correlation_values": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "configured_credential_inventory": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "reviewed_personal_model_alias": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      }
+    },
+    "metadata_matching_commits_or_tags": {
+      "home_paths": 0,
+      "machine_temp": 0,
+      "external_volumes": 0,
+      "private_key_headers": 0,
+      "provider_token_forms": 0,
+      "reviewed_real_correlation_values": 0,
+      "configured_credential_inventory": 0,
+      "reviewed_personal_model_alias": 0
+    }
+  },
+  "prior_candidate_counts_preceded_three_documentation_commits": true,
+  "previous_scope_preserved": true,
+  "whole_repository_clearance": false
+}

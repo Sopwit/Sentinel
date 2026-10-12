@@ -1,0 +1,1346 @@
+[
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_5c44f42ff16e4349a9cfaced7d685bc7",
+    "derivative_blob": "577bb2a5a756da6c8c640a19fd3eafe4df5b4d12",
+    "path": "assets/core-warden/renders/cw02/back.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_d2296e7099b44061be4af8142f9bb622",
+    "derivative_blob": "4bce0fbf53b1e3e35eccb98b3b740078bfe37698",
+    "path": "assets/core-warden/renders/cw02/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_bf4ffbb15d2a4f309b9de2b288565ffa",
+    "derivative_blob": "14bd1c631783df80ab83122cd3acd615f50ac0c7",
+    "path": "assets/core-warden/renders/cw02/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_ec7efd01e14841ba87abf7194a50869c",
+    "derivative_blob": "769fb711e10d2ed801515259b5a441d3c1ed31a2",
+    "path": "assets/core-warden/renders/cw02/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_0807ba57dc3247088e8dac17609100f1",
+    "derivative_blob": "78cd7ac4b5e73cea3269c32bb09a54b6abc8dae0",
+    "path": "assets/core-warden/renders/cw02/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_d9842aaf91db4aee886bdba1cff0bba2",
+    "derivative_blob": "fd3c19e76ffa79d96d82db4d535e3ba4b5fbc4f8",
+    "path": "assets/core-warden/renders/cw02/size_192.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_893fed3b279241f58683899e240c110a",
+    "derivative_blob": "c9537b166dc2f909c3d211f417d39486871a33e9",
+    "path": "assets/core-warden/renders/cw02/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_f57080d79e3944ec9f541830584d5e69",
+    "derivative_blob": "e4e7f28aa3b36a7550fc54b36dcf08f77f206129",
+    "path": "assets/core-warden/renders/cw02/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_8459142bef394021a471ad1336a8e4d8",
+    "derivative_blob": "33f87a5709fffdce97f1339cced159215b588869",
+    "path": "assets/core-warden/renders/cw02_1/front.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_3887db8e02734440ae0935b48f785397",
+    "derivative_blob": "e61661073aab1da1b541dbdd6a0ce08b8735d64f",
+    "path": "assets/core-warden/renders/cw02_1/hero.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_b920f81f5d124d18a3769eb3051c6865",
+    "derivative_blob": "31554e2f1b7161d50d9bac70cdab1e07a34a220e",
+    "path": "assets/core-warden/renders/cw02_1/side.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_7fc7b488af9f413e8a04d0f207c542dc",
+    "derivative_blob": "380ff980a6177c739dcc4a66a033c48b88b00a7c",
+    "path": "assets/core-warden/renders/cw02_1/size_128.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_698ebba960034ab9a7e99d2d423e11f0",
+    "derivative_blob": "0b5aabb0e50f3e1a2d538f4f507b97e6a857e7cc",
+    "path": "assets/core-warden/renders/cw02_1/size_96.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_dbc85295976b495681e71b645942225f",
+    "derivative_blob": "38da40348cfb86adbd0662db5c37eaf6f898a0aa",
+    "path": "assets/core-warden/renders/cw02_1/three_quarter.png",
+    "category": "PNG personal-path metadata only",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_d763055752ae4190b4cd893355dffd1e",
+    "derivative_blob": "91322d5ea0ccfa27087d9011e9145193c7f6d8b1",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_811c3ec69ab34457b71205fab83aa812",
+    "derivative_blob": "7fbccfa74cabdbb9349b89546192b4ff6bc64ce5",
+    "path": "docs/development/FINAL_CURRENT_HOST_BASELINE_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_5603a47ef937474783dc26b17e1d9e09",
+    "derivative_blob": "2e1eca7767ba6cb6aeb45d298d74fea86854a072",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_4bfab75eae8b4fce8ad8f5b783d45c88",
+    "derivative_blob": "80b39246f4da513286218fbc996c8ccbffc401b2",
+    "path": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_d9bd74a12e6c493a851118cf0baca56d",
+    "derivative_blob": "ea437235f0146306cf96b304b3c5b4772f58fda7",
+    "path": "docs/development/PHASE3_DESKTOP_IPC_MIGRATION_REPORT.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_2d4325dd5411405288f88f15d557746c",
+    "derivative_blob": "fa6495c9b7255737957cab47d00b9fe2a8f6c8e1",
+    "path": "docs/development/PLUGIN_SKILL_EXTENSION_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_31f8ab0b445d48ed9a95b040ee8e88e1",
+    "derivative_blob": "a0070b7bca40fd9c474ca60b09b57dc0044255b2",
+    "path": "docs/development/PLUGIN_SKILL_RESIDUAL_CLOSURE.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_7c6cb660938f4858a09ee1035c26638e",
+    "derivative_blob": "de76a494cb6ed0053ecc2f06c2b26b07cc841716",
+    "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_632eb8709b924cc39fe32a6d9f7e74ff",
+    "derivative_blob": "bf5d06737c41ed583a59bb90f0930d530ff418b1",
+    "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+    "category": "precise personal local model alias",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  },
+  {
+    "ref": "refs/heads/main",
+    "original_blob": "PRIVATE_REFERENCE_f6014cea998e4465ab9205f295f84671",
+    "derivative_blob": "5c61a8d3105eb2df9d5b1057aaa94b51d749f5ca",
+    "path": "assets/core-warden/blender/cw02_1_manifest.json",
+    "category": "owner-approved eight expected PNG hash updates; originals explicitly retained in provenance",
+    "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+  }
+]

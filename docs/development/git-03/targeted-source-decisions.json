@@ -1,0 +1,37 @@
+[
+  {
+    "blob": "cb3e692cb544e05817683cb4243a276f3aa7432c",
+    "path": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+    "classification": "standard Linuxbrew executable discovery prefix",
+    "decision": "UNCHANGED",
+    "reason": "public standard installation prefix"
+  },
+  {
+    "blob": "cad9ff2ce8d0df4bf39f4e01b459eb589aeacd93",
+    "path": "tests/helpers/provider_certification_probe.cpp",
+    "classification": "live certification authorization/workspace root",
+    "decision": "UNCHANGED",
+    "reason": "explicit test-root env/argument is feasible but changes authorization root; real provider/tool fixtures must validate that separate source change; no equivalent live execution demonstrated"
+  },
+  {
+    "blob": "328e22896cb3fef949d3bcacf86c78bb7c03e8a4",
+    "path": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+    "classification": "standard Linuxbrew executable discovery prefix",
+    "decision": "UNCHANGED",
+    "reason": "public standard installation prefix"
+  },
+  {
+    "blob": "354598593c9605cb1f46c5db49ad42c992404038",
+    "path": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+    "classification": "standard Linuxbrew executable discovery prefix",
+    "decision": "UNCHANGED",
+    "reason": "public standard installation prefix"
+  },
+  {
+    "blob": "0739870b7a5e319d87060710284596d572e6add9",
+    "path": "core/src/RealToolExecutor.cpp",
+    "classification": "machine-specific executable model/binary arguments",
+    "decision": "UNCHANGED",
+    "reason": "changing executable/model arguments cannot prove equivalent historical runtime behavior"
+  }
+]

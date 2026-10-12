@@ -1,0 +1,92 @@
+{
+  "independent_Qt_decoder": "PASS",
+  "files": 14,
+  "pixels_alpha_color_space_equal": true,
+  "RGBA_SHA256_agrees_with_Python_decoder": true,
+  "results": [
+    {
+      "RGBA_sha256": "3e8b4d85a847780020c0871422c01365ed8ae9f2858adfec3a9ca64b2e47f749",
+      "height": 640,
+      "pixels_equal": true,
+      "width": 640
+    },
+    {
+      "RGBA_sha256": "ced898ba9a1f275de8cb1ea37b3a6a8d759afb96d1983f83ee306bc7ad9ab5ac",
+      "height": 640,
+      "pixels_equal": true,
+      "width": 640
+    },
+    {
+      "RGBA_sha256": "b474ff5212dafa78f3d9a6d01a3b0d1d0a3526d9f205ad769b6573da43f6dcf7",
+      "height": 640,
+      "pixels_equal": true,
+      "width": 640
+    },
+    {
+      "RGBA_sha256": "f28c386667e1e30cfaa0cda2e979e04a326431af748f93d3eb671297a555078e",
+      "height": 640,
+      "pixels_equal": true,
+      "width": 640
+    },
+    {
+      "RGBA_sha256": "04045669d61e4658fcf67486d9f7a8ac3ae611c0e7cfa31b4dd76c72cc6eccde",
+      "height": 128,
+      "pixels_equal": true,
+      "width": 128
+    },
+    {
+      "RGBA_sha256": "0d7bd5bbd8bacf2c25bf81b7f23301336ca6327862019349d57330ae12545e32",
+      "height": 192,
+      "pixels_equal": true,
+      "width": 192
+    },
+    {
+      "RGBA_sha256": "aa1de7cf9d491fa63aa947a427d4bcb0e48bbb75683a3ee95e982c4d843e7d67",
+      "height": 96,
+      "pixels_equal": true,
+      "width": 96
+    },
+    {
+      "RGBA_sha256": "799c88a4a4fc4db05210b0105175f5b3062696b217badf6cf8e3e047019a76c1",
+      "height": 640,
+      "pixels_equal": true,
+      "width": 640
+    },
+    {
+      "RGBA_sha256": "1c3aa41ece6d29787325ee594bb513dca268ddcfb66fbb1a320052b803c754cd",
+      "height": 512,
+      "pixels_equal": true,
+      "width": 512
+    },
+    {
+      "RGBA_sha256": "188c42a82d4c138fae8977461350bc658b4d545c27ccf07955809ea278217530",
+      "height": 768,
+      "pixels_equal": true,
+      "width": 768
+    },
+    {
+      "RGBA_sha256": "2c14034be127eec662397213af44e5ac744cbb1e307cd78659155113182b8767",
+      "height": 512,
+      "pixels_equal": true,
+      "width": 512
+    },
+    {
+      "RGBA_sha256": "04d87671914eb5a58b0d2e3fbbe4706e258adc862f7df159eb8bc2400d6a13f3",
+      "height": 128,
+      "pixels_equal": true,
+      "width": 128
+    },
+    {
+      "RGBA_sha256": "54ef1801d25e9fd5c1df766f62593064bc52768b9ecb420287db7bb141d0bc70",
+      "height": 96,
+      "pixels_equal": true,
+      "width": 96
+    },
+    {
+      "RGBA_sha256": "731fec8e899ccd69a558e1be1c21fa44d057043335202dfc1fb778641082b6bb",
+      "height": 512,
+      "pixels_equal": true,
+      "width": 512
+    }
+  ]
+}
