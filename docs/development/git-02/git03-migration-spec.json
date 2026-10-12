@@ -1,0 +1,119 @@
+{
+  "status": "PROPOSAL ONLY; no rewrite/push/settings authority",
+  "source_head": "f920c8abc5aa1de49fe7df372a1bca6a5b4f35fd",
+  "generated_paths_file": "docs/development/sec-p1-1/untracking-paths.txt",
+  "generated_receipt_sha256": "3ca23c5446e225448523f65e4ff6373c05e7aad97092bdb37236870a1a97130f",
+  "original_generated_tree": "7e8bfa3a3f71af5c1d59b460a4b867e90f70f397",
+  "historical_transformations_file": "docs/development/git-02/historical-transformations.json",
+  "historical_transformations_sha256": "08b53c18b13d60b4fbcb7bd5413cefa7384d4f6d425d97b77eb18180c171b775",
+  "public_branch_candidates": [
+    {
+      "ref": "refs/heads/codex/agent-closure-checkpoint",
+      "expected_remote_old": "5551ace0a06bf86b09574cf180f4c830a2fb51a7",
+      "source_tip": "5551ace0a06bf86b09574cf180f4c830a2fb51a7",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/codex/docs-canonical-architecture",
+      "expected_remote_old": "151f65bb2a356427982299ca7a7c6cba7e446126",
+      "source_tip": "151f65bb2a356427982299ca7a7c6cba7e446126",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/codex/finalize-resource-version-cleanup",
+      "expected_remote_old": "89f50753909c1ff9b08038d39b3d6128d43da8a6",
+      "source_tip": "89f50753909c1ff9b08038d39b3d6128d43da8a6",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/cargo/cli/crossterm-0.29.0",
+      "expected_remote_old": "04e1511ec54b6925960c2b6056696bba5926ac54",
+      "source_tip": "04e1511ec54b6925960c2b6056696bba5926ac54",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/cargo/cli/ratatui-0.30.2",
+      "expected_remote_old": "9ccf33b208521471fff07c54de59936b43c62b57",
+      "source_tip": "9ccf33b208521471fff07c54de59936b43c62b57",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/cargo/cli/ratatui-image-11.1.0",
+      "expected_remote_old": "772816eb8092e6a1754ff7d726f37677a4876d66",
+      "source_tip": "772816eb8092e6a1754ff7d726f37677a4876d66",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/cargo/cli/rustix-1.1.5",
+      "expected_remote_old": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
+      "source_tip": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/cargo/cli/signal-hook-0.4.5",
+      "expected_remote_old": "e23f98cc2ba385c4931be41606fc6db133b4b891",
+      "source_tip": "e23f98cc2ba385c4931be41606fc6db133b4b891",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/dependabot/github_actions/github-actions-b98896b744",
+      "expected_remote_old": "365434e462a92fb5f5d8ee1dbce03772e88c99b3",
+      "source_tip": "365434e462a92fb5f5d8ee1dbce03772e88c99b3",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    },
+    {
+      "ref": "refs/heads/main",
+      "expected_remote_old": "c35a9aedff5832bd0704bbb164f4b25f9a7bff2d",
+      "source_tip": "f920c8abc5aa1de49fe7df372a1bca6a5b4f35fd",
+      "new_tip": "NOT GENERATED; requires approved isolated candidate"
+    }
+  ],
+  "tags_retain": [
+    {
+      "ref": "refs/tags/v1.0.0-rc.8",
+      "sha": "cec95419a63c0eda1bd5c969a0f0b0af5e219cbe"
+    },
+    {
+      "ref": "refs/tags/v1.0.0-rc.7",
+      "sha": "1a95a5516377905477bf13d857685b5f275508a3"
+    },
+    {
+      "ref": "refs/tags/v1.0.0-rc.1",
+      "sha": "aa8987dadaa24ceb4feb4643417bb80a180aa8d0"
+    }
+  ],
+  "tag_scope_validation": {
+    "tags": [
+      {
+        "tag": "v1.0.0-rc.8",
+        "sha": "cec95419a63c0eda1bd5c969a0f0b0af5e219cbe",
+        "prepared_privacy_blobs_reachable": 0
+      },
+      {
+        "tag": "v1.0.0-rc.7",
+        "sha": "1a95a5516377905477bf13d857685b5f275508a3",
+        "prepared_privacy_blobs_reachable": 0
+      },
+      {
+        "tag": "v1.0.0-rc.1",
+        "sha": "aa8987dadaa24ceb4feb4643417bb80a180aa8d0",
+        "prepared_privacy_blobs_reachable": 0
+      }
+    ],
+    "reachable_commits": 498,
+    "signature_headers": 7
+  },
+  "private_checkpoint_policy": "Preserve privately; never push; no private-only bytecode expansion of public rewrite",
+  "source_literal_policy": "Retain production/test source unchanged; separate reviewed source portability change if approved",
+  "artwork_policy": "Retain all canonical PNGs/masters unchanged; metadata derivatives require separate explicit authorization",
+  "release_policy": "Preserve existing tags/releases/assets; owner-reviewed notices only; no retag/replace/delete/publish",
+  "expected_old_policy": "Recheck live IDs at maintenance freeze; abort on drift and regenerate candidate/map. No unattended mirror force-push.",
+  "signature_policy": "Seven signature headers observed, validity unverified; new candidate must enumerate changes and signature losses; do not sign for original authors",
+  "backup_policy_update": {
+    "owner_cancelled_encrypted_image": true,
+    "approved_plain_directory_destination": "/Volumes/NeuralSilicon/Sentinel_Backup_2026-10-12/Sentinel",
+    "encrypted_backup_gate": "UNMET",
+    "git03_status": "BLOCKED",
+    "rewrite_authorized": false
+  }
+}
