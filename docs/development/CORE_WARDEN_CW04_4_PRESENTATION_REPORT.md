@@ -1,5 +1,7 @@
 # CW-04.4 — direct Kitty presentation adapter
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Status: implemented and verified at the protocol/output boundary. **Physical Ghostty acceptance is pending user confirmation.**
 
 ## Finding and limits of the diagnosis
@@ -62,18 +64,18 @@ Existing V3.3 and unrelated uncommitted changes preserved. No Desktop, daemon, A
 
 The populated fixture checks actual populated application state rather than searching for contiguous transcript text inside an incremental terminal diff. Physical absence of ghost images and visible overlay priority still require visual acceptance.
 
-Actual release executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Actual release executable: `<repository-root>/cli/target/release/sentinel`.
 
 ## Physical Ghostty verification
 
 Optional same-lifecycle comparison, run each separately in Ghostty without touching keys:
 
 ```sh
-<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/examples/kitty_first_paint
+"$SENTINEL_REPO/cli/target/release/examples/kitty_first_paint"
 ```
 
 ```sh
-<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/examples/kitty_first_paint --direct
+"$SENTINEL_REPO/cli/target/release/examples/kitty_first_paint" --direct
 ```
 
 A is the previous virtual presentation. B uses explicit direct placement, remains for five seconds and explicitly deletes its image. Physical results of these new controls have not been observed by the agent.
@@ -81,7 +83,7 @@ A is the previous virtual presentation. B uses explicit direct placement, remain
 Final production command:
 
 ```sh
-SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw044-$(date +%s).jsonl" <LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel tui
+SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw044-$(date +%s).jsonl" "$SENTINEL_REPO/cli/target/release/sentinel" tui
 ```
 
 Touch no keys for five seconds and verify automatic appearance. With a connected legitimate animated state, verify animation without input. Disconnected neutral display does not prove animation. Open Ctrl+P and close with Esc; inspect for image remnants. Resize and inspect placement. With an empty composer, Ctrl+D exits; inspect normal terminal restoration. The new diagnostics expose `graphics_presented`, `direct_placements`, image IDs, flush timestamps and the first keyboard-event timestamp without recording key contents.
