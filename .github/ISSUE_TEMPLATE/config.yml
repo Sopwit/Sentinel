@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Sentinel Community Discussions
-    url: https://github.com/Sopwit/Sentinel/discussions
-    about: Ask questions, share ideas, or discuss Sentinel architecture and platform integration.
+  - name: Project documentation
+    url: https://github.com/Sopwit/Sentinel/blob/main/docs/README.md
+    about: Read the documented architecture, capabilities and project limits.
   - name: Security Vulnerability Disclosure
     url: https://github.com/Sopwit/Sentinel/security/advisories/new
     about: Privately report a potential security vulnerability in Sentinel.

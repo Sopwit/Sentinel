@@ -1,0 +1,53 @@
+{
+  "baseline_head": "46013c3323f0c973d1cf05e9023666fd03dba20f",
+  "baseline_files_checked": 7896,
+  "existing_file_changes": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "before_sha256": "9601e21a70c201afe4737497afb8a542dab27cb026cfbdc430e687cd05f89aa4",
+      "after_sha256": "1d4a112f2508a34512ff2cb45d2d848d64d62e5f1a7fd344c87d9a5f4ad26bd2"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/release_check.md",
+      "before_sha256": "4764b7550a2e359946093d1373c1f9137f7e32cb25447a665947c1c1d0a7fb26",
+      "after_sha256": "99d53ebda682953364fedba76762323e5928fd3bcd77cfec3dc2ef517404676a"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "before_sha256": "203b83a30e3b69135166e251659520b0534db1bb82f9d328a5715b2ba7db3be5",
+      "after_sha256": "dbe5537f4432e9ab5f45798a12749415222f941e42af4a978d167f1e4d968ea3"
+    },
+    {
+      "path": ".github/workflows/ci-linux.yml",
+      "before_sha256": "94de7d3aebf546dac6123f2d7796cab4cddf3d7d9702ae480af1ec3ec93b29d7",
+      "after_sha256": "18450e12b4708f38868afa4f74a040a6594296d6a75a2fec88cf9520a241e03e"
+    },
+    {
+      "path": ".github/workflows/ci-rust.yml",
+      "before_sha256": "9f2d14bb076b49fd8e5a71c6392c1e7994203527def48c2bc8df2e3abb390af2",
+      "after_sha256": "b6db173c7b330e33bb1c401cbdbaf6eec1d3b6476ba00ee5bb9d9da555e67b83"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "before_sha256": "5228675b856bb53aec2b94dd4e326cf7019c569cb7ddabbc1d7ff5a253813404",
+      "after_sha256": "e339fa9ef8703e9fa3981e4907184d5af383b487cf08124ad3273d508604862c"
+    },
+    {
+      "path": "README.md",
+      "before_sha256": "8e71f1b6c3b142286784027fde6dc08736e1081a5e439fd588f6d4a335e98d47",
+      "after_sha256": "1f1f48b3f4d17511652994d4526c0f80377dac3b4c633c121111e9ebb98e0ed5"
+    },
+    {
+      "path": "docs/release/RELEASE_PROCESS.md",
+      "before_sha256": "3c3ce31aa7317bfeb045ff6307cff51e04b53787ad496bcf36e8a66ddb537de7",
+      "after_sha256": "d32369eb97077edbf4f7a1ab168aee9b01b97f0c3fc74abb78db8cb7cafdf329"
+    }
+  ],
+  "new_files_before_ledger": [
+    "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+    "docs/development/sec-p1-4/github-settings.json",
+    "docs/development/sec-p1-4/validation.json"
+  ],
+  "index_unchanged": true,
+  "tracked_files": 7896
+}

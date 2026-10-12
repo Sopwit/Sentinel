@@ -1,0 +1,32 @@
+{
+  "workflows": 7,
+  "steps": 82,
+  "unique_action_commit_pins": 9,
+  "workflow_boundary_checks": "PASS",
+  "artifact_collection_cases": {
+    "valid": {
+      "exit": 0,
+      "expected_behavior": "accepted"
+    },
+    "corrupt": {
+      "exit": 1,
+      "expected_behavior": "rejected"
+    },
+    "duplicate": {
+      "exit": 1,
+      "expected_behavior": "rejected"
+    }
+  },
+  "yaml_files_parsed": 13,
+  "actionlint": "PASS 1.7.12 with ShellCheck available",
+  "synthetic_checkout_depth_2": "PASS HEAD^ and PR merge base parent",
+  "local_markdown_links_and_anchors": {
+    "checked": 37,
+    "errors": []
+  },
+  "issue_forms_unique_ids": "PASS",
+  "git_diff_check": "PASS",
+  "baseline_preserved_except_intended_files": 7888,
+  "index_unchanged": true,
+  "focused_new_content_pattern_scan": "PASS; limited home-path/private-key/GitHub-token patterns"
+}

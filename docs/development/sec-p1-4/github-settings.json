@@ -1,0 +1,213 @@
+{
+  "assessed_date": "2026-10-12",
+  "repository": "Sopwit/Sentinel",
+  "visibility": "public",
+  "default_branch": "main",
+  "security_and_analysis": {
+    "secret_scanning": {
+      "status": "enabled"
+    },
+    "secret_scanning_push_protection": {
+      "status": "enabled"
+    },
+    "dependabot_security_updates": {
+      "status": "disabled"
+    },
+    "secret_scanning_non_provider_patterns": {
+      "status": "disabled"
+    },
+    "secret_scanning_validity_checks": {
+      "status": "disabled"
+    }
+  },
+  "actions_permissions": {
+    "enabled": true,
+    "allowed_actions": "all",
+    "sha_pinning_required": false
+  },
+  "workflow_permissions": {
+    "default_workflow_permissions": "read",
+    "can_approve_pull_request_reviews": false
+  },
+  "fork_pr_approval": {
+    "approval_policy": "first_time_contributors"
+  },
+  "private_reporting": {
+    "enabled": false
+  },
+  "dependabot_alerts_result": {
+    "message": "Vulnerability alerts are disabled.",
+    "documentation_url": "https://docs.github.com/rest/repos/repos#check-if-vulnerability-alerts-are-enabled-for-a-repository",
+    "status": "404"
+  },
+  "main_branch_protection_result": {
+    "message": "Branch not protected",
+    "documentation_url": "https://docs.github.com/rest/branches/branch-protection#get-branch-protection",
+    "status": "404"
+  },
+  "rulesets": [],
+  "environment_count": 0,
+  "discussions_enabled": false,
+  "forks_count": 1,
+  "remote_main_sha": "46013c3323f0c973d1cf05e9023666fd03dba20f",
+  "open_prs": [
+    {
+      "number": 12,
+      "head_ref": "dependabot/cargo/cli/rustix-1.1.5",
+      "base_ref": "main",
+      "head_sha": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac"
+    },
+    {
+      "number": 8,
+      "head_ref": "dependabot/github_actions/github-actions-b98896b744",
+      "base_ref": "main",
+      "head_sha": "5ebbdc2f9fc88e37dc8752638f836f02e791687a"
+    }
+  ],
+  "remote_tags": [
+    {
+      "name": "v1.0.0-rc.8",
+      "sha": "cec95419a63c0eda1bd5c969a0f0b0af5e219cbe"
+    },
+    {
+      "name": "v1.0.0-rc.7",
+      "sha": "1a95a5516377905477bf13d857685b5f275508a3"
+    },
+    {
+      "name": "v1.0.0-rc.1",
+      "sha": "aa8987dadaa24ceb4feb4643417bb80a180aa8d0"
+    }
+  ],
+  "remote_branches": [
+    {
+      "name": "codex/agent-closure-checkpoint",
+      "sha": "5551ace0a06bf86b09574cf180f4c830a2fb51a7",
+      "protected": false
+    },
+    {
+      "name": "codex/docs-canonical-architecture",
+      "sha": "151f65bb2a356427982299ca7a7c6cba7e446126",
+      "protected": false
+    },
+    {
+      "name": "codex/finalize-resource-version-cleanup",
+      "sha": "89f50753909c1ff9b08038d39b3d6128d43da8a6",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/crossterm-0.29.0",
+      "sha": "04e1511ec54b6925960c2b6056696bba5926ac54",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/ratatui-0.30.2",
+      "sha": "9ccf33b208521471fff07c54de59936b43c62b57",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/ratatui-image-11.1.0",
+      "sha": "772816eb8092e6a1754ff7d726f37677a4876d66",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/rustix-1.1.5",
+      "sha": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/signal-hook-0.4.5",
+      "sha": "e23f98cc2ba385c4931be41606fc6db133b4b891",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/github-actions-b98896b744",
+      "sha": "5ebbdc2f9fc88e37dc8752638f836f02e791687a",
+      "protected": false
+    },
+    {
+      "name": "main",
+      "sha": "46013c3323f0c973d1cf05e9023666fd03dba20f",
+      "protected": false
+    }
+  ],
+  "receipts": [
+    {
+      "query": "actions_permissions",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:23 GMT",
+      "private_raw_response_sha256": "b1c824d87b28d68a1220a0d55999563cdf60e70919074e1862f6e921ca4da27a"
+    },
+    {
+      "query": "branch_protection",
+      "http_status": "HTTP/2.0 404 Not Found",
+      "response_date": "Mon, 12 Oct 2026 13:26:26 GMT",
+      "private_raw_response_sha256": "1bc779e638dbfc6a8c2d405c2d71b4eaac67b0abf32a6ea99562909d447be8f2"
+    },
+    {
+      "query": "branches",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:27:18 GMT",
+      "private_raw_response_sha256": "442bf431e0c82b666286a17000083c23f609afcb09315186731b47320e38ee2d"
+    },
+    {
+      "query": "dependabot_alerts_enabled",
+      "http_status": "HTTP/2.0 404 Not Found",
+      "response_date": "Mon, 12 Oct 2026 13:26:25 GMT",
+      "private_raw_response_sha256": "58596e5f7b39fb1b25e36cb08dfaf164e2c0514b34c451fd9e6087b2eaa81537"
+    },
+    {
+      "query": "environments",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:27:19 GMT",
+      "private_raw_response_sha256": "ab92fb4cb37ca8c2b58fe56967b1a6904a3e01893bd81b987d6174bb2fda6eae"
+    },
+    {
+      "query": "fork_pr_approval",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:24 GMT",
+      "private_raw_response_sha256": "faf2b3b619f04771002e2eb6d3598bd60b127d1aa97e86a70b403b76310188c1"
+    },
+    {
+      "query": "open_pull_requests",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:27 GMT",
+      "private_raw_response_sha256": "1b09dd69a90845ff01db0460ea5f2c99747f4ff6caae1af6573577d3f39288fa"
+    },
+    {
+      "query": "private_reporting",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:24 GMT",
+      "private_raw_response_sha256": "ac6db2f865742b8a7f325ba7c4616fb4d0212a5c54bf5f291ec8ccf1617da61d"
+    },
+    {
+      "query": "remote_main",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:27:21 GMT",
+      "private_raw_response_sha256": "593bc1a5eb40bfad92ad544b321d49a63cf1a66529656d0333f64aa9108b4ad6"
+    },
+    {
+      "query": "repository",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:22 GMT",
+      "private_raw_response_sha256": "2fe968420d20ceed665b6aae3c74652a86f06a104df93588af047646df0b119b"
+    },
+    {
+      "query": "rulesets",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:26 GMT",
+      "private_raw_response_sha256": "8c1a34f78cf40a3b8dfd0c2dc929dc53f171d5d2872f9d1a87cbeddba48fcc31"
+    },
+    {
+      "query": "tags",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:28 GMT",
+      "private_raw_response_sha256": "866b3b2b53c633afe544529a092c773fbdb8ffb7e5d09d15c7358a8228d97320"
+    },
+    {
+      "query": "workflow_permissions",
+      "http_status": "HTTP/2.0 200 OK",
+      "response_date": "Mon, 12 Oct 2026 13:26:23 GMT",
+      "private_raw_response_sha256": "43cec22c0b483a8ad35a4e71db9475bfa6ced84405324e3697118229e273dda6"
+    }
+  ]
+}

@@ -22,6 +22,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The formatting diff needs HEAD^ on push and the merge parents on PRs.
+          fetch-depth: 2
       - name: Install build and validation tools
         run: |
           set -euo pipefail

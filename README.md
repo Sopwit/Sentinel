@@ -8,7 +8,7 @@ The Desktop is the primary user surface and Fedora KDE Plasma is the primary pla
 
 Desktop and the daemon-backed Rust CLI/TUI expose implemented runtime services. AgentRuntime acceptance remains incomplete; successful fixture tests do not establish reliable live task completion. Native Windows CLI/TUI named-pipe IPC is unavailable. Plugins, MCP, and Skills remain experimental; sandbox enforcement is platform-dependent.
 
-The TUI V4-B macOS arm64 package is conditional local evaluation material, **not cleared for public distribution**. License/source/artwork, physical terminal acceptance, and signing/notarization gates remain open. See the [public repository audit](docs/development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md) and [TUI release evidence](docs/development/TUI_V4_B_FINAL_RELEASE_REPORT.md).
+The TUI V4-B macOS arm64 package is conditional local evaluation material, **not cleared for public distribution**. License/source/artwork, physical terminal acceptance, and signing/notarization gates remain open. Public binary release remains blocked by the [dependency assessment](docs/development/SEC_P1_2_DEPENDENCY_SECURITY_REPORT.md) and [distribution assessment](docs/development/SEC_P1_3_DISTRIBUTION_COMPLIANCE_REPORT.md). See the [consolidated blocker register](docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md#5-consolidated-blocker-register), [public repository audit](docs/development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md) and [TUI release evidence](docs/development/TUI_V4_B_FINAL_RELEASE_REPORT.md).
 
 ## Start here
 

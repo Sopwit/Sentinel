@@ -245,7 +245,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish GitHub Release
+    name: Assemble unapproved release draft
     needs: [linux, macos, windows]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
@@ -276,5 +276,11 @@ jobs:
         with:
           # Maintainer verifies distribution gates before manually publishing.
           draft: true
+          body: |
+            Unapproved workflow draft. Passing CI and valid checksums do not establish release clearance.
+            Public binary distribution remains blocked by SEC-P1.2 and SEC-P1.3.
+            A maintainer must verify dependency security, privacy, licensing/source/artwork permissions,
+            native acceptance, binary/resource compatibility, inventories and signing/notarization policy
+            before separately approving publication. See docs/release/RELEASE_PROCESS.md.
           files: final-artifacts/*
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-pre') }}
