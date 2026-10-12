@@ -1,0 +1,23 @@
+{
+  "tracked_baseline_files_unchanged": 7900,
+  "primary_index_unchanged": true,
+  "primary_head_and_public_local_refs_unchanged": true,
+  "checkpoint_churn": "Application-managed refs/codex names rotated; no agent primary ref mutation; do not revert concurrent checkpoints.",
+  "backup_remote_branch_tips_match_read_only_inventory": 10,
+  "new_report_local_links_checked": 6,
+  "new_content_pattern_scan": "PASS; limited path/key/token forms",
+  "probe_fresh_debug_build": "PASS Rust 1.94.0 --locked --offline on aarch64-apple-darwin",
+  "probe_tests": "PASS 2/2",
+  "branding_guard": "PASS 69 FA-3 files",
+  "all_protected_artwork_inputs_unchanged": 651,
+  "known_canonical_png_metadata_cases_preserved": 14,
+  "original_and_final_gitleaks": "Five identical previously triaged false positives; no genuine credential confirmed; exits 1",
+  "simulation_fresh_reachable_mirror": {
+    "objects": 16543,
+    "pack_size_kib": 261122
+  },
+  "final_fsck": "PASS filtered store and fresh reachable-only mirror",
+  "git_diff_check": "PASS",
+  "primary_untracking_or_history_rewrite": false,
+  "remote_mutation": false
+}

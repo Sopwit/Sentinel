@@ -1,0 +1,97 @@
+{
+  "scope": "all objects reachable from backed-up local refs; same byte patterns, not file counts or complete semantic privacy clearance",
+  "original": {
+    "objects": 18789,
+    "types": {
+      "commit": 497,
+      "tree": 6685,
+      "blob": 11607
+    },
+    "blob_bytes": 1264295277,
+    "patterns": {
+      "home_paths": {
+        "matching_blobs": 1560,
+        "occurrences": 44437,
+        "generated_matching_blobs": 1147
+      },
+      "machine_temp": {
+        "matching_blobs": 249,
+        "occurrences": 1878,
+        "generated_matching_blobs": 2
+      },
+      "external_volumes": {
+        "matching_blobs": 10,
+        "occurrences": 57,
+        "generated_matching_blobs": 0
+      },
+      "private_key_headers": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "provider_token_forms": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      }
+    },
+    "metadata_matching_commits_or_tags": {
+      "home_paths": 0,
+      "machine_temp": 0,
+      "external_volumes": 0,
+      "private_key_headers": 0,
+      "provider_token_forms": 0
+    }
+  },
+  "simulated_final": {
+    "objects": 16543,
+    "types": {
+      "commit": 497,
+      "tree": 6284,
+      "blob": 9762
+    },
+    "blob_bytes": 587268906,
+    "patterns": {
+      "home_paths": {
+        "matching_blobs": 414,
+        "occurrences": 3106,
+        "generated_matching_blobs": 1
+      },
+      "machine_temp": {
+        "matching_blobs": 247,
+        "occurrences": 1876,
+        "generated_matching_blobs": 0
+      },
+      "external_volumes": {
+        "matching_blobs": 10,
+        "occurrences": 57,
+        "generated_matching_blobs": 0
+      },
+      "private_key_headers": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      },
+      "provider_token_forms": {
+        "matching_blobs": 0,
+        "occurrences": 0,
+        "generated_matching_blobs": 0
+      }
+    },
+    "metadata_matching_commits_or_tags": {
+      "home_paths": 0,
+      "machine_temp": 0,
+      "external_volumes": 0,
+      "private_key_headers": 0,
+      "provider_token_forms": 0
+    }
+  },
+  "reachable_blob_byte_reduction": 677026371,
+  "percentage_reduction": 53.54970340524336,
+  "gitleaks_original_findings": 5,
+  "gitleaks_simulated_findings": 5,
+  "triage": "Identical five known synthetic-fixture/digest false positives; scanner exits 1 are finding exits, not zero-findings passes. No genuine credential confirmed.",
+  "retained_historical_generated_example": "tools/branding/__pycache__/check.cpython-314.pyc",
+  "artwork_files_unchanged": 651,
+  "core_warden_home_path_png_metadata_files_retained": 14
+}

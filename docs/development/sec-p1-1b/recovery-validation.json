@@ -1,0 +1,20 @@
+{
+  "files_and_symlinks_verified": 125439,
+  "logical_bytes": 16185875964,
+  "snapshot_fsck_exit": 0,
+  "restored_fsck_exit": 0,
+  "full_restore_hashes_match": true,
+  "tracked_untracked_ignored_and_git_included": true,
+  "same_device_backup_only": true,
+  "backup_id": "sentinel-sec-p1-1b-20261012-1791813951",
+  "private_location_template": "$HOME/.codex/private-backups/<backup_id>",
+  "private_workspace_receipt_sha256": "ac222b2b03a9d0357bc39066c24941e63db29f7eada105ff8431fca85af83814",
+  "original_report_receipts_verified": 20,
+  "prior_candidate_evidence": {
+    "top_level_items_preserved": 72,
+    "files_restore_verified": 2355,
+    "bytes": 93424535,
+    "reproducible_cargo_target_trees_excluded": true
+  },
+  "independent_device_backup": "NOT VERIFIED; required before real migration"
+}

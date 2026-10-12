@@ -1,0 +1,37 @@
+[
+  {
+    "tag": "v1.0.0-rc.8",
+    "asset": "Sentinel-Desktop-Linux-1.0.0-rc.7.tar.gz",
+    "sha256": "dda7d08e53a3843565863ffba1cd7615d316cd3af9d4a5307df6faf68a648c40",
+    "github_digest_matches": true,
+    "members": 32,
+    "counts": {
+      "application_executables": 3,
+      "notice_named_files": 1
+    },
+    "not_executed": true
+  },
+  {
+    "tag": "v1.0.0-rc.7",
+    "asset": "Sentinel-Desktop-Linux-1.0.0-rc.7.tar.gz",
+    "sha256": "3e89afa6c13c1325474ffac8da687fc77a1a770c0bd62a31ebb1649076374d6f",
+    "github_digest_matches": true,
+    "members": 32,
+    "counts": {
+      "application_executables": 3,
+      "notice_named_files": 1
+    },
+    "not_executed": true
+  },
+  {
+    "tag": "v1.0.0-rc.1",
+    "asset": "Sentinel-Desktop-Linux-1.0.0-rc.1.tar.gz",
+    "sha256": "2d66bff071302349fc78b6a29d05e778e9caa247d3207781c0ed5e4208e9a597",
+    "github_digest_matches": true,
+    "members": 16,
+    "counts": {
+      "application_executables": 1
+    },
+    "not_executed": true
+  }
+]

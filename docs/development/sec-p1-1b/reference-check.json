@@ -1,0 +1,141 @@
+{
+  "local_markdown_targets_examined": 383,
+  "retained_docs_with_changed_commit_references": [
+    {
+      "document": "docs/development/SEC_P1_1_PRIVACY_CLEANUP_REPORT.md",
+      "old_commit_abbreviation": "541b8db91902066840093425109e9d9d93ae3b5c"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_1_FINAL_REPORT.md",
+      "old_commit_abbreviation": "18bc2a9"
+    },
+    {
+      "document": "docs/development/UI_UX_REMEDIATION_PHASE1_REPORT.md",
+      "old_commit_abbreviation": "102e602"
+    },
+    {
+      "document": "docs/development/SEC_P1_2_DEPENDENCY_SECURITY_REPORT.md",
+      "old_commit_abbreviation": "541b8db91902066840093425109e9d9d93ae3b5c"
+    },
+    {
+      "document": "docs/development/PHASE2_DAEMON_IPC_CLI_TUI_REPORT.md",
+      "old_commit_abbreviation": "db9eb38"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_AGENT_RELIABILITY_REPORT.md",
+      "old_commit_abbreviation": "ec19493bc9a3bdf531ae3d908217159253b396cc"
+    },
+    {
+      "document": "docs/development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md",
+      "old_commit_abbreviation": "ea64f1b9"
+    },
+    {
+      "document": "docs/development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md",
+      "old_commit_abbreviation": "4ea26ca2"
+    },
+    {
+      "document": "docs/development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md",
+      "old_commit_abbreviation": "541b8db9"
+    },
+    {
+      "document": "docs/development/UI_UX_VISUAL_AUDIT.md",
+      "old_commit_abbreviation": "102e602"
+    },
+    {
+      "document": "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+      "old_commit_abbreviation": "decc657e"
+    },
+    {
+      "document": "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+      "old_commit_abbreviation": "46013c3323f0c973d1cf05e9023666fd03dba20f"
+    },
+    {
+      "document": "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+      "old_commit_abbreviation": "28178a26"
+    },
+    {
+      "document": "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+      "old_commit_abbreviation": "46013c33"
+    },
+    {
+      "document": "docs/development/SEC_P1_4_GITHUB_HARDENING_REPORT.md",
+      "old_commit_abbreviation": "67951784"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_5_LIVE_ACCEPTANCE.md",
+      "old_commit_abbreviation": "695244b73b49395a4383f45ae2376164f1d3d0f7"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_3_EXECUTION_ENVIRONMENT.md",
+      "old_commit_abbreviation": "fbfc41d8"
+    },
+    {
+      "document": "docs/development/SEC_P1_3_DISTRIBUTION_COMPLIANCE_REPORT.md",
+      "old_commit_abbreviation": "541b8db91902066840093425109e9d9d93ae3b5c"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_3_FINAL_REPORT.md",
+      "old_commit_abbreviation": "fbfc41d8"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_2_MULTIFILE_FINAL_REPORT.md",
+      "old_commit_abbreviation": "b5e6933"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_4_FINAL_REPORT.md",
+      "old_commit_abbreviation": "144ef090"
+    },
+    {
+      "document": "docs/development/TUI_V3_2_5_CLASSIFICATION_ROOT_CAUSE.md",
+      "old_commit_abbreviation": "695244b73b49395a4383f45ae2376164f1d3d0f7"
+    },
+    {
+      "document": "docs/development/UI_UX_SCREEN_INVENTORY.md",
+      "old_commit_abbreviation": "102e602"
+    },
+    {
+      "document": "docs/development/TERMINAL_EXPERIENCE_V2_REPORT.md",
+      "old_commit_abbreviation": "102e602"
+    },
+    {
+      "document": "docs/reviews/agent-v323-2026-10-10/README.md",
+      "old_commit_abbreviation": "fbfc41d8"
+    },
+    {
+      "document": "docs/reviews/agent-v324-2026-10-10/README.md",
+      "old_commit_abbreviation": "144ef090"
+    },
+    {
+      "document": "docs/reviews/agent-v321-2026-10-10/README.md",
+      "old_commit_abbreviation": "18bc2a9"
+    },
+    {
+      "document": "docs/reviews/terminal-v2-2026-10-09/README.md",
+      "old_commit_abbreviation": "102e602"
+    },
+    {
+      "document": "docs/reviews/agent-v322-2026-10-10/README.md",
+      "old_commit_abbreviation": "b5e6933"
+    }
+  ],
+  "known_removed_build_log_evidence_manifest": "docs/reviews/agent-v323-2026-10-10/artifact-sha256.json",
+  "newly_missing_tracked_targets": [],
+  "ignored_local_evidence_links_not_publicly_tracked": [
+    {
+      "document": "docs/development/TUI_V3_3_C_REPORT.md",
+      "target": "docs/reviews/tui-v33c/tests.log"
+    },
+    {
+      "document": "docs/development/TUI_V3_3_C_REPORT.md",
+      "target": "docs/reviews/tui-v33c/clippy.log"
+    },
+    {
+      "document": "docs/development/TUI_V3_4_TERMINAL_COMPATIBILITY_REPORT.md",
+      "target": "docs/reviews/tui-v34/tests.log"
+    },
+    {
+      "document": "docs/development/TUI_V3_3_B_REPORT.md",
+      "target": "docs/reviews/tui-v33b/tests.log"
+    }
+  ]
+}

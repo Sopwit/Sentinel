@@ -1,0 +1,318 @@
+{
+  "repository": "Sopwit/Sentinel",
+  "visibility": "public",
+  "counts": {
+    "branches": 10,
+    "tags": 3,
+    "prs": 6,
+    "forks": 1,
+    "releases": 3
+  },
+  "branches": [
+    {
+      "name": "codex/agent-closure-checkpoint",
+      "sha": "5551ace0a06bf86b09574cf180f4c830a2fb51a7",
+      "protected": false
+    },
+    {
+      "name": "codex/docs-canonical-architecture",
+      "sha": "151f65bb2a356427982299ca7a7c6cba7e446126",
+      "protected": false
+    },
+    {
+      "name": "codex/finalize-resource-version-cleanup",
+      "sha": "89f50753909c1ff9b08038d39b3d6128d43da8a6",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/crossterm-0.29.0",
+      "sha": "04e1511ec54b6925960c2b6056696bba5926ac54",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/ratatui-0.30.2",
+      "sha": "9ccf33b208521471fff07c54de59936b43c62b57",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/ratatui-image-11.1.0",
+      "sha": "772816eb8092e6a1754ff7d726f37677a4876d66",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/rustix-1.1.5",
+      "sha": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac",
+      "protected": false
+    },
+    {
+      "name": "dependabot/cargo/cli/signal-hook-0.4.5",
+      "sha": "e23f98cc2ba385c4931be41606fc6db133b4b891",
+      "protected": false
+    },
+    {
+      "name": "dependabot/github_actions/github-actions-b98896b744",
+      "sha": "365434e462a92fb5f5d8ee1dbce03772e88c99b3",
+      "protected": false
+    },
+    {
+      "name": "main",
+      "sha": "c35a9aedff5832bd0704bbb164f4b25f9a7bff2d",
+      "protected": false
+    }
+  ],
+  "tags": [
+    {
+      "name": "v1.0.0-rc.8",
+      "sha": "cec95419a63c0eda1bd5c969a0f0b0af5e219cbe"
+    },
+    {
+      "name": "v1.0.0-rc.7",
+      "sha": "1a95a5516377905477bf13d857685b5f275508a3"
+    },
+    {
+      "name": "v1.0.0-rc.1",
+      "sha": "aa8987dadaa24ceb4feb4643417bb80a180aa8d0"
+    }
+  ],
+  "open_prs": [
+    {
+      "number": 16,
+      "base": "main",
+      "head": "dependabot/cargo/cli/ratatui-0.30.2",
+      "head_sha": "9ccf33b208521471fff07c54de59936b43c62b57"
+    },
+    {
+      "number": 15,
+      "base": "main",
+      "head": "dependabot/cargo/cli/crossterm-0.29.0",
+      "head_sha": "04e1511ec54b6925960c2b6056696bba5926ac54"
+    },
+    {
+      "number": 14,
+      "base": "main",
+      "head": "dependabot/cargo/cli/signal-hook-0.4.5",
+      "head_sha": "e23f98cc2ba385c4931be41606fc6db133b4b891"
+    },
+    {
+      "number": 13,
+      "base": "main",
+      "head": "dependabot/cargo/cli/ratatui-image-11.1.0",
+      "head_sha": "772816eb8092e6a1754ff7d726f37677a4876d66"
+    },
+    {
+      "number": 12,
+      "base": "main",
+      "head": "dependabot/cargo/cli/rustix-1.1.5",
+      "head_sha": "0b256bdc4723dd9e3ce4b5c9f58249fb1a468bac"
+    },
+    {
+      "number": 8,
+      "base": "main",
+      "head": "dependabot/github_actions/github-actions-b98896b744",
+      "head_sha": "365434e462a92fb5f5d8ee1dbce03772e88c99b3"
+    }
+  ],
+  "forks": [
+    {
+      "full_name": "minitheguitarist/Sentinel",
+      "default_branch": "main",
+      "pushed_at": "2026-07-25T14:56:01Z"
+    }
+  ],
+  "releases": [
+    {
+      "tag": "v1.0.0-rc.8",
+      "draft": false,
+      "prerelease": true,
+      "target_commitish": "main",
+      "published_at": "2026-08-01T05:25:39Z",
+      "assets": [
+        {
+          "name": "sentinel-desktop-1.0.0-Linux.tar.gz",
+          "bytes": 9410281,
+          "digest": "sha256:0b87e3d951078368f713aa0cfd7875506df68773e13b6b384166968eb5d0c3c4"
+        },
+        {
+          "name": "Sentinel-Desktop-Fedora-1.0.0-rc.7.rpm",
+          "bytes": 9342051,
+          "digest": "sha256:29bc2f0166e1b464214f341553d9c076b404acb96b2a77b050b844af040cbd18"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.AppImage",
+          "bytes": 53332472,
+          "digest": "sha256:eb3c810903632a0e9c7b6d5af56f8ef83191169c639cca1630051d028d51f110"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.deb",
+          "bytes": 9409668,
+          "digest": "sha256:1d2a33a06f0ac7970e93414e6edd60d02e53cf3a055350b03893b3ec5f3bbf7d"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.tar.gz",
+          "bytes": 9426481,
+          "digest": "sha256:dda7d08e53a3843565863ffba1cd7615d316cd3af9d4a5307df6faf68a648c40"
+        },
+        {
+          "name": "Sentinel-Desktop-macOS-1.0.0-rc.7.dmg",
+          "bytes": 80562488,
+          "digest": "sha256:53accf56f4caed7663b04a9edbe31b229aa10ba10bf83db7a60330027d7796e5"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.exe",
+          "bytes": 72441479,
+          "digest": "sha256:f1dc53f170725860a7ff40b9c588e899da4669bf9a8ad009c002a80f2bcf58e3"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.msi",
+          "bytes": 90595041,
+          "digest": "sha256:658035ae511bc3c7115f1f3a759ce8fc4c419c90626f16f15cf9863ad594edd1"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.zip",
+          "bytes": 91862285,
+          "digest": "sha256:9b7161a62665b68be622c0d96cf90acd8cdb8631268559cf807e01453021b2b7"
+        }
+      ]
+    },
+    {
+      "tag": "v1.0.0-rc.7",
+      "draft": false,
+      "prerelease": true,
+      "target_commitish": "main",
+      "published_at": "2026-08-01T01:59:48Z",
+      "assets": [
+        {
+          "name": "sentinel-desktop-1.0.0-Linux.tar.gz",
+          "bytes": 8472450,
+          "digest": "sha256:781126cac40914714832f272c1d232679ec23a7ce361dab916d211e606934b5c"
+        },
+        {
+          "name": "Sentinel-Desktop-Fedora-1.0.0-rc.7.rpm",
+          "bytes": 8422877,
+          "digest": "sha256:cad82d51614cb59ab4821e1aa274d8a8a5c3948892c5a1c9b5dc340abe02c234"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.AppImage",
+          "bytes": 49838584,
+          "digest": "sha256:a993314bcefbdd903c375ed414c8c21fbdda0e2a348ca9668d6f55df18d5965b"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.deb",
+          "bytes": 8472354,
+          "digest": "sha256:9d8ff70d96f5fef7f8553de55e839c49f26923d82fbace8ff15510c8ab2818fe"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.7.tar.gz",
+          "bytes": 8483180,
+          "digest": "sha256:3e89afa6c13c1325474ffac8da687fc77a1a770c0bd62a31ebb1649076374d6f"
+        },
+        {
+          "name": "Sentinel-Desktop-macOS-1.0.0-rc.7.dmg",
+          "bytes": 69378150,
+          "digest": "sha256:48345551fb279a4b7bf90e140b77c5befefe9ce578896f1d6fcf4b7a749759f0"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.exe",
+          "bytes": 67611254,
+          "digest": "sha256:b0667fc19e80bfb37b20f32747d88c01fb8a852b05e69781bc5283aa0f733e9a"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.msi",
+          "bytes": 83389176,
+          "digest": "sha256:4892d82c16968fa3312eee7818b84c4c78c401b4d4462eb8d0c8cd499ea77122"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-x64-1.0.0-rc.7.zip",
+          "bytes": 84301427,
+          "digest": "sha256:66c68d49dfca8783500b819670c49221cdc1006c6142fcd8508fe9d79ab778c2"
+        }
+      ]
+    },
+    {
+      "tag": "v1.0.0-rc.1",
+      "draft": false,
+      "prerelease": true,
+      "target_commitish": "main",
+      "published_at": "2026-07-23T13:29:08Z",
+      "assets": [
+        {
+          "name": "Sentinel-Desktop-Fedora-1.0.0-rc.1.rpm",
+          "bytes": 5715725,
+          "digest": "sha256:54c6c0be3a514cc8eba053ac42cddfc1e92d7ebeda32b9e71342984bc42628a4"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.1.AppImage",
+          "bytes": 46397944,
+          "digest": "sha256:9a676c398bd9867f2905409112349295ed4c3b7aaaf9b0447a2a512ee0423985"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.1.deb",
+          "bytes": 5743752,
+          "digest": "sha256:62c5a196cce52ee0906b084665249485666d79c3335e78f4334916312a4cac79"
+        },
+        {
+          "name": "Sentinel-Desktop-Linux-1.0.0-rc.1.tar.gz",
+          "bytes": 5743788,
+          "digest": "sha256:2d66bff071302349fc78b6a29d05e778e9caa247d3207781c0ed5e4208e9a597"
+        },
+        {
+          "name": "Sentinel-Desktop-macOS-1.0.0-rc.1.dmg",
+          "bytes": 47546167,
+          "digest": "sha256:a3b8dd3b97e90bf8e3934758bbf44a504272c22940a3327e332a8fa0c0e4b5c7"
+        },
+        {
+          "name": "Sentinel-Desktop-macOS-arm-1.0.0-rc.1.dmg",
+          "bytes": 47545977,
+          "digest": "sha256:c562c9b18a404d3f795974ad65b0d62b54f782156c2726154c21204805439f52"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-1.0.0-rc.1.exe",
+          "bytes": 57949485,
+          "digest": "sha256:75ba26af24647976015e05c03d065aaec94b6769ee8ac41105392c94f9d52293"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-1.0.0-rc.1.msi",
+          "bytes": 70869644,
+          "digest": "sha256:4e5959b00df1a7bc15bd8730823cc7a2fee82a119ae3b698bff55a9ecbb79192"
+        },
+        {
+          "name": "Sentinel-Desktop-Windows-1.0.0-rc.1.zip",
+          "bytes": 72128132,
+          "digest": "sha256:51ecfdfd749d106865f07c14300de23ec7c3b02a8782d3c2f9f93ca01536e2b8"
+        }
+      ]
+    }
+  ],
+  "security_and_analysis": {
+    "secret_scanning": {
+      "status": "enabled"
+    },
+    "secret_scanning_push_protection": {
+      "status": "enabled"
+    },
+    "dependabot_security_updates": {
+      "status": "disabled"
+    },
+    "secret_scanning_non_provider_patterns": {
+      "status": "disabled"
+    },
+    "secret_scanning_validity_checks": {
+      "status": "disabled"
+    }
+  },
+  "private_reporting": {
+    "enabled": false
+  },
+  "alerts": {
+    "message": "Vulnerability alerts are disabled.",
+    "documentation_url": "https://docs.github.com/rest/repos/repos#check-if-vulnerability-alerts-are-enabled-for-a-repository",
+    "status": "404"
+  },
+  "rulesets": [],
+  "main_protection": {
+    "message": "Branch not protected",
+    "documentation_url": "https://docs.github.com/rest/branches/branch-protection#get-branch-protection",
+    "status": "404"
+  },
+  "environments_count": 0
+}

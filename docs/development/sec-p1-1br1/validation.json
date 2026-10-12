@@ -1,0 +1,17 @@
+{
+  "backup_files_verified": 125439,
+  "backup_mismatches": 0,
+  "tracked_files_checked": 7900,
+  "tracked_mismatches": 0,
+  "head": "c35a9aedff5832bd0704bbb164f4b25f9a7bff2d",
+  "cached_public_refs_match_live": true,
+  "index_diff_empty": true,
+  "new_content_privacy_check": "PASS",
+  "git_diff_check": "PASS",
+  "probe_tests": "2/2 PASS",
+  "simulation_fsck": "PASS",
+  "residual_blob_ref_partition": {
+    "cached_public_refs": 413,
+    "private_checkpoint_only": 1
+  }
+}
