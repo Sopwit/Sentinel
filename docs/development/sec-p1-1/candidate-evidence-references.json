@@ -1,0 +1,24 @@
+[
+  {
+    "manifest": "docs/reviews/agent-v323-2026-10-10/artifact-sha256.json",
+    "referenced_candidates": 1,
+    "candidate_paths": [
+      "docs/reviews/core-warden-rust-terminal/target/release/build/zmij-7c2145943554e178/stderr"
+    ]
+  },
+  {
+    "manifest": "docs/development/sec-p1-1/untracking-proposal.json",
+    "referenced_candidates": 9,
+    "candidate_paths": [
+      "docs/reviews/agent-v323-2026-10-10/reproduce/__pycache__/sentinel_v323_accept.cpython-315.pyc",
+      "docs/reviews/agent-v324-2026-10-10/reproduce/__pycache__/live_readonly.cpython-315.pyc",
+      "docs/reviews/core-warden-cw044/__pycache__/ab_pty.cpython-315.pyc",
+      "docs/reviews/core-warden-cw044/__pycache__/production_pty.cpython-315.pyc",
+      "docs/reviews/core-warden-cw045/__pycache__/production_pty.cpython-315.pyc",
+      "docs/reviews/core-warden-rust-terminal/__pycache__/fragmented_probe_check.cpython-315.pyc",
+      "docs/reviews/core-warden-rust-terminal/__pycache__/run.cpython-315.pyc",
+      "docs/reviews/tui-v33b/__pycache__/pty_journeys.cpython-315.pyc",
+      "docs/reviews/tui-v34/__pycache__/compatibility.cpython-315.pyc"
+    ]
+  }
+]

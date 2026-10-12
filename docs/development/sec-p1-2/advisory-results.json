@@ -1,0 +1,157 @@
+{
+  "database_archive_sha256": "cc83895e4e10596d0f7470e6191d28994e8fe5e82b1ba74606d07a2ab65509ec",
+  "database_url": "https://codeload.github.com/RustSec/advisory-db/tar.gz/refs/heads/main",
+  "method": "Local TOML advisory comparison using Rust semver 1.0.28 VersionReq; all locked package/version entries; withdrawn excluded; patched/unaffected ranges evaluated; no external inventory upload",
+  "prior_results": {
+    "production_before": {
+      "lock_sha256": "96dcb71720f4498374df649438accb72db011f5557e42d6e92821dd6cbf43ef3",
+      "matched_advisory_pairs": 23,
+      "unresolved": [
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0253",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.18.2"
+          ]
+        },
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0002",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.16.3",
+            "< 0.9.0"
+          ]
+        },
+        {
+          "package": "paste",
+          "version": "1.0.15",
+          "advisory": "RUSTSEC-2024-0436",
+          "informational": "unmaintained",
+          "patched_or_unaffected": []
+        }
+      ]
+    },
+    "production_candidate": {
+      "lock_sha256": "4ae9d4dc7a0594613f9de77b4965e830cb0cfcc475e063b819acc1a07eaf221f",
+      "matched_advisory_pairs": 43,
+      "unresolved": []
+    },
+    "historical_probe_before": {
+      "lock_sha256": "d8c204425754465fd5353e5d906929211787e2aa73c0fc526237c8327bfb5d73",
+      "matched_advisory_pairs": 21,
+      "unresolved": [
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0253",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.18.2"
+          ]
+        },
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0002",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.16.3",
+            "< 0.9.0"
+          ]
+        },
+        {
+          "package": "paste",
+          "version": "1.0.15",
+          "advisory": "RUSTSEC-2024-0436",
+          "informational": "unmaintained",
+          "patched_or_unaffected": []
+        }
+      ]
+    }
+  },
+  "rejected_candidate": {
+    "cli/Cargo.lock": {
+      "lock_sha256": "4ae9d4dc7a0594613f9de77b4965e830cb0cfcc475e063b819acc1a07eaf221f",
+      "registry_package_entries": 250,
+      "matched_advisory_pairs": 43,
+      "unresolved": []
+    },
+    "docs/reviews/core-warden-rust-terminal/Cargo.lock": {
+      "lock_sha256": "8f051194c672d4d753d728b6551785f2a3c5c2deb097e4142d6536a1450747c4",
+      "registry_package_entries": 232,
+      "matched_advisory_pairs": 42,
+      "unresolved": []
+    }
+  },
+  "current": {
+    "cli/Cargo.lock": {
+      "lock_sha256": "96dcb71720f4498374df649438accb72db011f5557e42d6e92821dd6cbf43ef3",
+      "matched_advisory_pairs": 23,
+      "unresolved": [
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0253",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.18.2"
+          ]
+        },
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0002",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.16.3",
+            "< 0.9.0"
+          ]
+        },
+        {
+          "package": "paste",
+          "version": "1.0.15",
+          "advisory": "RUSTSEC-2024-0436",
+          "informational": "unmaintained",
+          "patched_or_unaffected": []
+        }
+      ]
+    },
+    "docs/reviews/core-warden-rust-terminal/Cargo.lock": {
+      "lock_sha256": "d8c204425754465fd5353e5d906929211787e2aa73c0fc526237c8327bfb5d73",
+      "matched_advisory_pairs": 21,
+      "unresolved": [
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0253",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.18.2"
+          ]
+        },
+        {
+          "package": "lru",
+          "version": "0.12.5",
+          "advisory": "RUSTSEC-2026-0002",
+          "informational": "unsound",
+          "patched_or_unaffected": [
+            ">= 0.16.3",
+            "< 0.9.0"
+          ]
+        },
+        {
+          "package": "paste",
+          "version": "1.0.15",
+          "advisory": "RUSTSEC-2024-0436",
+          "informational": "unmaintained",
+          "patched_or_unaffected": []
+        }
+      ]
+    }
+  },
+  "disposition": "BLOCKED: original graph retained after compatibility regressions; candidate security results do not describe current source"
+}

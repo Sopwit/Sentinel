@@ -1,0 +1,39 @@
+{
+  "baseline_head": "541b8db91902066840093425109e9d9d93ae3b5c",
+  "pre_phase_files_checked": 7888,
+  "existing_file_corrections": [
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "before_sha256": "bea60014ab64740f58a562034193e21c41f14b3d92317a4c20a7d6241c291dca",
+      "after_sha256": "b70766980b5fe6813803480e3b7518d2bf13e4268c771dab806881eb9bc66c83"
+    },
+    {
+      "path": "cmake/SentinelCPack.cmake",
+      "before_sha256": "12c6cdd3e0474879ca670725efc82d72ca6aee67b749a506adebe2bafd20ee48",
+      "after_sha256": "40e7fcdf38e055c1ac58f7c42d6ec26f5b0ca13e19c1882e98826f838ffe14ed"
+    },
+    {
+      "path": "packaging/windows/installer/license.rtf",
+      "before_sha256": "2a57dab987e417be2904c5107e26c23c4d5b44622a3234dfaa97554d7e04049f",
+      "after_sha256": "36d11886f979e7ca8b7297b936eead63217b32abd4ff93710bb49fb916bf71b4"
+    },
+    {
+      "path": "tools/terminal/stage-release.sh",
+      "before_sha256": "1f38fd4b85d820c99be4456f813032ff5c574c5c7bba3c5361f8d0611e450855",
+      "after_sha256": "3554ccb8f173b1151c3aa569321d9b9161897eea8954ca98780b84355aa88228"
+    }
+  ],
+  "new_files_before_ledger": [
+    "docs/development/SEC_P1_3_DISTRIBUTION_COMPLIANCE_REPORT.md",
+    "docs/development/sec-p1-3/original-notice-investigation.json",
+    "docs/development/sec-p1-3/rust-notice-inventory.json",
+    "docs/development/sec-p1-3/validation.json",
+    "resources/fonts/LICENSES/COPYRIGHTS.txt",
+    "resources/icons/lucide/LICENSE",
+    "resources/icons/lucide/license-provenance.json"
+  ],
+  "missing_files": [],
+  "tracked_files": 7862,
+  "index_diff_empty": true,
+  "focused_new_content_privacy_secret_scan": "PASS; home-directory/private-key/GitHub-token patterns; not universal secret clearance"
+}

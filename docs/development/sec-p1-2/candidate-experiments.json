@@ -1,0 +1,34 @@
+{
+  "final_disposition": "BLOCKED; no dependency/source changes retained",
+  "candidate_a": {
+    "binary_sha256": "881396fdfead63078647c45434ece29e751ed2f7f92e26e39064edd8ea4954b6",
+    "versions": {
+      "ratatui": "0.30.2",
+      "ratatui-image": "10.0.0",
+      "crossterm": "0.29.0",
+      "lru": "0.18.5",
+      "paste": null
+    },
+    "rust_tests": 122,
+    "warden_cases": 15,
+    "comparison_cases": 3,
+    "signal_cases": 18,
+    "asset_enabled_failure": "sixel-fragmented-120x40; cursor-position timeout",
+    "disposition": "Eight scoped files restored to verified baseline"
+  },
+  "candidate_b": {
+    "binary_sha256": "d3f270d8a224aadfa0ed319776e9cc05a0a7d1cf1d66bf7c4b318fe8891ff56a",
+    "runtime_adaptation": "Fullscreen clear -> resize(screen), isolated checkout only",
+    "rust_tests": 122,
+    "no_cursor_position_query_observed": true,
+    "asset_enabled_failure": "sixel-fragmented-120x40; expected pasted second line absent, cleanup timed out; persisted with bounded state wait",
+    "remaining_cause": "NOT ESTABLISHED",
+    "disposition": "Rejected without applying to repository"
+  },
+  "retained_baseline_control": {
+    "binary_sha256": "c92778d566e4bcfc4aa42c51dbed5445bad26035a1bfed0f3870011971de46b9",
+    "focused_sixel_cases": "Both sizes passed with short observation behavior and DCS-aware replay",
+    "final_full_terminal_cases": 29,
+    "all_pty_cases": 65
+  }
+}

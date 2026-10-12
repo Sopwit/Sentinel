@@ -1,0 +1,38 @@
+[
+  {
+    "revision": "8852b424193ca41602281b3d7540d7c8ed51e49a",
+    "url": "https://api.github.com/repos/madsmtm/objc2/git/trees/8852b424193ca41602281b3d7540d7c8ed51e49a?recursive=1",
+    "sha256": "8bc4d010a6c942e2e8391db65b3691c8965e65e5ae6858508acffa07125e1bc1",
+    "truncated": false,
+    "entries": 2173,
+    "license_paths": [
+      "LICENSE.md",
+      "framework-crates/objc2-foundation/src/copying.rs",
+      "framework-crates/objc2-foundation/src/tests/copying.rs"
+    ]
+  },
+  {
+    "revision": "b4167b582b2f75f9a1be75495c41b765344fd03c",
+    "url": "https://api.github.com/repos/madsmtm/objc2/git/trees/b4167b582b2f75f9a1be75495c41b765344fd03c?recursive=1",
+    "sha256": "9b27f0dd652b8c076959fa404208ab1a71242345cc5a9dfe4ad322a193b18c60",
+    "truncated": false,
+    "entries": 2169,
+    "license_paths": [
+      "LICENSE.md",
+      "framework-crates/objc2-foundation/src/copying.rs",
+      "framework-crates/objc2-foundation/src/tests/copying.rs"
+    ]
+  },
+  {
+    "revision": "8d214f5477365ffcbcbb7de058c86ed9a518efb7",
+    "url": "https://api.github.com/repos/madsmtm/objc2/git/trees/8d214f5477365ffcbcbb7de058c86ed9a518efb7?recursive=1",
+    "sha256": "1b466589fca908ca290c6dd80eb04bae26b8ecc5a0bf291c15c7c2105553eaa2",
+    "truncated": false,
+    "entries": 1595,
+    "license_paths": [
+      "LICENSE.md",
+      "framework-crates/objc2-foundation/src/copying.rs",
+      "framework-crates/objc2-foundation/src/tests/copying.rs"
+    ]
+  }
+]

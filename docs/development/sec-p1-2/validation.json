@@ -1,0 +1,1250 @@
+{
+  "recommendation": "BLOCKED",
+  "retained_binary_sha256": "c92778d566e4bcfc4aa42c51dbed5445bad26035a1bfed0f3870011971de46b9",
+  "rust_tests": {
+    "total": 122,
+    "cli": 14,
+    "ipc": 11,
+    "mascot": 22,
+    "tui": 75
+  },
+  "fmt": "PASS",
+  "clippy_all_targets_warnings_denied": "PASS",
+  "debug_build": "PASS",
+  "release_build": "PASS",
+  "rust_toolchain": "1.94.0",
+  "platform": "aarch64-apple-darwin",
+  "ipc_generated_contract": "PASS",
+  "git_diff_check": "PASS",
+  "unchanged_index": "PASS",
+  "retained_regressions": {
+    "compatibility": {
+      "cases": 29,
+      "result": "PASS",
+      "raw_result_sha256": "34cbe6e48b02bc340b11a7de14a237a987f10f44c50e09a679ba7bb5aa828b05",
+      "cases_summary": [
+        {
+          "name": "apple-no-images-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "silent-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "negative-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "kitty-fragmented-60x20",
+          "protocol": "kitty",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "sixel-fragmented-60x20",
+          "protocol": "sixel",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "late-da-cell-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "near-budget-kitty-60x20",
+          "protocol": "kitty",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "missing-cell-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "invalid-cell-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "ssh-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "tmux-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "screen-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "no-color-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "ascii-60x20",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            60,
+            20
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "apple-no-images-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "silent-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "negative-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "kitty-fragmented-120x40",
+          "protocol": "kitty",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "sixel-fragmented-120x40",
+          "protocol": "sixel",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "late-da-cell-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "near-budget-kitty-120x40",
+          "protocol": "kitty",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "missing-cell-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "invalid-cell-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "ssh-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "tmux-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "screen-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "no-color-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "ascii-120x40",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            120,
+            40
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "AUTOMATIC UPDATE",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "AUTOMATIC UPDATE"
+          ]
+        },
+        {
+          "name": "disconnected",
+          "protocol": "text",
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "no_inference": true,
+          "initial_size": [
+            80,
+            24
+          ],
+          "resized_size": [
+            100,
+            30
+          ],
+          "automatic_update_before_input": true,
+          "checks": [
+            "Disconnected",
+            "command \u00b7 Enter",
+            "help \u00b7 Enter",
+            "second",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "\u00fc\u00e7\u00fcnc\u00fc",
+            "static",
+            "Disconnected"
+          ]
+        }
+      ]
+    },
+    "warden": {
+      "cases": 15,
+      "result": "PASS",
+      "raw_result_sha256": "057fa19fea75aa829a1095098e095a05affe889d76176672610c68f4115f804b",
+      "cases_summary": [
+        {
+          "name": "offline-cold",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": 316.91950000822544,
+          "first_image_before_input_ms": 126.96391600184143
+        },
+        {
+          "name": "offline-warm",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": 273.3650839945767,
+          "first_image_before_input_ms": 118.74958401313052
+        },
+        {
+          "name": "offline-static",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 248.13745898427442,
+          "first_image_before_input_ms": 114.62649999884889
+        },
+        {
+          "name": "offline-auto",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "auto"
+          ],
+          "first_direct_placement_before_input_ms": 278.8717500225175,
+          "first_image_before_input_ms": 129.91391701507382
+        },
+        {
+          "name": "animated",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 16,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": 268.1082079943735,
+          "first_image_before_input_ms": 131.40300000668503
+        },
+        {
+          "name": "static",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 271.84324999689125,
+          "first_image_before_input_ms": 124.32024997542612
+        },
+        {
+          "name": "off",
+          "capability": "text",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "off"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "auto",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 16,
+          "modes": [
+            "auto"
+          ],
+          "first_direct_placement_before_input_ms": 264.5340830204077,
+          "first_image_before_input_ms": 129.26495799911208
+        },
+        {
+          "name": "populated",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 16,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": 252.04808299895376,
+          "first_image_before_input_ms": 116.71808297978714
+        },
+        {
+          "name": "timeout",
+          "capability": "text",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "missing",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "no-color",
+          "capability": "text",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "ssh",
+          "capability": "text",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "tmux",
+          "capability": "text",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 0,
+          "modes": [
+            "animated"
+          ],
+          "first_direct_placement_before_input_ms": null,
+          "first_image_before_input_ms": null
+        },
+        {
+          "name": "scenario",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 16,
+          "modes": [
+            "animated",
+            "auto",
+            "off",
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 264.40662500681356,
+          "first_image_before_input_ms": 130.69541699951515
+        }
+      ]
+    },
+    "signals": {
+      "cases": 18,
+      "result": "PASS",
+      "raw_result_sha256": "a7f52fb466713cba7e2a68757f804af98c1bb9ded27b68513893f3f8b0b46622",
+      "cases_summary": [
+        {
+          "name": "immediate-0",
+          "exit": -15,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "immediate-1",
+          "exit": -15,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "immediate-2",
+          "exit": -15,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "immediate-3",
+          "exit": -15,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "immediate-4",
+          "exit": -15,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "alt",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "enhancements",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "probe",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "idle",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "overlay",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "resize",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "connected-off",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "connected-static",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "connected-animated",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "connected-auto",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "repeated",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "hup",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        },
+        {
+          "name": "hup-overlay",
+          "exit": 1,
+          "termios_restored_except_transient_pendin": true,
+          "owned_images_deleted": true,
+          "no_global_delete": true,
+          "no_status_query": true,
+          "no_inference": true
+        }
+      ]
+    },
+    "comparison": {
+      "cases": 3,
+      "result": "PASS",
+      "raw_result_sha256": "b86aa06c9ce9c8a8bbde908534a01312d0d1c42f4055089c049cb95235c5b5a9",
+      "cases_summary": [
+        {
+          "name": "no-input",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 248.4874580113683,
+          "first_image_before_input_ms": 112.53008301719092
+        },
+        {
+          "name": "one-key",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 269.8469169845339,
+          "first_image_before_input_ms": 126.65291698067449
+        },
+        {
+          "name": "resize-only",
+          "capability": "kitty",
+          "exit": 0,
+          "status_query_sent": false,
+          "restored_termios": true,
+          "restored_alt": true,
+          "max_frames": 1,
+          "modes": [
+            "static"
+          ],
+          "first_direct_placement_before_input_ms": 255.71441699867137,
+          "first_image_before_input_ms": 117.81108297873288
+        }
+      ]
+    }
+  }
+}

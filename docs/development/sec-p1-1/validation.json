@@ -1,0 +1,23 @@
+{
+  "preserved_baseline_files": 7871,
+  "changed_reports": 20,
+  "tracked_files": 7862,
+  "remaining_privacy_matches": {
+    "source-or-asset": 16,
+    "historical-review": 491,
+    "bytecode": 4,
+    "build-output": 1389
+  },
+  "remaining_matching_files": 1900,
+  "baseline_preservation": "PASS",
+  "unchanged_non_path_lines": "PASS",
+  "digest_verification": "PASS",
+  "index_unchanged": "PASS",
+  "diff_check": "PASS",
+  "secret_scan_findings": 5,
+  "secret_scan_triage": "Five previously documented synthetic-token/digest false positives; no new confirmed credential",
+  "probe_offline_build": "PASS",
+  "probe_unit_tests": 2,
+  "ignore_positive_and_negative_checks": "PASS",
+  "network_operations": 0
+}

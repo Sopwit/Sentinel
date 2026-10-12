@@ -1,0 +1,65 @@
+{
+  "network_access": "None; cached references only; not confirmation of current GitHub availability",
+  "references": [
+    {
+      "ref": "refs/heads/main",
+      "commit": "541b8db91902066840093425109e9d9d93ae3b5c",
+      "target_present": true,
+      "same_target_tree_as_head": true
+    },
+    {
+      "ref": "refs/remotes/origin/HEAD",
+      "commit": "541b8db91902066840093425109e9d9d93ae3b5c",
+      "target_present": true,
+      "same_target_tree_as_head": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/agent-closure-checkpoint",
+      "commit": "5551ace0a06bf86b09574cf180f4c830a2fb51a7",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/remotes/origin/codex/docs-canonical-architecture",
+      "commit": "151f65bb2a356427982299ca7a7c6cba7e446126",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/remotes/origin/codex/finalize-resource-version-cleanup",
+      "commit": "89f50753909c1ff9b08038d39b3d6128d43da8a6",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/github-actions-b98896b744",
+      "commit": "5ebbdc2f9fc88e37dc8752638f836f02e791687a",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/remotes/origin/main",
+      "commit": "541b8db91902066840093425109e9d9d93ae3b5c",
+      "target_present": true,
+      "same_target_tree_as_head": true
+    },
+    {
+      "ref": "refs/tags/v1.0.0-rc.1",
+      "commit": "aa8987dadaa24ceb4feb4643417bb80a180aa8d0",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/tags/v1.0.0-rc.7",
+      "commit": "1a95a5516377905477bf13d857685b5f275508a3",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    },
+    {
+      "ref": "refs/tags/v1.0.0-rc.8",
+      "commit": "cec95419a63c0eda1bd5c969a0f0b0af5e219cbe",
+      "target_present": false,
+      "same_target_tree_as_head": false
+    }
+  ]
+}

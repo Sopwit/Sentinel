@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-12",
+  "originals": "Private local originals preserved outside the repository; request their retention/export before temporary storage is reclaimed.",
+  "reports": [
+    {
+      "path": "docs/development/CORE_WARDEN_CW01_MODEL_REPORT.md",
+      "original_sha256": "7dda3a7e881092ec1bcc25c5db9c9bf687a305abd9bfb75caa9ee527ea895301",
+      "redacted_sha256": "c568702b6e4135f2c40a3f2545efbcf5a93973b60ef427caa2efc31dd6a1610e",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW02_1_POLISH_REPORT.md",
+      "original_sha256": "026d68f97a63ff20dd775df480f9ee08c2fd9e2389e135015ce49daf49c4d711",
+      "redacted_sha256": "56fdb1363f0679dcdc8498f6f61cb72d21972645b9a68caf1bd3412542e9e344",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW02_REFINEMENT_REPORT.md",
+      "original_sha256": "774d8b5ee4a181cd21773e790aa5b761c81884e760a52d120b195d28083f461e",
+      "redacted_sha256": "f5bb016b6c71ed51156ea901ea1570eb2cfafbf37ae45a32c63fadf40bc357d1",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW04_1_GHOSTTY_REPORT.md",
+      "original_sha256": "b26a87d1a249957e2bf87e9d68bfe06506b75293828c3c87a7a832e8ee16cca4",
+      "redacted_sha256": "ca1cca53ad29a1f66924988c6c4dc88cdcd3dda8b4f73b6421ef1adca3beda78",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW04_2_STARTUP_REPORT.md",
+      "original_sha256": "aba53257b80621735521f7c7673968f42e203d0a64858a84537ab7a554c29691",
+      "redacted_sha256": "52498b52cd8ef7364dc9a603634f858f7e3852e48015cfdfc0f006c45ddf6a79",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW04_3_PRESENTATION_REPORT.md",
+      "original_sha256": "262ffdafae406295a0a67d204577f05f11e97fdfbc507960e91eb71be67a2bdf",
+      "redacted_sha256": "d237a84b7a7cad6551f18d9aaeb971ef54a972567ec5e374daf58cd86a75cb0c",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW04_4_PRESENTATION_REPORT.md",
+      "original_sha256": "dd382ea02b4b35f8261dd5ce1a088e156e9f1328433ef7ffdedf47d5c5ba7971",
+      "redacted_sha256": "9926be219cf43cfc86ebb48d58a49545ecc4da2edb81586c6adf8c61de8b645a",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CORE_WARDEN_CW05A_DESKTOP_INTEGRATION_REPORT.md",
+      "original_sha256": "ad2e9d5d087268726fa929e02c07bb269296a39e6f0e41478e237c2ab18cf1a8",
+      "redacted_sha256": "1491e2b8445ac2ca7a916736be9e003ce6381b2bac8f126d330580268b1162cc",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CROSS_PROVIDER_RESIDUAL_CLOSURE.md",
+      "original_sha256": "b555e429b1d2fe4c515d47480438fff519eccc68cb0e6e8278887f6a63f3116d",
+      "redacted_sha256": "ed8deb6c746c2eba95077890e8ddccc0f6c5c2aee67720f9e873e5212f4f93cf",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/CROSS_PROVIDER_RUNTIME_CERTIFICATION.md",
+      "original_sha256": "9dd13126c15ea1abc736dae07bf06f80433984704c403b0bcc3e7c84a6a21b78",
+      "redacted_sha256": "c88d424029e9bd4891d64c3edb3844b45cb7151fd9aa76fb0f0c3d46e0e1e26e",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/LEGACY_BRANDING_PURGE_REPORT.md",
+      "original_sha256": "1a6c032ec492f4a6df3a7917804b5767b1292cd7e073a464297be5a71ba28538",
+      "redacted_sha256": "a15905f8931ff2dc97b83116ffb261d00e53d664ba7ea3a9a5f6d6c0c694868e",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/MCP_RUNTIME_CERTIFICATION.md",
+      "original_sha256": "4227b2dc205deac66a429398a92ef7bd508f9bffec1a50488f4cfdd0349b2069",
+      "redacted_sha256": "cc7763fdadc2a3991e59190db91182652fbfd03db8d6a90b97f735cccfa6a6da",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TERMINAL_EXPERIENCE_REPORT.md",
+      "original_sha256": "384b0b6c99c943106ca6c4f86f6457d39a7e0decb7002faf5ed3438374c9410a",
+      "redacted_sha256": "f669485a44611b9cc113b9ec290d4dc97262d0e06a52b1ebe1317690cf32d6c8",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V3_1_LIVE_ACCEPTANCE.md",
+      "original_sha256": "6bef80079d81c96e2ca0ac19d5137a55c740484a9b85deccdcfce690eea76046",
+      "redacted_sha256": "4bec7d80c76f2b8a02301adfd5a41591c2091152bae2a74f47de15879b570c91",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V3_3_B_REPORT.md",
+      "original_sha256": "473fa512114c9b5c77b89fc6c2cb16ead0b1304900ba3ffd20dd733c3ff0b7f1",
+      "redacted_sha256": "972fbae375a7c370a62b219c5d8cde4ae1a7109527ac3e61ea269fe6c31e66ca",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V3_3_C_REPORT.md",
+      "original_sha256": "f00ab1e8355b0f2d3c7556d57359fb895649103a06e65c064e7063f389edefbd",
+      "redacted_sha256": "c6e99b50df7226a73c91a971c6c606c2c8e62f79439feba334ef96508bfdf614",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V3_4_TERMINAL_COMPATIBILITY_REPORT.md",
+      "original_sha256": "f16a2f09912344bb94deab177b41849016a91599b0176c95e5ef82d268b60ab3",
+      "redacted_sha256": "cd9e458a7b8c180c241591e154275f925067830a662882ca977a86d73533ef0d",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V4_A_1_SIGNAL_CLEANUP_REPORT.md",
+      "original_sha256": "899d387a596635188f0f0209874909f1ede19cc17f99ab1142e05224c19f0f57",
+      "redacted_sha256": "a82d705b38ba97e0f40a439600944507f5fac20fbfba4ee864992cecf6f1e591",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/development/TUI_V4_A_RELEASE_READINESS_REPORT.md",
+      "original_sha256": "515156cec3c462c52e2ab6a8ab2fceff366c504c1e17fe9a937a8e75a30107ef",
+      "redacted_sha256": "d254d428af270345ad15383a7167d43e0f0e975e953f4252e4ad2855e84b1a0e",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    },
+    {
+      "path": "docs/reviews/core-warden-cw045/REPORT.md",
+      "original_sha256": "a54eee3b56536a1d14cf514a49c0af81afae2bb19e9e45fdaaf901d445d9dae0",
+      "redacted_sha256": "d603a00041a4ba7242b4f966ac26a8cac49ff6559e9449721f9a96505f360a63",
+      "explicit_old_digest_references": [],
+      "edit_scope": "Machine-specific path display/command examples plus explicit privacy annotation; original preserved privately."
+    }
+  ]
+}

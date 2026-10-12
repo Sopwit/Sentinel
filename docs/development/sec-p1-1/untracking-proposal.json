@@ -1,0 +1,86 @@
+{
+  "baseline_head": "541b8db91902066840093425109e9d9d93ae3b5c",
+  "status": "PROPOSAL ONLY \u2014 explicit maintainer approval required; no index/file removal performed",
+  "target_tree": {
+    "path": "docs/reviews/core-warden-rust-terminal/target",
+    "git_tree": "7e8bfa3a3f71af5c1d59b460a4b867e90f70f397",
+    "tracked_files": 2758,
+    "bytes": 703223935,
+    "extensions": {
+      ".json": 318,
+      ".TAG": 1,
+      "(none)": 773,
+      ".timestamp": 317,
+      ".d": 286,
+      ".expr": 2,
+      ".rs": 4,
+      ".o": 614,
+      ".rmeta": 235,
+      ".rlib": 160,
+      ".dylib": 16,
+      ".bin": 24,
+      ".lock": 8
+    }
+  },
+  "bytecode": [
+    {
+      "path": "docs/reviews/agent-v323-2026-10-10/reproduce/__pycache__/sentinel_v323_accept.cpython-315.pyc",
+      "bytes": 8658,
+      "sha256": "4bd5bf6ceb93d0e06be8fd1a81702dd3da46b4bda8f26391a10278536e1d8a92",
+      "index_blob": "457f40e32ee24ce7b82741ce780cf823f638927a"
+    },
+    {
+      "path": "docs/reviews/agent-v324-2026-10-10/reproduce/__pycache__/live_readonly.cpython-315.pyc",
+      "bytes": 20533,
+      "sha256": "0a4ebd85e13c607bf87b9222737cf939a810b4ee6c9bae67c6a8f09007881e65",
+      "index_blob": "1530bc4308ccaad722b00225cc87838cc2acc0f4"
+    },
+    {
+      "path": "docs/reviews/core-warden-cw044/__pycache__/ab_pty.cpython-315.pyc",
+      "bytes": 4769,
+      "sha256": "5af0c7ec7486819a124bda6778fc813f1eff389878893a809941a2e7d6f2bd5e",
+      "index_blob": "c17062a9cd1f9813f74c2d640e8681cd18dd0d74"
+    },
+    {
+      "path": "docs/reviews/core-warden-cw044/__pycache__/production_pty.cpython-315.pyc",
+      "bytes": 18302,
+      "sha256": "4af3e05deb3dca47a7780ca22d592a3ea27d8165fb42486e56d981ac3e1a2c24",
+      "index_blob": "9bc2ca2a7629856f9134825fd7645763d3c81aad"
+    },
+    {
+      "path": "docs/reviews/core-warden-cw045/__pycache__/production_pty.cpython-315.pyc",
+      "bytes": 19690,
+      "sha256": "b46574d8d53e98607b1de8d0555b4a52517ec6389c6cc3146dd7499f53b460f8",
+      "index_blob": "b6685611c683be5c92f86a24b07b732bd7a55f7e"
+    },
+    {
+      "path": "docs/reviews/core-warden-rust-terminal/__pycache__/fragmented_probe_check.cpython-315.pyc",
+      "bytes": 8342,
+      "sha256": "35a9ef00b16bbaedbd596208c59571aa5ead1e1a966802c4743477fef944eeb9",
+      "index_blob": "a8625d596000511de4066e2e7c6ceab41aa2902a"
+    },
+    {
+      "path": "docs/reviews/core-warden-rust-terminal/__pycache__/run.cpython-315.pyc",
+      "bytes": 10360,
+      "sha256": "426a39cd34d8cab87c9fe624fe4b400da26da075ad7732e2b570987e21dbf53d",
+      "index_blob": "895c72c75ad6eeef1400fb9588c98359c1de8615"
+    },
+    {
+      "path": "docs/reviews/tui-v33b/__pycache__/pty_journeys.cpython-315.pyc",
+      "bytes": 23274,
+      "sha256": "cfc3c6b3dd811fb1489a8dc0c20c9b7c000bcb2a778e0db86b1172343bbce2b3",
+      "index_blob": "32026b95af475b6c946ed2068eecfa84fea23219"
+    },
+    {
+      "path": "docs/reviews/tui-v34/__pycache__/compatibility.cpython-315.pyc",
+      "bytes": 17488,
+      "sha256": "a8eb327f95b98dcc75f694e0870e96b1043deea7aecac6555830b8c18e047cb8",
+      "index_blob": "eb5c7f55721a0033628c74578696caf26998cf6b"
+    }
+  ],
+  "total_files": 2767,
+  "total_bytes": 703355351,
+  "complete_private_receipt_sha256": "3ca23c5446e225448523f65e4ff6373c05e7aad97092bdb37236870a1a97130f",
+  "rebuild": "CARGO_TARGET_DIR=<fresh-private-target> cargo +1.94.0 build --manifest-path docs/reviews/core-warden-rust-terminal/Cargo.toml --locked --offline",
+  "rebuild_scope": "Fresh debug build and two unit tests passed; no bit-for-bit identity or physical evidence reproduction claimed."
+}
