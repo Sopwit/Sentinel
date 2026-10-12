@@ -1,0 +1,41 @@
+Bundled font metadata notices
+Extracted verbatim from the unchanged OpenType name tables. OFL-1.1.txt applies.
+
+resources/fonts/IBMPlexMono-Regular.ttf
+SHA-256: 7c6fbddca4b700be918f5f6183d9bd4464fa427fe435f0b480d77fe2bb8c5a43
+OpenType name ID 0:
+Copyright 2017 IBM Corp. All rights reserved.
+OpenType name ID 1:
+IBM Plex Mono
+OpenType name ID 5:
+Version 2.005
+OpenType name ID 7:
+IBM Plex® is a trademark of IBM Corp, registered in many jurisdictions worldwide.
+OpenType name ID 8:
+Bold Monday
+OpenType name ID 9:
+Mike Abbink, Paul van der Laan, Pieter van Rosmalen
+OpenType name ID 13:
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL
+OpenType name ID 14:
+http://scripts.sil.org/OFL
+
+resources/fonts/InterVariable.ttf
+SHA-256: 4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf
+OpenType name ID 0:
+Copyright 2016 The Inter Project Authors
+OpenType name ID 1:
+Inter Variable
+OpenType name ID 5:
+Version 4.001;git-9221beed3
+OpenType name ID 7:
+Inter UI and Inter is a trademark of rsms.
+OpenType name ID 8:
+rsms
+OpenType name ID 9:
+Rasmus Andersson
+OpenType name ID 13:
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL
+OpenType name ID 14:
+http://scripts.sil.org/OFL
+

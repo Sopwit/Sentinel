@@ -1,0 +1,20 @@
+# Third-party notices and distribution gates
+
+Sentinel source is GPL-3.0-or-later, subject to file-specific notices; see [LICENSE](LICENSE). This file is an inventory and disclosure of unresolved obligations, not legal clearance.
+
+| Material | Evidence and obligations |
+| --- | --- |
+| Rust CLI/TUI crates | [Locked inventory](docs/development/sec-p1/dependency-inventory.json). The evaluation packager copies original available license/notice files, including required Unicode notices and declared `license_file` texts. Review the actual chosen alternatives; preserve applicable copyright, permission, attribution and NOTICE requirements. |
+| `base64-simd 0.8.0`, `vsimd 0.8.0` | Original upstream MIT text at the exact crate VCS commit is in [third_party/licenses](third_party/licenses/provenance.json). The packager verifies revision and SHA-256 before inclusion. |
+| `block2 0.6.2`, `dispatch2 0.3.1`, `objc2 0.6.4`, `objc2-encode 4.1.0` | Exact-revision upstream `LICENSE.md` policies are preserved with provenance. They point to license terms and describe Apple SDK uncertainty, without complete copyright/permission notices. These four items remain unresolved. No ownership, permissions or replacement notices are invented. |
+| Qt and its bundled third-party code | Qt module and third-party licenses must be inventoried for the exact deployed Qt build, including plugins, SQL drivers, multimedia dependencies and optional PDF support. Qt supports several license routes; the project license alone does not establish compliance for every shipped component. Include applicable original texts, notices and source/relinking arrangements under the selected route. See [Qt licensing](https://doc.qt.io/qt-6/licensing.html) and its [third-party inventory](https://doc.qt.io/qt-6/licenses-used-in-qt.html). |
+| Tabler icons | Original MIT notice: [resources/icons/tabler/LICENSE](resources/icons/tabler/LICENSE). Preserve it when redistributing embedded icons. |
+| Inter Variable and IBM Plex Mono | [Font notices](resources/fonts/LICENSES/README.md) and [OFL 1.1](resources/fonts/LICENSES/OFL-1.1.txt). Preserve embedded copyright/license fields and the OFL text. Font names and modifications remain subject to OFL terms. |
+| Core Warden, Sentinel FA-3 branding and sounds | Supplied project resources; complete ownership/reference provenance and redistribution permission have not been established by this audit. Branding similarity/trademark evidence remains deferred in the existing brand guidelines. No visual or sound assets were modified and no new permission was asserted. |
+| Rust toolchain, system libraries and deployment tools | Cargo declarations are not a full binary-symbol or toolchain inventory. Review exact toolchain notices and any redistributed runtime/library components before distribution. Build tools are not necessarily bundled application dependencies. |
+
+Public binary distribution requires a GPL-compliant Corresponding Source mechanism covering the actual binary and relevant build/install scripts and dependencies. A repository URL alone does not prove the binary corresponds to available source. Preserve third-party source/notice obligations independently. The TUI V4-B archive remains conditional local evaluation material, not cleared for publication.
+
+Desktop installation now includes this disclosure, the project GPL text, Tabler MIT notice and font notice directory (inside the macOS bundle; under the installed license directory on other platforms). This does not supply the unresolved Qt/toolchain/artwork evidence or retroactively alter an existing archive.
+
+SEC-P1.3 notice supplements: the five embedded `resources/icons/lucide/` SVGs now have the upstream original ISC/Feather MIT notice and immutable retrieval provenance in that directory. Their acquisition revision and local modifications are not established; this supplement does not certify their provenance. Desktop packages include these files under `licenses/lucide`. Font copyright, trademark, designer and OFL metadata extracted verbatim from unchanged font files is preserved in `resources/fonts/LICENSES/COPYRIGHTS.txt`.
