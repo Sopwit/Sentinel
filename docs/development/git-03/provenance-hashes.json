@@ -1,0 +1,7 @@
+{
+  "private_seven_report_provenance_sha256": "PRIVATE_REFERENCE_aaed3cb1000649a3b2279e7a665d43fa",
+  "private_complete_selected_derivative_receipt_sha256": "8e41a6f48a956b3b232d1be3959477ac70e62da3428507cc638bdd124829a9c3",
+  "private_fresh_commit_map_sha256": "3742a2aca81466c93b1bafd6acf6ff07f6f71a66ee0e4b6fa1d19840e9dc2dab",
+  "public_ref_map_sha256": "d63a6f42ab4d31ce18be6f8221839f5f701b1705ab0c015a33ab60d4c0e4e8e0",
+  "_privacy_notice": "REDACTED DESCRIPTIVE HISTORICAL EVIDENCE ONLY. Opaque reference strings are not executable hashes or lookup inputs. Recorded findings concern original historical bytes, not these redacted bytes. Exact provenance remains private; this is not publication clearance. Historical maps and SHA leases are inactive."
+}

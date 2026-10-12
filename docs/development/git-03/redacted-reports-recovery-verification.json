@@ -1,0 +1,37 @@
+{
+  "status": "CONTENT_GIT_AND_ISOLATED_RESTORATION_PASS",
+  "destination": "/Volumes/NeuralSilicon/Sentinel_GIT03_RedactedReports_2026-10-12",
+  "head": "d72ac588775a6ab84db5e60100e0d341f3280336",
+  "payload_regular_files": 5499,
+  "payload_directories": 315,
+  "payload_symlinks": 0,
+  "payload_logical_bytes": 989995787,
+  "metadata_exception_count": 0,
+  "metadata_exception_fields": [],
+  "native_metadata_corrections": {
+    "birthtime": 5791
+  },
+  "paths_types_all_regular_sha256_and_link_targets_match": true,
+  "source_stable_during_copy": true,
+  "latest_all_private_and_public_local_refs_covered": true,
+  "new_candidate_and_maps_hash_verified": true,
+  "original_three_bodies_hash_verified_in_new_private_git": true,
+  "restored_tracked_hashes": 5136,
+  "restored_untracked_hashes": 51,
+  "restored_head_refs_status_match": true,
+  "primary_candidate_and_restored_fsck": "pass",
+  "ignored_build_outputs_restored_by_this_package": false,
+  "existing_two_backups_preserved": true,
+  "plaintext": true,
+  "admin_or_remote_operations": 0,
+  "seven_private_original_and_derivative_hashes_verified": true,
+  "private_provenance_ledger": "private-records/seven-report-provenance-private.json",
+  "native_acl_comparison": {
+    "native_acl_entries_compared": 5814,
+    "differences": 0,
+    "entries_with_extended_acl": 0,
+    "isolated_restoration_worktree_independent": true
+  },
+  "all_older_backups_preserved": true,
+  "final_closeout_reports_stored_separately": true
+}

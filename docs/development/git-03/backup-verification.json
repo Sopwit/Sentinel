@@ -1,0 +1,21 @@
+{
+  "backup_accessible": true,
+  "receipt_paths_types_sizes_hashes_match": true,
+  "entries": 131800,
+  "types": {
+    "dir": 6287,
+    "file": 125513
+  },
+  "logical_file_bytes": 16186361160,
+  "fsck_exit": 0,
+  "backup_head_refs_status_match_receipt": true,
+  "backup_head": "f920c8abc5aa1de49fe7df372a1bca6a5b4f35fd",
+  "current_primary_head": "d72ac588775a6ab84db5e60100e0d341f3280336",
+  "current_commit_present_in_backup": false,
+  "plaintext_owner_accepted": true,
+  "encrypted": false,
+  "provenance_exceptions_remain_metadata_only": 7,
+  "original_internal_receipt_unchanged": true,
+  "outside_project_private_evidence_externally_backed_up": false,
+  "external_backup_overwritten": false
+}

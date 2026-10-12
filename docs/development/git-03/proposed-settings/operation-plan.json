@@ -1,0 +1,55 @@
+{
+  "status": "PROPOSED ONLY; separate owner authorization required",
+  "operations": [
+    {
+      "method": "PUT",
+      "endpoint": "repos/Sopwit/Sentinel/vulnerability-alerts",
+      "body": null,
+      "expect": 204
+    },
+    {
+      "method": "PUT",
+      "endpoint": "repos/Sopwit/Sentinel/automated-security-fixes",
+      "body": null,
+      "expect": 204
+    },
+    {
+      "method": "PUT",
+      "endpoint": "repos/Sopwit/Sentinel/private-vulnerability-reporting",
+      "body": null,
+      "expect": 204
+    },
+    {
+      "method": "POST",
+      "endpoint": "repos/Sopwit/Sentinel/rulesets",
+      "body_file": "main-ruleset.json",
+      "expect": 201
+    },
+    {
+      "method": "POST",
+      "endpoint": "repos/Sopwit/Sentinel/rulesets",
+      "body_file": "tag-creation-ruleset.json",
+      "expect": 201
+    },
+    {
+      "method": "POST",
+      "endpoint": "repos/Sopwit/Sentinel/rulesets",
+      "body_file": "tag-immutability-ruleset.json",
+      "expect": 201
+    },
+    {
+      "method": "PUT",
+      "endpoint": "repos/Sopwit/Sentinel/environments/release-signing",
+      "body_file": "release-signing-environment.json",
+      "expect": 200
+    },
+    {
+      "method": "POST",
+      "endpoint": "repos/Sopwit/Sentinel/environments/release-signing/deployment-branch-policies",
+      "body_file": "release-tag-deployment-policy.json",
+      "expect": 200
+    }
+  ],
+  "before_apply": "Re-read existing settings, preserve full responses privately, verify owner ID and GitHub Actions app ID, skip/update matching rulesets/environment rather than duplicate. No API mutation used as validation. Abort unsupported User bypass rather than substitute a broader actor.",
+  "rollback": "Record returned ruleset IDs and before-state. Owner-approved disable only affected ruleset for bounded emergency window; no blanket bypass. Re-enable exact original rules with PUT and read back active enforcement before ending window. Never automatically roll back security features to disabled."
+}

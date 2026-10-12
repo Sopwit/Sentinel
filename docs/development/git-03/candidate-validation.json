@@ -1,0 +1,17 @@
+{
+  "mapped_commits": 499,
+  "changed_commits": 103,
+  "original_signature_headers": 7,
+  "lost_signature_headers": 7,
+  "only_exact_generated_deletions_and_ledger_substitutions": true,
+  "historical_deletion_occurrences": 44372,
+  "historical_substitution_occurrences": 6828,
+  "unique_prepared_derivatives_used": 394,
+  "author_committer_messages_preserved": true,
+  "public_refs": 13,
+  "private_checkpoint_refs": 0,
+  "remote_tracking_refs": 0,
+  "tags_unchanged": true,
+  "artwork_baseline_files_verified": 651,
+  "publication_context_clearance": "all seven explicitly approved report versions precisely redacted; full conversation records removed"
+}

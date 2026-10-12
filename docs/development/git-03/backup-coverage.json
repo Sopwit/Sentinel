@@ -1,0 +1,11 @@
+{
+  "four_exact_originals_verified_in_retained_external_git": 4,
+  "prior_manifest_sha256": "267043ec75e9f79e0eb48dd88a133335fb89f70f91742a84a157bfb772381931",
+  "latest_primary_head_covered": "d72ac588775a6ab84db5e60100e0d341f3280336",
+  "new_derivative_ledger_and_new_commit_map_externally_backed_up": true,
+  "old_backups_overwritten": false,
+  "all_seven_exact_originals_verified_in_retained_external_git": 7,
+  "new_recovery_destination_owner_approved": "/Volumes/NeuralSilicon/Sentinel_GIT03_RedactedReports_2026-10-12",
+  "new_recovery_verified": true,
+  "new_recovery_destination": "/Volumes/NeuralSilicon/Sentinel_GIT03_RedactedReports_2026-10-12"
+}

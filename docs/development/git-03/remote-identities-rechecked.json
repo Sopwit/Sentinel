@@ -1,0 +1,17 @@
+{
+  "read_only": true,
+  "branches": 10,
+  "tags": 3,
+  "expected_old_ids_still_match": true,
+  "open_prs": 6,
+  "open_pr_numbers": [
+    8,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "observed_at_utc": "2026-10-12T20:03:29.114766+00:00",
+  "no_remote_git_fetch_or_mutation": true
+}

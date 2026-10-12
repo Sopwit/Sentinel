@@ -1,0 +1,13 @@
+# ILLUSTRATIVE REDACTED PATCH - NON-EXECUTABLE; NEVER APPLY.
+# DESCRIPTIVE REDACTED HISTORICAL EVIDENCE ONLY. Opaque labels are not hashes, filesystem locations or executable verification inputs. Historical conclusions concern retained original evidence, not fresh validation of these redacted bytes. Exact mappings remain private.
+--- a/.gitignore
++++ b/.gitignore
+@@ -104,3 +104,8 @@
+ /runtime-models/
+ /sentinel*.db
+ /sentinel*.db-journal
++
++# Private historical Agent review records: do not re-add.
++/PRIVATE_REFERENCE_a279cf0cd5754ba3be12eeeb68246c88
++/PRIVATE_REFERENCE_df18006d90434b19be617cc37a21b6ae
++/PRIVATE_REFERENCE_2e10bd245a654691803eafdcaeab1a1f

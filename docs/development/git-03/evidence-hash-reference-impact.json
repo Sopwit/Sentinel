@@ -1,0 +1,112 @@
+{
+  "references_to_original_hashes": 21,
+  "records": [
+    {
+      "path": "docs/reviews/agent-v323-2026-10-10/artifact-sha256.json",
+      "original_sha256": "PRIVATE_REFERENCE_8a81a80bf1ec42b0ac4ccafb34eb4e44",
+      "prepared_derivative_sha256": "PRIVATE_REFERENCE_329797341399470694bb5c41b7d141e1"
+    },
+    {
+      "path": "docs/reviews/agent-v323-2026-10-10/artifact-sha256.json",
+      "original_sha256": "PRIVATE_REFERENCE_a49b05704c964b4e981c8fc39f6cf0e1",
+      "prepared_derivative_sha256": "PRIVATE_REFERENCE_f168c4869f4c47339c0ca65f78658386"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "473fa512114c9b5c77b89fc6c2cb16ead0b1304900ba3ffd20dd733c3ff0b7f1",
+      "prepared_derivative_sha256": "4b47e4f8071333bd97e5e4a19fdc6d8f265562a677f9d63f2d7eace02a764dd4"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "384b0b6c99c943106ca6c4f86f6457d39a7e0decb7002faf5ed3438374c9410a",
+      "prepared_derivative_sha256": "7afcf349ff116bf60e50b7c566258c5ce904a79cbe661edc2f379b99935b90aa"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "f16a2f09912344bb94deab177b41849016a91599b0176c95e5ef82d268b60ab3",
+      "prepared_derivative_sha256": "d58d82ee8e4acf035c34cc49f5f343796c8dd8400f4e95e76a63dbbee8e9c938"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "6bef80079d81c96e2ca0ac19d5137a55c740484a9b85deccdcfce690eea76046",
+      "prepared_derivative_sha256": "d580773206925741c77599352d55d2931ae54d7cf03c58617e00e9c6832d9071"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "b26a87d1a249957e2bf87e9d68bfe06506b75293828c3c87a7a832e8ee16cca4",
+      "prepared_derivative_sha256": "f2bc55e429625ce411912bfeaaa9b124a7cd8aa3a501943fd30eb6f1885a74e6"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "1a6c032ec492f4a6df3a7917804b5767b1292cd7e073a464297be5a71ba28538",
+      "prepared_derivative_sha256": "ccde59a967a6160deaf6565ae22ce2e7556efaad7508131c5d888b80b5c9ea49"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "774d8b5ee4a181cd21773e790aa5b761c81884e760a52d120b195d28083f461e",
+      "prepared_derivative_sha256": "cb29cd62903fbe3d216d37fb1e14631a535a927a6a77c8d051a43c01863c6a16"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "899d387a596635188f0f0209874909f1ede19cc17f99ab1142e05224c19f0f57",
+      "prepared_derivative_sha256": "445dae393be62ae6074d0db94fdda5329cd5e263a446f24d9d426013979e4c3e"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "dd382ea02b4b35f8261dd5ce1a088e156e9f1328433ef7ffdedf47d5c5ba7971",
+      "prepared_derivative_sha256": "20119ebec60c7f802d667d6af784df96e2b9d978d6e3f43705c3ea18b0bce976"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "262ffdafae406295a0a67d204577f05f11e97fdfbc507960e91eb71be67a2bdf",
+      "prepared_derivative_sha256": "6791ef8f184973dc42c0a33ff52ccfdebdbba32b5753b171e92c59fbcf4b62fe"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "ad2e9d5d087268726fa929e02c07bb269296a39e6f0e41478e237c2ab18cf1a8",
+      "prepared_derivative_sha256": "f40035763ef81e8ea060ce88c4421803415d4e8490fc920445d8e4847961e32d"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "7dda3a7e881092ec1bcc25c5db9c9bf687a305abd9bfb75caa9ee527ea895301",
+      "prepared_derivative_sha256": "b50776280e807c415065f24353a66c0494e2d7e790331bc04781e74489c67a8a"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "f00ab1e8355b0f2d3c7556d57359fb895649103a06e65c064e7063f389edefbd",
+      "prepared_derivative_sha256": "5bfff1cb2afec582cbce3e21ef2a96febe3392a3ecdc078c97b69a131d05e926"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "aba53257b80621735521f7c7673968f42e203d0a64858a84537ab7a554c29691",
+      "prepared_derivative_sha256": "c19a34e029fd72726ff7e8ef7540088394729b83073ff67aa9f864be582d55df"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "a54eee3b56536a1d14cf514a49c0af81afae2bb19e9e45fdaaf901d445d9dae0",
+      "prepared_derivative_sha256": "6c075ef1f63cb1f887cff59f51474d1e6e37153aef09c331069249a5ddbd9223"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "b555e429b1d2fe4c515d47480438fff519eccc68cb0e6e8278887f6a63f3116d",
+      "prepared_derivative_sha256": "feee47198de73142708c957a7a6426f48cae3c0c92cd7de3d881f2c30e0bb6e4"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "4227b2dc205deac66a429398a92ef7bd508f9bffec1a50488f4cfdd0349b2069",
+      "prepared_derivative_sha256": "2d5c5f3d2bef7f2414647c3356eef460f329d05e3e32a3b5245c4a7c3a301d6e"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "026d68f97a63ff20dd775df480f9ee08c2fd9e2389e135015ce49daf49c4d711",
+      "prepared_derivative_sha256": "703ff3fcbd6b21ba9954bfdb81711731aed6f14ece4f9f153820a8ad0ca50c92"
+    },
+    {
+      "path": "docs/development/sec-p1-1/report-redactions.json",
+      "original_sha256": "515156cec3c462c52e2ab6a8ab2fceff366c504c1e17fe9a937a8e75a30107ef",
+      "prepared_derivative_sha256": "bfc24c9d965ffb530e559b22410868f6facf7e8035b8293383a293dae0512944"
+    }
+  ],
+  "policy": "Original hash remains valid for retained private original only; derivative validated via exact ledger. Historical manifest/assertion values not rewritten.",
+  "_privacy_notice": "DESCRIPTIVE REDACTED HISTORICAL EVIDENCE ONLY. Opaque labels are not hashes, filesystem locations or executable verification inputs. Historical conclusions concern retained original evidence, not fresh validation of these redacted bytes. Exact mappings remain private."
+}

@@ -1,0 +1,17 @@
+{
+  "primary_tracked_hashes_preserved": 5136,
+  "primary_head_index_and_tracked_diff_unchanged": true,
+  "candidate_full_fsck": "pass",
+  "all_499_commit_scope_comparisons": "pass",
+  "all_496_candidate_tree_removal_checks": "pass",
+  "seven_original_to_derivative_reconstructions": "pass",
+  "historical_outcomes_and_designated_measurements": "unchanged",
+  "asset_resource_hash_checks": 677,
+  "protected_previous_baseline_hash_checks": 651,
+  "fresh_probe": "2 passed, 0 failed",
+  "independent_recovery_and_private_provenance_coverage": "pass",
+  "public_refs_expected_old_ids_still_match": true,
+  "open_prs": 6,
+  "json_links_diff_check": "pass",
+  "remote_admin_publication_operations": 0
+}

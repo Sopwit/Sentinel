@@ -1,0 +1,26 @@
+{
+  "status": "APPROVED AND COMPLETED; see supplemental-backup-verification.json",
+  "proposed_destination": "/Volumes/NeuralSilicon/Sentinel_GIT03_Supplement_2026-10-12",
+  "plaintext": true,
+  "current_preflight_regular_files_excluding_candidate": 8650,
+  "current_preflight_logical_bytes_excluding_candidate": 675071885,
+  "scope": [
+    "Entire current .git, including private refs for private recovery only",
+    "Eight explicit current preparation reports/directories",
+    "Internal recovery evidence, receipts and simulation records, excluding its duplicate workspace",
+    "Original/sanitized historical blobs and original PNG evidence",
+    "Original generated-file receipt",
+    "Final isolated candidate and bounded validation records"
+  ],
+  "not_claimed": "Plaintext only; one explicit group metadata exception; only listed private evidence is covered; no complete disaster-recovery certification.",
+  "final_prepared_payload_size": {
+    "prepared_regular_files": 8724,
+    "prepared_logical_bytes": 1148756913,
+    "prepared_only": true,
+    "mutable_report_finalization_requires_fresh_manifest_before_copy": true,
+    "destination_written": false
+  },
+  "isolated_restoration_plan": "Copy existing external project into a new private local restore directory; quarantine only that restore copy\u2019s old .git; overlay supplement current private .git and exact preparation docs; compare HEAD/refs/status with latest private receipt and run fsck. Verify copied payload hashes independently. Neither existing external backup nor primary/internal snapshot is changed.",
+  "destination_written": true,
+  "verification_receipt": "supplemental-backup-verification.json"
+}

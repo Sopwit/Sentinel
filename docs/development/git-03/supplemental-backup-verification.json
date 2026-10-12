@@ -1,0 +1,43 @@
+{
+  "status": "CONTENT_AND_GIT_RESTORATION_VERIFIED_WITH_ONE_METADATA_EXCEPTION",
+  "destination": "/Volumes/NeuralSilicon/Sentinel_GIT03_Supplement_2026-10-12",
+  "plaintext": true,
+  "head": "d72ac588775a6ab84db5e60100e0d341f3280336",
+  "payload_regular_files": 8752,
+  "payload_directories": 1501,
+  "payload_symlinks": 2,
+  "payload_logical_bytes": 1148795057,
+  "paths_types_hashes_and_symlink_targets": "pass",
+  "source_stable_during_copy": true,
+  "copied_primary_and_candidate_fsck": "pass",
+  "metadata_exception_count": 1,
+  "metadata_exception": "One copied symlink retains destination staff group rather than source root group; owner lacks permission to assign root group. Content and symlink target match. Full metadata equality is not claimed.",
+  "metadata_corrections": {
+    "birthtime": 8339,
+    "mtime_ns": 2
+  },
+  "native_acl_comparison": {
+    "native_ls_acl_entries_compared": 10255,
+    "acl_differences": 0,
+    "entries_with_extended_acl": 0,
+    "method": "Native macOS ls -lden; direct ACL API returned ENOENT and was not treated as proof"
+  },
+  "isolated_restoration": {
+    "status": "PASS",
+    "restored_entries": 131880,
+    "restored_regular_files": 125591,
+    "restored_logical_file_bytes": 16186498705,
+    "restored_symlinks": 0,
+    "paths_types_sha256_and_symlinks_verified": true,
+    "head_refs_and_status_match_latest_captured_primary": true,
+    "restored_head": "d72ac588775a6ab84db5e60100e0d341f3280336",
+    "fsck_full_exit": 0,
+    "isolated_restore_retained_privately": true,
+    "base_git_copy_quarantined_not_deleted": true,
+    "primary_and_existing_backups_untouched": true
+  },
+  "original_derivative_pairs_verified": 394,
+  "existing_internal_and_external_backups_preserved": true,
+  "coverage": "Captured latest private Git state and exact listed recovery evidence plus candidate/maps; not every private location on the machine and not encrypted disaster-recovery certification.",
+  "closeout_docs": "Final reports and this summary copied separately into closeout/ with separate hashes; initial payload preserved."
+}

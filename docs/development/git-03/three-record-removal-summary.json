@@ -1,0 +1,20 @@
+{
+  "paths": [
+    "PRIVATE_REFERENCE_a279cf0cd5754ba3be12eeeb68246c88",
+    "PRIVATE_REFERENCE_df18006d90434b19be617cc37a21b6ae",
+    "PRIVATE_REFERENCE_2e10bd245a654691803eafdcaeab1a1f"
+  ],
+  "historical_versions": 3,
+  "versions_per_path": {
+    "PRIVATE_REFERENCE_a279cf0cd5754ba3be12eeeb68246c88": 1,
+    "PRIVATE_REFERENCE_df18006d90434b19be617cc37a21b6ae": 1,
+    "PRIVATE_REFERENCE_2e10bd245a654691803eafdcaeab1a1f": 1
+  },
+  "public_commits_examined": 499,
+  "public_unique_source_trees_examined": 497,
+  "original_aliases_outside_approved_paths": [],
+  "original_and_sanitized_blobs_unreachable": 6,
+  "exact_original_bytes_and_hashes_verified_in_external_backup": true,
+  "full_original_blob_hash_provenance": "Private; identified by provenance receipt digest only",
+  "_privacy_notice": "DESCRIPTIVE REDACTED HISTORICAL EVIDENCE ONLY. Opaque labels are not hashes, filesystem locations or executable verification inputs. Historical conclusions concern retained original evidence, not fresh validation of these redacted bytes. Exact mappings remain private."
+}

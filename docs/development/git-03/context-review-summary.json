@@ -1,0 +1,20 @@
+{
+  "original_four_held_blobs_resolved": 4,
+  "additional_current_variants_explicitly_owner_approved": 3,
+  "precise_report_versions": 7,
+  "root_only_previously_reviewed_blobs": 387,
+  "total_transformed_source_blobs": 394,
+  "full_live_record_derivatives_excluded": 3,
+  "all_reviewed_report_outcome_tokens_preserved": true,
+  "all_designated_measurement_regression_sections_preserved": true,
+  "all_bytes_outside_private_recorded_edits_unchanged": true,
+  "original_to_final_sensitive_edit_spans": 160,
+  "additional_report_removal_required": false,
+  "categories": [
+    "real session/run/notification/tool identifiers",
+    "process identifiers and machine-specific acceptance roots",
+    "credential-presence/configured-provider inventory",
+    "personal model selectors/aliases/storage and endpoint configuration"
+  ],
+  "private_receipts": "Exact original/new Git OIDs, SHA-256, byte ranges, span hashes and replacement bytes retained privately; no raw values reproduced here."
+}

@@ -1,0 +1,61 @@
+{
+  "objects": 16365,
+  "types": {
+    "commit": 499,
+    "tree": 6162,
+    "blob": 9704
+  },
+  "blob_bytes": 581336766,
+  "patterns": {
+    "home_paths": {
+      "matching_blobs": 19,
+      "occurrences": 20,
+      "generated_matching_blobs": 0
+    },
+    "machine_temp": {
+      "matching_blobs": 239,
+      "occurrences": 1185,
+      "generated_matching_blobs": 0
+    },
+    "external_volumes": {
+      "matching_blobs": 9,
+      "occurrences": 56,
+      "generated_matching_blobs": 0
+    },
+    "private_key_headers": {
+      "matching_blobs": 0,
+      "occurrences": 0,
+      "generated_matching_blobs": 0
+    },
+    "provider_token_forms": {
+      "matching_blobs": 0,
+      "occurrences": 0,
+      "generated_matching_blobs": 0
+    },
+    "reviewed_real_correlation_values": {
+      "matching_blobs": 0,
+      "occurrences": 0,
+      "generated_matching_blobs": 0
+    },
+    "configured_credential_inventory": {
+      "matching_blobs": 0,
+      "occurrences": 0,
+      "generated_matching_blobs": 0
+    },
+    "reviewed_personal_model_alias": {
+      "matching_blobs": 9,
+      "occurrences": 15,
+      "generated_matching_blobs": 0
+    }
+  },
+  "metadata_matching_commits_or_tags": {
+    "home_paths": 0,
+    "machine_temp": 0,
+    "external_volumes": 0,
+    "private_key_headers": 0,
+    "provider_token_forms": 0,
+    "reviewed_real_correlation_values": 0,
+    "configured_credential_inventory": 0,
+    "reviewed_personal_model_alias": 0
+  }
+}
