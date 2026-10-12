@@ -1,5 +1,7 @@
 # Core Warden CW-04.1 — Production release display diagnosis
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 ## Proven causes
 
 1. **The invoked release executable was stale.** Before this task, `cli/target/release/sentinel` was dated 2026-10-11 00:43:59 local time, while the integrated debug executable was dated 01:11:07. The old release's strings contained the old settings inspection but neither `SENTINEL_TUI_MASCOT` nor `/settings mascot`. Its SHA-256 was `8c894c995fa29186513375222770cff72828bd0aa848670766f29a5d4680f986`. Consequently the exact release command used by the user could not execute the new mascot path. CW-04 had built the debug workspace, not release. This is a delivery defect, rather than evidence that Ghostty rejected Kitty.
@@ -13,14 +15,14 @@ The physical Ghostty shell's environment/capability reply was not captured in th
 - `cli/crates/sentinel-tui/src/mascot.rs`: opt-in startup/presentation diagnostics with asset root/result, mode, environment gate flags, negotiated protocol/cell size, state, placement, selected resolution, loaded-frame count, decoded bytes, loader status and render invocation. Transition records are deduplicated; at most 64 records / 64 KiB per launch. The file must be new; create-new prevents overwriting existing files, Unix mode is 0600, and an unavailable destination disables logging. Prompts, model output, arbitrary keyboard bytes and IPC payloads are not recorded.
 - `cli/crates/sentinel-mascot/src/capability.rs`: explain the observed parsed Kitty/Sixel acknowledgement, cell response, response byte count, 300ms budget, measured elapsed time and bounded exit decision. Protocol selection and timeout behavior remain unchanged.
 - `cli/crates/sentinel-mascot/README.md`: diagnostic usage and local pasted mascot preference behavior.
-- Actual optimized executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+- Actual optimized executable: `<repository-root>/cli/target/release/sentinel`.
 - Current release SHA-256: `04ac8203350fe9c585fdda151decb753d5bacb750ab76f6a2801aef223c2241c` (also saved in `docs/reviews/core-warden-cw041/release-identity.json`).
 
 All existing work was preserved. C++ daemon, AgentRuntime, Blender models, animation frames and FA-3 icon were not modified in CW-04.1. No commit, push, merge or system-wide binary installation occurred. Personal-Brain `brain` was unavailable on PATH; the supplied workspace and repository instructions were used.
 
 ## Assets and capability results
 
-The normal development root resolves from the compile-time TUI crate directory to `<LOCAL_HOME>/Desktop/Projects/Sentinel/assets/core-warden`. Explicit `SENTINEL_CORE_WARDEN_ASSETS` takes priority; an existing executable-relative `../share/sentinel/core-warden` directory is the installed candidate. No recursive search or asset copies were added.
+The normal development root resolves from the compile-time TUI crate directory to `<repository-root>/assets/core-warden`. Explicit `SENTINEL_CORE_WARDEN_ASSETS` takes priority; an existing executable-relative `../share/sentinel/core-warden` directory is the installed candidate. No recursive search or asset copies were added.
 
 The contract/manifest and all 132 required PNG paths validate. The Rust test `all_132_pngs_decode_as_expected_rgba` decodes every source PNG at 96/128/192px. Production retains only the chosen clip/resolution. Confirmed 120×40 empty presentation: `[x=52,y=13,w=16,h=8]`, source 128px, 16 Idle frames, 1,048,576 retained source RGBA bytes. Populated presentation: reserved header rectangle `[94,0,6,3]`, 96px source, 16 frames, 589,824 source RGBA bytes. These exclude encoded payloads and terminal texture memory.
 
@@ -44,7 +46,7 @@ Evidence and reproduction script: `docs/reviews/core-warden-cw041/production_pty
 Physical Ghostty PASS is **not claimed**. Earlier computer-use access to Ghostty was denied; it was not bypassed. Run this in the real Ghostty window, with enough room (at least 80×24; 120×40 recommended):
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel
+cd "$SENTINEL_REPO"
 SENTINEL_TUI_MASCOT=animated \
 SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw041-$(date +%s).jsonl" \
 ./cli/target/release/sentinel tui

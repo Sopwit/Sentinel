@@ -30,3 +30,21 @@
 *.dmg binary
 *.msi binary
 *.AppImage binary
+
+# Rust and repository tooling
+*.rs text eol=lf
+*.toml text eol=lf
+Cargo.lock text eol=lf
+*.py text eol=lf
+
+# Canonical art/source models and media must never receive text conversion
+*.blend binary
+*.blend1 binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary

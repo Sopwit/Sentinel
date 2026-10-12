@@ -1,5 +1,7 @@
 # SENTINEL — TUI V4-A.1 graceful termination
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 2026-10-11. The V4-A external SIGTERM cleanup defect is corrected. Recommendation: **Ready for V4-B evaluation**, subject to the existing physical acceptance and distribution gates. This is not public release approval. No V4-B work was begun.
 
 ## Root cause and correction
@@ -26,7 +28,7 @@ No AgentRuntime, daemon, provider, Desktop, Blender or icon changes. No global i
 
 ## Actual executable and SIGTERM evidence
 
-Executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`, `sentinel 1.0.0-rc.8`, native Mach-O arm64. SHA-256: `45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c`. The older V4-A rc-stage was intentionally left unchanged.
+Executable: `<repository-root>/cli/target/release/sentinel`, `sentinel 1.0.0-rc.8`, native Mach-O arm64. SHA-256: `45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c`. The older V4-A rc-stage was intentionally left unchanged.
 
 **18 real-signal scenarios passed:** five immediate post-spawn attempts; alternate-screen, enhancement/paste and capability-probe startup milestones; disconnected idle, overlay and resize; connected Off/Static/Animated/Auto; ten repeated SIGTERM requests; SIGHUP idle and connected overlay. No user key is sent before signal except to open an overlay. Connected animation cases require at least four placements before termination; disconnected static presentation is not counted as animation.
 
@@ -84,7 +86,7 @@ The demonstrated SIGTERM blocker is removed for continued V4-B evaluation. Publi
 In Ghostty or Terminal.app, use the actual rebuilt executable (the older V4-A rc-stage is not this candidate):
 
 ```sh
-SENTINEL_TUI_MASCOT=auto <LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel tui
+SENTINEL_TUI_MASCOT=auto "$SENTINEL_REPO/cli/target/release/sentinel" tui
 ```
 
 Touch no keys for five seconds. Check automatic graphics in confirmed Kitty environments or readable fallback otherwise. In another terminal, identify this exact TUI PID with `ps -axo pid,command`, then run `kill -TERM PID`. Verify the original terminal returns to the shell with echo, canonical input and cursor functioning, alternate screen closed, no stale images, and `$?` equal to 1 with the signal message. Repeat during a connected animation and an open overlay; test normal Ctrl+D separately (0). A closed terminal/HUP is best effort; never use SIGKILL as a cleanup acceptance test.

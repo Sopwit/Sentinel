@@ -1,5 +1,7 @@
 # SENTINEL — CROSS-PROVIDER RUNTIME CERTIFICATION REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Date: 2026-10-02. Host: macOS arm64. Verdict: **PARTIAL**.
 
 Only existing providers and existing local models were used. Live desktop checks used the real built desktop through Computer Use; automated provider fixtures are not represented as cloud runtime certification. No secrets were generated or logged. No new provider, tool, model-name branch, timeout, or grounding relaxation was added.
@@ -38,7 +40,7 @@ Agent with thinking OFF: classifier completed with JSON (352 input tokens, 61 ou
 
 Executable: `/opt/homebrew/bin/llama-server`; version 0.5.0, build 11146, commit `7fe450e19`.
 
-Existing model: `<LOCAL_MODEL_STORAGE>/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` (Q4_K_M, approximately 3.97B parameters).
+Existing model: `<model-directory>/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` (Q4_K_M, approximately 3.97B parameters).
 
 Endpoint: `http://127.0.0.1:8081`; alias `<LOCAL_MODEL_ALIAS>`; flags `--ctx-size 8192 --jinja --reasoning off --host 127.0.0.1`; four server slots. Real discovery succeeded.
 

@@ -1,5 +1,7 @@
 # SENTINEL — TUI V3.1 LIVE ACCEPTANCE
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Completed 2026-10-10; captures began 2026-10-09. Verdict: **PARTIAL — FURTHER VALIDATION REQUIRED**. Real inference and security-sensitive Agent paths were exercised, but the full referenced-file journey and several failure permutations remain incomplete. No competitor parity or native terminal acceptance is claimed.
 
 ## 1. Current baseline
@@ -12,7 +14,7 @@ Host: macOS, Rust Ratatui/Crossterm client, copied existing debug daemon 1.0.0-r
 
 The user explicitly authorized the complete attached plan and any installed active provider. Read-only discovery found LM Studio models `nvidia/nemotron-3-nano-4b`, `google/gemma-4-e4b`, `qwen/qwen3.5-9b` and Ollama `qwen2.5:3b`. All successful inference tests used LM Studio `http://127.0.0.1:1234`, model `nvidia/nemotron-3-nano-4b`; no silent fallback, download or second model server. Model selection and run binding were daemon-owned. Catalog discovery alone was never accepted as inference readiness.
 
-The inference server remained shared: synthetic requests could affect its latency/cache/logs. No load/unload/configuration was performed. Export used Qt's test-profile AppData path rather than portable storage: `<LOCAL_HOME>/Library/Application Support/Sopwit/SentinelV31-sentinel-v31-isolated-0_dmd190/exports/`; this contains only the synthetic export. Evidence roots/session/run IDs are recorded in JSON. At final rerun, the LM Studio endpoint refused connection and `model.select` returned `model-unavailable`; the user's service was not restarted or altered.
+The inference server remained shared: synthetic requests could affect its latency/cache/logs. No load/unload/configuration was performed. Export used Qt's test-profile AppData path rather than portable storage: `<test-profile-AppData>/Sopwit/SentinelV31-sentinel-v31-isolated-0_dmd190/exports/`; this contains only the synthetic export. Evidence roots/session/run IDs are recorded in JSON. At final rerun, the LM Studio endpoint refused connection and `model.select` returned `model-unavailable`; the user's service was not restarted or altered.
 
 ## 3. Journey A — IMPLEMENTED + VERIFIED (bounded core)
 

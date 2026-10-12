@@ -40,3 +40,9 @@ Optional checks:
 - Update docs when architecture, privacy, security, packaging, or phase boundaries change.
 - Do not include signing credentials, API keys, secrets, update feed credentials, or generated
   packages.
+
+## Public repository hygiene
+
+Use synthetic credentials, transcripts and fixtures. Inspect screenshots and diagnostics for personal paths and user content before sharing. Ignore rules do not remove already tracked artifacts. Keep Cargo.lock for the application workspace and retain original third-party notices with redistributed assets.
+
+For workflow changes, run `actionlint` when available. Keep actions pinned to full commit IDs, checkout credentials disabled, PR jobs read-only, and privileged metadata jobs free of PR checkout/execution. Rust checks are `cargo +1.94.0 fmt --all --check`, `cargo +1.94.0 clippy --locked --all-targets -- -D warnings`, and `cargo +1.94.0 test --locked` from `cli/`. Security disclosures follow [SECURITY.md](SECURITY.md), not public issue forms.

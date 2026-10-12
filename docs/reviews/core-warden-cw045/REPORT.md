@@ -1,5 +1,7 @@
 # CW-04.5 verified terminal input fix
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 The isolated investigation physically identified the blocking combination: a delayed `CSI 0n` reply to the unnecessary trailing `CSI 5n` query reaches Crossterm after the capability reader has returned. Crossterm's inner blocking terminal read defeats the requested input poll timeout. A keyboard event releases it. The user-observed failing poll lasted 16.155 seconds instead of 50 milliseconds; the isolated candidate completed polling in 51 milliseconds and presented at 79 milliseconds. See [isolated evidence](../core-warden-rust-terminal/REPORT.md).
 
 ## Production change
@@ -25,14 +27,14 @@ Logs and machine-readable diagnostics/results are in this directory. The prior i
 
 ## Release and physical acceptance
 
-Executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`
+Executable: `<repository-root>/cli/target/release/sentinel`
 
 SHA-256: `06351b7359fe455b948a281a50e849742a69c04a5610db1c659df4340be63791`
 
 Run in Ghostty:
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-cw045-$(date +%s).jsonl ./cli/target/release/sentinel tui
+cd "$SENTINEL_REPO" && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-cw045-$(date +%s).jsonl ./cli/target/release/sentinel tui
 ```
 
 Touch no keys for five seconds. Core Warden should appear automatically; disconnected presentation is static and is not proof of animation. With a connected legitimate animated state, observe playback. Then open/close an overlay, resize, and exit normally, checking for remnants and restored terminal behavior. Physical production Ghostty PASS remains pending user confirmation.

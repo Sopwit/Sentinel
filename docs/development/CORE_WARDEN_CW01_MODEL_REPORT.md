@@ -1,5 +1,7 @@
 # SENTINEL — CORE WARDEN CW-01 MODEL REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 ## Environment and scope
 
 Blender **5.2.2 LTS**, build `d13f752e3b9c`, macOS ARM64. Reference inspected: `assets/core-warden/reference/Core_Warden_Original_Reference.png`; the requested lowercase filename was absent. Personal-Brain was not available on PATH (`command -v brain` returned 1), so the supplied workspace was inspected directly. Repository architecture, runtime, security, building and testing instructions were read.
@@ -26,7 +28,7 @@ Previews: CPU Cycles, 16 samples, 640 × 640, PNG RGBA, transparent film. All fi
 
 ## Commands and execution
 
-Executed from `<LOCAL_HOME>/Desktop/Projects/Sentinel`:
+Executed from `<repository-root>`:
 
 ```sh
 command -v brain

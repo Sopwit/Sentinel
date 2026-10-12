@@ -28,6 +28,9 @@ and project license; it never installs globally or publishes. Run the staged
 `bin/sentinel` from any working directory. Keep `bin/` beside `share/` when moving
 it. The daemon remains a separate prerequisite. This is an unsigned local RC
 stage, not a macOS installer, notarized package or supported Windows distribution.
+The staging copier does not certify binary/asset compatibility. The evaluation
+packager refuses the known old V4-B executable with the newer CW03B catalog;
+build and validate matching inputs first. See the [SEC-P1 audit](../development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md).
 
 The TUI resolves `SENTINEL_CORE_WARDEN_ASSETS` first, then executable-relative
 `../share/sentinel/core-warden`, then the standard checkout `cli/target/debug|release`

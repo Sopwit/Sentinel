@@ -1,5 +1,7 @@
 # SENTINEL — CORE WARDEN CW-02.1: FINAL VISUAL POLISH
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Status: **Ready for visual approval. No animation or TUI integration started.**
 
 ## Deliverables
@@ -37,13 +39,13 @@ All eight controls remain: CTRL_Float, CTRL_HeadMotion, CTRL_LeftShell, CTRL_Rig
 
 Blender **5.2.2 LTS**, ARM64 macOS, build `d13f752e3b9c`. Personal-Brain remains unavailable on PATH; the supplied workspace and repository instructions were used. All existing application changes were preserved.
 
-Actual commands executed from `<LOCAL_HOME>/Desktop/Projects/Sentinel`:
+Actual commands executed from `<repository-root>`:
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python assets/core-warden/scripts/polish_core_warden_cw02_1.py -- --draft > assets/core-warden/blender/cw02_1-draft.log 2>&1
 /Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python assets/core-warden/scripts/polish_core_warden_cw02_1.py > assets/core-warden/blender/cw02_1-build.log 2>&1
 /Applications/Blender.app/Contents/MacOS/Blender --background assets/core-warden/blender/core_warden_cw02_1.blend --python-exit-code 1 --python assets/core-warden/scripts/validate_core_warden_cw02_1.py > assets/core-warden/blender/cw02_1-validation.log 2>&1
-<LOCAL_HOME>/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 assets/core-warden/scripts/compare_core_warden_cw02_1.py
+python3 assets/core-warden/scripts/compare_core_warden_cw02_1.py
 ```
 
 The draft, final build, independent reopen validation and comparison audit exited **0**. Source compilation passed for all three new scripts. Blender used macOS graphics access, as earlier sandboxed Metal initialization had failed. A nonfatal `Material.use_nodes` deprecation warning remains under the installed API.

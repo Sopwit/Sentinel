@@ -12,9 +12,9 @@ The native linker ad-hoc signature is retained unmodified; no user credentials w
 
 ## Artifact and integrity
 
-Local archive: `<LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation.tar.gz`.
+Local archive: `docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation.tar.gz`.
 
-Extracted evaluation directory: `<LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation`.
+Extracted evaluation directory: `docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation`.
 
 - Version: **1.0.0-rc.8**, native Mach-O arm64.
 - Archive size: **4,791,016 bytes** (4.57 MiB).
@@ -103,13 +103,15 @@ Physical GUI access was unavailable for this phase; earlier terminal automation 
 From Ghostty (use a fresh diagnostics destination):
 
 ```sh
-cd /tmp && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4b-ghostty.jsonl <LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/sentinel tui
+export SENTINEL_REPO="$(pwd)" # run from the repository root
+cd /tmp && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4b-ghostty.jsonl "$SENTINEL_REPO/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/sentinel" tui
 ```
 
 From Apple Terminal.app:
 
 ```sh
-cd /tmp && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4b-terminal.jsonl <LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/sentinel tui
+export SENTINEL_REPO="$(pwd)" # run from the repository root
+cd /tmp && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4b-terminal.jsonl "$SENTINEL_REPO/docs/reviews/tui-v4b/artifacts/sentinel-cli-1.0.0-rc.8-macos-arm64-evaluation/bin/sentinel" tui
 ```
 
 1. Confirm `--version` is `1.0.0-rc.8`. Touch no keys for five seconds after launch. Ghostty should present graphics only when confirmed; Terminal.app readable fallback is expected. Disconnected state stays truthful/static.
@@ -126,3 +128,7 @@ Do not delete an existing diagnostics file simply to reuse its name; use a fresh
 Only packaging tooling (`tools/terminal/package-evaluation.py`), this report and `docs/reviews/tui-v4b/` fixtures/evidence were added/updated. Existing runtime implementation, version, assets and all unrelated dirty work were preserved. The artifact directory is locally ignored and retained for evaluation; no global install occurred.
 
 **CONDITIONAL:** local RC evaluation is supported by automated evidence. Public release is not approved until physical latest-package acceptance, license/source/artwork obligations and signing/notarization/distribution policy gates are resolved. No further phase starts automatically.
+
+## SEC-P1 follow-up (2026-10-12)
+
+The historical artifact and acceptance results above are unchanged. SEC-P1 verified and supplied exact-revision MIT texts for `base64-simd 0.8.0` and `vsimd 0.8.0`. Four Objective-C-related crates remain unresolved: their upstream policy text is preserved, but it does not supply complete copyright/permission notices and records Apple SDK licensing uncertainty. New evaluation staging includes this evidence and retains the open distribution gate. It does not retroactively repair the historical archive or clear public distribution. See [SEC-P1](SEC_P1_PUBLIC_REPOSITORY_AUDIT.md).

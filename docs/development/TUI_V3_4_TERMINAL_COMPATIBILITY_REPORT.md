@@ -1,5 +1,7 @@
 # SENTINEL — TUI V3.4 terminal compatibility
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 2026-10-11. Terminal compatibility audit and one demonstrated Unix input correction. No graphical protocol is forced from a terminal name. C++ daemon, AgentRuntime, Desktop, providers, Blender and icons were not changed. Existing dirty work was preserved. No commit, push, merge or V4 work.
 
 ## macOS finding and evidence limits
@@ -86,19 +88,19 @@ The host has only `aarch64-apple-darwin` installed. Platform-independent decisio
 
 ## Exact physical acceptance commands
 
-Executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Executable: `<repository-root>/cli/target/release/sentinel`.
 SHA-256: `f72a3d1ff11fbc13b521981860a32cf3ff0ccc72a70121c81dacd1001afa4b15`.
 
 In **Terminal.app**, run:
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v34-terminal.jsonl ./cli/target/release/sentinel tui
+cd "$SENTINEL_REPO" && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v34-terminal.jsonl ./cli/target/release/sentinel tui
 ```
 
 In **Ghostty**, run:
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v34-ghostty.jsonl ./cli/target/release/sentinel tui
+cd "$SENTINEL_REPO" && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v34-ghostty.jsonl ./cli/target/release/sentinel tui
 ```
 
 1. Touch no keys for five seconds. Terminal.app text fallback is acceptable; Ghostty should retain automatic Core Warden presentation. Verify connected/disconnected labels update without input. A disconnected mascot stays static; only connected eligible animation establishes playback.

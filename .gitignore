@@ -24,8 +24,6 @@
 /*.zip
 
 # Log, test, coverage, and sanitizer outputs
-/*.txt
-!/CMakeLists.txt
 *.log
 *.gcda
 *.gcno
@@ -68,3 +66,41 @@ yarn-error.log*
 
 # Rust build output
 /cli/target/
+
+# Nested developer builds and Python tooling (tracked evidence needs separate review)
+**/target/
+__pycache__/
+*.py[cod]
+/CMakeCache.txt
+/build.ninja
+/.ninja_*
+
+# Local runtime state, captures, models and crash data; keep fixture/source formats visible
+/.sentinel/
+/runtime-data/
+/local-data/
+/debug-captures/
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.db-wal
+*.db-shm
+*.core
+*.dmp
+/core.[0-9]*
+*.gguf
+*.safetensors
+*.p12
+*.pfx
+.env.local
+
+# Release staging and local compiler/model caches
+/artifacts/
+/.ccache/
+/.sccache/
+/runtime-models/
+/sentinel*.db
+/sentinel*.db-journal

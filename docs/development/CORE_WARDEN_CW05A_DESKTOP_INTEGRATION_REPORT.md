@@ -1,5 +1,7 @@
 # Core Warden CW-05A — Desktop integration
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Date: 2026-10-11. Scope: native Desktop presentation only. CW-05B has not started.
 
 ## Implementation
@@ -92,7 +94,7 @@ Pre-existing concurrent changes were preserved. This phase did not modify AgentR
 From any working directory, launch:
 
 ```sh
-<LOCAL_HOME>/Desktop/Projects/Sentinel/build/tests/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop --no-daemon-start --daemon-socket /tmp/sentinel-cw05a-no-daemon.sock
+"$SENTINEL_REPO/build/tests/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop" --no-daemon-start --daemon-socket /tmp/sentinel-cw05a-no-daemon.sock
 ```
 
 1. Touch no keys: verify artwork and Disconnected label appear, with composer unchanged.

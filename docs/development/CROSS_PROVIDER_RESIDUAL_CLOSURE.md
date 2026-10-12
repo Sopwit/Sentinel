@@ -1,12 +1,14 @@
 # SENTINEL — CROSS-PROVIDER RESIDUAL CLOSURE REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Certification date: 2026-10-03 (Europe/Istanbul).
 
 ## 1. llama.cpp Capability
 
 - Provider capability: implements OpenAI-compatible native requests; not proof of every model's capabilities.
 - Model capability: the selected existing <LOCAL_GGUF_ID>, alias `<LOCAL_MODEL_ALIAS>`, supports native tools with its current Jinja template.
-- Runtime: llama-server 0.5.0, build 11146, commit 7fe450e19; `<LOCAL_TEST_ENDPOINT>`. Flags: `--alias <LOCAL_MODEL_ALIAS> --ctx-size 8192 --jinja --reasoning off --host <LOOPBACK_HOST> --port <TEST_PORT>`. Existing GGUF under `<LOCAL_MODEL_STORAGE>`; no download.
+- Runtime: llama-server 0.5.0, build 11146, commit 7fe450e19; `<LOCAL_TEST_ENDPOINT>`. Flags: `--alias <LOCAL_MODEL_ALIAS> --ctx-size 8192 --jinja --reasoning off --host <LOOPBACK_HOST> --port <TEST_PORT>`. Existing GGUF under `<model-directory>/`; no download.
 - `/v1/models` identifies the model but omits native-tool flags. `/props` identifies the same alias and reports `supports_tools=true`, `supports_tool_calls=true`, object arguments and parallel tools supported. Its Nemotron XML tool template serializes assistant calls and tool results. Effective context 8192; training context 1048576; approximately 3.97B parameters, Q4_K Medium.
 - Chat: verified baseline PASS. Streaming: verified baseline PASS and binding Supported. Native tools: runtime and binding Supported. Reasoning: disabled by server flag; template preserves reasoning, effort control false. Embeddings: not advertised/validated. Binding has no separate reasoning/embedding capability fields; absence is not proof of unsupported behavior.
 - Blocker: **B + C**: metadata exists on `/props`, but Sentinel's discovery only consumed `/v1/models`, leaving provider-default native Unsupported. Not a model-name/GGUF incompatibility.
@@ -41,7 +43,7 @@ Certification date: 2026-10-03 (Europe/Istanbul).
 - git: BLOCKED; native run-command reached approval and production sandbox, then `Sandbox denied launch (DetachedProcessControlUnavailable)`. Repeated attempts did not execute unsandboxed; run ended Failed after ten steps.
 - Process probe tool contract narrowed `command` to the exact requested command, preserving production permission/sandbox policy.
 - Actual separate production ProcessSandbox child evidence: `/bin/cat` of workspace CMakeLists.txt under macOS sandbox-exec Enforced exited 0, 3457 stdout bytes.
-- Actual unauthorized existing `<LOCAL_HOME>/.zshrc` read under the same production sandbox exited 1, stdout zero, stderr `Operation not permitted`. File contents never printed.
+- Actual unauthorized existing `<user-home>/.zshrc` read under the same production sandbox exited 1, stdout zero, stderr `Operation not permitted`. File contents never printed.
 - This establishes real allowed/denied child access, not detached-child containment. No sandbox bypass or new fix to the prior dependency-access defect.
 
 ## 6. Permissions

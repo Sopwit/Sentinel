@@ -75,4 +75,21 @@ elseif(APPLE)
     set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/branding/app-icon/macos/sentinel.icns")
 endif()
 
+# Preserve known source/asset notices in every platform package, including
+# drag-copy installations where sibling files would be left behind.
+include(GNUInstallDirs)
+set(_sentinel_notice_dir "${CMAKE_INSTALL_DATAROOTDIR}/licenses/sentinel")
+if(APPLE)
+    set(_sentinel_notice_dir "sentinel-desktop.app/Contents/Resources/licenses")
+endif()
+install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+    DESTINATION "${_sentinel_notice_dir}")
+install(FILES "${CMAKE_SOURCE_DIR}/resources/icons/tabler/LICENSE"
+    DESTINATION "${_sentinel_notice_dir}/tabler")
+install(FILES "${CMAKE_SOURCE_DIR}/resources/icons/lucide/LICENSE"
+    "${CMAKE_SOURCE_DIR}/resources/icons/lucide/license-provenance.json"
+    DESTINATION "${_sentinel_notice_dir}/lucide")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts/LICENSES/"
+    DESTINATION "${_sentinel_notice_dir}/fonts")
+
 include(CPack)

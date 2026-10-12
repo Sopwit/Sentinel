@@ -1,5 +1,7 @@
 # Core Warden CW-04.2 — startup and empty-screen placement
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 ## Evidence and cause
 
 The user's physical CW-04.1 diagnostic files were available locally and are preserved in `docs/reviews/core-warden-cw042/prior-physical-*.jsonl`. They show confirmed Kitty, actual cell size **16×34**, successful manifest/PNG discovery, `connected=false`, state `error`, one loaded static frame (36,864 source RGBA bytes), and a render invocation. Thus the offline path already accepted background results and attempted rendering; an absent asset or failed capability probe is not the demonstrated cause. These old records have no input timestamps, so they cannot independently establish the exact keyboard-to-pixel timing.
@@ -35,7 +37,7 @@ The production `lib.rs` and `editor.rs` were not changed in CW-04.2, preserving 
 
 Evidence and reproducible fixture: `docs/reviews/core-warden-cw042/production_pty.py`, `production-pty-results.json`, per-case diagnostics, `focused-tests.log`, `clippy.log`, `release-build.log`, `release-identity.json`. No live Agent benchmark was used. The screenshot-like output of a PTY is not treated as physical Ghostty acceptance.
 
-Release executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Release executable: `<repository-root>/cli/target/release/sentinel`.
 SHA-256: `4ac9cc2d89a4c94be3f3578f63ced78af424aefec0eb6ad0008141ec7900fdc3`.
 
 ## New physical Ghostty check
@@ -43,7 +45,7 @@ SHA-256: `4ac9cc2d89a4c94be3f3578f63ced78af424aefec0eb6ad0008141ec7900fdc3`.
 Run inside a real Ghostty window (120×40 or larger is recommended):
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel
+cd "$SENTINEL_REPO"
 SENTINEL_TUI_MASCOT=animated \
 SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw042-$(date +%s).jsonl" \
 ./cli/target/release/sentinel tui

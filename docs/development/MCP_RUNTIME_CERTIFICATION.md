@@ -1,5 +1,7 @@
 # SENTINEL — MCP RUNTIME CERTIFICATION REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Date: 2026-10-03 (Europe/Istanbul). Existing dirty-tree cross-provider and sandbox changes preserved. Personal-Brain unavailable (`brain` not found); repository path and local architecture instructions supplied by user were used.
 
 ## 1. MCP Architecture
@@ -12,7 +14,7 @@ Date: 2026-10-03 (Europe/Istanbul). Existing dirty-tree cross-provider and sandb
 
 ## 2. Real MCP Server
 
-- Existing small C++/Qt executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/build/tests/tests/test_mcp_server` with arguments `"" --certification`.
+- Existing small C++/Qt executable: `<repository-root>/build/tests/tests/test_mcp_server` with arguments `"" --certification`.
 - No installation or unrelated dependencies. Test-only opt-in server extension adds deterministic arithmetic/fault cases; no new production MCP feature.
 - Transport: actual child stdio JSON-RPC, initialize protocol 2024-11-05.
 - Startup/discovery: successful through production McpService sandbox launch.

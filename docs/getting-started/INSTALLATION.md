@@ -1,8 +1,8 @@
 # Installation
 
-Sentinel release artifacts are built for Linux, macOS, and Windows. Fedora KDE Plasma is the primary target; Windows and macOS builds are maintained by CI.
+The Desktop release workflow targets Linux, macOS, and Windows; this is build configuration, not proof of a currently approved published artifact. Fedora KDE Plasma is the primary target. Native Windows Rust CLI/TUI IPC is unavailable. The TUI V4-B macOS package is for conditional local evaluation and is not cleared for public distribution.
 
-Download a release from the project’s GitHub Releases page. The release workflow produces Linux `.deb`, `.rpm`, AppImage, and tarball artifacts; a macOS DMG; and Windows `.exe` and `.msi` installers. Verify the accompanying `SHA256SUMS.txt` before installing.
+Use only a maintainer-approved published release, when available, from [GitHub Releases](https://github.com/Sopwit/Sentinel/releases). Draft workflow output is not an approved release. The release workflow produces Linux `.deb`, `.rpm`, AppImage, and tarball artifacts; a macOS DMG; and Windows `.exe` and `.msi` installers. Verify the accompanying `SHA256SUMS.txt` before installing.
 
 For a source build, follow [Building](../development/BUILDING.md). Local inference requires a reachable local runtime such as Ollama and an installed model. Sentinel discovers Ollama through its configured endpoint; it does not bundle Ollama or model weights.
 

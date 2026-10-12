@@ -1,5 +1,7 @@
 # SENTINEL — CORE WARDEN CW-02 REFINEMENT REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Status: **Static review deliverable; visual approval required before CW-03 animation.**
 
 ## Deliverables
@@ -61,7 +63,7 @@ There are no actions, state animations, keyframes, armature or animation sequenc
 
 ## 5. Blender script execution
 
-Installed and verified: **Blender 5.2.2 LTS**, ARM64 macOS, build `d13f752e3b9c`. Commands executed from `<LOCAL_HOME>/Desktop/Projects/Sentinel` include:
+Installed and verified: **Blender 5.2.2 LTS**, ARM64 macOS, build `d13f752e3b9c`. Commands executed from `<repository-root>` include:
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender --version
@@ -71,7 +73,7 @@ Installed and verified: **Blender 5.2.2 LTS**, ARM64 macOS, build `d13f752e3b9c`
 /Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python assets/core-warden/scripts/build_core_warden_cw02.py -- --skip-renders > assets/core-warden/blender/cw02-geometry-check.log 2>&1
 /Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python assets/core-warden/scripts/build_core_warden_cw02.py > assets/core-warden/blender/cw02-build.log 2>&1
 /Applications/Blender.app/Contents/MacOS/Blender --background assets/core-warden/blender/core_warden_cw02.blend --python-exit-code 1 --python assets/core-warden/scripts/validate_core_warden_cw02.py > assets/core-warden/blender/cw02-validation.log 2>&1
-<LOCAL_HOME>/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 assets/core-warden/scripts/compare_core_warden_cw02.py
+python3 assets/core-warden/scripts/compare_core_warden_cw02.py
 ```
 
 Final build, separate-process reopen validation and comparison/readability script all exited **0**, with `CW02_BUILD_OK`, `CW02_VALIDATION_OK` and `CW02_COMPARISON_OK`. Python source compilation also passed. `--python-exit-code 1` propagates script failures. The builder checks required inputs, saves recovery geometry before renders, uses fixed geometry/cameras/seed, and verifies protected baseline hashes.

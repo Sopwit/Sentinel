@@ -1,10 +1,12 @@
 # SENTINEL — TERMINAL EXPERIENCE COMPLETION REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Validation dates: 2026-10-07–08. Host: macOS arm64, Qt 6.11.2. Fedora remains the primary target; Linux/Windows native acceptance was not performed. The existing dirty Desktop/branding work was preserved. No commit or push was made during the initial validation. A subsequent user-authorized follow-up groups the changes into separate commits; no push was requested.
 
 ## 1. CLI Installation
 
-The canonical global executable is `<LOCAL_HOME>/.cargo/bin/sentinel`, on PATH, reporting `sentinel 1.0.0-rc.8`. `tools/terminal/install-dev.sh --force` installs the Cargo package with its lockfile. No shell configuration is changed. Uninstall: `cargo uninstall sentinel-cli`. Source-release installation is documented; crates.io/prebuilt packaging is not claimed.
+The canonical global executable is `<cargo-home>/bin/sentinel`, on PATH, reporting `sentinel 1.0.0-rc.8`. `tools/terminal/install-dev.sh --force` installs the Cargo package with its lockfile. No shell configuration is changed. Uninstall: `cargo uninstall sentinel-cli`. Source-release installation is documented; crates.io/prebuilt packaging is not claimed.
 
 ## 2. CLI UX
 

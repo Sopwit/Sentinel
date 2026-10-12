@@ -1,5 +1,7 @@
 # SENTINEL — LEGACY BRANDING PURGE REPORT
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Date: 2026-10-07. Scope: production identity selectors, obsolete assets, provenance gate and current-host branding verification. Earlier Brand Asset Integration and Phase 4 histories remain intact. No commit or push.
 
 ## 1. Audit

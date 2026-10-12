@@ -1,5 +1,7 @@
 # SENTINEL — TUI V3.3-C stabilization
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 2026-10-11. Focused Rust client stabilization. Automated tests and simulated production PTY checks are distinct from physical Ghostty acceptance, which remains pending for V3.3-B/C UX. The user's earlier physical CW-04.5 initial-display confirmation remains valid evidence for that earlier phase only.
 
 ## Changes and demonstrated causes
@@ -71,14 +73,14 @@ V3.3 is suitable to enter physical acceptance. V3.4 should be considered after t
 
 ## Exact physical Ghostty acceptance
 
-Executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Executable: `<repository-root>/cli/target/release/sentinel`.
 
 SHA-256: `4e565fcc173d81d9900550b8bb90c097737ccb56e2945fbcfdb33ebbb4b398fc`.
 
 Run from Ghostty:
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel && SENTINEL_TUI_MASCOT=animated ./cli/target/release/sentinel tui
+cd "$SENTINEL_REPO" && SENTINEL_TUI_MASCOT=animated ./cli/target/release/sentinel tui
 ```
 
 1. Start at 180×48. Touch no keys for five seconds. Confirm Core Warden appears automatically; connected idle should animate at the existing 8 FPS target. A disconnected mascot must remain static and truthful.

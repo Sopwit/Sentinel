@@ -10,6 +10,11 @@ def main():
  binary=ROOT/'cli/target/release/sentinel'
  identity=subprocess.check_output(['file','-b',str(binary)],text=True).strip()
  if 'Mach-O 64-bit executable arm64' not in identity:ap.error('Expected macOS arm64 release binary')
+ # The protected V4-B executable accepts only the original three-state catalog.
+ # Its version string is unchanged by later source/asset work, so check bytes.
+ if digest(binary)=='45087e81132d23b934c88b152195f5f59f5dd0276c7639358ef8e370a690491c':
+  manifest=json.loads((ROOT/'assets/core-warden/animations/manifest.json').read_text())
+  if len(manifest['states'])!=3:ap.error('Existing V4-B executable cannot read current CW03B assets; rebuild a compatible release or use the protected V4-B archive. No output created.')
  version=subprocess.check_output([str(binary),'--version'],text=True).strip().removeprefix('sentinel ')
  if not re.fullmatch(r'[A-Za-z0-9.+-]+',version):ap.error('Unsafe version string')
  def cargo(*a):return subprocess.check_output(['cargo',*a,'--locked','--offline'],cwd=ROOT/'cli',text=True)
@@ -24,6 +29,8 @@ def main():
  shutil.copy2(ROOT/'cli/crates/sentinel-mascot/README.md',docs/'CORE_WARDEN.md')
  notices=['# Third-party notices — local evaluation only','', 'Locked macOS arm64 normal + build graph; conservative superset, not a binary-symbol attribution proof. Original metadata expressions are preserved. No legal clearance is implied.','']
  audit=[];missing=[]
+ provenance_root=ROOT/'third_party/licenses'
+ provenance=json.loads((provenance_root/'provenance.json').read_text())['packages']
  for p in packages:
   if p['source'] is None:continue
   d=Path(p['manifest_path']).parent;files=[]
@@ -32,23 +39,37 @@ def main():
   if p['license_file']:
    f=d/p['license_file']
    if f.is_file() and f not in files:files.append(f)
+  original_text_present=bool(files)
   target=stage/'share/licenses/third-party'/f"{p['name']}-{p['version']}";entries=[]
   for f in sorted(files):
    if f.is_symlink() or not f.resolve().is_relative_to(d.resolve()):raise ValueError('Unsafe license path')
    rel=f.relative_to(d);dest=target/rel;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(f,dest)
    entries.append({'path':str(dest.relative_to(stage)),'sha256':digest(dest)})
+  if not files:
+   for supplied in provenance:
+    if (supplied['name'],supplied['version'])!=(p['name'],p['version']):continue
+    vcs=json.loads((d/'.cargo_vcs_info.json').read_text())
+    if vcs['git']['sha1']!=supplied['upstream_revision']:raise ValueError('Upstream license revision mismatch')
+    source=provenance_root/supplied['path']
+    if source.is_symlink() or not source.resolve().is_relative_to(provenance_root.resolve()):raise ValueError('Unsafe supplied license path')
+    if digest(source)!=supplied['sha256']:raise ValueError('Supplied license checksum mismatch')
+    dest=target/source.name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
+    entries.append({'path':str(dest.relative_to(stage)),'sha256':digest(dest),'source_url':supplied['source_url'],'complete_license_text':supplied['complete_license_text']})
+    original_text_present=supplied['complete_license_text']
   row={k:p[k] for k in ['name','version','license','license_file','repository','source']};row['included_texts']=entries;audit.append(row)
   notices.extend([f"## {p['name']} {p['version']}",f"Declared license: {p['license'] or 'not declared; see original license_file'}",f"Upstream: {p['repository'] or 'not declared'}"])
   notices.extend([f"- [{x['path']}]({x['path']})" for x in entries] or ['**Original license text absent from local crate: unresolved.**'])
   notices.append('')
-  if not files:missing.append(f"{p['name']} {p['version']}")
+  if not original_text_present:
+   notices.append('**Unresolved: upstream policy text alone is not a complete copyright/permission notice.**')
+   missing.append(f"{p['name']} {p['version']}")
  obligations='''# Open distribution obligations
 
 This is an unsigned local evaluation package, not a publication-cleared release.
 
 - Project is GPL-3.0-or-later. Complete Corresponding Source and build/install scripts, dependency source obligations and an appropriate distribution mechanism must be resolved before conveying publicly. This binary archive is not a complete source distribution or source offer.
 - Third-party metadata and original available license/notice files are included, without rewriting their declarations or choosing an unverified license branch. Preserve copyright/permission texts, applicable notices and required attribution. Apache, Unicode, BSD and other alternatives require review of the actual chosen distribution terms; this inventory is not a legal opinion or compatibility certification.
-- Six crates have declared licenses but no original license text in this locked local cache. Obtain and verify exact-version upstream texts before public distribution.
+- Any crates listed below still lack complete verified original copyright/permission texts. Upstream policy documents may be included as evidence without closing this gate. Resolve these before public distribution.
 - Core Warden is supplied project artwork. No third-party resource is intentionally added, but ownership/reference provenance and permission to redistribute artwork require maintainer confirmation. Blender/reference boards are excluded.
 - Rust standard library/toolchain and system-library obligations are not exhaustively audited by Cargo metadata. macOS system libraries are linked, not copied. Review toolchain notices and redistribution obligations before publication.
 - No Developer ID signing, hardened-runtime evaluation, notarization or Gatekeeper acceptance is claimed.

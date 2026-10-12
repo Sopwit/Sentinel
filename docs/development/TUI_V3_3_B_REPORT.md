@@ -1,5 +1,7 @@
 # SENTINEL — TUI V3.3-B interaction and settings completion
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 2026-10-11. Bounded Rust client improvements implemented. Deterministic tests and release PTY journeys pass. This phase has no new physical terminal acceptance; the user's earlier CW-04.5 initial Ghostty display confirmation remains separate.
 
 ## Implemented changes
@@ -50,14 +52,14 @@ Evidence: [PTY results](../reviews/tui-v33b/pty-results.json), [Rust tests](../r
 
 TUI settings and up to 32 session drafts remain local and nonpersistent. Environment-only preferences require relaunch; starting with mascot off intentionally skips graphics negotiation, so enabling graphics later may require a restart. Catalog health and model selection do not verify inference readiness. Long editor lines still use horizontal scrolling; grapheme editing and richer Markdown remain outside this phase. Backend reconnect notices may replace transient footer feedback; /notices exposes longer feedback. Shift+Enter depends on host keyboard support; Alt+Enter and Ctrl+O remain alternatives.
 
-Release executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Release executable: `<repository-root>/cli/target/release/sentinel`.
 
 SHA-256: `fa91ea3b0b02d56b2550d7fe30d755e55c28c7356d7b37a74ff7da15455d83ff`.
 
 In Ghostty, with the existing daemon connection available, run:
 
 ```sh
-cd <LOCAL_HOME>/Desktop/Projects/Sentinel && SENTINEL_TUI_MASCOT=animated ./cli/target/release/sentinel tui
+cd "$SENTINEL_REPO" && SENTINEL_TUI_MASCOT=animated ./cli/target/release/sentinel tui
 ```
 
 1. Touch no keys for five seconds; confirm the already accepted Core Warden initial-display behavior remains. A disconnected mascot is static and does not establish animated playback.

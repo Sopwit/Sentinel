@@ -19,6 +19,7 @@ Sentinel is a cross-platform AI agent platform. The Qt/QML Desktop and the comma
 
 ## Security
 
+- [Public repository audit and remaining release gates](development/SEC_P1_PUBLIC_REPOSITORY_AUDIT.md)
 - [Security model](security/SECURITY_MODEL.md)
 - [Permissions](security/PERMISSIONS.md)
 - [Sandbox](security/SANDBOX.md)

@@ -1,5 +1,7 @@
 # CW-04.3 — presentation investigation
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 Status: **physical defect unresolved; no proven presentation fix**. This change adds measurements and regression coverage. It must not be described as a successful CW-04.3 fix.
 
 ## Findings
@@ -39,14 +41,14 @@ There is **no newly introduced timer, full-screen invalidation, forced graphics 
 - Local mascot settings are checked by existing typed/pasted dispatch tests, with no inference. Fixture rejects unexpected chat/agent requests.
 - No claim of physical animation, overlay cleanup, keyboard responsiveness or Ghostty presentation PASS.
 
-Actual release executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+Actual release executable: `<repository-root>/cli/target/release/sentinel`.
 
 ## Required real Ghostty evidence
 
 Run in Ghostty:
 
 ```sh
-SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw043-$(date +%s).jsonl" <LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel tui
+SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS="/tmp/sentinel-cw043-$(date +%s).jsonl" "$SENTINEL_REPO/cli/target/release/sentinel" tui
 ```
 
 Touch no keys for five seconds. Record whether Core Warden is visible before input; if absent, press one harmless key and record whether it appears. Open/close the command palette with Ctrl+P/Esc and inspect remnants. Connected actual animated activity is required to assess animation; disconnected neutral presentation is not animation proof. Clear the draft, then exit with Ctrl+D and inspect terminal restoration.

@@ -1,5 +1,7 @@
 # SENTINEL — TUI V4-A release readiness
 
+> SEC-P1.1 privacy edit (2026-10-12): machine-specific paths are shown as role placeholders; recorded measurements and acceptance results are unchanged. Command examples use `SENTINEL_REPO`; set `export SENTINEL_REPO="$(git rev-parse --show-toplevel)"` from a checkout first. This edited report has a new file digest; original raw evidence is unchanged.
+
 2026-10-11. Recommendation: **Needs targeted correction** before unconditional release-candidate approval. Production startup/assets and normal/handled-error flows were stabilized; external SIGTERM cleanup, physical acceptance and distribution-license/packaging gates remain open. No V4-B work, publication, global installation, shell changes, commit, push or merge.
 
 ## Implemented fixes and causes
@@ -12,10 +14,10 @@ Both established terminal fixes remain unchanged: no trailing CSI 5n, and scoped
 
 ## Executable, resources and installation audit
 
-- Actual executable: `<LOCAL_HOME>/Desktop/Projects/Sentinel/cli/target/release/sentinel`.
+- Actual executable: `<repository-root>/cli/target/release/sentinel`.
 - Identity: Mach-O 64-bit **arm64**, `sentinel 1.0.0-rc.8`. User-visible version comes from the canonical CMake version through the existing IPC build script; Cargo workspace versions agree.
 - Final SHA-256: `6229bccc0ebaf37f34d7811b15fa799e3dc972a9517f1de9b6ffc8704d06cc81`.
-- Local evaluation stage: `<LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4a/rc-stage`. Its `bin/sentinel` hash exactly matches the final release. [Inventory](../reviews/tui-v4a/stage-inventory.json) records hashes/sizes for 137 files: executable, 132 PNGs, animation manifest, shared state contract, GPL project LICENSE and local-stage README.
+- Local evaluation stage: `<repository-root>/docs/reviews/tui-v4a/rc-stage`. Its `bin/sentinel` hash exactly matches the final release. [Inventory](../reviews/tui-v4a/stage-inventory.json) records hashes/sizes for 137 files: executable, 132 PNGs, animation manifest, shared state contract, GPL project LICENSE and local-stage README.
 - Stage moved to a disposable directory and started outside the repository: actual production graphics cache loads. Bare binary outside the repository: safe text fallback, even while the original developer checkout still exists. Missing explicit override also stays fallback rather than leaking back to checkout assets. Checkout release itself still discovers assets when launched from an unrelated working directory.
 - There is no CLI-owned runtime config file needed for startup. Existing daemon endpoint resolution uses the runtime HOME/default socket or explicit `--socket`; TUI preferences remain environment/process-derived. Themes are builtin, terminal fonts are host-owned. Daemon configuration, provider credentials/models and authoritative persistence are separate and are not staged.
 - `command -v` / `which -a` found no `sentinel` on this host's PATH; common Cargo/Homebrew/local bin locations contained no tested shadowing copy. No global binary was installed. An arbitrary shell/host may differ: use the absolute path and `--version` for acceptance.
@@ -108,13 +110,13 @@ Normal/handled-error automated flows are suitable for continued RC evaluation no
 In Ghostty, from an unrelated working directory:
 
 ```sh
-cd /tmp && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4a-ghostty.jsonl <LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4a/rc-stage/bin/sentinel tui
+cd /tmp && SENTINEL_TUI_MASCOT=animated SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4a-ghostty.jsonl "$SENTINEL_REPO/docs/reviews/tui-v4a/rc-stage/bin/sentinel" tui
 ```
 
 In Terminal.app:
 
 ```sh
-cd /tmp && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4a-terminal.jsonl <LOCAL_HOME>/Desktop/Projects/Sentinel/docs/reviews/tui-v4a/rc-stage/bin/sentinel tui
+cd /tmp && SENTINEL_TUI_MASCOT=auto SENTINEL_TUI_MASCOT_DIAGNOSTICS=/tmp/sentinel-v4a-terminal.jsonl "$SENTINEL_REPO/docs/reviews/tui-v4a/rc-stage/bin/sentinel" tui
 ```
 
 Use a fresh diagnostics destination per launch; existing files are intentionally not overwritten. Start the existing daemon separately if connected-session checks are needed; the terminal client never launches a daemon/provider fallback.
