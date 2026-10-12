@@ -18,6 +18,7 @@ void qml_register_types_Sentinel_Warden();
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -78,6 +79,7 @@ int main(int argc, char** argv) {
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName("Sentinel Settings Certification");
     QStandardPaths::setTestModeEnabled(true);
+    const bool extensionsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--extensions-smoke";
     const bool phase1Smoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--phase1-smoke";
     const bool traySmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--tray-smoke";
     const bool focusSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--focus-smoke";
@@ -86,9 +88,9 @@ int main(int argc, char** argv) {
     const bool settingsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--settings-smoke";
     const bool modelsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--models-smoke";
     QTemporaryDir temporaryProfile;
-    if (argc != 2 || (!phase1Smoke && !focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
+    if (argc != 2 || (!extensionsSmoke && !phase1Smoke && !focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
         return 2;
-    QDir profile(phase1Smoke || focusSmoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke ? temporaryProfile.path() : QString::fromLocal8Bit(argv[1]));
+    QDir profile(extensionsSmoke || phase1Smoke || focusSmoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke ? temporaryProfile.path() : QString::fromLocal8Bit(argv[1]));
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(profile.filePath("settings.json")),
         sentinel::core::inMemoryTestCredentialStore());
@@ -136,9 +138,76 @@ int main(int argc, char** argv) {
     engine.rootContext()->setContextProperty("ollamaLibraryFetcher", &library);
     for (const auto* name : {"ggufLibraryFetcher", "lmStudioLibraryFetcher", "ollamaModelDetailFetcher", "ollamaPuller", "daemonClient"})
         engine.rootContext()->setContextProperty(name, &emptyLibrary);
-    engine.load(QUrl::fromLocalFile(QStringLiteral(CERTIFICATION_QML_WRAPPER)));
+    engine.load(QUrl::fromLocalFile(extensionsSmoke
+        ? QFileInfo(QStringLiteral(CERTIFICATION_QML_WRAPPER)).dir().filePath("extensions_hub_certification.qml")
+        : QStringLiteral(CERTIFICATION_QML_WRAPPER)));
     if (engine.rootObjects().isEmpty())
         return 3;
+    if (extensionsSmoke) {
+        auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        QTimer::singleShot(200, &app, [&, window] {
+            auto find = [](auto&& self, QQuickItem* item, const QString& name) -> QQuickItem* {
+                if (item->objectName() == name) return item;
+                for (auto* child : item->childItems()) if (auto* result = self(self, child, name)) return result;
+                return nullptr;
+            };
+            auto check = [](bool ok, const char* message) { if (!ok) qFatal("Extensions acceptance: %s", message); };
+            auto* hub = find(find, window->contentItem(), "extensionsHubPage");
+            auto* fixture = window->findChild<QObject*>("extensionsFixture");
+            auto* search = find(find, hub, "extensionsSearch");
+            auto* refresh = find(find, hub, "extensionsRefresh");
+            check(hub && fixture && search && refresh, "mounted page");
+            check(!search->isEnabled() && !refresh->isEnabled(), "disconnected actions disabled");
+            auto* tools = find(find, window->contentItem(), "ToolsNavigationButton");
+            auto* extensions = find(find, window->contentItem(), "ExtensionsNavigationButton");
+            auto* settingsNav = find(find, window->contentItem(), "settingsNavigationButton");
+            check(tools && extensions && settingsNav, "rail destinations");
+            check(tools->y() < extensions->y() && extensions->mapToScene(QPointF()).y() < settingsNav->mapToScene(QPointF()).y(), "Tools Extensions Settings order");
+            tools->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+            check(hub->property("section").toString() == "tools" && window->property("currentPage").toString() == "Tools", "keyboard Tools route");
+            extensions->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+            check(hub->property("section").toString() == "plugins", "keyboard Extensions route");
+            QVariantList entries{QVariantMap{{"id", "plugin:fixture"}, {"name", "Synthetic plugin metadata"}, {"type", "plugins"}, {"enabledKnown", true}, {"enabled", false}},
+                QVariantMap{{"id", "mcp:fixture"}, {"name", "Synthetic configured server"}, {"type", "mcp"}, {"enabledKnown", true}, {"enabled", true}},
+                QVariantMap{{"id", "skill:fixture"}, {"name", "Synthetic discovered skill"}, {"type", "skills"}, {"enabledKnown", false}}};
+            QVariantMap data{{"phase", "ready"}, {"message", "Synthetic UI fixture — no plugin, MCP server, skill or tool executed."}, {"entries", entries}, {"tools", QStringList{"fixture.read", "fixture.refused"}}, {"policy", QStringList{"Synthetic policy: execution permission not granted"}}};
+            fixture->setProperty("daemonConnected", true); fixture->setProperty("data", data); QTest::qWait(40);
+            check(search->isEnabled() && refresh->isEnabled(), "metadata actions available");
+            for (const auto& key : {"plugins", "mcp", "skills", "tools"}) {
+                auto* button = find(find, hub, "extensionsSection_" + QString(key));
+                check(button, "section button"); button->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+                check(hub->property("section").toString() == key && window->activeFocusItem()->isVisible(), "section keyboard/focus");
+                const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
+                if (!evidence.isEmpty()) {
+                    QDir().mkpath(evidence);
+                    for (const auto& theme : {QStringLiteral("Paper"), QStringLiteral("Liquid Glass Dark")}) {
+                        viewModel.setThemeName(theme); QTest::qWait(80);
+                        window->grabWindow().save(evidence + "/" + key + (theme == "Paper" ? "-light.png" : "-dark.png"));
+                    }
+                }
+            }
+            hub->setProperty("query", "no-match"); QTest::qWait(20);
+            auto* empty = find(find, hub, "extensionsEmpty"); check(empty && empty->isVisible(), "search empty state");
+            hub->setProperty("query", "fixture.read"); QTest::qWait(20);
+            check(!empty->isVisible(), "local tool identity filter");
+            for (const auto& phase : {"loading", "error", "unavailable", "disconnected"}) {
+                data["phase"] = phase; data["entries"] = QVariantList{}; data["tools"] = QStringList{};
+                fixture->setProperty("data", data); QTest::qWait(20);
+                check(!search->isEnabled(), "non-ready search disabled");
+                const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
+                if (!evidence.isEmpty()) window->grabWindow().save(evidence + "/state-" + phase + ".png");
+            }
+            fixture->setProperty("daemonConnected", false); QTest::qWait(20);
+            check(!refresh->isEnabled(), "disconnect disables refresh");
+            window->resize(780, 640); QTest::qWait(40);
+            check(search->width() > 100 && refresh->mapToScene(QPointF()).x() + refresh->width() <= window->width(), "compact layout fits");
+            const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
+            if (!evidence.isEmpty()) window->grabWindow().save(evidence + "/compact-disconnected.png");
+            QTest::keyClick(window, Qt::Key_Tab); check(window->activeFocusItem() && window->activeFocusItem()->isVisible(), "Tab remains visible");
+            qInfo("Extensions routing, rail order, four sections, filter, loading/error/disconnected/unsupported and keyboard/compact checks passed; synthetic data only");
+            app.exit(0);
+        });
+    }
     if (phase1Smoke) {
         auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
         QTimer::singleShot(250, &app, [&, window] {

@@ -321,3 +321,9 @@ add_sentinel_core_test(test_core_warden desktop/test_core_warden.cpp)
 target_link_libraries(test_core_warden PRIVATE sentinel_desktop_viewmodels Qt6::Quick)
 target_compile_definitions(test_core_warden PRIVATE WARDEN_TEST_ROOT="${PROJECT_SOURCE_DIR}/assets/core-warden")
 set_tests_properties(test_core_warden PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_sentinel_core_test(test_extensions_hub desktop/test_extensions_hub.cpp)
+target_link_libraries(test_extensions_hub PRIVATE sentinel_desktop_viewmodels)
+
+add_test(NAME test_extensions_surface COMMAND $<TARGET_FILE:settings_ui_certification_probe> --extensions-smoke)
+set_tests_properties(test_extensions_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

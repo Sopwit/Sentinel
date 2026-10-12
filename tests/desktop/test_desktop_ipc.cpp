@@ -1,3 +1,4 @@
+#include "sentinel/desktop/ExtensionsHubPresentation.h"
 #include "sentinel/desktop/RemoteAgentInspectorService.h"
 #include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
 #include "service/DaemonModelHelpers.h"
@@ -194,6 +195,42 @@ private slots:
                 QVERIFY(QDir(path).removeRecursively());
             }
         }
+    }
+    void extensionsReadExistingSettingsWithoutExecuting() {
+        sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(),
+                                             sentinel::core::inMemoryTestCredentialStore());
+        QTemporaryDir directory{QDir::tempPath() + "/ext-XXXXXX"};
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner |
+                                     QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+            .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+            .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>()).build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        server.setSettings(&settings);
+        QVERIFY(server.startServer(directory.filePath("extensions.sock")));
+        DaemonClient transport(directory.filePath("extensions.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QTRY_VERIFY(adapter.ready());
+        const auto before = adapter.messages().size();
+        auto readInventory = [&] { return adapter.settingsService("productSettings", {}, true); };
+        QTRY_VERIFY(readInventory().toMap().contains("value"));
+        const auto result = sentinel::desktop::ExtensionsHubPresentation::inventory(true, true,
+            readInventory().toMap(), adapter.value("availableToolIds").toStringList(), {});
+        QCOMPARE(result.value("phase").toString(), "ready");
+        adapter.refreshExtensionsHub();
+        QTRY_VERIFY(readInventory().toMap().contains("value"));
+        auto missing = [&] { return adapter.settingsService("extensionSettingsState", {"plugin:not-installed"}, true); };
+        QTRY_VERIFY(missing().isValid());
+        QCOMPARE(sentinel::desktop::ExtensionsHubPresentation::detail(true, "plugin:not-installed",
+            missing().toMap(), true).value("phase").toString(), "unavailable");
+        QCOMPARE(adapter.messages().size(), before);
+        transport.disconnectFromDaemon();
+        QVERIFY(!adapter.ready());
+        const auto offline = sentinel::desktop::ExtensionsHubPresentation::inventory(false, false,
+            readInventory().toMap(), {"stale.tool"}, {});
+        QVERIFY(offline.value("tools").toStringList().isEmpty());
     }
     void modelCatalogFiltersAndSortsReportedMetadata() {
         QFile script(":/catalog-test/ModelCatalog.js");
