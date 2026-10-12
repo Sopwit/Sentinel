@@ -1,0 +1,4 @@
+<!-- Puzzle-style UI glyph, matching the existing 24px outline icon system. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8190a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 4h5a2 2 0 1 1 4 0h7v5a2 2 0 1 1 0 4v7h-7a2 2 0 1 0 -4 0H4v-7a2 2 0 1 0 0 -4V4z"/>
+</svg>

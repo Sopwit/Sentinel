@@ -19,6 +19,8 @@ target_link_libraries(sentinel_warden PUBLIC sentinel_core Qt6::Quick Qt6::Concu
 sentinel_apply_compiler_flags(sentinel_warden)
 
 add_library(sentinel_desktop_viewmodels STATIC
+    include/sentinel/desktop/ExtensionsHubPresentation.h
+    src/ExtensionsHubPresentation.cpp
     include/sentinel/desktop/DesktopBackupHelper.h
     src/DesktopBackupHelper.cpp
     include/sentinel/desktop/QuickPanelController.h
@@ -280,6 +282,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationToast.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/ExtensionsHubPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/AgentInspectorPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelsPage.qml

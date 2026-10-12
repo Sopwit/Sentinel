@@ -42,6 +42,7 @@ public:
     }
     QVariantMap quickPanelSnapshot() const;
     void refresh();
+    void refreshExtensionsHub();
     bool voiceAction(const QString& action);
     QVariantMap voiceState() const;
     bool respondToApproval(bool allow);

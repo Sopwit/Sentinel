@@ -28,7 +28,9 @@ Rectangle {
             model: [
                 { page: "Dashboard", label: qsTr("Home"), icon: "home" },
                 { page: "Models", label: qsTr("Models"), icon: "brain" },
-                { page: "Inspector", label: qsTr("Inspector"), icon: "eye" }
+                { page: "Inspector", label: qsTr("Inspector"), icon: "eye" },
+                { page: "Tools", label: qsTr("Tools"), icon: "tool" },
+                { page: "Extensions", label: qsTr("Extensions"), icon: "puzzle" }
             ]
             delegate: Button {
                 id: navigationButton

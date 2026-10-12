@@ -2470,6 +2470,9 @@ public:
     Q_INVOKABLE QVariantMap clearWorkspaceSettingOverride(const QString& workspaceId,
                                                           const QString& key);
     Q_INVOKABLE QVariantMap providerSettingsState(const QString& providerId) const;
+    Q_INVOKABLE QVariantMap extensionsHubSnapshot() const;
+    Q_INVOKABLE QVariantMap extensionsHubDetail(const QString& id) const;
+    Q_INVOKABLE void refreshExtensionsHub();
     Q_INVOKABLE QVariantMap extensionSettingsState(const QString& extensionId) const;
     Q_INVOKABLE QVariantMap performExtensionSettingsAction(const QString& extensionId, int action);
     Q_INVOKABLE QVariantMap speechSettingsState() const;

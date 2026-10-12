@@ -104,7 +104,10 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
                     m_projectionRemaining = 0;
                 }
                 if (failed.name == "desktop.settings_service") {
-                    m_settingsQueries.remove(failed.target);
+                    m_settingsStates[failed.target] = QVariantMap{{"accepted", false}, {"code", code}};
+                    if (!failed.target.startsWith("productSettings[") &&
+                        !failed.target.startsWith("extensionSettingsState["))
+                        m_settingsQueries.remove(failed.target);
                 }
                 if (failed.name == "voice.action" || failed.name == "voice.audio") {
                     ++m_voiceGeneration;
@@ -330,6 +333,14 @@ void DesktopRuntimeClient::refresh() {
     if (!m_sessionId.isEmpty()) {
         attach(m_sessionId);
     }
+}
+void DesktopRuntimeClient::refreshExtensionsHub() {
+    for (const auto& key : m_settingsStates.keys())
+        if (key.startsWith("productSettings[") || key.startsWith("extensionSettingsState[")) {
+            m_settingsStates.remove(key);
+            m_settingsQueries.remove(key);
+        }
+    emit changed();
 }
 QVariant DesktopRuntimeClient::settingsService(const QString& action, const QVariantList& arguments,
                                                bool query) {

@@ -87,6 +87,11 @@ ApplicationWindow {
             root.openSettings()
             return
         }
+        if (pageName === "Extensions" || pageName === "Tools") {
+            root.currentShellPage = pageName
+            extensionsHub.openSection(pageName === "Tools" ? "tools" : "plugins")
+            return
+        }
         if (pageName === "Dashboard" || pageName === "Models" || pageName === "Inspector") {
             root.currentShellPage = pageName
             return
@@ -214,6 +219,14 @@ ApplicationWindow {
                         viewModel: root.viewModel
                         soundManager: soundManager
                         onOpenUpdateRequested: root.openUpdateModal()
+                    }
+
+                    ExtensionsHubPage {
+                        id: extensionsHub
+                        anchors.fill: parent
+                        visible: root.currentShellPage === "Extensions" || root.currentShellPage === "Tools"
+                        viewModel: root.viewModel
+                        onSettingsRequested: function(category) { root.openSettings(category) }
                     }
 
                     AgentInspectorPage {
@@ -522,7 +535,7 @@ ApplicationWindow {
                 root.viewModel.notificationCenterVisible = false
             else if (commandPalette.opened)
                 commandPalette.close()
-            else if (root.currentShellPage === "Settings")
+            else if (root.currentShellPage === "Settings" || root.currentShellPage === "Extensions" || root.currentShellPage === "Tools")
                 root.currentShellPage = "Dashboard"
         }
     }

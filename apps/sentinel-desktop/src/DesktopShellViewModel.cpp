@@ -1,3 +1,4 @@
+#include "sentinel/desktop/ExtensionsHubPresentation.h"
 #include "sentinel/desktop/DesktopBackupHelper.h"
 // SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
 //
@@ -4377,6 +4378,34 @@ QVariantMap DesktopShellViewModel::providerSettingsState(const QString& provider
             ->settingsService(QStringLiteral("providerSettingsState"), {providerId}, true)
             .toMap();
     return composedSettingsService(settings_, controller_).providerState(providerId).toVariantMap();
+}
+
+QVariantMap DesktopShellViewModel::extensionsHubSnapshot() const {
+    const auto* remote = controller_.remote();
+    const bool connected = daemonConnected();
+    QVariantMap response;
+    if (connected && remote->ready())
+        response = controller_.remote()->settingsService("productSettings", {}, true).toMap();
+    QStringList policy;
+    if (connected && remote->ready()) {
+        policy = toolContractSummaries() + toolContractPermissionSummaries() +
+                 toolContractSandboxSummaries() + toolContractReadinessSummaries();
+    }
+    return ExtensionsHubPresentation::inventory(connected, remote && remote->ready(), response,
+                                               connected ? availableToolIds() : QStringList{}, policy);
+}
+QVariantMap DesktopShellViewModel::extensionsHubDetail(const QString& id) const {
+    // Only inventory IDs may be queried. No arbitrary extension/action input reaches the daemon.
+    const auto snapshot = extensionsHubSnapshot();
+    for (const auto& row : snapshot.value("entries").toList())
+        if (row.toMap().value("id").toString() == id) {
+            const auto response = controller_.remote()->settingsService("extensionSettingsState", {id}, true);
+            return ExtensionsHubPresentation::detail(daemonConnected(), id, response.toMap(), response.isValid());
+        }
+    return {{"phase", daemonConnected() ? "unavailable" : "disconnected"}};
+}
+void DesktopShellViewModel::refreshExtensionsHub() {
+    if (auto* remote = controller_.remote()) remote->refreshExtensionsHub();
 }
 
 QVariantMap DesktopShellViewModel::extensionSettingsState(const QString& extensionId) const {
