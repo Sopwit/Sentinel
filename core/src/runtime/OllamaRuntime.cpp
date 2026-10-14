@@ -1619,9 +1619,9 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
 
         OllamaModelSummary model{id, createdStr, 0};
         const auto positiveLimit = [&object](const QString& key) -> std::optional<int> {
-            const auto value = object.value(key);
-            if (!value.isDouble()) return std::nullopt;
-            const auto number = value.toDouble();
+            const auto field = object.value(key);
+            if (!field.isDouble()) return std::nullopt;
+            const auto number = field.toDouble();
             if (number <= 0 || number > std::numeric_limits<int>::max() ||
                 number != std::floor(number)) return std::nullopt;
             return static_cast<int>(number);
@@ -1631,16 +1631,16 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
             model.capabilities.contextWindow = positiveLimit(QStringLiteral("max_context_length"));
         model.capabilities.maxOutputTokens = positiveLimit(QStringLiteral("max_output_tokens"));
         const auto reportedSupport = [&object](const QString& key) {
-            const auto value = object.value(key);
-            return value.isBool() ? (value.toBool() ? CapabilitySupport::Supported
-                                                   : CapabilitySupport::Unsupported)
+            const auto field = object.value(key);
+            return field.isBool() ? (field.toBool() ? CapabilitySupport::Supported
+                                                    : CapabilitySupport::Unsupported)
                                   : CapabilitySupport::Unknown;
         };
         const auto reported = object.value(QStringLiteral("capabilities")).toObject();
         const auto booleanCapability = [&reported](const QString& key) {
-            const auto value = reported.value(key);
-            return value.isBool() ? (value.toBool() ? CapabilitySupport::Supported
-                                                   : CapabilitySupport::Unsupported)
+            const auto field = reported.value(key);
+            return field.isBool() ? (field.toBool() ? CapabilitySupport::Supported
+                                                    : CapabilitySupport::Unsupported)
                                   : CapabilitySupport::Unknown;
         };
         model.capabilities.nativeToolCalling = booleanCapability(QStringLiteral("trained_for_tool_use"));

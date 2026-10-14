@@ -104,7 +104,7 @@ WebSearchResponse RealToolExecutor::searchWeb(const QString& query) const {
 
 namespace {
 QString scopedPath(const QString& workingDirectory, const QString& rawPath);
-QString osascriptEscape(const QString& text);
+[[maybe_unused]] QString osascriptEscape(const QString& text);
 bool looksLikeDomainName(const QString& text);
 } // namespace
 
@@ -1000,7 +1000,7 @@ QString runSynchronousProcess(const QString& program, const QStringList& args,
     return out;
 }
 
-QString osascriptEscape(const QString& text) {
+[[maybe_unused]] QString osascriptEscape(const QString& text) {
     QString escaped = text;
     escaped.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
     escaped.replace(QLatin1Char('"'), QStringLiteral("\\\""));

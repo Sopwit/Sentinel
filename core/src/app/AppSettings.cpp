@@ -730,10 +730,10 @@ ModelCapabilities AppSettings::modelCapabilitiesOverride(const QString& provider
     const auto document = QJsonDocument::fromJson(value.toUtf8());
     if (!document.isObject())
         return capabilities;
-    auto support = [](const QJsonValue& value) {
-        if (value.toString() == QLatin1String("supported"))
+    auto support = [](const QJsonValue& capabilityValue) {
+        if (capabilityValue.toString() == QLatin1String("supported"))
             return CapabilitySupport::Supported;
-        if (value.toString() == QLatin1String("unsupported"))
+        if (capabilityValue.toString() == QLatin1String("unsupported"))
             return CapabilitySupport::Unsupported;
         return CapabilitySupport::Unknown;
     };

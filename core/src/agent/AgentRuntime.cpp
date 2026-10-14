@@ -545,7 +545,7 @@ bool AgentRuntime::cancel(const QString& sessionId) {
                 [this] {
                     AgentLoop* loop = nullptr;
                     {
-                        std::lock_guard lock(mutex_);
+                        std::lock_guard loopLock(mutex_);
                         loop = activeLoop_;
                     }
                     if (loop)
@@ -1084,6 +1084,8 @@ void AgentRuntime::configureLoop(AgentLoop& loop, const QString& sessionId,
             type = record && record->succeeded ? AgentEventType::ToolExecutionCompleted
                                                : AgentEventType::ToolExecutionFailed;
             break;
+        default:
+            return;
         }
         publish(sessionId, type, payload, index, true);
     });

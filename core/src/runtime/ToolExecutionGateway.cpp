@@ -654,8 +654,8 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                  completion = std::move(completion)](ToolExecutionResult result) {
                     if (hooks && hooks->hasHooks(toolId)) {
                         if (result.status == ToolExecutionStatus::Succeeded) {
-                            QJsonObject output{{QStringLiteral("summary"), result.summary}};
-                            hooks->afterToolExecution(toolId, output);
+                            QJsonObject hookOutput{{QStringLiteral("summary"), result.summary}};
+                            hooks->afterToolExecution(toolId, hookOutput);
                         } else {
                             hooks->onToolError(toolId, result.summary);
                         }

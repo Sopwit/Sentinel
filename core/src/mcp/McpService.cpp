@@ -1319,13 +1319,13 @@ void McpService::startRemoteEventStream(const QString& serverName) {
             const auto method = document.object().value(QStringLiteral("method")).toString();
             if (method == QLatin1String("notifications/tools/list_changed"))
                 QTimer::singleShot(0, this, [this, serverName, generation] {
-                    const auto* current = findServer(serverName);
-                    if (current && current->generation == generation) refreshTools(serverName);
+                    const auto* entry = findServer(serverName);
+                    if (entry && entry->generation == generation) refreshTools(serverName);
                 });
             else if (method == QLatin1String("notifications/resources/list_changed"))
                 QTimer::singleShot(0, this, [this, serverName, generation] {
-                    const auto* current = findServer(serverName);
-                    if (current && current->generation == generation) refreshResources(serverName);
+                    const auto* entry = findServer(serverName);
+                    if (entry && entry->generation == generation) refreshResources(serverName);
                 });
         }
     });
@@ -1343,8 +1343,8 @@ void McpService::startRemoteEventStream(const QString& serverName) {
         if (!active) return;
         if (status == 405 || (modern && status == 404)) {
             QTimer::singleShot(60000, this, [this, serverName, generation] {
-                const auto* current = findServer(serverName);
-                if (current && current->generation == generation && refreshTools(serverName))
+                const auto* entry = findServer(serverName);
+                if (entry && entry->generation == generation && refreshTools(serverName))
                     startRemoteEventStream(serverName);
             });
             return;
@@ -1355,9 +1355,9 @@ void McpService::startRemoteEventStream(const QString& serverName) {
             return;
         }
         QTimer::singleShot(*retryMs, this, [this, serverName, generation] {
-            const auto* current = findServer(serverName);
-            if (!current || current->generation != generation ||
-                current->state != McpConnectionState::Connected) return;
+            const auto* entry = findServer(serverName);
+            if (!entry || entry->generation != generation ||
+                entry->state != McpConnectionState::Connected) return;
             if (refreshTools(serverName)) startRemoteEventStream(serverName);
         });
     });

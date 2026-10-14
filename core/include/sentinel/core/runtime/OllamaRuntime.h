@@ -180,6 +180,9 @@ public:
     explicit NullOllamaRuntimeClient(OllamaConfig config = OllamaConfig{});
 
     OllamaConfig config() const override;
+    // Keep the cancellation-token overloads visible instead of hiding them.
+    using IOllamaRuntimeClient::healthCheck;
+    using IOllamaRuntimeClient::installedModels;
     OllamaHealthCheckResult healthCheck() const override;
     QList<OllamaModelSummary> installedModels() const override;
     OllamaModelDiscoveryResult discoverModels(

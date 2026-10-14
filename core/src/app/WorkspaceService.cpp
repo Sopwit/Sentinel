@@ -410,7 +410,7 @@ WorkspaceProfileSnapshot WorkspaceService::resolveProfile(
     for (auto it = configuredExtensions.begin(); it != configuredExtensions.end(); ++it) {
         auto found =
             std::find_if(inventory.cbegin(), inventory.cend(),
-                                  [&it](const ExtensionSnapshot& entry) { return entry.id == it.key(); });
+                                  [&it](const ExtensionSnapshot& candidate) { return candidate.id == it.key(); });
         const auto status = !extensions ? QStringLiteral("unverified")
                           : found == inventory.cend() ? QStringLiteral("unavailable")
                           : found->available ? QStringLiteral("available")

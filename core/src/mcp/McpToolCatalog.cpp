@@ -44,21 +44,23 @@ ToolDescriptor McpToolCatalog::mcpToolToDescriptor(const McpToolDefinition& mcpT
     descriptor.inputSchema = mcpTool.inputSchema;
     descriptor.structuredObservationKind = StructuredObservationKind::Generic;
     descriptor.filesystemFailureSemanticContract = mcpTool.filesystemSemanticContract;
-    descriptor.evidenceProduced =
-        mcpTool.filesystemSemanticContract &&
-                mcpTool.inputSchema.value(QStringLiteral("properties"))
-                    .toObject()
-                    .contains(QStringLiteral("path"))
-            ? QList<ToolEvidenceDescriptor>{{ObservationDomain::FileSystem, EvidenceFreshness::Live,
-                                             EvidenceScope::ExactResource, QStringLiteral("path")}}
-            : QList<ToolEvidenceDescriptor>{{ObservationDomain::ExternalService,
-                                             EvidenceFreshness::TurnScoped,
-                                             EvidenceScope::Provider,
-                                             {}},
-                                            {ObservationDomain::ExternalService,
-                                             EvidenceFreshness::TurnScoped,
-                                             EvidenceScope::Operation,
-                                             {}}};
+    // Built through separate assignments: GCC reports a dangling-pointer false
+    // positive for the ternary that yields a temporary QList of QStringLiteral.
+    if (mcpTool.filesystemSemanticContract &&
+        mcpTool.inputSchema.value(QStringLiteral("properties"))
+            .toObject()
+            .contains(QStringLiteral("path"))) {
+        descriptor.evidenceProduced = {ToolEvidenceDescriptor{
+            ObservationDomain::FileSystem, EvidenceFreshness::Live, EvidenceScope::ExactResource,
+            QStringLiteral("path")}};
+    } else {
+        descriptor.evidenceProduced = {ToolEvidenceDescriptor{ObservationDomain::ExternalService,
+                                                              EvidenceFreshness::TurnScoped,
+                                                              EvidenceScope::Provider, {}},
+                                       ToolEvidenceDescriptor{ObservationDomain::ExternalService,
+                                                              EvidenceFreshness::TurnScoped,
+                                                              EvidenceScope::Operation, {}}};
+    }
 
     // Convert input schema to parameter descriptors
     QJsonObject schema = mcpTool.inputSchema;

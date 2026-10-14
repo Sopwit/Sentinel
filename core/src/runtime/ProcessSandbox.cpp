@@ -18,7 +18,8 @@ namespace sentinel::core {
 
 namespace {
 
-QString profileLiteral(QString path) {
+// Only the macOS Seatbelt profile builder emits literals; GCC warns elsewhere.
+[[maybe_unused]] QString profileLiteral(QString path) {
     path.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
     path.replace(QLatin1Char('"'), QStringLiteral("\\\""));
     return QStringLiteral("\"") + path + QStringLiteral("\"");

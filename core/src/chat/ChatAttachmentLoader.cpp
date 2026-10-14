@@ -37,11 +37,11 @@ QByteArray docxXml(const QString& path) {
             success = record.state == ProcessState::Exited && record.exitCode == 0 && !record.timedOut && !exceeded;
             loop.quit();
         }
-    }, [&](const QString& id, ProcessStream stream, const QByteArray& bytes) {
+    }, [&](const QString& processId, ProcessStream stream, const QByteArray& bytes) {
         if (stream != ProcessStream::Stdout) return;
         if (output.size() + bytes.size() > 4 * 1024 * 1024) {
             exceeded = true;
-            executor.kill(id);
+            executor.kill(processId);
         } else output += bytes;
     });
     if (!done && !id.isEmpty()) loop.exec();

@@ -905,24 +905,24 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
         timeout_->stop();
         auto* reply = activeReply_;
         activeReply_ = nullptr;
-        const auto record = records_.value(id);
-        const bool sameEndpoint = activeEndpoint_ == endpointFor(record.providerId);
+        const auto current = records_.value(id);
+        const bool sameEndpoint = activeEndpoint_ == endpointFor(current.providerId);
         const auto body = reply->readAll();
         const auto statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const bool httpOk = reply->error() == QNetworkReply::NoError &&
                             statusCode >= 200 && statusCode < 300;
         const auto failure = networkError(reply);
         reply->deleteLater();
-        if (record.kind == ModelOperationKind::Pull) {
+        if (current.kind == ModelOperationKind::Pull) {
             pullBuffer_.append(body);
             processPullLines(true);
             if (pullSucceeded_ && !pullFailed_ && (httpOk || cancelRequested_)) {
                 finish(ModelOperationState::Succeeded, ModelOperationError::None,
                        QStringLiteral("Model installed."));
                 if (sameEndpoint) {
-                    models_.applyOllamaModelMutation(record.nativeModelId, true);
-                    emit catalogChanged(record.providerId);
-                    refreshAfterMutation(record.providerId);
+                    models_.applyOllamaModelMutation(current.nativeModelId, true);
+                    emit catalogChanged(current.providerId);
+                    refreshAfterMutation(current.providerId);
                 }
             } else if (cancelRequested_ && !pullSucceeded_) {
                 finish(ModelOperationState::Cancelled, ModelOperationError::Cancelled,
@@ -934,7 +934,7 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
             }
             return;
         }
-        if (cancelRequested_ && record.kind == ModelOperationKind::Refresh) {
+        if (cancelRequested_ && current.kind == ModelOperationKind::Refresh) {
             finish(ModelOperationState::Cancelled, ModelOperationError::Cancelled,
                    safeErrorText(ModelOperationError::Cancelled));
             return;
@@ -943,7 +943,7 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
             finish(ModelOperationState::Failed, failure, safeErrorText(failure));
             return;
         }
-        if (record.kind == ModelOperationKind::Remove) {
+        if (current.kind == ModelOperationKind::Remove) {
             if (!body.trimmed().isEmpty()) {
                 const auto response = QJsonDocument::fromJson(body);
                 if (response.isObject() &&
@@ -956,13 +956,13 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
             finish(ModelOperationState::Succeeded, ModelOperationError::None,
                    QStringLiteral("Model removed."));
             if (sameEndpoint) {
-                models_.applyOllamaModelMutation(record.nativeModelId, false);
-                emit catalogChanged(record.providerId);
-                refreshAfterMutation(record.providerId);
+                models_.applyOllamaModelMutation(current.nativeModelId, false);
+                emit catalogChanged(current.providerId);
+                refreshAfterMutation(current.providerId);
             }
             return;
         }
-        if (record.providerId == QLatin1String("lm-studio")) {
+        if (current.providerId == QLatin1String("lm-studio")) {
             if (!lmStudioCatalog_.acceptResponse(body)) {
                 finish(ModelOperationState::Failed,
                        ModelOperationError::MalformedRuntimeResponse,
@@ -971,7 +971,7 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
             }
             ProviderDiscoveryOutcome outcome;
             outcome.completed = true;
-            models_.acceptProviderDiscovery(record.providerId, lmStudioCatalog_.discoveredModels(),
+            models_.acceptProviderDiscovery(current.providerId, lmStudioCatalog_.discoveredModels(),
                                             outcome, models_.beginProviderHealthObservation(), true);
         } else {
             QJsonParseError parseError;
@@ -1003,8 +1003,8 @@ void ModelOperationService::beginNetwork(const ModelOperationRecord& record) {
         }
         finish(ModelOperationState::Succeeded, ModelOperationError::None,
                QStringLiteral("Catalog refreshed."));
-        emit catalogChanged(record.providerId);
-        if (record.providerId == QLatin1String("ollama") && sameEndpoint)
+        emit catalogChanged(current.providerId);
+        if (current.providerId == QLatin1String("ollama") && sameEndpoint)
             refreshOllamaTelemetry();
     });
 }

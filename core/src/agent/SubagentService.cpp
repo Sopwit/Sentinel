@@ -39,7 +39,7 @@ QString SubagentService::submitTask(const TaskRequest& request, TaskFunction fun
             result.error = e.what();
         }
 
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker resultLocker(&m_mutex);
         m_results[req.taskId] = result;
 
         emit taskCompleted(req.taskId, result.success);
