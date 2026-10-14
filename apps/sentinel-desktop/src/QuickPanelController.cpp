@@ -98,31 +98,56 @@ void QuickPanelController::project() {
         error_.clear();
     }
     const auto snapshot = runtime_.quickPanelSnapshot();
+    const auto generation = runtime_.transport().serverGeneration();
+    const auto session = runtime_.sessionId();
+    const bool generationChanged = !generation.isEmpty() && generation != lastGeneration_;
+    if (generationChanged) {
+        lastApproval_.clear(); // Approval identities are daemon-wide, not selected-session-wide.
+    }
+    if (generationChanged || session != lastSession_) {
+        lastRun_.clear();
+        lastState_.clear();
+        pendingTerminalStates_.clear();
+        lastGeneration_ = generation;
+        lastSession_ = session;
+    }
     const auto run = snapshot.value("runId").toString();
     const auto status = snapshot.value("state").toString();
-    const auto pending = snapshot.value("approval").toMap();
-    const auto approval = pending.value("approval_id").toString();
-    if (runtime_.ready()) {
-        if (!approval.isEmpty() && approval != lastApproval_) {
-            emit notificationRequested(tr("Approval needed"),
-                                       pending.value("detail").toString().left(240),
-                                       snapshot.value("approvalSession").toString(), QStringLiteral("Security"), QStringLiteral("High"));
-        }
-        if (!run.isEmpty() && run == lastRun_ && status != lastState_ &&
-            (lastState_ == "running" || lastState_ == "approval") &&
-            (status == "completed" || status == "failed" || status == "cancelled") &&
-            snapshot.value("kind") == "agent") {
-            emit notificationRequested(tr("Sentinel Agent: %1").arg(status),
-                                       tr("Open Sentinel to review this run."),
-                                       runtime_.sessionId(), QStringLiteral("Agent"),
-                                       status == "failed" ? QStringLiteral("High") : QStringLiteral("Normal"));
-        }
+    if (!run.isEmpty() && run == lastRun_ && status != lastState_ &&
+        (lastState_ == "running" || lastState_ == "approval") &&
+        (status == "completed" || status == "failed" || status == "cancelled") &&
+        snapshot.value("kind") == "agent") {
+        // Observe terminal transitions even while reattachment gates delivery.
+        // Keep their order within this session/generation until ready again.
+        pendingTerminalStates_.append(status);
     }
     lastRun_ = run;
     lastState_ = status;
-    // Keep the last notified ID across disconnects and resolved snapshots.
-    if (runtime_.ready() && !approval.isEmpty()) {
-        lastApproval_ = approval;
+    const auto sameScope = [&] {
+        return runtime_.sessionId() == session &&
+               runtime_.transport().serverGeneration() == generation;
+    };
+    while (runtime_.ready() && sameScope() && !pendingTerminalStates_.isEmpty()) {
+        // Consume one identity before emitting a potentially reentrant signal.
+        // If a slot reattaches, remaining deliveries stay queued until ready;
+        // if it changes session/generation, project() discards the old queue.
+        const auto terminal = pendingTerminalStates_.takeFirst();
+        emit notificationRequested(
+            tr("Sentinel Agent: %1").arg(terminal), tr("Open Sentinel to review this run."),
+            session, QStringLiteral("Agent"),
+            terminal == "failed" ? QStringLiteral("High") : QStringLiteral("Normal"));
+    }
+    if (runtime_.ready() && sameScope()) {
+        const auto current = runtime_.quickPanelSnapshot();
+        const auto pending = current.value("approval").toMap();
+        const auto approval = pending.value("approval_id").toString();
+        if (!approval.isEmpty() && approval != lastApproval_) {
+            lastApproval_ = approval;
+            emit notificationRequested(tr("Approval needed"),
+                                       pending.value("detail").toString().left(240),
+                                       current.value("approvalSession").toString(),
+                                       QStringLiteral("Security"), QStringLiteral("High"));
+        }
     }
     emit changed();
 }

@@ -179,6 +179,90 @@ struct Peer {
                             {"sessions", 0}}));
     }
 };
+// A wire peer with explicit barriers, not timers, for initial history and
+// reattachment. All replies use the actual typed IPC projection contract.
+struct RuntimePeer : Peer {
+    QJsonObject snapshot{{"session_id", "fixture-session"},
+                         {"run_id", "fixture-run"},
+                         {"run_type", "agent"},
+                         {"state", "running"},
+                         {"output", ""},
+                         {"server_generation", "fixture-generation"},
+                         {"event_sequence", 1},
+                         {"properties", QJsonObject{}}};
+    QJsonObject historyRequest;
+    bool holdHistory = true;
+    static QJsonValue emptyValue(const QString& type) {
+        if (type == "string") {
+            return QString{};
+        }
+        if (type == "boolean") {
+            return false;
+        }
+        if (type == "array") {
+            return QJsonArray{};
+        }
+        if (type == "object") {
+            return QJsonObject{};
+        }
+        return 0;
+    }
+    void replyHistory() {
+        const QJsonArray messages{
+            QJsonObject{{"id", 1}, {"role", "user"}, {"content", "First recorded message"}},
+            QJsonObject{{"id", 2}, {"role", "assistant"}, {"content", "Second recorded message"}}};
+        send(socket,
+             frame("response", historyRequest.value("id").toString(), "session.messages",
+                   {{"session_id", historyRequest.value("payload").toObject().value("session_id")},
+                    {"messages", messages}}));
+        historyRequest = {};
+    }
+    void pump() {
+        while (socket && socket->canReadLine()) {
+            const auto request = read(socket);
+            const auto name = request.value("name").toString();
+            QJsonObject payload;
+            // Background metadata requests (for example voice.state) remain
+            // valid even when a barrier spans a timer tick under ASan.
+            const auto required = sentinel::ipc::responses().value(name).toObject();
+            for (auto it = required.begin(); it != required.end(); ++it) {
+                payload[it.key()] = emptyValue(it.value().toString());
+            }
+            if (name == "daemon.status") {
+                payload = {{"running", true},
+                           {"daemon_version", "fixture"},
+                           {"uptime_ms", 0},
+                           {"active_runs", 1},
+                           {"sessions", 1}};
+            } else if (name == "desktop.projection") {
+                QJsonObject properties;
+                const auto fields = sentinel::ipc::desktopProjectionFields();
+                for (auto it = fields.begin(); it != fields.end(); ++it) {
+                    const auto field = it.value().toObject();
+                    if (field.value("scope") != "global" || !field.value("eager").toBool()) {
+                        continue;
+                    }
+                    const auto type = field.value("type").toString();
+                    properties[it.key()] = emptyValue(type);
+                }
+                payload = {{"page", 0}, {"pages", 1}, {"properties", properties}};
+            } else if (name == "desktop.settings") {
+                payload = {{"values", QJsonObject{}}};
+            } else if (name == "session.list") {
+                payload = {{"sessions", QJsonArray{snapshot}}};
+            } else if (name == "session.attach") {
+                payload = snapshot;
+            } else if (name == "session.messages") {
+                historyRequest = request;
+                if (!holdHistory) {
+                    replyHistory();
+                }
+                continue;
+            }
+            send(socket, frame("response", request.value("id").toString(), name, payload));
+        }
+    }
+};
 } // namespace
 class DesktopIpcTest final : public QObject {
     Q_OBJECT
@@ -195,6 +279,142 @@ private slots:
                 QVERIFY(QDir(path).removeRecursively());
             }
         }
+    }
+    void delayedInitialHistoryHasExplicitReadiness_data() {
+        QTest::addColumn<bool>("switchSession");
+        QTest::newRow("old-session-response") << true;
+        QTest::newRow("old-run-response") << false;
+    }
+    void delayedInitialHistoryHasExplicitReadiness() {
+        QFETCH(bool, switchSession);
+        RuntimePeer peer;
+        DaemonClient transport(peer.path, 3000, 1000);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return !peer.historyRequest.isEmpty();
+        })());
+        QVERIFY(adapter.ready());
+        QVERIFY(!adapter.historyLoaded());
+        QVERIFY(adapter.messages().isEmpty());
+        peer.replyHistory();
+        QTRY_VERIFY(adapter.historyLoaded());
+        QCOMPARE(adapter.messages().size(), 2);
+        QCOMPARE(adapter.messages().at(0).content, QString("First recorded message"));
+        QCOMPARE(adapter.messages().at(1).content, QString("Second recorded message"));
+        adapter.refresh();
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return !peer.historyRequest.isEmpty();
+        })());
+        const auto previousSessionRequest = peer.historyRequest;
+        peer.historyRequest = {};
+        const auto targetSession =
+            switchSession ? QStringLiteral("other-session") : QStringLiteral("fixture-session");
+        peer.snapshot["session_id"] = targetSession;
+        peer.snapshot["run_id"] = "other-run";
+        if (switchSession) {
+            QVERIFY(adapter.dispatch("switchConversation", {targetSession}).toBool());
+        } else {
+            adapter.refresh();
+        }
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return adapter.sessionId() == targetSession && !peer.historyRequest.isEmpty();
+        })());
+        QVERIFY(!adapter.historyLoaded());
+        const int retainedMessages = switchSession ? 0 : 2;
+        QCOMPARE(adapter.messages().size(), retainedMessages);
+        const auto currentSessionRequest = peer.historyRequest;
+        QSignalSpy replies(&transport, &DaemonClient::responseReceived);
+        peer.historyRequest = previousSessionRequest;
+        peer.replyHistory();
+        QTRY_COMPARE(replies.size(), 1);
+        QVERIFY(!adapter.historyLoaded()); // An old session/run cannot complete the new barrier.
+        QCOMPARE(adapter.messages().size(), retainedMessages);
+        if (!switchSession) {
+            QCOMPARE(adapter.messages().at(0).content, QString("First recorded message"));
+            QCOMPARE(adapter.messages().at(1).content, QString("Second recorded message"));
+        }
+        peer.historyRequest = currentSessionRequest;
+        peer.replyHistory();
+        QTRY_VERIFY(adapter.historyLoaded());
+        QCOMPARE(adapter.messages().size(), 2);
+        transport.disconnectFromDaemon();
+        QVERIFY(!adapter.historyLoaded());
+    }
+    void terminalNotificationSurvivesReattach_data() {
+        QTest::addColumn<QString>("state");
+        QTest::addColumn<bool>("switchSession");
+        QTest::addColumn<bool>("reenter");
+        QTest::newRow("denied") << QString("failed") << false << false;
+        QTest::newRow("cancelled") << QString("cancelled") << false << false;
+        QTest::newRow("completed") << QString("completed") << false << false;
+        QTest::newRow("different-session-discards-pending") << QString("failed") << true << false;
+        QTest::newRow("reentrant-refresh-not-duplicated") << QString("failed") << false << true;
+    }
+    void terminalNotificationSurvivesReattach() {
+        QFETCH(QString, state);
+        QFETCH(bool, switchSession);
+        QFETCH(bool, reenter);
+        RuntimePeer peer;
+        peer.holdHistory = false;
+        DaemonClient transport(peer.path, 3000, 1000);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        sentinel::desktop::QuickPanelController panel(adapter);
+        QSignalSpy notices(&panel, &sentinel::desktop::QuickPanelController::notificationRequested);
+        if (reenter) {
+            connect(&panel, &sentinel::desktop::QuickPanelController::notificationRequested,
+                    &adapter, [&] { adapter.refresh(); });
+        }
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return adapter.ready() && adapter.historyLoaded();
+        })());
+        QCOMPARE(notices.size(), 0);
+        adapter.refresh(); // Withhold the attach reply, making ready() false.
+        QVERIFY(!adapter.ready());
+        peer.snapshot["state"] = state;
+        peer.snapshot["event_sequence"] = 2;
+        transport.eventReceived(state == "failed"      ? "run.failed"
+                                : state == "cancelled" ? "run.cancelled"
+                                                       : "run.completed",
+                                peer.snapshot);
+        QCOMPARE(adapter.value("conversationState").toString(), state);
+        QCOMPARE(notices.size(), 0); // No delivery during the unavailable state.
+        if (switchSession) {
+            peer.snapshot["session_id"] = "other-session";
+            peer.snapshot["run_id"] = "other-run";
+            QTRY_VERIFY(([&] {
+                peer.pump();
+                return adapter.ready() && adapter.sessionId() == "other-session";
+            })());
+            QCOMPARE(notices.size(), 0); // Never deliver an old run into a different session.
+            return;
+        }
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return adapter.ready();
+        })());
+        QCOMPARE(notices.size(), 1);
+        QCOMPARE(notices.first().at(2).toString(), QString("fixture-session"));
+        QVERIFY(notices.first().at(0).toString().contains(state));
+        // Replaying the terminal snapshot or a late success cannot duplicate
+        // the notification or turn denial/cancellation into success.
+        adapter.refresh();
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return adapter.ready();
+        })());
+        transport.eventReceived("run.completed", {{"session_id", "fixture-session"},
+                                                  {"run_id", "fixture-run"},
+                                                  {"server_generation", "fixture-generation"},
+                                                  {"event_sequence", 3},
+                                                  {"state", "completed"}});
+        QCOMPARE(notices.size(), 1);
+        QCOMPARE(adapter.value("conversationState").toString(), state);
     }
     void extensionsReadExistingSettingsWithoutExecuting() {
         sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(),
@@ -213,6 +433,7 @@ private slots:
         DaemonClient transport(directory.filePath("extensions.sock"), 3000, 10);
         sentinel::desktop::DesktopRuntimeClient adapter(transport);
         QTRY_VERIFY(adapter.ready());
+        QTRY_VERIFY(adapter.historyLoaded());
         const auto before = adapter.messages().size();
         auto readInventory = [&] { return adapter.settingsService("productSettings", {}, true); };
         QTRY_VERIFY(readInventory().toMap().contains("value"));

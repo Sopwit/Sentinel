@@ -147,6 +147,7 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
             m_settings = {};
             m_values.clear();
             m_messages.clear();
+            m_historyLoaded = false;
             m_requests.clear();
             m_submissionPending = false;
             m_attaching = false;
@@ -486,6 +487,7 @@ void DesktopRuntimeClient::clearSession() {
     m_preferredSession.clear();
     m_attaching = false;
     m_messages.clear();
+    m_historyLoaded = false;
     m_runId.clear();
     m_state.clear();
     m_output.clear();
@@ -510,6 +512,7 @@ void DesktopRuntimeClient::attach(const QString& id) {
 }
 void DesktopRuntimeClient::requestMessages() {
     if (!m_sessionId.isEmpty()) {
+        m_historyLoaded = false;
         send(DaemonClient::Command::session_messages, {{"session_id", m_sessionId}}, m_sessionId);
     }
 }
@@ -680,6 +683,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
                 }
             }
             m_messages.clear();
+            m_historyLoaded = false;
         }
         m_sessionId = request.target;
         m_preferredSession = m_sessionId;
@@ -711,6 +715,7 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
             messages.append(message);
         }
         m_messages = std::move(messages);
+        m_historyLoaded = true;
         m_activeAssistantId = m_kind == "chat" && !m_messages.isEmpty() &&
                                       m_messages.last().role == core::ChatRole::Assistant
                                   ? m_messages.last().id
@@ -776,6 +781,9 @@ void DesktopRuntimeClient::applySnapshot(const QJsonObject& snapshot) {
     m_values["activeConversationSummary"] = snapshot.value("summary").toString();
     m_values["activeConversationPinned"] = snapshot.value("pinned").toBool();
     m_values["activeConversationArchived"] = snapshot.value("archived").toBool();
+    if (m_runId != snapshot.value("run_id").toString()) {
+        m_historyLoaded = false;
+    }
     m_runId = snapshot.value("run_id").toString();
     m_kind = snapshot.value("run_type").toString();
     m_state = snapshot.value("state").toString();

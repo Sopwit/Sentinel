@@ -25,6 +25,11 @@ public:
     const QList<core::ChatMessage>& messages() const {
         return m_messages;
     }
+    // Unlike transport/session readiness, this confirms the requested history
+    // for the current session/run has arrived.
+    bool historyLoaded() const {
+        return m_historyLoaded;
+    }
     DaemonClient& transport() const {
         return m_transport;
     }
@@ -102,6 +107,7 @@ private:
     quint64 m_voiceGeneration = 0;
     QVariantMap m_voiceState;
     bool m_voiceQueryPending = false;
+    bool m_historyLoaded = false;
     bool m_settingsLoaded = false, m_sessionsLoaded = false;
     bool m_loaded = false, m_attaching = false, m_submissionPending = false;
     QElapsedTimer m_startupProjectionTimer;

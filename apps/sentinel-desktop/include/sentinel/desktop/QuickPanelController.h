@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include <QObject>
+#include <QStringList>
 #include <QVariantMap>
 namespace sentinel::desktop {
 class DesktopRuntimeClient;
@@ -37,5 +38,7 @@ private:
     void project();
     DesktopRuntimeClient& runtime_;
     QString error_, lastState_, lastRun_, lastApproval_;
+    QString lastGeneration_, lastSession_;
+    QStringList pendingTerminalStates_;
 };
 } // namespace sentinel::desktop

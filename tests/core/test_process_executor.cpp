@@ -75,6 +75,9 @@ void ProcessExecutorTest::pluginRuntimeStartsInsideSandbox() {
         executor.write(id, plugin::pluginHostFrame({{"protocol", plugin::PluginHostProtocolVersion},
                                                     {"id", "shutdown"},
                                                     {"op", "shutdown"}})));
+    // Complete the peer lifetime so the host input reader can observe EOF.
+    // The same clean exit and confinement assertions remain required.
+    QVERIFY(executor.closeWriteChannel(id));
     QTRY_COMPARE_WITH_TIMEOUT(executor.record(id).state, ProcessState::Exited, 5000);
     QCOMPARE(executor.record(id).exitCode, 0);
     executor.shutdown();

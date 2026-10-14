@@ -11,27 +11,28 @@ void qml_register_types_Sentinel_Warden();
 #include "sentinel/core/memory/SQLiteMemoryStore.h"
 #include "sentinel/desktop/DesktopShellViewModel.h"
 #include "sentinel/desktop/NativeCompanionAdapter.h"
-#include <QApplication>
 #include <QAccessible>
-#include <cmath>
+#include <QApplication>
+#include <QDir>
+#include <QElapsedTimer>
+#include <QFile>
+#include <QFileInfo>
+#include <QJSValue>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQuickItem>
-#include <QJSValue>
 #include <QQuickWindow>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
-#include <QElapsedTimer>
 #include <QTranslator>
+#include <cmath>
+#include <cstdio>
 
 // Deterministic catalog data only; the harness does not simulate provider success.
 class CatalogUiFixture final : public QObject {
@@ -75,6 +76,25 @@ QVariant qmlVariant(const QVariant& value) {
     return value.metaType() == QMetaType::fromType<QJSValue>() ? value.value<QJSValue>().toVariant() : value;
 }
 
+namespace {
+// Test-only stage output is flushed immediately. CTest's process-level
+// timeout can report the last operation even if Qt's event loop blocks.
+class Phase1Diagnostic {
+public:
+    explicit Phase1Diagnostic(bool enabled) : enabled_(enabled) {}
+    void stage(const char* name) const {
+        if (!enabled_) {
+            return;
+        }
+        std::fprintf(stderr, "PHASE1 STAGE: %s\n", name);
+        std::fflush(stderr);
+    }
+
+private:
+    bool enabled_;
+};
+} // namespace
+
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName("Sentinel Settings Certification");
@@ -87,6 +107,7 @@ int main(int argc, char** argv) {
     const bool chatSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--chat-smoke";
     const bool settingsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--settings-smoke";
     const bool modelsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--models-smoke";
+    Phase1Diagnostic diagnostic(phase1Smoke);
     QTemporaryDir temporaryProfile;
     if (argc != 2 || (!extensionsSmoke && !phase1Smoke && !focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
         return 2;
@@ -100,7 +121,9 @@ int main(int argc, char** argv) {
             std::make_unique<sentinel::core::SQLiteMemoryStore>(profile.filePath("memory.sqlite3")))
         .withConversationStore(std::make_unique<sentinel::core::SQLiteConversationStore>(
             profile.filePath("chat.sqlite3")));
+    diagnostic.stage("controller-build");
     auto controller = builder.build();
+    diagnostic.stage("controller-ready");
     sentinel::core::ModeManager modes;
     sentinel::core::JsonSettingsStore presentationStore(profile.filePath("warden-harness.json"));
     sentinel::desktop::CoreWardenPreferences wardenPreferences(presentationStore);
@@ -138,9 +161,11 @@ int main(int argc, char** argv) {
     engine.rootContext()->setContextProperty("ollamaLibraryFetcher", &library);
     for (const auto* name : {"ggufLibraryFetcher", "lmStudioLibraryFetcher", "ollamaModelDetailFetcher", "ollamaPuller", "daemonClient"})
         engine.rootContext()->setContextProperty(name, &emptyLibrary);
+    diagnostic.stage("qml-engine-load");
     engine.load(QUrl::fromLocalFile(extensionsSmoke
         ? QFileInfo(QStringLiteral(CERTIFICATION_QML_WRAPPER)).dir().filePath("extensions_hub_certification.qml")
         : QStringLiteral(CERTIFICATION_QML_WRAPPER)));
+    diagnostic.stage("qml-engine-loaded");
     if (engine.rootObjects().isEmpty())
         return 3;
     if (extensionsSmoke) {
@@ -216,8 +241,12 @@ int main(int argc, char** argv) {
                 for (auto* child : item->childItems()) if (auto* found = self(self, child, name)) return found;
                 return nullptr;
             };
+            diagnostic.stage("phase1-callback-enter");
             auto check = [&](bool ok, const char* detail) {
-                if (!ok) qFatal("Phase 1 acceptance failed: %s", detail);
+                diagnostic.stage(detail);
+                if (!ok) {
+                    qFatal("Phase 1 acceptance failed: %s", detail);
+                }
             };
             auto* page = find(find, window->contentItem(), "settingsPage");
             auto* popup = window->findChild<QObject*>("notificationCenterPopup");
@@ -228,6 +257,7 @@ int main(int argc, char** argv) {
             auto* history = find(find, page, "notificationHistoryButton");
             check(history, "Settings history entry");
             history->forceActiveFocus();
+            diagnostic.stage("history-click");
             QMetaObject::invokeMethod(history, "clicked"); QTest::qWait(100);
             check(popup->property("visible").toBool(), "history opens");
             auto* empty = find(find, window->contentItem(), "notificationHistoryEmpty");
@@ -235,6 +265,7 @@ int main(int argc, char** argv) {
             QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(100);
             check(!viewModel.notificationCenterVisible() && !popup->property("visible").toBool(), "Escape synchronizes visibility");
             check(history->hasActiveFocus(), "focus returns to history entry");
+            diagnostic.stage("notification-create");
             viewModel.addNotificationWithPriority("Security", "Disposable phase 1 notice", "Synthetic test content", "High");
             viewModel.setNotificationCenterVisible(true); QTest::qWait(100);
             auto* list = find(find, window->contentItem(), "notificationHistoryList");
@@ -244,11 +275,13 @@ int main(int argc, char** argv) {
             auto* markRead = find(find, window->contentItem(), "notificationMarkReadButton");
             auto* archive = find(find, window->contentItem(), "notificationArchiveButton");
             check(markRead && archive, "notification row actions");
+            diagnostic.stage("notification-mark-read");
             QMetaObject::invokeMethod(markRead, "clicked"); QApplication::processEvents();
             const auto readRow = QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object();
             check(readRow.value("read").toBool(), "row marks notification read");
             archive = find(find, window->contentItem(), "notificationArchiveButton");
             check(archive, "archive action survives refresh");
+            diagnostic.stage("notification-archive");
             QMetaObject::invokeMethod(archive, "clicked"); QApplication::processEvents();
             check(QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object().value("archived").toBool(), "row archives notification");
             check(viewModel.notificationFilteredSummaries().join(" ").contains("Disposable phase 1 notice"), "archive remains in history");
@@ -262,6 +295,7 @@ int main(int argc, char** argv) {
                 const auto name = action.value("action").toString();
                 if (name == "settings" || name == "notifications" || name == "search-chats" || name == "universal-search" || name == "theme") {
                     const auto oldTheme = viewModel.themeName();
+                    diagnostic.stage("palette-action");
                     QMetaObject::invokeMethod(palette, "runAction", Q_ARG(QVariant, value));
                     QApplication::processEvents();
                     if (name == "settings") check(page->property("activeCategory").toString() == action.value("category", "Interface").toString(), "category route");
@@ -282,6 +316,7 @@ int main(int argc, char** argv) {
             }
             auto* status = find(find, window->contentItem(), "daemonStatusButton");
             check(status, "focusable daemon indicator"); status->forceActiveFocus();
+            diagnostic.stage("accessible-interface-query");
             const auto* accessible = QAccessible::queryAccessibleInterface(status);
             check(accessible && !accessible->text(QAccessible::Name).isEmpty(), "status accessible name");
             QTest::keyClick(window, Qt::Key_Space); QTest::qWait(60);
@@ -290,10 +325,12 @@ int main(int argc, char** argv) {
             check(window->activeFocusItem() && window->activeFocusItem() != status, "status popup receives focus");
             QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(40);
             check(status->hasActiveFocus(), "status popup restores focus");
+            diagnostic.stage("voice-capture-start");
             window->setProperty("surface", 2); viewModel.startVoiceCapture(true); QTest::qWait(60);
             check(!viewModel.voiceInputStatus().isEmpty() && !viewModel.voiceInputMessage().contains("ModelUnavailable"), "voice prerequisite guidance");
             auto* voiceSetup = find(find, window->contentItem(), "chatVoiceSetupButton");
             check(voiceSetup && voiceSetup->isVisible(), "voice setup action");
+            diagnostic.stage("voice-setup-click");
             QMetaObject::invokeMethod(voiceSetup, "clicked"); QApplication::processEvents();
             check(page->property("activeCategory").toString() == "Voice" && window->property("surface").toInt() == 0, "voice settings route");
             QQmlComponent finishComponent(&engine);
@@ -314,6 +351,7 @@ int main(int argc, char** argv) {
                     }
                 }
             )", QUrl("qrc:/phase1-finish-test.qml"));
+            diagnostic.stage("finish-component-create");
             std::unique_ptr<QObject> finish(finishComponent.create());
             check(bool(finish), "finish component fixture");
             auto* readiness = qvariant_cast<QObject*>(finish->property("viewModel"));
@@ -335,6 +373,7 @@ int main(int argc, char** argv) {
                 viewModel.setThemeName(theme);
                 for (bool contrast : {false, true}) {
                     viewModel.setHighContrastEnabled(contrast); QTest::qWait(100);
+                    diagnostic.stage("contrast-window-grab");
                     const auto screenshot = window->grabWindow();
                     check(!screenshot.isNull(), "renderer returns icon pixels");
                     const auto background = window->property("settingsSurface").value<QColor>();
@@ -356,6 +395,7 @@ int main(int argc, char** argv) {
             }
             qInfo("Onboarding readiness state matrix and rendered rail stroke samples passed; not full WCAG certification");
             qInfo("Phase 1 notification lifecycle/dismissal/focus, palette routes, labels, status and missing-STT flow passed (isolated harness)");
+            diagnostic.stage("phase1-assertions-complete");
             app.exit(0);
         });
     }
@@ -900,11 +940,15 @@ int main(int argc, char** argv) {
             app.exit(0);
         });
     }
-    QTimer::singleShot(15 * 60 * 1000, &app, &QApplication::quit);
+    QTimer::singleShot(15 * 60 * 1000, &app, [&app] { app.exit(98); });
+    diagnostic.stage("event-loop-enter");
     const auto code = app.exec();
+    diagnostic.stage("event-loop-exit");
     // Tear down production QML before its stack-owned viewmodel disappears.
+    diagnostic.stage("qml-root-teardown");
     for (auto* root : engine.rootObjects())
         delete root;
+    diagnostic.stage("qml-root-teardown-complete");
     return code;
 }
 
