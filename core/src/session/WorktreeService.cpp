@@ -258,7 +258,7 @@ bool WorktreeService::removeWorktree(const QString& repositoryPath, const QStrin
     const auto repository = discoverRepository(repositoryPath);
     const QString target = QDir::cleanPath(QFileInfo(worktreePath).absoluteFilePath());
     const QString base = QDir(m_worktreeBasePath).absolutePath();
-    if (!repository || !target.startsWith(base + QDir::separator())) {
+    if (!repository || !target.startsWith(base + QLatin1Char('/'))) {
         setError(QStringLiteral("Worktree path is outside Sentinel's worktree directory"));
         return false;
     }

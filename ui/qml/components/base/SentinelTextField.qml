@@ -14,7 +14,12 @@ TextField {
     placeholderTextColor: SentinelTheme.textPlaceholder
     selectByMouse: true
     hoverEnabled: true
-    implicitHeight: 36
+    // Font fallback and DPI can make the line taller than the nominal control.
+    implicitHeight: Math.max(36, Math.ceil(lineMetrics.height) + topPadding + bottomPadding)
+    FontMetrics {
+        id: lineMetrics
+        font: control.font
+    }
     leftPadding: SentinelTheme.spaceMd
     rightPadding: SentinelTheme.spaceMd
     font.pixelSize: SentinelTheme.fontBody

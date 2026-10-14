@@ -17,6 +17,7 @@ void qml_register_types_Sentinel_Warden();
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QFontMetricsF>
 #include <QJSValue>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -100,7 +101,10 @@ int main(int argc, char** argv) {
     QCoreApplication::setApplicationName("Sentinel Settings Certification");
     QStandardPaths::setTestModeEnabled(true);
     const bool extensionsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--extensions-smoke";
-    const bool phase1Smoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--phase1-smoke";
+    const bool phase1FailureSmoke =
+        argc == 2 && QString::fromLocal8Bit(argv[1]) == "--phase1-failure-smoke";
+    const bool phase1Smoke =
+        phase1FailureSmoke || (argc == 2 && QString::fromLocal8Bit(argv[1]) == "--phase1-smoke");
     const bool traySmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--tray-smoke";
     const bool focusSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--focus-smoke";
     const bool navigationSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--navigation-smoke";
@@ -235,7 +239,8 @@ int main(int argc, char** argv) {
     }
     if (phase1Smoke) {
         auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
-        QTimer::singleShot(250, &app, [&, window] {
+        struct AcceptanceFailure {};
+        const auto exercise = [&, window] {
             auto find = [](auto&& self, QQuickItem* item, const QString& name) -> QQuickItem* {
                 if (item->objectName() == name) return item;
                 for (auto* child : item->childItems()) if (auto* found = self(self, child, name)) return found;
@@ -247,9 +252,12 @@ int main(int argc, char** argv) {
                 std::fprintf(stderr, "PHASE1 CHECK: %s result=%s\n", detail, ok ? "pass" : "FAIL");
                 std::fflush(stderr);
                 if (!ok) {
-                    qFatal("Phase 1 acceptance failed: %s", detail);
+                    std::fprintf(stderr, "Phase 1 acceptance failed: %s\n", detail);
+                    std::fflush(stderr);
+                    throw AcceptanceFailure{};
                 }
             };
+            check(!phase1FailureSmoke, "injected failure exit contract");
             auto* page = find(find, window->contentItem(), "settingsPage");
             auto* popup = window->findChild<QObject*>("notificationCenterPopup");
             auto* palette = window->findChild<QObject*>("certificationPalette");
@@ -260,34 +268,41 @@ int main(int argc, char** argv) {
             check(history, "Settings history entry");
             history->forceActiveFocus();
             diagnostic.stage("history-click");
-            QMetaObject::invokeMethod(history, "clicked"); QTest::qWait(100);
+            QMetaObject::invokeMethod(history, "clicked");
+            QTest::qWait(100);
             check(popup->property("visible").toBool(), "history opens");
             auto* empty = find(find, window->contentItem(), "notificationHistoryEmpty");
             check(empty && empty->isVisible(), "empty history");
-            QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(100);
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTest::qWait(100);
             check(!viewModel.notificationCenterVisible() && !popup->property("visible").toBool(), "Escape synchronizes visibility");
             check(history->hasActiveFocus(), "focus returns to history entry");
             diagnostic.stage("notification-create");
             viewModel.addNotificationWithPriority("Security", "Disposable phase 1 notice", "Synthetic test content", "High");
-            viewModel.setNotificationCenterVisible(true); QTest::qWait(100);
+            viewModel.setNotificationCenterVisible(true);
+            QTest::qWait(100);
             auto* list = find(find, window->contentItem(), "notificationHistoryList");
             check(list && list->property("count").toInt() == 2 && !empty->isVisible(), "group and populated history");
-            viewModel.setDndEnabled(true); QApplication::processEvents();
+            viewModel.setDndEnabled(true);
+            QApplication::processEvents();
             check(list->property("count").toInt() == 2, "DND retains history");
             auto* markRead = find(find, window->contentItem(), "notificationMarkReadButton");
             auto* archive = find(find, window->contentItem(), "notificationArchiveButton");
             check(markRead && archive, "notification row actions");
             diagnostic.stage("notification-mark-read");
-            QMetaObject::invokeMethod(markRead, "clicked"); QApplication::processEvents();
+            QMetaObject::invokeMethod(markRead, "clicked");
+            QApplication::processEvents();
             const auto readRow = QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object();
             check(readRow.value("read").toBool(), "row marks notification read");
             archive = find(find, window->contentItem(), "notificationArchiveButton");
             check(archive, "archive action survives refresh");
             diagnostic.stage("notification-archive");
-            QMetaObject::invokeMethod(archive, "clicked"); QApplication::processEvents();
+            QMetaObject::invokeMethod(archive, "clicked");
+            QApplication::processEvents();
             check(QJsonDocument::fromJson(viewModel.notificationFilteredSummaries().first().toUtf8()).object().value("archived").toBool(), "row archives notification");
             check(viewModel.notificationFilteredSummaries().join(" ").contains("Disposable phase 1 notice"), "archive remains in history");
-            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(5, 5)); QTest::qWait(100);
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(5, 5));
+            QTest::qWait(100);
             check(!popup->property("visible").toBool() && !viewModel.notificationCenterVisible(), "outside dismissal");
             check(viewModel.clearArchivedNotifications(), "clear archived");
             viewModel.setDndEnabled(false);
@@ -300,14 +315,56 @@ int main(int argc, char** argv) {
                     diagnostic.stage("palette-action");
                     QMetaObject::invokeMethod(palette, "runAction", Q_ARG(QVariant, value));
                     QApplication::processEvents();
-                    if (name == "settings") check(page->property("activeCategory").toString() == action.value("category", "Interface").toString(), "category route");
-                    if (name == "notifications") { check(viewModel.notificationCenterVisible(), "palette history route"); viewModel.setNotificationCenterVisible(false); }
-                    if (name.startsWith("search") || name == "universal-search") check(!action.value("enabled").toBool(), "unsupported search disabled");
-                    if (name == "theme") check(viewModel.themeName() != oldTheme, "theme cycle");
+                    if (name == "settings")
+                        check(page->property("activeCategory").toString() ==
+                                  action.value("category", "Interface").toString(),
+                              "category route");
+                    if (name == "notifications") {
+                        check(viewModel.notificationCenterVisible(), "palette history route");
+                        viewModel.setNotificationCenterVisible(false);
+                    }
+                    if (name.startsWith("search") || name == "universal-search")
+                        check(!action.value("enabled").toBool(), "unsupported search disabled");
+                    if (name == "theme")
+                        check(viewModel.themeName() != oldTheme, "theme cycle");
                 }
             }
+            // Exercise a large real font at the original 1100px breakpoint, not a wider window.
+            window->setWidth(1100);
+            auto* settingsSearch = find(find, page, "settingsSearch");
+            check(settingsSearch, "sidebar search present");
+            const QFont originalSearchFont = settingsSearch->property("font").value<QFont>();
+            QFont largeSearchFont = originalSearchFont;
+            largeSearchFont.setPixelSize(26);
+            settingsSearch->setProperty("font", largeSearchFont);
+            check(QTest::qWaitFor([&] {
+                      const QFontMetricsF metrics(largeSearchFont);
+                      return settingsSearch->height() -
+                                     settingsSearch->property("topPadding").toReal() -
+                                     settingsSearch->property("bottomPadding").toReal() >=
+                                 metrics.height() &&
+                             settingsSearch->width() -
+                                     settingsSearch->property("leftPadding").toReal() -
+                                     settingsSearch->property("rightPadding").toReal() >=
+                                 metrics.horizontalAdvance(
+                                     settingsSearch->property("placeholderText").toString());
+                  }),
+                  "large-font sidebar search content fits");
+            auto placeholderFits = [](auto&& self, QQuickItem* item) -> bool {
+                if (item->isVisible() && item->property("truncated").toBool())
+                    return false;
+                for (auto* child : item->childItems())
+                    if (!self(self, child))
+                        return false;
+                return true;
+            };
+            check(placeholderFits(placeholderFits, settingsSearch),
+                  "large-font placeholder not truncated");
+            settingsSearch->setProperty("font", originalSearchFont);
             for (int width : {1100, 900, 780}) {
-                window->setWidth(width); window->setHeight(width == 780 ? 640 : 780); QTest::qWait(60);
+                window->setWidth(width);
+                window->setHeight(width == 780 ? 640 : 780);
+                QTest::qWait(60);
                 auto* sidebar = find(find, page, "settingsCategorySidebar");
                 check(sidebar && sidebar->isVisible() == !page->property("compact").toBool(), "responsive breakpoint");
                 auto inspect = [&](auto&& self, QQuickItem* item) -> void {
@@ -336,23 +393,29 @@ int main(int argc, char** argv) {
                 inspect(inspect, sidebar);
             }
             auto* status = find(find, window->contentItem(), "daemonStatusButton");
-            check(status, "focusable daemon indicator"); status->forceActiveFocus();
+            check(status, "focusable daemon indicator");
+            status->forceActiveFocus();
             diagnostic.stage("accessible-interface-query");
             const auto* accessible = QAccessible::queryAccessibleInterface(status);
             check(accessible && !accessible->text(QAccessible::Name).isEmpty(), "status accessible name");
-            QTest::keyClick(window, Qt::Key_Space); QTest::qWait(60);
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(60);
             auto* statusPopup = window->findChild<QObject*>("daemonStatusPopup");
             check(statusPopup && statusPopup->property("visible").toBool(), "keyboard opens daemon details");
             check(window->activeFocusItem() && window->activeFocusItem() != status, "status popup receives focus");
-            QTest::keyClick(window, Qt::Key_Escape); QTest::qWait(40);
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTest::qWait(40);
             check(status->hasActiveFocus(), "status popup restores focus");
             diagnostic.stage("voice-capture-start");
-            window->setProperty("surface", 2); viewModel.startVoiceCapture(true); QTest::qWait(60);
+            window->setProperty("surface", 2);
+            viewModel.startVoiceCapture(true);
+            QTest::qWait(60);
             check(!viewModel.voiceInputStatus().isEmpty() && !viewModel.voiceInputMessage().contains("ModelUnavailable"), "voice prerequisite guidance");
             auto* voiceSetup = find(find, window->contentItem(), "chatVoiceSetupButton");
             check(voiceSetup && voiceSetup->isVisible(), "voice setup action");
             diagnostic.stage("voice-setup-click");
-            QMetaObject::invokeMethod(voiceSetup, "clicked"); QApplication::processEvents();
+            QMetaObject::invokeMethod(voiceSetup, "clicked");
+            QApplication::processEvents();
             check(page->property("activeCategory").toString() == "Voice" && window->property("surface").toInt() == 0, "voice settings route");
             QQmlComponent finishComponent(&engine);
             finishComponent.setData(R"(
@@ -393,7 +456,8 @@ int main(int argc, char** argv) {
             for (const char* theme : {"Liquid Glass Light", "Liquid Glass Dark"}) {
                 viewModel.setThemeName(theme);
                 for (bool contrast : {false, true}) {
-                    viewModel.setHighContrastEnabled(contrast); QTest::qWait(100);
+                    viewModel.setHighContrastEnabled(contrast);
+                    QTest::qWait(100);
                     diagnostic.stage("contrast-window-grab");
                     const auto screenshot = window->grabWindow();
                     check(!screenshot.isNull(), "renderer returns icon pixels");
@@ -407,7 +471,8 @@ int main(int argc, char** argv) {
                         for (int y = int(origin.y() * scale); y < int((origin.y() + 20) * scale); ++y)
                             for (int x = int(origin.x() * scale); x < int((origin.x() + 20) * scale); ++x) {
                                 const double a = luminance(screenshot.pixelColor(x, y)), b = luminance(background);
-                                if ((qMax(a, b) + 0.05) / (qMin(a, b) + 0.05) >= 3.0) ++contrastingPixels;
+                                if ((qMax(a, b) + 0.05) / (qMin(a, b) + 0.05) >= 3.0)
+                                    ++contrastingPixels;
                             }
                         check(contrastingPixels >= 10, "icon strokes visible at >= 3:1 against rail surface");
                         qInfo() << "Icon contrast pixels" << theme << contrast << buttonName << contrastingPixels;
@@ -418,6 +483,15 @@ int main(int argc, char** argv) {
             qInfo("Phase 1 notification lifecycle/dismissal/focus, palette routes, labels, status and missing-STT flow passed (isolated harness)");
             diagnostic.stage("phase1-assertions-complete");
             app.exit(0);
+        };
+        QTimer::singleShot(250, &app, [&, exercise] {
+            try {
+                exercise();
+            } catch (const AcceptanceFailure&) {
+                // Catch inside the Qt callback and retain main's normal QML teardown.
+                diagnostic.stage("phase1-failure-exit");
+                app.exit(97);
+            }
         });
     }
     if (traySmoke) {
@@ -505,6 +579,11 @@ int main(int argc, char** argv) {
                 QApplication::processEvents();
                 if (provider->width() <= 0 ||
                     send->mapToScene(QPointF()).x() + send->width() > panel->width()) {
+                    std::fprintf(stderr,
+                                 "TRAY LAYOUT: window=%d provider-width=%.1f send-right=%.1f\n",
+                                 panel->width(), provider->width(),
+                                 send->mapToScene(QPointF()).x() + send->width());
+                    std::fflush(stderr);
                     fail(75, "compact layout");
                     return;
                 }

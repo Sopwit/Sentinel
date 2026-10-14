@@ -401,6 +401,12 @@ bool DaemonIpcServer::startServer(const QString& requested) {
         return false;
     }
     if (QFileInfo::exists(m_path)) {
+#ifdef Q_OS_WIN
+        // Named pipes do not occupy filesystem nodes. Never treat an existing
+        // filesystem entry as a stale pipe endpoint or remove it.
+        m_lock.reset();
+        return false;
+#endif
 #ifdef Q_OS_UNIX
         struct stat info{};
         if (::lstat(m_path.toLocal8Bit().constData(), &info) != 0 || !S_ISSOCK(info.st_mode) ||

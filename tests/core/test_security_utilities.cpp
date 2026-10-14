@@ -15,6 +15,7 @@ private slots:
     void pathGuardBlocksEscape();
     void pathGuardBlocksSymlinkEscape();
     void pathGuardResolvesMissingChild();
+    void pathGuardUsesNormalizedSeparators();
     void base64UrlRoundTrips();
 };
 
@@ -63,6 +64,16 @@ void SecurityUtilitiesTest::pathGuardResolvesMissingChild() {
     QVERIFY(PathGuard::contains(root.path(), missing));
     QCOMPARE(PathGuard::safePath(root.path(), missing),
              PathGuard::canonicalPath(missing));
+}
+
+void SecurityUtilitiesTest::pathGuardUsesNormalizedSeparators() {
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const auto nested = root.filePath(QStringLiteral("nested/file.txt"));
+    QVERIFY(PathGuard::contains(root.path(), nested));
+    QVERIFY(PathGuard::contains(root.path(), QDir::toNativeSeparators(nested)));
+    QVERIFY(!PathGuard::contains(root.path(), root.path() + QStringLiteral("-other/file.txt")));
+    QVERIFY(!PathGuard::contains(root.path(), root.filePath(QStringLiteral("../outside.txt"))));
 }
 
 void SecurityUtilitiesTest::base64UrlRoundTrips() {

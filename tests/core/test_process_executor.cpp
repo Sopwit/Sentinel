@@ -255,12 +255,12 @@ void ProcessExecutorTest::failedStart() {
     ProcessRequest request;
     request.unconfinedPermitted = true;
     request.program = QStringLiteral("/nonexistent/sentinel-process-test");
+    QSignalSpy spy(this, &ProcessExecutorTest::completed);
     const auto id = executor.start(request, [&](const ProcessRecord& record) {
         if (record.state == ProcessState::Failed)
             emit completed();
     });
-    QSignalSpy spy(this, &ProcessExecutorTest::completed);
-    QVERIFY(spy.wait(5000));
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 5000);
     QCOMPARE(executor.record(id).state, ProcessState::Failed);
 }
 

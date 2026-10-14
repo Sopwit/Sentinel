@@ -78,7 +78,7 @@ TruncationResult ToolOutputTruncator::truncate(const QByteArray& output,
     result.fullOutputPath = m_config.outputDir + "/" + filename;
 
     QFile file(result.fullOutputPath);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (file.open(QIODevice::WriteOnly)) {
         file.write(output);
     }
 

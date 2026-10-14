@@ -81,7 +81,8 @@ Item {
         Rectangle {
             objectName: "settingsCategorySidebar"
             visible: settingsPage.sidebarExpanded && !settingsPage.compact
-            Layout.preferredWidth: settingsPage.width < 1050 ? 256 : 280
+            Layout.preferredWidth: Math.max(settingsPage.width < 1050 ? 256 : 280,
+                                            searchField.implicitWidth + 2 * SentinelTheme.spaceLg)
             Layout.fillHeight: true
             color: SentinelTheme.backgroundRaised
             ColumnLayout {
@@ -95,8 +96,15 @@ Item {
                     color: SentinelTheme.textPrimary
                 }
                 SentinelTextField {
+                    id: searchField
                     objectName: "settingsSearch"
+                    implicitWidth: Math.ceil(searchMetrics.advanceWidth) + leftPadding + rightPadding
                     Layout.fillWidth: true
+                    TextMetrics {
+                        id: searchMetrics
+                        font: searchField.font
+                        text: searchField.placeholderText
+                    }
                     placeholderText: qsTr("Search settings")
                     Accessible.name: placeholderText
                     onTextChanged: settingsPage.searchQuery = text

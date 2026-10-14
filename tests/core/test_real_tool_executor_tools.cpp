@@ -560,20 +560,28 @@ private slots:
 
     void deleteFileRefusesPathOutsideWorkspace() {
         QTemporaryDir dir;
+        QTemporaryDir outside;
+        QVERIFY(outside.isValid());
+        const auto protectedPath = outside.filePath(QStringLiteral("protected.txt"));
+        QFile protectedFile(protectedPath);
+        QVERIFY(protectedFile.open(QIODevice::WriteOnly));
+        QCOMPARE(protectedFile.write("protected"), qint64(9));
+        protectedFile.close();
         const auto oldCwd = QDir::currentPath();
         QVERIFY(QDir::setCurrent(dir.path()));
 
         RealToolExecutor executor;
         const auto result =
             runTool(executor, QStringLiteral("delete-file"),
-                    {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("/etc/passwd")}},
-                    QStringList{});
+                    {ToolInvocationArgument{QStringLiteral("path"), protectedPath}}, QStringList{});
 
         QVERIFY(QDir::setCurrent(oldCwd));
 
         QCOMPARE(result.status, ToolExecutionStatus::Blocked);
-        QVERIFY(result.summary.contains(QStringLiteral("Filesystem access denied for /etc/passwd")));
-        QVERIFY(QFile::exists(QStringLiteral("/etc/passwd")));
+        QVERIFY(result.summary.contains(
+            QStringLiteral("Filesystem access denied for %1").arg(protectedPath)));
+        QVERIFY(protectedFile.open(QIODevice::ReadOnly));
+        QCOMPARE(protectedFile.readAll(), QByteArray("protected"));
     }
 
     void moveFileRenamesWithinWorkspace() {

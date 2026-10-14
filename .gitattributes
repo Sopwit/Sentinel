@@ -36,6 +36,7 @@
 *.toml text eol=lf
 Cargo.lock text eol=lf
 *.py text eol=lf
+*.mjs text eol=lf
 
 # Canonical art/source models and media must never receive text conversion
 *.blend binary

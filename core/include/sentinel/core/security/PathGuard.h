@@ -18,9 +18,8 @@ public:
         if (candidatePath == rootPath) {
             return true;
         }
-        const QString prefix = rootPath.endsWith(QDir::separator())
-                                   ? rootPath
-                                   : rootPath + QDir::separator();
+        const QString prefix =
+            rootPath.endsWith(QLatin1Char('/')) ? rootPath : rootPath + QLatin1Char('/');
         return candidatePath.startsWith(prefix);
     }
 

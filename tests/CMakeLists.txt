@@ -53,6 +53,12 @@ add_test(NAME test_ui_phase1 COMMAND settings_ui_certification_probe --phase1-sm
 set_tests_properties(test_ui_phase1 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     TIMEOUT 180)
+add_test(NAME test_ui_phase1_failure_exit
+    COMMAND ${CMAKE_COMMAND} -DPROBE=$<TARGET_FILE:settings_ui_certification_probe>
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/helpers/verify_phase1_failure_exit.cmake)
+set_tests_properties(test_ui_phase1_failure_exit PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    TIMEOUT 30)
 add_test(NAME test_chat_surface COMMAND settings_ui_certification_probe --chat-smoke)
 add_test(NAME test_models_surface COMMAND settings_ui_certification_probe --models-smoke)
 add_test(NAME test_settings_surface COMMAND settings_ui_certification_probe --settings-smoke)
