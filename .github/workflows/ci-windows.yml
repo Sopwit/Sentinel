@@ -47,6 +47,8 @@ jobs:
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
+          # QtTest must use captured stderr rather than the Windows debugger channel.
+          QT_FORCE_STDERR_LOGGING: '1'
         run: ctest --preset tests --output-on-failure
 
   experimental-arm64:

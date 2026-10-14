@@ -244,6 +244,8 @@ int main(int argc, char** argv) {
             diagnostic.stage("phase1-callback-enter");
             auto check = [&](bool ok, const char* detail) {
                 diagnostic.stage(detail);
+                std::fprintf(stderr, "PHASE1 CHECK: %s result=%s\n", detail, ok ? "pass" : "FAIL");
+                std::fflush(stderr);
                 if (!ok) {
                     qFatal("Phase 1 acceptance failed: %s", detail);
                 }
@@ -309,8 +311,27 @@ int main(int argc, char** argv) {
                 auto* sidebar = find(find, page, "settingsCategorySidebar");
                 check(sidebar && sidebar->isVisible() == !page->property("compact").toBool(), "responsive breakpoint");
                 auto inspect = [&](auto&& self, QQuickItem* item) -> void {
-                    if (item->isVisible()) check(!item->property("truncated").toBool(), "complete sidebar labels");
-                    for (auto* child : item->childItems()) self(self, child);
+                    // Constant class names and geometry only: no text, paths or user data.
+                    std::fprintf(
+                        stderr,
+                        "PHASE1 SIDEBAR: width=%d class=%s geometry=%.1fx%.1f inspect-begin\n",
+                        width, item->metaObject()->className(), item->width(), item->height());
+                    std::fflush(stderr);
+                    const bool visible = item->isVisible();
+                    diagnostic.stage("sidebar-visibility-read");
+                    if (visible) {
+                        const QVariant truncated = item->property("truncated");
+                        std::fprintf(stderr, "PHASE1 SIDEBAR: truncated-valid=%d truncated=%d\n",
+                                     truncated.isValid(), truncated.toBool());
+                        std::fflush(stderr);
+                        check(!truncated.toBool(), "complete sidebar labels");
+                    }
+                    diagnostic.stage("sidebar-children-read-begin");
+                    const auto children = item->childItems();
+                    diagnostic.stage("sidebar-children-read-end");
+                    for (auto* child : children)
+                        self(self, child);
+                    diagnostic.stage("sidebar-item-complete");
                 };
                 inspect(inspect, sidebar);
             }
