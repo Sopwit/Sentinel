@@ -15,8 +15,10 @@
 #include "sentinel/core/security/ResourceAuthorizationResolver.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/security/StaticSandboxPolicy.h"
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QProcess>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -93,6 +95,49 @@ ToolExecutionRequest requestFor(const QString& id) {
     request.sandbox.status = SandboxStatus::Allowed;
     return request;
 }
+
+// The host is launched through the sandbox broker (bwrap on Linux), so its
+// direct parent is never this process and Linux truncates ps comm to 15
+// characters. Match the full command line and require the process to descend
+// from this test binary so a foreign host is never selected.
+qint64 ownedPluginHostPid() {
+    QProcess listing;
+    listing.start("/bin/ps", {"-ww", "-axo", "pid=,ppid=,args="});
+    if (!listing.waitForFinished(5000))
+        return 0;
+    QHash<qint64, qint64> parents;
+    QList<qint64> hosts;
+    const auto lines = QString::fromUtf8(listing.readAllStandardOutput()).split(QLatin1Char('\n'));
+    for (const auto& raw : lines) {
+        const auto line = raw.simplified();
+        if (line.isEmpty())
+            continue;
+        const auto fields = line.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+        if (fields.size() < 3)
+            continue;
+        bool pidOk = false;
+        bool ppidOk = false;
+        const auto pid = fields.at(0).toLongLong(&pidOk);
+        const auto ppid = fields.at(1).toLongLong(&ppidOk);
+        if (!pidOk || !ppidOk)
+            continue;
+        parents.insert(pid, ppid);
+        const auto command = fields.at(2);
+        if (command.endsWith(QLatin1String("/sentinel-plugin-host")) ||
+            command == QLatin1String("sentinel-plugin-host"))
+            hosts.append(pid);
+    }
+    const auto self = QCoreApplication::applicationPid();
+    for (const auto host : hosts) {
+        auto ancestor = host;
+        for (int depth = 0; ancestor > 0 && depth < 64; ++depth) {
+            if (ancestor == self)
+                return host;
+            ancestor = parents.value(ancestor, 0);
+        }
+    }
+    return 0;
+}
 } // namespace
 
 class PluginToolIntegrationTest final : public QObject {
@@ -121,16 +166,7 @@ void PluginToolIntegrationTest::stoppedHostTimesOutInflightWithoutLateSuccess() 
                 QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).absolutePath()) >= 1);
     QVERIFY(manager.startPlugin(pluginId));
     const auto host = manager.descriptor(pluginId)->host;
-    QProcess listing;
-    listing.start("/bin/ps", {"-axo", "pid,ppid,comm"});
-    QVERIFY(listing.waitForFinished(5000));
-    qint64 pid = 0;
-    for (const auto& line : QString::fromUtf8(listing.readAllStandardOutput()).split('\n')) {
-        const auto fields = line.simplified().split(' ');
-        if (fields.size() >= 3 && fields[1].toLongLong() == QCoreApplication::applicationPid() &&
-            fields[2].endsWith("/sentinel-plugin-host"))
-            pid = fields[0].toLongLong();
-    }
+    const qint64 pid = ownedPluginHostPid();
     QVERIFY(pid > 0);
     QCOMPARE(::kill(static_cast<pid_t>(pid), SIGSTOP), 0);
     ToolExecutionGateway gateway(&registry);
@@ -350,16 +386,7 @@ void PluginToolIntegrationTest::separateHostCrashFailsInflightAndRemovesTools() 
     QVERIFY(manager.discoverPlugins(
                 QFileInfo(QString::fromUtf8(TEST_PLUGIN_PATH)).absolutePath()) >= 1);
     QVERIFY(manager.startPlugin(pluginId));
-    QProcess listing;
-    listing.start("/bin/ps", {"-axo", "pid,ppid,comm"});
-    QVERIFY(listing.waitForFinished(5000));
-    qint64 hostPid = 0;
-    for (const auto& line : QString::fromUtf8(listing.readAllStandardOutput()).split('\n')) {
-        const auto fields = line.simplified().split(' ');
-        if (fields.size() >= 3 && fields[1].toLongLong() == QCoreApplication::applicationPid() &&
-            fields[2].endsWith("/sentinel-plugin-host"))
-            hostPid = fields[0].toLongLong();
-    }
+    const qint64 hostPid = ownedPluginHostPid();
     QVERIFY(hostPid > 0);
     QVERIFY(hostPid != QCoreApplication::applicationPid());
     qInfo() << "Plugin host PID" << hostPid << "owner PID" << QCoreApplication::applicationPid();

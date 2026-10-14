@@ -815,14 +815,21 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             } else if (record.state == ProcessState::Cancelled) {
                 summary = QStringLiteral("run-command: Command cancelled.");
             } else if (record.state == ProcessState::Failed && record.systemPid == 0) {
+                const auto launchFailure = record.sandbox.failureCategory;
+                // A docker sandbox that cannot even start is almost always a
+                // missing docker CLI, so say that instead of a bare sandbox error.
+                const bool missingDocker =
+                    current->docker &&
+                    (launchFailure.isEmpty() ||
+                     launchFailure == QLatin1String("ExecutableUnavailable"));
                 summary =
-                    !record.sandbox.failureCategory.isEmpty()
-                        ? QStringLiteral("run-command: Sandbox denied launch (%1).")
-                              .arg(record.sandbox.failureCategory)
-                    : current->docker
+                    missingDocker
                         ? QStringLiteral(
                               "run-command: docker sandbox requested but the docker CLI is not "
                               "available. Install Docker or retry without sandbox=docker.")
+                    : !launchFailure.isEmpty()
+                        ? QStringLiteral("run-command: Sandbox denied launch (%1).")
+                              .arg(launchFailure)
                         : QStringLiteral("run-command: Failed to start the approved command.");
             } else if (current->docker) {
                 if (record.exitCode == 0)

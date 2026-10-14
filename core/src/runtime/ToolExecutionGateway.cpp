@@ -465,9 +465,13 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 if (batch->finished)
                     return;
                 batch->cancelled = true;
-                if (batch->active && batch->cancel)
-                    batch->cancel();
-                else if (batch->next)
+                if (batch->active && batch->cancel) {
+                    // The in-flight completion clears batch->cancel while this
+                    // functor runs, so take ownership before invoking it.
+                    auto cancel = std::move(batch->cancel);
+                    batch->cancel = {};
+                    cancel();
+                } else if (batch->next)
                     batch->next();
             };
         }

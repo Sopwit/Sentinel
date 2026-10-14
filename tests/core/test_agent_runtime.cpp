@@ -295,6 +295,9 @@ private slots:
             planner.decision.arguments.append(
                 {QStringLiteral("timeout"),
                  cancel ? QStringLiteral("60000") : QStringLiteral("1000")});
+            // The validator types timeout as an integer, so the argument keeps
+            // its JSON type alongside the legacy string form.
+            planner.decision.arguments.last().jsonValue = QJsonValue(cancel ? 60000 : 1000);
             RealToolExecutor executor;
             StaticApprovalPolicy approval;
             StaticSandboxPolicy sandbox;
@@ -418,6 +421,9 @@ private slots:
         AgentSessionOptions options;
         options.autonomousMode = true;
         options.availableToolIds = {QStringLiteral("run-command")};
+        // The sandbox only exposes the workspace, so the fake docker CLI has to
+        // live in the approved workspace root instead of an arbitrary temp dir.
+        options.workspaceContext.rootPath = temporary.path();
         runtime.configureSession(session, std::move(options));
         QVERIFY(runtime.start(session, QStringLiteral("task")));
         QTRY_COMPARE_WITH_TIMEOUT(runtime.sessionState(session).phase, AgentLoopPhase::Completed,

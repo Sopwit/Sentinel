@@ -489,7 +489,11 @@ void AgentLoop::cancelAsync() {
     if (scheduler_)
         scheduler_->cancel();
     if (waitingForTool_ && cancelTool_) {
-        cancelTool_();
+        // The completion path clears cancelTool_ from inside the functor, so
+        // run it from local storage instead of the member it can invalidate.
+        auto cancelTool = std::move(cancelTool_);
+        cancelTool_ = {};
+        cancelTool();
         asyncState_.phase = AgentLoopPhase::Cancelled;
         asyncState_.abortReason = QStringLiteral("Agent run cancelled by user.");
         completeAsync();

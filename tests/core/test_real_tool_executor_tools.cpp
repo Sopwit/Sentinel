@@ -772,6 +772,13 @@ private slots:
             {ToolInvocationArgument{QStringLiteral("app"), QStringLiteral("sahibinden.com")}},
             QStringList{});
 
+        if (result.failureCategory == ToolFailureCategory::Unsupported) {
+            // Linux registers app-launch as platform-unsupported, so the
+            // gateway refuses the call before any launch happens.
+            QCOMPARE(result.status, ToolExecutionStatus::Failed);
+            QVERIFY(result.summary.contains(QStringLiteral("unsupported on this platform")));
+            return;
+        }
         QCOMPARE(result.status, ToolExecutionStatus::InvalidArguments);
         QVERIFY(result.summary.contains(QStringLiteral("open-url")));
     }
@@ -1026,8 +1033,8 @@ private slots:
 
     void runCommandDockerSandboxReportsMissingDocker() {
         // On machines without docker the tool must degrade to clear guidance
-        // instead of failing the whole plan. (Docker installs run the same
-        // code path with a real container.)
+        // instead of an opaque sandbox error. The command never runs, so the
+        // result stays a failure that names the missing runtime.
         const bool hasDocker =
             QProcess::execute(QStringLiteral("docker"), {QStringLiteral("--version")}) == 0;
         if (hasDocker) {
@@ -1041,7 +1048,7 @@ private slots:
                      ToolInvocationArgument{QStringLiteral("sandbox"), QStringLiteral("docker")}},
                     QStringList{});
 
-        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
         QVERIFY(result.summary.contains(QStringLiteral("docker CLI is not available")));
     }
 
