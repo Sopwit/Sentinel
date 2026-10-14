@@ -56,7 +56,7 @@ void LocalModelRuntime::ensureRunning() {
     }
     QUrl health = endpoint;
     health.setPath("/health");
-    health.setQuery({});
+    health.setQuery(QString{});
     QNetworkRequest request(health);
     request.setTransferTimeout(1500);
     probing_ = true;

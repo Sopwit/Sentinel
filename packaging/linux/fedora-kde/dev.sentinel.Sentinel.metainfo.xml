@@ -17,13 +17,8 @@
     </p>
   </description>
   <launchable type="desktop-id">dev.sentinel.Sentinel.desktop</launchable>
-  <url type="homepage">https://sentinel.dev</url>
-  <url type="bugtracker">https://github.com/sentinel/sentinel/issues</url>
-  <url type="vcs-browser">https://github.com/sentinel/sentinel</url>
-  <kudos>
-    <kudo>ModernToolkit</kudo>
-    <kudo>HiDpiIcon</kudo>
-  </kudos>
+  <url type="homepage">https://github.com/sentinel-projects/sentinel</url>
+  <url type="bugtracker">https://github.com/sentinel-projects/sentinel/issues</url>
   <releases>
     <release version="1.0.0" date="2026-07-30">
       <description>

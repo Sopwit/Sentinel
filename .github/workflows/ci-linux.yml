@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
+          sudo apt-get install -y bubblewrap cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
@@ -127,7 +127,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev
+          sudo apt-get install -y bubblewrap cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
