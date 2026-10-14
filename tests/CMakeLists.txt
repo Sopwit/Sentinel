@@ -281,6 +281,20 @@ if(Qt6QuickTest_FOUND AND TARGET Qt6::QuickTest)
             Qt6::Quick
             Qt6::Test
     )
+    # SoundManager resolves qrc:/sounds/*.wav; embed the same cues as the desktop app.
+    set_source_files_properties(${PROJECT_SOURCE_DIR}/resources/sounds/notification.wav
+        PROPERTIES QT_RESOURCE_ALIAS sounds/notification.wav)
+    set_source_files_properties(${PROJECT_SOURCE_DIR}/resources/sounds/error.wav
+        PROPERTIES QT_RESOURCE_ALIAS sounds/error.wav)
+    set_source_files_properties(${PROJECT_SOURCE_DIR}/resources/sounds/success.wav
+        PROPERTIES QT_RESOURCE_ALIAS sounds/success.wav)
+    qt_add_resources(test_gui_components sentinel_gui_sounds
+        PREFIX /
+        FILES
+            ${PROJECT_SOURCE_DIR}/resources/sounds/notification.wav
+            ${PROJECT_SOURCE_DIR}/resources/sounds/error.wav
+            ${PROJECT_SOURCE_DIR}/resources/sounds/success.wav
+    )
     add_test(NAME test_gui_components COMMAND $<TARGET_FILE:test_gui_components> -input "${CMAKE_CURRENT_SOURCE_DIR}/gui")
 endif()
 

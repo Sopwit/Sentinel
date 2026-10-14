@@ -10,76 +10,56 @@ QtObject {
     id: root
 
     property bool enabled: true
+
+    // QSoundEffect only decodes WAV/AIFF sources (QSoundEffect::supportedMimeTypes()),
+    // so platform sound themes (freedesktop *.oga) cannot be played through it. Bundled
+    // WAV cues are used on every platform to avoid decode failures and the resulting
+    // "Error decoding source" warnings.
+    readonly property string notificationSource: "qrc:/sounds/notification.wav"
+    readonly property string errorSource: "qrc:/sounds/error.wav"
+    readonly property string successSource: "qrc:/sounds/success.wav"
+
+    // Effects are created on first use. Creating them eagerly races the platform audio
+    // device enumeration during startup: QSoundEffect resolves the default audio output
+    // while loading and reports an error when none is available yet.
+    property var notificationSound: null
+    property var errorSound: null
+    property var successSound: null
+
     readonly property bool soundEffectsAvailable: root.enabled
+        && (!notificationSound || notificationSound.status !== SoundEffect.Error)
+        && (!errorSound || errorSound.status !== SoundEffect.Error)
+        && (!successSound || successSound.status !== SoundEffect.Error)
 
-    function systemSoundPath(name) {
-        if (Qt.platform.os === "osx" || Qt.platform.os === "macos") {
-            var macSounds = {
-                "notification": "file:///System/Library/Sounds/Pop.aiff",
-                "error": "file:///System/Library/Sounds/Basso.aiff",
-                "success": "file:///System/Library/Sounds/Glass.aiff"
-            }
-            return macSounds[name] || ""
-        }
-        if (Qt.platform.os === "linux" || Qt.platform.os === "unix") {
-            var linuxSounds = {
-                "notification": "file:///usr/share/sounds/freedesktop/stereo/message-new-instant.oga",
-                "error": "file:///usr/share/sounds/freedesktop/stereo/dialog-error.oga",
-                "success": "file:///usr/share/sounds/freedesktop/stereo/complete.oga"
-            }
-            return linuxSounds[name] || ""
-        }
-        if (Qt.platform.os === "windows") {
-            var winSounds = {
-                "notification": "file:///C:/Windows/Media/Windows Notify System Generic.wav",
-                "error": "file:///C:/Windows/Media/Windows Critical Stop.wav",
-                "success": "file:///C:/Windows/Media/Windows Ding.wav"
-            }
-            return winSounds[name] || ""
-        }
-        return ""
+    readonly property Component effectComponent: Component {
+        SoundEffect {}
     }
 
-    readonly property string notificationPrimary: root.systemSoundPath("notification")
-    readonly property string errorPrimary: root.systemSoundPath("error")
-    readonly property string successPrimary: root.systemSoundPath("success")
-    readonly property string notificationFallback: "qrc:/sounds/notification.wav"
-    readonly property string errorFallback: "qrc:/sounds/error.wav"
-    readonly property string successFallback: "qrc:/sounds/success.wav"
-
-    property SoundEffect notificationSound: SoundEffect {
-        source: root.notificationPrimary
-        volume: 0.4
-    }
-
-    property SoundEffect errorSound: SoundEffect {
-        source: root.errorPrimary
-        volume: 0.5
-    }
-
-    property SoundEffect successSound: SoundEffect {
-        source: root.successPrimary
-        volume: 0.3
+    function createEffect(source, volume) {
+        return effectComponent.createObject(root, {"source": source, "volume": volume})
     }
 
     function playNotification() {
         if (!root.enabled) return
-        if (notificationSound.status !== SoundEffect.Ready && notificationSound.source.toString() !== notificationFallback)
-            notificationSound.source = notificationFallback
-        notificationSound.play()
+        if (!notificationSound)
+            notificationSound = createEffect(notificationSource, 0.4)
+        if (notificationSound.status !== SoundEffect.Error)
+            notificationSound.play()
     }
 
     function playError() {
         if (!root.enabled) return
-        if (errorSound.status !== SoundEffect.Ready && errorSound.source.toString() !== errorFallback)
-            errorSound.source = errorFallback
-        errorSound.play()
+        if (!errorSound)
+            errorSound = createEffect(errorSource, 0.5)
+        if (errorSound.status !== SoundEffect.Error)
+            errorSound.play()
     }
 
     function playSuccess() {
         if (!root.enabled) return
-        if (successSound.status !== SoundEffect.Ready && successSound.source.toString() !== successFallback)
-            successSound.source = successFallback
-        successSound.play()
+        if (!successSound)
+            successSound = createEffect(successSource, 0.3)
+        if (successSound.status !== SoundEffect.Error)
+            successSound.play()
     }
 }
