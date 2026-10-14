@@ -11,8 +11,9 @@
 #include <QFileInfo>
 #include <QUuid>
 
-#include <cstring>
 #include <algorithm>
+#include <cstring>
+#include <string>
 #include <utility>
 
 namespace sentinel::core::securefs {
@@ -68,12 +69,11 @@ QString finalPath(HANDLE handle) {
     const DWORD length = GetFinalPathNameByHandleW(handle, nullptr, 0,
                                                     FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
     if (length == 0 || length > 32767) return {};
-    QString path(static_cast<qsizetype>(length + 1), Qt::Uninitialized);
+    std::wstring path(static_cast<std::size_t>(length + 1), L'\0');
     const DWORD written = GetFinalPathNameByHandleW(handle, path.data(), length + 1,
                                                      FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
     if (written == 0 || written > length) return {};
-    path.resize(static_cast<qsizetype>(written));
-    return normalized(path);
+    return normalized(QString::fromWCharArray(path.data(), static_cast<qsizetype>(written)));
 }
 
 bool identity(HANDLE handle, quint64& device, quint64& file) {

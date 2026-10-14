@@ -230,8 +230,9 @@ add_sentinel_core_test(test_process_executor core/test_process_executor.cpp)
 qt_add_executable(canonical_path_probe helpers/canonical_path_probe.cpp)
 target_link_libraries(canonical_path_probe PRIVATE Qt6::Core)
 target_compile_definitions(test_process_executor PRIVATE
-    CANONICAL_PATH_PROBE="$<TARGET_FILE:canonical_path_probe>")
-add_dependencies(test_process_executor canonical_path_probe)
+    CANONICAL_PATH_PROBE="$<TARGET_FILE:canonical_path_probe>"
+    PLUGIN_RUNTIME_HOST="$<TARGET_FILE:sentinel-plugin-host>")
+add_dependencies(test_process_executor canonical_path_probe sentinel-plugin-host)
 add_sentinel_core_test(test_fuzzy_editor core/test_fuzzy_editor.cpp)
 add_sentinel_core_test(test_web_search_tool core/test_web_search_tool.cpp)
 add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)

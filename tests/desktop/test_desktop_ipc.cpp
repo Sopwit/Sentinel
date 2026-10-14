@@ -1239,7 +1239,8 @@ private slots:
             QCOMPARE(saved.last().content, QString("Fixture finished"));
         }
 
-        QCOMPARE(notices.size(), 2);
+        // Terminal state and its notification arrive through queued IPC updates.
+        QTRY_COMPARE(notices.size(), 2);
         QVERIFY(!panel.approve(true));
         // A late completion from this closed run cannot turn cancellation/denial into success.
         const auto terminal = adapter.value("conversationState");

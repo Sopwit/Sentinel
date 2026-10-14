@@ -4,6 +4,9 @@
 
 #include "sentinel/core/security/CredentialStore.h"
 
+#include <QScopeGuard>
+#include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QUuid>
 #include <QtTest>
 #include <memory>
@@ -23,6 +26,7 @@ class CredentialStoreTest final : public QObject {
 
 private slots:
     void defaultStateUsesPlatformBackend();
+    void missingLinuxHelperRefusesPersistence();
     void backendReadinessSummaryIsDeterministic();
     void disabledActionsDoNotMutateOrExecute();
     void disabledBackendRefusesPersistence();
@@ -45,9 +49,47 @@ void CredentialStoreTest::defaultStateUsesPlatformBackend() {
         QVERIFY(!summary.summary.contains(QStringLiteral("no API key storage is active")));
         QVERIFY(!summary.backendSummary.contains(QStringLiteral("requiresFutureImplementation")));
     } else {
+#ifdef Q_OS_LINUX
+        QVERIFY(QStandardPaths::findExecutable(QStringLiteral("secret-tool")).isEmpty());
+        QCOMPARE(summary.status, CredentialStoreStatus::Unavailable);
+        QCOMPARE(summary.preferredBackend, CredentialStoreBackend::LinuxSecretService);
+#else
         QCOMPARE(summary.status, CredentialStoreStatus::Disabled);
+#endif
+        QCOMPARE(summary.readiness, CredentialStoreReadiness::DisabledFallback);
+        QVERIFY(!summary.plaintextPersistenceAllowed);
         QVERIFY(!summary.secretPersistenceEnabled);
     }
+}
+
+void CredentialStoreTest::missingLinuxHelperRefusesPersistence() {
+#ifndef Q_OS_LINUX
+    QSKIP("Linux Secret Service helper contract.");
+#else
+    QTemporaryDir emptyPath;
+    QVERIFY(emptyPath.isValid());
+    const auto previousPath = qgetenv("PATH");
+    const bool hadPath = qEnvironmentVariableIsSet("PATH");
+    const auto restorePath = qScopeGuard([&] {
+        if (hadPath)
+            qputenv("PATH", previousPath);
+        else
+            qunsetenv("PATH");
+    });
+    qputenv("PATH", emptyPath.path().toLocal8Bit());
+    auto store = sentinel::core::platformCredentialStore();
+    QCOMPARE(store.summary().status, CredentialStoreStatus::Unavailable);
+    QVERIFY(!store.summary().secretPersistenceEnabled);
+    QVERIFY(!store.summary().plaintextPersistenceAllowed);
+    const CredentialKey key{QStringLiteral("test-provider"), QStringLiteral("apiKey")};
+    const auto stored = store.storeCredential(key, QStringLiteral("test-only-secret"));
+    QVERIFY(!stored.succeeded);
+    QVERIFY(!stored.mutatedState);
+    QVERIFY(!stored.secretReturned);
+    const auto read = store.readCredential(key);
+    QVERIFY(!read.result.succeeded);
+    QVERIFY(!read.secret.has_value());
+#endif
 }
 
 void CredentialStoreTest::backendReadinessSummaryIsDeterministic() {

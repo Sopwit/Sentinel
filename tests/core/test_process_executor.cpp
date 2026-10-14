@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sentinel/core/plugin/PluginHostProtocol.h"
 #include "sentinel/core/runtime/ProcessExecutor.h"
 
 #include <QCoreApplication>
@@ -26,12 +27,63 @@ private slots:
     void cancellationAndShutdown();
     void macHostContainmentPreventsChildren();
     void macHostContainmentRestrictsFilesystem();
-    void macHostCanonicalizationPreservesReadBoundary();
+    void runtimeCanonicalizationPreservesReadBoundary();
+    void pluginRuntimeStartsInsideSandbox();
 };
 
-void ProcessExecutorTest::macHostCanonicalizationPreservesReadBoundary() {
-#ifndef Q_OS_MACOS
-    QSKIP("macOS canonicalization and containment probe.");
+void ProcessExecutorTest::pluginRuntimeStartsInsideSandbox() {
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_LINUX)
+    QSKIP("Native sandboxed plugin runtime loader contract.");
+#else
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    ProcessExecutor executor;
+    ProcessRequest request;
+    request.program = QString::fromUtf8(PLUGIN_RUNTIME_HOST);
+    request.workingDirectory = directory.path();
+    SandboxExecutionPlan plan;
+    plan.workingDirectory = directory.path();
+    plan.readablePaths = {QFileInfo(request.program).canonicalFilePath(),
+                          QFileInfo(directory.path()).canonicalFilePath()};
+    plan.forbidDetachedChildren = true;
+    request.sandbox = plan;
+    QByteArray output, error;
+    const auto id = executor.start(
+        request, {}, [&](const QString&, ProcessStream stream, const QByteArray& bytes) {
+            (stream == ProcessStream::Stdout ? output : error) += bytes;
+        });
+    const auto health = plugin::pluginHostFrame({{"protocol", plugin::PluginHostProtocolVersion},
+                                                 {"id", "runtime-health"},
+                                                 {"op", "health"}});
+    QVERIFY(executor.write(id, health));
+    QTRY_VERIFY_WITH_TIMEOUT(output.contains('\n') ||
+                                 executor.record(id).state == ProcessState::Exited ||
+                                 executor.record(id).state == ProcessState::Failed,
+                             5000);
+    QVERIFY2(output.contains('\n'), error.constData());
+    QJsonObject response;
+    QVERIFY(plugin::parsePluginHostFrame(output.split('\n').first(), &response));
+    QVERIFY(response.value("ok").toBool());
+    QCOMPARE(response.value("abi").toInt(), plugin::NativePluginAbiVersion);
+    QCOMPARE(response.value("id").toString(), QStringLiteral("runtime-health"));
+    const auto record = executor.record(id);
+    QCOMPARE(record.sandbox.enforcement, SandboxEnforcement::Enforced);
+    QVERIFY(record.sandbox.networkDenied);
+    QVERIFY(record.sandbox.processTreeControlled);
+    QVERIFY(record.sandbox.filesystemRestricted);
+    QVERIFY(
+        executor.write(id, plugin::pluginHostFrame({{"protocol", plugin::PluginHostProtocolVersion},
+                                                    {"id", "shutdown"},
+                                                    {"op", "shutdown"}})));
+    QTRY_COMPARE_WITH_TIMEOUT(executor.record(id).state, ProcessState::Exited, 5000);
+    QCOMPARE(executor.record(id).exitCode, 0);
+    executor.shutdown();
+#endif
+}
+
+void ProcessExecutorTest::runtimeCanonicalizationPreservesReadBoundary() {
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_LINUX)
+    QSKIP("Native runtime canonicalization and containment probe.");
 #else
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -57,7 +109,7 @@ void ProcessExecutorTest::macHostCanonicalizationPreservesReadBoundary() {
         request.workingDirectory = allowedDirectory;
         SandboxExecutionPlan plan;
         plan.workingDirectory = allowedDirectory;
-        plan.readablePaths = {allowedDirectory};
+        plan.readablePaths = {allowedDirectory, QFileInfo(request.program).canonicalFilePath()};
         plan.forbidDetachedChildren = true;
         request.sandbox = plan;
         QByteArray error;

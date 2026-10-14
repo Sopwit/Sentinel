@@ -664,8 +664,12 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(fixture.viewModel.providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
-    QVERIFY(fixture.viewModel.credentialStoreSummary().contains(QStringLiteral("ready")));
-    QVERIFY(fixture.viewModel.credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
+    // The production platform store can legitimately be unavailable on a
+    // headless runner. The view must faithfully expose its exact safe state.
+    const auto credentialSummary = sentinel::core::platformCredentialStore().summary();
+    QCOMPARE(fixture.viewModel.credentialStoreSummary(), credentialSummary.summary);
+    QCOMPARE(fixture.viewModel.credentialStoreBackendSummary(), credentialSummary.backendSummary);
+    QVERIFY(!credentialSummary.plaintextPersistenceAllowed);
     QVERIFY(
         fixture.viewModel.credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);

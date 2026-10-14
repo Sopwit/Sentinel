@@ -908,8 +908,12 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("lm-studio: readiness=unknown")));
     QVERIFY(controller->providerCredentialRegistrySummary().contains(
         QStringLiteral("API key values are persisted")));
-    QVERIFY(controller->credentialStoreSummary().contains(QStringLiteral("ready")));
-    QVERIFY(controller->credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
+    // The production platform store can legitimately be unavailable on a
+    // headless runner. The view must faithfully expose its exact safe state.
+    const auto credentialSummary = sentinel::core::platformCredentialStore().summary();
+    QCOMPARE(controller->credentialStoreSummary(), credentialSummary.summary);
+    QCOMPARE(controller->credentialStoreBackendSummary(), credentialSummary.backendSummary);
+    QVERIFY(!credentialSummary.plaintextPersistenceAllowed);
     QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
     QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("credential store")));

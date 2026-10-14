@@ -7,6 +7,9 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QSet>
+#if defined(Q_OS_LINUX)
+#include <link.h>
+#endif
 #if defined(Q_OS_MACOS)
 #include <mach-o/dyld.h>
 #endif
@@ -349,6 +352,37 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
             prepareParents(QString::fromLatin1(path));
             launch.arguments.append({QStringLiteral("--ro-bind"), QString::fromLatin1(path),
                                      QString::fromLatin1(path)});
+        }
+    }
+    // Only expose individual runtime images already loaded into this trusted
+    // process. In particular, an SDK Qt installation may live outside /usr.
+    // Never bind the SDK directory or forward caller-controlled loader paths.
+    QSet<QString> runtimeImages;
+    dl_iterate_phdr(
+        [](dl_phdr_info* image, size_t, void* context) {
+            const QFileInfo file(QString::fromLocal8Bit(image->dlpi_name));
+            if (file.isAbsolute() && file.isFile())
+                static_cast<QSet<QString>*>(context)->insert(file.absoluteFilePath());
+            return 0;
+        },
+        &runtimeImages);
+    auto images = runtimeImages.values();
+    images.sort();
+    for (const auto& image : images) {
+        if (image.startsWith(QLatin1String("/usr/")) || image.startsWith(QLatin1String("/lib/")) ||
+            image.startsWith(QLatin1String("/lib64/")))
+            continue; // Already covered by the system runtime baseline.
+        const auto canonical = QFileInfo(image).canonicalFilePath();
+        if (canonical.isEmpty()) {
+            launch.result.enforcement = SandboxEnforcement::Failed;
+            launch.result.failureCategory = QStringLiteral("RuntimeImageUnavailable");
+            return launch;
+        }
+        // Mount the verified target at both loader and canonical names. All
+        // ancestors are empty synthetic directories, not host directory binds.
+        for (const auto& name : QSet<QString>{image, canonical}) {
+            prepareParents(name);
+            launch.arguments.append({QStringLiteral("--ro-bind"), canonical, name});
         }
     }
     for (const auto& path : plan.readablePaths) {
