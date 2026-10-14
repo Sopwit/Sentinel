@@ -8,6 +8,7 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QScopeGuard>
+#include <QStandardPaths>
 
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 #include "sentinel/core/memory/InMemoryStore.h"
@@ -1032,24 +1033,79 @@ private slots:
     }
 
     void runCommandDockerSandboxReportsMissingDocker() {
-        // On machines without docker the tool must degrade to clear guidance
-        // instead of an opaque sandbox error. The command never runs, so the
-        // result stays a failure that names the missing runtime.
-        const bool hasDocker =
-            QProcess::execute(QStringLiteral("docker"), {QStringLiteral("--version")}) == 0;
-        if (hasDocker) {
-            QSKIP("docker is installed on this machine; the missing-docker branch cannot run.");
-        }
+        // Resolve/cache the real sandbox launcher before isolating PATH.
+        const PlatformProcessSandbox backend;
+        Q_UNUSED(backend)
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto originalPath = qgetenv("PATH");
+        const auto restorePath = qScopeGuard([&] { qputenv("PATH", originalPath); });
+        QVERIFY(qputenv("PATH", workspace.path().toLocal8Bit()));
+        QVERIFY(QStandardPaths::findExecutable("docker").isEmpty());
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, "run-command",
+            {{"command", "fixture-must-not-execute"}, {"sandbox", "docker"}}, {}, workspace.path());
+        QCOMPARE(result.status, ToolExecutionStatus::Failed);
+        QVERIFY2(result.summary.contains("docker CLI is not available"),
+                 qPrintable(result.summary));
+        QVERIFY(result.sandbox.enforcement != SandboxEnforcement::Enforced);
+    }
 
+    void runCommandDockerFixtureContracts_data() {
+        QTest::addColumn<QString>("command");
+        QTest::addColumn<ToolExecutionStatus>("expectedStatus");
+        QTest::addColumn<QString>("expectedSummary");
+        QTest::newRow("success") << QString("fixture-success") << ToolExecutionStatus::Succeeded
+                                 << QString("DOCKER_FIXTURE_OK");
+        QTest::newRow("daemon-unavailable")
+            << QString("fixture-daemon-unavailable") << ToolExecutionStatus::Failed
+            << QString("daemon is not running");
+        QTest::newRow("command-failure")
+            << QString("fixture-command-failure") << ToolExecutionStatus::Failed
+            << QString("DOCKER_FIXTURE_FAILURE");
+    }
+
+    void runCommandDockerFixtureContracts() {
+        QFETCH(QString, command);
+        QFETCH(ToolExecutionStatus, expectedStatus);
+        QFETCH(QString, expectedSummary);
+        const PlatformProcessSandbox backend;
+        Q_UNUSED(backend)
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const QString program = workspace.filePath(
+#ifdef Q_OS_WIN
+            "docker.exe"
+#else
+            "docker"
+#endif
+        );
+        QVERIFY(QFile::copy(QString::fromUtf8(DOCKER_CLI_FIXTURE), program));
+        QVERIFY(
+            QFile::setPermissions(program, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+        const auto originalPath = qgetenv("PATH");
+        const auto restorePath = qScopeGuard([&] { qputenv("PATH", originalPath); });
+        QVERIFY(qputenv("PATH", workspace.path().toLocal8Bit()));
+        QCOMPARE(QFileInfo(QStandardPaths::findExecutable("docker")).canonicalFilePath(),
+                 QFileInfo(program).canonicalFilePath());
         RealToolExecutor executor;
         const auto result =
-            runTool(executor, QStringLiteral("run-command"),
-                    {ToolInvocationArgument{QStringLiteral("command"), QStringLiteral("ls")},
-                     ToolInvocationArgument{QStringLiteral("sandbox"), QStringLiteral("docker")}},
-                    QStringList{});
-
+            runTool(executor, "run-command", {{"command", command}, {"sandbox", "docker"}}, {},
+                    workspace.path());
+#ifdef Q_OS_WIN
+        // The production Windows backend cannot enforce filesystem/network
+        // confinement. Preserve its fail-closed contract instead of relaxing it.
         QCOMPARE(result.status, ToolExecutionStatus::Failed);
-        QVERIFY(result.summary.contains(QStringLiteral("docker CLI is not available")));
+        QVERIFY(result.sandbox.enforcement != SandboxEnforcement::Enforced);
+        QVERIFY(result.summary.contains("Sandbox denied launch"));
+#else
+        QCOMPARE(result.status, expectedStatus);
+        QVERIFY2(result.summary.contains(expectedSummary), qPrintable(result.summary));
+        QCOMPARE(result.sandbox.enforcement, SandboxEnforcement::Enforced);
+        QVERIFY(result.sandbox.networkDenied);
+        QVERIFY(result.sandbox.processTreeControlled);
+#endif
     }
 
     void browserToolsReportMissingNodeGracefully() {

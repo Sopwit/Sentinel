@@ -33,7 +33,10 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
-          version: '6.11.*'
+          version: '6.11.3'
+          # aqt 3.3.0 predates Qt 6.11's architecture-specific Windows metadata.
+          # Upstream fix: miurahr/aqtinstall#1000; pin the merged source exactly.
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b'
           arch: win64_msvc2022_64
           modules: qtmultimedia
           cache: true

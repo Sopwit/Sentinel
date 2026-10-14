@@ -219,8 +219,41 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
         if (!imageName)
             continue;
         const QString image = QString::fromUtf8(imageName);
-        if (!image.startsWith(QStringLiteral("/opt/homebrew/")))
+        if (!image.startsWith(QStringLiteral("/opt/homebrew/"))) {
+            // Hosted CI and official Qt installers put frameworks outside
+            // Homebrew. Authorize only libraries already loaded by this trusted
+            // parent, never their installation prefix or a user's home tree.
+            const auto framework = image.indexOf(QStringLiteral(".framework/"));
+            if (framework < 0 && !image.endsWith(QStringLiteral(".dylib"))) {
+                continue;
+            }
+            if (image.startsWith(QStringLiteral("/System/")) ||
+                image.startsWith(QStringLiteral("/usr/"))) {
+                continue; // Covered by the runtime baseline above.
+            }
+            const auto runtime = framework >= 0
+                                     ? image.left(framework + QStringLiteral(".framework").size())
+                                     : image;
+            profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                           .arg(profileLiteral(runtime));
+            const auto canonicalRuntime = QFileInfo(runtime).canonicalFilePath();
+            if (!canonicalRuntime.isEmpty()) {
+                profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                               .arg(profileLiteral(canonicalRuntime));
+            }
+            for (const auto& path : {runtime, canonicalRuntime}) {
+                if (path.isEmpty()) {
+                    continue;
+                }
+                auto directory = QFileInfo(path).absolutePath();
+                while (!QDir(directory).isRoot()) {
+                    profile += QStringLiteral("(allow file-read-metadata (literal %1))")
+                                   .arg(profileLiteral(directory));
+                    directory = QFileInfo(directory).absolutePath();
+                }
+            }
             continue;
+        }
         runtimeImages.insert(image);
         const auto canonical = QFileInfo(image).canonicalFilePath();
         if (!canonical.isEmpty())
@@ -256,6 +289,16 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     for (const auto& directory : runtimeDirectories)
         profile += QStringLiteral("(allow file-read-metadata (literal %1))")
                        .arg(profileLiteral(directory));
+    // Qt canonicalizes an absolute plugin path before loading it. Permit only
+    // metadata traversal of ancestors; their contents remain inaccessible.
+    for (const auto& path : plan.readablePaths + plan.writablePaths + QStringList{program}) {
+        auto directory = QFileInfo(path).absolutePath();
+        while (!QDir(directory).isRoot()) {
+            profile += QStringLiteral("(allow file-read-metadata (literal %1))")
+                           .arg(profileLiteral(directory));
+            directory = QFileInfo(directory).absolutePath();
+        }
+    }
     for (const auto& path : plan.readablePaths)
         profile += QStringLiteral("(allow file-read* (subpath %1))").arg(profileLiteral(path));
     for (const auto& path : plan.writablePaths)
