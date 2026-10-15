@@ -23,8 +23,13 @@ namespace {
 bool sameAuthorizationSnapshot(const ToolDescriptor& captured, const ToolDescriptor& current) {
     return captured.id == current.id && captured.providerId == current.providerId &&
            captured.version == current.version && captured.source == current.source &&
-           captured.riskLevel == current.riskLevel && captured.executionMode == current.executionMode &&
-           captured.enabled == current.enabled && captured.inputSchema == current.inputSchema &&
+           captured.riskLevel == current.riskLevel &&
+           captured.executionMode == current.executionMode && captured.enabled == current.enabled &&
+           captured.exposedToModel == current.exposedToModel &&
+           captured.platforms.macOS == current.platforms.macOS &&
+           captured.platforms.linux == current.platforms.linux &&
+           captured.platforms.windows == current.platforms.windows &&
+           captured.inputSchema == current.inputSchema &&
            captured.authorizationRequirements == current.authorizationRequirements &&
            captured.parallelSafe == current.parallelSafe;
 }
@@ -55,23 +60,17 @@ bool sameResources(const ResourceAuthorizationSnapshot& captured,
 
 bool usesLocalProcess(const QString& id) {
     static const QSet<QString> ids{
-        QStringLiteral("run-command"), QStringLiteral("process-list"),
-        QStringLiteral("app-quit"), QStringLiteral("app-launch"),
-        QStringLiteral("open-url"),
-        QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
-        QStringLiteral("browser-pdf"), QStringLiteral("voice-transcribe"),
-        QStringLiteral("voice-speak")};
+        QStringLiteral("git-status"),         QStringLiteral("git-diff"),
+        QStringLiteral("run-command"),        QStringLiteral("process-list"),
+        QStringLiteral("app-quit"),           QStringLiteral("app-launch"),
+        QStringLiteral("open-url"),           QStringLiteral("system-notify"),
+        QStringLiteral("browser-screenshot"), QStringLiteral("browser-pdf"),
+        QStringLiteral("voice-transcribe"),   QStringLiteral("voice-speak")};
     return ids.contains(id);
 }
 
 bool unsupportedHere(const ToolDescriptor& descriptor) {
-#if defined(Q_OS_MACOS)
-    return descriptor.platforms.macOS == ToolPlatformSupport::Unsupported;
-#elif defined(Q_OS_WIN)
-    return descriptor.platforms.windows == ToolPlatformSupport::Unsupported;
-#else
-    return descriptor.platforms.linux == ToolPlatformSupport::Unsupported;
-#endif
+    return !toolSupportedOnCurrentPlatform(descriptor);
 }
 
 QString permissionPostureForDomain(const QString& domainId, const QString& defaultPermissionState,
@@ -105,7 +104,8 @@ QList<ToolCompleteness> ToolExecutionGateway::toolCompleteness() const {
         item.maturityReason = descriptor.maturityReason;
         item.handlerAvailable = registration && registration->handler != nullptr;
         item.modelVisible = descriptor.enabled && descriptor.exposedToModel &&
-                            item.handlerAvailable;
+                            item.handlerAvailable && !unsupportedHere(descriptor) &&
+                            registration->handler->unavailableReason().isEmpty();
         if (descriptor.inputSchema.isEmpty())
             item.schemaQuality = ToolSchemaQuality::Missing;
         else if (!ToolArgumentValidator::validateSchema(descriptor.inputSchema).isEmpty())
@@ -159,11 +159,22 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
             scope = ToolGatewayScope::Cloud;
         else if (descriptor.scope == ToolScope::LocalAndCloud)
             scope = ToolGatewayScope::LocalAndCloud;
+        QString refusal;
+        if (!descriptor.enabled || !descriptor.exposedToModel)
+            refusal = QStringLiteral("Tool is disabled or internal.");
+        else if (unsupportedHere(descriptor))
+            refusal = QStringLiteral("Tool is unsupported on this platform.");
+        else if (registry_) {
+            const auto registration = registry_->findRegistration(descriptor.id);
+            refusal = !registration || !registration->handler
+                          ? QStringLiteral("Tool has no execution handler.")
+                          : registration->handler->unavailableReason();
+        }
         metadata.append({descriptor.id, descriptor.name, descriptor.category,
                          descriptor.description, descriptor.requiredPermissionDomain, risk, scope,
-                         descriptor.enabled ? ToolExecutionAvailability::Available
-                                            : ToolExecutionAvailability::Refused,
-                         descriptor.enabled ? QString() : QStringLiteral("Tool is disabled.")});
+                         refusal.isEmpty() ? ToolExecutionAvailability::Available
+                                           : ToolExecutionAvailability::Refused,
+                         refusal});
     }
     return metadata;
 }
@@ -259,6 +270,12 @@ ToolExecutionResult ToolExecutionGateway::validatePlan(ToolInvocationPlan& plan)
         if (!registration || !registration->handler || !registration->descriptor.enabled)
             return {ToolExecutionStatus::UnknownTool,
                     QStringLiteral("Tool unavailable: %1").arg(invocation.toolId)};
+        if (!registration->handler->unavailableReason().isEmpty()) {
+            ToolExecutionResult unavailable{ToolExecutionStatus::Failed,
+                                            registration->handler->unavailableReason()};
+            unavailable.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            return unavailable;
+        }
         if (unsupportedHere(registration->descriptor)) {
             ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
                 QStringLiteral("Tool is unsupported on this platform: %1").arg(invocation.toolId)};
@@ -483,6 +500,13 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                             .arg(request.plan.invocations.first().toolId)});
             return {};
         }
+        if (!registration->handler->unavailableReason().isEmpty()) {
+            ToolExecutionResult unavailable{ToolExecutionStatus::Failed,
+                                            registration->handler->unavailableReason()};
+            unavailable.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+            completion(std::move(unavailable));
+            return {};
+        }
         if (unsupportedHere(registration->descriptor)) {
             ToolExecutionResult unsupported{ToolExecutionStatus::Failed,
                 QStringLiteral("Tool is unsupported on this platform: %1")
@@ -524,6 +548,7 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 ToolArgumentValidator::toInvocationArguments(
                     snapshotValidation.normalizedArguments);
             resolved.plan.invocations.first().runtimeToolCallId = toolCallId;
+            resolved.plan.invocations.first().runtimeSessionId = sessionId;
             const auto& invocation = resolved.plan.invocations.first();
             const bool usesFileSystem = std::any_of(
                 registration->descriptor.authorizationRequirements.cbegin(),

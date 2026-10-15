@@ -30,7 +30,24 @@ namespace {
 
 QProcessEnvironment restrictedEnvironment(const QProcessEnvironment& source,
                                           const SandboxExecutionPlan& plan) {
-    if (!plan.restrictedEnvironment) return source;
+    const auto isolateGit = [&plan](QProcessEnvironment result) {
+        if (plan.isolateGitConfiguration) {
+            for (const auto& key : result.keys())
+                if (key.startsWith(QStringLiteral("GIT_")))
+                    result.remove(key);
+            result.insert(QStringLiteral("GIT_CONFIG_NOSYSTEM"), QStringLiteral("1"));
+#if defined(Q_OS_WIN)
+            result.insert(QStringLiteral("GIT_CONFIG_GLOBAL"), QStringLiteral("NUL"));
+#else
+            result.insert(QStringLiteral("GIT_CONFIG_GLOBAL"), QStringLiteral("/dev/null"));
+#endif
+            result.insert(QStringLiteral("GIT_TERMINAL_PROMPT"), QStringLiteral("0"));
+            result.insert(QStringLiteral("GIT_OPTIONAL_LOCKS"), QStringLiteral("0"));
+        }
+        return result;
+    };
+    if (!plan.restrictedEnvironment)
+        return isolateGit(source);
     QProcessEnvironment result;
     for (const auto& key : {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TERM", "TMPDIR", "TMP", "TEMP"}) {
         const auto name = QString::fromLatin1(key);
@@ -47,7 +64,7 @@ QProcessEnvironment restrictedEnvironment(const QProcessEnvironment& source,
         result.insert(QStringLiteral("TMP"), plan.temporaryDirectory);
         result.insert(QStringLiteral("TEMP"), plan.temporaryDirectory);
     }
-    return result;
+    return isolateGit(result);
 }
 
 } // namespace
@@ -212,6 +229,48 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
         // target. Both names refer to the same read-only runtime dependency.
         profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
                        .arg(profileLiteral(homebrewQtAlias));
+    }
+    // Newer macOS /bin/sh reads this system-owned selector before exec.
+    profile += QStringLiteral("(allow file-read* (literal \"/private/var/select/sh\"))"
+                              "(allow file-read-metadata (literal \"/private/var/select\"))");
+    // Coding subprocesses need their installed runtime, not access to arbitrary
+    // package-manager configuration or the user's home. Resolve a closed set of
+    // toolchain commands and authorize only their immutable Cellar version roots.
+    for (const auto* command : {"python3", "node", "cmake", "ninja", "git", "clang", "clang++"}) {
+        const auto executable = QStandardPaths::findExecutable(QString::fromLatin1(command));
+        const auto canonical = QFileInfo(executable).canonicalFilePath();
+        QString package;
+        for (const auto* prefix : {"/opt/homebrew/Cellar/", "/usr/local/Cellar/"}) {
+            const auto cellar = QString::fromLatin1(prefix);
+            if (!canonical.startsWith(cellar))
+                continue;
+            const auto parts = canonical.mid(cellar.size()).split(QLatin1Char('/'));
+            if (parts.size() >= 3)
+                package = cellar + parts.at(0) + QLatin1Char('/') + parts.at(1);
+        }
+        if (package.isEmpty())
+            continue;
+        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                       .arg(profileLiteral(package));
+        profile += QStringLiteral("(allow file-read* file-map-executable (literal %1))")
+                       .arg(profileLiteral(executable));
+        for (const auto& path : {executable, canonical}) {
+            auto directory = QFileInfo(path).absolutePath();
+            while (!QDir(directory).isRoot()) {
+                profile += QStringLiteral("(allow file-read-metadata (literal %1))")
+                               .arg(profileLiteral(directory));
+                directory = QFileInfo(directory).absolutePath();
+            }
+        }
+    }
+    // Apple SDKs and command-line tools are system runtime assets. User project
+    // files, keychains and provisioning profiles under home remain outside scope.
+    for (const auto& sdk : {QStringLiteral("/Applications/Xcode.app/Contents/Developer"),
+                            QStringLiteral("/Library/Developer/CommandLineTools")}) {
+        const auto canonical = QFileInfo(sdk).canonicalFilePath();
+        if (!canonical.isEmpty())
+            profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                           .arg(profileLiteral(canonical));
     }
     // Permit library directories of already-loaded Homebrew runtime images
     // (for example Qt's ICU dependency), not the entire package-manager tree. dyld may check

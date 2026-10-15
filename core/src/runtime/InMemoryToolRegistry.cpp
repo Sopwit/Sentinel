@@ -127,11 +127,16 @@ QList<ToolDescriptor> InMemoryToolRegistry::listTools() const {
 }
 
 QList<ToolDescriptor> InMemoryToolRegistry::enabledTools() const {
-    QReadLocker lock(&mutex_);
+    QList<Registration> registrations;
+    {
+        QReadLocker lock(&mutex_);
+        registrations = toolsById_.values();
+    }
     QList<ToolDescriptor> tools;
-    for (const auto& registration : toolsById_)
+    for (const auto& registration : registrations)
         if (registration.descriptor.enabled && registration.descriptor.exposedToModel &&
-            registration.handler)
+            toolSupportedOnCurrentPlatform(registration.descriptor) && registration.handler &&
+            registration.handler->unavailableReason().isEmpty())
             tools.append(registration.descriptor);
     return tools;
 }

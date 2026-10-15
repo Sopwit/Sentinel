@@ -242,6 +242,54 @@ private slots:
             QSKIP("Host cannot enforce the required process sandbox.");
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QFileInfo(workspace.path()).canonicalFilePath()));
+        QVERIFY(result.structuredObservation);
+        const auto receipt = result.structuredObservation->data;
+        QCOMPARE(receipt.value(QStringLiteral("exitCode")).toInt(), 0);
+        QVERIFY(receipt.value(QStringLiteral("stdout"))
+                    .toString()
+                    .contains(QFileInfo(workspace.path()).canonicalFilePath()));
+        QVERIFY(!receipt.value(QStringLiteral("timedOut")).toBool());
+        QVERIFY(!receipt.value(QStringLiteral("stdoutTruncated")).toBool());
+        QVERIFY(receipt.value(QStringLiteral("complete")).toBool());
+    }
+
+    void pythonToolchainRunsButCannotReadOutsideWorkspace() {
+#if !defined(Q_OS_MACOS)
+        QSKIP("macOS toolchain runtime regression.");
+#else
+        if (QStandardPaths::findExecutable(QStringLiteral("python3")).isEmpty())
+            QSKIP("Python is not installed.");
+        QTemporaryDir workspace;
+        QTemporaryDir outside;
+        QVERIFY(workspace.isValid());
+        QVERIFY(outside.isValid());
+        QFile secret(outside.filePath(QStringLiteral("private.txt")));
+        QVERIFY(secret.open(QIODevice::WriteOnly));
+        secret.write("DO_NOT_EXPOSE");
+        secret.close();
+        QFile script(workspace.filePath(QStringLiteral("test.py")));
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        const auto encoded =
+            QJsonDocument(QJsonArray{secret.fileName()}).toJson(QJsonDocument::Compact);
+        script.write("import json, pathlib\ntry:\n    pathlib.Path(json.loads(");
+        const auto quoted =
+            QJsonDocument(QJsonArray{QString::fromUtf8(encoded)}).toJson(QJsonDocument::Compact);
+        script.write(quoted.mid(1, quoted.size() - 2));
+        script.write(
+            ")[0]).read_text()\nexcept PermissionError:\n    print('SANDBOX_PRESERVED')\nelse:\n   "
+            " raise AssertionError('outside workspace was readable')\n");
+        script.close();
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("run-command"),
+            {{QStringLiteral("command"), QStringLiteral("python3 test.py")}}, {}, workspace.path());
+        if (result.status == ToolExecutionStatus::Blocked &&
+            result.summary.contains(QStringLiteral("Sandbox")))
+            QSKIP("Host cannot enforce the required process sandbox.");
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("SANDBOX_PRESERVED")));
+        QVERIFY(!result.summary.contains(QStringLiteral("DO_NOT_EXPOSE")));
+#endif
     }
 
     void readFileReturnsNumberedLines() {
@@ -271,6 +319,127 @@ private slots:
         QVERIFY(!result.summary.contains(QStringLiteral("5: ")));
     }
 
+    void gitInspectionUsesFixedSandboxedArguments() {
+        if (QStandardPaths::findExecutable(QStringLiteral("git")).isEmpty())
+            QSKIP("Git is not installed.");
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        QProcess setup;
+        setup.setWorkingDirectory(workspace.path());
+        setup.start(QStringLiteral("git"), {QStringLiteral("init"), QStringLiteral("--quiet")});
+        QVERIFY(setup.waitForFinished());
+        QCOMPARE(setup.exitCode(), 0);
+        QFile file(workspace.filePath(QStringLiteral("fixture.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("original\n");
+        file.close();
+        RealToolExecutor executor;
+        const auto status =
+            runTool(executor, QStringLiteral("git-status"),
+                    {{QStringLiteral("path"), QStringLiteral(".")}}, {}, workspace.path());
+        if (status.status == ToolExecutionStatus::Blocked &&
+            status.summary.contains(QStringLiteral("Sandbox")))
+            QSKIP("Host cannot enforce the required process sandbox.");
+        QCOMPARE(status.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(status.summary.contains(QStringLiteral("?? fixture.txt")));
+        QVERIFY(status.structuredObservation);
+        QCOMPARE(status.structuredObservation->data.value(QStringLiteral("exitCode")).toInt(), 0);
+        setup.start(QStringLiteral("git"),
+                    {QStringLiteral("add"), QStringLiteral("--"), QStringLiteral("fixture.txt")});
+        QVERIFY(setup.waitForFinished());
+        QCOMPARE(setup.exitCode(), 0);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write("modified\n");
+        file.close();
+        const auto diff =
+            runTool(executor, QStringLiteral("git-diff"),
+                    {{QStringLiteral("path"), QStringLiteral(".")}}, {}, workspace.path());
+        QCOMPARE(diff.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(diff.summary.contains(QStringLiteral("-original")));
+        QVERIFY(diff.summary.contains(QStringLiteral("+modified")));
+        const auto staged =
+            runTool(executor, QStringLiteral("git-diff"),
+                    {{QStringLiteral("path"), QStringLiteral(".")},
+                     {QStringLiteral("staged"), QStringLiteral("true"), QJsonValue(true)}},
+                    {}, workspace.path());
+        QCOMPARE(staged.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(staged.summary.contains(QStringLiteral("+original")));
+        setup.start(QStringLiteral("git"),
+                    {QStringLiteral("config"), QStringLiteral("filter.test.clean"),
+                     QStringLiteral("sentinel-filter-must-never-run")});
+        QVERIFY(setup.waitForFinished());
+        QCOMPARE(setup.exitCode(), 0);
+        const auto filtered =
+            runTool(executor, QStringLiteral("git-diff"),
+                    {{QStringLiteral("path"), QStringLiteral(".")}}, {}, workspace.path());
+        QCOMPARE(filtered.status, ToolExecutionStatus::Blocked);
+        QCOMPARE(filtered.failureCategory, ToolFailureCategory::SecurityDenied);
+        QVERIFY(filtered.summary.contains(QStringLiteral("filters")));
+        const auto escaped =
+            runTool(executor, QStringLiteral("git-status"),
+                    {{QStringLiteral("path"), workspace.path() + QStringLiteral("/../")}}, {},
+                    workspace.path());
+        QCOMPARE(escaped.status, ToolExecutionStatus::Blocked);
+    }
+
+    void statPathUsesAuthorizedFilesystem() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QFile file(dir.filePath(QStringLiteral("stat.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write("hello"), 5);
+        file.close();
+        const auto previous = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+        const auto restore = qScopeGuard([&] { QDir::setCurrent(previous); });
+        RealToolExecutor executor;
+        const auto inspect = [&](const QString& path) {
+            return runTool(executor, QStringLiteral("stat-path"),
+                           {ToolInvocationArgument{QStringLiteral("path"), path}}, {});
+        };
+        const auto result = inspect(QStringLiteral("stat.txt"));
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.structuredObservation);
+        QCOMPARE(result.structuredObservation->kind, StructuredObservationKind::FileSystemFact);
+        QCOMPARE(result.structuredObservation->data.value(QStringLiteral("size")).toInt(), 5);
+        QVERIFY(result.structuredObservation->data.value(QStringLiteral("regularFile")).toBool());
+        const auto directory = inspect(QStringLiteral("."));
+        QCOMPARE(directory.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(directory.structuredObservation->data.value(QStringLiteral("directory")).toBool());
+        const auto missing = inspect(QStringLiteral("missing.txt"));
+        QCOMPARE(missing.status, ToolExecutionStatus::Failed);
+        QVERIFY(missing.structuredObservation);
+        QCOMPARE(missing.structuredObservation->fileSystemFailure, FileSystemFailure::NotFound);
+        const auto escaped = inspect(dir.path() + QStringLiteral("/../outside.txt"));
+        QCOMPARE(escaped.status, ToolExecutionStatus::Blocked);
+    }
+
+    void readFilePageEvidenceMatchesReturnedContent() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QFile file(dir.filePath(QStringLiteral("pages.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("first\nsecond\nthird\n");
+        file.close();
+        const auto previous = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+        const auto restore = qScopeGuard([&] { QDir::setCurrent(previous); });
+        RealToolExecutor executor;
+        const auto result =
+            runTool(executor, QStringLiteral("read-file"),
+                    {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("pages.txt")},
+                     intArgument(QStringLiteral("limit"), 1)},
+                    {});
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.structuredObservation);
+        const auto data = result.structuredObservation->data;
+        QCOMPARE(data.value(QStringLiteral("content")).toString(), QStringLiteral("first"));
+        QCOMPARE(data.value(QStringLiteral("returnedLines")).toInt(), 1);
+        QVERIFY(!data.value(QStringLiteral("complete")).toBool());
+        QVERIFY(data.value(QStringLiteral("truncated")).toBool());
+        QVERIFY(!result.summary.contains(QStringLiteral("second")));
+    }
+
     void readFileOffsetOutOfRangeFailsGracefully() {
         QTemporaryDir dir;
         QFile file(dir.filePath(QStringLiteral("tiny.txt")));
@@ -295,6 +464,9 @@ private slots:
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.isEmpty());
         QVERIFY(result.structuredObservation);
+        QVERIFY(result.structuredObservation->data.value(QStringLiteral("content"))
+                    .toString()
+                    .isEmpty());
         QCOMPARE(result.structuredObservation->data.value(QStringLiteral("complete")).toBool(),
                  false);
         QCOMPARE(result.structuredObservation->data.value(QStringLiteral("truncated")).toBool(),
@@ -440,24 +612,37 @@ private slots:
         QVERIFY(!result.summary.contains(QStringLiteral("three.txt")));
     }
 
-    void todoToolsAreRegisteredButRefusedWhileDisabled() {
-        // The checklist tools ship with handlers, but they are registered
-        // disabled and hidden from the model while their state is executor-wide
-        // rather than session-scoped. The execution boundary must refuse them.
+    void todoToolsAreSessionIsolatedAndBounded() {
         RealToolExecutor executor;
-        const QString todos = QStringLiteral(
-            "[{\"content\":\"find files\",\"status\":\"completed\",\"priority\":\"high\"},"
-            "{\"content\":\"edit config\",\"status\":\"in_progress\",\"priority\":\"medium\"}]");
-
-        const auto writeResult =
-            runTool(executor, QStringLiteral("todo-write"),
-                    {ToolInvocationArgument{QStringLiteral("todos"), todos}}, QStringList{});
-        QCOMPARE(writeResult.status, ToolExecutionStatus::UnknownTool);
-        QVERIFY(writeResult.summary.contains(QStringLiteral("todo-write")));
-
-        const auto readResult = runTool(executor, QStringLiteral("todo-read"), {}, QStringList{});
-        QCOMPARE(readResult.status, ToolExecutionStatus::UnknownTool);
-        QVERIFY(readResult.summary.contains(QStringLiteral("todo-read")));
+        const auto workspace = QDir::currentPath();
+        const auto read = [&](const QString& session) {
+            return runTool(executor, QStringLiteral("todo-read"), {}, {}, workspace, nullptr,
+                           session);
+        };
+        const QString todos =
+            QStringLiteral("[{\"content\":\"test project\",\"status\":\"pending\"}]");
+        const auto saved = runTool(
+            executor, QStringLiteral("todo-write"),
+            {{QStringLiteral("todos"), todos, QJsonDocument::fromJson(todos.toUtf8()).array()}}, {},
+            workspace, nullptr, QStringLiteral("session-a"));
+        QCOMPARE(saved.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(saved.structuredObservation);
+        QCOMPARE(saved.structuredObservation->data.value(QStringLiteral("todos")).toArray().size(),
+                 1);
+        const auto other = read(QStringLiteral("session-b"));
+        QCOMPARE(other.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(
+            other.structuredObservation->data.value(QStringLiteral("todos")).toArray().isEmpty());
+        QVERIFY(read(QStringLiteral("session-a")).summary.contains(QStringLiteral("test project")));
+        QCOMPARE(read({}).status, ToolExecutionStatus::Blocked);
+        const auto invalid = runTool(
+            executor, QStringLiteral("todo-write"),
+            {{QStringLiteral("todos"), QString(),
+              QJsonArray{QJsonObject{{QStringLiteral("content"), QStringLiteral("bad")},
+                                     {QStringLiteral("status"), QStringLiteral("invalid")}}}}},
+            {}, workspace, nullptr, QStringLiteral("session-a"));
+        QCOMPARE(invalid.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(read(QStringLiteral("session-a")).summary.contains(QStringLiteral("test project")));
     }
 
     void setAlarmAndListAlarmsRoundTrip() {

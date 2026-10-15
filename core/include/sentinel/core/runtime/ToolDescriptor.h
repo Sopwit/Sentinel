@@ -109,4 +109,14 @@ struct ToolDescriptor {
     ToolErrorSemantics errorSemantics = ToolErrorSemantics::General;
 };
 
+inline bool toolSupportedOnCurrentPlatform(const ToolDescriptor& tool) {
+#if defined(Q_OS_MACOS)
+    return tool.platforms.macOS != ToolPlatformSupport::Unsupported;
+#elif defined(Q_OS_WIN)
+    return tool.platforms.windows != ToolPlatformSupport::Unsupported;
+#else
+    return tool.platforms.linux != ToolPlatformSupport::Unsupported;
+#endif
+}
+
 } // namespace sentinel::core

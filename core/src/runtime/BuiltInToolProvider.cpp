@@ -5,11 +5,13 @@
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/security/AuthorizationResolver.h"
 #include <QDir>
+#include <QGuiApplication>
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPointer>
 #include <QSet>
+#include <QStandardPaths>
 #include <QThreadPool>
 #include <QTimer>
 namespace sentinel::core {
@@ -27,7 +29,8 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                 parameter.id != QLatin1String("newString"))
                 field.insert(QStringLiteral("minLength"), 1);
         }
-        if (parameter.id == QLatin1String("includeHidden") ||
+        if (parameter.id == QLatin1String("staged") ||
+            parameter.id == QLatin1String("includeHidden") ||
             parameter.id == QLatin1String("replaceAll")) {
             field.insert(QStringLiteral("type"), QStringLiteral("boolean"));
             field.insert(QStringLiteral("default"), false);
@@ -54,13 +57,16 @@ QJsonObject builtInSchema(const ToolDescriptor& tool) {
                    parameter.id == QLatin1String("todos")) {
             field = QJsonObject{
                 {QStringLiteral("type"), QStringLiteral("array")},
+                {QStringLiteral("maxItems"), 100},
                 {QStringLiteral("items"),
                  QJsonObject{
                      {QStringLiteral("type"), QStringLiteral("object")},
                      {QStringLiteral("properties"),
                       QJsonObject{
                           {QStringLiteral("content"),
-                           QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}},
+                           QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                                       {QStringLiteral("minLength"), 1},
+                                       {QStringLiteral("maxLength"), 2000}}},
                           {QStringLiteral("status"),
                            QJsonObject{
                                {QStringLiteral("type"), QStringLiteral("string")},
@@ -115,6 +121,10 @@ QList<ToolEvidenceDescriptor> builtInEvidence(const QString& id) {
         return QList<ToolEvidenceDescriptor>{
             {domain, freshness, scope, std::move(argument), std::move(qualifier)}};
     };
+    if (id == QLatin1String("git-status") || id == QLatin1String("git-diff"))
+        return one(D::Workspace, F::Live, S::ExactResource, QStringLiteral("path"));
+    if (id == QLatin1String("stat-path"))
+        return one(D::FileSystem, F::Live, S::ExactResource, QStringLiteral("path"));
     if (id == QLatin1String("list-directory"))
         return one(D::FileSystem, F::Live, S::DirectoryEntries, QStringLiteral("path"));
     if (id == QLatin1String("read-file") || id == QLatin1String("list-code-definitions"))
@@ -158,6 +168,38 @@ QList<ToolEvidenceDescriptor> builtInEvidence(const QString& id) {
 } // namespace
 QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
     QList<ToolDescriptor> tools = {
+        ToolDescriptor{
+            QStringLiteral("git-status"),
+            QStringLiteral("Git Status"),
+            QStringLiteral("Inspect repository status using fixed Git arguments. "
+                           "Read-only, optional index locking and fsmonitor disabled."),
+            ToolRiskLevel::Medium,
+            ToolExecutionMode::Local,
+            {ToolParameterDescriptor{QStringLiteral("path"),
+                                     QStringLiteral("Authorized repository directory."), true}}},
+        ToolDescriptor{
+            QStringLiteral("git-diff"),
+            QStringLiteral("Git Diff"),
+            QStringLiteral("Inspect unstaged or staged repository changes. "
+                           "External diff and text conversion commands are disabled."),
+            ToolRiskLevel::Medium,
+            ToolExecutionMode::Local,
+            {ToolParameterDescriptor{QStringLiteral("path"),
+                                     QStringLiteral("Authorized repository directory."), true},
+             ToolParameterDescriptor{QStringLiteral("staged"),
+                                     QStringLiteral("Inspect staged changes (default false)."),
+                                     false}}},
+        ToolDescriptor{
+            QStringLiteral("stat-path"),
+            QStringLiteral("Stat Path"),
+            QStringLiteral(
+                "Inspect one authorized file or directory: path, type and byte size. "
+                "A missing path returns a typed failure; it is not a successful observation."),
+            ToolRiskLevel::Low,
+            ToolExecutionMode::Local,
+            {ToolParameterDescriptor{
+                QStringLiteral("path"),
+                QStringLiteral("Workspace-relative or authorized absolute path."), true}}},
         ToolDescriptor{QStringLiteral("local-plan-summary"),
                        QStringLiteral("Local Plan Summary"),
                        QStringLiteral("Local planning summary tool."),
@@ -636,30 +678,35 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                                                    QStringLiteral("The text to speak."), true},
                        }},
     };
-    const QSet<QString> filesystem{
-        QStringLiteral("list-directory"), QStringLiteral("read-file"),
-        QStringLiteral("write-file"),     QStringLiteral("edit-file"),
-        QStringLiteral("delete-file"),    QStringLiteral("move-file"),
-        QStringLiteral("apply-patch"),    QStringLiteral("grep"),
-        QStringLiteral("glob"),           QStringLiteral("list-code-definitions")};
+    const QSet<QString> filesystem{QStringLiteral("stat-path"),
+                                   QStringLiteral("list-directory"),
+                                   QStringLiteral("read-file"),
+                                   QStringLiteral("write-file"),
+                                   QStringLiteral("edit-file"),
+                                   QStringLiteral("delete-file"),
+                                   QStringLiteral("move-file"),
+                                   QStringLiteral("apply-patch"),
+                                   QStringLiteral("grep"),
+                                   QStringLiteral("glob"),
+                                   QStringLiteral("list-code-definitions")};
     const QSet<QString> network{QStringLiteral("web-fetch"), QStringLiteral("web-search")};
     const QSet<QString> voice{QStringLiteral("voice-transcribe"), QStringLiteral("voice-speak")};
     const QSet<QString> system{QStringLiteral("run-command"),  QStringLiteral("app-launch"),
                                QStringLiteral("app-quit"),     QStringLiteral("system-info"),
                                QStringLiteral("process-list"), QStringLiteral("current-time")};
-    const QSet<QString> portableReady{QStringLiteral("list-directory"),
-                                      QStringLiteral("read-file"),
-                                      QStringLiteral("write-file"),
-                                      QStringLiteral("edit-file"),
-                                      QStringLiteral("delete-file"),
-                                      QStringLiteral("move-file"),
-                                      QStringLiteral("grep"),
-                                      QStringLiteral("glob"),
-                                      QStringLiteral("list-code-definitions"),
-                                      QStringLiteral("current-time"),
-                                      QStringLiteral("apply-patch"),
-                                      QStringLiteral("system-info")};
+    const QSet<QString> portableReady{
+        QStringLiteral("stat-path"),    QStringLiteral("list-directory"),
+        QStringLiteral("read-file"),    QStringLiteral("write-file"),
+        QStringLiteral("edit-file"),    QStringLiteral("delete-file"),
+        QStringLiteral("move-file"),    QStringLiteral("grep"),
+        QStringLiteral("glob"),         QStringLiteral("list-code-definitions"),
+        QStringLiteral("current-time"), QStringLiteral("apply-patch"),
+        QStringLiteral("system-info")};
     const QHash<QString, QString> experimentalReasons{
+        {QStringLiteral("git-status"),
+         QStringLiteral("Requires Git and an enforceable process sandbox; output is bounded.")},
+        {QStringLiteral("git-diff"),
+         QStringLiteral("Requires Git and an enforceable process sandbox; output is bounded.")},
         {QStringLiteral("run-command"),
          QStringLiteral(
              "Sandbox backend availability and command effects are platform-dependent.")},
@@ -715,7 +762,9 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
          QStringLiteral("Requires configured Whisper binary and audio input support.")},
         {QStringLiteral("voice-speak"),
          QStringLiteral("Requires Piper binary and model; synthesis does not imply playback.")}};
-    const QSet<QString> cancellable{QStringLiteral("list-directory"),
+    const QSet<QString> cancellable{QStringLiteral("git-status"),
+                                    QStringLiteral("git-diff"),
+                                    QStringLiteral("list-directory"),
                                     QStringLiteral("glob"),
                                     QStringLiteral("grep"),
                                     QStringLiteral("list-code-definitions"),
@@ -755,24 +804,23 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
                 QStringLiteral("Internal planning metadata; never model-visible.");
         }
         if (tool.id == QLatin1String("todo-write") || tool.id == QLatin1String("todo-read")) {
-            tool.enabled = false;
-            tool.exposedToModel = false;
+            tool.structuredObservationKind = StructuredObservationKind::Generic;
+            tool.maturityReason = QStringLiteral(
+                "Session-isolated bounded checklist; volatile until daemon restart.");
         }
-        static const QSet<QString> parallelBuiltIns{QStringLiteral("list-directory"),
-                                                    QStringLiteral("read-file"),
-                                                    QStringLiteral("grep"),
-                                                    QStringLiteral("glob"),
-                                                    QStringLiteral("list-code-definitions"),
-                                                    QStringLiteral("write-file"),
-                                                    QStringLiteral("edit-file"),
-                                                    QStringLiteral("delete-file"),
-                                                    QStringLiteral("move-file"),
-                                                    QStringLiteral("web-search"),
-                                                    QStringLiteral("web-fetch")};
+        static const QSet<QString> parallelBuiltIns{
+            QStringLiteral("stat-path"),   QStringLiteral("list-directory"),
+            QStringLiteral("read-file"),   QStringLiteral("grep"),
+            QStringLiteral("glob"),        QStringLiteral("list-code-definitions"),
+            QStringLiteral("write-file"),  QStringLiteral("edit-file"),
+            QStringLiteral("delete-file"), QStringLiteral("move-file"),
+            QStringLiteral("web-search"),  QStringLiteral("web-fetch")};
         tool.parallelSafe = parallelBuiltIns.contains(tool.id);
         tool.inputSchema = builtInSchema(tool);
         tool.evidenceProduced = builtInEvidence(tool.id);
-        if (tool.id == QLatin1String("list-directory"))
+        if (tool.id == QLatin1String("stat-path"))
+            tool.structuredObservationKind = StructuredObservationKind::FileSystemFact;
+        else if (tool.id == QLatin1String("list-directory"))
             tool.structuredObservationKind = StructuredObservationKind::DirectoryListing;
         else if (tool.id == QLatin1String("glob"))
             tool.structuredObservationKind = StructuredObservationKind::PathMatches;
@@ -782,13 +830,19 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             tool.structuredObservationKind = StructuredObservationKind::TextSearch;
         else if (tool.id == QLatin1String("list-code-definitions"))
             tool.structuredObservationKind = StructuredObservationKind::CodeDefinitions;
-        else if (tool.id == QLatin1String("system-info"))
+        else if (tool.id == QLatin1String("git-status") || tool.id == QLatin1String("git-diff"))
+            tool.structuredObservationKind = StructuredObservationKind::Generic;
+        else if (tool.id == QLatin1String("system-info") || tool.id == QLatin1String("run-command"))
             tool.structuredObservationKind = StructuredObservationKind::Generic;
         else if (tool.id == QLatin1String("web-fetch") || tool.id == QLatin1String("web-search"))
             tool.structuredObservationKind = StructuredObservationKind::Generic;
         tool.source = ToolSource::BuiltIn;
         tool.providerId = QStringLiteral("builtin");
-        if (filesystem.contains(tool.id)) {
+        if (tool.id == QLatin1String("git-status") || tool.id == QLatin1String("git-diff")) {
+            tool.category = QStringLiteral("Git");
+            tool.requiredPermissionDomain = QStringLiteral("subprocess-execution");
+            tool.errorSemantics = ToolErrorSemantics::Typed;
+        } else if (filesystem.contains(tool.id)) {
             tool.category = QStringLiteral("Filesystem");
             tool.requiredPermissionDomain = tool.riskLevel == ToolRiskLevel::Low
                                                 ? QStringLiteral("workspace-access")
@@ -818,9 +872,14 @@ QList<ToolDescriptor> BuiltInToolProvider::descriptors() {
             tool.authorizationRequirements.append(
                 {domain, access, kind, std::move(argument), std::move(fixed)});
         };
-        if (tool.id == QLatin1String("list-directory") || tool.id == QLatin1String("read-file") ||
-            tool.id == QLatin1String("grep") || tool.id == QLatin1String("glob") ||
-            tool.id == QLatin1String("list-code-definitions")) {
+        if (tool.id == QLatin1String("git-status") || tool.id == QLatin1String("git-diff")) {
+            add(D::FileSystem, A::Read, R::FileSystemPath, QStringLiteral("path"));
+            add(D::Process, A::Execute, R::ArgumentDigest, QStringLiteral("path"));
+        } else if (tool.id == QLatin1String("stat-path") ||
+                   tool.id == QLatin1String("list-directory") ||
+                   tool.id == QLatin1String("read-file") || tool.id == QLatin1String("grep") ||
+                   tool.id == QLatin1String("glob") ||
+                   tool.id == QLatin1String("list-code-definitions")) {
             add(D::FileSystem, A::Read, R::FileSystemPath, QStringLiteral("path"));
         } else if (tool.id == QLatin1String("write-file")) {
             add(D::FileSystem, A::Write, R::FileSystemPath, QStringLiteral("path"));
@@ -891,6 +950,9 @@ struct BuiltInOperation {
     bool processBacked;
 };
 const QHash<QString, BuiltInOperation> kMethods = {
+    {QStringLiteral("git-status"), {&RealToolExecutor::executeGitInspection, true}},
+    {QStringLiteral("git-diff"), {&RealToolExecutor::executeGitInspection, true}},
+    {QStringLiteral("stat-path"), {&RealToolExecutor::executeStatPath, false}},
     {QStringLiteral("local-plan-summary"), {&RealToolExecutor::executeLocalPlanSummary, false}},
     {QStringLiteral("list-directory"), {&RealToolExecutor::executeListDirectory, false}},
     {QStringLiteral("read-file"), {&RealToolExecutor::executeReadFile, false}},
@@ -934,6 +996,17 @@ public:
     BuiltInHandler(RealToolExecutor& executor, RealToolExecutor::BuiltInMethod method,
                    bool processBacked)
         : executor_(executor), method_(method), processBacked_(processBacked) {}
+
+    QString unavailableReason() const override {
+        if (method_ == &RealToolExecutor::executeGitInspection &&
+            QStandardPaths::findExecutable(QStringLiteral("git")).isEmpty())
+            return QStringLiteral("Git executable is not installed.");
+        if ((method_ == &RealToolExecutor::executeClipboardRead ||
+             method_ == &RealToolExecutor::executeClipboardWrite) &&
+            !qobject_cast<QGuiApplication*>(QCoreApplication::instance()))
+            return QStringLiteral("Clipboard requires a GUI session; this runtime is headless.");
+        return {};
+    }
 
     IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString& sessionId,
                                   const QString& toolCallId, IToolExecutor::Output output,
@@ -1031,6 +1104,7 @@ bool BuiltInToolProvider::registerTools(IToolRegistry& registry, RealToolExecuto
     const auto tools = descriptors();
     if (tools.size() != static_cast<int>(kMethods.size()))
         return false;
+    QList<IToolRegistry::Registration> registrations;
     for (int i = 0; i < tools.size(); ++i) {
         auto descriptor = tools.at(i);
         descriptor.source = ToolSource::BuiltIn;
@@ -1040,9 +1114,9 @@ bool BuiltInToolProvider::registerTools(IToolRegistry& registry, RealToolExecuto
             return false;
         auto handler =
             std::make_shared<BuiltInHandler>(executor, operation.method, operation.processBacked);
-        if (!registry.registerTool({std::move(descriptor), std::move(handler)}))
-            return false;
+        registrations.append({std::move(descriptor), std::move(handler)});
     }
-    return true;
+    return registry.replaceProvider(ToolSource::BuiltIn, QStringLiteral("builtin"),
+                                    std::move(registrations));
 }
 } // namespace sentinel::core

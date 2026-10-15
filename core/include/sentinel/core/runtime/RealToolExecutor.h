@@ -13,7 +13,9 @@
 #include "sentinel/core/runtime/tools/WebSearchTool.h"
 #include "sentinel/core/voice/UnifiedAudioService.h"
 
+#include <QHash>
 #include <QJsonArray>
+#include <QMutex>
 #include <QStringList>
 #include <functional>
 #include <memory>
@@ -79,6 +81,10 @@ public:
                         Completion completion) const override;
 
 public:
+    ToolExecutionResult executeGitInspection(const PlannedToolInvocation& invocation,
+                                             QString& currentWorkingDirectory) const;
+    ToolExecutionResult executeStatPath(const PlannedToolInvocation& invocation,
+                                        QString& currentWorkingDirectory) const;
     using BuiltInMethod = ToolExecutionResult (RealToolExecutor::*)(const PlannedToolInvocation&,
                                                                     QString&) const;
     ToolExecutionResult executeLocalPlanSummary(const PlannedToolInvocation& invocation,
@@ -167,7 +173,8 @@ private:
     std::shared_ptr<ITextToSpeechRuntime> ttsRuntime_;
     std::function<ToolExecutionResult(const SubagentAssignment&,
                                       const QString& parentToolCallId)> subagentRunner_;
-    mutable QJsonArray todos_;
+    mutable QMutex todosMutex_;
+    mutable QHash<QString, QJsonArray> sessionTodos_;
 };
 
 } // namespace sentinel::core

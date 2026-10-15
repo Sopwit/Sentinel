@@ -17,6 +17,11 @@ namespace sentinel::core {
 class IToolHandler {
 public:
     virtual ~IToolHandler() = default;
+    // A known missing runtime dependency excludes a tool from discovery and execution.
+    // Empty means eligible to attempt execution, not a guarantee of success.
+    virtual QString unavailableReason() const {
+        return {};
+    }
     virtual IToolExecutor::Cancel execute(const ToolExecutionRequest& request,
                                           const QString& sessionId, const QString& toolCallId,
                                           IToolExecutor::Output output,

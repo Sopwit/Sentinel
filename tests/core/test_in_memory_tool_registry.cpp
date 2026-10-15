@@ -34,6 +34,8 @@ private slots:
     void handlerRegistrationAndProviderRemoval();
     void builtInHandlersExecuteThroughRegistry();
     void rejectsNonExecutableDynamicTools();
+    void unavailableHandlersAreNotAdvertised();
+    void builtInRegistrationIsAtomic();
 };
 
 static ToolDescriptor makeTool(const QString& id, const QString& name) {
@@ -218,7 +220,13 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
     sentinel::core::RealToolExecutor executor;
     InMemoryToolRegistry registry;
     QVERIFY(sentinel::core::BuiltInToolProvider::registerTools(registry, executor));
-    QCOMPARE(registry.enabledTools().size(), 32);
+    int expected = 0;
+    for (const auto& descriptor : registry.listTools())
+        expected +=
+            descriptor.enabled && descriptor.exposedToModel &&
+            sentinel::core::toolSupportedOnCurrentPlatform(descriptor) &&
+            registry.findRegistration(descriptor.id)->handler->unavailableReason().isEmpty();
+    QCOMPARE(registry.enabledTools().size(), expected);
     for (const auto& descriptor : registry.listTools()) {
         const auto& id = descriptor.id;
         const auto registration = registry.findRegistration(id);
@@ -304,6 +312,48 @@ void InMemoryToolRegistryTest::builtInHandlersExecuteThroughRegistry() {
                  .status,
              sentinel::core::ToolExecutionStatus::UnknownTool);
     QVERIFY(registry.setEnabled(QStringLiteral("grep"), true));
+}
+
+void InMemoryToolRegistryTest::unavailableHandlersAreNotAdvertised() {
+    using namespace sentinel::core;
+    class Unavailable final : public IToolHandler {
+    public:
+        QString unavailableReason() const override {
+            return QStringLiteral("Dependency missing");
+        }
+        IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString&, const QString&,
+                                      IToolExecutor::Output, IToolExecutor::Completion) override {
+            return {};
+        }
+    };
+    InMemoryToolRegistry registry;
+    auto descriptor = makeTool(QStringLiteral("unavailable"), QStringLiteral("Unavailable"));
+    QVERIFY(registry.registerTool({descriptor, std::make_shared<Unavailable>()}));
+    QCOMPARE(registry.listTools().size(), 1);
+    QVERIFY(registry.enabledTools().isEmpty());
+    ToolExecutionGateway gateway(&registry);
+    QCOMPARE(gateway.toolMetadata().first().availability, ToolExecutionAvailability::Refused);
+    QCOMPARE(gateway.toolMetadata().first().refusalReason, QStringLiteral("Dependency missing"));
+    QVERIFY(!gateway.toolCompleteness().first().modelVisible);
+    ToolInvocationPlan plan;
+    plan.status = ToolInvocationPlanStatus::Planned;
+    PlannedToolInvocation invocation;
+    invocation.toolId = descriptor.id;
+    plan.invocations.append(invocation);
+    QCOMPARE(gateway.validatePlan(plan).failureCategory, ToolFailureCategory::RuntimeUnavailable);
+}
+
+void InMemoryToolRegistryTest::builtInRegistrationIsAtomic() {
+    using namespace sentinel::core;
+    InMemoryToolRegistry registry;
+    auto conflict = makeTool(QStringLiteral("write-file"), QStringLiteral("Existing owner"));
+    conflict.providerId = QStringLiteral("other");
+    QVERIFY(registry.registerTool(conflict));
+    RealToolExecutor executor;
+    QVERIFY(!BuiltInToolProvider::registerTools(registry, executor));
+    QCOMPARE(registry.listTools().size(), 1);
+    QCOMPARE(registry.findToolById(QStringLiteral("write-file"))->name,
+             QStringLiteral("Existing owner"));
 }
 
 QTEST_MAIN(InMemoryToolRegistryTest)

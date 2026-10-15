@@ -84,6 +84,8 @@ struct PlannedToolInvocation {
     QList<int> dependsOn;
     QString providerCallId;
     QString runtimeToolCallId;
+    // Set by the gateway from the runtime session, never accepted as a model argument.
+    QString runtimeSessionId;
 };
 
 struct ToolInvocationPlan {

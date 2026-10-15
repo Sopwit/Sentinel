@@ -388,6 +388,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
     }
     if (toolId != QLatin1String("run-command")) {
         static const QSet<QString> processTools{
+            QStringLiteral("git-status"),    QStringLiteral("git-diff"),
             QStringLiteral("process-list"),  QStringLiteral("app-quit"),
             QStringLiteral("system-notify"), QStringLiteral("browser-screenshot"),
             QStringLiteral("browser-pdf"),   QStringLiteral("app-launch"),
@@ -409,7 +410,68 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         std::function<QString(const ProcessRecord&, const QString&, const QString&)> format;
         QByteArray input;
         std::shared_ptr<QTemporaryDir> outputDirectory;
-        if (toolId == QLatin1String("process-list")) {
+        if (toolId == QLatin1String("git-status") || toolId == QLatin1String("git-diff")) {
+            const auto path =
+                authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                   AccessMode::Read, process.workingDirectory);
+            if (!path.ok()) {
+                completion(fileToolFailure(toolId, path));
+                return {};
+            }
+            const auto entry = fileSystemService_.stat(*path.value);
+            if (!entry.ok()) {
+                completion(fileToolFailure(toolId, entry));
+                return {};
+            }
+            if (!entry.value->directory) {
+                completion({ToolExecutionStatus::InvalidArguments,
+                            QStringLiteral("Git path must be a repository directory.")});
+                return {};
+            }
+            process.program = QStringLiteral("git");
+            process.sandbox->isolateGitConfiguration = true;
+            process.workingDirectory = path.value->canonicalPath;
+            // No model text becomes a shell command or a Git option.
+            process.arguments = {
+                QStringLiteral("--no-pager"), QStringLiteral("--no-optional-locks"),
+                QStringLiteral("-c"),         QStringLiteral("core.fsmonitor=false"),
+                QStringLiteral("-c"),         QStringLiteral("core.untrackedCache=false"),
+                QStringLiteral("-c"),         QStringLiteral("color.ui=false")};
+            if (toolId == QLatin1String("git-status"))
+                process.arguments.append({QStringLiteral("status"),
+                                          QStringLiteral("--porcelain=v1"),
+                                          QStringLiteral("--untracked-files=normal"),
+                                          QStringLiteral("--ignore-submodules=all")});
+            else {
+                process.arguments.append({QStringLiteral("diff"), QStringLiteral("--no-ext-diff"),
+                                          QStringLiteral("--no-textconv"),
+                                          QStringLiteral("--ignore-submodules=all")});
+                if (argument(QStringLiteral("staged")) == QLatin1String("true"))
+                    process.arguments.append(QStringLiteral("--cached"));
+                process.arguments.append(QStringLiteral("--"));
+            }
+            process.environment = QProcessEnvironment::systemEnvironment();
+            for (const auto& key : process.environment.keys())
+                if (key.startsWith(QStringLiteral("GIT_")))
+                    process.environment.remove(key);
+            process.environment.insert(QStringLiteral("GIT_TERMINAL_PROMPT"), QStringLiteral("0"));
+            process.environment.insert(QStringLiteral("GIT_OPTIONAL_LOCKS"), QStringLiteral("0"));
+            process.environment.insert(QStringLiteral("GIT_CONFIG_NOSYSTEM"), QStringLiteral("1"));
+#if defined(Q_OS_WIN)
+            process.environment.insert(QStringLiteral("GIT_CONFIG_GLOBAL"), QStringLiteral("NUL"));
+#else
+            process.environment.insert(QStringLiteral("GIT_CONFIG_GLOBAL"),
+                                       QStringLiteral("/dev/null"));
+#endif
+            format = [toolId](const ProcessRecord& record, const QString& out, const QString& err) {
+                return record.state == ProcessState::Exited && record.exitCode == 0
+                           ? out
+                           : QStringLiteral("%1 failed (exit=%2): %3 %4")
+                                 .arg(toolId)
+                                 .arg(record.exitCode)
+                                 .arg(record.error, err);
+            };
+        } else if (toolId == QLatin1String("process-list")) {
 #if defined(Q_OS_WIN)
             process.program = QStringLiteral("tasklist");
 #else
@@ -629,6 +691,7 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             QString id;
             QByteArray out;
             QByteArray err;
+            bool truncated = false;
             Output output;
             Completion completion;
             std::function<QString(const ProcessRecord&, const QString&, const QString&)> format;
@@ -642,59 +705,117 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         active->format = std::move(format);
         active->outputDirectory = std::move(outputDirectory);
         std::weak_ptr<Active> weak = active;
-        active->id = active->executor->start(
-            process,
-            [weak](const ProcessRecord& record) {
-                auto current = weak.lock();
+        const auto launch = [weak, process, input] {
+            const auto active = weak.lock();
+            if (!active)
+                return;
+            active->id = active->executor->start(
+                process,
+                [weak](const ProcessRecord& record) {
+                    auto current = weak.lock();
+                    if (!current || (record.state != ProcessState::Exited &&
+                                     record.state != ProcessState::Failed &&
+                                     record.state != ProcessState::Cancelled))
+                        return;
+                    ToolExecutionResult result{
+                        record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
+                        : record.state == ProcessState::Exited && record.exitCode == 0
+                            ? ToolExecutionStatus::Succeeded
+                            : ToolExecutionStatus::Failed,
+                        current->format(record, QString::fromUtf8(current->out).trimmed(),
+                                        QString::fromUtf8(current->err).trimmed())};
+                    if (record.timedOut)
+                        result.failureCategory = ToolFailureCategory::Timeout;
+                    else if (record.state == ProcessState::Cancelled)
+                        result.failureCategory = ToolFailureCategory::Cancelled;
+                    else if (record.state == ProcessState::Failed && record.systemPid == 0)
+                        result.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+                    else if (result.status == ToolExecutionStatus::Failed)
+                        result.failureCategory = ToolFailureCategory::InternalFailure;
+                    if (result.status == ToolExecutionStatus::Succeeded &&
+                        current->outputDirectory &&
+                        QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty()) {
+                        result.status = ToolExecutionStatus::Failed;
+                        result.failureCategory = ToolFailureCategory::InternalFailure;
+                        result.summary =
+                            QStringLiteral("Expected output artifact was not produced.");
+                    }
+                    const QJsonObject receipt{
+                        {QStringLiteral("processId"), record.processId},
+                        {QStringLiteral("exitCode"), record.exitCode},
+                        {QStringLiteral("stdout"), QString::fromUtf8(current->out)},
+                        {QStringLiteral("stderr"), QString::fromUtf8(current->err)},
+                        {QStringLiteral("truncated"), current->truncated},
+                        {QStringLiteral("timedOut"), record.timedOut},
+                        {QStringLiteral("cancelled"), record.state == ProcessState::Cancelled},
+                        {QStringLiteral("complete"), record.state == ProcessState::Exited &&
+                                                         !record.timedOut && !current->truncated}};
+                    result.structuredObservation = std::make_shared<StructuredObservation>(
+                        StructuredObservation{StructuredObservationKind::Generic, receipt});
+                    result.sandbox = record.sandbox;
+                    if (record.exitCode != 0 && (current->err.startsWith("bwrap:") ||
+                                                 current->err.startsWith("sandbox-exec:"))) {
+                        result.sandbox.enforcement = SandboxEnforcement::Failed;
+                        result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
+                    }
+                    if (result.status == ToolExecutionStatus::Succeeded &&
+                        current->outputDirectory &&
+                        !QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty())
+                        current->outputDirectory->setAutoRemove(false);
+                    current->completion(std::move(result));
+                },
+                [weak](const QString& id, ProcessStream stream, const QByteArray& bytes) {
+                    auto current = weak.lock();
+                    if (!current)
+                        return;
+                    auto& buffer = stream == ProcessStream::Stdout ? current->out : current->err;
+                    const auto remaining = qMax<qsizetype>(0, 65536 - buffer.size());
+                    current->truncated |= bytes.size() > remaining;
+                    buffer.append(bytes.left(remaining));
+                    if (current->output)
+                        current->output(id, stream, bytes);
+                });
+            if (!input.isEmpty()) {
+                active->executor->write(active->id, input);
+                active->executor->closeWriteChannel(active->id);
+            }
+        };
+        if (toolId == QLatin1String("git-status") || toolId == QLatin1String("git-diff")) {
+            // Git status/diff may invoke clean/process filters even with --no-textconv.
+            // Inspect configuration in the same sandbox and refuse configured commands.
+            auto preflight = process;
+            preflight.arguments = {QStringLiteral("--no-pager"), QStringLiteral("config"),
+                                   QStringLiteral("--name-only"), QStringLiteral("--get-regexp"),
+                                   QStringLiteral("^filter\\..*\\.(clean|process|smudge)$")};
+            active->id = active->executor->start(preflight, [weak,
+                                                             launch](const ProcessRecord& record) {
+                const auto current = weak.lock();
                 if (!current ||
                     (record.state != ProcessState::Exited && record.state != ProcessState::Failed &&
                      record.state != ProcessState::Cancelled))
                     return;
-                ToolExecutionResult result{
-                    record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
-                    : record.state == ProcessState::Exited && record.exitCode == 0
-                        ? ToolExecutionStatus::Succeeded
-                        : ToolExecutionStatus::Failed,
-                    current->format(record, QString::fromUtf8(current->out).trimmed(),
-                                    QString::fromUtf8(current->err).trimmed())};
-                if (record.timedOut)
-                    result.failureCategory = ToolFailureCategory::Timeout;
-                else if (record.state == ProcessState::Cancelled)
-                    result.failureCategory = ToolFailureCategory::Cancelled;
-                else if (record.state == ProcessState::Failed && record.systemPid == 0)
-                    result.failureCategory = ToolFailureCategory::RuntimeUnavailable;
-                else if (result.status == ToolExecutionStatus::Failed)
-                    result.failureCategory = ToolFailureCategory::InternalFailure;
-                if (result.status == ToolExecutionStatus::Succeeded && current->outputDirectory &&
-                    QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty()) {
-                    result.status = ToolExecutionStatus::Failed;
-                    result.failureCategory = ToolFailureCategory::InternalFailure;
-                    result.summary = QStringLiteral("Expected output artifact was not produced.");
-                }
-                result.sandbox = record.sandbox;
-                if (record.exitCode != 0 && (current->err.startsWith("bwrap:") ||
-                                             current->err.startsWith("sandbox-exec:"))) {
-                    result.sandbox.enforcement = SandboxEnforcement::Failed;
-                    result.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
-                }
-                if (result.status == ToolExecutionStatus::Succeeded && current->outputDirectory &&
-                    !QDir(current->outputDirectory->path()).entryList(QDir::Files).isEmpty())
-                    current->outputDirectory->setAutoRemove(false);
-                current->completion(std::move(result));
-            },
-            [weak](const QString& id, ProcessStream stream, const QByteArray& bytes) {
-                auto current = weak.lock();
-                if (!current)
+                if (record.state == ProcessState::Exited && record.exitCode == 1 &&
+                    !record.timedOut) {
+                    launch();
                     return;
-                auto& buffer = stream == ProcessStream::Stdout ? current->out : current->err;
-                if (buffer.size() < 65536)
-                    buffer.append(bytes.left(65536 - buffer.size()));
-                if (current->output)
-                    current->output(id, stream, bytes);
+                }
+                ToolExecutionResult failure{
+                    record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
+                                                            : ToolExecutionStatus::Blocked,
+                    record.exitCode == 0
+                        ? QStringLiteral("Git inspection refused: repository filters can execute "
+                                         "commands. Use an explicitly approved shell operation.")
+                        : QStringLiteral("Git filter safety check could not complete: %1")
+                              .arg(record.error)};
+                failure.failureCategory = record.state == ProcessState::Cancelled
+                                              ? ToolFailureCategory::Cancelled
+                                          : record.timedOut ? ToolFailureCategory::Timeout
+                                                            : ToolFailureCategory::SecurityDenied;
+                failure.sandbox = record.sandbox;
+                current->completion(std::move(failure));
             });
-        if (!input.isEmpty()) {
-            active->executor->write(active->id, input);
-            active->executor->closeWriteChannel(active->id);
+        } else {
+            launch();
         }
         if (toolId == QLatin1String("app-quit") || toolId == QLatin1String("app-launch") ||
             toolId == QLatin1String("open-url") || toolId == QLatin1String("system-notify"))
@@ -778,6 +899,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         QString id;
         QByteArray stdoutBytes;
         QByteArray stderrBytes;
+        bool stdoutTruncated = false;
+        bool stderrTruncated = false;
         Output output;
         Completion completion;
         bool docker = false;
@@ -872,6 +995,20 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                     ? ToolExecutionStatus::Succeeded
                     : ToolExecutionStatus::Failed,
                 summary};
+            const bool complete = record.state == ProcessState::Exited && !record.timedOut &&
+                                  !current->stdoutTruncated && !current->stderrTruncated;
+            const QJsonObject receipt{
+                {QStringLiteral("processId"), record.processId},
+                {QStringLiteral("exitCode"), record.exitCode},
+                {QStringLiteral("stdout"), QString::fromUtf8(current->stdoutBytes)},
+                {QStringLiteral("stderr"), QString::fromUtf8(current->stderrBytes)},
+                {QStringLiteral("timedOut"), record.timedOut},
+                {QStringLiteral("cancelled"), record.state == ProcessState::Cancelled},
+                {QStringLiteral("stdoutTruncated"), current->stdoutTruncated},
+                {QStringLiteral("stderrTruncated"), current->stderrTruncated},
+                {QStringLiteral("complete"), complete}};
+            result.structuredObservation = std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::Generic, receipt});
             result.sandbox = record.sandbox;
             if (record.exitCode != 0 && (current->stderrBytes.startsWith("bwrap:") ||
                                          current->stderrBytes.startsWith("sandbox-exec:"))) {
@@ -895,8 +1032,11 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 return;
             auto& buffer =
                 stream == ProcessStream::Stdout ? current->stdoutBytes : current->stderrBytes;
-            if (buffer.size() < 65536)
-                buffer.append(bytes.left(65536 - buffer.size()));
+            auto& truncated = stream == ProcessStream::Stdout ? current->stdoutTruncated
+                                                              : current->stderrTruncated;
+            const auto remaining = qMax<qsizetype>(0, 65536 - buffer.size());
+            truncated |= bytes.size() > remaining;
+            buffer.append(bytes.left(remaining));
             if (current->output)
                 current->output(id, stream, bytes);
         });
@@ -1466,6 +1606,33 @@ ToolExecutionResult RealToolExecutor::executeListDirectory(const PlannedToolInvo
             std::make_shared<StructuredObservation>(
                 StructuredObservation{StructuredObservationKind::DirectoryListing, data})};
 }
+ToolExecutionResult RealToolExecutor::executeGitInspection(const PlannedToolInvocation&,
+                                                           QString&) const {
+    return {ToolExecutionStatus::Blocked,
+            QStringLiteral("Git inspection must use the asynchronous sandboxed process handler.")};
+}
+
+ToolExecutionResult RealToolExecutor::executeStatPath(const PlannedToolInvocation& invocation,
+                                                      QString& cwd) const {
+    const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
+                                         AccessMode::Read, cwd);
+    if (!path.ok())
+        return fileToolFailure(QStringLiteral("stat-path"), path);
+    const auto entry = fileSystemService_.stat(*path.value);
+    if (!entry.ok())
+        return fileToolFailure(QStringLiteral("stat-path"), entry);
+    const QJsonObject data{{QStringLiteral("path"), entry.resource},
+                           {QStringLiteral("exists"), true},
+                           {QStringLiteral("directory"), entry.value->directory},
+                           {QStringLiteral("regularFile"), entry.value->regularFile},
+                           {QStringLiteral("size"), entry.value->size},
+                           {QStringLiteral("complete"), true}};
+    return {ToolExecutionStatus::Succeeded,
+            QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::FileSystemFact, data})};
+}
+
 ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocation& invocation,
                                                       QString& cwd) const {
     const auto path = authorizedFilePath(fileSystemService_, invocation, QStringLiteral("path"),
@@ -1495,12 +1662,25 @@ ToolExecutionResult RealToolExecutor::executeReadFile(const PlannedToolInvocatio
     const int limit = getIntArgument(invocation, QStringLiteral("limit"), kDefaultReadLimit);
     const auto lines = QString::fromUtf8(read.value->content).split(QLatin1Char('\n'));
     QStringList output;
-    for (int i = qMax(0, offset - 1); i < lines.size() && output.size() < limit; ++i)
-        output.append(QStringLiteral("%1: %2").arg(i + 1).arg(lines.at(i).left(kMaxLineLength)));
+    QStringList page;
+    bool shortenedLine = false;
+    const int start = qMin(offset - 1, static_cast<int>(lines.size()));
+    int end = start;
+    while (end < lines.size() && page.size() < limit) {
+        const auto text = lines.at(end).left(kMaxLineLength);
+        shortenedLine |= text.size() < lines.at(end).size();
+        page.append(text);
+        output.append(QStringLiteral("%1: %2").arg(end + 1).arg(text));
+        ++end;
+    }
+    const bool complete =
+        read.value->complete && offset == 1 && end == lines.size() && !shortenedLine;
     const QJsonObject data{{QStringLiteral("path"), read.resource},
-                           {QStringLiteral("content"), QString::fromUtf8(read.value->content)},
-                           {QStringLiteral("complete"), read.value->complete && offset == 1},
-                           {QStringLiteral("truncated"), read.value->truncated || offset != 1},
+                           {QStringLiteral("content"), page.join(QLatin1Char('\n'))},
+                           {QStringLiteral("offset"), offset},
+                           {QStringLiteral("returnedLines"), page.size()},
+                           {QStringLiteral("complete"), complete},
+                           {QStringLiteral("truncated"), !complete},
                            {QStringLiteral("cancelled"), false},
                            {QStringLiteral("permissionLimited"), false},
                            {QStringLiteral("issues"), QJsonArray{}}};
@@ -2293,70 +2473,61 @@ ToolExecutionResult RealToolExecutor::executeCancelAlarm(const PlannedToolInvoca
 }
 
 ToolExecutionResult RealToolExecutor::executeTodoWrite(const PlannedToolInvocation& invocation,
-                                                       QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        const QString todosRaw = getArgument(invocation, QStringLiteral("todos"));
-        const auto document = QJsonDocument::fromJson(todosRaw.toUtf8());
-        if (!document.isArray()) {
-            logs.append(
-                QStringLiteral("todo-write: The 'todos' argument must be a JSON array of "
-                               "{content, status, priority} objects. Please rewrite the input."));
-            continue;
-        }
-
-        QJsonArray cleaned;
-        const auto array = document.array();
-        for (const auto& value : array) {
-            const auto object = value.toObject();
-            const QString status = object.value(QStringLiteral("status")).toString();
-            if (status != QStringLiteral("pending") && status != QStringLiteral("in_progress") &&
-                status != QStringLiteral("completed") && status != QStringLiteral("cancelled")) {
-                logs.append(QStringLiteral(
-                                "todo-write: Invalid status '%1'. Allowed: pending, in_progress, "
-                                "completed, cancelled. Please rewrite the input.")
-                                .arg(status));
-                continue;
-            }
-            QJsonObject fixed;
-            fixed.insert(QStringLiteral("content"),
-                         object.value(QStringLiteral("content")).toString());
-            fixed.insert(QStringLiteral("status"), status);
-            fixed.insert(
-                QStringLiteral("priority"),
-                object.value(QStringLiteral("priority")).toString(QStringLiteral("medium")));
-            cleaned.append(fixed);
-        }
-        todos_ = cleaned;
-
-        int pending = 0;
-        for (const auto& value : todos_) {
-            if (value.toObject().value(QStringLiteral("status")).toString() ==
-                QStringLiteral("pending")) {
-                ++pending;
-            }
-        }
-        logs.append(
-            QStringLiteral("todo-write: %1 todo(s) saved (%2 pending). Current list:\n%3")
-                .arg(QString::number(todos_.size()), QString::number(pending),
-                     QString::fromUtf8(QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+                                                       QString&) const {
+    if (invocation.runtimeSessionId.isEmpty())
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Checklist requires a runtime session.")};
+    const auto document =
+        QJsonDocument::fromJson(getArgument(invocation, QStringLiteral("todos")).toUtf8());
+    if (!document.isArray())
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("Checklist must be an array.")};
+    const auto todos = document.array();
+    // Validate again at the handler boundary; never partially accept a malformed list.
+    if (todos.size() > 100)
+        return {ToolExecutionStatus::InvalidArguments,
+                QStringLiteral("Checklist exceeds 100 items.")};
+    for (const auto& value : todos) {
+        const auto item = value.toObject();
+        const auto content = item.value(QStringLiteral("content")).toString();
+        const auto status = item.value(QStringLiteral("status")).toString();
+        if (!value.isObject() || content.trimmed().isEmpty() || content.size() > 2000 ||
+            (status != QLatin1String("pending") && status != QLatin1String("in_progress") &&
+             status != QLatin1String("completed") && status != QLatin1String("cancelled")))
+            return {ToolExecutionStatus::InvalidArguments,
+                    QStringLiteral("Invalid checklist item.")};
+    }
+    {
+        QMutexLocker lock(&todosMutex_);
+        if (!sessionTodos_.contains(invocation.runtimeSessionId) && sessionTodos_.size() >= 256)
+            return {ToolExecutionStatus::Failed,
+                    QStringLiteral("Checklist session capacity reached.")};
+        if (todos.isEmpty())
+            sessionTodos_.remove(invocation.runtimeSessionId);
+        else
+            sessionTodos_.insert(invocation.runtimeSessionId, todos);
+    }
+    QString unusedDirectory;
+    return executeTodoRead(invocation, unusedDirectory);
 }
 
 ToolExecutionResult RealToolExecutor::executeTodoRead(const PlannedToolInvocation& invocation,
-                                                      QString& currentWorkingDirectory) const {
-    QStringList logs;
-    do {
-        logs.append(todos_.isEmpty()
-                        ? QStringLiteral("todo-read: No todos recorded for this session yet.")
-                        : QStringLiteral("todo-read: Current todos:\n%1")
-                              .arg(QString::fromUtf8(
-                                  QJsonDocument(todos_).toJson(QJsonDocument::Compact))));
-
-    } while (false);
-    return {ToolExecutionStatus::Succeeded, logs.join(QStringLiteral("\n\n"))};
+                                                      QString&) const {
+    if (invocation.runtimeSessionId.isEmpty())
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Checklist requires a runtime session.")};
+    QJsonArray todos;
+    {
+        QMutexLocker lock(&todosMutex_);
+        todos = sessionTodos_.value(invocation.runtimeSessionId);
+    }
+    const QJsonObject data{{QStringLiteral("todos"), todos},
+                           {QStringLiteral("complete"), true},
+                           {QStringLiteral("persistent"), false}};
+    return {ToolExecutionStatus::Succeeded,
+            QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
+            std::make_shared<StructuredObservation>(
+                StructuredObservation{StructuredObservationKind::Generic, data})};
 }
 
 ToolExecutionResult RealToolExecutor::executeMemorySearch(const PlannedToolInvocation& invocation,

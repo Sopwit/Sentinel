@@ -17,6 +17,8 @@ struct SandboxExecutionPlan {
     QString temporaryDirectory;
     bool networkAllowed = false;
     bool restrictedEnvironment = true;
+    // Runtime-only policy for native Git inspection; never a model-supplied environment.
+    bool isolateGitConfiguration = false;
     bool requireEnforcement = true;
     bool forbidDetachedChildren = false;
 };
