@@ -13,6 +13,8 @@
 #include "sentinel/core/security/StaticSandboxPolicy.h"
 
 #include <QFile>
+#include <QScopeGuard>
+#include <QSemaphore>
 #include <QTemporaryDir>
 #include <atomic>
 #include <chrono>
@@ -180,6 +182,93 @@ class AgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void boundedShutdownRetainsUnresponsivePlannerUntilReleased() {
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::FinalAnswer;
+        planner.decision.answer = QStringLiteral("late answer must not complete");
+        QSemaphore entered, release;
+        planner.onStep = [&] {
+            entered.release();
+            release.tryAcquire(1, 5000);
+        };
+        NullToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools()),
+                             planner, executor, approval, sandbox);
+        auto cleanup = qScopeGuard([&] {
+            release.release();
+            runtime.shutdown();
+        });
+        const auto session = runtime.createSession();
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QVERIFY(entered.tryAcquire(1, 1000));
+        QVERIFY(!runtime.tryShutdown(0));
+        QCOMPARE(runtime.shutdownState(), AgentRuntime::ShutdownState::Stopping);
+        QVERIFY(!runtime.tryShutdown(0));
+        QVERIFY(runtime.createSession().isEmpty());
+        QVERIFY(!runtime.start(session, QStringLiteral("new task")));
+        release.release();
+        QTRY_VERIFY(runtime.tryShutdown(0));
+        QCOMPARE(runtime.shutdownState(), AgentRuntime::ShutdownState::Stopped);
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelled);
+        int terminals = 0;
+        for (const auto& event : runtime.eventHistory(session)) {
+            if (event.type == AgentEventType::AgentCompleted ||
+                event.type == AgentEventType::AgentFailed ||
+                event.type == AgentEventType::AgentCancelled) {
+                ++terminals;
+            }
+        }
+        QCOMPARE(terminals, 1);
+        QVERIFY(runtime.tryShutdown(0));
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelled);
+    }
+
+    void cancellationRejectsMissingSession() {
+        Planner planner;
+        NullToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools()),
+                             planner, executor, approval, sandbox);
+        QVERIFY(!runtime.cancel(QString{}));
+        QVERIFY(runtime.eventHistory(QString{}).isEmpty());
+        QVERIFY(!runtime.cancel(QStringLiteral("unknown-session")));
+        QVERIFY(runtime.eventHistory(QStringLiteral("unknown-session")).isEmpty());
+    }
+    void rejectedSessionOperationsPreserveState() {
+        Planner planner;
+        planner.decision.kind = AgentStepDecision::Kind::FinalAnswer;
+        planner.decision.answer = QStringLiteral("finished");
+        NullToolExecutor executor;
+        StaticApprovalPolicy approval;
+        StaticSandboxPolicy sandbox;
+        AgentRuntime runtime(std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools()),
+                             planner, executor, approval, sandbox);
+        const auto session = runtime.createSession();
+        auto finished = std::make_shared<std::atomic_bool>(false);
+        AgentSessionOptions options;
+        options.onFinished = [finished](const AgentLoopState&) { finished->store(true); };
+        runtime.configureSession(session, std::move(options));
+        QVERIFY(!runtime.continueSession(session, true));
+        QCOMPARE(runtime.error(session).code, AgentRuntimeErrorCode::InvalidState);
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Idle);
+        QVERIFY(runtime.start(session, QStringLiteral("task")));
+        QTRY_COMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Completed);
+        QTRY_VERIFY(finished->load());
+        const auto completed = runtime.sessionState(session);
+        const auto events = runtime.eventHistory(session).size();
+        QVERIFY(!runtime.start(session, QStringLiteral("duplicate task")));
+        QCOMPARE(runtime.error(session).code, AgentRuntimeErrorCode::InvalidState);
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Completed);
+        QCOMPARE(runtime.sessionState(session).finalAnswer, completed.finalAnswer);
+        QCOMPARE(runtime.eventHistory(session).size(), events);
+        QVERIFY(!runtime.continueSession(session, true));
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Completed);
+        QCOMPARE(planner.calls, 1);
+    }
+
     void skillInstructionsReachContextButCannotAuthorizeProcess() {
         Planner planner;
         planner.decision.kind = AgentStepDecision::Kind::ToolCall;

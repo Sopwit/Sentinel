@@ -47,6 +47,7 @@ public:
                       const ModelSelection& selection = {}, bool requireLocal = false);
     void setResponseProfileInstructions(QString instructions) { profileInstructions_ = instructions.left(2000); }
     bool stop();
+    bool tryShutdown(int timeoutMs);
     bool busy() const;
     ChatMessage activeMessage() const;
     ChatProviderErrorCategory lastError() const;
@@ -67,6 +68,7 @@ private:
     ModelService& models_;
     ChatSession& session_;
     IConversationStore& store_;
+    bool stopping_ = false;
     QThread* worker_ = nullptr;
     QSet<QThread*> workers_;
     std::shared_ptr<std::atomic_bool> cancellation_;

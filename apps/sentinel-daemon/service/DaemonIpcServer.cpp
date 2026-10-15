@@ -354,7 +354,7 @@ void DaemonIpcServer::setController(core::ApplicationController* controller) {
     }
 }
 bool DaemonIpcServer::startServer(const QString& requested) {
-    if (m_server.isListening()) {
+    if (m_shuttingDown || m_server.isListening()) {
         return false;
     }
     m_path = requested.isEmpty() ? defaultSocketPath() : requested;
@@ -442,7 +442,38 @@ bool DaemonIpcServer::startServer(const QString& requested) {
     qInfo("Daemon IPC listening");
     return true;
 }
+void DaemonIpcServer::requestShutdown() {
+    if (m_shuttingDown) {
+        return;
+    }
+    m_shuttingDown = true;
+    emit shutdownStarted();
+    m_server.close();
+    if (m_titleCancellation) {
+        m_titleCancellation->store(true);
+    }
+    if (m_controller) {
+        (void)m_controller->tryShutdownRuntime();
+    }
+    m_shutdownDrain.setInterval(25);
+    connect(&m_shutdownDrain, &QTimer::timeout, this, [this] {
+        const bool runtimeStopped = !m_controller || m_controller->tryShutdownRuntime();
+        if (!runtimeStopped || (m_titleWorker && !m_titleWorker->wait(0))) {
+            return;
+        }
+        if (m_titleWorker) {
+            auto* finishedWorker = m_titleWorker.data();
+            m_titleWorker = nullptr;
+            delete finishedWorker;
+        }
+        m_shutdownDrain.stop();
+        emit shutdownDrained();
+    });
+    m_shutdownDrain.start();
+}
+
 void DaemonIpcServer::stopServer() {
+    m_shutdownDrain.stop();
     m_server.close();
     const auto sockets = m_clients.keys();
     for (auto* socket : sockets) {
@@ -694,14 +725,9 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
         return;
     }
     if (name == "daemon.shutdown") {
-        m_shuttingDown = true;
         reply({{"shutting_down", true}});
-        m_server.close();
-        if (m_controller) {
-            m_controller->stopChatGeneration();
-            m_controller->agentRuntime()->shutdown();
-        }
-        QTimer::singleShot(50, QCoreApplication::instance(), &QCoreApplication::quit);
+        socket->flush();
+        requestShutdown();
         return;
     }
     if (!m_controller) {
@@ -1646,9 +1672,14 @@ void DaemonIpcServer::scheduleConversationTitle() {
         }, Qt::QueuedConnection);
     });
     auto* worker = m_titleWorker.data();
-    connect(worker, &QThread::finished, this, [this, worker] {
-        if (m_titleWorker == worker) m_titleWorker = nullptr;
-        worker->deleteLater();
+    connect(worker, &QThread::finished, this, [this, guardedWorker = QPointer<QThread>(worker)] {
+        if (!guardedWorker) {
+            return;
+        }
+        if (m_titleWorker == guardedWorker) {
+            m_titleWorker = nullptr;
+        }
+        guardedWorker->deleteLater();
     });
     worker->start(QThread::LowPriority);
 }

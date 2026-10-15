@@ -141,6 +141,10 @@ public:
     virtual bool continueSession(const QString&, bool) {
         return false;
     }
+    // A false result retains ownership: the composition root must stay alive.
+    virtual bool tryShutdown(int) {
+        return !supportsSessions();
+    }
     virtual void shutdown() {}
     virtual bool supportsSessions() const {
         return false;

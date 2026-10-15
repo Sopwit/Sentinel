@@ -80,6 +80,21 @@ impl Drop for Worker {
         self.stop.store(true, Ordering::Relaxed);
     }
 }
+// A connected socket is not a restored session. Never return it to the worker
+// after a failed attach, and never replay the command that required recovery.
+fn connect_session(path: &Path, sid: Option<&str>) -> Result<(Client, Option<Value>), Error> {
+    let mut client = Client::connect(path, "sentinel-tui")?;
+    let snapshot = if let Some(id) = sid {
+        let value = client.request("terminal.attach", json!({"session_id":id}))?;
+        if value["session_id"].as_str() != Some(id) {
+            return Err(Error::Protocol("restored session identity mismatch".into()));
+        }
+        Some(value)
+    } else {
+        None
+    };
+    Ok((client, snapshot))
+}
 fn worker(path: &Path) -> Worker {
     let path = path.to_owned();
     let (tx, commands) = mpsc::sync_channel::<Request>(32);
@@ -92,34 +107,20 @@ fn worker(path: &Path) -> Worker {
         let mut retry = Instant::now();
         while !stopping.load(Ordering::Relaxed) {
             if client.is_none() && retry.elapsed() >= Duration::from_secs(1) {
-                match Client::connect(&path, "sentinel-tui") {
-                    Ok(mut c) => {
-                        let _ = c.set_read_timeout(Some(Duration::from_secs(10)));
-                        let mut restored = true;
-                        if let Some(id) = &sid {
-                            match c.request("terminal.attach", json!({"session_id":id})) {
-                                Ok(snapshot) => {
-                                    if updates
-                                        .send(Update::Reply("attach".into(), snapshot))
-                                        .is_err()
-                                    {
-                                        return;
-                                    }
-                                }
-                                Err(e) => {
-                                    restored = false;
-                                    if updates.send(Update::Failure("attach".into(), e)).is_err() {
-                                        return;
-                                    }
-                                }
-                            }
+                match connect_session(&path, sid.as_deref()) {
+                    Ok((c, snapshot)) => {
+                        if let Some(snapshot) = snapshot
+                            && updates
+                                .send(Update::Reply("attach".into(), snapshot))
+                                .is_err()
+                        {
+                            return;
                         }
-                        if restored {
-                            client = Some(c);
-                            let _ = updates.send(Update::Connection(true));
-                        }
+                        client = Some(c);
+                        let _ = updates.send(Update::Connection(true));
                     }
                     Err(e) => {
+                        let _ = updates.send(Update::Connection(false));
                         let _ = updates.send(Update::Failure("connection".into(), e));
                     }
                 }
@@ -133,23 +134,25 @@ fn worker(path: &Path) -> Worker {
                         continue;
                     }
                     if client.is_none() {
-                        match Client::connect(&path, "sentinel-tui") {
-                            Ok(mut c) => {
-                                if let Some(id) = &sid {
-                                    match c.request("terminal.attach", json!({"session_id":id})) {
-                                        Ok(snapshot) => {
-                                            let _ = updates
-                                                .send(Update::Reply("attach".into(), snapshot));
-                                        }
-                                        Err(error) => {
-                                            let _ = updates
-                                                .send(Update::Failure("attach".into(), error));
-                                        }
-                                    }
+                        // Explicit session selection does not depend on restoring the old
+                        // session (which may have been deleted by another client).
+                        let restore_sid =
+                            if ["session.create", "terminal.attach"].contains(&request.name) {
+                                None
+                            } else {
+                                sid.as_deref()
+                            };
+                        match connect_session(&path, restore_sid) {
+                            Ok((c, snapshot)) => {
+                                if let Some(snapshot) = snapshot {
+                                    let _ = updates.send(Update::Reply("attach".into(), snapshot));
                                 }
                                 client = Some(c);
+                                let _ = updates.send(Update::Connection(true));
                             }
                             Err(e) => {
+                                retry = Instant::now();
+                                let _ = updates.send(Update::Connection(false));
                                 let _ = updates.send(Update::Failure(request.tag, e));
                                 continue;
                             }
@@ -167,13 +170,12 @@ fn worker(path: &Path) -> Worker {
                             }
                         }
                         Err(e) => {
-                            let disconnected = matches!(
-                                e,
-                                Error::Disconnected | Error::Unavailable(_) | Error::Timeout
-                            );
+                            let disconnected = e.requires_reconnect();
                             let _ = updates.send(Update::Failure(request.tag, e));
                             if disconnected {
                                 client = None;
+                                retry = Instant::now();
+                                let _ = updates.send(Update::Connection(false));
                             }
                         }
                     }
@@ -414,10 +416,7 @@ impl App {
                 }
             }
             Update::Failure(tag, error) => {
-                if matches!(
-                    error,
-                    Error::Disconnected | Error::Unavailable(_) | Error::Timeout
-                ) {
+                if error.requires_reconnect() {
                     self.connected = false;
                 }
                 if tag == "models" {
@@ -761,6 +760,11 @@ impl App {
                 if event.payload["run_id"].as_str() != Some(self.run_id.as_str())
                     && !self.run_id.is_empty()
                 {
+                    return;
+                }
+                // A terminal snapshot/event closes this run. Only a new run.started
+                // snapshot may reopen it; late approvals/results cannot revive it.
+                if !self.active() {
                     return;
                 }
                 self.mascot.event(&event.name);
@@ -2917,6 +2921,138 @@ mod tests {
             id: String::new(),
             name: name.into(),
             payload,
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn reconnect_requires_matching_authoritative_snapshot() {
+        use std::io::{BufRead, BufReader, Write};
+        use std::os::unix::net::UnixListener;
+        for (label, response_sid, rejection) in [
+            ("rejected", "session", Some("daemon-shutting-down")),
+            ("mismatched", "other", None),
+            ("restored", "session", None),
+        ] {
+            let root =
+                std::env::temp_dir().join(format!("sentinel-p33-{}-{label}", std::process::id()));
+            std::fs::create_dir_all(&root).unwrap();
+            let path = root.join("daemon.sock");
+            let listener = UnixListener::bind(&path).unwrap();
+            let server = std::thread::spawn(move || {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                for expected in ["hello", "terminal.attach"] {
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    let request: Value = serde_json::from_str(&line).unwrap();
+                    assert_eq!(request["name"], expected);
+                    let (kind, payload) = if expected == "hello" {
+                        (
+                            "response",
+                            json!({"major":1,"minor":1,"daemon_version":"test","capabilities":[]}),
+                        )
+                    } else if let Some(code) = rejection {
+                        ("error", json!({"code":code}))
+                    } else {
+                        (
+                            "response",
+                            json!({"session_id":response_sid,"state":"cancelled","output":"preserved","run_id":"run"}),
+                        )
+                    };
+                    writeln!(stream, "{}", json!({"version":{"major":1,"minor":1},"type":kind,"id":request["id"],"name":expected,"payload":payload})).unwrap();
+                }
+                // Failed restoration must close the socket, not run a queued mutation.
+                let mut extra = String::new();
+                assert_eq!(reader.read_line(&mut extra).unwrap(), 0);
+            });
+            match connect_session(&path, Some("session")) {
+                Ok((client, snapshot)) => {
+                    assert_eq!(label, "restored");
+                    let snapshot = snapshot.unwrap();
+                    assert_eq!(snapshot["state"], "cancelled");
+                    assert_eq!(snapshot["output"], "preserved");
+                    drop(client);
+                }
+                Err(error) => {
+                    assert_ne!(label, "restored");
+                    if rejection.is_some() {
+                        assert!(error.requires_reconnect());
+                    } else {
+                        assert!(matches!(error, Error::Protocol(_)));
+                    }
+                }
+            }
+            server.join().unwrap();
+            std::fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn terminal_events_are_idempotent_and_late_approval_cannot_revive_run() {
+        let (worker, requests) = captured_worker();
+        let mut app = ready_app();
+        app.state = "running".into();
+        app.run_id = "run".into();
+        app.generation = "server".into();
+        let session = app.sid.clone();
+        let event = |name: &str, sequence, text: &str| {
+            Update::Event(mascot_event(
+                name,
+                json!({"session_id":session,"run_id":"run","server_generation":"server",
+                "event_sequence":sequence,"text":text}),
+            ))
+        };
+        app.update(event("run.completed", 1, "accepted final"), &worker);
+        assert_eq!(app.state, "completed");
+        while requests.try_recv().is_ok() {}
+        for (name, sequence) in [
+            ("run.completed", 2),
+            ("run.failed", 3),
+            ("run.cancelled", 4),
+            ("approval.requested", 5),
+        ] {
+            app.update(event(name, sequence, "late conflicting value"), &worker);
+            assert_eq!(app.state, "completed");
+            assert_eq!(app.output, "accepted final");
+            assert!(app.approval.is_none());
+            assert!(requests.try_recv().is_err());
+        }
+        app.update(
+            Update::Event(mascot_event(
+                "run.started",
+                json!({"session_id":session,
+            "run_id":"next","server_generation":"server","event_sequence":6,"state":"running"}),
+            )),
+            &worker,
+        );
+        assert_eq!(app.run_id, "next");
+        assert_eq!(app.state, "running");
+    }
+
+    #[test]
+    fn shutdown_failure_disconnects_without_faking_terminal_state() {
+        let worker = test_worker();
+        for state in ["running", "cancelling", "completed", "cancelled"] {
+            let mut app = ready_app();
+            app.state = state.into();
+            app.output = "authoritative output".into();
+            app.editor.insert("unsent draft");
+            app.update(
+                Update::Failure(
+                    "cancel".into(),
+                    Error::Remote("daemon-shutting-down".into()),
+                ),
+                &worker,
+            );
+            assert!(!app.connected);
+            assert_eq!(app.state, state);
+            assert_eq!(app.output, "authoritative output");
+            assert_eq!(app.editor.text, "unsent draft");
+            assert!(app.notice.contains("shutting down"));
         }
     }
 

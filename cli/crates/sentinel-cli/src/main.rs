@@ -373,12 +373,26 @@ fn run(cli: Cli) -> Result<(), Error> {
         },
         json!({"session_id":sid,"text":text}),
     )?;
-    *active.lock().unwrap() = start["run_id"].as_str().map(str::to_owned);
+    let run_id = start["run_id"]
+        .as_str()
+        .filter(|id| !id.is_empty())
+        .ok_or_else(|| Error::Protocol("missing run id".into()))?;
+    if start["session_id"].as_str() != Some(sid) {
+        return Err(Error::Protocol("started session identity mismatch".into()));
+    }
+    *active.lock().unwrap() = Some(run_id.to_owned());
     if interrupted.load(Ordering::SeqCst) {
         client.request("run.cancel", json!({"run_id":start["run_id"]}))?;
     }
     loop {
         let event = client.next_event()?;
+        // Attach/start may queue events from a previous run or another client.
+        // Only this acknowledged run can approve, stream or finish this command.
+        if event.payload["session_id"].as_str() != Some(sid)
+            || event.payload["run_id"].as_str() != Some(run_id)
+        {
+            continue;
+        }
         if output == Output::StreamJson {
             println!("{}", serde_json::to_string(&event).unwrap());
         }

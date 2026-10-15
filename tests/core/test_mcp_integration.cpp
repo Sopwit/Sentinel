@@ -84,6 +84,7 @@ class McpIntegrationTest final : public QObject {
     Q_OBJECT
 private slots:
     void realStdioAgentLoop();
+    void oldCancellationCannotConsumeRecreatedServerCall();
     void realDenialSandboxCrashAndCancellation();
     void runtimeEventsAndCorrelation();
     void certificationDirectValidationAndFaults();
@@ -255,6 +256,47 @@ void McpIntegrationTest::certificationDirectValidationAndFaults() {
     QVERIFY(!service->connectToServer(unavailable.name));
     QVERIFY(service->connectionState(unavailable.name) != McpConnectionState::Connected);
     QVERIFY(!service->lastError(unavailable.name).isEmpty());
+}
+
+void McpIntegrationTest::oldCancellationCannotConsumeRecreatedServerCall() {
+    for (bool completedBeforeRemoval : {false, true}) {
+        McpService service;
+        McpServerConfig config;
+        config.name = QStringLiteral("recreated-server");
+        config.type = QStringLiteral("local");
+        config.command = QString::fromUtf8(TEST_MCP_SERVER_PATH);
+        QVERIFY(service.addServer(config));
+        QVERIFY2(service.connectToServer(config.name), qPrintable(service.lastError(config.name)));
+        int oldResults = 0, newResults = 0;
+        auto oldCancel = service.callToolAsync(config.name, QStringLiteral("echo_value"),
+                                               {{QStringLiteral("value"), QStringLiteral("old")}},
+                                               [&](const QJsonObject&) { ++oldResults; });
+        QVERIFY(oldCancel);
+        if (completedBeforeRemoval) {
+            QTRY_COMPARE_WITH_TIMEOUT(oldResults, 1, 5000);
+        }
+        QVERIFY(service.removeServer(config.name));
+        QCOMPARE(oldResults, 1); // Response or disconnect settles the original invocation.
+        QVERIFY(service.addServer(config));
+        QVERIFY2(service.connectToServer(config.name), qPrintable(service.lastError(config.name)));
+        QJsonObject newResult;
+        auto newCancel = service.callToolAsync(config.name, QStringLiteral("echo_value"),
+                                               {{QStringLiteral("value"), QStringLiteral("new")}},
+                                               [&](QJsonObject value) {
+                                                   newResult = std::move(value);
+                                                   ++newResults;
+                                               });
+        QVERIFY(newCancel);
+        oldCancel();
+        oldCancel();
+        QTRY_COMPARE_WITH_TIMEOUT(newResults, 1, 5000);
+        QVERIFY(!newResult.contains(QStringLiteral("error")));
+        QVERIFY(
+            QString::fromUtf8(QJsonDocument(newResult).toJson()).contains(QStringLiteral("new")));
+        QCOMPARE(oldResults, 1);
+        QVERIFY(service.disconnectFromServer(config.name));
+        QCOMPARE(newResults, 1);
+    }
 }
 
 void McpIntegrationTest::realStdioAgentLoop() {

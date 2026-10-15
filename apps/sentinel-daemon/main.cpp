@@ -53,9 +53,9 @@ int main(int argc, char* argv[]) {
     std::signal(SIGINT, requestShutdown);
     std::signal(SIGTERM, requestShutdown);
     QTimer signalTimer;
-    QObject::connect(&signalTimer, &QTimer::timeout, &app, [&app] {
+    QObject::connect(&signalTimer, &QTimer::timeout, &app, [&service] {
         if (shutdownRequested) {
-            app.quit();
+            service.requestShutdown();
         }
     });
     signalTimer.start(50);

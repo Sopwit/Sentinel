@@ -98,3 +98,32 @@ existing runtime events. See the [CLI](../user/CLI.md) and [TUI](../user/TUI.md)
 `voice.state` projects runtime readiness, state, owner-only completed transcript, failure, input-device identity and VAD setting. `voice.action` supports start/cancel. Platform microphone permission and capture stay in the GUI using the existing AudioDeviceService; the daemon reserves ownership and accepts normalized mono 16 kHz signed little-endian 16-bit PCM through `voice.audio {pcm, final, speech}`. The GUI sends acknowledged 49,152-byte chunks (at most 65,536 base64 characters), stopping at 59 seconds; daemon total bound is 1,920,000 bytes. Disconnect and cancellation release capture/STT; changed STT revision rejects the lease. Dictation is reviewed in the composer, never automatically executed. Unconfigured STT remains unavailable.
 
 Desktop Connected is transport status only. Ready requires complete required eager/global projection, settings, session list and successful attachment. Optional/session-only fields are not eagerly enumerated. Disconnect clears stale projections and reconnect follows the same path. Model-library presentation uses ModelService's credential-free cached status; actual provider binding still authorizes configuration normally.
+
+## Rust request deadlines
+
+The shared Rust CLI/TUI client applies one absolute deadline to a command's write,
+interleaved events, partial frames and acknowledgement. It uses the configured
+read timeout, or ten seconds when event polling is unbounded. Event polling keeps
+its own existing timeout and partial-frame recovery behavior. Successful requests
+restore the polling/write timeouts. A command timeout closes the connection so a
+late reply cannot be consumed by the next command; it does not cancel the daemon
+run or replay the command. Reconnect and attach to inspect authoritative state.
+
+## Terminal client recovery and event identity
+
+Rust command transport failures (including invalid protocol/version and
+`daemon-shutting-down`) invalidate the TUI connection. Provider/permission/business
+errors do not request a transport reconnect. Idle polling timeouts remain normal.
+Both TUI reconnect paths must obtain a matching `terminal.attach` snapshot before
+sending session-dependent commands. Failed restoration closes that socket and
+fails the queued command once; it never replays a sent command. Explicit new/session
+selection can replace an unavailable old session. Snapshot state remains daemon
+owned; disconnect/shutdown rejection is not a fabricated run completion.
+
+The noninteractive Rust CLI validates the acknowledged session/run identity and
+filters queued/streamed events by both before displaying output, answering approvals
+or selecting a terminal exit code. Previous-run and other-session events cannot
+finish the current command. In the TUI, the first terminal outcome closes the run;
+duplicate terminals and late approvals/activity cannot overwrite it. Only an
+authoritative new-run snapshot reopens execution. The protocol schema and Core
+permission decisions are unchanged. P3 development remains based on the unmerged PR #17 branch.

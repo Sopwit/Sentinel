@@ -10,6 +10,7 @@
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QFileInfo>
 #include <QStandardPaths>
@@ -17,6 +18,14 @@
 namespace sentinel::daemon {
 
 DaemonService::DaemonService(QObject* parent) : QObject(parent) {
+    connect(&m_ipcServer, &DaemonIpcServer::shutdownStarted, this, [this] {
+        m_healthTimer.stop();
+        if (m_localModelRuntime) {
+            m_localModelRuntime->beginShutdown();
+        }
+    });
+    connect(&m_ipcServer, &DaemonIpcServer::shutdownDrained, this,
+            [] { QCoreApplication::quit(); });
     connect(&m_healthTimer, &QTimer::timeout, this, &DaemonService::performHealthCheck);
 }
 

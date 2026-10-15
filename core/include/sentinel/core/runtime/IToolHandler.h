@@ -11,6 +11,9 @@ namespace sentinel::core {
 // Gateway-mediated calls enforce ToolDescriptor.inputSchema before invoking a handler.
 // Arguments then carry normalized JSON values and defaults; handlers still enforce
 // semantic permissions, resource state, and operation-specific safety.
+// Like IToolExecutor, execute, output/completion and cancellation belong to the
+// execution event-loop thread. Worker-backed handlers must marshal callbacks there.
+// Cancellation requests are not completion: retain dependencies until work ends.
 class IToolHandler {
 public:
     virtual ~IToolHandler() = default;

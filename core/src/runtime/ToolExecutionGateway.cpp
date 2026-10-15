@@ -652,10 +652,32 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                 hooks_->beforeToolExecution(toolId, parameters);
             }
             auto* hooks = hooks_;
+            // Handlers and their callbacks run on the execution event-loop thread.
+            // Close the invocation before notifying observers, including reentrant ones.
+            struct Delivery {
+                bool finished = false;
+                bool cancelled = false;
+            };
+            auto delivery = std::make_shared<Delivery>();
             auto cancel = handler->execute(
-                resolved, sessionId, toolCallId, std::move(output),
-                [handler, hooks, toolId,
+                resolved, sessionId, toolCallId,
+                [delivery, output = std::move(output)](const QString& id, ProcessStream stream,
+                                                       const QByteArray& bytes) {
+                    if (!delivery->finished && !delivery->cancelled && output) {
+                        output(id, stream, bytes);
+                    }
+                },
+                [handler, hooks, toolId, delivery,
                  completion = std::move(completion)](ToolExecutionResult result) {
+                    if (delivery->finished) {
+                        return;
+                    }
+                    delivery->finished = true;
+                    if (delivery->cancelled) {
+                        result = {ToolExecutionStatus::Cancelled,
+                                  QStringLiteral("Tool execution cancelled.")};
+                        result.failureCategory = ToolFailureCategory::Cancelled;
+                    }
                     if (hooks && hooks->hasHooks(toolId)) {
                         if (result.status == ToolExecutionStatus::Succeeded) {
                             QJsonObject hookOutput{{QStringLiteral("summary"), result.summary}};
@@ -666,9 +688,16 @@ ToolExecutionGateway::executeAsync(const ToolExecutionRequest& originalRequest,
                     }
                     completion(std::move(result));
                 });
-            return [handler, cancel = std::move(cancel)] {
-                if (cancel)
+            return [handler, delivery, cancel = std::move(cancel)] {
+                if (delivery->finished || delivery->cancelled) {
+                    return;
+                }
+                delivery->cancelled = true;
+                // Request cancellation once; ownership and terminal delivery remain
+                // with the actual handler completion, even for non-cooperative work.
+                if (cancel) {
                     cancel();
+                }
             };
         }
     }

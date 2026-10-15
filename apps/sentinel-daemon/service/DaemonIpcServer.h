@@ -9,9 +9,10 @@
 #include <QLockFile>
 #include <QPointer>
 #include <QSet>
-#include <memory>
-#include <atomic>
 #include <QThread>
+#include <QTimer>
+#include <atomic>
+#include <memory>
 namespace sentinel::core {
 class ApplicationController;
 class AppSettings;
@@ -29,13 +30,19 @@ public:
     static QString defaultSocketPath();
     bool startServer(const QString& serverName = {});
     void stopServer();
+    void requestShutdown();
     void setController(core::ApplicationController* controller);
     bool openSessionProjectionStore(const QString& path);
     void setSettings(core::AppSettings* settings) {
         m_settings = settings;
     }
 
+signals:
+    void shutdownStarted();
+    void shutdownDrained();
+
 private:
+    QTimer m_shutdownDrain;
     QPointer<QLocalSocket> m_voiceOwner;
     QByteArray m_voicePcm;
     bool m_voiceCaptureReserved = false;

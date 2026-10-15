@@ -18,6 +18,7 @@
 #include "sentinel/core/security/PathGuard.h"
 #include "sentinel/core/security/ResourceAuthorizationResolver.h"
 
+#include <QDeadlineTimer>
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -444,6 +445,9 @@ QString AgentRuntime::createSession() {
     state.sessionId = id;
     {
         std::lock_guard lock(mutex_);
+        if (shuttingDown_) {
+            return {};
+        }
         sessions_.insert(id, state);
     }
     publish(id, AgentEventType::SessionCreated);
@@ -528,6 +532,9 @@ bool AgentRuntime::cancel(const QString& sessionId) {
     bool waitingForApproval = false;
     {
         std::lock_guard lock(mutex_);
+        if (sessionId.isEmpty() || !sessions_.contains(sessionId)) {
+            return false;
+        }
         if (activeSessionId_ != sessionId) {
             if (!activeSessionId_.isEmpty() ||
                 sessions_.value(sessionId).phase != AgentLoopPhase::AwaitingApproval)
@@ -610,8 +617,12 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
     AgentSessionOptions runOptions;
     {
         std::lock_guard lock(mutex_);
-        if (shuttingDown_ || !planner_ || !activeSessionId_.isEmpty() ||
-            !sessions_.contains(sessionId)) {
+        if (shuttingDown_) {
+            errors_[sessionId] = {AgentRuntimeErrorCode::InvalidState,
+                                  QStringLiteral("Agent runtime is shutting down."), false};
+            return false;
+        }
+        if (!planner_ || !activeSessionId_.isEmpty() || !sessions_.contains(sessionId)) {
             if (sessions_.contains(sessionId) && activeSessionId_.isEmpty()) {
                 auto& state = sessions_[sessionId];
                 state.phase = AgentLoopPhase::Failed;
@@ -623,10 +634,9 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
         }
         const auto phase = sessions_.value(sessionId).phase;
         if (isResume ? phase != AgentLoopPhase::AwaitingApproval : phase != AgentLoopPhase::Idle) {
-            auto& state = sessions_[sessionId];
-            state.phase = AgentLoopPhase::Failed;
-            state.abortReason = QStringLiteral("Agent session is in the wrong state.");
-            errors_[sessionId] = {AgentRuntimeErrorCode::InvalidState, state.abortReason, false};
+            // Reject the operation, not the already accepted session lifecycle.
+            errors_[sessionId] = {AgentRuntimeErrorCode::InvalidState,
+                                  QStringLiteral("Agent session is in the wrong state."), false};
             return false;
         }
         activeSessionId_ = sessionId;
@@ -686,10 +696,34 @@ bool AgentRuntime::launch(const QString& sessionId, bool isResume, bool approved
     return true;
 }
 
+AgentRuntime::ShutdownState AgentRuntime::shutdownState() const {
+    std::lock_guard lock(mutex_);
+    return shutdownComplete_ ? ShutdownState::Stopped
+           : shuttingDown_   ? ShutdownState::Stopping
+                             : ShutdownState::Running;
+}
+
 void AgentRuntime::shutdown() {
+    // Compatibility/destruction fence: dependencies must outlive all borrowed work.
+    // Event-loop owners use tryShutdown(nonnegative budget) and retain us on false.
+    (void)drainShutdown(QDeadlineTimer(QDeadlineTimer::Forever));
+}
+
+bool AgentRuntime::tryShutdown(int timeoutMs) {
+    if (timeoutMs < 0) {
+        return false;
+    }
+    return drainShutdown(QDeadlineTimer(timeoutMs));
+}
+
+bool AgentRuntime::drainShutdown(QDeadlineTimer deadline) {
     QStringList sessionsToCancel;
     {
         std::lock_guard lock(mutex_);
+        if (shutdownComplete_) {
+            return true;
+        }
+        shuttingDown_ = true;
         if (!activeSessionId_.isEmpty())
             sessionsToCancel.append(activeSessionId_);
         for (auto it = sessions_.cbegin(); it != sessions_.cend(); ++it) {
@@ -700,7 +734,13 @@ void AgentRuntime::shutdown() {
     }
     if (!sessionsToCancel.isEmpty())
         cancel(sessionsToCancel.first());
-    std::lock_guard workerLock(workerMutex_);
+    std::unique_lock workerLock(workerMutex_, std::defer_lock);
+    if (deadline.isForever()) {
+        workerLock.lock();
+    } else if (!workerLock.try_lock_for(
+                   std::chrono::milliseconds(qMax<qint64>(0, deadline.remainingTime())))) {
+        return false;
+    }
     {
         std::lock_guard lock(mutex_);
         shuttingDown_ = true;
@@ -708,7 +748,12 @@ void AgentRuntime::shutdown() {
         modelCancellationToken_->store(true);
     }
     if (worker_) {
-        worker_->wait();
+        if (QThread::currentThread() == worker_) {
+            return false;
+        }
+        if (!worker_->wait(deadline)) {
+            return false;
+        }
         delete worker_;
         worker_ = nullptr;
     }
@@ -721,6 +766,11 @@ void AgentRuntime::shutdown() {
     }
     for (const auto& id : subscriberIds)
         unsubscribe(id);
+    {
+        std::lock_guard lock(mutex_);
+        shutdownComplete_ = true;
+    }
+    return true;
 }
 
 QStringList AgentRuntime::toolIds() const {

@@ -10,6 +10,8 @@
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/model/ModelService.h"
 
+#include <QScopeGuard>
+#include <QSemaphore>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QThread>
@@ -42,7 +44,11 @@ public:
     ChatProviderReply sendMessage(const QString&) override {
         return {};
     }
+    std::function<void()> beforeReply;
     ChatProviderReply sendRequest(const QString& prompt, const ChatRequestOptions&) override {
+        if (beforeReply) {
+            beforeReply();
+        }
         if (mode_ == ReplyMode::Failure) {
             ChatProviderReply result;
             result.errorMessage = QStringLiteral("Fixture transport failure.");
@@ -96,6 +102,35 @@ class ChatModeServiceTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void boundedShutdownRetainsProviderAndRejectsLateSuccess() {
+        Harness h(FixtureProvider::ReplyMode::FinalOnly);
+        QSemaphore entered, release;
+        auto provider = std::make_shared<FixtureProvider>(FixtureProvider::ReplyMode::FinalOnly);
+        provider->beforeReply = [&] {
+            entered.release();
+            release.tryAcquire(1, 5000);
+        };
+        h.models.registerProvider(QStringLiteral("ollama"),
+                                  [provider](const ModelBinding&) { return provider; });
+        ChatModeService service(h.models, h.session, h.store);
+        auto cleanup = qScopeGuard([&] { release.release(); });
+        QVERIFY(service.send(h.conversationId, QStringLiteral("task"), {}, {"ollama", "fixture"}));
+        QVERIFY(entered.tryAcquire(1, 1000));
+        QVERIFY(!service.tryShutdown(0));
+        QVERIFY(!service.busy());
+        QCOMPARE(h.session.messages().last().status, ChatMessageStatus::Cancelled);
+        QVERIFY(
+            !service.send(h.conversationId, QStringLiteral("new task"), {}, {"ollama", "fixture"}));
+        QVERIFY(!service.tryShutdown(0));
+        release.release();
+        QTRY_VERIFY(service.tryShutdown(0));
+        QCoreApplication::processEvents();
+        QCOMPARE(h.session.messages().last().status, ChatMessageStatus::Cancelled);
+        QVERIFY(!h.session.messages().last().content.contains(
+            QStringLiteral("SENTINEL_CHAT_PIPELINE_OK")));
+        QVERIFY(service.tryShutdown(0));
+    }
+
     void finalOnlyReplyUpdatesPersistedPlaceholder();
     void emptyStreamingFinalDoesNotEraseDeltas();
     void providerFailureDoesNotLeaveEmptyAssistantMessage();

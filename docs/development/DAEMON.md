@@ -37,3 +37,27 @@ cargo clippy --manifest-path cli/Cargo.toml --all-targets -- -D warnings
 - **Stage C:** retire Desktop direct runtime composition and the legacy in-process C++ CLI after equivalent lifecycle, approvals, recovery and all baseline tests pass through IPC. Runtime authority then belongs exclusively to daemon.
 
 Protocol/security/session details are in [IPC](../interfaces/IPC.md); terminal usage is in [CLI](../interfaces/CLI.md).
+
+## Shutdown drain and provider lifetime
+
+IPC shutdown acknowledges acceptance and closes the listener before draining.
+SIGINT/SIGTERM enter the same idempotent path. Health/automatic model startup stops;
+Chat, Agent and conversation-title cancellation is requested. A 25ms event-loop
+maintenance timer checks nonblocking `tryShutdown(0)` readiness; it is not a sleep
+or an assumption that work has finished. Existing clients receive
+`daemon-shutting-down` for new commands. Only a fully drained runtime/title worker
+emits shutdownDrained and permits application exit. No worker is detached or
+forcibly destroyed. Late Chat/title results remain cancellation-filtered.
+
+`AgentRuntime::tryShutdown(nonnegative budget)` returns false while borrowed work
+is still active. State moves Running -> Stopping -> Stopped; Stopping rejects new
+sessions/start/continue. Keep the runtime, providers, executor, stores and callback
+dependencies alive until it returns true. Event subscribers must be nonblocking;
+this API bounds worker joins, not arbitrary user callback execution. The legacy
+void shutdown/destructor remains a synchronous ownership fence and may wait for
+non-cooperative code: do not destroy the composition root after an incomplete
+tryShutdown result. A malicious/non-returning in-process provider cannot be safely
+killed by C++. The daemon remains responsive but Stopping, reports no successful
+exit, and retains all ownership. A hard process termination guarantee requires an
+externally supervised isolated provider/process; it is not implemented here.
+Cancellation does not become a permission grant and never revives a closed run.

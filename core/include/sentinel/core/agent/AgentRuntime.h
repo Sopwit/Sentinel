@@ -15,6 +15,7 @@
 #include "sentinel/core/security/PermissionService.h"
 #include "sentinel/core/skill/SkillService.h"
 
+#include <QDeadlineTimer>
 #include <QHash>
 #include <QPointer>
 #include <QThread>
@@ -74,6 +75,9 @@ public:
     void configureSession(const QString& sessionId, AgentSessionOptions options) override;
     bool start(const QString& sessionId, const QString& goal) override;
     bool continueSession(const QString& sessionId, bool approved) override;
+    enum class ShutdownState { Running, Stopping, Stopped };
+    ShutdownState shutdownState() const;
+    bool tryShutdown(int timeoutMs) override;
     void shutdown() override;
     bool supportsSessions() const override;
     QString subscribe(AgentEventCallback callback) override;
@@ -109,6 +113,7 @@ public:
     void setMcpService(std::shared_ptr<IMcpService> service);
 
 private:
+    bool drainShutdown(QDeadlineTimer deadline);
     AgentLoopState advance(const QString& sessionId, bool isResume, bool approved,
                            const QString& goal, bool prepared = false);
     void advanceAsync(const QString& sessionId, bool isResume, bool approved, const QString& goal,
@@ -155,7 +160,7 @@ private:
     QString activeGoal_;
     std::shared_ptr<AgentExecutionScheduler::Budget> executionBudget_;
     mutable std::mutex mutex_;
-    std::mutex workerMutex_;
+    std::timed_mutex workerMutex_;
     std::mutex executionMutex_;
     QHash<QString, AgentLoopState> sessions_;
     QHash<QString, AgentSessionOptions> options_;
@@ -170,6 +175,7 @@ private:
     QObject* workerContext_ = nullptr;
     AgentLoop* activeLoop_ = nullptr;
     bool shuttingDown_ = false;
+    bool shutdownComplete_ = false;
     mutable std::mutex eventMutex_;
     struct Subscription {
         AgentEventCallback callback;
