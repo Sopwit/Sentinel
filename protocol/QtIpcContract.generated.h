@@ -890,6 +890,7 @@ inline QJsonObject desktopActions() { return {
 {QStringLiteral("unpinConversation"), QJsonDocument::fromJson(R"json({"return":"bool","arguments":[{"name":"conversationId","cpp":"const QString&","type":"string"}],"scope":"session"})json").object()},
 }; }
 inline QJsonObject desktopSettingsActions() { return {
+{QStringLiteral("extensionsHubState"), QJsonDocument::fromJson(R"json({"query":true,"arguments":[]})json").object()},
 {QStringLiteral("productSettings"), QJsonDocument::fromJson(R"json({"query":true,"arguments":[]})json").object()},
 {QStringLiteral("productSettingsSections"), QJsonDocument::fromJson(R"json({"query":true,"arguments":[]})json").object()},
 {QStringLiteral("setProductSetting"), QJsonDocument::fromJson(R"json({"query":false,"arguments":["string","value"]})json").object()},

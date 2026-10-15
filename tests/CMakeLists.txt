@@ -332,6 +332,7 @@ if(Python3_Interpreter_FOUND)
 endif()
 
 qt_add_executable(test_desktop_ipc desktop/test_desktop_ipc.cpp)
+target_compile_definitions(test_desktop_ipc PRIVATE TEST_MCP_SERVER_PATH="$<TARGET_FILE:test_mcp_server>")
 qt_add_resources(test_desktop_ipc model_catalog_test PREFIX "/catalog-test"
     BASE "${CMAKE_SOURCE_DIR}/ui/qml/pages/models"
     FILES "${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js")

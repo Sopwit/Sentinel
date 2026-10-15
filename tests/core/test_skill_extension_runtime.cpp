@@ -20,6 +20,71 @@ class SkillExtensionRuntimeTest final: public QObject {
     Q_OBJECT
     QString preferencePath;
 private slots:
+    void managementSnapshotIsBoundedAndDoesNotGrantPermissions() {
+        InMemoryToolRegistry registry;
+        ToolDescriptor tool;
+        tool.id = "requires-approval";
+        tool.name = "Permission fixture";
+        tool.requiredPermissionDomain = "filesystem";
+        tool.riskLevel = ToolRiskLevel::High;
+        QVERIFY(registry.registerTool(tool));
+        SkillService skills;
+        Skill skill;
+        skill.name = "hub-fixture";
+        skill.content = "PRIVATE_CONTENT_MUST_NOT_LEAK";
+        QVERIFY(skills.addSkill(skill));
+        ExtensionService extensions(nullptr, nullptr, &skills, &registry);
+        auto state = extensions.managementSnapshot();
+        QCOMPARE(state.value("entries").toArray().size(), 1);
+        const auto row = state.value("entries").toArray().first().toObject();
+        QVERIFY(row.value("available").toBool());
+        QCOMPARE(row.value("health").toString(), QString("Ready"));
+        QVERIFY(!QJsonDocument(state).toJson().contains("PRIVATE_CONTENT"));
+        const auto descriptor = state.value("toolEntries").toArray().first().toObject();
+        QCOMPARE(descriptor.value("risk").toString(), QString("High"));
+        QVERIFY(!descriptor.value("handlerAvailable").toBool());
+        QCOMPARE(descriptor.value("readiness").toString(), QString("Invocation authorization required"));
+        QVERIFY(extensions.perform("skill:hub-fixture", ExtensionAction::Disable));
+        state = extensions.managementSnapshot();
+        QVERIFY(!state.value("entries").toArray().first().toObject().value("available").toBool());
+        QCOMPARE(state.value("entries").toArray().first().toObject().value("health").toString(), QString("Disabled"));
+        QVERIFY(skills.removeSkill(skill.name));
+        for (int i = 0; i < 150; ++i) {
+            tool.id = QString("large-%1").arg(i);
+            tool.name = QString(160, QChar(0x4e00));
+            QVERIFY(registry.registerTool(tool));
+        }
+        state = extensions.managementSnapshot();
+        QVERIFY(state.value("truncated").toBool());
+        QVERIFY(QJsonDocument(state).toJson(QJsonDocument::Compact).size() < 190000);
+        QVERIFY(!registry.findRegistration("requires-approval")->handler);
+    }
+    void managementSnapshotPluginFailureAndDisabledState() {
+        QTemporaryDir directory;
+        QFile file(directory.filePath("plugin.json"));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QJsonDocument(QJsonObject{{"id", "hub.plugin"}, {"name", "Hub fixture"},
+            {"version", "1.0.0"}, {"api_version", "5.0"}, {"entry_point", "not_present"},
+            {"permissions", QJsonArray{"tool.execute"}}}).toJson());
+        file.close();
+        InMemoryToolRegistry registry;
+        plugin::PluginManager plugins("1.0.0", directory.filePath("storage"));
+        plugins.setToolRegistry(&registry);
+        QCOMPARE(plugins.discoverPlugins(directory.path()), 1);
+        ExtensionService extensions(nullptr, &plugins, nullptr, &registry);
+        QVERIFY(extensions.perform("plugin:hub.plugin", ExtensionAction::Disable));
+        auto row = extensions.managementSnapshot().value("entries").toArray().first().toObject();
+        QCOMPARE(row.value("health").toString(), QString("Disabled"));
+        QVERIFY(!row.value("available").toBool());
+        QVERIFY(!row.value("hostRunning").toBool());
+        QVERIFY(!extensions.perform("plugin:hub.plugin", ExtensionAction::Enable));
+        row = extensions.managementSnapshot().value("entries").toArray().first().toObject();
+        QCOMPARE(row.value("health").toString(), QString("Failed"));
+        QVERIFY(!row.value("available").toBool());
+        QVERIFY(!row.contains("source"));
+        QVERIFY(!row.contains("credentials"));
+        QVERIFY(!row.contains("failureDetail"));
+    }
     void responseProfileIsBoundedAndDoesNotAlterGoalOrTools() {
         AgentContextInput input;
         input.goal = "Explain recursion";

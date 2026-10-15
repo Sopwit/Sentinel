@@ -1,0 +1,4559 @@
+{
+  "scope": "Selected eight implementation sources, not whole repository",
+  "p3_same_three_sources": 105,
+  "p41_same_three_sources": 107,
+  "p41_added": 2,
+  "p41_added_categories": [
+    "readability-braces-around-statements"
+  ],
+  "p42_five_sources_before": 274,
+  "p42_five_sources_after": 270,
+  "p42_new_final_diagnostics": 0,
+  "combined_eight_sources_final": 377,
+  "p42_removed_diagnostics": 4,
+  "p3_inventory": [
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 30,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 38,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 42,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 50,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 54,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 61,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 90,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 96,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 103,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 109,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 150,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 153,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 154,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 223,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 226,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 230,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 234,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 238,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 248,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 250,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 254,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 273,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 281,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 287,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 290,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 294,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 296,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 302,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 306,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 315,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 320,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 329,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 333,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 335,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 337,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 339,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 342,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 344,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 346,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 349,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 351,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 353,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 356,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 358,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 360,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 362,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 369,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 374,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 388,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 397,
+      "message": "'brew' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 408,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 414,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 418,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 421,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 425,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 16,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 25,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 33,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 43,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 45,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 52,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 80,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 101,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 102,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 104,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 114,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 117,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 118,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 18,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 20,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 21,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 22,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 143,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 149,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 152,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 153,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 155,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 166,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 170,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 174,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 188,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 189,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 191,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 193,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 199,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 200,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 202,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 204,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 211,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 215,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 219,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 224,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 269,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 274,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 279,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 292,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 297,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 305,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 314,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 324,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 331,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    }
+  ],
+  "p41_inventory": [
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 30,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 38,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 42,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 50,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 54,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 61,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 90,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 96,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 103,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 109,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 150,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 153,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 154,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 223,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 226,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 230,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 234,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 238,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 248,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 250,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 254,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 273,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 281,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 287,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 290,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 294,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 296,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 302,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 306,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 315,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 320,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 329,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 333,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 335,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 337,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 339,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 342,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 344,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 346,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 349,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 351,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 353,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 356,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 358,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 360,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 362,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 369,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 374,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 388,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 397,
+      "message": "'brew' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 408,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 414,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 418,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 421,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonModelHelpers.cpp",
+      "line": 425,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 20,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 25,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 30,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 35,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 45,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 47,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 54,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 69,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 88,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 110,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 111,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 113,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 123,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 126,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/RemoteAgentInspectorService.cpp",
+      "line": 127,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 18,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 20,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 21,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 22,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 143,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 149,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 152,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 153,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 155,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 166,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 170,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 174,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 188,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 189,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 191,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 193,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 199,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 200,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 202,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 204,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 211,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 215,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 219,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 224,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 269,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 274,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 279,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 292,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 297,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 305,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 314,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 324,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/viewmodels/AgentInspectorViewModel.cpp",
+      "line": 331,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    }
+  ],
+  "p42_before_inventory": [
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 17,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 38,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 40,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 42,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 53,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 55,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 57,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 65,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 69,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 142,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 144,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 146,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 148,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 155,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 195,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 197,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 199,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 202,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 204,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 207,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 210,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 212,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 214,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 217,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 219,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 221,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 223,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 225,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 232,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 236,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 238,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 240,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 242,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 244,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 247,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 250,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 77,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 109,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 339,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 481,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 498,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 659,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 740,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 747,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 67,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 74,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 80,
+      "message": "narrowing conversion from 'long long' to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 84,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 86,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 191,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 245,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 289,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 302,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 304,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 321,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 576,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 578,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 638,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 691,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 698,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1300,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1307,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1311,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1422,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1432,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1442,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2254,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2256,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2258,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2260,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2262,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2263,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2265,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2274,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2276,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2282,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2286,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2288,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2290,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2298,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2307,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2309,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2313,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3822,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3936,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3948,
+      "message": "macro 'Q_OS_MAC' has been marked as deprecated: use Q_OS_MACOS for macOS or Q_OS_APPLE for all Apple platforms instead",
+      "check": "clang-diagnostic-deprecated-pragma"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3967,
+      "message": "macro 'Q_OS_MAC' has been marked as deprecated: use Q_OS_MACOS for macOS or Q_OS_APPLE for all Apple platforms instead",
+      "check": "clang-diagnostic-deprecated-pragma"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4261,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4269,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4286,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4298,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4304,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4306,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4320,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4326,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4328,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4330,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4339,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4345,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4349,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4363,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4376,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4387,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4400,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4408,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4412,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4423,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4436,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4444,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4455,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4463,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4473,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4481,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4494,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4509,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4515,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4517,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4519,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4521,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4528,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4537,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4546,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4557,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4567,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4580,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4592,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4965,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4972,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4980,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4985,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4995,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5003,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5012,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5021,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5031,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5039,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5047,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5063,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5081,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5488,
+      "message": "performing an implicit widening conversion to type 'qint64' (aka 'long long') of a multiplication performed in type 'int'",
+      "check": "bugprone-implicit-widening-of-multiplication-result"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5890,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5892,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5894,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5896,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5898,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5910,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5912,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5915,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5922,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5926,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5929,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5932,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5944,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5947,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5950,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5972,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5974,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5975,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5999,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6014,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6017,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6018,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6080,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6120,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6129,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6130,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6140,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6141,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6213,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6288,
+      "message": "the type of the loop variable 'val' is different from the one returned by the iterator and generates an implicit conversion; you can either change the type to the matching one ('const QJsonValueConstRef &' but 'const auto&' is always a valid option) or remove the reference to make it explicit that you are creating a new value",
+      "check": "performance-implicit-conversion-in-loop"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6308,
+      "message": "'assetDownloadUrl' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6309,
+      "message": "'assetName' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6424,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6430,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6435,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6435,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6543,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6634,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6680,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6681,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6683,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6684,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6685,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6701,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6798,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6840,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6859,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7077,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7091,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7105,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7119,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7133,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7147,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7161,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7197,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 22,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 25,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 27,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 30,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 37,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 42,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 44,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 46,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 48,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 50,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 73,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 75,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 77,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 79,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 83,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 84,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 23,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 59,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 60,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 73,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 80,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 86,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 92,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 93,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 97,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 98,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 102,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 103,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 104,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 105,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 106,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 107,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 113,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 125,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 160,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 163,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 164,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 171,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 182,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 186,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 190,
+      "message": "narrowing conversion from 'qsizetype' (aka 'long long') to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 191,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 193,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 202,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 226,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 228,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 230,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 233,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 235,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 247,
+      "message": "narrowing conversion from 'qsizetype' (aka 'long long') to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 248,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 250,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 265,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 295,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 306,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 325,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 327,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 329,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 340,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 346,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 362,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 363,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 371,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 375,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 376,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 377,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 382,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 383,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 387,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 389,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 392,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 394,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 395,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    }
+  ],
+  "p42_final_inventory": [
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 18,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 39,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 41,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 43,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 54,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 56,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 58,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 66,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 70,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 143,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 145,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 147,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 149,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 156,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 201,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 203,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 205,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 208,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 210,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 213,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 216,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 218,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 220,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 223,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 225,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 227,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 229,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 231,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 238,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 242,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 244,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 246,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 248,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 250,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 253,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp",
+      "line": 256,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 92,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 124,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 548,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 565,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 732,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 813,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp",
+      "line": 820,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 67,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 74,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 80,
+      "message": "narrowing conversion from 'long long' to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 84,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 86,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 191,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 245,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 289,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 302,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 304,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 321,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 576,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 578,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 638,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 691,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 698,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1300,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1307,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1311,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1422,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1432,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 1442,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2254,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2256,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2258,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2260,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2262,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2263,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2265,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2274,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2276,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2282,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2283,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2286,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2288,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2290,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2298,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2307,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2309,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 2313,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3822,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3936,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3948,
+      "message": "macro 'Q_OS_MAC' has been marked as deprecated: use Q_OS_MACOS for macOS or Q_OS_APPLE for all Apple platforms instead",
+      "check": "clang-diagnostic-deprecated-pragma"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 3967,
+      "message": "macro 'Q_OS_MAC' has been marked as deprecated: use Q_OS_MACOS for macOS or Q_OS_APPLE for all Apple platforms instead",
+      "check": "clang-diagnostic-deprecated-pragma"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4261,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4269,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4286,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4298,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4304,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4306,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4308,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4320,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4326,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4328,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4330,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4339,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4345,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4349,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4363,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4376,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4416,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4427,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4440,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4448,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4459,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4467,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4477,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4485,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4498,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4513,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4519,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4521,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4523,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4525,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4532,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4541,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4550,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4561,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4571,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4584,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4596,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4969,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4976,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4984,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4989,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 4999,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5007,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5016,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5025,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5035,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5043,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5051,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5067,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5085,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5492,
+      "message": "performing an implicit widening conversion to type 'qint64' (aka 'long long') of a multiplication performed in type 'int'",
+      "check": "bugprone-implicit-widening-of-multiplication-result"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5894,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5896,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5898,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5900,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5902,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5914,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5916,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5919,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5926,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5930,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5933,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5936,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5948,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5951,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5954,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5976,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5978,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 5979,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6003,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6018,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6021,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6022,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6084,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6124,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6133,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6134,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6144,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6145,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6217,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6292,
+      "message": "the type of the loop variable 'val' is different from the one returned by the iterator and generates an implicit conversion; you can either change the type to the matching one ('const QJsonValueConstRef &' but 'const auto&' is always a valid option) or remove the reference to make it explicit that you are creating a new value",
+      "check": "performance-implicit-conversion-in-loop"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6312,
+      "message": "'assetDownloadUrl' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6313,
+      "message": "'assetName' could be moved here",
+      "check": "performance-use-std-move"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6428,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6434,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6439,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6439,
+      "message": "narrowing conversion from 'qint64' (aka 'long long') to 'double'",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6547,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6638,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6684,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6685,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6687,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6688,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6689,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6705,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6802,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6844,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 6863,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7081,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7095,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7109,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7123,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7137,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7151,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7165,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/DesktopShellViewModel.cpp",
+      "line": 7201,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 22,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 25,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 27,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 85,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 92,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 97,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 99,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 101,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 103,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 105,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 128,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 130,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 132,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 134,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 138,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp",
+      "line": 139,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 24,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 60,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 61,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 74,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 81,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 87,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 93,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 94,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 98,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 99,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 103,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 104,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 105,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 106,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 107,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 108,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 114,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 126,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 161,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 164,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 165,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 172,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 183,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 187,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 191,
+      "message": "narrowing conversion from 'qsizetype' (aka 'long long') to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 192,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 194,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 203,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 227,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 229,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 231,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 234,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 236,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 248,
+      "message": "narrowing conversion from 'qsizetype' (aka 'long long') to signed type 'int' is implementation-defined",
+      "check": "bugprone-narrowing-conversions"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 249,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 251,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 266,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 267,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 296,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 307,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 326,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 328,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 330,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 341,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 347,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 450,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 451,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 459,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 463,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 464,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 465,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 470,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 471,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 475,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 477,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 480,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 482,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    },
+    {
+      "file": "core/src/extension/ExtensionService.cpp",
+      "line": 483,
+      "message": "statement should be inside braces",
+      "check": "readability-braces-around-statements"
+    }
+  ],
+  "warnings_on_added_or_replaced_lines": []
+}

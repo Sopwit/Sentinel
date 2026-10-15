@@ -2471,6 +2471,8 @@ public:
                                                           const QString& key);
     Q_INVOKABLE QVariantMap providerSettingsState(const QString& providerId) const;
     Q_INVOKABLE QVariantMap extensionsHubSnapshot() const;
+    Q_INVOKABLE QVariantMap extensionsHubActionState() const;
+    Q_INVOKABLE bool performExtensionsHubAction(const QString& id, const QString& action);
     Q_INVOKABLE QVariantMap extensionsHubDetail(const QString& id) const;
     Q_INVOKABLE void refreshExtensionsHub();
     Q_INVOKABLE QVariantMap extensionSettingsState(const QString& extensionId) const;

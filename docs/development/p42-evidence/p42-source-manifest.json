@@ -1,0 +1,21 @@
+{
+  "core/include/sentinel/core/extension/ExtensionService.h": "271770bb8bdb52b63b9dfdbb16b9b4647fc6405bf2d285858b6e5ecb632df016",
+  "core/src/extension/ExtensionService.cpp": "6a6c207d1f6348130c439298c053d9e34641288c57ddfcf700aec0b80a91a05b",
+  "apps/sentinel-daemon/service/DaemonDesktopSettings.cpp": "21bcfadcbf1640cb0f9a55a4daba8e974f534b29271739479cd6c62de143d95b",
+  "apps/sentinel-daemon/service/DesktopProjection.generated.h": "9c1f236f684cf22090c7a4de90e31156c728340fb4c3b808f7f4b838416f049a",
+  "apps/sentinel-desktop/include/sentinel/desktop/DesktopRuntimeClient.h": "4eb42556e7f77a582bd2273f101d7046ce765de5eb2e345f4b1708adaab35a75",
+  "apps/sentinel-desktop/include/sentinel/desktop/DesktopShellViewModel.h": "aea7c931c9c4f23a5f30cd92d130c397cf70e903ea8fc2d3840d1447df57acb1",
+  "apps/sentinel-desktop/src/DesktopRuntimeClient.cpp": "55a924125450a818e7b88c285aaadc31f7dac4aa1bb41df13c815adf0f9d654b",
+  "apps/sentinel-desktop/src/DesktopShellViewModel.cpp": "30327448e822205fe46921f22750cec8ce09501c4abf4f19cb8274f8d1765967",
+  "apps/sentinel-desktop/src/ExtensionsHubPresentation.cpp": "d4a6f6a3269da37d5c0df92a8476491c0c0695299430f63c8cf8ba611253f611",
+  "protocol/ipc-v1.json": "02aaa031ab631f7eedf3b1bcffad19cedde11d16ea67a9dc38d52f616f20a3d9",
+  "protocol/QtIpcContract.generated.h": "012fab35b9eaa6dd9773d8fbe66194c8728c06e48e5fc4f16b38bc1d41333597",
+  "ui/qml/pages/ExtensionsHubPage.qml": "bd9f3c8f0ab48e79b113894ab4ff4e831d87e5cdfbda68bc75cffc8a06ab1a61",
+  "tests/CMakeLists.txt": "504642f941654b6ec1acb88633b589f96e21795fd4f3e42b733f6f93352ca13b",
+  "tests/core/test_mcp_integration.cpp": "1fe2645c33427988a85393f378e679caea96a9493ff533744088b2924e12067e",
+  "tests/core/test_skill_extension_runtime.cpp": "c4b91329d54a492b6be2d55bb44dae8d7f2aa4ed3ed8aad02ebbeca7b249710c",
+  "tests/desktop/test_desktop_ipc.cpp": "1aa2a519548f7cef19a8aacf742dc8289bfd107d3c657232e969cd0f37c4d9c7",
+  "tests/desktop/test_extensions_hub.cpp": "44201e1bf1296baa68371fb5308c10fc693000ee601f70ebcaccd96c2a04e08c",
+  "tests/helpers/extensions_hub_certification.qml": "19da6eaf5700e64cbb94d2f09ee65b59610b70836505c02d67dd95caad2743c7",
+  "tests/helpers/settings_ui_certification_probe.cpp": "6364c849118205e7b1fb6855130e46e2f2d4d13bffc9bcb0e4da768623272fd0"
+}

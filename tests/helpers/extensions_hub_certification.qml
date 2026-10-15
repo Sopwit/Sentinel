@@ -19,6 +19,16 @@ ApplicationWindow {
         property var data: ({phase: "disconnected", message: "Daemon disconnected — synthetic UI fixture", entries: [], tools: [], policy: []})
         property var availability: ({phase: "ready", available: false, version: "fixture", requirements: ["Fixture permission pending"]})
         signal runtimeProjectionChanged()
+        property var actionData: ({phase: "unavailable"})
+        property int actionCalls: 0
+        onActionDataChanged: runtimeProjectionChanged()
+        function extensionsHubActionState() { return actionData }
+        function performExtensionsHubAction(id, action) {
+            if (actionData.phase === "pending") return false
+            actionCalls += 1
+            actionData = {phase: "pending", id: id, action: action}
+            return true
+        }
         function extensionsHubSnapshot() { return data }
         function extensionsHubDetail(id) { return daemonConnected ? availability : {phase: "disconnected"} }
         function refreshExtensionsHub() { runtimeProjectionChanged() }

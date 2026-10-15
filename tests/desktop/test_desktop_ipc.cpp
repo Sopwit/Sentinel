@@ -6,6 +6,8 @@
 #include "../../protocol/QtIpcContract.generated.h"
 #include "../support/DeterministicChatFixture.h"
 #include "sentinel/core/agent/IAgentStepPlanner.h"
+#include "sentinel/core/agent/AgentRuntime.h"
+#include "sentinel/core/mcp/McpToolProvider.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/app/OnboardingService.h"
@@ -192,6 +194,8 @@ struct RuntimePeer : Peer {
                          {"properties", QJsonObject{}}};
     QJsonObject historyRequest;
     bool holdHistory = true;
+    bool holdExtensions = false;
+    QJsonObject extensionsRequest, extensionActionRequest;
     static QJsonValue emptyValue(const QString& type) {
         if (type == "string") {
             return QString{};
@@ -211,6 +215,18 @@ struct RuntimePeer : Peer {
         const QJsonArray messages{
             QJsonObject{{"id", 1}, {"role", "user"}, {"content", "First recorded message"}},
             QJsonObject{{"id", 2}, {"role", "assistant"}, {"content", "Second recorded message"}}};
+        send(socket,
+             frame("response", historyRequest.value("id").toString(), "session.messages",
+                   {{"session_id", historyRequest.value("payload").toObject().value("session_id")},
+                    {"messages", messages}}));
+        historyRequest = {};
+    }
+    // A fresh conversation only carries the startup system notice; the greeting
+    // screen must stay visible because no user/assistant history exists yet.
+    void replySystemOnlyHistory() {
+        const QJsonArray messages{QJsonObject{{"id", 1},
+                                              {"role", "system"},
+                                              {"content", "Sentinel Core online."}}};
         send(socket,
              frame("response", historyRequest.value("id").toString(), "session.messages",
                    {{"session_id", historyRequest.value("payload").toObject().value("session_id")},
@@ -252,6 +268,16 @@ struct RuntimePeer : Peer {
                 payload = {{"sessions", QJsonArray{snapshot}}};
             } else if (name == "session.attach") {
                 payload = snapshot;
+            } else if (name == "desktop.settings_service" && holdExtensions) {
+                const auto action = request.value("payload").toObject().value("action").toString();
+                if (action == "extensionsHubState") {
+                    extensionsRequest = request;
+                    continue;
+                }
+                if (action == "performExtensionSettingsAction") {
+                    extensionActionRequest = request;
+                    continue;
+                }
             } else if (name == "session.messages") {
                 historyRequest = request;
                 if (!holdHistory) {
@@ -344,6 +370,23 @@ private slots:
         transport.disconnectFromDaemon();
         QVERIFY(!adapter.historyLoaded());
     }
+    // The greeting/welcome screen depends on conversationHistoryMessageCount
+    // staying at zero while a session only holds the startup system notice.
+    void systemOnlyHistoryKeepsGreetingVisible() {
+        RuntimePeer peer;
+        DaemonClient transport(peer.path, 3000, 1000);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(([&] {
+            peer.pump();
+            return !peer.historyRequest.isEmpty();
+        })());
+        peer.replySystemOnlyHistory();
+        QTRY_VERIFY(adapter.historyLoaded());
+        QCOMPARE(adapter.messages().size(), 1);
+        QCOMPARE(adapter.value(QStringLiteral("conversationHistoryMessageCount")).toInt(), 0);
+    }
+
     void terminalNotificationSurvivesReattach_data() {
         QTest::addColumn<QString>("state");
         QTest::addColumn<bool>("switchSession");
@@ -415,6 +458,152 @@ private slots:
                                                   {"state", "completed"}});
         QCOMPARE(notices.size(), 1);
         QCOMPARE(adapter.value("conversationState").toString(), state);
+    }
+    void extensionsDesktopMcpRealProcessDisconnectAndRecovery() {
+        sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(),
+                                             sentinel::core::inMemoryTestCredentialStore());
+        QTemporaryDir directory{QDir::tempPath() + "/em-XXXXXX"};
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+            .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+            .withAgentRuntime(std::make_unique<sentinel::core::NullAgentRuntime>()).build();
+        auto* runtime = dynamic_cast<sentinel::core::AgentRuntime*>(controller->agentRuntime());
+        QVERIFY(runtime);
+        auto mcp = std::make_shared<sentinel::core::McpService>();
+        sentinel::core::McpServerConfig config;
+        config.name = "desktop-hub-process";
+        config.type = "local";
+        config.command = QString::fromUtf8(TEST_MCP_SERVER_PATH);
+        config.arguments = {"", "--certification"};
+        QVERIFY(mcp->addServer(config));
+        sentinel::core::McpToolProvider provider(mcp, runtime->toolRegistry());
+        runtime->extensionService().setMcpService(mcp.get());
+        QVERIFY(mcp->connectToServer(config.name));
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        server.setSettings(&settings);
+        QVERIFY(server.startServer(directory.filePath("extensions.sock")));
+        DaemonClient transport(directory.filePath("extensions.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QTRY_VERIFY(adapter.ready());
+        auto selected = [&] {
+            const auto snapshot = adapter.settingsService("extensionsHubState", {}, true).toMap();
+            for (const auto& value : snapshot.value("entries").toList()) {
+                if (value.toMap().value("id").toString() == "mcp:desktop-hub-process") return value.toMap();
+            }
+            return QVariantMap{};
+        };
+        QTRY_VERIFY(selected().value("available").toBool());
+        QCOMPARE(selected().value("toolCount").toInt(), 8);
+        QVERIFY(adapter.performExtensionsHubAction("mcp:desktop-hub-process", "disconnect"));
+        QTRY_COMPARE(adapter.extensionsHubActionState().value("phase").toString(), QString("accepted"));
+        QTRY_COMPARE(selected().value("connection").toString(), QString("Disconnected"));
+        QVERIFY(!selected().value("available").toBool());
+        QVERIFY(mcp->tools().isEmpty());
+        QVERIFY(mcp->connectToServer(config.name));
+        adapter.refreshExtensionsHub();
+        QTRY_VERIFY(selected().value("available").toBool());
+        const auto persistedConfig = settings.mcpServersJson();
+        QVERIFY(adapter.performExtensionsHubAction("mcp:desktop-hub-process", "disable"));
+        QTRY_COMPARE(adapter.extensionsHubActionState().value("phase").toString(), QString("accepted"));
+        QTRY_COMPARE(selected().value("health").toString(), QString("Disabled"));
+        QCOMPARE(settings.mcpServersJson(), persistedConfig);
+    }
+    void extensionsLiveInventoryAndSafeSkillDeactivation() {
+        sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(),
+                                             sentinel::core::inMemoryTestCredentialStore());
+        QTemporaryDir directory{QDir::tempPath() + "/ex-XXXXXX"};
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+            .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+            .withAgentRuntime(std::make_unique<sentinel::core::NullAgentRuntime>()).build();
+        auto* runtime = dynamic_cast<sentinel::core::AgentRuntime*>(controller->agentRuntime());
+        QVERIFY(runtime);
+        sentinel::core::Skill skill;
+        skill.name = "hub-live-fixture";
+        skill.content = "Private fixture instructions";
+        QVERIFY(runtime->skillService().addSkill(skill));
+        const auto cleanup = qScopeGuard([&] { runtime->skillService().removeSkill(skill.name); });
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        server.setSettings(&settings);
+        QVERIFY(server.startServer(directory.filePath("extensions.sock")));
+        DaemonClient transport(directory.filePath("extensions.sock"), 2000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QTRY_VERIFY(adapter.ready());
+        auto inventory = [&] { return adapter.settingsService("extensionsHubState", {}, true).toMap(); };
+        QTRY_VERIFY(inventory().contains("entries"));
+        auto selected = [&] {
+            for (const auto& row : inventory().value("entries").toList()) {
+                if (row.toMap().value("id").toString() == "skill:hub-live-fixture") return row.toMap();
+            }
+            return QVariantMap{};
+        };
+        QVERIFY(selected().value("available").toBool());
+        QVERIFY(!adapter.performExtensionsHubAction("skill:hub-live-fixture", "enable"));
+        QVERIFY(!adapter.performExtensionsHubAction("skill:missing", "disable"));
+        QVERIFY(adapter.performExtensionsHubAction("skill:hub-live-fixture", "disable"));
+        QVERIFY(!adapter.performExtensionsHubAction("skill:hub-live-fixture", "disable"));
+        QTRY_COMPARE(adapter.extensionsHubActionState().value("phase").toString(), QString("accepted"));
+        QTRY_VERIFY(selected().value("health").toString() == "Disabled");
+        QVERIFY(!selected().value("available").toBool());
+        QVERIFY(runtime->skillService().getSkillContent(skill.name).isEmpty());
+        transport.disconnectFromDaemon();
+        QCOMPARE(adapter.extensionsHubActionState().value("phase").toString(), QString("disconnected"));
+    }
+    void extensionsRejectStaleReadsAndSettleActions_data() {
+        QTest::addColumn<QString>("outcome");
+        QTest::newRow("accepted") << QString("accepted");
+        QTest::newRow("rejected") << QString("failed");
+        QTest::newRow("timeout") << QString("unconfirmed");
+    }
+    void extensionsRejectStaleReadsAndSettleActions() {
+        QFETCH(QString, outcome);
+        RuntimePeer peer;
+        peer.holdHistory = false;
+        peer.holdExtensions = true;
+        DaemonClient transport(peer.path, 1000, 1000);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY((peer.pump(), adapter.ready()));
+        auto inventory = [&] { return adapter.settingsService("extensionsHubState", {}, true).toMap(); };
+        inventory();
+        QTRY_VERIFY((peer.pump(), !peer.extensionsRequest.isEmpty()));
+        const auto old = peer.extensionsRequest;
+        peer.extensionsRequest = {};
+        adapter.refreshExtensionsHub();
+        inventory();
+        QTRY_VERIFY((peer.pump(), !peer.extensionsRequest.isEmpty()));
+        auto reply = [&](const QJsonObject& request, const QString& name) {
+            send(peer.socket, frame("response", request.value("id").toString(), "desktop.settings_service",
+                {{"result", QJsonObject{{"entries", QJsonArray{QJsonObject{{"id", "mcp:fixture"},
+                    {"type", "mcp"}, {"name", name}, {"actions", QJsonArray{"disconnect"}}}}},
+                    {"toolEntries", QJsonArray{}}}}}));
+        };
+        reply(peer.extensionsRequest, "Newest inventory");
+        QTRY_VERIFY(inventory().contains("entries"));
+        reply(old, "Stale inventory");
+        reply(peer.extensionsRequest, "Duplicate inventory");
+        QVERIFY(adapter.performExtensionsHubAction("mcp:fixture", "disconnect"));
+        QVERIFY(!adapter.performExtensionsHubAction("mcp:fixture", "disconnect"));
+        QTRY_VERIFY((peer.pump(), !peer.extensionActionRequest.isEmpty()));
+        QCOMPARE(inventory().value("entries").toList().first().toMap().value("name").toString(), QString("Newest inventory"));
+        if (outcome != "unconfirmed") {
+            send(peer.socket, frame("response", peer.extensionActionRequest.value("id").toString(),
+                "desktop.settings_service", {{"result", QJsonObject{{"accepted", outcome == "accepted"}}}}));
+        }
+        QTRY_COMPARE((peer.pump(), adapter.extensionsHubActionState().value("phase").toString()), outcome);
+        // A timed-out mutation is never replayed; a late acceptance cannot rewrite its visible outcome.
+        send(peer.socket, frame("response", peer.extensionActionRequest.value("id").toString(),
+            "desktop.settings_service", {{"result", QJsonObject{{"accepted", true}}}}));
+        peer.extensionsRequest = {};
+        inventory();
+        QTRY_VERIFY((peer.pump(), !peer.extensionsRequest.isEmpty()));
+        reply(peer.extensionsRequest, "Post-action inventory");
+        QTRY_VERIFY(inventory().contains("entries"));
+        QCOMPARE(adapter.extensionsHubActionState().value("phase").toString(), outcome);
+        transport.disconnectFromDaemon();
+        QCOMPARE(adapter.extensionsHubActionState().value("phase").toString(), QString("disconnected"));
     }
     void extensionsReadExistingSettingsWithoutExecuting() {
         sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>(),
@@ -848,6 +1037,115 @@ private slots:
         QTRY_VERIFY(history.recentRuns(500).size() >= 31);
         QVERIFY(inspector.errorMessage().isEmpty());
     }
+    void inspectorSelectionDuringPendingRead_data() {
+        QTest::addColumn<bool>("failedRead");
+        QTest::newRow("late-response") << false;
+        QTest::newRow("failed-read") << true;
+    }
+    void inspectorSelectionDuringPendingRead() {
+        QFETCH(bool, failedRead);
+        Peer peer;
+        DaemonClient transport(peer.path, 2000, 1000);
+        sentinel::desktop::RemoteAgentInspectorService history(transport);
+        sentinel::desktop::AgentInspectorViewModel inspector(history);
+        connect(&history, &sentinel::desktop::RemoteAgentInspectorService::updated, &inspector,
+                [&] { inspector.refreshFromRemote(history.recentRuns(500), history.hasMore()); });
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(transport.daemonReachable());
+        auto nextHistory = [&] {
+            auto request = read(peer.socket);
+            while (request.value("name").toString() == "daemon.status") {
+                send(peer.socket, frame("response", request.value("id").toString(),
+                                        "daemon.status", {{"running", true}, {"daemon_version", "fixture"},
+                                                          {"uptime_ms", 0}, {"active_runs", 0},
+                                                          {"sessions", 0}}));
+                request = read(peer.socket);
+            }
+            return request;
+        };
+        const auto initial = nextHistory();
+        QCOMPARE(initial.value("name").toString(), QString("agent.history"));
+        inspector.selectRun("old-run");
+        inspector.selectRun("new-run");
+        QCOMPARE(inspector.selectedRunId(), QString("new-run"));
+        QVERIFY(inspector.selectedRun().isEmpty());
+        auto reply = [&](const QJsonObject& request, const QString& run) {
+            QJsonArray runs;
+            for (int i = 0; i < 26; ++i)
+                runs.append(QJsonObject{{"runId", QString("history-%1").arg(i)}});
+            send(peer.socket, frame("response", request.value("id").toString(), "agent.history",
+                 {{"history", QJsonObject{{"runs", runs},
+                     {"run", QJsonObject{{"runId", run}, {"state", "completed"},
+                                         {"finalAnswer", "Confirmed answer"}}}}}}));
+        };
+        if (failedRead)
+            send(peer.socket, frame("error", initial.value("id").toString(), "agent.history",
+                                    {{"code", "request-timeout"}}));
+        else
+            reply(initial, "old-run");
+        const auto selected = nextHistory();
+        QCOMPARE(selected.value("payload").toObject().value("run_id").toString(), QString("new-run"));
+        QVERIFY(inspector.selectedRun().isEmpty());
+        reply(selected, "new-run");
+        QTRY_COMPARE(inspector.selectedRun().value("answer").toString(), QString("Confirmed answer"));
+        QVERIFY(history.hasMore());
+        transport.disconnectFromDaemon();
+        QTRY_VERIFY(history.recentRuns(500).isEmpty());
+        QVERIFY(!history.hasMore());
+        QVERIFY(inspector.selectedRun().isEmpty());
+        QCOMPARE(inspector.selectedRunId(), QString("new-run"));
+        QVERIFY(!inspector.errorMessage().isEmpty());
+        QVERIFY(peer.connect(transport));
+        QTRY_VERIFY(transport.daemonReachable());
+        const auto reattached = nextHistory();
+        QCOMPARE(reattached.value("payload").toObject().value("run_id").toString(), QString("new-run"));
+        reply(reattached, "new-run");
+        QTRY_COMPARE(inspector.selectedRun().value("answer").toString(), QString("Confirmed answer"));
+        QVERIFY(inspector.errorMessage().isEmpty());
+    }
+    void modelRowsUseAuthoritativeInstallation_data() {
+        QTest::addColumn<bool>("missing");
+        QTest::newRow("installed-runtime-unverified") << false;
+        QTest::newRow("missing-registered-file") << true;
+    }
+    void modelRowsUseAuthoritativeInstallation() {
+        QFETCH(bool, missing);
+        QTemporaryDir directory;
+        sentinel::test::DeterministicModelServiceFixture models;
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                              .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                              .build();
+        QSet<QString> installedBefore;
+        for (const auto& entry : controller->modelLibrary()->entries())
+            if (entry.installed == sentinel::core::ModelLibraryInstalledState::Installed)
+                installedBefore.insert(entry.localFile.isEmpty()
+                    ? entry.provider.id + ":" + entry.nativeModelId
+                    : QFileInfo(entry.localFile).canonicalFilePath());
+        const auto path = directory.filePath("fixture.gguf");
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QByteArray header(24, '\0');
+        header.replace(0, 4, "GGUF");
+        header[4] = 3;
+        header[8] = 1;
+        QCOMPARE(file.write(header), qint64(24));
+        file.close();
+        QVERIFY(controller->modelLibrary()->registerLocalGguf(path));
+        const auto id = sentinel::core::ModelLibraryService::entryId(
+            "llama-cpp-server", "llama-cpp-server", "local-file", QFileInfo(path).canonicalFilePath());
+        const auto cleanup = qScopeGuard([&] { controller->modelLibrary()->removeLocalGgufRegistration(id); });
+        if (missing) QVERIFY(QFile::remove(path));
+        sentinel::daemon::DaemonModelHelpers helper(controller.get());
+        QJsonObject projected;
+        QTRY_VERIFY(([&] {
+            for (const auto& row : helper.state("ggufLibraryFetcher").value("models").toArray())
+                if (row.toObject().value("id").toString() == id) projected = row.toObject();
+            return !projected.isEmpty();
+        })());
+        QCOMPARE(projected.value("installed").toBool(), !missing);
+        QCOMPARE(helper.state("ggufLibraryFetcher").value("installedCount").toInt(), static_cast<int>(installedBefore.size()) + (missing ? 0 : 1));
+    }
     void modelHelperRecoversAfterReadTimeout() {
         Peer peer;
         DaemonClient transport(peer.path, 150, 1000);
@@ -987,6 +1285,32 @@ private slots:
         controller->setSelectedRuntimeProvider("lm-studio");
         QCOMPARE(helper.state("ggufLibraryFetcher").value("catalog").toArray(), catalog);
         QVERIFY(!helper.action("ggufLibraryFetcher", "download", "unknown-artifact", {}));
+    }
+    void providerExecutionFailureNeverProjectsSuccess() {
+        QTemporaryDir directory{QDir::tempPath() + "/pf-XXXXXX"};
+        sentinel::test::DeterministicModelServiceFixture models(
+            sentinel::test::DeterministicChatReply::Failure);
+        sentinel::core::ApplicationControllerBuilder builder;
+        auto controller = builder.withModelService(models.takeModelService())
+                              .withOllamaRuntimeClient(std::make_unique<MetadataClient>())
+                              .withMemoryStore(std::make_unique<sentinel::core::InMemoryStore>())
+                              .build();
+        sentinel::daemon::DaemonIpcServer server(controller.get());
+        QVERIFY(server.startServer(directory.filePath("daemon.sock")));
+        DaemonClient transport(directory.filePath("daemon.sock"), 3000, 10);
+        sentinel::desktop::DesktopRuntimeClient adapter(transport);
+        sentinel::desktop::DesktopControllerBridge bridge({nullptr, &adapter});
+        QTRY_VERIFY(adapter.ready());
+        QVERIFY(bridge.sendMessage(QStringLiteral("Read-only failure fixture")));
+        QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("failed"));
+        QTRY_VERIFY(!adapter.messages().isEmpty() &&
+                    adapter.messages().last().role == sentinel::core::ChatRole::Assistant);
+        QCOMPARE(adapter.messages().last().status, sentinel::core::ChatMessageStatus::Failed);
+        QVERIFY(!bridge.chatGenerationActive());
+        models.state->reply = sentinel::test::DeterministicChatReply::Final;
+        QVERIFY(bridge.sendMessage(QStringLiteral("Read-only recovery fixture")));
+        QTRY_COMPARE(bridge.chatSendLifecycleState(), QString("completed"));
+        QTRY_COMPARE(adapter.messages().last().status, sentinel::core::ChatMessageStatus::Completed);
     }
     void rejectedSendRemainsVisibleAcrossPollingAndRecovers() {
         QTemporaryDir directory{QDir::tempPath() + "/se-XXXXXX"};

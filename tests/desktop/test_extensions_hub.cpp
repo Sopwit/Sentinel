@@ -5,6 +5,26 @@ using sentinel::desktop::ExtensionsHubPresentation;
 class TestExtensionsHub : public QObject {
     Q_OBJECT
 private slots:
+    void liveInventoryUsesLifecycleAndOmitsPrivateFields() {
+        const QVariantMap row{{"id", "mcp:live"}, {"type", "mcp"}, {"name", "Live server"},
+            {"available", false}, {"health", "Failed"}, {"metadataStale", true},
+            {"actions", QStringList{"disable", "connect", "install"}},
+            {"source", "private/path"}, {"credentials", "secret"}, {"failureDetail", "private stderr"}};
+        auto result = ExtensionsHubPresentation::inventory(true, true,
+            {{"entries", QVariantList{row}}, {"toolEntries", QVariantList{}}}, {}, {});
+        const auto safe = result.value("entries").toList().first().toMap();
+        QCOMPARE(safe.value("health").toString(), QString("Failed"));
+        QVERIFY(!safe.value("available").toBool());
+        QCOMPARE(safe.value("actions").toStringList(), QStringList{"disable"});
+        QVERIFY(!safe.contains("source"));
+        QVERIFY(!safe.contains("credentials"));
+        QVERIFY(!safe.contains("failureDetail"));
+        auto invalid = row;
+        invalid["available"] = "true";
+        result = ExtensionsHubPresentation::inventory(true, true,
+            {{"entries", QVariantList{invalid}}, {"toolEntries", QVariantList{}}}, {}, {});
+        QVERIFY(!result.value("entries").toList().first().toMap().contains("available"));
+    }
     void disconnectedClearsStaleMetadata() {
         const QVariantMap data{{"value", QVariantList{QVariantMap{{"id", "extensions.plugin:stale"},
                                                                   {"value", true}}}}};

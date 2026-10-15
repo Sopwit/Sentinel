@@ -13,6 +13,7 @@ FocusScope {
     property string query: ""
     property string selectedId: ""
     property var snapshot: ({phase: "loading", entries: [], tools: [], policy: []})
+    property var actionState: ({phase: "unavailable"})
     property var detail: ({phase: "unavailable"})
     readonly property var sections: [
         {key: "plugins", title: qsTr("Plugins")}, {key: "mcp", title: qsTr("MCP Servers")},
@@ -20,6 +21,9 @@ FocusScope {
     readonly property var rows: {
         if (snapshot.phase !== "ready") return []
         const needle = query.trim().toLocaleLowerCase()
+        if (section === "tools" && snapshot.toolEntries) return snapshot.toolEntries.filter(function(row) {
+            return (row.name + " " + row.id + " " + row.origin).toLocaleLowerCase().indexOf(needle) >= 0
+        })
         if (section === "tools") return (snapshot.tools || []).filter(function(id) {
             return id.toLocaleLowerCase().indexOf(needle) >= 0
         }).map(function(id) { return {id: id, name: id, type: "tools"} })
@@ -31,6 +35,7 @@ FocusScope {
     function reload() {
         if (!visible) return
         snapshot = viewModel.extensionsHubSnapshot()
+        actionState = viewModel.extensionsHubActionState()
         detail = selectedId.length > 0 ? viewModel.extensionsHubDetail(selectedId) : {phase: "unavailable"}
     }
     function openSection(key) {
@@ -62,10 +67,28 @@ FocusScope {
             SentinelButton {
                 objectName: "extensionsRefresh"
                 text: qsTr("Refresh")
-                enabled: hub.viewModel.daemonConnected && hub.snapshot.phase !== "loading"
+                enabled: hub.viewModel.daemonConnected && hub.snapshot.phase !== "loading" && hub.actionState.phase !== "pending"
                 Accessible.name: qsTr("Refresh extension metadata")
                 onClicked: { hub.viewModel.refreshExtensionsHub(); hub.reload() }
             }
+        }
+        Label {
+            objectName: "extensionsActionStatus"
+            Layout.fillWidth: true
+            visible: ["pending", "accepted", "failed", "unconfirmed"].indexOf(hub.actionState.phase) >= 0
+            text: hub.actionState.phase === "pending" ? qsTr("Applying extension action…")
+                : hub.actionState.phase === "accepted" ? qsTr("Action accepted. The inventory shows the latest backend state.")
+                : hub.actionState.phase === "unconfirmed" ? qsTr("Action could not be confirmed. Refresh before retrying.")
+                : qsTr("The daemon rejected the extension action. Review current state before retrying.")
+            wrapMode: Text.WordWrap
+            color: hub.actionState.phase === "failed" || hub.actionState.phase === "unconfirmed" ? SentinelTheme.error : SentinelTheme.textMuted
+        }
+        Label {
+            Layout.fillWidth: true
+            visible: !!hub.snapshot.truncated
+            text: qsTr("Inventory is bounded. Additional entries are not shown.")
+            color: SentinelTheme.warning
+            wrapMode: Text.WordWrap
         }
         RowLayout {
             Layout.fillWidth: true
@@ -143,12 +166,8 @@ FocusScope {
                 Label {
                     Layout.fillWidth: true
                     text: hub.section === "tools"
-                        ? qsTr("Listed tools are discovered identities. Per-tool descriptions, permission requirements and runtime eligibility are not supplied by this Desktop contract. Execution always goes through the permission gateway.")
-                        : hub.section === "mcp"
-                        ? qsTr("Configured or enabled does not mean connected. Connection details, capabilities, failure details and supported management actions are not supplied by this Desktop contract.")
-                        : hub.section === "skills"
-                        ? qsTr("Discovered skill metadata does not establish execution eligibility. Presentation profiles in Settings are separate from discovered skills.")
-                        : qsTr("Availability and effective enablement are separate. Plugin descriptions and supported configuration actions are not supplied by this Desktop contract.")
+                        ? qsTr("Registry metadata is not an execution grant. Each invocation still requires gateway, permission and sandbox evaluation.")
+                        : qsTr("Live lifecycle state comes from the daemon. Disable and disconnect use existing backend contracts; enable, connect, reload and installation are unavailable here.")
                     color: SentinelTheme.textMuted
                     wrapMode: Text.WordWrap
                 }
@@ -188,12 +207,42 @@ FocusScope {
                             }
                             Label {
                                 Layout.fillWidth: true
-                                text: hub.section === "tools" ? qsTr("Discovered · Execution eligibility not reported")
+                                text: hub.section === "tools" && rowCard.modelData.origin
+                                    ? qsTr("Origin: %1 · Enabled: %2 · Handler: %3").arg(rowCard.modelData.origin).arg(rowCard.modelData.enabled ? qsTr("Yes") : qsTr("No")).arg(rowCard.modelData.handlerAvailable ? qsTr("Registered") : qsTr("Unavailable"))
+                                      + (rowCard.modelData.owner ? " · " + rowCard.modelData.owner : "")
+                                      + (rowCard.modelData.metadataOnly ? " · " + qsTr("Metadata only") : "")
+                                      + "\n" + qsTr("Permission: %1 · Risk: %2 · Invocation authorization required").arg(rowCard.modelData.permissionDomain || qsTr("Not reported")).arg(rowCard.modelData.risk || qsTr("Unknown"))
+                                    : hub.section === "tools" ? qsTr("Discovered · Execution eligibility not reported")
                                     : !rowCard.modelData.enabledKnown ? qsTr("Effective enablement not reported")
                                     : rowCard.modelData.enabled ? qsTr("Effectively enabled")
                                     : qsTr("Effectively disabled")
                                 wrapMode: Text.WordWrap
                                 color: SentinelTheme.textMuted
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: !!rowCard.modelData.health
+                                text: (rowCard.modelData.health || qsTr("Unknown"))
+                                    + " · " + (rowCard.modelData.maturity || qsTr("Unknown"))
+                                    + (rowCard.modelData.connection ? " · " + rowCard.modelData.connection : "")
+                                    + (rowCard.modelData.transport ? " · " + rowCard.modelData.transport : "")
+                                    + (rowCard.modelData.metadataStale ? " · " + qsTr("Stale metadata") : "")
+                                    + (rowCard.modelData.type === "plugins" ? "\n" + qsTr("PluginHost: %1 · Sandbox: %2").arg(rowCard.modelData.hostRunning ? qsTr("Running") : qsTr("Not running")).arg(rowCard.modelData.sandbox || qsTr("Unknown")) : "")
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WordWrap
+                                color: SentinelTheme.textMuted
+                            }
+                            Repeater {
+                                model: rowCard.modelData.actions || []
+                                delegate: SentinelButton {
+                                    required property string modelData
+                                    objectName: "extensionAction_" + modelData
+                                    text: modelData === "disconnect" ? qsTr("Disconnect")
+                                        : rowCard.modelData.actionScope === "persistent" ? qsTr("Disable skill") : qsTr("Disable for this daemon")
+                                    enabled: hub.snapshot.phase === "ready" && hub.viewModel.daemonConnected && hub.actionState.phase !== "pending"
+                                    Accessible.name: text + " — " + rowCard.modelData.name
+                                    onClicked: { hub.viewModel.performExtensionsHubAction(rowCard.modelData.id, modelData); hub.reload() }
+                                }
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -217,6 +266,9 @@ FocusScope {
                                     : (hub.detail.available === undefined ? qsTr("Availability not reported")
                                         : hub.detail.available ? qsTr("Available") : qsTr("Unavailable"))
                                       + (hub.detail.version ? " · " + qsTr("Version %1").arg(hub.detail.version) : "")
+                                      + (hub.detail.permissions && hub.detail.permissions.length > 0 ? "\n" + qsTr("Requested permissions: %1").arg(hub.detail.permissions.join(", ")) : "")
+                                      + (hub.detail.capabilities && hub.detail.capabilities.length > 0 ? "\n" + qsTr("Declared capabilities: %1").arg(hub.detail.capabilities.join(", ")) : "")
+                                      + (hub.detail.toolCount !== undefined ? "\n" + qsTr("Registered tools: %1").arg(hub.detail.toolCount) : "")
                                       + (hub.detail.requirements && hub.detail.requirements.length > 0 ? "\n" + qsTr("Requirements: %1").arg(hub.detail.requirements.join(", ")) : "")
                                 textFormat: Text.PlainText
                                 wrapMode: Text.WordWrap

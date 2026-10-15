@@ -77,6 +77,8 @@ public:
     void refreshSkillRequirements();
     void setWorkspacePreferences(const QString& workspaceId, const QJsonObject& preferences);
     QList<ExtensionSnapshot> extensions() const;
+    // Bounded, credential-free management metadata; never an execution grant.
+    QJsonObject managementSnapshot() const;
     QJsonArray pluginCredentialStates(const QString& pluginId) const;
     bool setPluginCredential(const QString& pluginId, const QString& credentialId,
                              const QString& value);

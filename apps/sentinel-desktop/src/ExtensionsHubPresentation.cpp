@@ -27,6 +27,61 @@ QVariantMap ExtensionsHubPresentation::inventory(bool connected, bool loaded,
     if (settings.contains("code"))
         return phase("error", text("Extension metadata could not be loaded. Retry or review daemon "
                                    "connection details."));
+    if (settings.value("entries").metaType().id() == QMetaType::QVariantList &&
+        settings.value("toolEntries").metaType().id() == QMetaType::QVariantList) {
+        auto result = phase("ready", text("Live daemon metadata. Availability never grants invocation permission."));
+        QVariantList entries;
+        QVariantList tools;
+        QSet<QString> seen;
+        auto safeRow = [](const QVariantMap& row) {
+            QVariantMap safe;
+            for (const auto& field : {"id", "type", "name", "enabledKnown", "enabled",
+                                     "globalEnabled", "available", "health", "maturity", "connection",
+                                     "transport", "version", "sandbox", "hostRunning", "requirements",
+                                     "permissions", "capabilities", "toolCount", "resourceCount",
+                                     "metadataStale", "failure", "actions", "actionScope", "origin",
+                                     "handlerAvailable", "permissionDomain", "risk", "modelVisible", "readiness", "owner", "metadataOnly"}) {
+                if (row.contains(field)) {
+                    safe[field] = row.value(field);
+                }
+            }
+            for (const auto& field : {"enabledKnown", "enabled", "globalEnabled", "available",
+                                     "hostRunning", "metadataStale", "handlerAvailable", "modelVisible", "metadataOnly"}) {
+                if (safe.contains(field) && safe.value(field).metaType().id() != QMetaType::Bool) {
+                    safe.remove(field);
+                }
+            }
+            QStringList actions;
+            for (const auto& action : row.value("actions").toStringList()) {
+                if (action == "disable" || action == "disconnect") {
+                    actions.append(action);
+                }
+            }
+            safe["actions"] = actions;
+            return safe;
+        };
+        for (const auto& value : settings.value("entries").toList()) {
+            const auto row = value.toMap();
+            const auto id = row.value("id").toString();
+            const auto type = row.value("type").toString();
+            if (!seen.contains(id) && ((type == "plugins" && id.startsWith("plugin:")) ||
+                (type == "mcp" && id.startsWith("mcp:")) ||
+                (type == "skills" && id.startsWith("skill:")))) {
+                entries.append(safeRow(row));
+                seen.insert(id);
+            }
+        }
+        for (const auto& value : settings.value("toolEntries").toList()) {
+            const auto row = value.toMap();
+            if (!row.value("id").toString().isEmpty()) {
+                tools.append(safeRow(row));
+            }
+        }
+        result["entries"] = entries;
+        result["toolEntries"] = tools;
+        result["truncated"] = settings.value("truncated").toBool();
+        return result;
+    }
     if (settings.value("value").metaType().id() != QMetaType::QVariantList)
         return phase("unavailable", text("The daemon did not supply an extension inventory."));
     QVariantList entries;

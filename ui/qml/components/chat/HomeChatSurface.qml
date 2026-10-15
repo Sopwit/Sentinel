@@ -273,10 +273,12 @@ ShellPanel {
         ShellPanel {
             id: conversationRail
             readonly property real expandedWidth: homeChat.width < 1000 ? 210 : 260
-            Layout.minimumWidth: 44
+            // Collapsed rail leaves no stub behind: the chat surface owns the
+            // full width, and the rail only exists while it is opened.
+            Layout.minimumWidth: 0
             Layout.maximumWidth: Layout.preferredWidth
-            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? expandedWidth : 44
-            visible: true
+            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? expandedWidth : 0
+            visible: homeChat.sidebarEffectiveOpen
             Layout.fillHeight: true
             Layout.minimumHeight: 0
             color: SentinelTheme.backgroundBase
@@ -291,67 +293,8 @@ ShellPanel {
                 }
             }
 
-            // Collapsed strip: New Chat + expand toggle
-            ColumnLayout {
-                visible: !homeChat.sidebarEffectiveOpen
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.topMargin: SentinelTheme.spaceSm
-                spacing: SentinelTheme.spaceXs
-                width: 32
-
-                Button {
-                    id: collapsedNewChatBtn
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    hoverEnabled: true
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("New Chat")
-                    Accessible.name: ToolTip.text
-                    onClicked: {
-                        homeChat.viewModel.createConversation("")
-                        promptInput.clear()
-                        if (homeChat.compact)
-                            homeChat.conversationSidebarOpen = false
-                    }
-                    contentItem: Text {
-                        text: "+"
-                        color: SentinelTheme.textPrimary
-                        font.pixelSize: 20
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    background: Rectangle {
-                        radius: SentinelTheme.radiusMd
-                        color: InteractionTokens.surfaceColor(collapsedNewChatBtn.hovered, collapsedNewChatBtn.down, false, homeChat.modeAccent)
-                        border.color: InteractionTokens.borderColor(collapsedNewChatBtn.activeFocus, collapsedNewChatBtn.hovered, false, homeChat.modeAccent)
-                    }
-                }
-
-                Button {
-                    id: sidebarToggleCollapsed
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    hoverEnabled: true
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Show sidebar")
-                    Accessible.name: ToolTip.text
-                    onClicked: homeChat.conversationSidebarOpen = true
-                    contentItem: TablerGlyph {
-                        text: "menu"
-                        color: SentinelTheme.textPrimary
-                        font.pixelSize: 14
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    background: Rectangle {
-                        radius: SentinelTheme.radiusMd
-                        color: InteractionTokens.surfaceColor(sidebarToggleCollapsed.hovered, sidebarToggleCollapsed.down, false, homeChat.modeAccent)
-                        border.color: InteractionTokens.borderColor(sidebarToggleCollapsed.activeFocus, sidebarToggleCollapsed.hovered, false, homeChat.modeAccent)
-                    }
-                }
-            }
+            // Collapsed-state controls (New Chat + sidebar toggle) live in the
+            // chat surface header so the rail itself needs no collapsed stub.
 
             // Preserve the full layout while the clipped rail animates.
             ColumnLayout {
@@ -801,6 +744,83 @@ if (homeChat.compact)
                 anchors.margins: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
                 spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
 
+                // Chat-surface header: owns the New Chat and sidebar controls so
+                // the conversation rail never needs a collapsed 44px stub.
+                RowLayout {
+                    id: chatHeaderBar
+                    objectName: "chatHeaderBar"
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceXs
+
+                    Button {
+                        id: headerNewChatBtn
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("New Chat")
+                        Accessible.name: ToolTip.text
+                        onClicked: {
+                            homeChat.viewModel.createConversation("")
+                            promptInput.clear()
+                            if (homeChat.compact)
+                                homeChat.conversationSidebarOpen = false
+                        }
+                        contentItem: Text {
+                            text: "+"
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: 18
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: InteractionTokens.surfaceColor(headerNewChatBtn.hovered, headerNewChatBtn.down, false, homeChat.modeAccent)
+                            border.color: InteractionTokens.borderColor(headerNewChatBtn.activeFocus, headerNewChatBtn.hovered, false, homeChat.modeAccent)
+                        }
+                    }
+
+                    Button {
+                        id: headerSidebarToggle
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Show sidebar")
+                        Accessible.name: ToolTip.text
+                        visible: !homeChat.sidebarEffectiveOpen
+                        onClicked: homeChat.conversationSidebarOpen = true
+                        contentItem: TablerGlyph {
+                            text: "menu"
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: InteractionTokens.surfaceColor(headerSidebarToggle.hovered, headerSidebarToggle.down, false, homeChat.modeAccent)
+                            border.color: InteractionTokens.borderColor(headerSidebarToggle.activeFocus, headerSidebarToggle.hovered, false, homeChat.modeAccent)
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
+
+                    Text {
+                        visible: homeChat.inChatMode
+                        text: homeChat.viewModel.conversationListCurrentTitle
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: homeChat.compact ? SentinelTheme.fontSmall : SentinelTheme.fontBody
+                        font.bold: true
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+
                 ErrorBanner {
                     objectName: "chatSendErrorBanner"
                     Layout.fillWidth: true
@@ -1066,38 +1086,6 @@ if (homeChat.compact)
                     accent: homeChat.modeAccent
                 }
             }
-
-            RowLayout {
-                Layout.fillWidth: true
-                visible: homeChat.inChatMode
-                spacing: SentinelTheme.spaceSm
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: SentinelTheme.spaceXs
-
-                Text {
-                    Layout.fillWidth: true
-                    text: homeChat.viewModel.conversationListCurrentTitle
-                    color: SentinelTheme.textPrimary
-                    font.pixelSize: homeChat.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: ""
-                    visible: false
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontSmall
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
-                }
-            }
-
-
-        }
 
         ListView {
             id: recentMessages

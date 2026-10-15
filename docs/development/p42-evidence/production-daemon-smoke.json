@@ -1,0 +1,21 @@
+{
+  "real_inference": false,
+  "daemon_running": true,
+  "desktop_projection_received": true,
+  "model_current": {
+    "model_id": "",
+    "provider_id": "llama-cpp-server"
+  },
+  "session_attach": true,
+  "history_received": true,
+  "model_helper_received": true,
+  "extensions_hub_received": true,
+  "extension_count": 0,
+  "tool_count": 35,
+  "private_fields_absent": true,
+  "chat_without_ready_model": "error",
+  "generation_changed": true,
+  "session_restored": true,
+  "reattach_after_restart": true,
+  "extensions_after_restart": true
+}

@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-15",
+  "branch": "feat/p4-desktop-live-integration",
+  "head": "0f68c8e94bdbc09f2e31f037877e7c095839699d",
+  "p42_configure": "PASS",
+  "p42_build": "PASS",
+  "p42_ctest": {
+    "passed": 127,
+    "failed": 0,
+    "seconds": 150.22,
+    "qt_skipped_subcases": [
+      "SKIP   : CredentialStoreTest::missingLinuxHelperRefusesPersistence() Linux Secret Service helper contract.",
+      "SKIP   : AgentRuntimeTest::asyncRunCommandStreamsAndContinues() This shell fixture requires child creation; strict macOS plans deny forks. Native host lifecycle is covered by plugin integration tests.",
+      "SKIP   : AgentRuntimeTest::asyncRunCommandCancellationAndTimeout() This shell fixture requires child creation; macOS strict no-detached-child plans now deny all forks. Plugin host cancellation is covered by real host integration tests.",
+      "SKIP   : AgentRuntimeTest::asyncDockerUsesProcessExecutorAndPreservesRestrictions() The fake Docker shell fixture requires child creation; strict macOS plans deny forks.",
+      "SKIP   : AgentRuntimeTest::shutdownStopsActiveCommand() This shell fixture requires child creation; strict macOS plans deny forks. Native host shutdown is covered by plugin integration tests.",
+      "SKIP   : ObservationPolicyTest::optInLiveClassification() Explicit opt-in required for production local-provider probe",
+      "SKIP   : RealToolExecutorToolsTest::browserToolsReportMissingNodeGracefully() npx is installed on this machine; the missing-node branch cannot run."
+    ]
+  },
+  "rust": {
+    "passed": 130,
+    "failed": 0,
+    "toolchain": "1.94.0"
+  },
+  "rust_fmt": "PASS",
+  "rust_clippy": "PASS (-D warnings)",
+  "qml_lint": {
+    "exit": 0,
+    "files": 72,
+    "warnings": 113,
+    "p41_warnings": 113
+  },
+  "ipc_generators": "PASS (both --check)",
+  "native_macos_qt_fixture_ui": "PASS (synthetic data only, Cocoa platform)",
+  "real_mcp_process_fixture": "PASS (Core and Desktop IPC lifecycle tests)",
+  "production_daemon_extensions_query": "PASS (disposable profile, 0 extensions/35 tools, restart)",
+  "external_worktree_changes": {
+    "user_confirmed_other_work": true,
+    "preserved": true,
+    "combined_build": "FAILED",
+    "diagnostic": "core/src/runtime/ToolExecutionGateway.cpp:283: use of undeclared identifier completion",
+    "files_at_final_audit": [
+      "core/include/sentinel/core/runtime/IToolHandler.h",
+      "core/include/sentinel/core/runtime/RealToolExecutor.h",
+      "core/include/sentinel/core/runtime/ToolDescriptor.h",
+      "core/src/agent/LlmAgentRuntime.cpp",
+      "core/src/runtime/BuiltInToolProvider.cpp",
+      "core/src/runtime/InMemoryToolRegistry.cpp",
+      "core/src/runtime/RealToolExecutor.cpp",
+      "core/src/runtime/ToolExecutionGateway.cpp",
+      "tests/core/test_in_memory_tool_registry.cpp",
+      "tests/core/test_real_tool_executor_tools.cpp"
+    ],
+    "combined_build_retry": "FAILED (arm64 linker: undefined core symbols including OllamaModelPuller and EnterpriseConfigService)",
+    "source_changes_continued_during_verification": true,
+    "current_combined_tree_certified": false
+  },
+  "static_analysis": {
+    "scope": "8 selected implementation sources",
+    "total": 377,
+    "p42_five_changed_sources": 270,
+    "p42_new": 0,
+    "p41_new_vs_p3": 2,
+    "p42_warnings_on_changed_lines": 0
+  }
+}

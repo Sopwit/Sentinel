@@ -48,6 +48,8 @@ public:
     QVariantMap quickPanelSnapshot() const;
     void refresh();
     void refreshExtensionsHub();
+    bool performExtensionsHubAction(const QString& id, const QString& action);
+    QVariantMap extensionsHubActionState() const;
     bool voiceAction(const QString& action);
     QVariantMap voiceState() const;
     bool respondToApproval(bool allow);
@@ -92,6 +94,8 @@ private:
     QSet<QString> m_settingsQueries;
     QString m_sessionId, m_preferredSession, m_runId, m_state, m_kind, m_output, m_generation;
     QString m_submissionError, m_submissionErrorSummary;
+    QString m_extensionActionPending;
+    QVariantMap m_extensionActionState;
     quint64 m_sequence = 0;
     QTimer m_refreshTimer;
     QTimer m_voiceTimer;

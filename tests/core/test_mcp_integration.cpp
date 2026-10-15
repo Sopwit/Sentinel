@@ -84,12 +84,43 @@ class McpIntegrationTest final : public QObject {
     Q_OBJECT
 private slots:
     void realStdioAgentLoop();
+    void extensionsSnapshotFollowsRealProcessLifecycle();
     void oldCancellationCannotConsumeRecreatedServerCall();
     void realDenialSandboxCrashAndCancellation();
     void runtimeEventsAndCorrelation();
     void certificationDirectValidationAndFaults();
     void certificationPersistenceAndOwnedShutdown();
 };
+
+void McpIntegrationTest::extensionsSnapshotFollowsRealProcessLifecycle() {
+    auto service = std::make_shared<McpService>();
+    McpServerConfig config;
+    config.name = "hub-process";
+    config.type = "local";
+    config.command = QString::fromUtf8(TEST_MCP_SERVER_PATH);
+    config.arguments = {"", "--certification"};
+    QVERIFY(service->addServer(config));
+    InMemoryToolRegistry registry;
+    McpToolProvider provider(service, registry);
+    ExtensionService extensions(service.get(), nullptr, nullptr, &registry);
+    auto row = [&] { return extensions.managementSnapshot().value("entries").toArray().first().toObject(); };
+    QCOMPARE(row().value("connection").toString(), QString("Disconnected"));
+    QVERIFY(!row().value("available").toBool());
+    QVERIFY(service->connectToServer(config.name));
+    QTRY_COMPARE(row().value("health").toString(), QString("Ready"));
+    QCOMPARE(row().value("toolCount").toInt(), 8);
+    QVERIFY(extensions.perform("mcp:hub-process", ExtensionAction::Disconnect));
+    QVERIFY(!row().value("available").toBool());
+    QVERIFY(row().value("metadataStale").toBool());
+    QVERIFY(registry.enabledTools().isEmpty());
+    QVERIFY(service->connectToServer(config.name));
+    QTRY_VERIFY(row().value("available").toBool());
+    QCOMPARE(row().value("toolCount").toInt(), 8);
+    QVERIFY(extensions.perform("mcp:hub-process", ExtensionAction::Disable));
+    QCOMPARE(row().value("health").toString(), QString("Disabled"));
+    QVERIFY(!service->connectToServer(config.name));
+    QVERIFY(registry.enabledTools().isEmpty());
+}
 
 void McpIntegrationTest::certificationPersistenceAndOwnedShutdown() {
     QTemporaryDir directory;

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DaemonDesktopSettings.h"
+#include "sentinel/core/extension/ExtensionService.h"
 namespace sentinel::daemon {
 static core::SettingsService
 composedSettingsService(core::AppSettings& settings,
@@ -192,6 +193,11 @@ QVariantMap DaemonDesktopSettings::clearProductPluginCredential(const QString& p
     return {{QStringLiteral("accepted"), result.accepted}, {QStringLiteral("code"), result.code}};
 }
 QJsonObject DaemonDesktopSettings::dispatch(const QString& name, const QJsonArray& args) {
+    if (name == "extensionsHubState") {
+        const auto* service = controller_.extensionService();
+        return service ? service->managementSnapshot()
+                       : QJsonObject{{"code", "ExtensionServiceUnavailable"}};
+    }
     if (name == "productSettings")
         return {{"value", QJsonArray::fromVariantList(productSettings())}};
     if (name == "productSettingsSections")

@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QPermissions>
 #include <cmath>
+#include <algorithm>
+#include "sentinel/core/extension/ExtensionService.h"
 
 namespace sentinel::desktop {
 namespace {
@@ -74,6 +76,19 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
                     return;
                 }
                 const auto failed = m_requests.take(id);
+                if (id == m_extensionActionPending) {
+                    m_extensionActionPending.clear();
+                    m_extensionActionState["phase"] = "unconfirmed";
+                    refreshExtensionsHub();
+                    return;
+                }
+                if (failed.name == "desktop.settings_service" &&
+                    failed.target.startsWith("extensionsHubState[")) {
+                    m_settingsStates[failed.target] = QVariantMap{{"code", "ExtensionInventoryUnavailable"}};
+                    m_settingsQueries.remove(failed.target);
+                    emit changed();
+                    return;
+                }
                 if (failed.target == "requestPermanentDeleteConversation")
                     emit conversationDeleteCompleted(failed.conversationId, false,
                         code == "request-timeout"
@@ -149,6 +164,10 @@ DesktopRuntimeClient::DesktopRuntimeClient(DaemonClient& transport, QObject* par
             m_messages.clear();
             m_historyLoaded = false;
             m_requests.clear();
+            m_extensionActionPending.clear();
+            m_extensionActionState.clear();
+            m_settingsStates.remove("extensionsHubState[]");
+            m_settingsQueries.remove("extensionsHubState[]");
             m_submissionPending = false;
             m_attaching = false;
             m_projectionRemaining = 0;
@@ -336,12 +355,57 @@ void DesktopRuntimeClient::refresh() {
     }
 }
 void DesktopRuntimeClient::refreshExtensionsHub() {
-    for (const auto& key : m_settingsStates.keys())
-        if (key.startsWith("productSettings[") || key.startsWith("extensionSettingsState[")) {
-            m_settingsStates.remove(key);
+    auto extensionQuery = [](const QString& key) {
+        return key.startsWith("extensionsHubState[") || key.startsWith("productSettings[") ||
+               key.startsWith("extensionSettingsState[");
+    };
+    // Invalidate pending reads as well as cached values. A pre-refresh response cannot repopulate them.
+    for (auto it = m_requests.begin(); it != m_requests.end();) {
+        if (it->name == "desktop.settings_service" && extensionQuery(it->target)) {
+            it = m_requests.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    for (const auto& key : m_settingsQueries.values()) {
+        if (extensionQuery(key)) {
             m_settingsQueries.remove(key);
         }
+    }
+    for (const auto& key : m_settingsStates.keys()) {
+        if (extensionQuery(key)) {
+            m_settingsStates.remove(key);
+        }
+    }
     emit changed();
+}
+QVariantMap DesktopRuntimeClient::extensionsHubActionState() const {
+    return ready() ? m_extensionActionState : QVariantMap{{"phase", "disconnected"}};
+}
+bool DesktopRuntimeClient::performExtensionsHubAction(const QString& id, const QString& action) {
+    if (!ready() || !m_extensionActionPending.isEmpty() ||
+        (action != "disable" && action != "disconnect")) {
+        return false;
+    }
+    bool allowed = false;
+    for (const auto& value : m_settingsStates.value("extensionsHubState[]").value("entries").toList()) {
+        const auto row = value.toMap();
+        if (row.value("id").toString() == id && row.value("actions").toStringList().contains(action)) {
+            allowed = true;
+            break;
+        }
+    }
+    if (!allowed) {
+        return false;
+    }
+    const int operation = static_cast<int>(action == "disable" ? core::ExtensionAction::Disable
+                                                               : core::ExtensionAction::Disconnect);
+    m_extensionActionState = {{"id", id}, {"action", action}, {"phase", "pending"}};
+    m_extensionActionPending = send(DaemonClient::Command::desktop_settings_service,
+        {{"action", "performExtensionSettingsAction"}, {"arguments", QJsonArray{id, operation}}},
+        "performExtensionSettingsAction[]");
+    emit changed();
+    return true;
 }
 QVariant DesktopRuntimeClient::settingsService(const QString& action, const QVariantList& arguments,
                                                bool query) {
@@ -355,7 +419,10 @@ QVariant DesktopRuntimeClient::settingsService(const QString& action, const QVar
         return QVariantMap{{"accepted", false}, {"code", "DaemonUnavailable"}};
     }
     if (query) {
-        if (!m_settingsQueries.contains(key)) {
+        const bool pending = std::any_of(m_requests.cbegin(), m_requests.cend(), [&](const auto& request) {
+            return request.name == "desktop.settings_service" && request.target == key;
+        });
+        if (!m_settingsQueries.contains(key) && !pending) {
             m_settingsQueries.insert(key);
             send(DaemonClient::Command::desktop_settings_service,
                  {{"action", action}, {"arguments", QJsonArray::fromVariantList(arguments)}}, key);
@@ -560,6 +627,12 @@ void DesktopRuntimeClient::onResponse(const QString& id, const QString& name,
         }
     } else if (name == "desktop.settings_service") {
         const auto result = payload.value("result").toObject();
+        if (id == m_extensionActionPending) {
+            m_extensionActionPending.clear();
+            m_extensionActionState["phase"] = result.value("accepted").toBool() ? "accepted" : "failed";
+            refreshExtensionsHub();
+            return;
+        }
         const auto action = request.target.left(request.target.indexOf('['));
         if (ipc::desktopSettingsActions().value(action).toObject().value("query").toBool()) {
             m_settingsStates[request.target] = result.toVariantMap();
@@ -940,7 +1013,13 @@ void DesktopRuntimeClient::projectRun() {
         m_values["chatErrorCategory"] = m_submissionError;
         m_values["chatSendLifecycleSummary"] = m_submissionErrorSummary;
     }
-    m_values["conversationHistoryMessageCount"] = m_messages.size();
+    // Match ApplicationController semantics: system-only transcripts (e.g. the
+    // startup "Sentinel Core online." notice) are not chat history, so the
+    // greeting screen keeps showing until a user or assistant message exists.
+    m_values["conversationHistoryMessageCount"] = static_cast<int>(std::count_if(
+        m_messages.cbegin(), m_messages.cend(), [](const core::ChatMessage& message) {
+            return message.role != core::ChatRole::System;
+        }));
     m_values["latestApprovalSummary"] = m_approval.value("detail").toString();
     if (m_kind == "chat" && !m_submissionPending && !m_messages.isEmpty() &&
         m_messages.last().role == core::ChatRole::Assistant && !m_runId.isEmpty() &&

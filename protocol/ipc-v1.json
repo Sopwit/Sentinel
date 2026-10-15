@@ -5481,6 +5481,10 @@
     ]
   },
   "desktop_settings_service": {
+    "extensionsHubState": {
+      "query": true,
+      "arguments": []
+    },
     "productSettings": {
       "query": true,
       "arguments": []

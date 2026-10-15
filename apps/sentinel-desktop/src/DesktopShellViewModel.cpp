@@ -4381,31 +4381,35 @@ QVariantMap DesktopShellViewModel::providerSettingsState(const QString& provider
 }
 
 QVariantMap DesktopShellViewModel::extensionsHubSnapshot() const {
-    const auto* remote = controller_.remote();
+    auto* remote = controller_.remote();
     const bool connected = daemonConnected();
-    QVariantMap response;
-    if (connected && remote->ready())
-        response = controller_.remote()->settingsService("productSettings", {}, true).toMap();
-    QStringList policy;
-    if (connected && remote->ready()) {
-        policy = toolContractSummaries() + toolContractPermissionSummaries() +
-                 toolContractSandboxSummaries() + toolContractReadinessSummaries();
-    }
-    return ExtensionsHubPresentation::inventory(connected, remote && remote->ready(), response,
-                                               connected ? availableToolIds() : QStringList{}, policy);
+    const auto response = remote && connected && remote->ready()
+        ? remote->settingsService("extensionsHubState", {}, true).toMap() : QVariantMap{};
+    return ExtensionsHubPresentation::inventory(connected, remote && remote->ready(), response, {}, {});
 }
 QVariantMap DesktopShellViewModel::extensionsHubDetail(const QString& id) const {
-    // Only inventory IDs may be queried. No arbitrary extension/action input reaches the daemon.
     const auto snapshot = extensionsHubSnapshot();
-    for (const auto& row : snapshot.value("entries").toList())
+    for (const auto& row : snapshot.value("entries").toList()) {
         if (row.toMap().value("id").toString() == id) {
-            const auto response = controller_.remote()->settingsService("extensionSettingsState", {id}, true);
-            return ExtensionsHubPresentation::detail(daemonConnected(), id, response.toMap(), response.isValid());
+            auto detail = row.toMap();
+            detail["phase"] = "ready";
+            return detail;
         }
+    }
     return {{"phase", daemonConnected() ? "unavailable" : "disconnected"}};
 }
+QVariantMap DesktopShellViewModel::extensionsHubActionState() const {
+    auto* remote = controller_.remote();
+    return remote ? remote->extensionsHubActionState() : QVariantMap{{"phase", "unavailable"}};
+}
+bool DesktopShellViewModel::performExtensionsHubAction(const QString& id, const QString& action) {
+    auto* remote = controller_.remote();
+    return remote && remote->performExtensionsHubAction(id, action);
+}
 void DesktopShellViewModel::refreshExtensionsHub() {
-    if (auto* remote = controller_.remote()) remote->refreshExtensionsHub();
+    if (auto* remote = controller_.remote()) {
+        remote->refreshExtensionsHub();
+    }
 }
 
 QVariantMap DesktopShellViewModel::extensionSettingsState(const QString& extensionId) const {

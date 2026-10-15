@@ -215,6 +215,42 @@ int main(int argc, char** argv) {
                     }
                 }
             }
+            // Synthetic lifecycle management: no process or trust mutation is performed.
+            auto pluginRow = entries.first().toMap();
+            pluginRow["enabled"] = true;
+            pluginRow["health"] = "Failed";
+            pluginRow["maturity"] = "Experimental";
+            pluginRow["hostRunning"] = false;
+            pluginRow["actions"] = QStringList{"disable"};
+            pluginRow["actionScope"] = "daemon-lifetime";
+            entries[0] = pluginRow;
+            data["entries"] = entries;
+            fixture->setProperty("data", data);
+            hub->setProperty("section", "plugins");
+            QMetaObject::invokeMethod(hub, "reload");
+            QCoreApplication::processEvents();
+            auto* disable = find(find, hub, "extensionAction_disable");
+            check(disable && disable->isEnabled(), "backend-supported deactivation exposed");
+            disable->forceActiveFocus();
+            QTest::keyClick(window, Qt::Key_Space);
+            QCoreApplication::processEvents();
+            check(fixture->property("actionCalls").toInt() == 1, "one management request");
+            check(!disable->isEnabled() && !refresh->isEnabled(), "pending action prevents duplicate and refresh");
+            auto* actionStatus = find(find, hub, "extensionsActionStatus");
+            check(actionStatus && actionStatus->isVisible(), "pending status visible");
+            const auto managementEvidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
+            if (!managementEvidence.isEmpty()) {
+                window->grabWindow().save(managementEvidence + "/management-pending.png");
+            }
+            fixture->setProperty("actionData", QVariantMap{{"phase", "unconfirmed"}});
+            QCoreApplication::processEvents();
+            check(actionStatus->property("text").toString().contains("could not be confirmed"), "timeout is not success");
+            if (!managementEvidence.isEmpty()) {
+                window->grabWindow().save(managementEvidence + "/management-unconfirmed.png");
+            }
+            fixture->setProperty("actionData", QVariantMap{{"phase", "accepted"}});
+            QMetaObject::invokeMethod(hub, "openSection", Q_ARG(QVariant, QVariant("tools")));
+            QCoreApplication::processEvents();
             hub->setProperty("query", "no-match"); QTest::qWait(20);
             auto* empty = find(find, hub, "extensionsEmpty"); check(empty && empty->isVisible(), "search empty state");
             hub->setProperty("query", "fixture.read"); QTest::qWait(20);

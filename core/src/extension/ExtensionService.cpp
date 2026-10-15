@@ -6,6 +6,7 @@
 #include <QRegularExpression>
 #include <QUrl>
 #include <QTimer>
+#include <QJsonDocument>
 
 namespace {
 QString safeDetail(QString value) {
@@ -354,6 +355,93 @@ QList<ExtensionSnapshot> ExtensionService::extensions() const {
         item.available = item.available && item.effectiveEnabled;
     }
     return result;
+}
+
+QJsonObject ExtensionService::managementSnapshot() const {
+    const auto inventory = extensions();
+    QJsonArray entries;
+    qsizetype bytes = 0;
+    auto append = [&bytes](QJsonArray& target, const QJsonObject& row) {
+        const auto size = QJsonDocument(row).toJson(QJsonDocument::Compact).size();
+        if (bytes + size <= 180000) {
+            target.append(row);
+            bytes += size;
+        }
+    };
+    auto strings = [](const QStringList& values) {
+        QJsonArray result;
+        for (const auto& value : values.mid(0, 12)) {
+            result.append(value.left(120));
+        }
+        return result;
+    };
+    const QStringList healthNames{"Disabled", "Disconnected", "Connecting", "Ready",
+                                  "Degraded", "Failed", "Incompatible"};
+    for (const auto& item : inventory.mid(0, 64)) {
+        if (item.id.size() > 512) {
+            continue;
+        }
+        QJsonArray actions;
+        // Deactivation only: these existing operations cannot grant trust or start a process.
+        if (item.availableActions.contains(ExtensionAction::Disable)) {
+            actions.append("disable");
+        }
+        if (item.availableActions.contains(ExtensionAction::Disconnect)) {
+            actions.append("disconnect");
+        }
+        append(entries, QJsonObject{
+            {"id", item.id.left(512)},
+            {"type", item.type == ExtensionType::Plugin ? "plugins"
+                     : item.type == ExtensionType::MCP ? "mcp" : "skills"},
+            {"name", item.displayName.left(160)},
+            {"enabledKnown", true}, {"enabled", item.effectiveEnabled},
+            {"globalEnabled", item.globallyEnabled}, {"available", item.available},
+            {"health", healthNames.value(static_cast<int>(item.health), "Unknown")},
+            {"maturity", item.maturity == ExtensionMaturity::ProductionReady ? "ProductionReady"
+                         : item.maturity == ExtensionMaturity::Experimental ? "Experimental"
+                         : "Unavailable"},
+            {"connection", item.connectionState.left(80)},
+            {"transport", item.transport.left(80)}, {"version", item.version.left(80)},
+            {"sandbox", item.sandboxStatus.left(80)},
+            {"hostRunning", item.type == ExtensionType::Plugin
+                                ? QJsonValue(item.connectionState == "Running") : QJsonValue{}},
+            {"requirements", strings(item.requirements)},
+            {"permissions", strings(item.requestedPermissions)},
+            {"capabilities", strings(item.requestedHostCapabilities)},
+            {"toolCount", item.registeredToolCount}, {"resourceCount", item.resourceCount},
+            {"metadataStale", item.metadataStale},
+            // Raw stderr, URLs, source paths and credential metadata are deliberately omitted.
+            {"failure", item.failureCategory.left(80)},
+            {"actions", actions},
+            {"actionScope", item.type == ExtensionType::Skill ? "persistent" : "daemon-lifetime"}});
+    }
+    QJsonArray tools;
+    const auto descriptors = registry_ ? registry_->listTools() : QList<ToolDescriptor>{};
+    for (const auto& tool : descriptors.mid(0, 128)) {
+        if (!registry_ || tool.id.size() > 512) {
+            continue;
+        }
+        const auto registration = registry_->findRegistration(tool.id);
+        append(tools, QJsonObject{
+            {"id", tool.id.left(512)}, {"name", tool.name.left(160)}, {"type", "tools"},
+            {"origin", tool.source == ToolSource::BuiltIn ? "built-in"
+                       : tool.source == ToolSource::Plugin ? "plugin"
+                       : tool.source == ToolSource::MCP ? "mcp" : "internal"},
+            {"enabled", tool.enabled}, {"enabledKnown", true},
+            {"owner", tool.providerId.left(160)},
+            {"metadataOnly", tool.executionMode == ToolExecutionMode::MetadataOnly},
+            {"maturity", QStringList{"ProductionReady", "Partial", "Experimental", "Deprecated", "Internal"}
+                             .value(static_cast<int>(tool.maturity), "Unknown")},
+            {"handlerAvailable", registration && static_cast<bool>(registration->handler)},
+            {"permissionDomain", tool.requiredPermissionDomain.left(80)},
+            {"risk", tool.riskLevel == ToolRiskLevel::High ? "High"
+                     : tool.riskLevel == ToolRiskLevel::Medium ? "Medium" : "Low"},
+            {"modelVisible", tool.exposedToModel},
+            {"readiness", "Invocation authorization required"}});
+    }
+    return {{"entries", entries}, {"toolEntries", tools},
+            {"extensionCount", inventory.size()}, {"toolCount", descriptors.size()},
+            {"truncated", inventory.size() > entries.size() || descriptors.size() > tools.size()}};
 }
 
 QList<ExtensionSnapshot> ExtensionService::filter(std::optional<ExtensionType> type,
