@@ -8,6 +8,14 @@ use std::{
 };
 static NEXT: AtomicU64 = AtomicU64::new(0);
 fn cli(args: &[&str], stdin: Option<&str>, terminal: &str) -> std::process::Output {
+    cli_events(args, stdin, terminal, false)
+}
+fn cli_events(
+    args: &[&str],
+    stdin: Option<&str>,
+    terminal: &str,
+    stale: bool,
+) -> std::process::Output {
     let root = std::env::temp_dir().join(format!(
         "sentinel-cli-test-{}-{}",
         std::process::id(),
@@ -39,10 +47,23 @@ fn cli(args: &[&str], stdin: Option<&str>, terminal: &str) -> std::process::Outp
                 }
                 _ => panic!("unexpected command"),
             };
+            if stale && ["chat.send", "agent.start"].contains(&request["name"].as_str().unwrap()) {
+                // Real request() queues these before the new start acknowledgement.
+                for (sid, run) in [("session", "old-run"), ("other-session", "run")] {
+                    writeln!(stream,"{}",json!({"version":{"major":1,"minor":0},"type":"event","id":"","name":"run.failed","payload":{"text":"STALE","run_id":run,"session_id":sid,"state":"failed"}})).unwrap();
+                }
+            }
             writeln!(stream,"{}",json!({"version":{"major":1,"minor":0},"type":"response","id":request["id"],"name":request["name"],"payload":payload})).unwrap();
         }
         writeln!(stream,"{}",json!({"version":{"major":1,"minor":0},"type":"event","id":"","name":"output.delta","payload":{"text":"MAVI","run_id":"run","session_id":"session"}})).unwrap();
         writeln!(stream,"{}",json!({"version":{"major":1,"minor":0},"type":"event","id":"","name":terminal,"payload":{"text":"MAVI","run_id":"run","session_id":"session","state":terminal.trim_start_matches("run.")}})).unwrap();
+        // The real daemon keeps the transport alive after a terminal event.
+        // Wait for the client's close, rather than racing socket option restoration.
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+            .unwrap();
+        let mut extra = String::new();
+        assert_eq!(reader.read_line(&mut extra).unwrap(), 0);
     });
     let mut child = Command::new(env!("CARGO_BIN_EXE_sentinel"))
         .arg("--socket")
@@ -260,4 +281,46 @@ fn global_output_after_task_is_parsed() {
     assert!(r.status.success());
     let value: Value = serde_json::from_slice(&r.stdout).unwrap();
     assert_eq!(value["text"], "MAVI");
+}
+
+#[test]
+fn queued_old_and_cross_client_terminals_cannot_finish_new_command() {
+    for terminal in ["run.completed", "run.cancelled", "run.failed"] {
+        let result = cli_events(
+            &["--output", "stream-json", "run", "task"],
+            None,
+            terminal,
+            true,
+        );
+        assert_eq!(
+            result.status.code(),
+            Some(match terminal {
+                "run.completed" => 0,
+                "run.cancelled" => 130,
+                _ => 1,
+            })
+        );
+        let rows: Vec<Value> = String::from_utf8(result.stdout)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(rows.len(), if terminal == "run.completed" { 2 } else { 3 });
+        if terminal != "run.completed" {
+            assert_eq!(
+                rows[2]["error"]["code"],
+                if terminal == "run.cancelled" {
+                    "cancelled"
+                } else {
+                    "task-failed"
+                }
+            );
+        }
+        let rows = &rows[..2];
+        assert_eq!(rows[1]["name"], terminal);
+        assert!(
+            rows.iter().all(|row| row["payload"]["run_id"] == "run"
+                && row["payload"]["session_id"] == "session")
+        );
+    }
 }

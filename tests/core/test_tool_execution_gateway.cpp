@@ -5,7 +5,9 @@
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/runtime/ToolHookService.h"
 
+#include <QScopeGuard>
 #include <QtTest>
 
 using sentinel::core::PermissionPolicyService;
@@ -20,6 +22,7 @@ private slots:
     void reportsMetadataOnlyDiagnostics();
     void asyncPathPreservesApprovalGate();
     void dynamicHandlerUsesGatewayGates();
+    void handlerTerminalCallbacksAreInvocationScopedAndIdempotent();
     void registeredPathRejectsUnknownWithoutFallback();
 };
 
@@ -142,6 +145,95 @@ void ToolExecutionGatewayTest::dynamicHandlerUsesGatewayGates() {
     QCOMPARE(result.status, sentinel::core::ToolExecutionStatus::Succeeded);
     QCOMPARE(result.summary, QStringLiteral("dynamic"));
     QCOMPARE(handler->calls, 1);
+}
+
+void ToolExecutionGatewayTest::handlerTerminalCallbacksAreInvocationScopedAndIdempotent() {
+    using namespace sentinel::core;
+    class Handler final : public IToolHandler {
+    public:
+        QList<IToolExecutor::Completion> completions;
+        QList<IToolExecutor::Output> outputs;
+        int cancellations = 0;
+        QList<QPair<QString, QString>> identities;
+        IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString& session,
+                                      const QString& call, IToolExecutor::Output output,
+                                      IToolExecutor::Completion completion) override {
+            identities.append({session, call});
+            completions.append(std::move(completion));
+            outputs.append(std::move(output));
+            return [this] { ++cancellations; };
+        }
+    };
+    class Executor final : public IToolExecutor {
+    public:
+        ToolExecutionResult execute(const ToolExecutionRequest&) const override {
+            return {ToolExecutionStatus::Failed, QStringLiteral("must not use fallback")};
+        }
+    } executor;
+    auto handler = std::make_shared<Handler>();
+    auto cleanup = qScopeGuard([handler] {
+        handler->completions.clear();
+        handler->outputs.clear();
+    });
+    InMemoryToolRegistry registry;
+    ToolDescriptor descriptor;
+    descriptor.id = QStringLiteral("plugin.test.callbacks");
+    descriptor.source = ToolSource::Plugin;
+    descriptor.providerId = QStringLiteral("test");
+    descriptor.inputSchema = {{QStringLiteral("type"), QStringLiteral("object")},
+                              {QStringLiteral("additionalProperties"), false}};
+    QVERIFY(registry.registerTool({descriptor, handler}));
+    ToolExecutionGateway gateway(&registry);
+    ToolHookService hooks;
+    int beforeHooks = 0, successHooks = 0, errorHooks = 0;
+    hooks.registerHook(descriptor.id, {descriptor.id, [&](QJsonObject&) { ++beforeHooks; },
+                                       [&](QJsonObject&) { ++successHooks; },
+                                       [&](const QString&) { ++errorHooks; }});
+    gateway.setHookService(&hooks);
+    ToolExecutionRequest request;
+    request.plan.status = ToolInvocationPlanStatus::Planned;
+    request.plan.invocations.append({descriptor.id, QStringLiteral("Callbacks")});
+    request.approval.status = ApprovalStatus::Approved;
+    request.sandbox.status = SandboxStatus::Allowed;
+    QList<ToolExecutionResult> results;
+    int chunks = 0;
+    auto start = [&](const QString& id) {
+        return gateway.executeAsync(
+            request, executor, QStringLiteral("session"), id,
+            [&](const QString&, ProcessStream, const QByteArray&) { ++chunks; },
+            [&](auto result) { results.append(std::move(result)); });
+    };
+    auto firstCancel = start(QStringLiteral("first"));
+    handler->outputs[0]({}, ProcessStream::Stdout, "valid");
+    QCOMPARE(chunks, 1);
+    handler->completions[0]({ToolExecutionStatus::Succeeded, QStringLiteral("first result")});
+    handler->completions[0]({ToolExecutionStatus::Failed, QStringLiteral("duplicate")});
+    handler->outputs[0]({}, ProcessStream::Stdout, "late");
+    firstCancel();
+    QCOMPARE(results.size(), 1);
+    QCOMPARE(results.first().summary, QStringLiteral("first result"));
+    QCOMPARE(chunks, 1);
+    QCOMPARE(handler->cancellations, 0);
+    auto secondCancel = start(QStringLiteral("second"));
+    secondCancel();
+    secondCancel();
+    QCOMPARE(handler->cancellations, 1);
+    QCOMPARE(results.size(), 1); // Cancellation requests do not fabricate worker completion.
+    handler->outputs[1]({}, ProcessStream::Stdout, "cancelled late output");
+    handler->completions[0]({ToolExecutionStatus::Succeeded, QStringLiteral("stale first")});
+    handler->completions[1]({ToolExecutionStatus::Succeeded, QStringLiteral("late success")});
+    handler->completions[1]({ToolExecutionStatus::Succeeded, QStringLiteral("duplicate second")});
+    QCOMPARE(results.size(), 2);
+    QCOMPARE(results.last().status, ToolExecutionStatus::Cancelled);
+    QCOMPARE(results.last().failureCategory, ToolFailureCategory::Cancelled);
+    QVERIFY(!results.last().structuredObservation);
+    QCOMPARE(chunks, 1);
+    QCOMPARE(beforeHooks, 2);
+    QCOMPARE(successHooks, 1);
+    QCOMPARE(errorHooks, 1);
+    QCOMPARE(handler->identities, (QList<QPair<QString, QString>>{
+                                      {QStringLiteral("session"), QStringLiteral("first")},
+                                      {QStringLiteral("session"), QStringLiteral("second")}}));
 }
 
 void ToolExecutionGatewayTest::registeredPathRejectsUnknownWithoutFallback() {

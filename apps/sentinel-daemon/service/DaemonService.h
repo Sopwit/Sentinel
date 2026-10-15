@@ -25,6 +25,10 @@ public:
     ~DaemonService() override;
 
     bool initialize(const QString& socketPath = {});
+    void requestShutdown() {
+        m_healthTimer.stop();
+        m_ipcServer.requestShutdown();
+    }
 
 private slots:
     void performHealthCheck();

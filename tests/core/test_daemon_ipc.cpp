@@ -15,8 +15,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLocalSocket>
-#include <QStandardPaths>
 #include <QScopeGuard>
+#include <QSemaphore>
+#include <QSignalSpy>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUuid>
@@ -91,6 +93,22 @@ public:
     QString providerId() const override { return {}; }
     QList<core::ModelLibraryEntry> entries() const override { ++reads; return rows; }
 };
+class ShutdownGatePlanner final : public core::IAgentStepPlanner {
+public:
+    QSemaphore& entered;
+    QSemaphore& release;
+    ShutdownGatePlanner(QSemaphore& enteredSignal, QSemaphore& releaseSignal)
+        : entered(enteredSignal), release(releaseSignal) {}
+    core::AgentStepDecision nextStep(const QString&,
+                                     const QList<core::AgentStepRecord>&) const override {
+        entered.release();
+        release.tryAcquire(1, 5000);
+        core::AgentStepDecision decision;
+        decision.kind = core::AgentStepDecision::Kind::FinalAnswer;
+        decision.answer = QStringLiteral("late provider answer");
+        return decision;
+    }
+};
 struct Harness {
     QTemporaryDir directory{QDir::tempPath() + "/sentinel-ipc-XXXXXX"};
     test::DeterministicModelServiceFixture models;
@@ -99,14 +117,15 @@ struct Harness {
     QString path;
     explicit Harness(test::DeterministicChatReply reply = test::DeterministicChatReply::Final,
                      bool agent = false, core::AppSettings* settings = nullptr,
-                     bool realFiles = false)
+                     bool realFiles = false, std::unique_ptr<core::IAgentStepPlanner> planner = {})
         : models(reply, settings) {
         core::ApplicationControllerBuilder builder;
         if (agent || realFiles) {
             builder
                 .withAgentRuntime(std::make_unique<core::NullAgentRuntime>(
                     core::NullAgentRuntime::standardTools()))
-                .withAgentStepPlanner(std::make_unique<ApprovalPlanner>())
+                .withAgentStepPlanner(planner ? std::move(planner)
+                                              : std::make_unique<ApprovalPlanner>())
                 .withToolExecutor(realFiles ? std::unique_ptr<core::IToolExecutor>(
                                                   std::make_unique<core::RealToolExecutor>())
                                             : std::unique_ptr<core::IToolExecutor>(
@@ -124,6 +143,48 @@ struct Harness {
 class DaemonIpcServerTest : public QObject {
     Q_OBJECT
 private slots:
+    void shutdownAckDoesNotWaitForUnresponsivePlanner() {
+        QSemaphore entered, release;
+        Harness h(test::DeterministicChatReply::Final, true, nullptr, false,
+                  std::make_unique<ShutdownGatePlanner>(entered, release));
+        auto cleanup = qScopeGuard([&] { release.release(); });
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket client;
+        hello(client, h.path);
+        auto* runtime = h.controller->agentRuntime();
+        const auto session = runtime->createSession();
+        QVERIFY(runtime->start(session, QStringLiteral("task")));
+        QVERIFY(entered.tryAcquire(1, 1000));
+        QSignalSpy drained(h.server.get(), &daemon::DaemonIpcServer::shutdownDrained);
+        const auto response = request(client, "daemon.shutdown");
+        QVERIFY(response.value("payload").toObject().value("shutting_down").toBool());
+        QCOMPARE(drained.size(), 0);
+        QVERIFY(!runtime->tryShutdown(0));
+        h.server->requestShutdown();
+        release.release();
+        QTRY_COMPARE(drained.size(), 1);
+        QCOMPARE(runtime->sessionState(session).phase, core::AgentLoopPhase::Cancelled);
+    }
+
+    void shutdownAcknowledgesAndDrainsExactlyOnce() {
+        Harness h;
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket client;
+        hello(client, h.path);
+        QSignalSpy drained(h.server.get(), &daemon::DaemonIpcServer::shutdownDrained);
+        const auto response = request(client, "daemon.shutdown");
+        QCOMPARE(response.value("type").toString(), QStringLiteral("response"));
+        QVERIFY(response.value("payload").toObject().value("shutting_down").toBool());
+        h.server->requestShutdown();
+        QVERIFY(!h.server->startServer(h.path));
+        QTRY_COMPARE(drained.size(), 1);
+        h.server->requestShutdown();
+        QCOMPARE(drained.size(), 1);
+        const auto rejected = request(client, "daemon.status");
+        QCOMPARE(rejected.value("payload").toObject().value("code").toString(),
+                 QStringLiteral("daemon-shutting-down"));
+    }
+
     void initTestCase() {
         QStandardPaths::setTestModeEnabled(true);
         QCoreApplication::setApplicationName("sentinel-phase2-ipc-" +

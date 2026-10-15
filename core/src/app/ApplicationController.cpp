@@ -8039,6 +8039,16 @@ bool ApplicationController::requestMemoryCandidateCommit(const QString& candidat
     }
 
     memoryStore_->put(readiness.plan.key, value);
+    // Inspect the write result before a read/refresh can clear the backend error.
+    // Keep the reviewed candidate retryable and do not expose backend diagnostics.
+    if (!memoryStore_->lastError().isEmpty()) {
+        latestMemoryCommitResult_.status = QStringLiteral("Refused");
+        latestMemoryCommitResult_.summary =
+            QStringLiteral("Memory commit refused: storage write failed. The approved candidate "
+                           "has been preserved; retry after restoring storage availability.");
+        emit memoryCandidatesChanged();
+        return false;
+    }
 
     latestMemoryCommitResult_.accepted = true;
     latestMemoryCommitResult_.commitStatus = MemoryCommitStatus::Committed;
@@ -8131,6 +8141,12 @@ bool ApplicationController::sendMessageWithAttachments(const QString& message, c
         setChatSendLifecycle(QStringLiteral("refused"),
                              QStringLiteral("The message could not be persisted or sent."));
     return accepted;
+}
+
+bool ApplicationController::tryShutdownRuntime() {
+    const bool chatStopped = !chatMode_ || chatMode_->tryShutdown(0);
+    const bool agentStopped = !agentRuntime_ || agentRuntime_->tryShutdown(0);
+    return chatStopped && agentStopped;
 }
 
 bool ApplicationController::stopChatGeneration() {

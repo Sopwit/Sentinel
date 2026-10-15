@@ -360,6 +360,7 @@ private slots:
     void archivesReviewedMemoryCandidatesAsTerminalMetadata();
     void memoryCandidatesDoNotMutateKeyValueMemory();
     void approvedMemoryCandidateCommitsToKeyValueMemory();
+    void failedMemoryCommitPreservesCandidateAndAllowsRetry();
     void pendingAndRejectedMemoryCandidatesCannotCommit();
     void archivedMemoryCandidateCannotCommit();
     void duplicateMemoryCommitKeyRefusesByDefault();
@@ -2637,6 +2638,62 @@ void ApplicationControllerTest::approvedMemoryCandidateCommitsToKeyValueMemory()
              QStringList{QStringLiteral("memory.semantic.conversation-memory-candidate."
                                         "memory-candidate-1: The project keeps memory commits "
                                         "behind explicit user action.")});
+}
+
+void ApplicationControllerTest::failedMemoryCommitPreservesCandidateAndAllowsRetry() {
+    class Store final : public sentinel::core::IMemoryStore {
+    public:
+        InMemoryStore data;
+        bool rejectWrites = true;
+        mutable QString error;
+        void put(QString key, QString value) override {
+            if (rejectWrites) {
+                error = QStringLiteral("private-storage-detail-must-not-be-published");
+                return;
+            }
+            data.put(std::move(key), std::move(value));
+            error.clear();
+        }
+        QString get(const QString& key) const override {
+            error.clear();
+            return data.get(key);
+        }
+        sentinel::core::MemoryEntries entries() const override {
+            return data.entries();
+        }
+        void clear() override {
+            data.clear();
+        }
+        QString lastError() const override {
+            return error;
+        }
+    };
+    auto store = std::make_unique<Store>();
+    auto* backend = store.get();
+    auto controller = std::make_unique<ApplicationController>(std::make_unique<LocalEchoProvider>(),
+                                                              std::move(store));
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Reviewed candidate must survive failed persistence."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QSignalSpy entriesChanged(controller.get(), &ApplicationController::memoryEntriesChanged);
+    QVERIFY(!controller->requestMemoryCandidateCommit(id));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("storage")));
+    QVERIFY(
+        !controller->lastMemoryCommitResultSummary().contains(QStringLiteral("private-storage")));
+    QCOMPARE(controller->committedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->memoryCommitReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(controller->memoryEntries().isEmpty());
+    QCOMPARE(entriesChanged.size(), 0);
+    backend->rejectWrites = false;
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Committed"));
+    QCOMPARE(controller->committedMemoryCandidateCount(), 1);
+    QCOMPARE(controller->memoryEntries().size(), 1);
+    QCOMPARE(entriesChanged.size(), 1);
+    QVERIFY(!controller->requestMemoryCandidateCommit(id));
+    QCOMPARE(controller->memoryEntries().size(), 1);
+    QCOMPARE(entriesChanged.size(), 1);
 }
 
 void ApplicationControllerTest::pendingAndRejectedMemoryCandidatesCannotCommit() {

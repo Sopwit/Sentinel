@@ -80,6 +80,8 @@ impl std::fmt::Display for Error {
                     "runtime-rejected" =>
                         "Runtime rejected this request. Run sentinel doctor to inspect model, workspace and tool readiness",
                     "runtime-unavailable" => "The daemon runtime is unavailable",
+                    "daemon-shutting-down" =>
+                        "Daemon is shutting down; new requests are not accepted",
                     "invalid-approval" =>
                         "Approval is stale or has already been answered. Reattach the session",
                     "unknown-session" =>
@@ -92,6 +94,18 @@ impl std::fmt::Display for Error {
 }
 impl std::error::Error for Error {}
 impl Error {
+    /// Command failures that make this connection unusable. Polling Timeout is
+    /// handled separately by callers and does not invalidate a healthy socket.
+    pub fn requires_reconnect(&self) -> bool {
+        matches!(
+            self,
+            Self::Disconnected
+                | Self::Unavailable(_)
+                | Self::Timeout
+                | Self::Protocol(_)
+                | Self::Incompatible
+        ) || matches!(self, Self::Remote(code) if code == "daemon-shutting-down")
+    }
     pub fn from_run_detail(detail: &str) -> Self {
         if [
             "ProviderUnavailable",
@@ -133,6 +147,7 @@ impl Error {
             Self::Usage(_) => 2,
             Self::Cancelled => 130,
             Self::Incompatible | Self::Protocol(_) => 4,
+            Self::Remote(code) if code == "daemon-shutting-down" => 3,
             Self::Remote(code)
                 if [
                     "provider-unavailable",
@@ -191,6 +206,24 @@ pub fn decode(bytes: &[u8]) -> Result<Envelope, Error> {
     Ok(message)
 }
 #[cfg(unix)]
+fn remaining_budget(deadline: std::time::Instant) -> Result<std::time::Duration, Error> {
+    deadline
+        .checked_duration_since(std::time::Instant::now())
+        .filter(|value| !value.is_zero())
+        .ok_or(Error::Timeout)
+}
+#[cfg(unix)]
+fn transport_error(error: std::io::Error) -> Error {
+    if matches!(
+        error.kind(),
+        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+    ) {
+        Error::Timeout
+    } else {
+        Error::Disconnected
+    }
+}
+#[cfg(unix)]
 pub struct Client {
     reader: BufReader<UnixStream>,
     writer: UnixStream,
@@ -228,6 +261,38 @@ impl Client {
             .map_err(|e| Error::Protocol(e.to_string()))
     }
     pub fn request(&mut self, name: &str, payload: Value) -> Result<Value, Error> {
+        let polling_timeout = self
+            .reader
+            .get_ref()
+            .read_timeout()
+            .map_err(|_| Error::Disconnected)?;
+        let write_timeout = self
+            .writer
+            .write_timeout()
+            .map_err(|_| Error::Disconnected)?;
+        // Blocking event polling must not make command acknowledgements unbounded.
+        let deadline = std::time::Instant::now()
+            + polling_timeout.unwrap_or(std::time::Duration::from_secs(10));
+        let result = self.request_until(name, payload, deadline);
+        let restored_read = self.reader.get_ref().set_read_timeout(polling_timeout);
+        let restored_write = self.writer.set_write_timeout(write_timeout);
+        if matches!(result, Err(Error::Timeout))
+            || restored_read.is_err()
+            || restored_write.is_err()
+        {
+            // Late replies cannot poison the next command. Disconnect does not cancel a run.
+            let _ = self.writer.shutdown(std::net::Shutdown::Both);
+        }
+        // macOS can reject setsockopt after the peer closes. Preserve an already
+        // validated acknowledgement; shutdown above makes further I/O fail closed.
+        result
+    }
+    fn request_until(
+        &mut self,
+        name: &str,
+        payload: Value,
+        deadline: std::time::Instant,
+    ) -> Result<Value, Error> {
         let _: contract::RequestPayload =
             serde_json::from_value(json!({"name":name,"payload":payload}))
                 .map_err(|e| Error::Protocol(e.to_string()))?;
@@ -248,11 +313,22 @@ impl Client {
             return Err(Error::Protocol("oversized request".into()));
         }
         frame.push(b'\n');
-        self.writer
-            .write_all(&frame)
-            .map_err(|_| Error::Disconnected)?;
+        let mut remaining = frame.as_slice();
+        while !remaining.is_empty() {
+            self.writer
+                .set_write_timeout(Some(remaining_budget(deadline)?))
+                .map_err(|_| Error::Disconnected)?;
+            let count = match self.writer.write(remaining) {
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+                result => result.map_err(transport_error)?,
+            };
+            if count == 0 {
+                return Err(Error::Disconnected);
+            }
+            remaining = &remaining[count..];
+        }
         loop {
-            let message = self.read()?;
+            let message = self.read_until(Some(deadline))?;
             if message.kind == MessageType::Event {
                 if self.events.len() >= 256 {
                     return Err(Error::Protocol("event backlog exceeded".into()));
@@ -278,16 +354,17 @@ impl Client {
         }
     }
     fn read(&mut self) -> Result<Envelope, Error> {
+        self.read_until(None)
+    }
+    fn read_until(&mut self, deadline: Option<std::time::Instant>) -> Result<Envelope, Error> {
         loop {
-            let available = self.reader.fill_buf().map_err(|e| {
-                if [std::io::ErrorKind::WouldBlock, std::io::ErrorKind::TimedOut]
-                    .contains(&e.kind())
-                {
-                    Error::Timeout
-                } else {
-                    Error::Disconnected
-                }
-            })?;
+            if let Some(deadline) = deadline {
+                self.reader
+                    .get_ref()
+                    .set_read_timeout(Some(remaining_budget(deadline)?))
+                    .map_err(|_| Error::Disconnected)?;
+            }
+            let available = self.reader.fill_buf().map_err(transport_error)?;
             if available.is_empty() {
                 return Err(Error::Disconnected);
             }
@@ -325,6 +402,28 @@ impl Client {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn command_reconnection_policy_preserves_business_errors() {
+        for error in [
+            Error::Timeout,
+            Error::Disconnected,
+            Error::Unavailable("test".into()),
+            Error::Protocol("bad frame".into()),
+            Error::Incompatible,
+            Error::Remote("daemon-shutting-down".into()),
+        ] {
+            assert!(error.requires_reconnect());
+        }
+        for code in [
+            "permission-denied",
+            "provider-unavailable",
+            "runtime-busy",
+            "unknown-session",
+        ] {
+            assert!(!Error::Remote(code.into()).requires_reconnect());
+        }
+        assert!(!Error::Cancelled.requires_reconnect());
+    }
     #[test]
     fn rejects_malformed() {
         assert!(decode(b"invalid").is_err());
@@ -364,9 +463,78 @@ mod tests {
         let frame = br#"{"version":{"major":1,"minor":1},"type":"event","id":"","name":"run.cancelled","payload":{"run_id":"r","session_id":"s","text":"","state":"cancelled"}}"#;
         peer.write_all(&frame[..30]).unwrap();
         assert!(matches!(client.read(), Err(Error::Timeout)));
+        let partial = client.incoming.clone();
+        assert!(!partial.is_empty());
+        assert!(matches!(
+            client.read_until(Some(std::time::Instant::now())),
+            Err(Error::Timeout)
+        ));
+        assert_eq!(client.incoming, partial);
         peer.write_all(&frame[30..]).unwrap();
         peer.write_all(b"\n").unwrap();
         assert_eq!(client.read().unwrap().name, "run.cancelled");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn expired_deadline_rejects_buffered_frame_without_consuming_it() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let mut client = Client {
+            writer: stream.try_clone().unwrap(),
+            reader: BufReader::new(stream),
+            incoming: Vec::new(),
+            sequence: 0,
+            events: VecDeque::new(),
+        };
+        writeln!(peer, "{}", json!({"version":{"major":1,"minor":1},"type":"event","id":"","name":"run.cancelled","payload":{"run_id":"r","session_id":"s","text":"","state":"cancelled"}})).unwrap();
+        assert!(matches!(
+            client.read_until(Some(std::time::Instant::now())),
+            Err(Error::Timeout)
+        ));
+        assert!(client.incoming.is_empty());
+        assert_eq!(client.read().unwrap().name, "run.cancelled");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn request_timeout_closes_transport() {
+        let (stream, _peer) = UnixStream::pair().unwrap();
+        let timeout = Some(std::time::Duration::from_millis(20));
+        stream.set_read_timeout(timeout).unwrap();
+        let mut client = Client {
+            writer: stream.try_clone().unwrap(),
+            reader: BufReader::new(stream),
+            incoming: Vec::new(),
+            sequence: 0,
+            events: VecDeque::new(),
+        };
+        assert!(matches!(
+            client.request("daemon.status", json!({})),
+            Err(Error::Timeout)
+        ));
+        assert!(matches!(
+            client.request("daemon.status", json!({})),
+            Err(Error::Disconnected)
+        ));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn successful_request_restores_polling_timeout() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let timeout = Some(std::time::Duration::from_millis(20));
+        stream.set_read_timeout(timeout).unwrap();
+        let mut client = Client {
+            writer: stream.try_clone().unwrap(),
+            reader: BufReader::new(stream),
+            incoming: Vec::new(),
+            sequence: 0,
+            events: VecDeque::new(),
+        };
+        writeln!(peer, "{}", json!({"version":{"major":1,"minor":1},"type":"response","id":"1","name":"daemon.status","payload":{"running":true,"daemon_version":APP_VERSION,"uptime_ms":0,"active_runs":0,"sessions":0}})).unwrap();
+        assert_eq!(
+            client.request("daemon.status", json!({})).unwrap()["running"],
+            true
+        );
+        assert_eq!(client.reader.get_ref().read_timeout().unwrap(), timeout);
+        assert_eq!(client.writer.write_timeout().unwrap(), None);
     }
     #[test]
     fn stable_error_categories() {
@@ -375,6 +543,7 @@ mod tests {
             (Error::Remote("model-unavailable".into()), 5),
             (Error::Remote("permission-denied".into()), 6),
             (Error::Remote("runtime-rejected".into()), 7),
+            (Error::Remote("daemon-shutting-down".into()), 3),
             (Error::Cancelled, 130),
             (Error::Failed("arbitrary detail".into()), 1),
         ] {

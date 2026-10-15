@@ -1922,6 +1922,7 @@ public:
     bool sendMessageWithAttachments(const QString& message, const QList<ChatAttachment>& attachments);
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool stopChatGeneration();
+    bool tryShutdownRuntime();
     Q_INVOKABLE bool regenerateChatResponse(int userMessageId);
     Q_INVOKABLE bool retryChatResponse(int assistantMessageId);
     Q_INVOKABLE QString editAndResendChatMessage(int userMessageId, const QString& text);

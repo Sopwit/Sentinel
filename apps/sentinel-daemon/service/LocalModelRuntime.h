@@ -13,6 +13,10 @@ public:
     explicit LocalModelRuntime(core::ApplicationController& controller, QObject* parent = nullptr);
     ~LocalModelRuntime() override;
     void ensureRunning();
+    void beginShutdown() {
+        shuttingDown_ = true;
+        timer_.stop();
+    }
     QString status() const {
         return status_;
     }

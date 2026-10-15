@@ -583,6 +583,49 @@ private slots:
         QCOMPARE(onboarding.snapshot().step, sentinel::core::OnboardingStep::Welcome);
         QVERIFY(!client.daemonReachable());
     }
+    void disconnectSettlesPendingRequestsOnceAndRejectsLateReplies() {
+        Peer peer;
+        DaemonClient client(peer.path, 1000, 1000);
+        QVERIFY(peer.connect(client));
+        QTRY_VERIFY(client.daemonReachable());
+        peer.status();
+        QSignalSpy failed(&client, &DaemonClient::requestFailed);
+        const auto first =
+            client.request(DaemonClient::Command::session_create, {{"title", "pending"}});
+        const auto second = client.request(DaemonClient::Command::model_current);
+        read(peer.socket);
+        read(peer.socket);
+        client.disconnectFromDaemon();
+        client.disconnectFromDaemon();
+        int firstCount = 0, secondCount = 0;
+        for (const auto& failure : failed) {
+            if (failure[0].toString() == first || failure[0].toString() == second) {
+                QCOMPARE(failure[1].value<DaemonClient::Error>(),
+                         DaemonClient::Error::RequestCancelled);
+            }
+            if (failure[0].toString() == first) {
+                ++firstCount;
+            }
+            if (failure[0].toString() == second) {
+                ++secondCount;
+            }
+        }
+        QCOMPARE(firstCount, 1);
+        QCOMPARE(secondCount, 1);
+        QVERIFY(peer.connect(client));
+        QTRY_VERIFY(client.daemonReachable());
+        peer.status();
+        QSignalSpy replies(&client, &DaemonClient::responseReceived);
+        send(peer.socket, frame("response", second, "model.current",
+                                {{"provider_id", "stale"}, {"model_id", "stale"}}));
+        const auto barrier = client.request(DaemonClient::Command::daemon_status);
+        peer.status();
+        QTRY_VERIFY(!replies.isEmpty());
+        QTRY_COMPARE(replies.last()[0].toString(), barrier);
+        for (const auto& response : replies) {
+            QVERIFY(response[0].toString() != second);
+        }
+    }
     void handshakeStatusAndDisconnect() {
         Peer peer;
         DaemonClient client(peer.path, 1000, 1000);

@@ -592,7 +592,17 @@ IMcpService::Cancel McpService::callToolAsync(const QString& serverName, const Q
     const auto payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
     if (state->config.type == QStringLiteral("local") &&
         (state->process || !state->managedProcessId.isEmpty())) {
-        m_pendingCalls[serverName].insert(id, std::move(completion));
+        // Request IDs can be reused after a server is removed and recreated.
+        // Bind cancellation and timeout to this invocation, not only the map key.
+        auto active = std::make_shared<bool>(true);
+        m_pendingCalls[serverName].insert(
+            id, [active, completion = std::move(completion)](QJsonObject response) mutable {
+                if (!*active) {
+                    return;
+                }
+                *active = false;
+                completion(std::move(response));
+            });
         const bool written = state->process ? state->process->write(payload) == payload.size()
             : m_processExecutor.write(state->managedProcessId, payload);
         if (!written) {
@@ -601,16 +611,20 @@ IMcpService::Cancel McpService::callToolAsync(const QString& serverName, const Q
             return {};
         }
         QPointer<McpService> self(this);
-        QTimer::singleShot(30000, this, [self, serverName, id] {
-            if (!self)
+        QTimer::singleShot(30000, this, [self, serverName, id, active] {
+            if (!self || !*active) {
                 return;
+            }
             auto callback = self->m_pendingCalls[serverName].take(id);
             if (callback)
                 callback(failure(McpFailureCategory::Timeout, QStringLiteral("MCP local request timed out")));
         });
-        return [self, serverName, id] {
-            if (self)
-                self->m_pendingCalls[serverName].remove(id);
+        return [self, serverName, id, active] {
+            if (!self || !*active) {
+                return;
+            }
+            *active = false;
+            self->m_pendingCalls[serverName].remove(id);
         };
     }
     if (state->config.type == QStringLiteral("remote")) {

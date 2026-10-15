@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/chat/ChatModeService.h"
+#include <QDeadlineTimer>
 
 #include <QDateTime>
 #include <QJsonDocument>
@@ -24,6 +25,24 @@ ChatModeService::~ChatModeService() {
     // A subsequent turn can replace worker_, so shutdown must join every live worker.
     for (auto* worker : workers_)
         worker->wait();
+}
+
+bool ChatModeService::tryShutdown(int timeoutMs) {
+    stopping_ = true;
+    stop();
+    QDeadlineTimer deadline(qMax(0, timeoutMs));
+    const auto workers = workers_;
+    for (auto* worker : workers) {
+        if (QThread::currentThread() == worker || !worker->wait(deadline)) {
+            return false;
+        }
+        workers_.remove(worker);
+        if (worker_ == worker) {
+            worker_ = nullptr;
+        }
+        delete worker;
+    }
+    return true;
 }
 
 bool ChatModeService::busy() const {
@@ -70,8 +89,9 @@ ChatProviderErrorCategory ChatModeService::bindingError(ModelBindingError error)
 bool ChatModeService::send(const QString& conversationId, const QString& text,
                            const QList<ChatAttachment>& attachments,
                            const ModelSelection& selection, bool requireLocal) {
-    if (busy() || conversationId.isEmpty() || text.trimmed().isEmpty())
+    if (stopping_ || busy() || conversationId.isEmpty() || text.trimmed().isEmpty()) {
         return false;
+    }
     if (text.size() > 12000) {
         lastError_ = ChatProviderErrorCategory::RequestRejected;
         emit requestStateChanged();
@@ -97,8 +117,9 @@ bool ChatModeService::send(const QString& conversationId, const QString& text,
 bool ChatModeService::sendExisting(const QString& conversationId, int userMessageId,
                                    int replacesMessageId, const ModelSelection& selection,
                                    bool requireLocal) {
-    if (busy() || conversationId.isEmpty())
+    if (stopping_ || busy() || conversationId.isEmpty()) {
         return false;
+    }
     return runTurn(conversationId, userMessageId, replacesMessageId, selection, requireLocal);
 }
 
