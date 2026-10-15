@@ -24,6 +24,8 @@ jobs:
           persist-credentials: false
           # The formatting diff needs HEAD^ on push and the merge parents on PRs.
           fetch-depth: 2
+      - name: Reject personal paths in public files
+        run: python3 tools/analysis/check_personal_paths.py
       - name: Install build and validation tools
         run: |
           set -euo pipefail

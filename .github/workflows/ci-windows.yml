@@ -23,6 +23,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Reject personal paths in public files
+        run: python tools/analysis/check_personal_paths.py
       - name: Install Ninja
         shell: pwsh
         run: choco install ninja --no-progress --yes
