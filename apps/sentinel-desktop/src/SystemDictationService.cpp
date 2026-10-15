@@ -6,6 +6,7 @@ SystemDictationService::SystemDictationService(QObject* parent) : QObject(parent
 SystemDictationService::~SystemDictationService() = default;
 bool SystemDictationService::active() const { return false; }
 bool SystemDictationService::busy() const { return false; }
+bool SystemDictationService::supported() const { return false; }
 void SystemDictationService::start(const QString&) {
 #ifdef Q_OS_WIN
     emit failed(tr("Focus the message field and use Windows dictation (Win+H), or select Local Whisper."));

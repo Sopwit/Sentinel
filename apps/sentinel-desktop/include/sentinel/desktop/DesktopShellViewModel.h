@@ -2919,7 +2919,11 @@ private:
     bool companionChatVisible_ = false;
     SystemDictationService systemDictation_{this};
     void deliverVoiceTranscript(const QString& transcript);
+    bool localSttReady() const;
     bool voiceTestOnly_ = false;
+    // True while this capture runs on native dictation because local Whisper
+    // was not ready; stop/cancel must route back to the same backend.
+    bool voiceUsingSystemFallback_ = false;
     QString voiceInputStatus_;
     QString lastVoiceTranscript_;
     QString attachmentError_;

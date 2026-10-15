@@ -2275,12 +2275,20 @@ void DesktopShellViewModel::setVoiceInputSource(const QString& source) {
     systemDictation_.cancel();
     if (controller_.remote()) controller_.remote()->voiceAction("cancel");
     settings_.setVoiceInputSource(source);
+    voiceUsingSystemFallback_ = false;
     voiceInputStatus_.clear();
     emit voiceInputChanged();
 }
 void DesktopShellViewModel::deliverVoiceTranscript(const QString& transcript) {
     if (voiceTestOnly_) emit voiceTestTranscriptionCompleted(transcript);
     else emit voiceTranscriptionCompleted(transcript);
+}
+bool DesktopShellViewModel::localSttReady() const {
+    if (auto* client = controller_.remote())
+        return client->voiceState().value("available").toBool();
+    if (auto* session = controller_.audioSession())
+        return session->sttInfo().readiness == core::AudioRuntimeReadiness::Ready;
+    return false;
 }
 void DesktopShellViewModel::startVoiceCapture(bool testOnly) {
     if (voiceRecordingActive_ || systemDictation_.busy()) return;
@@ -2292,19 +2300,37 @@ void DesktopShellViewModel::startVoiceCapture(bool testOnly) {
     voiceTestOnly_ = testOnly;
     voiceInputStatus_.clear();
     lastVoiceTranscript_.clear();
+    voiceUsingSystemFallback_ = false;
+    // Local Whisper needs a configured runtime and model. Native dictation
+    // needs no setup, so prefer it over a dead microphone button. The user is
+    // told which backend is actually capturing, not left guessing.
+    const auto useNativeDictation = [this] {
+        voiceUsingSystemFallback_ = true;
+        voiceInputStatus_ =
+            tr("Local Whisper is not ready, so system dictation is being used instead.");
+        systemDictation_.start(settings_.appLanguage());
+    };
     if (voiceInputSource() == "system") {
         systemDictation_.start(settings_.appLanguage());
     } else if (auto* client = controller_.remote()) {
-        if (!client->voiceAction("start")) voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper and enable transcription in Settings → Voice & Audio, or choose system dictation.");
+        // The desktop app always reaches voice through the daemon. When it
+        // refuses the start (Whisper model missing, runtime busy, daemon still
+        // connecting) the mic button would otherwise stay dead, so fall back to
+        // the platform's native dictation, which needs no setup.
+        if (!client->voiceAction("start")) {
+            if (systemDictation_.supported()) useNativeDictation();
+            else voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper and enable transcription in Settings → Voice & Audio, or choose system dictation.");
+        }
     } else if (auto* session = controller_.audioSession()) {
-        session->startPushToTalk(core::VoiceInteractionMode::Dictation);
+        if (localSttReady()) session->startPushToTalk(core::VoiceInteractionMode::Dictation);
+        else voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper or choose system dictation.");
     } else {
         voiceInputStatus_ = tr("Local voice input is unavailable. Configure Whisper or choose system dictation.");
     }
     emit voiceInputChanged();
 }
 void DesktopShellViewModel::stopVoiceCapture() {
-    if (voiceInputSource() == "system") systemDictation_.stop();
+    if (voiceInputSource() == "system" || voiceUsingSystemFallback_) systemDictation_.stop();
     else if (auto* client = controller_.remote()) client->voiceAction("stop");
     else if (auto* session = controller_.audioSession()) session->stopPushToTalk();
 }

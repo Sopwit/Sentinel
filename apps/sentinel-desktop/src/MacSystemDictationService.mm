@@ -19,6 +19,7 @@ SystemDictationService::SystemDictationService(QObject* parent) : QObject(parent
 SystemDictationService::~SystemDictationService() { cancel(); }
 bool SystemDictationService::active() const { return impl_->active; }
 bool SystemDictationService::busy() const { return impl_->active || impl_->task != nil; }
+bool SystemDictationService::supported() const { return true; }
 void SystemDictationService::cancel() {
     ++impl_->generation;
     [impl_->engine stop];

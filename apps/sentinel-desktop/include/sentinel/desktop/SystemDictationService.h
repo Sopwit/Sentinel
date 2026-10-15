@@ -11,6 +11,9 @@ public:
     ~SystemDictationService() override;
     bool active() const;
     bool busy() const;
+    // False when this build has no real native dictation backend (Linux stub),
+    // so callers do not fall back to a path that can only fail.
+    bool supported() const;
     void start(const QString& language);
     void stop();
     void cancel();
