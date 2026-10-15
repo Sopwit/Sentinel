@@ -228,9 +228,9 @@ void AgentInspectorViewModel::setSearchText(QString value) {
 void AgentInspectorViewModel::selectRun(const QString& runId) {
     const auto detail = service_.detail(runId);
     setError(service_.error());
-    selectedRunId_ = detail.run.runId;
-    selectedRun_ = selectedRunId_.isEmpty() ? QVariantMap{} : runRow(detail.run);
-    if (!selectedRunId_.isEmpty() && controller_) {
+    selectedRunId_ = runId;
+    selectedRun_ = detail.run.runId.isEmpty() ? QVariantMap{} : runRow(detail.run);
+    if (!detail.run.runId.isEmpty() && controller_) {
         selectedRun_.insert(QStringLiteral("providerCatalogStatus"),
                             controller_->providerCatalogStatus(detail.run.providerId,
                                                                detail.run.modelId));

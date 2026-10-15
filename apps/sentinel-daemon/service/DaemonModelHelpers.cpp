@@ -211,7 +211,7 @@ void DaemonModelHelpers::rebuildModelRows() {
                 {"bestFor", repository.pipelineTask},
                 {"modelCard", repository.metadata.value("modelCard").toString().left(16000)},
                 {"chatCompatible", chatCompatible},
-                {"installed", !entry.localFile.isEmpty()},
+                {"installed", entry.installed == core::ModelLibraryInstalledState::Installed},
                 {"ollamaId", ""},
                 {"externalUrl",
                  gguf ? entry.source.url : "https://huggingface.co/" + entry.repositoryId},
@@ -223,7 +223,7 @@ void DaemonModelHelpers::rebuildModelRows() {
             if (entry.id.isEmpty()) entry.id = core::ModelLibraryService::entryId(
                 entry.provider.id, entry.runtime.id, entry.source.id, entry.artifactId);
             append(entry, repository);
-            if (entry.installed == core::ModelLibraryInstalledState::Installed || !entry.localFile.isEmpty())
+            if (entry.installed == core::ModelLibraryInstalledState::Installed)
                 installed.insert(!entry.localFile.isEmpty() ? QFileInfo(entry.localFile).canonicalFilePath()
                     : entry.provider.id + ":" + entry.nativeModelId);
         };

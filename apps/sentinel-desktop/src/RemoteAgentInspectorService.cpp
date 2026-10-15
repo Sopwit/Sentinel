@@ -9,16 +9,16 @@ RemoteAgentInspectorService::RemoteAgentInspectorService(DaemonClient& client, Q
     connect(&timer_, &QTimer::timeout, this, [this] { request(selected_); });
     connect(&client_, &DaemonClient::connectionStateChanged, this, [this] {
         pending_.clear();
+        pendingRun_.clear();
+        hasMore_ = false;
         runs_.clear();
         detail_ = {};
         queuedBefore_ = {};
         queuedBeforeId_.clear();
+        error_ = client_.daemonReachable() ? QString{} : client_.statusSummary();
+        emit updated();
         if (client_.daemonReachable())
             request(selected_);
-        else {
-            error_ = client_.statusSummary();
-            emit updated();
-        }
     });
     connect(&client_, &DaemonClient::requestFailed, this,
             [this](const QString& id, DaemonClient::Error, const QString& code) {
@@ -27,6 +27,8 @@ RemoteAgentInspectorService::RemoteAgentInspectorService(DaemonClient& client, Q
                 pending_.clear();
                 error_ = code;
                 emit updated();
+                if (pendingRun_ != selected_)
+                    request(selected_);
             });
     connect(&client_, &DaemonClient::responseReceived, this,
             [this](const QString& id, const QString&, const QJsonObject& payload) {
@@ -51,11 +53,12 @@ RemoteAgentInspectorService::RemoteAgentInspectorService(DaemonClient& client, Q
                 });
                 while (runs_.size() > 500)
                     runs_.removeLast();
-                detail_ = {};
-                detail_.run = decodeStoredAgentRun(h.value("run").toObject());
+                const bool selectionChanged = pendingRun_ != selected_;
+                core::AgentInspectorDetail incoming;
+                incoming.run = decodeStoredAgentRun(h.value("run").toObject());
 #define READ_LIST(field, key, Type)                                                                \
     for (const auto& v : h.value(key).toArray())                                                   \
-        detail_.field.append(decode##Type(v.toObject()));
+        incoming.field.append(decode##Type(v.toObject()));
                 READ_LIST(steps, "steps", StoredAgentStep)
                 READ_LIST(tools, "tools", StoredAgentToolCall)
                 READ_LIST(authorizations, "authorizations", StoredAgentAuthorization)
@@ -63,9 +66,14 @@ RemoteAgentInspectorService::RemoteAgentInspectorService(DaemonClient& client, Q
                 READ_LIST(claims, "claims", StoredAgentClaim)
                 READ_LIST(children, "children", StoredAgentRun)
 #undef READ_LIST
+                if (!selectionChanged)
+                    detail_ = incoming.run.runId == selected_ ? std::move(incoming)
+                                                              : core::AgentInspectorDetail{};
                 error_ = h.value("error").toString();
                 emit updated();
-                if (queuedBefore_.isValid()) {
+                if (selectionChanged) {
+                    request(selected_);
+                } else if (queuedBefore_.isValid()) {
                     const auto before = queuedBefore_;
                     const auto beforeId = queuedBeforeId_;
                     queuedBefore_ = {};
@@ -86,6 +94,7 @@ void RemoteAgentInspectorService::request(const QString& run, const QDateTime& b
         }
         return;
     }
+    pendingRun_ = run;
     pending_ = client_.request(DaemonClient::Command::agent_history,
                                {{"run_id", run},
                                 {"before_time", before.toString(Qt::ISODateWithMs)},

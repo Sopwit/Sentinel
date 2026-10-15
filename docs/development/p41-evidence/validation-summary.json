@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-15",
+  "head": "0f68c8e94bdbc09f2e31f037877e7c095839699d",
+  "branch": "feat/p4-desktop-live-integration",
+  "configure": "PASS",
+  "build": "PASS (CCACHE_DISABLE=1)",
+  "ctest": {
+    "passed": 127,
+    "failed": 0,
+    "seconds": 127.97,
+    "qt_skipped_subcases": [
+      "SKIP   : CredentialStoreTest::missingLinuxHelperRefusesPersistence() Linux Secret Service helper contract.",
+      "SKIP   : AgentRuntimeTest::asyncRunCommandStreamsAndContinues() This shell fixture requires child creation; strict macOS plans deny forks. Native host lifecycle is covered by plugin integration tests.",
+      "SKIP   : AgentRuntimeTest::asyncRunCommandCancellationAndTimeout() This shell fixture requires child creation; macOS strict no-detached-child plans now deny all forks. Plugin host cancellation is covered by real host integration tests.",
+      "SKIP   : AgentRuntimeTest::asyncDockerUsesProcessExecutorAndPreservesRestrictions() The fake Docker shell fixture requires child creation; strict macOS plans deny forks.",
+      "SKIP   : AgentRuntimeTest::shutdownStopsActiveCommand() This shell fixture requires child creation; strict macOS plans deny forks. Native host shutdown is covered by plugin integration tests.",
+      "SKIP   : ObservationPolicyTest::optInLiveClassification() Explicit opt-in required for production local-provider probe",
+      "SKIP   : RealToolExecutorToolsTest::browserToolsReportMissingNodeGracefully() npx is installed on this machine; the missing-node branch cannot run."
+    ]
+  },
+  "desktop_ipc_qttest": {
+    "passed_including_setup_cleanup": 66,
+    "failed": 0,
+    "skipped": 0
+  },
+  "rust": {
+    "passed": 130,
+    "failed": 0,
+    "toolchain": "1.94.0",
+    "host_socket_access": true
+  },
+  "rust_fmt": "PASS",
+  "rust_clippy": "PASS (-D warnings)",
+  "qml_lint": {
+    "files": 72,
+    "exit": 0
+  },
+  "ipc_generators": "PASS (both --check)",
+  "clang_tidy": {
+    "scope": [
+      "DaemonModelHelpers.cpp",
+      "RemoteAgentInspectorService.cpp",
+      "AgentInspectorViewModel.cpp"
+    ],
+    "errors": 0,
+    "warnings": 107,
+    "warning_categories": {
+      "readability-braces-around-statements": 106,
+      "performance-use-std-move": 1
+    }
+  },
+  "git_diff_check": "PASS",
+  "real_inference": "UNVERIFIED",
+  "native_gui_acceptance": "INCOMPLETE"
+}

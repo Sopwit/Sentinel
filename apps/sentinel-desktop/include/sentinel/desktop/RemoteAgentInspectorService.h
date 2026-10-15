@@ -25,7 +25,7 @@ private:
                  const QString& beforeId = {});
     DaemonClient& client_;
     QTimer timer_;
-    QString pending_, selected_, error_;
+    QString pending_, pendingRun_, selected_, error_;
     bool hasMore_ = false;
     QDateTime queuedBefore_;
     QString queuedBeforeId_;
