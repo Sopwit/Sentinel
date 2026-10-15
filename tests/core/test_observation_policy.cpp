@@ -57,6 +57,139 @@ class ObservationPolicyTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void relativeRequirementsUseFrozenWorkspace() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = QFileInfo(workspace.path()).canonicalFilePath();
+        FixedReplyProvider provider;
+        provider.reply =
+            R"({"requirements":[{"domain":"filesystem","resource":"calc.py","purpose":"inspect","tool":"read-file"},{"domain":"workspace","resource":".","purpose":"inspect","tool":"git-diff"}]})";
+        ObservationIntentPolicy policy(&provider);
+        const auto intent =
+            policy.classify("Read calc.py and inspect git-diff", "\nACTIVE WORKSPACE ROOT: " + root,
+                            BuiltInToolProvider::descriptors());
+        QVERIFY(!intent.indeterminate);
+        QCOMPARE(intent.requirements.size(), 2);
+        QCOMPARE(intent.requirements.first().resourceHint, root + "/calc.py");
+        QCOMPARE(intent.requirements.last().resourceHint, root);
+    }
+    void genericMutationDoesNotRequireAnInventedImplementation() {
+        FixedReplyProvider provider;
+        provider.reply =
+            R"({"requirements":[{"domain":"filesystem","resource":"/fixture/calc.py","purpose":"operate","tool":"edit-file"}]})";
+        ObservationIntentPolicy policy(&provider);
+        auto intent = policy.classify("Fix calc.py", {}, BuiltInToolProvider::descriptors());
+        QVERIFY(!intent.indeterminate);
+        QVERIFY(intent.requirements.first().toolId.isEmpty());
+        intent =
+            policy.classify("Fix calc.py using edit-file", {}, BuiltInToolProvider::descriptors());
+        QCOMPARE(intent.requirements.first().toolId, QStringLiteral("edit-file"));
+    }
+    void gitFileHintUsesActiveRepositoryScope() {
+        QTemporaryDir workspace, external;
+        QVERIFY(workspace.isValid());
+        QVERIFY(external.isValid());
+        const auto root = QFileInfo(workspace.path()).canonicalFilePath();
+        const auto outside = QFileInfo(external.path()).canonicalFilePath() + "/calc.py";
+        FixedReplyProvider provider;
+        QJsonArray requirements;
+        for (const auto& path : {root + "/calc.py", outside})
+            requirements.append(QJsonObject{{"domain", "workspace"},
+                                            {"resource", path},
+                                            {"purpose", "inspect"},
+                                            {"tool", "git-diff"}});
+        provider.reply =
+            QString::fromUtf8(QJsonDocument(QJsonObject{{"requirements", requirements}})
+                                  .toJson(QJsonDocument::Compact));
+        ObservationIntentPolicy policy(&provider);
+        const auto intent =
+            policy.classify("Inspect the active workspace diff", "\nACTIVE WORKSPACE ROOT: " + root,
+                            BuiltInToolProvider::descriptors());
+        QVERIFY(!intent.indeterminate);
+        QCOMPARE(intent.requirements.size(), 2);
+        QCOMPARE(intent.requirements.first().resourceHint, root);
+        QCOMPARE(intent.requirements.last().resourceHint, outside);
+    }
+    void executionRequiresExactRequestedCommand() {
+        ObservationIntent intent;
+        intent.requirements.append({ObservationDomain::ProcessExecution, "python3 test_calc.py",
+                                    EvidenceFreshness::TurnScoped, ObservationPurpose::Operate});
+        EvidenceRecord receipt;
+        receipt.domain = ObservationDomain::ProcessExecution;
+        receipt.scope = EvidenceScope::Operation;
+        receipt.outcome = EvidenceOutcome::Verified;
+        receipt.resource = "python3 TEST_CALC.py";
+        QVERIFY(
+            !EvidencePolicy::evaluate(intent, {receipt}, GroundingMode::Verified, true).accepted);
+        receipt.resource = "python3 test_calc.py";
+        QVERIFY(
+            EvidencePolicy::evaluate(intent, {receipt}, GroundingMode::Verified, true).accepted);
+    }
+    void classifierUsesRegisteredEvidenceContract() {
+        FixedReplyProvider provider;
+        provider.reply =
+            R"({"requirements":[{"domain":"system","resource":"/fixture","purpose":"inspect","tool":"git-diff"},{"domain":"execution","resource":"","query":"python3 test_calc.py","purpose":"inspect","tool":"run-command"}]})";
+        ObservationIntentPolicy policy(&provider);
+        const auto intent = policy.classify("Run test and inspect git-diff", {},
+                                            BuiltInToolProvider::descriptors());
+        QVERIFY(!intent.indeterminate);
+        QCOMPARE(intent.requirements.size(), 2);
+        QCOMPARE(intent.requirements.first().domain, ObservationDomain::Workspace);
+        QCOMPARE(intent.requirements.last().purpose, ObservationPurpose::Operate);
+        QCOMPARE(intent.requirements.last().resourceHint, QStringLiteral("python3 test_calc.py"));
+    }
+    void exactRequestedToolCannotBeSubstituted() {
+        ObservationIntent intent;
+        ObservationRequirement requirement{ObservationDomain::Workspace, "/fixture"};
+        requirement.toolId = "git-diff";
+        intent.requirements.append(requirement);
+        EvidenceRecord evidence;
+        evidence.domain = ObservationDomain::Workspace;
+        evidence.resource = "/fixture";
+        evidence.outcome = EvidenceOutcome::Verified;
+        evidence.scope = EvidenceScope::ExactResource;
+        evidence.toolId = "git-status";
+        QVERIFY(
+            !EvidencePolicy::evaluate(intent, {evidence}, GroundingMode::Verified, true).accepted);
+        evidence.toolId = "git-diff";
+        QVERIFY(
+            EvidencePolicy::evaluate(intent, {evidence}, GroundingMode::Verified, true).accepted);
+    }
+    void classifierPreservesBoundedTaskRequirements_data() {
+        QTest::addColumn<int>("count");
+        QTest::addColumn<QString>("tool");
+        QTest::addColumn<bool>("valid");
+        QTest::newRow("five-requirements") << 5 << "git-diff" << true;
+        QTest::newRow("eight-requirements") << 8 << "git-diff" << true;
+        QTest::newRow("nine-rejected") << 9 << "git-diff" << false;
+        QTest::newRow("unknown-tool-rejected") << 1 << "invented-tool" << false;
+    }
+    void classifierPreservesBoundedTaskRequirements() {
+        QFETCH(int, count);
+        QFETCH(QString, tool);
+        QFETCH(bool, valid);
+        auto provider = std::make_shared<FixedReplyProvider>();
+        QJsonArray requirements;
+        for (int i = 0; i < count; ++i)
+            requirements.append(QJsonObject{{"domain", "workspace"},
+                                            {"resource", "/fixture"},
+                                            {"purpose", "inspect"},
+                                            {"operation", "none"},
+                                            {"tool", tool}});
+        provider->reply =
+            QString::fromUtf8(QJsonDocument(QJsonObject{{"requirements", requirements}})
+                                  .toJson(QJsonDocument::Compact));
+        ObservationIntentPolicy policy(provider.get());
+        const auto intent =
+            policy.classify("Inspect requested diff", {}, BuiltInToolProvider::descriptors());
+        QCOMPARE(!intent.indeterminate, valid);
+        if (valid) {
+            QCOMPARE(intent.requirements.size(), count);
+            QCOMPARE(intent.requirements.first().toolId, tool);
+        } else
+            QVERIFY(intent.requirements.isEmpty());
+    }
+
     void optInLiveClassification() {
         const auto model = qEnvironmentVariable("SENTINEL_LIVE_CLASSIFIER_MODEL");
         if (model.isEmpty())
@@ -89,6 +222,9 @@ private slots:
         QTest::newRow("invented-call") << "other-run:1" << "return a - b;" << false;
         QTest::newRow("invented-quote") << "run:1" << "return a + b;" << false;
         QTest::newRow("empty") << "run:1" << "" << false;
+        QTest::newRow("double-escaped-newline") << "run:1" << "}\\n// literal" << true;
+        QTest::newRow("escaped-fabrication") << "run:1" << "}\\nUNOBSERVED" << false;
+        QTest::newRow("literal-backslash-preferred") << "run:1" << "// literal \\n" << true;
     }
     void explanationReferences() {
         QFETCH(QString, callId);
@@ -97,7 +233,7 @@ private slots:
         auto observation = std::make_shared<StructuredObservation>();
         observation->kind = StructuredObservationKind::FileContent;
         observation->data = {{"path", "/fixture/calc.cpp"},
-                             {"content", "int add(int a,int b) { return a - b; }"}};
+                             {"content", "int add(int a,int b) { return a - b; }\n// literal \\n"}};
         EvidenceRecord evidence;
         evidence.domain = ObservationDomain::FileSystem;
         evidence.outcome = EvidenceOutcome::Verified;
@@ -133,6 +269,62 @@ private slots:
             QVERIFY(!ClaimGroundingResolver::filesystemExplanation({}, {denied}, proposed));
         }
     }
+    void codingFinalUsesActualExecutionReceipt() {
+        ObservationIntent intent;
+        intent.requirements.append({ObservationDomain::FileSystem,
+                                    QStringLiteral("/fixture/calc.py"),
+                                    EvidenceFreshness::TurnScoped, ObservationPurpose::Operate});
+        EvidenceRecord operation;
+        operation.toolId = QStringLiteral("edit-file");
+        operation.toolCallId = QStringLiteral("edit:1");
+        operation.domain = ObservationDomain::FileSystem;
+        operation.resource = QStringLiteral("/fixture/calc.py");
+        operation.scope = EvidenceScope::Operation;
+        operation.outcome = EvidenceOutcome::Verified;
+        EvidenceRecord execution;
+        execution.toolId = QStringLiteral("run-command");
+        execution.toolCallId = QStringLiteral("exec:1");
+        execution.domain = ObservationDomain::ProcessExecution;
+        execution.resource = QStringLiteral("python3 test_calc.py");
+        execution.outcome = EvidenceOutcome::Verified;
+        auto receipt = std::make_shared<StructuredObservation>();
+        receipt->kind = StructuredObservationKind::Generic;
+        receipt->data = {{QStringLiteral("exitCode"), 0},
+                         {QStringLiteral("stdout"), QStringLiteral("TEST_OK")},
+                         {QStringLiteral("stderr"), QString()},
+                         {QStringLiteral("complete"), true}};
+        execution.structuredObservation = receipt;
+        const auto final = ClaimGroundingResolver::filesystemFinalAnswer(
+            intent, {operation, execution}, QStringLiteral("FABRICATED_ASSERTION"));
+        QVERIFY(final);
+        QVERIFY(final->contains(QStringLiteral("TEST_OK")));
+        QVERIFY(!final->contains(QStringLiteral("FABRICATED_ASSERTION")));
+        auto json = QJsonDocument::fromJson(final->toUtf8()).object();
+        QCOMPARE(json.value(QStringLiteral("executions"))
+                     .toArray()
+                     .first()
+                     .toObject()
+                     .value(QStringLiteral("exit_code"))
+                     .toInt(),
+                 0);
+        auto failedReceipt = std::make_shared<StructuredObservation>(*receipt);
+        failedReceipt->data.insert(QStringLiteral("exitCode"), 1);
+        execution.outcome = EvidenceOutcome::Failed;
+        execution.structuredObservation = failedReceipt;
+        const auto failed = ClaimGroundingResolver::filesystemFinalAnswer(
+            intent, {operation, execution}, QStringLiteral("ALL TESTS PASSED"));
+        QVERIFY(failed);
+        json = QJsonDocument::fromJson(failed->toUtf8()).object();
+        QCOMPARE(json.value(QStringLiteral("executions"))
+                     .toArray()
+                     .first()
+                     .toObject()
+                     .value(QStringLiteral("exit_code"))
+                     .toInt(),
+                 1);
+        QVERIFY(!failed->contains(QStringLiteral("ALL TESTS PASSED")));
+    }
+
     void relativeReadEvidenceUsesAuthoritativeResolvedPath() {
         auto tools = BuiltInToolProvider::descriptors();
         const auto descriptor = *std::find_if(tools.begin(), tools.end(), [](const auto& t) {
@@ -376,8 +568,8 @@ private slots:
         ObservationIntentPolicy policy(&provider, token);
         const auto intent = policy.classify(QStringLiteral("List the workspace"), {}, {});
         QCOMPARE(provider.request.cancellationToken, token);
-        QCOMPARE(provider.request.deadlineMs, 30000);
-        QCOMPARE(provider.request.maxOutputTokens, 512);
+        QCOMPARE(provider.request.deadlineMs, 60000);
+        QCOMPARE(provider.request.maxOutputTokens, 2048);
         QVERIFY(intent.indeterminate);
         QCOMPARE(intent.error, QStringLiteral("Cancelled"));
         QVERIFY(provider.request.tools.isEmpty());

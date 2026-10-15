@@ -80,7 +80,142 @@ class LlmAgentRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void skippedNativeCallNeverReusesOldHistory_data() {
+        QTest::addColumn<bool>("feedback");
+        QTest::newRow("loop-skip-repair") << true;
+        QTest::newRow("missing-result-fails-closed") << false;
+    }
+    void skippedNativeCallNeverReusesOldHistory() {
+        QFETCH(bool, feedback);
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply call;
+        call.success = true;
+        call.toolCalls.append({"new-call", "read-file", QJsonObject{{"path", "calc.py"}}, {}});
+        ChatProviderReply final;
+        final.success = true;
+        final.message = "No new observation was executed.";
+        provider->scriptedRequests = {call, final};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        auto old = sampleRecord();
+        old.toolId = "read-file";
+        old.observation = "OLDER_OBSERVATION_SHOULD_NOT_BE_REBOUND";
+        QCOMPARE(runtime.nextStep("Read calc.py", {old}).kind, AgentStepDecision::Kind::ToolCall);
+        if (feedback)
+            runtime.setPlannerFeedback(
+                "Repeated read was not executed. Choose missing verification or final.");
+        const auto decision = runtime.nextStep("Read calc.py", {old});
+        if (feedback) {
+            QCOMPARE(provider->requestOptions.size(), 2);
+            QVERIFY(provider->requestOptions.last().priorToolCalls.isEmpty());
+            QVERIFY(provider->requestOptions.last().toolResults.isEmpty());
+            QCOMPARE(decision.kind, AgentStepDecision::Kind::FinalAnswer);
+        } else {
+            QCOMPARE(provider->requestOptions.size(), 1);
+            QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+            QVERIFY(decision.reason.contains("missing"));
+        }
+    }
+    void mismatchedNativeResultFailsClosed() {
+        auto provider = std::make_shared<FakeChatProvider>();
+        ChatProviderReply call;
+        call.success = true;
+        call.toolCalls.append({"read-call", "read-file", QJsonObject{{"path", "calc.py"}}, {}});
+        provider->scriptedRequests = {call};
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), provider.get());
+        ModelBinding binding;
+        binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
+        runtime.bindModel(binding, provider);
+        QCOMPARE(runtime.nextStep("Read calc.py", {}).kind, AgentStepDecision::Kind::ToolCall);
+        auto wrong = sampleRecord();
+        wrong.toolId = "git-diff";
+        const auto rejected = runtime.nextStep("Read calc.py", {wrong});
+        QCOMPARE(rejected.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(rejected.reason.contains("does not match"));
+        QCOMPARE(provider->requestOptions.size(), 1);
+    }
+
+    void pendingVerificationIsExplicitAndDisappearsAfterObservation() {
+        FakeChatProvider provider;
+        provider.scriptedReply = R"({"action":"giveup","reason":"fixture stop"})";
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        ObservationIntent intent;
+        intent.requirements = {{ObservationDomain::FileSystem, "/fixture/calc.py",
+                                EvidenceFreshness::TurnScoped, ObservationPurpose::Operate},
+                               {ObservationDomain::FileSystem, "/fixture/test_calc.py"},
+                               {ObservationDomain::Workspace, "/fixture"}};
+        intent.requirements[1].toolId = "read-file";
+        intent.requirements[2].toolId = "git-diff";
+        runtime.setObservationIntent(intent);
+        runtime.setEvidence({});
+        runtime.nextStep("Fix calc.py, run the test and inspect git-diff", {});
+        auto pending = provider.prompts.last().section("REMAINING REQUIRED OBSERVATIONS", 1);
+        QVERIFY(pending.contains("/fixture/test_calc.py"));
+        QVERIFY(pending.contains("git-diff"));
+        EvidenceRecord read;
+        read.domain = ObservationDomain::FileSystem;
+        read.resource = "/fixture/test_calc.py";
+        read.scope = EvidenceScope::ExactResource;
+        read.outcome = EvidenceOutcome::Verified;
+        read.toolId = "read-file";
+        runtime.setEvidence({read});
+        runtime.nextStep("Fix calc.py, run the test and inspect git-diff", {});
+        pending = provider.prompts.last().section("REMAINING REQUIRED OBSERVATIONS", 1);
+        QVERIFY(!pending.contains("/fixture/test_calc.py"));
+        QVERIFY(pending.contains("git-diff"));
+        EvidenceRecord diff = read;
+        diff.domain = ObservationDomain::Workspace;
+        diff.resource = "/fixture";
+        diff.toolId = "git-diff";
+        runtime.setEvidence({read, diff});
+        runtime.nextStep("Fix calc.py, run the test and inspect git-diff", {});
+        QVERIFY(!provider.prompts.last().contains("REMAINING REQUIRED OBSERVATIONS"));
+    }
+
+    void focusesLocalCodingToolsWithoutExpandingProfile() {
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime(BuiltInToolProvider::descriptors(), &provider);
+        ObservationIntent intent;
+        intent.requirements.append({ObservationDomain::FileSystem, QStringLiteral("fixture.cpp")});
+        runtime.setObservationIntent(intent);
+        const auto ids = [&] {
+            QStringList result;
+            for (const auto& tool : runtime.availableTools())
+                result.append(tool.id);
+            return result;
+        };
+        QVERIFY(ids().contains(QStringLiteral("read-file")));
+        QVERIFY(ids().contains(QStringLiteral("git-diff")));
+        QVERIFY(!ids().contains(QStringLiteral("write-file")));
+        QVERIFY(!ids().contains(QStringLiteral("run-command")));
+        QVERIFY(!ids().contains(QStringLiteral("web-search")));
+        intent.requirements.first().purpose = ObservationPurpose::Operate;
+        runtime.setObservationIntent(intent);
+        QVERIFY(ids().contains(QStringLiteral("edit-file")));
+        QVERIFY(ids().contains(QStringLiteral("run-command")));
+        QVERIFY(ids().contains(QStringLiteral("todo-write")));
+        QVERIFY(!ids().contains(QStringLiteral("voice-speak")));
+        intent.requirements.append(
+            {ObservationDomain::Network, QStringLiteral("https://example.test")});
+        runtime.setObservationIntent(intent);
+        QVERIFY(ids().contains(QStringLiteral("web-search")));
+        runtime.setAllowedToolIds({QStringLiteral("read-file")});
+        QCOMPARE(ids(), QStringList{QStringLiteral("read-file")});
+    }
+    void nativeRequestHonorsPerRequestDeadline_data() {
+        QTest::addColumn<int>("requestedBudget");
+        QTest::addColumn<int>("modelLimit");
+        QTest::addColumn<int>("expectedBudget");
+        QTest::newRow("unknown-small") << 128 << 0 << 128;
+        QTest::newRow("unknown-reasoning-budget") << 2048 << 0 << 2048;
+        QTest::newRow("known-model-cap") << 2048 << 512 << 512;
+    }
     void nativeRequestHonorsPerRequestDeadline() {
+        QFETCH(int, requestedBudget);
+        QFETCH(int, modelLimit);
+        QFETCH(int, expectedBudget);
         QTcpServer server;
         QVERIFY(server.listen(QHostAddress::LocalHost, 0));
         QList<QTcpSocket*> sockets;
@@ -95,11 +230,13 @@ private slots:
         binding.modelId = "fixture";
         binding.capabilities.nativeToolCalling = CapabilitySupport::Supported;
         binding.capabilities.contextWindow = 8192;
+        if (modelLimit > 0)
+            binding.capabilities.maxOutputTokens = modelLimit;
         auto provider = service.constructProvider(binding);
         ChatRequestOptions options;
         options.nativeToolCalling = true;
         options.deadlineMs = 100;
-        options.maxOutputTokens = 128;
+        options.maxOutputTokens = requestedBudget;
         QElapsedTimer timer;
         timer.start();
         const auto reply = provider->sendRequest("Synthetic stall", options);
@@ -107,7 +244,7 @@ private slots:
         QCOMPARE(reply.category, ChatProviderErrorCategory::Timeout);
         QCOMPARE(reply.attempts, 1);
         QVERIFY(timer.elapsed() < 2000);
-        QCOMPARE(reply.diagnostics.value("requested_output_tokens").toInt(), 128);
+        QCOMPARE(reply.diagnostics.value("requested_output_tokens").toInt(), expectedBudget);
         QCOMPARE(sockets.size(), 1);
     }
 

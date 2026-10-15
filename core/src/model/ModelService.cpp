@@ -696,8 +696,9 @@ public:
         // Budget the actual serialized native request, including schemas and tool
         // results omitted by ContextEngine's prompt estimate. This is an estimate,
         // not a tokenizer measurement; the provider may still reject the request.
-        const int outputBudget = qMin(options.maxOutputTokens > 0 ? options.maxOutputTokens : 1024,
-                                      binding_.capabilities.maxOutputTokens.value_or(1024));
+        const int requestedBudget = options.maxOutputTokens > 0 ? options.maxOutputTokens : 1024;
+        const int outputBudget =
+            qMin(requestedBudget, binding_.capabilities.maxOutputTokens.value_or(requestedBudget));
         body.insert(QStringLiteral("max_tokens"), qMax(1, outputBudget));
         const auto bytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
         const auto estimatedInput = (bytes + 2) / 3 + 256;

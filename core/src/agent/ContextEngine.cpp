@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/agent/ContextEngine.h"
+#include "sentinel/core/agent/ObservationPolicy.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/runtime/ToolArgumentValidator.h"
 #include "sentinel/core/security/AuthorizationResolver.h"
@@ -71,18 +72,28 @@ AgentPlanningContext ContextEngine::build(const AgentContextInput& input) const 
         budget);
 
     QStringList requirements;
-    for (const auto& requirement : input.intent.requirements)
-        requirements.append(requirement.claimId + QLatin1Char(' ') +
-                            observationDomainName(requirement.domain) + QLatin1Char(' ') +
-                            requirement.resourceHint +
-                            (requirement.recursive ? QStringLiteral(" recursive scope")
-                                                   : QStringLiteral(" exact scope")) +
-                            (requirement.claimType == ClaimType::HiddenEntriesExist
-                                 ? QStringLiteral(" hidden_entries; use includeHidden:true")
-                             : requirement.claimType == ClaimType::PathPatternExists
-                                 ? QStringLiteral(" path_pattern ") + requirement.claimQuery +
-                                       QStringLiteral("; includeHidden:true")
-                                 : QString{}));
+    for (const auto& requirement : input.intent.requirements) {
+        ObservationIntent single;
+        single.requirements = {requirement};
+        const auto gate =
+            EvidencePolicy::evaluate(single, input.evidence, GroundingMode::Verified, true);
+        requirements.append(
+            QStringLiteral("%1 purpose=%2 tool=%3 ")
+                .arg(gate.accepted ? QStringLiteral("observed") : QStringLiteral("PENDING"),
+                     requirement.purpose == ObservationPurpose::Operate ? QStringLiteral("operate")
+                                                                        : QStringLiteral("inspect"),
+                     requirement.toolId) +
+            requirement.claimId + QLatin1Char(' ') + observationDomainName(requirement.domain) +
+            QLatin1Char(' ') + requirement.resourceHint +
+            (requirement.recursive ? QStringLiteral(" recursive scope")
+                                   : QStringLiteral(" exact scope")) +
+            (requirement.claimType == ClaimType::HiddenEntriesExist
+                 ? QStringLiteral(" hidden_entries; use includeHidden:true")
+             : requirement.claimType == ClaimType::PathPatternExists
+                 ? QStringLiteral(" path_pattern ") + requirement.claimQuery +
+                       QStringLiteral("; includeHidden:true")
+                 : QString{}));
+    }
     if (input.intent.indeterminate)
         requirements.append(QStringLiteral("Live state is uncertain; obtain current evidence."));
     if (!requirements.isEmpty())

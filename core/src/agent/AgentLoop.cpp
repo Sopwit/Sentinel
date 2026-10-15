@@ -16,9 +16,11 @@
 #include "sentinel/core/security/ISandboxPolicy.h"
 #include "sentinel/core/security/PathGuard.h"
 #include "sentinel/core/security/PermissionService.h"
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
@@ -33,14 +35,85 @@
 namespace sentinel::core {
 namespace {
 Q_LOGGING_CATEGORY(loopDiagnostics, "sentinel.agent.loop.diagnostics", QtWarningMsg)
+QJsonObject traceArguments(const QList<ToolInvocationArgument>& arguments,
+                           const QString& workspace) {
+    QJsonObject result;
+    for (const auto& argument : arguments) {
+        if (argument.id == QLatin1String("path") || argument.id == QLatin1String("source") ||
+            argument.id == QLatin1String("destination")) {
+            const auto path = ExternalDirectoryGate{}.resolvePath(argument.value, workspace);
+            result.insert(argument.id, !workspace.isEmpty() && PathGuard::contains(workspace, path)
+                                           ? QStringLiteral("<workspace>/") +
+                                                 QDir(workspace).relativeFilePath(path)
+                                           : QStringLiteral("<redacted-path>"));
+        } else if (argument.id == QLatin1String("command")) {
+            result.insert(QStringLiteral("command_sha256"),
+                          QString::fromLatin1(QCryptographicHash::hash(argument.value.toUtf8(),
+                                                                       QCryptographicHash::Sha256)
+                                                  .toHex()));
+        } else if (argument.id == QLatin1String("offset") ||
+                   argument.id == QLatin1String("limit") ||
+                   argument.id == QLatin1String("timeoutMs")) {
+            bool valid = false;
+            const auto number = argument.value.toInt(&valid);
+            if (valid) {
+                result.insert(argument.id, number);
+            }
+        } else if (argument.id == QLatin1String("staged")) {
+            result.insert(argument.id, argument.value == QLatin1String("true"));
+        }
+    }
+    return result;
+}
+
 void traceStage(const AgentLoopState& state, const char* stage, const char* event,
-                const AgentStepDecision* decision = nullptr) {
+                const AgentStepDecision* decision = nullptr, const QString& workspace = {}) {
     QJsonObject record{{"session_id", state.sessionId},
                        {"stage", stage},
                        {"event", event},
                        {"utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
                        {"step", state.steps.size() + 1},
                        {"classification_indeterminate", state.observationIntent.indeterminate}};
+    QJsonArray requirements, evidence;
+    for (const auto& item : state.observationIntent.requirements) {
+        requirements.append(QJsonObject{{"domain", observationDomainName(item.domain)},
+                                        {"purpose", int(item.purpose)},
+                                        {"tool", item.toolId}});
+    }
+    for (const auto& item : state.evidence) {
+        evidence.append(QJsonObject{{"tool", item.toolId},
+                                    {"step", item.stepIndex},
+                                    {"outcome", int(item.outcome)},
+                                    {"scope", int(item.scope)}});
+    }
+    record.insert("requirements", requirements);
+    record.insert("evidence", evidence);
+    record.insert("phase", agentLoopPhaseName(state.phase));
+    record.insert("rejected_finals", state.rejectedFinalAnswers);
+    record.insert("read_repairs", state.repeatedReadRepairs);
+    record.insert("verification_recoveries", state.finalVerificationRecoveries);
+    if (decision) {
+        record.insert("decision", int(decision->kind));
+        record.insert("tool", decision->toolId);
+        QJsonArray calls;
+        if (decision->toolBatch.isEmpty() && !decision->toolId.isEmpty()) {
+            calls.append(
+                QJsonObject{{"tool", decision->toolId},
+                            {"arguments", traceArguments(decision->arguments, workspace)}});
+        }
+        for (const auto& call : decision->toolBatch) {
+            calls.append(QJsonObject{{"tool", call.toolId},
+                                     {"provider_call_id", call.providerCallId.left(128)},
+                                     {"arguments", traceArguments(call.arguments, workspace)}});
+        }
+        record.insert("calls", calls);
+    }
+    if (QLatin1String(stage) == QLatin1String("evidence") && !state.steps.isEmpty()) {
+        const auto& step = state.steps.last();
+        record.insert("executed_tool", step.toolId);
+        record.insert("executed_arguments", traceArguments(step.arguments, workspace));
+        record.insert("tool_status", step.statusText);
+    }
     if (decision)
         record.insert("tool_requested",
                       !decision->toolId.isEmpty() || !decision->toolBatch.isEmpty());
@@ -82,6 +155,87 @@ void AgentLoop::preparePlanningContext(const AgentLoopState& state) {
 
 namespace {
 
+std::optional<AgentStepDecision> finalVerificationRecovery(AgentLoopState& state,
+                                                           const QString& workspace,
+                                                           const QStringList& knownTools,
+                                                           const IToolRegistry* registry) {
+    if (!registry || state.rejectedFinalAnswers != 1 || state.finalVerificationRecoveries >= 3 ||
+        !state.pendingApprovalPlan.invocations.isEmpty()) {
+        return std::nullopt;
+    }
+    const bool wrote =
+        std::any_of(state.evidence.cbegin(), state.evidence.cend(), [](const auto& item) {
+            return item.scope == EvidenceScope::Operation &&
+                   item.outcome == EvidenceOutcome::Verified &&
+                   (item.domain == ObservationDomain::FileSystem ||
+                    item.domain == ObservationDomain::Workspace);
+        });
+    const bool tested =
+        std::any_of(state.evidence.cbegin(), state.evidence.cend(), [](const auto& item) {
+            return item.toolId == QLatin1String("run-command") &&
+                   item.domain == ObservationDomain::ProcessExecution &&
+                   item.outcome == EvidenceOutcome::Verified && item.structuredObservation &&
+                   item.structuredObservation->data.value(QStringLiteral("exitCode")).toInt(-1) ==
+                       0;
+        });
+    if (!wrote || !tested) {
+        return std::nullopt;
+    }
+    QList<ObservationRequirement> pending;
+    for (const auto& requirement : state.observationIntent.requirements) {
+        ObservationIntent single;
+        single.requirements = {requirement};
+        if (EvidencePolicy::evaluate(single, state.evidence, GroundingMode::Verified, true)
+                .accepted) {
+            continue;
+        }
+        if (requirement.purpose != ObservationPurpose::Inspect ||
+            (requirement.toolId != QLatin1String("read-file") &&
+             requirement.toolId != QLatin1String("git-diff") &&
+             requirement.toolId != QLatin1String("git-status"))) {
+            return std::nullopt;
+        }
+        pending.append(requirement);
+    }
+    if (pending.isEmpty() || pending.size() > 3 - state.finalVerificationRecoveries) {
+        return std::nullopt;
+    }
+    // Vet the complete remaining read-only checklist before dispatching any of it.
+    for (const auto& requirement : pending) {
+        if (!knownTools.contains(requirement.toolId) || requirement.resourceHint.isEmpty()) {
+            return std::nullopt;
+        }
+        const auto path = ExternalDirectoryGate{}.resolvePath(requirement.resourceHint, workspace);
+        if (!PathGuard::contains(workspace, path)) {
+            return std::nullopt;
+        }
+        const auto tool = registry->findToolById(requirement.toolId);
+        if (!tool || tool->source != ToolSource::BuiltIn || !tool->enabled ||
+            !tool->exposedToModel || !toolSupportedOnCurrentPlatform(*tool)) {
+            return std::nullopt;
+        }
+        if (std::any_of(state.steps.cbegin(), state.steps.cend(), [&](const auto& step) {
+                return step.toolId == requirement.toolId && !step.succeeded;
+            })) {
+            return std::nullopt;
+        }
+    }
+    const auto& missing = pending.first();
+    const auto path = ExternalDirectoryGate{}.resolvePath(missing.resourceHint, workspace);
+    const auto tool = registry->findToolById(missing.toolId);
+    AgentStepDecision decision;
+    decision.kind = AgentStepDecision::Kind::ToolCall;
+    decision.toolId = tool->id;
+    decision.toolName = tool->name;
+    decision.riskLevel = tool->riskLevel;
+    decision.executionMode = tool->executionMode;
+    decision.arguments = {{QStringLiteral("path"), path}};
+    decision.thought =
+        QStringLiteral("Observe the explicitly requested remaining read-only verification.");
+    ++state.finalVerificationRecoveries;
+    return decision;
+}
+
 QString decisionActionKey(const AgentStepDecision& decision) {
     auto argumentsKey = [](const QList<ToolInvocationArgument>& arguments) {
         QStringList parts;
@@ -97,19 +251,65 @@ QString decisionActionKey(const AgentStepDecision& decision) {
     return key;
 }
 
-bool repeatsUnchangedStep(const AgentLoopState& state, const ToolInvocationPlan& plan) {
+QString normalizedActionKey(const QString& id, QList<ToolInvocationArgument> arguments,
+                            const QString& workspace, const IToolRegistry* registry) {
+    for (auto& argument : arguments) {
+        if (argument.id == QLatin1String("path") || argument.id == QLatin1String("source") ||
+            argument.id == QLatin1String("destination")) {
+            argument.value = ExternalDirectoryGate{}.resolvePath(argument.value, workspace);
+        }
+    }
+    std::sort(arguments.begin(), arguments.end(),
+              [](const auto& a, const auto& b) { return a.id < b.id; });
+    QJsonObject values;
+    for (const auto& argument : arguments) {
+        values.insert(argument.id, argument.value);
+    }
+    if (registry) {
+        const auto descriptor = registry->findToolById(id);
+        if (descriptor) {
+            const auto properties =
+                descriptor->inputSchema.value(QStringLiteral("properties")).toObject();
+            for (auto it = properties.begin(); it != properties.end(); ++it) {
+                const auto field = it.value().toObject();
+                if (!values.contains(it.key()) && field.contains(QStringLiteral("default"))) {
+                    values.insert(it.key(),
+                                  field.value(QStringLiteral("default")).toVariant().toString());
+                }
+            }
+        }
+    }
+    return id + QLatin1Char('|') +
+           QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact));
+}
+
+bool repeatsUnchangedStep(const AgentLoopState& state, const ToolInvocationPlan& plan,
+                          const QString& workspace, const IToolRegistry* registry) {
     if (plan.invocations.size() != 1 || state.steps.isEmpty())
         return false;
-    const auto& previous = state.steps.last();
     const auto& call = plan.invocations.first();
-    if (previous.toolId != call.toolId || previous.arguments.size() != call.arguments.size())
-        return false;
-    auto ordered = [](QList<ToolInvocationArgument> arguments) {
-        std::sort(arguments.begin(), arguments.end(),
-                  [](const auto& a, const auto& b) { return a.id < b.id; });
-        return arguments;
-    };
-    return ordered(previous.arguments) == ordered(call.arguments);
+    const auto requested = normalizedActionKey(call.toolId, call.arguments, workspace, registry);
+    for (auto it = state.steps.crbegin(); it != state.steps.crend(); ++it) {
+        if (normalizedActionKey(it->toolId, it->arguments, workspace, registry) != requested) {
+            continue;
+        }
+        // The immediately previous identical call made no intervening progress.
+        if (it == state.steps.crbegin()) {
+            return true;
+        }
+        // A stale read is legitimately repeatable after mutation. A still-current
+        // successful observation/command must not be executed again just to finish.
+        if (it->succeeded &&
+            std::any_of(state.evidence.cbegin(), state.evidence.cend(), [&](const auto& item) {
+                return item.stepIndex == it->index &&
+                       (item.scope != EvidenceScope::Operation ||
+                        item.domain == ObservationDomain::ProcessExecution) &&
+                       item.outcome == EvidenceOutcome::Verified;
+            })) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool repeatsFailedCycle(const AgentLoopState& state, const ToolInvocationPlan& plan) {
@@ -134,20 +334,36 @@ bool repeatsFailedCycle(const AgentLoopState& state, const ToolInvocationPlan& p
            first == key(plan.invocations.first().toolId, plan.invocations.first().arguments);
 }
 
-bool repairRepeatedRead(AgentLoopState& state, const ToolInvocationPlan& plan,
-                        IAgentStepPlanner& planner) {
+bool repairRepeatedObservation(AgentLoopState& state, const ToolInvocationPlan& plan,
+                               IAgentStepPlanner& planner) {
     if (state.repeatedReadRepairs != 0 || plan.invocations.size() != 1 || state.steps.isEmpty() ||
         !state.steps.last().succeeded)
         return false;
     const auto& id = plan.invocations.first().toolId;
-    if (id != QLatin1String("read-file") && id != QLatin1String("glob") &&
-        id != QLatin1String("grep") && id != QLatin1String("list-directory"))
+    const bool read = id == QLatin1String("read-file") || id == QLatin1String("glob") ||
+                      id == QLatin1String("grep") || id == QLatin1String("list-directory");
+    QString command;
+    for (const auto& argument : plan.invocations.first().arguments) {
+        if (argument.id == QLatin1String("command")) {
+            command = argument.value;
+        }
+    }
+    const bool verifiedCommand =
+        id == QLatin1String("run-command") &&
+        std::any_of(state.evidence.cbegin(), state.evidence.cend(), [&](const auto& item) {
+            return item.toolId == id && item.domain == ObservationDomain::ProcessExecution &&
+                   item.resource == command && item.outcome == EvidenceOutcome::Verified;
+        });
+    if (!read && !verifiedCommand) {
         return false;
+    }
     ++state.repeatedReadRepairs;
     // Nothing is executed or assumed successful here. One planning-only repair
     // preserves the existing evidence/approval gates and the next repeat stops.
     planner.setPlannerFeedback(QStringLiteral(
-        "Repeated observation was not executed. Review all current tool observations, not only "
+        "Repeated observation or already successful command was not executed. Do not rerun a "
+        "successful test for the same file revision. Review the PENDING requirements and all "
+        "current tool observations, not only "
         "the latest result. If they satisfy the task, provide a verified final with the required "
         "structured claims. Otherwise choose a different missing observation or report the "
         "blocker. Do not repeat equivalent reads using another spelling of the same path."));
@@ -550,9 +766,19 @@ void AgentLoop::advanceAsync() {
         preparePlanningContext(asyncState_);
         planner_.setEvidence(asyncState_.evidence);
         traceStage(asyncState_, "planning", "enter");
-        decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
-        traceStage(asyncState_, "planning", "exit", &decision);
-        asyncState_.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+        if (const auto recovery = finalVerificationRecovery(asyncState_, workingDirectory(),
+                                                            knownToolIds_, toolRegistry_)) {
+            decision = *recovery;
+            if (statusCallback_) {
+                statusCallback_(QStringLiteral("Planning requested final verification."));
+            }
+            traceStage(asyncState_, "verification_recovery", "selected", &decision,
+                       workingDirectory());
+        } else {
+            decision = planner_.nextStep(asyncState_.goal, asyncState_.steps);
+            asyncState_.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+        }
+        traceStage(asyncState_, "planning", "exit", &decision, workingDirectory());
     } catch (...) {
         if (planningCallback_)
             planningCallback_(stepIndex, false);
@@ -590,7 +816,7 @@ void AgentLoop::advanceAsync() {
     auto plan = planFromDecision(decision);
     if (std::any_of(plan.invocations.cbegin(), plan.invocations.cend(),
                     [this](const auto& call) { return !knownToolIds_.contains(call.toolId); })) {
-        if (repeatsUnchangedStep(asyncState_, plan)) {
+        if (repeatsUnchangedStep(asyncState_, plan, workingDirectory(), toolRegistry_)) {
             asyncState_.phase = AgentLoopPhase::Failed;
             asyncState_.terminalReason = AgentTerminalReason::CapabilityUnavailable;
             asyncState_.abortReason = QStringLiteral("Required tool is unavailable.");
@@ -602,8 +828,9 @@ void AgentLoop::advanceAsync() {
         scheduleAsyncAdvance();
         return;
     }
-    if (repeatsUnchangedStep(asyncState_, plan) || repeatsFailedCycle(asyncState_, plan)) {
-        if (repairRepeatedRead(asyncState_, plan, planner_)) {
+    if (repeatsUnchangedStep(asyncState_, plan, workingDirectory(), toolRegistry_) ||
+        repeatsFailedCycle(asyncState_, plan)) {
+        if (repairRepeatedObservation(asyncState_, plan, planner_)) {
             scheduleAsyncAdvance();
             return;
         }
@@ -618,7 +845,7 @@ void AgentLoop::advanceAsync() {
     }
     doomDetector_.recordAction(asyncState_.sessionId, decisionActionKey(decision));
     if (doomDetector_.isStuck(asyncState_.sessionId)) {
-        if (repairRepeatedRead(asyncState_, plan, planner_)) {
+        if (repairRepeatedObservation(asyncState_, plan, planner_)) {
             scheduleAsyncAdvance();
             return;
         }
@@ -989,9 +1216,19 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             preparePlanningContext(state);
             planner_.setEvidence(state.evidence);
             traceStage(state, "planning", "enter");
-            decision = planner_.nextStep(state.goal, state.steps);
-            traceStage(state, "planning", "exit", &decision);
-            state.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+            if (const auto recovery = finalVerificationRecovery(state, workingDirectory(),
+                                                                knownToolIds_, toolRegistry_)) {
+                decision = *recovery;
+                if (statusCallback_) {
+                    statusCallback_(QStringLiteral("Planning requested final verification."));
+                }
+                traceStage(state, "verification_recovery", "selected", &decision,
+                           workingDirectory());
+            } else {
+                decision = planner_.nextStep(state.goal, state.steps);
+                state.providerRecoveryAttempts += planner_.lastProviderRecoveryAttempts();
+            }
+            traceStage(state, "planning", "exit", &decision, workingDirectory());
         } catch (...) {
             if (planningCallback_)
                 planningCallback_(stepIndex, false);
@@ -1030,7 +1267,7 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
                                              });
         if (!known) {
             auto unavailablePlan = planFromDecision(decision);
-            if (repeatsUnchangedStep(state, unavailablePlan)) {
+            if (repeatsUnchangedStep(state, unavailablePlan, workingDirectory(), toolRegistry_)) {
                 state.phase = AgentLoopPhase::Failed;
                 state.terminalReason = AgentTerminalReason::CapabilityUnavailable;
                 state.abortReason = QStringLiteral("Required tool is unavailable.");
@@ -1043,9 +1280,11 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
 
         auto plan = planFromDecision(decision);
-        if (repeatsUnchangedStep(state, plan) || repeatsFailedCycle(state, plan)) {
-            if (repairRepeatedRead(state, plan, planner_))
+        if (repeatsUnchangedStep(state, plan, workingDirectory(), toolRegistry_) ||
+            repeatsFailedCycle(state, plan)) {
+            if (repairRepeatedObservation(state, plan, planner_)) {
                 continue;
+            }
             state.phase = AgentLoopPhase::Stuck;
             state.terminalReason = state.steps.last().succeeded
                                        ? AgentTerminalReason::UnableToComplete
@@ -1056,8 +1295,9 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
         }
         doomDetector_.recordAction(state.sessionId, decisionActionKey(decision));
         if (doomDetector_.isStuck(state.sessionId)) {
-            if (repairRepeatedRead(state, plan, planner_))
+            if (repairRepeatedObservation(state, plan, planner_)) {
                 continue;
+            }
             state.phase = AgentLoopPhase::Stuck;
             state.abortReason = QStringLiteral(
                 "Doom loop detected: the agent repeated the same action without progress.");
@@ -1465,9 +1705,20 @@ void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& desc
         if (descriptor.id == QLatin1String("run-command"))
             changed.append(workingDirectory());
         for (auto& prior : state.evidence) {
-            if (prior.domain != ObservationDomain::FileSystem &&
-                prior.domain != ObservationDomain::Workspace)
+            // A test of an earlier file revision cannot verify a later edit.
+            if (trustedMutations && !mutations.isEmpty() &&
+                prior.domain == ObservationDomain::ProcessExecution &&
+                prior.outcome == EvidenceOutcome::Verified) {
+                prior.outcome = EvidenceOutcome::Stale;
+            }
+            // Operation receipts describe an event that already happened. Later
+            // commands invalidate state observations, not that historical event.
+            // acceptFinalAnswer still requires a fresh post-mutation observation.
+            if (prior.scope == EvidenceScope::Operation ||
+                (prior.domain != ObservationDomain::FileSystem &&
+                 prior.domain != ObservationDomain::Workspace)) {
                 continue;
+            }
             const auto resource =
                 normalizedObservationResource(prior.resource, ObservationDomain::FileSystem);
             for (const auto& change : changed)
@@ -1478,13 +1729,21 @@ void AgentLoop::recordEvidence(AgentLoopState& state, const ToolDescriptor& desc
                 }
         }
     }
-    state.evidence.append(EvidencePolicy::record(descriptor, plan.invocations.first(), status,
-                                                 summary, stepIndex, callId,
-                                                 structuredObservation));
+    auto recorded = EvidencePolicy::record(descriptor, plan.invocations.first(), status, summary,
+                                           stepIndex, callId, structuredObservation);
+    for (auto& item : recorded) {
+        if (descriptor.source == ToolSource::BuiltIn && !item.resource.isEmpty() &&
+            (item.domain == ObservationDomain::FileSystem ||
+             item.domain == ObservationDomain::Workspace)) {
+            item.resource = ExternalDirectoryGate{}.resolvePath(item.resource, workingDirectory());
+        }
+    }
+    state.evidence.append(recorded);
     if (trustedMutations && !mutations.isEmpty() && status == ToolExecutionStatus::Succeeded)
         planner_.setPlannerFeedback(QStringLiteral(
             "The mutation was reported successful. Observe the affected path before claiming "
             "its final filesystem state."));
+    traceStage(state, "evidence", "updated", nullptr, workingDirectory());
     while (state.evidence.size() > 48)
         state.evidence.removeFirst();
 }

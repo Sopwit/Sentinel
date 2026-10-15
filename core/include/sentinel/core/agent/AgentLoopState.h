@@ -87,6 +87,7 @@ struct AgentLoopState {
     QList<ClaimAssertion> finalClaims;
     int rejectedFinalAnswers = 0;
     int repeatedReadRepairs = 0;
+    int finalVerificationRecoveries = 0;
     int providerRecoveryAttempts = 0;
     QString finalAnswer;
     QString abortReason;

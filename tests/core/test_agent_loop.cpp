@@ -19,6 +19,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QTemporaryDir>
+#include <algorithm>
 #include <functional>
 
 using namespace sentinel::core;
@@ -49,6 +50,11 @@ public:
     mutable QVector<QList<AgentStepRecord>> observedHistories;
     mutable int calls = 0;
     bool repeatLast = false;
+    bool canonicalFinal = false;
+    QList<EvidenceRecord> evidence;
+    void setEvidence(const QList<EvidenceRecord>& value) override {
+        evidence = value;
+    }
     std::function<void(int)> onCall;
 
     AgentStepDecision nextStep(const QString& goal,
@@ -60,7 +66,18 @@ public:
             onCall(index);
         }
         if (index < decisions.size()) {
-            return decisions.at(index);
+            auto decision = decisions.at(index);
+            if (canonicalFinal && decision.kind == AgentStepDecision::Kind::FinalAnswer) {
+                ObservationIntent intent;
+                intent.requirements = {{ObservationDomain::FileSystem,
+                                        {},
+                                        EvidenceFreshness::TurnScoped,
+                                        ObservationPurpose::Operate}};
+                if (auto answer = ClaimGroundingResolver::filesystemFinalAnswer(intent, evidence,
+                                                                                decision.answer))
+                    decision.answer = *answer;
+            }
+            return decision;
         }
         if (repeatLast && !decisions.isEmpty()) {
             return decisions.last();
@@ -97,6 +114,75 @@ public:
     }
 };
 
+// Deterministic execution fixture: real scratch-file writes/reads, controlled
+// command receipts. The real-model suite independently runs the actual command.
+class CodingFixtureApproval final : public IApprovalPolicy {
+public:
+    bool denyVerification = false;
+    ApprovalDecision evaluate(const ToolInvocationPlan& plan) const override {
+        if (denyVerification && plan.invocations.first().toolId == "git-diff")
+            return {ApprovalStatus::Denied, "Fixture verification denied", {}};
+        return {ApprovalStatus::Approved, "Explicitly approved isolated fixture", {}};
+    }
+};
+
+class CodingTaskHandler final : public IToolHandler {
+public:
+    QString root;
+    int exitCode = 0;
+    bool denyReadAfterWrite = false;
+    QStringList calls;
+    IToolExecutor::Cancel execute(const ToolExecutionRequest& request, const QString&,
+                                  const QString&, IToolExecutor::Output,
+                                  IToolExecutor::Completion completion) override {
+        const auto& invocation = request.plan.invocations.first();
+        const auto id = invocation.toolId;
+        calls.append(id);
+        QString path;
+        for (const auto& arg : invocation.arguments)
+            if (arg.id == "path")
+                path = QDir(root).absoluteFilePath(arg.value);
+        path = QDir::cleanPath(path);
+        auto observation = std::make_shared<StructuredObservation>();
+        observation->data = {{"complete", true}, {"truncated", false}, {"cancelled", false}};
+        ToolExecutionResult result{ToolExecutionStatus::Succeeded, "fixture success"};
+        if (id == "write-file") {
+            QFile file(path);
+            if (!file.open(QIODevice::WriteOnly) ||
+                file.write("def add(a, b):\n    return a + b\n") < 0) {
+                completion({ToolExecutionStatus::Failed, "fixture write failed"});
+                return {};
+            }
+            result.mutations.append({path});
+        } else if (id == "read-file") {
+            if (denyReadAfterWrite && calls.contains("write-file")) {
+                completion({ToolExecutionStatus::Blocked, "Fixture post-mutation read denied"});
+                return {};
+            }
+            QFile file(path);
+            if (!file.open(QIODevice::ReadOnly)) {
+                completion({ToolExecutionStatus::Failed, "fixture read failed"});
+                return {};
+            }
+            observation->kind = StructuredObservationKind::FileContent;
+            observation->data.insert("path", QFileInfo(path).canonicalFilePath());
+            observation->data.insert("content", QString::fromUtf8(file.readAll()));
+        } else {
+            observation->kind = StructuredObservationKind::Generic;
+            observation->data.insert("exitCode", id == "run-command" ? exitCode : 0);
+            observation->data.insert("stdout", id == "run-command"
+                                                   ? (exitCode ? "TEST_FAILED" : "ALL_TESTS_PASSED")
+                                                   : "- return a - b\n+ return a + b");
+            observation->data.insert("stderr", "");
+            if (id == "run-command" && exitCode)
+                result.status = ToolExecutionStatus::Failed;
+        }
+        result.structuredObservation = observation;
+        completion(result);
+        return {};
+    }
+};
+
 AgentStepDecision toolDecision(const QString& toolId, const QString& argValue = QStringLiteral("x"),
                                ToolRiskLevel risk = ToolRiskLevel::Low) {
     AgentStepDecision decision;
@@ -128,6 +214,192 @@ class AgentLoopTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void codingTaskFinalization_data() {
+        QTest::addColumn<QString>("scenario");
+        QTest::addColumn<bool>("async");
+        for (const auto& scenario :
+             {"complete", "test-fails", "repeated-read", "read-after-write", "missing-diff",
+              "stale-after-write", "provider-extra-read", "cancel-final", "unsupported-success",
+              "wrong-diff", "test-before-edit", "relative-write", "provider-extra-test",
+              "recover-missing-diff", "cancel-recovery", "denied-recovery",
+              "recover-missing-multiple", "stale-denied", "verification-budget"})
+            for (bool async : {false, true})
+                QTest::newRow(
+                    qPrintable(QString::fromLatin1(scenario) + (async ? "-async" : "-sync")))
+                    << QString::fromLatin1(scenario) << async;
+    }
+
+    void codingTaskFinalization() {
+        QFETCH(QString, scenario);
+        QFETCH(bool, async);
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto root = QFileInfo(directory.path()).canonicalFilePath();
+        const auto path = root + "/calc.py";
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("def add(a, b):\n    return a - b\n");
+        file.close();
+        auto policy = std::make_shared<FixedFilesystemIntent>();
+        policy->intent.requirements = {{ObservationDomain::FileSystem, path,
+                                        EvidenceFreshness::TurnScoped, ObservationPurpose::Operate},
+                                       {ObservationDomain::FileSystem, path,
+                                        EvidenceFreshness::TurnScoped, ObservationPurpose::Inspect},
+                                       {ObservationDomain::ProcessExecution, "python3 test_calc.py",
+                                        EvidenceFreshness::TurnScoped, ObservationPurpose::Operate},
+                                       {ObservationDomain::Workspace, root,
+                                        EvidenceFreshness::TurnScoped,
+                                        ObservationPurpose::Inspect}};
+        policy->intent.requirements.last().toolId = "git-diff";
+        policy->intent.requirements[1].toolId = "read-file";
+        if (scenario == "recover-missing-multiple" || scenario == "verification-budget") {
+            for (const auto& name : scenario == "verification-budget"
+                                        ? QStringList{"test_calc.py", "extra_one.py"}
+                                        : QStringList{"test_calc.py"}) {
+                QFile observed(root + "/" + name);
+                QVERIFY(observed.open(QIODevice::WriteOnly));
+                observed.write("fixture verification\n");
+                observed.close();
+                ObservationRequirement required{ObservationDomain::FileSystem, root + "/" + name};
+                required.toolId = "read-file";
+                policy->intent.requirements.append(required);
+            }
+        }
+        ScriptedPlanner planner;
+        planner.canonicalFinal = scenario != "unsupported-success";
+        auto read = toolDecision("read-file");
+        read.arguments = {{"path", path}};
+        auto write = toolDecision("write-file");
+        write.arguments = {{"path", path}, {"content", "def add(a, b):\n    return a + b\n"}};
+        if (scenario == "relative-write")
+            write.arguments[0].value = "./calc.py";
+        auto command = toolDecision("run-command", "python3 test_calc.py");
+        auto diff = toolDecision(scenario == "wrong-diff" ? "git-status" : "git-diff");
+        diff.arguments = {{"path", root}};
+        auto final = finalDecision("All tests succeeded and the requested diff was verified.");
+        final.grounding = GroundingMode::Verified;
+        final.groundingDeclared = true;
+        planner.decisions = scenario == "test-before-edit"
+                                ? QVector<AgentStepDecision>{read, command, write}
+                                : QVector<AgentStepDecision>{read, write, command};
+        if (scenario != "stale-after-write" && scenario != "stale-denied" &&
+            scenario != "recover-missing-multiple" && scenario != "verification-budget")
+            planner.decisions.append(read);
+        if (scenario != "missing-diff" && scenario != "recover-missing-diff" &&
+            scenario != "cancel-recovery" && scenario != "denied-recovery" &&
+            scenario != "recover-missing-multiple" && scenario != "verification-budget")
+            planner.decisions.append(diff);
+        if (scenario == "repeated-read" || scenario == "provider-extra-read") {
+            auto alias = read;
+            alias.arguments = {{"path", "./calc.py"}};
+            planner.decisions.append(alias);
+        }
+        if (scenario == "provider-extra-test")
+            planner.decisions.append(command);
+        planner.decisions.append(final);
+        planner.decisions.append(final);
+        auto handler = std::make_shared<CodingTaskHandler>();
+        handler->root = root;
+        handler->denyReadAfterWrite = scenario == "stale-denied";
+        handler->exitCode = scenario == "test-fails" ? 1 : 0;
+        RealToolExecutor executor;
+        InMemoryToolRegistry registry;
+        InMemoryToolRegistry source;
+        QVERIFY(BuiltInToolProvider::registerTools(source, executor));
+        for (const auto& id :
+             {"read-file", "write-file", "run-command", "git-diff", "git-status"}) {
+            const auto descriptor = source.findToolById(id);
+            QVERIFY(descriptor);
+            QVERIFY(registry.registerTool(IToolRegistry::Registration{*descriptor, handler}));
+        }
+        CodingFixtureApproval approval;
+        auto sandbox = permissiveSandbox();
+        approval.denyVerification = scenario == "denied-recovery";
+        QStringList knownTools{"read-file", "write-file", "run-command", "git-diff", "git-status"};
+        if (scenario == "missing-diff" || scenario == "wrong-diff")
+            knownTools.removeAll("git-diff");
+        AgentLoop loop(planner, executor, approval, sandbox, knownTools);
+        loop.setToolRegistry(&registry);
+        loop.setResourceScope(root);
+        loop.setObservationIntentPolicy(policy);
+        AgentContextInput::WorkspaceContext workspace;
+        workspace.rootPath = root;
+        loop.setWorkspaceContext(workspace);
+        bool cancel = false;
+        planner.onCall = [&](int index) {
+            if (scenario == "cancel-final" &&
+                planner.decisions.at(qMin(index, int(planner.decisions.size()) - 1)).kind ==
+                    AgentStepDecision::Kind::FinalAnswer)
+                cancel = true;
+        };
+        loop.setCancelQuery([&] { return cancel; });
+        loop.setStatusCallback([&](const QString& status) {
+            if (scenario == "cancel-recovery" && status == "Planning requested final verification.")
+                cancel = true;
+        });
+        AgentLoopState state;
+        int terminals = 0;
+        if (async) {
+            loop.runAsync("Correct calc.py, run python3 test_calc.py, reread calc.py and inspect "
+                          "git-diff before finalizing",
+                          "coding-final", this, [&](const AgentLoopState& result) {
+                              state = result;
+                              ++terminals;
+                          });
+            QTRY_COMPARE(terminals, 1);
+            QCoreApplication::processEvents();
+            QCOMPARE(terminals, 1);
+        } else {
+            state = loop.run("Correct calc.py, run python3 test_calc.py, reread calc.py and "
+                             "inspect git-diff before finalizing",
+                             "coding-final");
+        }
+        const bool success = scenario == "complete" || scenario == "read-after-write" ||
+                             scenario == "repeated-read" || scenario == "provider-extra-read" ||
+                             scenario == "relative-write" || scenario == "provider-extra-test" ||
+                             scenario == "recover-missing-diff" ||
+                             scenario == "recover-missing-multiple" ||
+                             scenario == "stale-after-write";
+        if (success) {
+            QVERIFY2(state.phase == AgentLoopPhase::Completed, qPrintable(state.abortReason));
+            QCOMPARE(handler->calls.count("run-command"), 1);
+            QCOMPARE(handler->calls.count("read-file"),
+                     scenario == "recover-missing-multiple" ? 3 : 2);
+            QCOMPARE(handler->calls.count("git-diff"), 1);
+            QVERIFY(state.finalAnswer.contains("ALL_TESTS_PASSED"));
+            QVERIFY(state.finalAnswer.contains("git-diff"));
+            QVERIFY(state.finalAnswer.contains("return a + b"));
+            QVERIFY(
+                std::any_of(state.evidence.cbegin(), state.evidence.cend(), [](const auto& item) {
+                    return item.scope == EvidenceScope::Operation &&
+                           item.outcome == EvidenceOutcome::Verified;
+                }));
+            if (scenario == "repeated-read" || scenario == "provider-extra-read")
+                QCOMPARE(state.repeatedReadRepairs, 1);
+        } else if (scenario == "cancel-final" || scenario == "cancel-recovery")
+            QCOMPARE(state.phase, AgentLoopPhase::Cancelled);
+        else {
+            QVERIFY(state.phase != AgentLoopPhase::Completed);
+            QVERIFY(state.finalAnswer.isEmpty());
+        }
+        if (scenario == "recover-missing-diff" || scenario == "cancel-recovery" ||
+            scenario == "denied-recovery") {
+            QCOMPARE(state.finalVerificationRecoveries, 1);
+            QCOMPARE(handler->calls.count("git-diff"), scenario == "recover-missing-diff" ? 1 : 0);
+        }
+        QVERIFY(handler->calls.count("write-file") == 1);
+        QVERIFY(handler->calls.count("run-command") == 1);
+        if (scenario == "recover-missing-multiple")
+            QCOMPARE(state.finalVerificationRecoveries, 3);
+        if (scenario == "verification-budget")
+            QCOMPARE(state.finalVerificationRecoveries, 0);
+        if (scenario == "stale-after-write" || scenario == "stale-denied")
+            QVERIFY(
+                std::any_of(state.evidence.cbegin(), state.evidence.cend(), [](const auto& item) {
+                    return item.toolId == "read-file" && item.outcome == EvidenceOutcome::Stale;
+                }));
+    }
+
     void citedExplanationCompletesThroughReadGateway() {
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
@@ -530,7 +802,7 @@ private slots:
         EvidenceRecord observation;
         observation.domain = ObservationDomain::FileSystem;
         observation.toolId = QStringLiteral("list-directory");
-        observation.resource = QStringLiteral(".");
+        observation.resource = QFileInfo(workspace.path()).canonicalFilePath();
         observation.outcome = EvidenceOutcome::Verified;
         const auto representation = ClaimGroundingResolver::filesystemFinalAnswer(
             {}, {observation}, QStringLiteral("done"));

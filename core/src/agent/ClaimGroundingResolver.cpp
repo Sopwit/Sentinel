@@ -303,7 +303,7 @@ ClaimGroundingResolver::filesystemExplanation(const ObservationIntent& intent,
         for (const auto& sourceValue : sources) {
             const auto source = sourceValue.toObject();
             const auto id = source.value(QStringLiteral("call_id")).toString();
-            const auto quote = source.value(QStringLiteral("quote")).toString();
+            auto quote = source.value(QStringLiteral("quote")).toString();
             if (source.size() < 2 || source.size() > 3 || id.isEmpty() ||
                 quote.trimmed().isEmpty() || quote.size() > 512)
                 return {};
@@ -323,8 +323,20 @@ ClaimGroundingResolver::filesystemExplanation(const ObservationIntent& intent,
                     return {};
             const auto data = matched->structuredObservation->data;
             const auto resource = data.value(QStringLiteral("path")).toString();
-            if (resource.isEmpty() ||
-                !data.value(QStringLiteral("content")).toString().contains(quote) ||
+            const auto observed = data.value(QStringLiteral("content")).toString();
+            if (!observed.contains(quote)) {
+                // Some native model replies double-escape whitespace inside JSON
+                // quotes. Repair representation only when the decoded quote is
+                // still an exact substring of this current verified observation.
+                auto decoded = quote;
+                decoded.replace(QStringLiteral("\\r"), QStringLiteral("\r"));
+                decoded.replace(QStringLiteral("\\n"), QStringLiteral("\n"));
+                decoded.replace(QStringLiteral("\\t"), QStringLiteral("\t"));
+                if (!observed.contains(decoded))
+                    return {};
+                quote = decoded;
+            }
+            if (resource.isEmpty() || !observed.contains(quote) ||
                 (source.contains(QStringLiteral("source")) &&
                  source.value(QStringLiteral("source")).toString() != resource))
                 return {};
@@ -351,6 +363,87 @@ ClaimGroundingResolver::filesystemFinalAnswer(const ObservationIntent& intent,
                                               const QString& proposed) {
     if (const auto explanation = filesystemExplanation(intent, evidence, proposed))
         return explanation->canonical;
+    const bool codingOperation =
+        !intent.indeterminate &&
+        std::any_of(intent.requirements.cbegin(), intent.requirements.cend(),
+                    [](const auto& r) {
+                        return r.domain == ObservationDomain::FileSystem ||
+                               r.domain == ObservationDomain::Workspace;
+                    }) &&
+        std::any_of(intent.requirements.cbegin(), intent.requirements.cend(),
+                    [](const auto& r) { return r.purpose == ObservationPurpose::Operate; });
+    if (codingOperation) {
+        QJsonArray operations;
+        QJsonArray executions;
+        QJsonArray observations;
+        QJsonArray inspections;
+        QSet<QString> seen;
+        for (auto it = evidence.crbegin(); it != evidence.crend(); ++it) {
+            if (it->scope == EvidenceScope::Operation && it->outcome == EvidenceOutcome::Verified &&
+                (it->domain == ObservationDomain::FileSystem ||
+                 it->domain == ObservationDomain::Workspace) &&
+                operations.size() < 8)
+                operations.append(
+                    QJsonObject{{QStringLiteral("tool"), it->toolId},
+                                {QStringLiteral("call_id"), it->toolCallId},
+                                {QStringLiteral("resource"), it->resource},
+                                {QStringLiteral("outcome"), QStringLiteral("verified_operation")}});
+            if (!it->structuredObservation)
+                continue;
+            const auto& data = it->structuredObservation->data;
+            if (it->toolId == QLatin1String("run-command") &&
+                it->domain == ObservationDomain::ProcessExecution && executions.size() < 8 &&
+                it->structuredObservation->kind == StructuredObservationKind::Generic &&
+                data.value(QStringLiteral("exitCode")).isDouble()) {
+                const auto out = data.value(QStringLiteral("stdout")).toString();
+                const auto err = data.value(QStringLiteral("stderr")).toString();
+                executions.append(QJsonObject{
+                    {QStringLiteral("call_id"), it->toolCallId},
+                    {QStringLiteral("command"), it->resource},
+                    {QStringLiteral("exit_code"), data.value(QStringLiteral("exitCode"))},
+                    {QStringLiteral("stdout"), out.left(4096)},
+                    {QStringLiteral("stderr"), err.left(4096)},
+                    {QStringLiteral("timed_out"), data.value(QStringLiteral("timedOut"))},
+                    {QStringLiteral("cancelled"), data.value(QStringLiteral("cancelled"))},
+                    {QStringLiteral("complete"), data.value(QStringLiteral("complete")).toBool() &&
+                                                     out.size() <= 4096 && err.size() <= 4096}});
+            }
+            if (it->domain == ObservationDomain::Workspace &&
+                it->outcome == EvidenceOutcome::Verified &&
+                (it->toolId == QLatin1String("git-diff") ||
+                 it->toolId == QLatin1String("git-status")) &&
+                inspections.size() < 8) {
+                const auto output = data.value(QStringLiteral("stdout")).toString();
+                inspections.append(QJsonObject{
+                    {QStringLiteral("tool"), it->toolId},
+                    {QStringLiteral("call_id"), it->toolCallId},
+                    {QStringLiteral("resource"), it->resource},
+                    {QStringLiteral("observed_output"), output.left(4096)},
+                    {QStringLiteral("complete"),
+                     data.value(QStringLiteral("complete")).toBool() && output.size() <= 4096}});
+            }
+            if (it->domain != ObservationDomain::FileSystem &&
+                it->domain != ObservationDomain::Workspace)
+                continue;
+            if (it->scope == EvidenceScope::Operation || seen.contains(it->resource))
+                continue;
+            seen.insert(it->resource);
+            if (it->outcome == EvidenceOutcome::Verified && observations.size() < 8 &&
+                it->structuredObservation->kind == StructuredObservationKind::FileContent)
+                observations.append(
+                    QJsonObject{{QStringLiteral("call_id"), it->toolCallId},
+                                {QStringLiteral("source"), data.value(QStringLiteral("path"))},
+                                {QStringLiteral("observed_text"),
+                                 data.value(QStringLiteral("content")).toString().left(4096)}});
+        }
+        if (!operations.isEmpty() || !executions.isEmpty())
+            return QString::fromUtf8(
+                QJsonDocument(QJsonObject{{QStringLiteral("operations"), operations},
+                                          {QStringLiteral("executions"), executions},
+                                          {QStringLiteral("observations"), observations},
+                                          {QStringLiteral("inspections"), inspections}})
+                    .toJson(QJsonDocument::Compact));
+    }
     QStringList facts;
     QStringList supportingCalls;
     for (const auto& requirement : intent.requirements) {

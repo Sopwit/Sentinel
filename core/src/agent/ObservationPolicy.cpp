@@ -20,6 +20,7 @@
 #include <QStandardPaths>
 #include <QUrl>
 #include <QUuid>
+#include <algorithm>
 
 namespace sentinel::core {
 namespace {
@@ -60,6 +61,9 @@ QString normalizedResource(QString resource, ObservationDomain domain) {
         const QUrl url(resource);
         if (url.isValid() && !url.host().isEmpty())
             return url.adjusted(QUrl::NormalizePathSegments).toString();
+    }
+    if (domain == ObservationDomain::ProcessExecution) {
+        return resource;
     }
     return resource.toCaseFolded();
 }
@@ -146,7 +150,8 @@ bool resourceMatches(const ObservationRequirement& requirement, const EvidenceRe
 }
 
 bool matches(const ObservationRequirement& requirement, const EvidenceRecord& evidence) {
-    return compatibleDomain(requirement.domain, evidence.domain) &&
+    return (requirement.toolId.isEmpty() || requirement.toolId == evidence.toolId) &&
+           compatibleDomain(requirement.domain, evidence.domain) &&
            resourceMatches(requirement, evidence);
 }
 
@@ -245,12 +250,16 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
     const auto context = rootOffset < 0 ? conversationContext.left(1500)
                                         : conversationContext.left(qMin(rootOffset, 1000)) +
                                               conversationContext.mid(rootOffset).left(600);
+    QStringList availableToolIds;
+    for (const auto& tool : tools) {
+        availableToolIds.append(tool.id);
+    }
     const auto prompt =
         QStringLiteral(
             "Classify the USER GOAL. Return ONLY JSON: "
             "{\"requirements\":[{\"domain\":\"filesystem\","
             "\"resource\":\"\",\"purpose\":\"inspect\",\"operation\":\"none\",\"query\":\"\","
-            "\"recursive\":false}]}. At most 4 entries. Domains: %1. "
+            "\"recursive\":false,\"tool\":\"\"}]}. At most 8 entries. Domains: %1. "
             "Require evidence for current external state; [] for general knowledge, writing, "
             "hypotheticals or reasoning from visible conversation. Older history needs history. "
             "purpose is inspect or operate. Reading/explaining/comparing file CONTENT uses "
@@ -260,8 +269,16 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
             "hidden_entries; named-file search/absence uses path_pattern. For workspace-wide "
             "search use the ACTIVE WORKSPACE ROOT and recursive:true. query is exact text/pattern. "
             "Resolve relative files against that root; never guess cwd/home. "
+            "Separate every requested action and final verification. For an explicit requested "
+            "tool such as git-diff, set tool to that registered ID; do not substitute a file read "
+            "or git-status for a requested diff. For generic file changes leave tool empty; "
+            "write/edit/patch are alternative implementations. For Git inspection use the "
+            "requested repository directory; for active-workspace changes use ACTIVE WORKSPACE "
+            "ROOT, never a source-file path. For execution resource is the exact requested "
+            "command, not an empty string. Otherwise tool may be empty. Available tools: %4. "
             "CONTEXT: %2\nUSER GOAL: %3")
-            .arg(capabilities.join(QLatin1Char(',')), context, goal);
+            .arg(capabilities.join(QLatin1Char(',')), context, goal,
+                 availableToolIds.join(QLatin1Char(',')));
     const auto traceId = QUuid::createUuid().toString(QUuid::WithoutBraces);
     QElapsedTimer elapsed;
     elapsed.start();
@@ -274,8 +291,10 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
                .toJson(QJsonDocument::Compact);
     ChatRequestOptions options;
     options.cancellationToken = cancellationToken_;
-    options.deadlineMs = 30000;
-    options.maxOutputTokens = 512;
+    // Reasoning models count hidden reasoning against the completion budget too.
+    // Keep a hard bound, while leaving room for the required classification JSON.
+    options.deadlineMs = 60000;
+    options.maxOutputTokens = 2048;
     const auto reply = provider_->sendRequest(prompt, options);
     const auto recordOutcome = qScopeGuard([&] {
         QJsonObject diagnostic{{"stage", "classification"},
@@ -297,6 +316,9 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
                                                           ? QJsonValue(value.toString().left(128))
                                                           : value);
         }
+        if (reply.success && intent.indeterminate) {
+            diagnostic.insert(QStringLiteral("parse_failure"), intent.error);
+        }
         diagnostic.insert(QStringLiteral("classification_result"),
                           intent.indeterminate ? QStringLiteral("indeterminate")
                                                : QStringLiteral("classified"));
@@ -310,22 +332,26 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
     }
     const auto candidate = strictJsonObject(reply.message);
     if (candidate.isEmpty()) {
+        intent.error = QStringLiteral("Classifier response is not a standalone JSON object.");
         intent.indeterminate = true;
         return intent;
     }
     const auto document = QJsonDocument::fromJson(candidate.toUtf8());
     if (!document.isObject() ||
         !document.object().value(QStringLiteral("requirements")).isArray()) {
+        intent.error = QStringLiteral("Classifier requirements JSON is malformed.");
         intent.indeterminate = true;
         return intent;
     }
     const auto entries = document.object().value(QStringLiteral("requirements")).toArray();
-    if (entries.size() > 4) {
+    if (entries.size() > 8) {
+        intent.error = QStringLiteral("Classifier requirements exceed the eight-entry limit.");
         intent.indeterminate = true;
         return intent;
     }
     for (const auto& entry : entries) {
         if (!entry.isObject()) {
+            intent.error = QStringLiteral("Classifier requirement is not an object.");
             intent.indeterminate = true;
             intent.requirements.clear();
             return intent;
@@ -333,6 +359,7 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         const auto object = entry.toObject();
         const auto domain = domainFromName(object.value(QStringLiteral("domain")).toString());
         if (!domain) {
+            intent.error = QStringLiteral("Classifier selected an unsupported domain.");
             intent.indeterminate = true;
             intent.requirements.clear();
             return intent;
@@ -340,15 +367,67 @@ ObservationIntent ObservationIntentPolicy::classify(const QString& goal,
         ObservationRequirement requirement;
         requirement.domain = *domain;
         requirement.resourceHint = object.value(QStringLiteral("resource")).toString().left(512);
+        requirement.toolId = object.value(QStringLiteral("tool")).toString();
+        if (!requirement.toolId.isEmpty() && !availableToolIds.contains(requirement.toolId)) {
+            intent.error = QStringLiteral("Classifier selected an unregistered tool.");
+            intent.indeterminate = true;
+            intent.requirements.clear();
+            return intent;
+        }
         requirement.purpose =
             object.value(QStringLiteral("purpose")).toString() == QLatin1String("operate")
                 ? ObservationPurpose::Operate
                 : ObservationPurpose::Inspect;
-        requirement.freshness = *domain == ObservationDomain::ConversationHistory
+        if (!requirement.toolId.isEmpty()) {
+            const auto tool = std::find_if(tools.cbegin(), tools.cend(), [&](const auto& item) {
+                return item.id == requirement.toolId;
+            });
+            // A classifier label cannot change a registered tool's evidence type.
+            // Resolve only unambiguous contracts; this grants no execution authority.
+            if (tool != tools.cend() && tool->evidenceProduced.size() == 1) {
+                const auto& produced = tool->evidenceProduced.first();
+                requirement.domain = produced.domain;
+                if (produced.scope == EvidenceScope::Operation) {
+                    requirement.purpose = ObservationPurpose::Operate;
+                }
+            }
+        }
+        const auto workspace =
+            rootOffset < 0
+                ? QString{}
+                : normalizedResource(conversationContext.mid(rootOffset + marker.size()).trimmed(),
+                                     ObservationDomain::Workspace);
+        if (!workspace.isEmpty() && !requirement.resourceHint.isEmpty() &&
+            (requirement.domain == ObservationDomain::FileSystem ||
+             requirement.domain == ObservationDomain::Workspace)) {
+            requirement.resourceHint =
+                ExternalDirectoryGate{}.resolvePath(requirement.resourceHint, workspace);
+        }
+        if ((requirement.toolId == QLatin1String("git-diff") ||
+             requirement.toolId == QLatin1String("git-status")) &&
+            !workspace.isEmpty() &&
+            QFileInfo(requirement.resourceHint).absolutePath() == workspace) {
+            requirement.resourceHint = workspace;
+        }
+        if (requirement.domain == ObservationDomain::ProcessExecution &&
+            requirement.resourceHint.isEmpty()) {
+            requirement.resourceHint = object.value(QStringLiteral("query")).toString().left(512);
+        }
+        // Generic file edits bind the verified effect, not a classifier-invented
+        // implementation constraint. Explicitly named tool constraints remain exact.
+        if (requirement.purpose == ObservationPurpose::Operate &&
+            (requirement.toolId == QLatin1String("write-file") ||
+             requirement.toolId == QLatin1String("edit-file") ||
+             requirement.toolId == QLatin1String("apply-patch")) &&
+            !goal.contains(requirement.toolId)) {
+            requirement.toolId.clear();
+        }
+        requirement.freshness = requirement.domain == ObservationDomain::ConversationHistory
                                     ? EvidenceFreshness::SessionStable
                                     : EvidenceFreshness::TurnScoped;
         const auto operation = object.value(QStringLiteral("operation")).toString();
-        if ((*domain == ObservationDomain::FileSystem || *domain == ObservationDomain::Workspace) &&
+        if ((requirement.domain == ObservationDomain::FileSystem ||
+             requirement.domain == ObservationDomain::Workspace) &&
             !requirement.resourceHint.isEmpty() &&
             requirement.purpose == ObservationPurpose::Inspect) {
             if (operation == QLatin1String("exists") || operation == QLatin1String("file_exists"))

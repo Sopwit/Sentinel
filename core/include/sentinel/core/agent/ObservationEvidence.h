@@ -142,6 +142,8 @@ struct ObservationRequirement {
     QString claimId;
     QString claimQuery;
     bool recursive = false;
+    // Optional classifier-selected registered tool; not an authorization grant.
+    QString toolId;
 };
 
 struct ObservationIntent {

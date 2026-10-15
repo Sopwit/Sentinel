@@ -108,6 +108,7 @@ private:
     mutable QList<ChatProviderReply::ToolCall> nativeCalls_;
     mutable QList<ChatRequestOptions::ToolResult> nativeResults_;
     mutable int awaitingNativeResults_ = 0;
+    mutable qsizetype nativeHistoryCursor_ = 0;
     mutable bool lastDecisionUsedLlm_ = false;
     mutable int lastProviderRecoveryAttempts_ = 0;
     mutable std::function<void(const QString&)> streamObserver_;
