@@ -238,7 +238,9 @@ private slots:
                                      {QStringLiteral("workdir"), QStringLiteral(".")}},
                                     {}, workspace.path());
         if (result.status == ToolExecutionStatus::Blocked &&
-            result.summary.contains(QStringLiteral("Sandbox")))
+            (result.summary.contains(QStringLiteral("sandbox"), Qt::CaseInsensitive) ||
+             result.sandbox.enforcement == SandboxEnforcement::Failed ||
+             result.failureCategory == ToolFailureCategory::RuntimeUnavailable))
             QSKIP("Host cannot enforce the required process sandbox.");
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QFileInfo(workspace.path()).canonicalFilePath()));
@@ -284,7 +286,9 @@ private slots:
             executor, QStringLiteral("run-command"),
             {{QStringLiteral("command"), QStringLiteral("python3 test.py")}}, {}, workspace.path());
         if (result.status == ToolExecutionStatus::Blocked &&
-            result.summary.contains(QStringLiteral("Sandbox")))
+            (result.summary.contains(QStringLiteral("sandbox"), Qt::CaseInsensitive) ||
+             result.sandbox.enforcement == SandboxEnforcement::Failed ||
+             result.failureCategory == ToolFailureCategory::RuntimeUnavailable))
             QSKIP("Host cannot enforce the required process sandbox.");
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("SANDBOX_PRESERVED")));
@@ -338,7 +342,9 @@ private slots:
             runTool(executor, QStringLiteral("git-status"),
                     {{QStringLiteral("path"), QStringLiteral(".")}}, {}, workspace.path());
         if (status.status == ToolExecutionStatus::Blocked &&
-            status.summary.contains(QStringLiteral("Sandbox")))
+            (status.summary.contains(QStringLiteral("sandbox"), Qt::CaseInsensitive) ||
+             status.sandbox.enforcement == SandboxEnforcement::Failed ||
+             status.failureCategory == ToolFailureCategory::RuntimeUnavailable))
             QSKIP("Host cannot enforce the required process sandbox.");
         QCOMPARE(status.status, ToolExecutionStatus::Succeeded);
         QVERIFY(status.summary.contains(QStringLiteral("?? fixture.txt")));
@@ -380,6 +386,30 @@ private slots:
                     {{QStringLiteral("path"), workspace.path() + QStringLiteral("/../")}}, {},
                     workspace.path());
         QCOMPARE(escaped.status, ToolExecutionStatus::Blocked);
+
+        // Fixed Git argument construction and strict argument schema validation:
+        // Extraneous or hostile parameters are refused as invalid arguments.
+        const auto injectionAttempt =
+            runTool(executor, QStringLiteral("git-status"),
+                    {{QStringLiteral("path"), QStringLiteral(".")},
+                     {QStringLiteral("command"), QStringLiteral("echo injected")},
+                     {QStringLiteral("args"), QStringLiteral("--upload-pack=injected")},
+                     {QStringLiteral("extra"), QStringLiteral("; touch injected.txt")}},
+                    {}, workspace.path());
+        QCOMPARE(injectionAttempt.status, ToolExecutionStatus::InvalidArguments);
+        QVERIFY(!QFileInfo::exists(workspace.filePath(QStringLiteral("injected.txt"))));
+
+        // Refuse non-directory paths for repository inspection:
+        const auto fileNotDir =
+            runTool(executor, QStringLiteral("git-status"),
+                    {{QStringLiteral("path"), QStringLiteral("fixture.txt")}}, {},
+                    workspace.path());
+        QCOMPARE(fileNotDir.status, ToolExecutionStatus::InvalidArguments);
+
+        // Verification of no unexpected filesystem mutations:
+        QFile checkFile(workspace.filePath(QStringLiteral("fixture.txt")));
+        QVERIFY(checkFile.open(QIODevice::ReadOnly));
+        QCOMPARE(checkFile.readAll(), QByteArray("modified\n"));
     }
 
     void statPathUsesAuthorizedFilesystem() {

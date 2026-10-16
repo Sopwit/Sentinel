@@ -4,14 +4,17 @@
 #include "sentinel/core/runtime/ProcessSandbox.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
-#include <QStandardPaths>
 #include <QSet>
+#include <QStandardPaths>
 #if defined(Q_OS_LINUX)
 #include <link.h>
 #endif
 #if defined(Q_OS_MACOS)
 #include <mach-o/dyld.h>
+#include <mach-o/fat.h>
+#include <mach-o/loader.h>
 #endif
 #if defined(Q_OS_WIN)
 #include "WindowsProcessSandbox.h"
@@ -27,6 +30,107 @@ namespace {
     path.replace(QLatin1Char('"'), QStringLiteral("\\\""));
     return QStringLiteral("\"") + path + QStringLiteral("\"");
 }
+
+#if defined(Q_OS_MACOS)
+QStringList machODependencies(const QString& path) {
+    QStringList dylibs;
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return dylibs;
+
+    uint32_t magic = 0;
+    if (file.read(reinterpret_cast<char*>(&magic), sizeof(magic)) != sizeof(magic))
+        return dylibs;
+
+    qint64 headerOffset = 0;
+    if (magic == FAT_MAGIC || magic == FAT_CIGAM || magic == FAT_MAGIC_64 ||
+        magic == FAT_CIGAM_64) {
+        const bool swap = (magic == FAT_CIGAM || magic == FAT_CIGAM_64);
+        const bool is64 = (magic == FAT_MAGIC_64 || magic == FAT_CIGAM_64);
+        uint32_t nfat_arch = 0;
+        if (file.read(reinterpret_cast<char*>(&nfat_arch), sizeof(nfat_arch)) != sizeof(nfat_arch))
+            return dylibs;
+        if (swap)
+            nfat_arch = __builtin_bswap32(nfat_arch);
+
+        for (uint32_t i = 0; i < nfat_arch; ++i) {
+            cpu_type_t cputype = 0;
+            uint64_t offset = 0;
+            if (is64) {
+                fat_arch_64 arch{};
+                if (file.read(reinterpret_cast<char*>(&arch), sizeof(arch)) != sizeof(arch))
+                    return dylibs;
+                cputype = swap ? __builtin_bswap32(arch.cputype) : arch.cputype;
+                offset = swap ? __builtin_bswap64(arch.offset) : arch.offset;
+            } else {
+                fat_arch arch{};
+                if (file.read(reinterpret_cast<char*>(&arch), sizeof(arch)) != sizeof(arch))
+                    return dylibs;
+                cputype = swap ? __builtin_bswap32(arch.cputype) : arch.cputype;
+                offset = swap ? __builtin_bswap32(arch.offset) : arch.offset;
+            }
+#if defined(__arm64__)
+            if (cputype == CPU_TYPE_ARM64) {
+                headerOffset = static_cast<qint64>(offset);
+                break;
+            }
+#elif defined(__x86_64__)
+            if (cputype == CPU_TYPE_X86_64) {
+                headerOffset = static_cast<qint64>(offset);
+                break;
+            }
+#endif
+            if (headerOffset == 0 && i == 0)
+                headerOffset = static_cast<qint64>(offset);
+        }
+        if (!file.seek(headerOffset))
+            return dylibs;
+        if (file.read(reinterpret_cast<char*>(&magic), sizeof(magic)) != sizeof(magic))
+            return dylibs;
+    }
+
+    if (magic == MH_MAGIC_64 || magic == MH_CIGAM_64) {
+        const bool swap = (magic == MH_CIGAM_64);
+        mach_header_64 header{};
+        if (!file.seek(headerOffset))
+            return dylibs;
+        if (file.read(reinterpret_cast<char*>(&header), sizeof(header)) != sizeof(header))
+            return dylibs;
+        uint32_t ncmds = swap ? __builtin_bswap32(header.ncmds) : header.ncmds;
+        for (uint32_t i = 0; i < ncmds; ++i) {
+            const auto cmdOffset = file.pos();
+            load_command cmd{};
+            if (file.read(reinterpret_cast<char*>(&cmd), sizeof(cmd)) != sizeof(cmd))
+                break;
+            const uint32_t cmdType = swap ? __builtin_bswap32(cmd.cmd) : cmd.cmd;
+            const uint32_t cmdSize = swap ? __builtin_bswap32(cmd.cmdsize) : cmd.cmdsize;
+            if (cmdSize < sizeof(load_command))
+                break;
+            if (cmdType == LC_LOAD_DYLIB || cmdType == LC_LOAD_WEAK_DYLIB ||
+                cmdType == LC_REEXPORT_DYLIB) {
+                dylib_command dylibCmd{};
+                if (file.seek(cmdOffset) && file.read(reinterpret_cast<char*>(&dylibCmd),
+                                                      sizeof(dylibCmd)) == sizeof(dylibCmd)) {
+                    const uint32_t nameOffset = swap ? __builtin_bswap32(dylibCmd.dylib.name.offset)
+                                                     : dylibCmd.dylib.name.offset;
+                    if (nameOffset < cmdSize) {
+                        const auto nameLen = cmdSize - nameOffset;
+                        if (file.seek(cmdOffset + nameOffset)) {
+                            const QByteArray nameBytes = file.read(nameLen);
+                            const auto name = QString::fromUtf8(nameBytes.constData());
+                            if (!name.isEmpty())
+                                dylibs.append(name);
+                        }
+                    }
+                }
+            }
+            if (!file.seek(cmdOffset + cmdSize))
+                break;
+        }
+    }
+    return dylibs;
+}
+#endif
 
 QProcessEnvironment restrictedEnvironment(const QProcessEnvironment& source,
                                           const SandboxExecutionPlan& plan) {
@@ -220,46 +324,93 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     // Homebrew is the supported Qt distribution on macOS.  A Qt-based local
     // MCP server can load its framework dependencies from this immutable
     // prefix; denying it makes the child exit before the stdio handshake.
-    const QString homebrewQtAlias = QStringLiteral("/opt/homebrew/opt/qtbase");
-    const QString homebrewQtBase = QFileInfo(homebrewQtAlias).canonicalFilePath();
-    if (!homebrewQtBase.isEmpty()) {
-        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
-                       .arg(profileLiteral(homebrewQtBase));
-        // dyld also inspects the install-name alias before resolving the Cellar
-        // target. Both names refer to the same read-only runtime dependency.
-        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
-                       .arg(profileLiteral(homebrewQtAlias));
+    for (const auto* prefix : {"/opt/homebrew/opt/qtbase", "/usr/local/opt/qtbase"}) {
+        const QString homebrewQtAlias = QString::fromLatin1(prefix);
+        const QString homebrewQtBase = QFileInfo(homebrewQtAlias).canonicalFilePath();
+        if (!homebrewQtBase.isEmpty()) {
+            profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                           .arg(profileLiteral(homebrewQtBase));
+            // dyld also inspects the install-name alias before resolving the Cellar
+            // target. Both names refer to the same read-only runtime dependency.
+            profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                           .arg(profileLiteral(homebrewQtAlias));
+        }
     }
     // Newer macOS /bin/sh reads this system-owned selector before exec.
     profile += QStringLiteral("(allow file-read* (literal \"/private/var/select/sh\"))"
                               "(allow file-read-metadata (literal \"/private/var/select\"))");
     // Coding subprocesses need their installed runtime, not access to arbitrary
     // package-manager configuration or the user's home. Resolve a closed set of
-    // toolchain commands and authorize only their immutable Cellar version roots.
-    for (const auto* command : {"python3", "node", "cmake", "ninja", "git", "clang", "clang++"}) {
-        const auto executable = QStandardPaths::findExecutable(QString::fromLatin1(command));
-        const auto canonical = QFileInfo(executable).canonicalFilePath();
+    // toolchain commands and authorize only their immutable Cellar version roots
+    // and their linked shared libraries.
+    QSet<QString> runtimeImages;
+    const auto authorizeAncestors = [&](const QString& path) {
+        auto directory = QFileInfo(path).absolutePath();
+        while (!QDir(directory).isRoot()) {
+            profile += QStringLiteral("(allow file-read-metadata (literal %1))")
+                           .arg(profileLiteral(directory));
+            directory = QFileInfo(directory).absolutePath();
+        }
+    };
+    const auto authorizeCellarPackage = [&](const QString& canonical) {
         QString package;
         for (const auto* prefix : {"/opt/homebrew/Cellar/", "/usr/local/Cellar/"}) {
             const auto cellar = QString::fromLatin1(prefix);
             if (!canonical.startsWith(cellar))
                 continue;
             const auto parts = canonical.mid(cellar.size()).split(QLatin1Char('/'));
-            if (parts.size() >= 3)
+            if (parts.size() >= 2)
                 package = cellar + parts.at(0) + QLatin1Char('/') + parts.at(1);
         }
+        if (!package.isEmpty()) {
+            profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                           .arg(profileLiteral(package));
+        }
+        return package;
+    };
+    for (const auto* command : {"python3", "node", "cmake", "ninja", "git", "clang", "clang++"}) {
+        const auto executable = QStandardPaths::findExecutable(QString::fromLatin1(command));
+        const auto canonical = QFileInfo(executable).canonicalFilePath();
+        const auto package = authorizeCellarPackage(canonical);
         if (package.isEmpty())
             continue;
-        profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
-                       .arg(profileLiteral(package));
         profile += QStringLiteral("(allow file-read* file-map-executable (literal %1))")
                        .arg(profileLiteral(executable));
-        for (const auto& path : {executable, canonical}) {
-            auto directory = QFileInfo(path).absolutePath();
-            while (!QDir(directory).isRoot()) {
-                profile += QStringLiteral("(allow file-read-metadata (literal %1))")
-                               .arg(profileLiteral(directory));
-                directory = QFileInfo(directory).absolutePath();
+        for (const auto& path : {executable, canonical})
+            authorizeAncestors(path);
+
+        // Dynamically inspect toolchain executable load commands to discover
+        // dependent dylibs installed under Homebrew (such as pcre2 or gettext for git).
+        const auto deps = machODependencies(canonical);
+        for (const auto& dep : deps) {
+            if (dep.startsWith(QStringLiteral("/opt/homebrew/")) ||
+                dep.startsWith(QStringLiteral("/usr/local/Cellar/")) ||
+                dep.startsWith(QStringLiteral("/usr/local/opt/"))) {
+                runtimeImages.insert(dep);
+                const auto depCanonical = QFileInfo(dep).canonicalFilePath();
+                if (!depCanonical.isEmpty()) {
+                    runtimeImages.insert(depCanonical);
+                    authorizeCellarPackage(depCanonical);
+                    authorizeAncestors(depCanonical);
+                }
+                authorizeAncestors(dep);
+            }
+        }
+    }
+    // Defense-in-depth: authorize explicit immutable Cellar package roots for common
+    // toolchain shared libraries if present on the host.
+    for (const auto* pkg : {"pcre2", "gettext", "libunistring", "json-c"}) {
+        for (const auto* prefix : {"/opt/homebrew/opt/", "/usr/local/opt/"}) {
+            const auto optPath = QString::fromLatin1(prefix) + QString::fromLatin1(pkg);
+            const auto canonicalPath = QFileInfo(optPath).canonicalFilePath();
+            if (!canonicalPath.isEmpty()) {
+                runtimeImages.insert(optPath);
+                runtimeImages.insert(canonicalPath);
+                authorizeCellarPackage(canonicalPath);
+                profile += QStringLiteral("(allow file-read* file-map-executable (subpath %1))")
+                               .arg(profileLiteral(optPath));
+                authorizeAncestors(optPath);
+                authorizeAncestors(canonicalPath);
             }
         }
     }
@@ -275,13 +426,15 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
     // Permit library directories of already-loaded Homebrew runtime images
     // (for example Qt's ICU dependency), not the entire package-manager tree. dyld may check
     // both an install-name symlink and its canonical target.
-    QSet<QString> runtimeImages;
     for (uint32_t i = 0; i < _dyld_image_count(); ++i) {
         const auto* imageName = _dyld_get_image_name(i);
         if (!imageName)
             continue;
         const QString image = QString::fromUtf8(imageName);
-        if (!image.startsWith(QStringLiteral("/opt/homebrew/"))) {
+        const bool isHomebrew = image.startsWith(QStringLiteral("/opt/homebrew/")) ||
+                                image.startsWith(QStringLiteral("/usr/local/Cellar/")) ||
+                                image.startsWith(QStringLiteral("/usr/local/opt/"));
+        if (!isHomebrew) {
             // Hosted CI and official Qt installers put frameworks outside
             // Homebrew. Authorize only libraries already loaded by this trusted
             // parent, never their installation prefix or a user's home tree.
@@ -307,12 +460,7 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
                 if (path.isEmpty()) {
                     continue;
                 }
-                auto directory = QFileInfo(path).absolutePath();
-                while (!QDir(directory).isRoot()) {
-                    profile += QStringLiteral("(allow file-read-metadata (literal %1))")
-                                   .arg(profileLiteral(directory));
-                    directory = QFileInfo(directory).absolutePath();
-                }
+                authorizeAncestors(path);
             }
             continue;
         }
@@ -320,12 +468,20 @@ SandboxLaunch PlatformProcessSandbox::prepare(const SandboxExecutionPlan& plan,
         const auto canonical = QFileInfo(image).canonicalFilePath();
         if (!canonical.isEmpty())
             runtimeImages.insert(canonical);
-        const QString cellar = QStringLiteral("/opt/homebrew/Cellar/");
-        if (canonical.startsWith(cellar)) {
+    }
+    for (const auto& image : runtimeImages) {
+        const auto canonical = QFileInfo(image).canonicalFilePath();
+        for (const auto* prefix : {"/opt/homebrew/Cellar/", "/usr/local/Cellar/"}) {
+            const auto cellar = QString::fromLatin1(prefix);
+            if (!canonical.startsWith(cellar))
+                continue;
             const auto parts = canonical.mid(cellar.size()).split(QLatin1Char('/'));
             if (parts.size() > 2) {
-                const QString alias = QStringLiteral("/opt/homebrew/opt/%1/%2")
-                                          .arg(parts.first(), parts.mid(2).join(QLatin1Char('/')));
+                const auto prefixStr = QString::fromLatin1(prefix);
+                const auto optPrefix = prefixStr.left(prefixStr.indexOf(QLatin1String("Cellar/"))) +
+                                       QLatin1String("opt/");
+                const QString alias = optPrefix + parts.first() + QLatin1Char('/') +
+                                      parts.mid(2).join(QLatin1Char('/'));
                 if (QFileInfo(alias).canonicalFilePath() == canonical)
                     runtimeImages.insert(alias);
                 // ABI install names can be additional symlinks (78 -> 78.3).

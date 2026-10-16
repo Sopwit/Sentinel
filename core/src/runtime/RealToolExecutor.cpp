@@ -709,6 +709,9 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             const auto entry = weak.lock();
             if (!entry)
                 return;
+            entry->out.clear();
+            entry->err.clear();
+            entry->truncated = false;
             entry->id = entry->executor->start(
                 process,
                 [weak](const ProcessRecord& record) {
@@ -787,33 +790,57 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
             preflight.arguments = {QStringLiteral("--no-pager"), QStringLiteral("config"),
                                    QStringLiteral("--name-only"), QStringLiteral("--get-regexp"),
                                    QStringLiteral("^filter\\..*\\.(clean|process|smudge)$")};
-            active->id = active->executor->start(preflight, [weak,
-                                                             launch](const ProcessRecord& record) {
-                const auto current = weak.lock();
-                if (!current ||
-                    (record.state != ProcessState::Exited && record.state != ProcessState::Failed &&
-                     record.state != ProcessState::Cancelled))
-                    return;
-                if (record.state == ProcessState::Exited && record.exitCode == 1 &&
-                    !record.timedOut) {
-                    launch();
-                    return;
-                }
-                ToolExecutionResult failure{
-                    record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
-                                                            : ToolExecutionStatus::Blocked,
-                    record.exitCode == 0
-                        ? QStringLiteral("Git inspection refused: repository filters can execute "
-                                         "commands. Use an explicitly approved shell operation.")
-                        : QStringLiteral("Git filter safety check could not complete: %1")
-                              .arg(record.error)};
-                failure.failureCategory = record.state == ProcessState::Cancelled
-                                              ? ToolFailureCategory::Cancelled
-                                          : record.timedOut ? ToolFailureCategory::Timeout
-                                                            : ToolFailureCategory::SecurityDenied;
-                failure.sandbox = record.sandbox;
-                current->completion(std::move(failure));
-            });
+            active->id = active->executor->start(
+                preflight,
+                [weak, launch](const ProcessRecord& record) {
+                    const auto current = weak.lock();
+                    if (!current ||
+                        (record.state != ProcessState::Exited &&
+                         record.state != ProcessState::Failed &&
+                         record.state != ProcessState::Cancelled))
+                        return;
+                    if (record.state == ProcessState::Exited && record.exitCode == 1 &&
+                        !record.timedOut) {
+                        launch();
+                        return;
+                    }
+                    const auto errText = QString::fromUtf8(current->err).trimmed();
+                    const auto detail = !errText.isEmpty() ? errText : record.error;
+                    ToolExecutionResult failure{
+                        record.state == ProcessState::Cancelled ? ToolExecutionStatus::Cancelled
+                                                                : ToolExecutionStatus::Blocked,
+                        record.exitCode == 0
+                            ? QStringLiteral(
+                                  "Git inspection refused: repository filters can execute "
+                                  "commands. Use an explicitly approved shell operation.")
+                            : QStringLiteral("Git filter safety check could not complete: %1")
+                                  .arg(detail)};
+                    failure.failureCategory =
+                        record.state == ProcessState::Cancelled
+                            ? ToolFailureCategory::Cancelled
+                        : record.timedOut
+                            ? ToolFailureCategory::Timeout
+                            : ToolFailureCategory::SecurityDenied;
+                    failure.sandbox = record.sandbox;
+                    if (record.exitCode != 0 && (current->err.startsWith("bwrap:") ||
+                                                 current->err.startsWith("sandbox-exec:"))) {
+                        failure.sandbox.enforcement = SandboxEnforcement::Failed;
+                        failure.sandbox.failureCategory = QStringLiteral("BackendLaunchFailed");
+                        failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+                    } else if (record.sandbox.enforcement == SandboxEnforcement::Failed) {
+                        failure.failureCategory = ToolFailureCategory::RuntimeUnavailable;
+                    }
+                    current->completion(std::move(failure));
+                },
+                [weak](const QString& /*id*/, ProcessStream stream, const QByteArray& bytes) {
+                    auto current = weak.lock();
+                    if (!current)
+                        return;
+                    auto& buffer = stream == ProcessStream::Stdout ? current->out : current->err;
+                    const auto remaining = qMax<qsizetype>(0, 65536 - buffer.size());
+                    current->truncated |= bytes.size() > remaining;
+                    buffer.append(bytes.left(remaining));
+                });
         } else {
             launch();
         }
