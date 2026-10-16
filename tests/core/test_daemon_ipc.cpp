@@ -18,12 +18,15 @@
 #include <QScopeGuard>
 #include <QSemaphore>
 #include <QSignalSpy>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUuid>
 #ifdef Q_OS_UNIX
 #include <cstring>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -107,6 +110,28 @@ public:
         decision.kind = core::AgentStepDecision::Kind::FinalAnswer;
         decision.answer = QStringLiteral("late provider answer");
         return decision;
+    }
+};
+class BackpressurePlanner final : public core::IAgentStepPlanner {
+public:
+    int totalSteps;
+    explicit BackpressurePlanner(int steps = 8) : totalSteps(steps) {}
+    core::AgentStepDecision nextStep(const QString&,
+                                     const QList<core::AgentStepRecord>& history) const override {
+        core::AgentStepDecision step;
+        if (history.size() < totalSteps) {
+            step.kind = core::AgentStepDecision::Kind::ToolCall;
+            step.toolId = "memory-search";
+            step.toolName = "memory-search";
+            step.riskLevel = core::ToolRiskLevel::Low;
+            step.arguments.append(
+                {QStringLiteral("query"),
+                 QString::number(history.size()) + QStringLiteral("_") + QString(160000, 'P')});
+        } else {
+            step.kind = core::AgentStepDecision::Kind::FinalAnswer;
+            step.answer = "Backpressure test finished";
+        }
+        return step;
     }
 };
 struct Harness {
@@ -754,6 +779,399 @@ private slots:
         h.server->stopServer();
         QVERIFY(!QFileInfo::exists(h.path));
         QVERIFY(h.server->startServer(h.path));
+    }
+    void peerAuthorizationNativeSameUid() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket s;
+        hello(s, h.path);
+        QVERIFY(s.state() == QLocalSocket::ConnectedState);
+        const auto fd = s.socketDescriptor();
+        const auto peerUid = daemon::DaemonIpcServer::querySocketPeerUid(fd);
+        QVERIFY(peerUid.has_value());
+        QCOMPARE(peerUid.value(), ::getuid());
+        const auto created = request(s, "session.create", {{"title", "Native Auth Session"}});
+        QCOMPARE(created.value("type").toString(), QString("response"));
+        QVERIFY(!created.value("payload").toObject().value("session_id").toString().isEmpty());
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void peerAuthorizationDirectDescriptorValidation() {
+#ifdef Q_OS_UNIX
+        const auto invalidPeer = daemon::DaemonIpcServer::querySocketPeerUid(-1);
+        QVERIFY(!invalidPeer.has_value());
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void peerAuthorizationCrossUidRejectionSimulated() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        h.server->setPeerUidResolverForTesting(
+            [](qintptr) { return std::optional<uid_t>(::getuid() + 1000); });
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket s;
+        s.connectToServer(h.path);
+        s.waitForConnected(1000);
+        s.write("test\n");
+        s.flush();
+        QTRY_COMPARE(s.state(), QLocalSocket::UnconnectedState);
+        QCOMPARE(s.error(), QLocalSocket::PeerClosedError);
+        QCOMPARE(s.bytesAvailable(), 0);
+        QVERIFY(s.readAll().isEmpty());
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void peerAuthorizationMissingCredentialsRejectionSimulated() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        h.server->setPeerUidResolverForTesting([](qintptr) { return std::nullopt; });
+        QVERIFY(h.server->startServer(h.path));
+        QLocalSocket s;
+        s.connectToServer(h.path);
+        s.waitForConnected(1000);
+        s.write("test\n");
+        s.flush();
+        QTRY_COMPARE(s.state(), QLocalSocket::UnconnectedState);
+        QCOMPARE(s.error(), QLocalSocket::PeerClosedError);
+        QCOMPARE(s.bytesAvailable(), 0);
+        QVERIFY(s.readAll().isEmpty());
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void peerAuthorizationRootUidRejectedWhenNonRootDaemon() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        h.server->setPeerUidResolverForTesting([](qintptr) { return std::optional<uid_t>(0); });
+        QVERIFY(h.server->startServer(h.path));
+        if (::getuid() != 0) {
+            QLocalSocket s;
+            s.connectToServer(h.path);
+            s.waitForConnected(1000);
+            s.write("test\n");
+            s.flush();
+            QTRY_COMPARE(s.state(), QLocalSocket::UnconnectedState);
+            QCOMPARE(s.error(), QLocalSocket::PeerClosedError);
+            QCOMPARE(s.bytesAvailable(), 0);
+            QVERIFY(s.readAll().isEmpty());
+        }
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void peerAuthorizationNoFallbackToUnauthenticated() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        h.server->setPeerUidResolverForTesting(
+            [](qintptr) { return std::optional<uid_t>(::getuid() + 999); });
+        QVERIFY(h.server->startServer(h.path));
+        int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+        QVERIFY(fd >= 0);
+        sockaddr_un address{};
+        address.sun_family = AF_UNIX;
+        const auto path = h.path.toLocal8Bit();
+        std::memcpy(address.sun_path, path.constData(), path.size() + 1);
+        ::connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+        ::fcntl(fd, F_SETFL, O_NONBLOCK);
+        const auto raw =
+            QJsonDocument(message("session.list")).toJson(QJsonDocument::Compact) + '\n';
+        ::write(fd, raw.constData(), raw.size());
+        QTest::qWait(100);
+        char buf[1024];
+        const auto readBytes = ::read(fd, buf, sizeof(buf));
+        QVERIFY(readBytes <= 0);
+        ::close(fd);
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
+    }
+    void slowClientPendingBytesBackpressure() {
+#ifdef Q_OS_UNIX
+        Harness h(test::DeterministicChatReply::Final, true, nullptr, false,
+                  std::make_unique<BackpressurePlanner>(8));
+        QVERIFY(h.server->startServer(h.path));
+
+        QLocalSocket fastClient;
+        hello(fastClient, h.path);
+        const auto created =
+            request(fastClient, "session.create", {{"title", "Backpressure Session"}})["payload"]
+                .toObject();
+        const auto sessionId = created["session_id"].toString();
+        QVERIFY(!sessionId.isEmpty());
+        QCOMPARE(
+            request(fastClient, "session.attach", {{"session_id", sessionId}})["type"].toString(),
+            QString("response"));
+
+        int slowFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+        QVERIFY(slowFd >= 0);
+        int rcvBuf = 8192;
+        ::setsockopt(slowFd, SOL_SOCKET, SO_RCVBUF, &rcvBuf, sizeof(rcvBuf));
+
+        sockaddr_un address{};
+        address.sun_family = AF_UNIX;
+        const auto path = h.path.toLocal8Bit();
+        std::memcpy(address.sun_path, path.constData(), path.size() + 1);
+        QCOMPARE(::connect(slowFd, reinterpret_cast<sockaddr*>(&address), sizeof(address)), 0);
+
+        const auto helloMsg =
+            QJsonDocument(message("hello", {{"client_id", "slow-reader"},
+                                           {"major", 1},
+                                           {"minor", 0},
+                                           {"capabilities", QJsonArray{}}}))
+                .toJson(QJsonDocument::Compact) +
+            '\n';
+        QCOMPARE(::write(slowFd, helloMsg.constData(), helloMsg.size()), helloMsg.size());
+        QTest::qWait(50);
+        char buf[8192];
+        ssize_t n = ::read(slowFd, buf, sizeof(buf));
+        QVERIFY(n > 0);
+
+        const auto attachMsg =
+            QJsonDocument(message("session.attach", {{"session_id", sessionId}}))
+                .toJson(QJsonDocument::Compact) +
+            '\n';
+        QCOMPARE(::write(slowFd, attachMsg.constData(), attachMsg.size()), attachMsg.size());
+        QTest::qWait(50);
+        n = ::read(slowFd, buf, sizeof(buf));
+        QVERIFY(n > 0);
+
+        ::fcntl(slowFd, F_SETFL, O_NONBLOCK);
+
+        core::OllamaModelDiscoveryResult catalog;
+        catalog.models = {{QStringLiteral("sentinel-test-model"), {}, 0}};
+        catalog.lifecycle = core::ChatRequestLifecycle::Completed;
+        catalog.errorCategory = core::ChatProviderErrorCategory::None;
+        catalog.safeDetail = QStringLiteral("Deterministic test catalog is ready.");
+        h.controller->modelService()->acceptOllamaDiscovery(
+            catalog, h.controller->modelService()->beginProviderHealthObservation());
+
+        const auto startResp = request(fastClient, "agent.start",
+                                       {{"session_id", sessionId}, {"text", "produce backpressure"}});
+        QCOMPARE(startResp["type"].toString(), QString("response"));
+        const auto runId = startResp["payload"].toObject()["run_id"].toString();
+        QVERIFY(!runId.isEmpty());
+
+        bool completed = false;
+        qint64 lastSequence = 0;
+        QElapsedTimer timer;
+        timer.start();
+        while (!completed && timer.elapsed() < 10000) {
+            const auto event = receive(fastClient, 200);
+            if (event.isEmpty())
+                continue;
+            qDebug() << "FastClient got:" << event.value("name").toString()
+                     << "type:" << event.value("type").toString()
+                     << "detail:" << event.value("payload").toObject()["detail"].toString();
+            QVERIFY(event.value("type").toString() == QString("event"));
+            const auto payload = event.value("payload").toObject();
+            const auto seq = payload.value("event_sequence").toInteger();
+            if (seq > 0) {
+                QVERIFY(seq > lastSequence);
+                lastSequence = seq;
+            }
+            if (event.value("name").toString() == QString("run.completed")) {
+                completed = true;
+                QCOMPARE(payload.value("text").toString(), QString("Backpressure test finished"));
+            }
+        }
+        QVERIFY(completed);
+
+        QTest::qWait(100);
+        char drainBuf[1024];
+        while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {}
+        const ssize_t closedRead = ::read(slowFd, drainBuf, sizeof(drainBuf));
+        QVERIFY(closedRead <= 0);
+        ::close(slowFd);
+
+        QLocalSocket freshClient;
+        hello(freshClient, h.path);
+        const auto snapshot = request(freshClient, "session.attach", {{"session_id", sessionId}});
+        QCOMPARE(snapshot["type"].toString(), QString("response"));
+        const auto snapPayload = snapshot["payload"].toObject();
+        QCOMPARE(snapPayload["state"].toString(), QString("completed"));
+        QCOMPARE(snapPayload["run_id"].toString(), runId);
+#else
+        QSKIP("Slow client backpressure is a Unix platform contract.");
+#endif
+    }
+    void interruptedRunningRunReconciledOnRestart() {
+        Harness h(test::DeterministicChatReply::Final, true);
+        const auto dbPath = h.directory.filePath("sessions.sqlite3");
+        QVERIFY(h.server->openSessionProjectionStore(dbPath));
+        QVERIFY(h.server->startServer(h.path));
+
+        QLocalSocket s;
+        hello(s, h.path);
+        const auto created =
+            request(s, "session.create", {{"title", "Interrupted Run"}})["payload"].toObject();
+        const auto sessionId = created["session_id"].toString();
+        QVERIFY(!sessionId.isEmpty());
+
+        const auto started =
+            request(s, "agent.start", {{"session_id", sessionId}, {"text", "Run task"}});
+        QCOMPARE(started["type"].toString(), QString("response"));
+        const auto runId = started["payload"].toObject()["run_id"].toString();
+        QVERIFY(!runId.isEmpty());
+
+        bool runStartedEvent = false;
+        for (int i = 0; i < 5 && !runStartedEvent; ++i) {
+            const auto e = receive(s, 200);
+            if (e["name"] == "run.started")
+                runStartedEvent = true;
+        }
+        QVERIFY(runStartedEvent);
+
+        s.disconnectFromServer();
+        h.server->stopServer();
+
+        daemon::DaemonIpcServer recovered(h.controller.get());
+        QVERIFY(recovered.openSessionProjectionStore(dbPath));
+        QVERIFY(recovered.startServer(h.path));
+
+        QLocalSocket s2;
+        hello(s2, h.path);
+        const auto attachResp = request(s2, "session.attach", {{"session_id", sessionId}});
+        QCOMPARE(attachResp["type"].toString(), QString("response"));
+        const auto payload = attachResp["payload"].toObject();
+
+        QCOMPARE(payload["session_id"].toString(), sessionId);
+        QCOMPARE(payload["run_id"].toString(), runId);
+        QCOMPARE(payload["state"].toString(), QString("failed"));
+        QCOMPARE(payload["detail"].toString(), QString("daemon-restarted"));
+        QCOMPARE(payload["output"].toString(), QString{});
+        QVERIFY(payload["approval_id"].toString().isEmpty());
+        QVERIFY(h.controller->persistentPermissionGrants().isEmpty());
+
+        {
+            QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "test_verify_interrupted_run");
+            db.setDatabaseName(dbPath);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QString("SELECT payload FROM session_projection WHERE session_id = '%1'")
+                               .arg(sessionId)));
+            QVERIFY(q.next());
+            const auto diskVal = QJsonDocument::fromJson(q.value(0).toByteArray()).object();
+            QCOMPARE(diskVal["state"].toString(), QString("failed"));
+            QCOMPARE(diskVal["detail"].toString(), QString("daemon-restarted"));
+            db.close();
+        }
+        QSqlDatabase::removeDatabase("test_verify_interrupted_run");
+    }
+    void interruptedApprovalRunReconciledOnRestart() {
+        Harness h(test::DeterministicChatReply::Final, true);
+        const auto dbPath = h.directory.filePath("sessions.sqlite3");
+        QVERIFY(h.server->openSessionProjectionStore(dbPath));
+        QVERIFY(h.server->startServer(h.path));
+
+        QLocalSocket s;
+        hello(s, h.path);
+        const auto created =
+            request(s, "session.create", {{"title", "Interrupted Approval"}})["payload"].toObject();
+        const auto sessionId = created["session_id"].toString();
+        QVERIFY(!sessionId.isEmpty());
+
+        const auto started =
+            request(s, "agent.start", {{"session_id", sessionId}, {"text", "Run with approval"}});
+        const auto runId = started["payload"].toObject()["run_id"].toString();
+        QVERIFY(!runId.isEmpty());
+
+        QJsonObject approval;
+        for (int i = 0; i < 10 && approval.isEmpty(); ++i) {
+            const auto e = receive(s, 200);
+            if (e["name"] == "approval.requested")
+                approval = e["payload"].toObject();
+        }
+        QVERIFY(!approval.isEmpty());
+        const auto approvalId = approval["approval_id"].toString();
+        QVERIFY(!approvalId.isEmpty());
+
+        s.disconnectFromServer();
+        h.server->stopServer();
+
+        daemon::DaemonIpcServer recovered(h.controller.get());
+        QVERIFY(recovered.openSessionProjectionStore(dbPath));
+        QVERIFY(recovered.startServer(h.path));
+
+        QLocalSocket s2;
+        hello(s2, h.path);
+        const auto attachResp = request(s2, "session.attach", {{"session_id", sessionId}});
+        QCOMPARE(attachResp["type"].toString(), QString("response"));
+        const auto payload = attachResp["payload"].toObject();
+
+        QCOMPARE(payload["session_id"].toString(), sessionId);
+        QCOMPARE(payload["run_id"].toString(), runId);
+        QCOMPARE(payload["state"].toString(), QString("failed"));
+        QCOMPARE(payload["detail"].toString(), QString("daemon-restarted"));
+        QCOMPARE(payload["output"].toString(), QString{});
+        QVERIFY(payload["approval_id"].toString().isEmpty());
+
+        const auto replayResp = request(
+            s2, "approval.respond",
+            {{"run_id", runId}, {"approval_id", approvalId}, {"allow", true}});
+        QCOMPARE(replayResp["type"].toString(), QString("error"));
+        QCOMPARE(replayResp["payload"].toObject()["code"].toString(), QString("invalid-approval"));
+    }
+    void completedRunSurvivesDaemonRestart() {
+        Harness h(test::DeterministicChatReply::Final, true);
+        const auto dbPath = h.directory.filePath("sessions.sqlite3");
+        QVERIFY(h.server->openSessionProjectionStore(dbPath));
+        QVERIFY(h.server->startServer(h.path));
+
+        QLocalSocket s, control;
+        hello(s, h.path);
+        hello(control, h.path);
+        const auto created =
+            request(s, "session.create", {{"title", "Completed Run"}})["payload"].toObject();
+        const auto sessionId = created["session_id"].toString();
+        QVERIFY(!sessionId.isEmpty());
+
+        const auto started =
+            request(s, "agent.start", {{"session_id", sessionId}, {"text", "Run to completion"}});
+        const auto runId = started["payload"].toObject()["run_id"].toString();
+
+        QJsonObject approval;
+        for (int i = 0; i < 10 && approval.isEmpty(); ++i) {
+            const auto e = receive(s, 200);
+            if (e["name"] == "approval.requested")
+                approval = e["payload"].toObject();
+        }
+        QVERIFY(!approval.isEmpty());
+        QCOMPARE(request(control, "approval.respond",
+                         {{"run_id", runId},
+                          {"approval_id", approval["approval_id"]},
+                          {"allow", true}})["type"]
+                     .toString(),
+                 QString("response"));
+
+        bool completed = false;
+        for (int i = 0; i < 15 && !completed; ++i) {
+            const auto e = receive(s, 200);
+            if (e["name"] == "run.completed")
+                completed = true;
+        }
+        QVERIFY(completed);
+
+        s.disconnectFromServer();
+        h.server->stopServer();
+
+        daemon::DaemonIpcServer recovered(h.controller.get());
+        QVERIFY(recovered.openSessionProjectionStore(dbPath));
+        QVERIFY(recovered.startServer(h.path));
+
+        QLocalSocket s2;
+        hello(s2, h.path);
+        const auto attachResp = request(s2, "session.attach", {{"session_id", sessionId}});
+        QCOMPARE(attachResp["type"].toString(), QString("response"));
+        const auto payload = attachResp["payload"].toObject();
+
+        QCOMPARE(payload["session_id"].toString(), sessionId);
+        QCOMPARE(payload["run_id"].toString(), runId);
+        QCOMPARE(payload["state"].toString(), QString("completed"));
+        QCOMPARE(payload["output"].toString(), QString("Fixture finished"));
     }
 };
 QTEST_GUILESS_MAIN(DaemonIpcServerTest)

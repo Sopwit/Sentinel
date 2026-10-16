@@ -27,6 +27,12 @@
 #include <QTest>
 #include <QUuid>
 #include <atomic>
+#ifdef Q_OS_UNIX
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#endif
 
 using namespace sentinel;
 using desktop::DaemonClient;
@@ -37,6 +43,28 @@ const QByteArray replacement = "authorized mutation\n";
 struct Gate {
     QSemaphore entered, release;
     std::atomic_bool timedOut{false};
+};
+class MultiClientBackpressurePlanner final : public core::IAgentStepPlanner {
+public:
+    int totalSteps;
+    explicit MultiClientBackpressurePlanner(int steps = 8) : totalSteps(steps) {}
+    core::AgentStepDecision nextStep(const QString&,
+                                     const QList<core::AgentStepRecord>& history) const override {
+        core::AgentStepDecision step;
+        if (history.size() < totalSteps) {
+            step.kind = core::AgentStepDecision::Kind::ToolCall;
+            step.toolId = "memory-search";
+            step.toolName = "memory-search";
+            step.riskLevel = core::ToolRiskLevel::Low;
+            step.arguments.append(
+                {QStringLiteral("query"),
+                 QString::number(history.size()) + QStringLiteral("_") + QString(160000, 'P')});
+        } else {
+            step.kind = core::AgentStepDecision::Kind::FinalAnswer;
+            step.answer = "Backpressure test finished";
+        }
+        return step;
+    }
 };
 class MutationPlanner final : public core::IAgentStepPlanner {
 public:
@@ -73,9 +101,10 @@ public:
     mutable std::atomic_int calls{0}, unauthorized{0}, contextReads{0};
     core::ToolExecutionResult execute(const core::ToolExecutionRequest& request) const override {
         if (request.plan.invocations.size() == 1 &&
-            request.plan.invocations.first().toolId == "glob") {
+            (request.plan.invocations.first().toolId == "glob" ||
+             request.plan.invocations.first().toolId == "memory-search")) {
             ++contextReads;
-            return core::RealToolExecutor{}.execute(request);
+            return {core::ToolExecutionStatus::Succeeded, QStringLiteral("Fixture result")};
         }
         ++calls;
         if (request.plan.invocations.size() != 1) {
@@ -143,7 +172,7 @@ struct Fixture {
     std::unique_ptr<daemon::DaemonIpcServer> server;
     QString root, path, artifact;
     QMap<QString, QByteArray> before;
-    bool start() {
+    bool start(std::unique_ptr<core::IAgentStepPlanner> customPlanner = nullptr) {
         if (!directory.isValid())
             return false;
         root = directory.filePath("workspace");
@@ -166,7 +195,8 @@ struct Fixture {
                 .withMemoryStore(std::make_unique<core::InMemoryStore>())
                 .withAgentRuntime(std::make_unique<core::NullAgentRuntime>(
                     core::NullAgentRuntime::standardTools()))
-                .withAgentStepPlanner(std::make_unique<MutationPlanner>(artifact, gate))
+                .withAgentStepPlanner(customPlanner ? std::move(customPlanner)
+                                                    : std::make_unique<MutationPlanner>(artifact, gate))
                 .withToolExecutor(std::move(counted))
                 .withSandboxPolicy(std::make_unique<core::StaticSandboxPolicy>(
                     QSet<QString>{"tool.metadata.read", "tool.risk.medium", "tool.risk.high"}))
@@ -313,6 +343,8 @@ private slots:
     void cor17_disconnectReattachDuringActiveRun();
     void cor18_staleDuplicateForeignEventsIgnored_data();
     void cor18_staleDuplicateForeignEventsIgnored();
+    void cor19_eventSequenceMonotonicAndGenerationFencing();
+    void cor20_multiClientBackpressureAndBufferSaturation();
 };
 void AgentReliabilityIpcTest::initTestCase() {
     QStandardPaths::setTestModeEnabled(true);
@@ -430,7 +462,8 @@ void AgentReliabilityIpcTest::cor18_staleDuplicateForeignEventsIgnored() {
     QTRY_VERIFY(fixture.gate->entered.available() == 1);
     QVERIFY(fixture.exactMutation());
     const auto runtimeSession = fixture.controller->activeAgentSessionId();
-    QTRY_VERIFY(adapter.ready()); // Drain the approval response and its attach snapshot first.
+    QTRY_VERIFY(adapter.ready() &&
+                adapter.value("conversationState").toString() == QStringLiteral("running"));
     if (cancel) {
         const auto cancelled = call(observer, DaemonClient::Command::run_cancel, {{"run_id", run}});
         QVERIFY(cancelled.ok);
@@ -534,5 +567,170 @@ void AgentReliabilityIpcTest::cor18_staleDuplicateForeignEventsIgnored() {
     QVERIFY(fixture.exactMutation());
     QVERIFY(!fixture.gate->timedOut.load());
 }
+void AgentReliabilityIpcTest::cor19_eventSequenceMonotonicAndGenerationFencing() {
+    Fixture fixture;
+    QVERIFY(fixture.start());
+    DaemonClient client(fixture.path, deadlineMs, 10000);
+    client.connectToDaemon();
+    QTRY_VERIFY(client.daemonReachable());
+
+    const auto created =
+        call(client, DaemonClient::Command::session_create, {{"title", "COR-19"}});
+    QVERIFY(created.ok);
+    const auto session = created.payload.value("session_id").toString();
+    QVERIFY(call(client, DaemonClient::Command::session_attach, {{"session_id", session}}).ok);
+
+    QSignalSpy clientEvents(&client, &DaemonClient::eventReceived);
+    const auto started =
+        call(client, DaemonClient::Command::agent_start,
+             {{"session_id", session}, {"text", "Apply prescribed fixture mutation"}});
+    QVERIFY(started.ok);
+    const auto run = started.payload.value("run_id").toString();
+    QVERIFY(!run.isEmpty());
+
+    QTRY_VERIFY(!wireEvent(clientEvents, "approval.requested").isEmpty());
+    const auto approval = wireEvent(clientEvents, "approval.requested");
+    QCOMPARE(fixture.executor->calls.load(), 0);
+
+    const auto gen = client.serverGeneration();
+    QVERIFY(!gen.isEmpty());
+
+    qint64 lastSeq = 0;
+    for (const auto& row : clientEvents) {
+        const auto payload = row[1].toJsonObject();
+        const auto seq = payload.value("event_sequence").toInteger();
+        if (seq > 0) {
+            QVERIFY(seq > lastSeq);
+            lastSeq = seq;
+        }
+        QCOMPARE(payload.value("server_generation").toString(), gen);
+    }
+
+    QVERIFY(call(client, DaemonClient::Command::approval_respond,
+                 {{"run_id", run},
+                  {"approval_id", approval.value("approval_id")},
+                  {"allow", true}})
+                .ok);
+    QTRY_VERIFY(fixture.gate->entered.available() == 1);
+    QVERIFY(fixture.exactMutation());
+    fixture.gate->release.release();
+
+    QTRY_VERIFY(!wireEvent(clientEvents, "run.completed").isEmpty());
+
+    lastSeq = 0;
+    int terminalEvents = 0;
+    for (const auto& row : clientEvents) {
+        const auto name = row[0].toString();
+        const auto payload = row[1].toJsonObject();
+        const auto seq = payload.value("event_sequence").toInteger();
+        if (seq > 0) {
+            QVERIFY(seq > lastSeq);
+            lastSeq = seq;
+        }
+        if (QStringList{"run.completed", "run.failed", "run.cancelled"}.contains(name)) {
+            ++terminalEvents;
+        }
+        QCOMPARE(payload.value("server_generation").toString(), gen);
+        QCOMPARE(payload.value("session_id").toString(), session);
+    }
+    QCOMPARE(terminalEvents, 1);
+
+    DaemonClient fresh(fixture.path, deadlineMs, 10000);
+    fresh.connectToDaemon();
+    QTRY_VERIFY(fresh.daemonReachable());
+    const auto snap =
+        call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
+    QVERIFY(snap.ok);
+    QCOMPARE(snap.payload.value("state").toString(), QString("completed"));
+    QCOMPARE(snap.payload.value("run_id").toString(), run);
+    QCOMPARE(fixture.executor->calls.load(), 1);
+    QVERIFY(fixture.exactMutation());
+}
+
+void AgentReliabilityIpcTest::cor20_multiClientBackpressureAndBufferSaturation() {
+#ifdef Q_OS_UNIX
+    Fixture fixture;
+    QVERIFY(fixture.start(std::make_unique<MultiClientBackpressurePlanner>(8)));
+
+    DaemonClient fastClient(fixture.path, deadlineMs, 10000);
+    fastClient.connectToDaemon();
+    QTRY_VERIFY(fastClient.daemonReachable());
+
+    const auto created =
+        call(fastClient, DaemonClient::Command::session_create, {{"title", "COR-20"}});
+    QVERIFY(created.ok);
+    const auto session = created.payload.value("session_id").toString();
+    QVERIFY(call(fastClient, DaemonClient::Command::session_attach, {{"session_id", session}}).ok);
+
+    int slowFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+    QVERIFY(slowFd >= 0);
+    int rcvBuf = 8192;
+    ::setsockopt(slowFd, SOL_SOCKET, SO_RCVBUF, &rcvBuf, sizeof(rcvBuf));
+
+    sockaddr_un address{};
+    address.sun_family = AF_UNIX;
+    const auto pathBytes = fixture.path.toLocal8Bit();
+    std::memcpy(address.sun_path, pathBytes.constData(), pathBytes.size() + 1);
+    QCOMPARE(::connect(slowFd, reinterpret_cast<sockaddr*>(&address), sizeof(address)), 0);
+
+    const auto helloMsg =
+        QJsonDocument(QJsonObject{{"version", QJsonObject{{"major", 1}, {"minor", 0}}},
+                                  {"type", "request"},
+                                  {"id", "h1"},
+                                  {"name", "hello"},
+                                  {"payload", QJsonObject{{"client_id", "slow-observer"},
+                                                          {"major", 1},
+                                                          {"minor", 0},
+                                                          {"capabilities", QJsonArray{}}}}})
+            .toJson(QJsonDocument::Compact) +
+        '\n';
+    QCOMPARE(::write(slowFd, helloMsg.constData(), helloMsg.size()), helloMsg.size());
+    QTest::qWait(50);
+    char buf[8192];
+    ssize_t n = ::read(slowFd, buf, sizeof(buf));
+    QVERIFY(n > 0);
+
+    const auto attachMsg =
+        QJsonDocument(QJsonObject{{"version", QJsonObject{{"major", 1}, {"minor", 0}}},
+                                  {"type", "request"},
+                                  {"id", "a1"},
+                                  {"name", "session.attach"},
+                                  {"payload", QJsonObject{{"session_id", session}}}})
+            .toJson(QJsonDocument::Compact) +
+        '\n';
+    QCOMPARE(::write(slowFd, attachMsg.constData(), attachMsg.size()), attachMsg.size());
+    QTest::qWait(50);
+    n = ::read(slowFd, buf, sizeof(buf));
+    QVERIFY(n > 0);
+
+    ::fcntl(slowFd, F_SETFL, O_NONBLOCK);
+
+    QSignalSpy fastEvents(&fastClient, &DaemonClient::eventReceived);
+    const auto started =
+        call(fastClient, DaemonClient::Command::agent_start,
+             {{"session_id", session}, {"text", "Run saturation task"}});
+    QVERIFY(started.ok);
+
+    QTRY_VERIFY_WITH_TIMEOUT(!wireEvent(fastEvents, "run.completed").isEmpty(), 15000);
+    QCOMPARE(terminalCount(fastEvents), 1);
+
+    char drainBuf[1024];
+    while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {}
+    const ssize_t closedRead = ::read(slowFd, drainBuf, sizeof(drainBuf));
+    QVERIFY(closedRead <= 0);
+    ::close(slowFd);
+
+    DaemonClient fresh(fixture.path, deadlineMs, 10000);
+    fresh.connectToDaemon();
+    QTRY_VERIFY(fresh.daemonReachable());
+    const auto snap =
+        call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
+    QVERIFY(snap.ok);
+    QCOMPARE(snap.payload.value("state").toString(), QString("completed"));
+#else
+    QSKIP("Slow client backpressure is a Unix platform contract.");
+#endif
+}
+
 QTEST_MAIN(AgentReliabilityIpcTest)
 #include "test_agent_reliability_ipc.moc"
