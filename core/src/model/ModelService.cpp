@@ -946,6 +946,11 @@ public:
                                    ChatProviderErrorCategory::CapabilityUnsupported,
                                    ChatProviderReply::Error::CapabilityRejected);
         }
+        if (!options.images.isEmpty() &&
+            binding_.capabilities.visionInput == CapabilitySupport::Unsupported)
+            return providerFailure(QStringLiteral("Selected model does not support image input."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
         if (options.structuredOutput || options.nativeToolCalling) {
             return providerFailure(
                 QStringLiteral(
@@ -1775,6 +1780,7 @@ LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
     } else {
         config.endpoint = QUrl(lmStudioEndpoint_);
     }
+    config.networkFactory = providerNetworkFactory_;
     return config;
 }
 
@@ -1810,6 +1816,11 @@ void ModelService::setLlamaCppEndpoint(const QString& endpoint) {
 
 void ModelService::setLocalInferenceTimeoutMs(int timeoutMs) {
     localInferenceTimeoutMs_ = timeoutMs;
+}
+
+void ModelService::setProviderNetworkFactoryForTesting(
+    std::shared_ptr<ILocalInferenceNetworkFactory> networkFactory) {
+    providerNetworkFactory_ = std::move(networkFactory);
 }
 
 } // namespace sentinel::core

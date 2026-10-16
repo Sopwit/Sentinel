@@ -22,6 +22,8 @@ class QNetworkAccessManager;
 
 namespace sentinel::core {
 
+class ILocalInferenceNetworkFactory;
+
 enum class OllamaConnectionStatus : std::uint8_t {
     Unavailable,
     Blocked,
@@ -131,28 +133,31 @@ struct ProviderDiscoveryOutcome {
 QString ollamaModelSummary(const OllamaModelSummary& model);
 QStringList ollamaModelSummaries(const QList<OllamaModelSummary>& models);
 QString safeOllamaHealthSummary(const OllamaHealthCheckResult& result);
-QList<OllamaModelSummary>
-fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
-                            const QMap<QByteArray, QByteArray>& headers = {},
-                            QString* errorOut = nullptr,
-                            const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
-                            ProviderDiscoveryOutcome* outcome = nullptr);
+QList<OllamaModelSummary> fetchOpenAiCompatibleModels(
+    const QUrl& url, int timeoutMs, const QMap<QByteArray, QByteArray>& headers = {},
+    QString* errorOut = nullptr, const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+    ProviderDiscoveryOutcome* outcome = nullptr,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {});
 QList<OllamaModelSummary>
 fetchLlamaCppModels(const QUrl& modelsUrl, int timeoutMs,
                     const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
                     ProviderDiscoveryOutcome* outcome = nullptr);
-QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000,
-                                                 QString* errorOut = nullptr,
-                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
-                                                 ProviderDiscoveryOutcome* outcome = nullptr);
-QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs = 4000,
-                                                    QString* errorOut = nullptr,
-                                                    const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
-                                                    ProviderDiscoveryOutcome* outcome = nullptr);
-QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
-                                                 int timeoutMs = 4000, QString* errorOut = nullptr,
-                                                 const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
-                                                 ProviderDiscoveryOutcome* outcome = nullptr);
+QList<OllamaModelSummary>
+fetchGeminiCloudModels(const QString& apiKey, int timeoutMs = 4000, QString* errorOut = nullptr,
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                       ProviderDiscoveryOutcome* outcome = nullptr,
+                       const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {});
+QList<OllamaModelSummary> fetchAnthropicCloudModels(
+    const QString& apiKey, int timeoutMs = 4000, QString* errorOut = nullptr,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+    ProviderDiscoveryOutcome* outcome = nullptr,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {});
+QList<OllamaModelSummary>
+fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey, int timeoutMs = 4000,
+                       QString* errorOut = nullptr,
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                       ProviderDiscoveryOutcome* outcome = nullptr,
+                       const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {});
 
 class IOllamaRuntimeClient {
 public:

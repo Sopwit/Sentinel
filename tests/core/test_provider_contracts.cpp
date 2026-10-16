@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef Q_MOC_RUN
 #include "../support/ProviderHttpFixture.h"
+#include "../support/ScriptedProviderTransport.h"
 #endif
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/memory/InMemorySettingsStore.h"
@@ -204,21 +205,23 @@ void ProviderContractsTest::discoveryContract() {
     QFETCH(int, status);
     QFETCH(int, count);
     QFETCH(int, category);
-    ProviderHttpFixture server;
-    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
-    server.respond = [=](QTcpSocket* socket, const auto&) {
-        ProviderHttpFixture::reply(socket, body, status);
+    auto state = std::make_shared<sentinel::test::ScriptedTransportState>();
+    state->responder = [=](const auto&) {
+        return sentinel::test::ScriptedHttpResponse::body(body, status);
     };
+    auto factory = std::make_shared<sentinel::test::ScriptedNetworkFactory>(state);
+    sentinel::test::ScopedOnlineNetworkMode online;
     ProviderDiscoveryOutcome outcome;
     QString error;
-    const auto models =
-        fetchOpenAiCloudModels(server.endpoint(), "synthetic-key", 500, &error, {}, &outcome);
+    const auto models = fetchOpenAiCloudModels(QUrl("https://fixture.invalid/v1/models"),
+                                               "synthetic-key", 500, &error, {}, &outcome, factory);
     QCOMPARE(models.size(), count);
     QCOMPARE(int(outcome.category), category);
     QCOMPARE(outcome.completed, category == int(ChatProviderErrorCategory::None));
     QVERIFY(!outcome.requestId.isEmpty());
-    QCOMPARE(server.requests.size(), status == 429 ? 2 : 1);
-    QVERIFY(server.requests.first().headers.contains("Bearer synthetic-key"));
+    QCOMPARE(state->requests.size(), status == 429 ? 2 : 1);
+    QCOMPARE(state->requests.first().headers.value("authorization"),
+             QByteArray("Bearer synthetic-key"));
     QVERIFY(!error.contains("synthetic-key"));
     QVERIFY(!error.contains("PRIVATE_DISCOVERY"));
     QVERIFY(error.size() < 256);

@@ -175,6 +175,7 @@ add_sentinel_core_test(test_static_execution_lifecycle core/test_static_executio
 add_sentinel_core_test(test_runtime_integration core/test_runtime_integration.cpp)
 add_sentinel_core_test(test_runtime_provider core/test_runtime_provider.cpp)
 add_sentinel_core_test(test_provider_contracts core/test_provider_contracts.cpp)
+add_sentinel_core_test(test_native_provider_contract core/test_native_provider_contract.cpp)
 add_sentinel_core_test(test_bounded_streaming_contract core/test_bounded_streaming_contract.cpp)
 add_sentinel_core_test(test_credential_store core/test_credential_store.cpp)
 add_sentinel_core_test(test_provider_credentials core/test_provider_credentials.cpp)
@@ -398,3 +399,7 @@ qt_add_executable(test_local_model_runtime desktop/test_local_model_runtime.cpp)
 target_link_libraries(test_local_model_runtime PRIVATE sentinel_daemon_service Qt6::Test)
 add_test(NAME test_local_model_runtime COMMAND $<TARGET_FILE:test_local_model_runtime>)
 set_tests_properties(test_local_model_runtime PROPERTIES TIMEOUT 30)
+
+add_sentinel_core_test(test_vendor_cloud_contract core/test_vendor_cloud_contract.cpp)
+
+add_sentinel_core_test(test_endpoint_security_capability core/test_endpoint_security_capability.cpp)

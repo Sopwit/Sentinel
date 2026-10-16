@@ -19,9 +19,10 @@
 namespace sentinel::core {
 
 class AppSettings;
+class IModelRouter;
+class ILocalInferenceNetworkFactory;
 // Gemini's full JSON Schema field preserves the authoritative tool contract.
 QJsonObject geminiFunctionDeclaration(const ToolDescriptor& tool);
-class IModelRouter;
 struct LMStudioConfig;
 struct ProviderHealthRegistry;
 
@@ -186,6 +187,14 @@ public:
     void setLlamaCppEndpoint(const QString& endpoint);
     void setLocalInferenceTimeoutMs(int timeoutMs);
 
+    // Safely constrained transport seam for deterministic provider-contract
+    // fixtures. Empty in production, so constructed provider configurations keep
+    // the existing authenticated HTTPS endpoints and network policy. A fixture
+    // may install an in-memory factory to observe the exact intended URL,
+    // headers and serialized body without issuing a network request.
+    void setProviderNetworkFactoryForTesting(
+        std::shared_ptr<ILocalInferenceNetworkFactory> networkFactory);
+
 signals:
     void selectedModelChanged();
     void providerRegistryChanged();
@@ -203,6 +212,7 @@ private:
     QString lmStudioEndpoint_;
     QString llamaCppEndpoint_;
     int localInferenceTimeoutMs_ = 0;
+    std::shared_ptr<ILocalInferenceNetworkFactory> providerNetworkFactory_;
     std::shared_ptr<ProviderHealthRegistry> providerHealthRegistry_;
 };
 
