@@ -5,9 +5,9 @@
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/model/ModelCategory.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
-#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/LocalInferenceTransport.h"
+#include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QDateTime>
 #include <QDir>
