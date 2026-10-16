@@ -17,7 +17,9 @@ The terminal uses additive IPC 1.1 operations. `terminal.attach` returns the bou
 
 ## Legacy C++ CLI
 
-`sentinel-cli` remains the existing in-process diagnostic/configuration/model interface for Desktop compatibility. Its commands are documented in the [legacy CLI reference](../reference/CLI_REFERENCE.md). It is separate from the daemon-connected Rust binary.
+`sentinel-cli` remains the existing in-process diagnostic/configuration/model interface for Desktop compatibility. Its commands are documented in the [legacy CLI reference](../reference/CLI_REFERENCE.md). It is separate from the daemon-connected Rust binary. Chat timeout and model-pull failure can still return exit code 0; do not use that code as proof of completion.
+
+Core Warden is a presentation component with terminal graphics/text fallback, not provider health or inference authority. Native Windows Rust named-pipe transport is not implemented. The TUI explicitly leaves `/plan`, `/compact`, `/undo`, `/redo`, `/skills`, `/init`, `/grill-me` and `/editor` unavailable; inspect the user guides for supported commands.
 
 ## Local release-candidate evaluation
 

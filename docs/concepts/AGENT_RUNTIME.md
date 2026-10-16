@@ -1,12 +1,15 @@
 # Agent Runtime
 
-**Status: Implemented.** Agent execution is multi-step and cancellable, but completion and capability availability remain policy- and provider-dependent.
+**Status: Implemented; real-model reliability acceptance incomplete.** Agent execution is multi-step and cancellable, but completion and capability availability remain policy- and provider-dependent. Fixture success is not proof of reliable live task completion.
 
 Agent Mode enters through `AgentRuntime`. `LlmAgentRuntime` uses `AgentLoop` for multi-step execution; a tool completion is an observation, not completion of a run. Controlled tasks use the same runtime through `ControlledTaskService`, which owns records, session mapping, and `AgentEvent` projection.
 
 ```mermaid
 flowchart TD
-  I[Desktop or CLI input] --> C[ApplicationController]
+  I[Production Desktop or Rust CLI/TUI] --> IPC[Typed local IPC]
+  IPC --> C[Daemon ApplicationController]
+  L[Legacy C++ CLI] --> LC[Separate in-process ApplicationController]
+  LC --> CHAT[Legacy Chat path]
   C --> R[AgentRuntime / AgentLoop]
   R --> M[IModelRouter and provider binding]
   R -->|tool request| G[ToolExecutionGateway]
