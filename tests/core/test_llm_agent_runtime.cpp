@@ -12,6 +12,7 @@
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/model/ModelLibrary.h"
 #include "sentinel/core/runtime/BuiltInToolProvider.h"
+#include "sentinel/core/runtime/IToolHandler.h"
 #include "sentinel/core/runtime/InMemoryToolRegistry.h"
 #include "sentinel/core/runtime/ToolOutputTruncator.h"
 
@@ -679,9 +680,12 @@ private slots:
         const auto tools = BuiltInToolProvider::descriptors();
         FakeChatProvider provider;
         LlmAgentRuntime runtime(tools, &provider);
-        for (const auto& tool : tools) {
-            if (!tool.enabled || !tool.exposedToModel)
-                continue;
+        const auto exposed = runtime.availableTools();
+        QVERIFY(!exposed.isEmpty());
+        for (const auto& tool : exposed) {
+            QVERIFY(tool.enabled);
+            QVERIFY(tool.exposedToModel);
+            QVERIFY(toolSupportedOnCurrentPlatform(tool));
             QJsonObject arguments;
             const auto properties = tool.inputSchema.value("properties").toObject();
             for (const auto& required : tool.inputSchema.value("required").toArray()) {
@@ -704,6 +708,263 @@ private slots:
             QCOMPARE(decision.toolName, tool.name);
             QCOMPARE(decision.riskLevel, tool.riskLevel);
             QCOMPARE(decision.executionMode, tool.executionMode);
+        }
+        const auto appLaunch =
+            std::find_if(tools.cbegin(), tools.cend(), [](const ToolDescriptor& t) {
+                return t.id == QLatin1String("app-launch");
+            });
+        QVERIFY(appLaunch != tools.cend());
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+        // On Linux, app-launch detached desktop launching has no sandbox guarantee;
+        // it must never be advertised as exposed or available.
+        QVERIFY(!toolSupportedOnCurrentPlatform(*appLaunch));
+        QVERIFY(std::none_of(exposed.cbegin(), exposed.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("app-launch");
+        }));
+#else
+        QVERIFY(toolSupportedOnCurrentPlatform(*appLaunch));
+        QVERIFY(std::any_of(exposed.cbegin(), exposed.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("app-launch");
+        }));
+#endif
+    }
+
+    void unsupportedPlatformCapabilityFailsClosedWithoutDispatch() {
+        // Deterministic fixture: tool explicitly marked Unsupported on all platforms.
+        ToolDescriptor unsupportedProbe;
+        unsupportedProbe.id = QStringLiteral("unsupported-probe");
+        unsupportedProbe.name = QStringLiteral("Unsupported Platform Probe");
+        unsupportedProbe.category = QStringLiteral("System");
+        unsupportedProbe.description =
+            QStringLiteral("A capability not available on this platform.");
+        unsupportedProbe.riskLevel = ToolRiskLevel::High;
+        unsupportedProbe.executionMode = ToolExecutionMode::Local;
+        unsupportedProbe.enabled = true;
+        unsupportedProbe.exposedToModel = true;
+        unsupportedProbe.inputSchema = QJsonObject{
+            {QStringLiteral("type"), QStringLiteral("object")},
+            {QStringLiteral("properties"),
+             QJsonObject{{QStringLiteral("command"),
+                          QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}}}},
+            {QStringLiteral("required"), QJsonArray{QStringLiteral("command")}}};
+        unsupportedProbe.platforms.linux = ToolPlatformSupport::Unsupported;
+        unsupportedProbe.platforms.macOS = ToolPlatformSupport::Unsupported;
+        unsupportedProbe.platforms.windows = ToolPlatformSupport::Unsupported;
+
+        QVERIFY(!toolSupportedOnCurrentPlatform(unsupportedProbe));
+
+        auto catalog = BuiltInToolProvider::descriptors();
+        catalog.append(unsupportedProbe);
+
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime(catalog, &provider);
+
+        // 1. Must never be exposed/advertised as available to the model.
+        const auto available = runtime.availableTools();
+        QVERIFY(std::none_of(available.cbegin(), available.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("unsupported-probe");
+        }));
+
+        // 2. Unsolicited model proposal for this unsupported capability must fail closed.
+        provider.scriptedReply = QStringLiteral("{\"action\":\"tool\",\"tool\":\"unsupported-"
+                                                "probe\",\"args\":{\"command\":\"status\"}}");
+
+        const auto decision = runtime.nextStep(QStringLiteral("run unsupported capability"), {});
+        // Expected terminal outcome: GiveUp, never ToolCall.
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        // No unauthorized tool dispatch.
+        QVERIFY(decision.toolId.isEmpty());
+        // No invented success or LLM acceptance.
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+        // Bounded retry attempts: exactly initial proposal + 1 repair attempt, no infinite loop.
+        QCOMPARE(provider.prompts.size(), 2);
+        QVERIFY(provider.prompts.last().contains(QStringLiteral("Return one valid JSON action.")));
+
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
+        // Linux-specific regression check for app-launch
+        provider.prompts.clear();
+        provider.scriptedReply = QStringLiteral(
+            "{\"action\":\"tool\",\"tool\":\"app-launch\",\"args\":{\"app\":\"calculator\"}}");
+        const auto linuxDecision = runtime.nextStep(QStringLiteral("launch calculator"), {});
+        QCOMPARE(linuxDecision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(linuxDecision.toolId.isEmpty());
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+        QCOMPARE(provider.prompts.size(), 2);
+#endif
+    }
+
+    void disabledAndInternalToolsAreNeverAdvertisedOrDispatched() {
+        ToolDescriptor disabledProbe;
+        disabledProbe.id = QStringLiteral("disabled-probe");
+        disabledProbe.name = QStringLiteral("Disabled Probe");
+        disabledProbe.category = QStringLiteral("System");
+        disabledProbe.description = QStringLiteral("Administratively disabled tool.");
+        disabledProbe.riskLevel = ToolRiskLevel::Low;
+        disabledProbe.executionMode = ToolExecutionMode::Local;
+        disabledProbe.enabled = false;
+        disabledProbe.exposedToModel = true;
+        disabledProbe.inputSchema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}};
+
+        ToolDescriptor internalProbe;
+        internalProbe.id = QStringLiteral("internal-probe");
+        internalProbe.name = QStringLiteral("Internal Probe");
+        internalProbe.category = QStringLiteral("Agent");
+        internalProbe.description = QStringLiteral("Internal metadata tool; not for model.");
+        internalProbe.riskLevel = ToolRiskLevel::Low;
+        internalProbe.executionMode = ToolExecutionMode::MetadataOnly;
+        internalProbe.enabled = true;
+        internalProbe.exposedToModel = false;
+        internalProbe.inputSchema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}};
+
+        auto catalog = BuiltInToolProvider::descriptors();
+        catalog.append(disabledProbe);
+        catalog.append(internalProbe);
+
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime(catalog, &provider);
+
+        // Neither disabled nor internal tools may be visible in available tools.
+        const auto available = runtime.availableTools();
+        QVERIFY(std::none_of(available.cbegin(), available.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("disabled-probe");
+        }));
+        QVERIFY(std::none_of(available.cbegin(), available.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("internal-probe");
+        }));
+        // Built-in local-plan-summary is also internal and must never be exposed.
+        QVERIFY(std::none_of(available.cbegin(), available.cend(), [](const ToolDescriptor& t) {
+            return t.id == QLatin1String("local-plan-summary");
+        }));
+
+        // Attempting to invoke disabled tool fails closed.
+        provider.scriptedReply =
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"disabled-probe\",\"args\":{}}");
+        auto decision = runtime.nextStep(QStringLiteral("invoke disabled"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(decision.toolId.isEmpty());
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+
+        // Attempting to invoke internal tool fails closed.
+        provider.scriptedReply =
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"internal-probe\",\"args\":{}}");
+        decision = runtime.nextStep(QStringLiteral("invoke internal"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(decision.toolId.isEmpty());
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+    }
+
+    void missingHandlerOrUnavailableIntegrationFailsClosedInRegistry() {
+        InMemoryToolRegistry registry;
+
+        // 1. Tool descriptor with missing handler (nullptr).
+        ToolDescriptor missingHandlerTool;
+        missingHandlerTool.id = QStringLiteral("missing-handler-tool");
+        missingHandlerTool.name = QStringLiteral("Missing Handler Tool");
+        missingHandlerTool.category = QStringLiteral("System");
+        missingHandlerTool.description = QStringLiteral("Tool without execution handler.");
+        missingHandlerTool.enabled = true;
+        missingHandlerTool.exposedToModel = true;
+        missingHandlerTool.inputSchema =
+            QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}};
+        missingHandlerTool.platforms = {ToolPlatformSupport::Supported,
+                                        ToolPlatformSupport::Supported,
+                                        ToolPlatformSupport::Supported};
+        QVERIFY(registry.registerTool(missingHandlerTool));
+
+        // 2. Tool descriptor with unavailable OS integration.
+        ToolDescriptor unavailableOsTool;
+        unavailableOsTool.id = QStringLiteral("unavailable-os-tool");
+        unavailableOsTool.name = QStringLiteral("Unavailable OS Tool");
+        unavailableOsTool.category = QStringLiteral("System");
+        unavailableOsTool.description = QStringLiteral("Tool requiring missing OS service.");
+        unavailableOsTool.enabled = true;
+        unavailableOsTool.exposedToModel = true;
+        unavailableOsTool.inputSchema =
+            QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}};
+        unavailableOsTool.platforms = {ToolPlatformSupport::Supported,
+                                       ToolPlatformSupport::Supported,
+                                       ToolPlatformSupport::Supported};
+
+        class FixtureUnavailableHandler final : public IToolHandler {
+        public:
+            QString unavailableReason() const override {
+                return QStringLiteral("Fixture OS service is not present in this session.");
+            }
+            IToolExecutor::Cancel execute(const ToolExecutionRequest&, const QString&,
+                                          const QString&, IToolExecutor::Output,
+                                          IToolExecutor::Completion completion) override {
+                completion({ToolExecutionStatus::Failed, unavailableReason()});
+                return {};
+            }
+        };
+
+        auto mockHandler = std::make_shared<FixtureUnavailableHandler>();
+        QVERIFY(registry.registerTool(IToolRegistry::Registration{unavailableOsTool, mockHandler}));
+
+        // Both are registered in registry listTools(), but excluded from enabledTools().
+        QCOMPARE(registry.listTools().size(), 2);
+        QCOMPARE(registry.enabledTools().size(), 0);
+
+        FakeChatProvider provider;
+        LlmAgentRuntime runtime({}, &provider);
+        runtime.setToolRegistry(&registry);
+
+        // Neither tool may be available to the agent runtime.
+        QCOMPARE(runtime.availableTools().size(), 0);
+
+        // Attempting to invoke missing-handler tool must fail closed with GiveUp.
+        provider.scriptedReply =
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"missing-handler-tool\",\"args\":{}}");
+        auto decision = runtime.nextStep(QStringLiteral("run missing handler"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(decision.toolId.isEmpty());
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+
+        // Attempting to invoke unavailable OS integration tool must fail closed with GiveUp.
+        provider.scriptedReply =
+            QStringLiteral("{\"action\":\"tool\",\"tool\":\"unavailable-os-tool\",\"args\":{}}");
+        decision = runtime.nextStep(QStringLiteral("run unavailable os"), {});
+        QCOMPARE(decision.kind, AgentStepDecision::Kind::GiveUp);
+        QVERIFY(decision.toolId.isEmpty());
+        QVERIFY(!runtime.lastDecisionUsedLlm());
+    }
+
+    void descriptorSchemaIdentityAndPlatformContract() {
+        const auto tools = BuiltInToolProvider::descriptors();
+        QVERIFY(tools.size() >= 38);
+        for (const auto& tool : tools) {
+            QVERIFY(!tool.id.trimmed().isEmpty());
+            QVERIFY(!tool.name.trimmed().isEmpty());
+            QVERIFY(!tool.category.trimmed().isEmpty());
+            QVERIFY(!tool.description.trimmed().isEmpty());
+
+            // Schema identity: valid JSON Schema object.
+            QCOMPARE(tool.inputSchema.value(QStringLiteral("type")).toString(),
+                     QStringLiteral("object"));
+            const auto properties = tool.inputSchema.value(QStringLiteral("properties")).toObject();
+            const auto required = tool.inputSchema.value(QStringLiteral("required")).toArray();
+            for (const auto& req : required) {
+                QVERIFY2(
+                    properties.contains(req.toString()),
+                    qPrintable(QStringLiteral(
+                                   "Tool %1 required property %2 missing from schema properties")
+                                   .arg(tool.id, req.toString())));
+            }
+
+            // Platform support contract: every platform entry is classified.
+            const auto validPlatformSupport = [](ToolPlatformSupport s) {
+                return s == ToolPlatformSupport::Supported ||
+                       s == ToolPlatformSupport::PartiallySupported ||
+                       s == ToolPlatformSupport::Unsupported;
+            };
+            QVERIFY(validPlatformSupport(tool.platforms.macOS));
+            QVERIFY(validPlatformSupport(tool.platforms.linux));
+            QVERIFY(validPlatformSupport(tool.platforms.windows));
+
+            // Platform invariants.
+            if (tool.id == QLatin1String("app-launch")) {
+                QCOMPARE(tool.platforms.linux, ToolPlatformSupport::Unsupported);
+            }
         }
     }
 
