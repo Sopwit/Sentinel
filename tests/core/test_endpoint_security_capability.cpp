@@ -105,11 +105,13 @@ void EndpointSecurityCapabilityTest::endpointValidation() {
         const auto reply =
             LMStudioLocalInferenceStreamClient(config).startStream(request, [](const auto&) {});
         QVERIFY(!reply.endpoint.contains("synthetic-password"));
+        QVERIFY(!reply.endpoint.contains("synthetic-user"));
         QVERIFY(!reply.endpoint.contains("synthetic-secret"));
         QCOMPARE(reply.status == LocalInferenceStreamStatus::Completed, allowed);
     } else {
         const auto reply = LMStudioLocalInferenceClient(config).infer(request);
         QVERIFY(!reply.endpoint.contains("synthetic-password"));
+        QVERIFY(!reply.endpoint.contains("synthetic-user"));
         QVERIFY(!reply.endpoint.contains("synthetic-secret"));
         QCOMPARE(reply.status == LocalInferenceStatus::Succeeded, allowed);
     }
@@ -403,6 +405,13 @@ void EndpointSecurityCapabilityTest::discovery() {
         if (fault == "numeric-id") {
             payload = gemini ? R"({"models":[{"name":7}]})" : R"({"data":[{"id":7}]})";
         }
+        if (fault.startsWith("auth")) {
+            payload =
+                QJsonDocument(
+                    QJsonObject{{"error", QJsonObject{{"message", QString::fromLatin1(key) +
+                                                                      " PRIVATE_DISCOVERY_ECHO"}}}})
+                    .toJson();
+        }
         auto response = ScriptedHttpResponse::body(payload, fault == "auth401"    ? 401
                                                             : fault == "auth403"  ? 403
                                                             : fault == "redirect" ? 302
@@ -471,6 +480,7 @@ void EndpointSecurityCapabilityTest::discovery() {
     QCOMPARE(state->requests.size(), dispatched ? 1 : 0);
     QVERIFY(!error.contains(key));
     QVERIFY(!error.contains("synthetic-secret"));
+    QVERIFY(!error.contains("PRIVATE_DISCOVERY_ECHO"));
     if (dispatched) {
         const auto request = state->requests.first();
         QCOMPARE(request.method, QByteArray("GET"));

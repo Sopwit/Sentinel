@@ -5,6 +5,7 @@
 #include "../support/LocalInferenceWorkerFixture.h"
 #ifndef Q_MOC_RUN
 #include "../support/ProviderHttpFixture.h"
+#include "../support/ScriptedProviderTransport.h"
 #endif
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
@@ -319,8 +320,7 @@ void LocalInferenceTest::workerPropagatesCancellationToInferenceClient() {
 QTEST_MAIN(LocalInferenceTest)
 
 void LocalInferenceTest::cloudEndpointWithoutKeyIsBlocked() {
-    // 127.0.0.2 is not treated as a local loopback endpoint, so it exercises
-    // the cloud permission gate: an API key is mandatory.
+    // The fixed HTTPS cloud endpoint requires a credential before dispatch.
     LMStudioConfig config;
     config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
     config.apiKey = QString();
@@ -337,66 +337,27 @@ void LocalInferenceTest::cloudEndpointWithoutKeyIsBlocked() {
 }
 
 void LocalInferenceTest::cloudOpenAiCompatibleRequestCarriesBearerKey() {
-    QTcpServer server;
-    if (!server.listen(QHostAddress::LocalHost, 0)) {
-        QSKIP("loopback TCP server is not available on this machine.");
-    }
-    const quint16 port = server.serverPort();
-
-    // "localhost." (trailing dot) resolves to 127.0.0.1 but is not matched by
-    // the loopback-host check, so the client takes the cloud request path.
+    auto state = std::make_shared<sentinel::test::ScriptedTransportState>();
+    state->responder = [](const auto&) {
+        return sentinel::test::ScriptedHttpResponse::body(
+            R"({"choices":[{"message":{"role":"assistant","content":"cloud says hi"}}]})");
+    };
     LMStudioConfig config;
-    config.endpoint = QUrl(QStringLiteral("http://localhost.:%1").arg(port));
+    config.endpoint = QUrl(QStringLiteral("https://fixture.invalid"));
     config.apiKey = QStringLiteral("test-key-123");
-
-    QString capturedAuth;
-    QString capturedRequestLine;
-    server.connect(&server, &QTcpServer::newConnection, &server, [&]() {
-        QTcpSocket* socket = server.nextPendingConnection();
-        socket->connect(socket, &QTcpSocket::readyRead, socket,
-                        [socket, &capturedAuth, &capturedRequestLine]() {
-                            const QByteArray data = socket->readAll();
-                            const int headerEnd = data.indexOf("\r\n\r\n");
-                            if (headerEnd < 0) {
-                                return;
-                            }
-                            const QByteArray headers = data.left(headerEnd);
-                            if (capturedRequestLine.isEmpty()) {
-                                capturedRequestLine =
-                                    QString::fromLatin1(headers.split('\r').first());
-                            }
-                            if (capturedAuth.isEmpty()) {
-                                for (const auto& line : headers.split('\n')) {
-                                    if (line.startsWith("Authorization:")) {
-                                        capturedAuth = QString::fromLatin1(line.trimmed());
-                                    }
-                                }
-                            }
-
-                            const QByteArray body = QByteArrayLiteral(
-                                "{\"choices\":[{\"message\":{\"role\":\"assistant\","
-                                "\"content\":\"cloud says hi\"}}]}");
-                            socket->write(QStringLiteral("HTTP/1.1 200 OK\r\n"
-                                                         "Content-Type: application/json\r\n"
-                                                         "Content-Length: %1\r\n"
-                                                         "Connection: close\r\n\r\n")
-                                              .arg(body.size())
-                                              .toLatin1() +
-                                          body);
-                            socket->flush();
-                        });
-    });
-
+    config.networkFactory = std::make_shared<sentinel::test::ScriptedNetworkFactory>(state);
+    sentinel::test::ScopedOnlineNetworkMode online;
     LMStudioLocalInferenceClient client(config, 5000);
     LocalInferenceRequest request;
     request.prompt = QStringLiteral("hello cloud");
     request.options.model = QStringLiteral("gpt-test");
-
     const auto response = client.infer(request);
     QCOMPARE(response.status, LocalInferenceStatus::Succeeded);
     QCOMPARE(response.text, QStringLiteral("cloud says hi"));
-    QVERIFY(capturedAuth.contains(QStringLiteral("Bearer test-key-123")));
-    QVERIFY(capturedRequestLine.contains(QStringLiteral("/v1/chat/completions")));
+    QCOMPARE(state->requests.size(), 1);
+    QCOMPARE(state->requests.first().headers.value("authorization"),
+             QByteArray("Bearer test-key-123"));
+    QCOMPARE(state->requests.first().url.path(), QStringLiteral("/v1/chat/completions"));
 }
 
 void LocalInferenceTest::completedReasoningOnlyIsInvalid() {

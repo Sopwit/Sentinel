@@ -1197,9 +1197,10 @@ LMStudioLocalInferenceClient::completeOpenAiChat(
     QMap<QByteArray, QByteArray> headers;
     if (!config_.apiKey.isEmpty())
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-    const auto path = config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
-                          ? QStringLiteral("/chat/completions")
-                          : QStringLiteral("/v1/chat/completions");
+    const auto path =
+        config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
+            ? QStringLiteral("/chat/completions")
+            : QStringLiteral("/v1/chat/completions");
     const auto reply =
         postJson(endpointUrl(path), body, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs, headers,
                  cancellationToken, config_.networkFactory);
@@ -1330,8 +1331,11 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     // OpenAI-compatible body below only fits LM Studio / llama.cpp / local
     // OpenAI-compatible servers.
     if (config_.isCloud()) {
-        const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"), Qt::CaseInsensitive) == 0;
-        const bool isGemini = config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"), Qt::CaseInsensitive) == 0;
+        const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"),
+                                                                 Qt::CaseInsensitive) == 0;
+        const bool isGemini =
+            config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"),
+                                            Qt::CaseInsensitive) == 0;
 
         if (isAnthropic) {
             QJsonObject messageObj;
@@ -1496,11 +1500,13 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
         QMap<QByteArray, QByteArray> headers;
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-        const auto reply = postJson(
-            endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
-                            ? QStringLiteral("/chat/completions")
-                            : QStringLiteral("/v1/chat/completions")),
-            body, timeoutMs, headers, request.options.cancellationToken, config_.networkFactory);
+        const auto reply = postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
+                                                        .path()
+                                                        .endsWith(QLatin1String("/v1"))
+                                                    ? QStringLiteral("/chat/completions")
+                                                    : QStringLiteral("/v1/chat/completions")),
+                                    body, timeoutMs, headers, request.options.cancellationToken,
+                                    config_.networkFactory);
         recordRequestMetadata(response, reply);
         if (!reply.ok) {
             response.status = LocalInferenceStatus::Error;
@@ -1574,7 +1580,9 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                   .arg(timeoutMs)));
 
     const auto reply =
-        postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
+        postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
+                                     .path()
+                                     .endsWith(QLatin1String("/v1"))
                                  ? QStringLiteral("/chat/completions")
                                  : QStringLiteral("/v1/chat/completions")),
                  body, timeoutMs, {}, request.options.cancellationToken, config_.networkFactory);
@@ -1772,8 +1780,11 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     QNetworkRequest networkRequest;
     QJsonObject body;
 
-    const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"), Qt::CaseInsensitive) == 0;
-    const bool isGemini = config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"), Qt::CaseInsensitive) == 0;
+    const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"),
+                                                             Qt::CaseInsensitive) == 0;
+    const bool isGemini =
+        config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"),
+                                        Qt::CaseInsensitive) == 0;
 
     if (isAnthropic) {
         networkRequest.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")));
@@ -1820,7 +1831,9 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         generationConfig.insert(QStringLiteral("maxOutputTokens"), request.options.maxTokens);
         body.insert(QStringLiteral("generationConfig"), generationConfig);
     } else {
-        networkRequest.setUrl(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
+        networkRequest.setUrl(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
+                                                  .path()
+                                                  .endsWith(QLatin1String("/v1"))
                                               ? QStringLiteral("/chat/completions")
                                               : QStringLiteral("/v1/chat/completions")));
         if (!config_.apiKey.isEmpty()) {

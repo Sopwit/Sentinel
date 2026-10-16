@@ -946,6 +946,11 @@ public:
                                    ChatProviderErrorCategory::CapabilityUnsupported,
                                    ChatProviderReply::Error::CapabilityRejected);
         }
+        if (!options.images.isEmpty() &&
+            binding_.capabilities.visionInput == CapabilitySupport::Unsupported)
+            return providerFailure(QStringLiteral("Selected model does not support image input."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
         if (options.structuredOutput || options.nativeToolCalling) {
             return providerFailure(
                 QStringLiteral(
