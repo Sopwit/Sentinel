@@ -110,6 +110,9 @@ public:
     bool supportsStreaming() const override {
         return delegate_->supportsStreaming();
     }
+    bool supportsBoundedStreaming() const override {
+        return delegate_->supportsBoundedStreaming();
+    }
     ChatProviderReply sendMessage(const QString& message) override {
         const auto sequence = ++registry_->nextSequence;
         auto reply = delegate_->sendMessage(message);
@@ -128,6 +131,15 @@ public:
                          const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
         const auto sequence = ++registry_->nextSequence;
         auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken);
+        update(sequence, reply, QStringLiteral("stream"));
+        return reply;
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) override {
+        const auto sequence = ++registry_->nextSequence;
+        auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken, options);
         update(sequence, reply, QStringLiteral("stream"));
         return reply;
     }
@@ -375,14 +387,19 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
     LMStudioLocalInferenceClient client(config, timeoutMs);
     const auto completion = client.completeNativeChat(protocol, body, options.cancellationToken);
     if (!completion.ok) {
+        // Precedence: cancellation, an explicit native capability rejection, then the
+        // transport-classified status/category. The Qt UnknownContentError flag is a
+        // last-resort fallback so it cannot override a validated HTTP status such as
+        // 408 (Timeout) or 429 (RateLimited).
         const auto classified =
-            completion.cancelled   ? ChatProviderErrorCategory::Cancelled
-            : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+            completion.cancelled ? ChatProviderErrorCategory::Cancelled
             : completion.httpStatus == 400 || completion.httpStatus == 422 ||
                     completion.httpStatus == 501
                 ? ChatProviderErrorCategory::CapabilityUnsupported
             : completion.providerErrorCategory > 0
                 ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
+            : completion.malformed
+                ? ChatProviderErrorCategory::MalformedResponse
                 : ProviderRequestRuntime::classify(completion.httpStatus, completion.networkError,
                                                    completion.timedOut, completion.cancelled);
         const auto category = classified == ChatProviderErrorCategory::None
@@ -538,6 +555,9 @@ public:
     bool supportsStreaming() const override {
         return binding_.capabilities.streaming == CapabilitySupport::Supported;
     }
+    bool supportsBoundedStreaming() const override {
+        return binding_.capabilities.streaming == CapabilitySupport::Supported;
+    }
     ChatProviderReply sendMessage(const QString& message) override {
         return sendMessageWithToken(message, {});
     }
@@ -608,6 +628,11 @@ public:
 
     ChatProviderReply sendRequest(const QString& message,
                                   const ChatRequestOptions& options) override {
+        if (!options.images.isEmpty() &&
+            binding_.capabilities.visionInput == CapabilitySupport::Unsupported)
+            return providerFailure(QStringLiteral("Selected model does not support image input."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
         if ((options.nativeToolCalling &&
              binding_.capabilities.nativeToolCalling != CapabilitySupport::Supported) ||
             (options.structuredOutput &&
@@ -774,27 +799,32 @@ public:
             const bool rejected = (options.nativeToolCalling || options.structuredOutput) &&
                                   (completion.httpStatus == 400 || completion.httpStatus == 422 ||
                                    completion.httpStatus == 501);
+            // Precedence: cancellation, explicit context/capability rejection, then the
+            // transport-classified status/category. The Qt UnknownContentError flag is a
+            // last-resort fallback so a validated HTTP status such as 408 (Timeout) or
+            // 429 (RateLimited) is never collapsed into MalformedResponse.
             auto reply = providerFailure(
                 completion.error,
-                completion.cancelled   ? ChatProviderErrorCategory::Cancelled
-                : contextRejected      ? ChatProviderErrorCategory::RequestRejected
-                : rejected             ? ChatProviderErrorCategory::CapabilityUnsupported
-                : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                completion.cancelled ? ChatProviderErrorCategory::Cancelled
+                : contextRejected    ? ChatProviderErrorCategory::RequestRejected
+                : rejected           ? ChatProviderErrorCategory::CapabilityUnsupported
                 : completion.providerErrorCategory > 0
                     ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
-                    : ProviderRequestRuntime::classify(completion.httpStatus,
-                                                       completion.networkError, completion.timedOut,
-                                                       completion.cancelled),
+                : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                                       : ProviderRequestRuntime::classify(
+                                             completion.httpStatus, completion.networkError,
+                                             completion.timedOut, completion.cancelled),
                 rejected && !contextRejected ? ChatProviderReply::Error::CapabilityRejected
                                              : ChatProviderReply::Error::ProviderFailure,
                 completion.httpStatus, completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
-            return finish(reply, contextRejected        ? QStringLiteral("context_exhausted")
-                                 : completion.malformed ? QStringLiteral("response_format_failure")
-                                 : rejected ? QStringLiteral("provider_request_rejected")
+            return finish(reply, contextRejected ? QStringLiteral("context_exhausted")
+                                 : rejected      ? QStringLiteral("provider_request_rejected")
                                  : completion.cancelled ? QStringLiteral("cancelled")
                                  : completion.timedOut  ? QStringLiteral("timeout")
-                                                        : QStringLiteral("transport_failure"));
+                                 : reply.category == ChatProviderErrorCategory::MalformedResponse
+                                     ? QStringLiteral("response_format_failure")
+                                     : QStringLiteral("transport_failure"));
         }
         const auto choices = completion.body.value(QStringLiteral("choices")).toArray();
         if (choices.isEmpty()) {
@@ -905,10 +935,51 @@ public:
             return providerFailure(QStringLiteral("Selected model does not support streaming."),
                                    ChatProviderErrorCategory::CapabilityUnsupported,
                                    ChatProviderReply::Error::CapabilityRejected);
+        return streamSelected(message, onDelta, cancellationToken, {}, timeoutMs_, 0, false);
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) override {
+        if (binding_.capabilities.streaming != CapabilitySupport::Supported) {
+            return providerFailure(QStringLiteral("Selected model does not support streaming."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
+        }
+        if (options.structuredOutput || options.nativeToolCalling) {
+            return providerFailure(
+                QStringLiteral(
+                    "Bounded streaming does not carry structured or native tool output."),
+                ChatProviderErrorCategory::CapabilityUnsupported,
+                ChatProviderReply::Error::CapabilityRejected);
+        }
+        if (options.requireBoundedStreaming && options.deadlineMs <= 0) {
+            return providerFailure(
+                QStringLiteral("Bounded streaming requires a positive request deadline."),
+                ChatProviderErrorCategory::RequestRejected,
+                ChatProviderReply::Error::InvalidResponse);
+        }
+        const auto token = cancellationToken ? cancellationToken : options.cancellationToken;
+        const int deadlineMs = options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_;
+        return streamSelected(message, onDelta, token, options.images, deadlineMs,
+                              options.maxOutputTokens, options.requireBoundedStreaming);
+    }
+
+private:
+    ChatProviderReply streamSelected(const QString& message,
+                                     const std::function<void(const QString&)>& onDelta,
+                                     const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                     const QList<ChatImage>& images, int deadlineMs,
+                                     int maxOutputTokens, bool requireBoundedStreaming) {
         LocalInferenceRequest request;
         request.prompt = message;
+        request.images = images;
         request.options.model = binding_.modelId;
-        request.options.timeoutMs = timeoutMs_;
+        request.options.timeoutMs = deadlineMs;
+        request.options.requireBoundedStreaming = requireBoundedStreaming;
+        if (maxOutputTokens > 0) {
+            request.options.maxTokens = maxOutputTokens;
+        }
         request.options.cancellationToken = cancellationToken;
         LMStudioLocalInferenceStreamClient client(config_, timeoutMs_);
         const auto result =
@@ -920,6 +991,8 @@ public:
             ChatProviderReply reply{true, result.accumulatedText, {}};
             reply.lifecycle = ChatRequestLifecycle::Completed;
             reply.requestId = result.requestId;
+            reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+            reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
             return reply;
         }
         auto reply = providerFailure(
@@ -933,10 +1006,11 @@ public:
             result.retrySummary);
         reply.lifecycle = result.lifecycle;
         reply.requestId = result.requestId;
+        reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+        reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
         return reply;
     }
 
-private:
     ModelBinding binding_;
     LMStudioConfig config_;
     int timeoutMs_ = 0;

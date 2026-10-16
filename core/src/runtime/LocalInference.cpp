@@ -88,18 +88,27 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
         reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() >= 400) {
         const auto networkError = reply->error();
         const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        QString error = httpStatus > 0 ? QStringLiteral("HTTP %1 request failed.").arg(httpStatus)
-                                       : QStringLiteral("Network request failed (%1).")
-                                             .arg(static_cast<int>(networkError));
+        const auto category = ProviderRequestRuntime::classify(httpStatus, networkError);
+        QString error =
+            QStringLiteral("Provider request failed: %1%2.")
+                .arg(chatProviderErrorCategoryName(category),
+                     httpStatus > 0 ? QStringLiteral(" (HTTP %1)").arg(httpStatus) : QString{});
         const auto retryAfter = QString::fromLatin1(reply->rawHeader("Retry-After"));
-        const auto payload = reply->readAll();
-        const auto errorBody =
-            QJsonDocument::fromJson(payload).object().value(QStringLiteral("error"));
-        const auto apiMessage =
-            errorBody.isObject() ? errorBody.toObject().value(QStringLiteral("message")).toString()
-                                 : errorBody.toString();
-        if (!apiMessage.isEmpty())
-            error = apiMessage.left(512);
+        // Upstream bodies are untrusted, including credential/prompt echoes. Retain only
+        // the existing context-rejection signal, never any upstream message text.
+        if (httpStatus == 400 || httpStatus == 422) {
+            const auto errorBody =
+                QJsonDocument::fromJson(reply->read(16384)).object().value(QStringLiteral("error"));
+            const auto message =
+                errorBody.isObject()
+                    ? errorBody.toObject().value(QStringLiteral("message")).toString()
+                    : errorBody.toString();
+            if (message.contains(QStringLiteral("context size has been exceeded"),
+                                 Qt::CaseInsensitive) ||
+                message.contains(QStringLiteral("context length exceeded"), Qt::CaseInsensitive) ||
+                message.contains(QStringLiteral("maximum context length"), Qt::CaseInsensitive))
+                error = QStringLiteral("Provider request rejected: context length exceeded.");
+        }
         reply->deleteLater();
         return JsonReply{false, false, {}, error, networkError, httpStatus, retryAfter};
     }
@@ -251,6 +260,10 @@ LocalInferenceError networkErrorCategory(const JsonReply& reply) {
 }
 
 QString safeNetworkFailureSummary(const JsonReply& reply, const QString& operation, int timeoutMs) {
+    // Qt may use UnknownContentError for HTTP failures too. Preserve the safe
+    // HTTP/category summary (and canonical context signal) instead of calling it JSON.
+    if (reply.httpStatus >= 400)
+        return QStringLiteral("%1 failed: %2").arg(operation, reply.error);
     const auto category = networkErrorCategory(reply);
     if (category == LocalInferenceError::Offline)
         return QStringLiteral("%1 blocked by network policy: %2.").arg(operation, reply.error);
@@ -845,6 +858,18 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                                               "with %1 ms timeout metadata.")
                                    .arg(result.timeoutMs)));
 
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("Local streaming request rejected: a finite deadline is "
+                                        "required and none was available.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
@@ -929,6 +954,7 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     QByteArray pending;
     int sequence = 0;
     bool done = false;
+    bool streamError = false;
     QElapsedTimer elapsed;
     elapsed.start();
 
@@ -936,6 +962,9 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
 
     auto processLine = [&](const QByteArray& line) {
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (status < 200 || status >= 300 || streamError)
+            return;
         const auto trimmedLine = line.trimmed();
         if (trimmedLine.isEmpty()) {
             return;
@@ -959,6 +988,11 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         }
 
         const auto object = document.object();
+        if (object.contains(QStringLiteral("error")) ||
+            object.value(QStringLiteral("type")).toString() == QLatin1String("error")) {
+            streamError = true;
+            return;
+        }
         const auto text = object.value(QStringLiteral("response")).toString();
         const auto finalChunk = object.value(QStringLiteral("done")).toBool(false);
         if (text.isEmpty() && !finalChunk) {
@@ -1082,7 +1116,7 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (!done || result.accumulatedText.trimmed().isEmpty()) {
+    if (streamError || !done || result.accumulatedText.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Error;
         result.lifecycle = ChatRequestLifecycle::Failed;
         result.providerErrorCategory =
@@ -1646,6 +1680,19 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                   .arg(config_.providerDisplayName())
                   .arg(result.timeoutMs)));
 
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("%1 streaming request rejected: a finite deadline is "
+                                        "required and none was available.")
+                             .arg(config_.providerDisplayName());
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
@@ -1780,6 +1827,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     QByteArray pending;
     int sequence = 0;
     bool done = false;
+    bool streamError = false;
     QElapsedTimer elapsed;
     elapsed.start();
 
@@ -1787,6 +1835,9 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
 
     auto processLine = [&](const QByteArray& line) {
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (status < 200 || status >= 300 || streamError)
+            return;
         const auto trimmedLine = line.trimmed();
         if (trimmedLine.isEmpty()) {
             return;
@@ -1820,6 +1871,11 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         }
 
         const auto object = document.object();
+        if (object.contains(QStringLiteral("error")) ||
+            object.value(QStringLiteral("type")).toString() == QLatin1String("error")) {
+            streamError = true;
+            return;
+        }
         QString text;
         bool isFinal = false;
 
@@ -1978,7 +2034,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (!done || result.accumulatedText.trimmed().isEmpty()) {
+    if (streamError || !done || result.accumulatedText.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Error;
         result.lifecycle = ChatRequestLifecycle::Failed;
         result.providerErrorCategory =

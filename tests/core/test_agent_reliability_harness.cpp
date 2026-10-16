@@ -232,6 +232,14 @@ public:
     ObservationIntent canonicalIntent;
     std::function<void(int)> onCall;
     mutable int calls = 0;
+    // Deterministic planning barrier. When enabled, nextStep announces entry
+    // and blocks until the test thread releases it, so cancellation can be
+    // requested while planning is genuinely on the stack. No sleeps are used;
+    // the timeout only guards a hung fixture.
+    mutable bool barrierPlanning = false;
+    mutable QSemaphore planningEntered{0};
+    mutable QSemaphore planningRelease{0};
+    mutable std::atomic_bool planningBarrierTimedOut{false};
 
     void resetPlanningIndex() {
         indexBase_ = calls;
@@ -245,6 +253,11 @@ public:
                                const QList<AgentStepRecord>& history) const override {
         Q_UNUSED(goal);
         Q_UNUSED(history);
+        if (barrierPlanning) {
+            planningEntered.release();
+            if (!planningRelease.tryAcquire(1, kBarrierTimeoutMs))
+                planningBarrierTimedOut.store(true);
+        }
         const int index = (calls++) - indexBase_;
         if (onCall)
             onCall(index);
@@ -369,6 +382,11 @@ public:
     bool testReceiptFails = false;         // deterministic failing-test receipt
     QHash<QString, QString> allowedWrites; // rel path -> exact canonical content
     QString unavailableReasonOverride;     // registered capability missing
+    // Force structured coverage metadata to advertise an incomplete/truncated
+    // observation. The observation content is real; only the typed completeness
+    // contract is degraded, which must prevent unsupported absence conclusions.
+    bool observationIncomplete = false;
+    bool emptyFileContent = false;         // read-file reports empty (missing) content
     bool blockSlowBuild = false;           // cooperative blocking command flag
     QSemaphore slowBuildStarted{0};
     std::atomic<qint64> childPid{0};
@@ -425,7 +443,9 @@ public:
         }
 
         auto observation = std::make_shared<StructuredObservation>();
-        observation->data = {{"complete", true}, {"truncated", false}, {"cancelled", false}};
+        observation->data = {{"complete", !observationIncomplete},
+                             {"truncated", observationIncomplete},
+                             {"cancelled", false}};
         ToolExecutionResult result{ToolExecutionStatus::Succeeded, QStringLiteral("fixture ok")};
         counts[toolId]++;
 
@@ -453,7 +473,8 @@ public:
             }
             observation->kind = StructuredObservationKind::FileContent;
             observation->data.insert("path", QFileInfo(path).canonicalFilePath());
-            observation->data.insert("content", QString::fromUtf8(file.readAll()));
+            observation->data.insert(
+                "content", emptyFileContent ? QString{} : QString::fromUtf8(file.readAll()));
         } else if (toolId == QLatin1String("list-directory")) {
             observation->kind = StructuredObservationKind::DirectoryListing;
             QJsonArray listing;
@@ -610,6 +631,27 @@ bool registerFixtureTools(InMemoryToolRegistry& registry, IToolHandler& handler,
     return true;
 }
 
+// Register a real built-in descriptor with no execution handler. The capability
+// metadata exists but no execution target is wired; the gateway must refuse the
+// operation without inventing a receipt.
+bool registerDescriptorWithoutHandler(InMemoryToolRegistry& registry, const QString& id) {
+    const auto descriptors = BuiltInToolProvider::descriptors();
+    const auto found = std::find_if(descriptors.cbegin(), descriptors.cend(),
+                                    [&id](const ToolDescriptor& item) { return item.id == id; });
+    if (found == descriptors.cend())
+        return false;
+    return registry.registerTool(*found);
+}
+
+// Locate a real built-in descriptor by id, failing the calling test if absent.
+ToolDescriptor builtInDescriptor(const QString& id) {
+    const auto descriptors = BuiltInToolProvider::descriptors();
+    const auto found = std::find_if(descriptors.cbegin(), descriptors.cend(),
+                                    [&id](const ToolDescriptor& item) { return item.id == id; });
+    Q_ASSERT(found != descriptors.cend());
+    return *found;
+}
+
 // --------------------------------------------------------------------------
 // Deterministic chat provider fixture (injected model layer)
 // --------------------------------------------------------------------------
@@ -675,11 +717,13 @@ public:
 // Probe the actual LlmAgentRuntime dispatch contract without forcing deadlines to zero.
 class CancellationProbeProvider final : public IChatProvider {
 public:
+    using IChatProvider::sendMessageStreaming;
     bool native = false, cooperative = false;
     QString artifact, readPath;
     std::atomic_int requests{0}, streamRequests{0}, emittedDeltas{0}, cancellationAcks{0},
         freshRequests{0};
     std::atomic_bool barrierTimedOut{false}, fresh{false};
+    std::atomic_bool originalRequireBounded{false};
     QSemaphore entered, release;
     std::shared_ptr<std::atomic_bool> originalToken, freshToken;
     int originalDeadline = 0;
@@ -691,6 +735,11 @@ public:
         return ChatProviderStatus::Ready;
     }
     bool supportsStreaming() const override {
+        return true;
+    }
+    // Explicit bounded-streaming opt-in: this fixture implements the actual
+    // deadline-aware streaming interface below, so the planner may route to it.
+    bool supportsBoundedStreaming() const override {
         return true;
     }
     ChatProviderConcurrency concurrency() const override {
@@ -728,22 +777,43 @@ public:
             barrierTimedOut.store(true);
         return lateReply();
     }
+    // Legacy streaming entry point retained for compatibility.
     ChatProviderReply
     sendMessageStreaming(const QString&, const std::function<void(const QString&)>& delta,
                          const std::shared_ptr<std::atomic_bool>& token) override {
+        return streamBounded(delta, token, {}, false);
+    }
+    // Deadline-aware bounded streaming contract used by the planner.
+    ChatProviderReply sendMessageStreaming(const QString&,
+                                           const std::function<void(const QString&)>& delta,
+                                           const std::shared_ptr<std::atomic_bool>& token,
+                                           const ChatRequestOptions& options) override {
+        return streamBounded(delta, token, options, options.requireBoundedStreaming);
+    }
+
+private:
+    ChatProviderReply streamBounded(const std::function<void(const QString&)>& delta,
+                                    const std::shared_ptr<std::atomic_bool>& token,
+                                    const ChatRequestOptions& options, bool bounded) {
         ++streamRequests;
         originalToken = token;
+        originalDeadline = options.deadlineMs;
+        originalNative = options.nativeToolCalling;
+        originalRequireBounded.store(bounded);
+        // The first real delta is delivered while the provider stream is active
+        // and before any cancellation is requested.
         delta(QStringLiteral("synthetic-first-delta"));
         ++emittedDeltas;
         entered.release();
         if (!release.tryAcquire(1, kBarrierTimeoutMs))
             barrierTimedOut.store(true);
+        // This late delta is delivered after cancellation and must never be
+        // accepted or published by the runtime.
         delta(QStringLiteral("synthetic-late-delta"));
         ++emittedDeltas;
         return lateReply();
     }
 
-private:
     ChatProviderReply lateReply() {
         ChatProviderReply reply;
         if (cooperative && originalToken && originalToken->load()) {
@@ -1188,6 +1258,213 @@ private slots:
         QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 0);
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QVERIFY(verifier.untouched());
+    }
+
+    // ------------------------------------------------------------------
+    // COR-01 (extended): truncated/empty/missing context and an omitted
+    // critical dependency must not become unsupported conclusions. Observed
+    // facts (a real file read) still ground a scoped final. Every variant is
+    // read-only: no write receipt and no workspace mutation is permitted.
+    // ------------------------------------------------------------------
+    void cor01_truncatedAndMissingEvidence_data() {
+        QTest::addColumn<QString>("variant");
+        for (const auto& variant :
+             {"truncated-listing-absence", "hidden-excluded-claim", "empty-incomplete-read",
+              "missing-required-file", "omitted-critical-dependency", "dependency-observed",
+              "truncated-listing-positive"})
+            QTest::newRow(variant) << QString::fromLatin1(variant);
+    }
+
+    void cor01_truncatedAndMissingEvidence() {
+        QFETCH(QString, variant);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(root), "README.md", "fixture synthetic repository\n");
+        seedFile(QDir(root), "src/calc.cpp", "int add(int a,int b){ return a + b; }\n");
+        seedFile(QDir(root), "src/main.cpp",
+                 "#include \"helper.h\"\nint main(){ return add(1,2); }\n");
+        seedFile(QDir(root), "src/helper.h", "int add(int,int);\n");
+        const auto calcPath = root + QStringLiteral("/src/calc.cpp");
+        const auto mainPath = root + QStringLiteral("/src/main.cpp");
+        const auto helperPath = root + QStringLiteral("/src/helper.h");
+
+        LoopFixture fixture;
+        fixture.registerTools({QStringLiteral("list-directory"), QStringLiteral("read-file")});
+        WorkspaceVerifier verifier(root);
+
+        auto policy = std::make_shared<FixedIntentPolicy>();
+        ScriptedPlanner planner;
+
+        if (variant == "truncated-listing-absence") {
+            fixture.handler.observationIncomplete = true;
+            ObservationRequirement claim;
+            claim.domain = ObservationDomain::FileSystem;
+            claim.resourceHint = root;
+            claim.claimType = ClaimType::PathPatternExists;
+            claim.claimId = QStringLiteral("claim-1");
+            claim.claimQuery = QStringLiteral("*.md");
+            claim.toolId = QStringLiteral("list-directory");
+            policy->intent.requirements = {claim};
+            auto list = toolDecision(QStringLiteral("list-directory"));
+            appendArg(list, QStringLiteral("path"), root);
+            auto fabricated =
+                finalDecision(QStringLiteral("No markdown files match in the repository."));
+            fabricated.grounding = GroundingMode::Verified;
+            fabricated.groundingDeclared = true;
+            fabricated.claims = {{QStringLiteral("claim-1"), true}};
+            planner.decisions = {list, fabricated};
+            planner.repeatLast = true;
+        } else if (variant == "hidden-excluded-claim") {
+            ObservationRequirement claim;
+            claim.domain = ObservationDomain::FileSystem;
+            claim.resourceHint = root;
+            claim.claimType = ClaimType::HiddenEntriesExist;
+            claim.claimId = QStringLiteral("hidden");
+            claim.toolId = QStringLiteral("list-directory");
+            policy->intent.requirements = {claim};
+            auto list = toolDecision(QStringLiteral("list-directory"));
+            appendArg(list, QStringLiteral("path"), root);
+            auto fabricated = finalDecision(QStringLiteral("No hidden entries exist here."));
+            fabricated.grounding = GroundingMode::Verified;
+            fabricated.groundingDeclared = true;
+            fabricated.claims = {{QStringLiteral("hidden"), true}};
+            planner.decisions = {list, fabricated};
+            planner.repeatLast = true;
+        } else if (variant == "empty-incomplete-read") {
+            fixture.handler.observationIncomplete = true;
+            fixture.handler.emptyFileContent = true;
+            ObservationRequirement read;
+            read.domain = ObservationDomain::FileSystem;
+            read.resourceHint = calcPath;
+            read.purpose = ObservationPurpose::Inspect;
+            read.toolId = QStringLiteral("read-file");
+            policy->intent.requirements = {read};
+            auto readCall = toolDecision(QStringLiteral("read-file"));
+            appendArg(readCall, QStringLiteral("path"), calcPath);
+            auto fabricated = finalDecision(QStringLiteral("src/calc.cpp is empty."));
+            fabricated.grounding = GroundingMode::Verified;
+            fabricated.groundingDeclared = true;
+            planner.decisions = {readCall, fabricated};
+            planner.repeatLast = true;
+        } else if (variant == "missing-required-file") {
+            const auto absent = root + QStringLiteral("/src/absent.cpp");
+            ObservationRequirement read;
+            read.domain = ObservationDomain::FileSystem;
+            read.resourceHint = absent;
+            read.purpose = ObservationPurpose::Inspect;
+            read.toolId = QStringLiteral("read-file");
+            policy->intent.requirements = {read};
+            auto readCall = toolDecision(QStringLiteral("read-file"));
+            appendArg(readCall, QStringLiteral("path"), absent);
+            auto fabricated = finalDecision(QStringLiteral("src/absent.cpp defines the parser."));
+            fabricated.grounding = GroundingMode::Verified;
+            fabricated.groundingDeclared = true;
+            planner.decisions = {readCall, fabricated};
+            planner.repeatLast = true;
+        } else if (variant == "omitted-critical-dependency" || variant == "dependency-observed") {
+            ObservationRequirement mainRead;
+            mainRead.domain = ObservationDomain::FileSystem;
+            mainRead.resourceHint = mainPath;
+            mainRead.purpose = ObservationPurpose::Inspect;
+            mainRead.toolId = QStringLiteral("read-file");
+            ObservationRequirement helperRead = mainRead;
+            helperRead.resourceHint = helperPath;
+            policy->intent.requirements = {mainRead, helperRead};
+            auto readMain = toolDecision(QStringLiteral("read-file"));
+            appendArg(readMain, QStringLiteral("path"), mainPath);
+            auto readHelper = toolDecision(QStringLiteral("read-file"));
+            appendArg(readHelper, QStringLiteral("path"), helperPath);
+            auto grounded = finalDecision(QStringLiteral("Both source files were inspected."));
+            grounded.grounding = GroundingMode::Verified;
+            grounded.groundingDeclared = true;
+            const bool observed = variant == "dependency-observed";
+            planner.decisions = observed
+                                    ? QVector<AgentStepDecision>{readMain, readHelper, grounded}
+                                    : QVector<AgentStepDecision>{readMain, grounded};
+            planner.repeatLast = true;
+            planner.canonicalFinal = observed;
+            planner.canonicalIntent = policy->intent;
+        } else { // truncated-listing-positive
+            fixture.handler.observationIncomplete = true;
+            ObservationRequirement read;
+            read.domain = ObservationDomain::FileSystem;
+            read.resourceHint = calcPath;
+            read.purpose = ObservationPurpose::Inspect;
+            read.toolId = QStringLiteral("read-file");
+            policy->intent.requirements = {read};
+            auto list = toolDecision(QStringLiteral("list-directory"));
+            appendArg(list, QStringLiteral("path"), root);
+            auto readCall = toolDecision(QStringLiteral("read-file"));
+            appendArg(readCall, QStringLiteral("path"), calcPath);
+            auto grounded = finalDecision(QStringLiteral("positive fixture read"));
+            grounded.grounding = GroundingMode::Verified;
+            grounded.groundingDeclared = true;
+            planner.decisions = {list, readCall, grounded};
+            planner.repeatLast = true;
+            planner.canonicalFinal = true;
+            planner.canonicalIntent = policy->intent;
+        }
+
+        AgentLoop::Config config;
+        config.maxIterations = 3;
+        AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools, config);
+        configureLoopFixture(loop, fixture, root);
+        loop.setObservationIntentPolicy(policy);
+        loop.setToolCallIdProvider([](int) { return QStringLiteral("observed"); });
+
+        const auto state = runLoop(loop, this, QStringLiteral("cor01"), false,
+                                   QStringLiteral("Inspect the fixture repository read-only"));
+
+        // Read-only invariant for every variant.
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.executor.calls, 0);
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("write-file"), 0), 0);
+        QVERIFY(verifier.untouched());
+
+        if (variant == "truncated-listing-absence") {
+            QVERIFY2(state.phase == AgentLoopPhase::Failed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(state.finalAnswer.isEmpty());
+            QVERIFY2(state.abortReason.contains(QStringLiteral("lacks fresh filesystem evidence")),
+                     qPrintable(state.abortReason));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("list-directory"), 0), 1);
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 0);
+        } else if (variant == "hidden-excluded-claim") {
+            QVERIFY2(state.phase == AgentLoopPhase::Failed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(state.finalAnswer.isEmpty());
+            QVERIFY2(state.abortReason.contains(QStringLiteral("cannot determine")),
+                     qPrintable(state.abortReason));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("list-directory"), 0), 1);
+        } else if (variant == "empty-incomplete-read") {
+            QVERIFY2(state.phase == AgentLoopPhase::Failed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(state.finalAnswer.isEmpty());
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
+        } else if (variant == "missing-required-file") {
+            QVERIFY2(state.phase == AgentLoopPhase::Failed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(state.finalAnswer.isEmpty());
+            QVERIFY(!state.finalAnswer.contains(QStringLiteral("parser")));
+        } else if (variant == "omitted-critical-dependency") {
+            QVERIFY2(state.phase == AgentLoopPhase::Failed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(state.finalAnswer.isEmpty());
+            QVERIFY2(state.abortReason.contains(QStringLiteral("helper.h")),
+                     qPrintable(state.abortReason));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
+        } else if (variant == "dependency-observed") {
+            QCOMPARE(state.phase, AgentLoopPhase::Completed);
+            QVERIFY(!state.finalAnswer.isEmpty());
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 2);
+        } else { // truncated-listing-positive
+            QCOMPARE(state.phase, AgentLoopPhase::Completed);
+            QVERIFY(state.finalAnswer.contains(QStringLiteral("return a + b")));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("list-directory"), 0), 1);
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -1742,6 +2019,206 @@ private slots:
     }
 
     // ------------------------------------------------------------------
+    // COR-06 (extended): every declared capability family fails closed when
+    // the underlying capability is missing. The negative mechanisms are the
+    // registry's own contracts: an unavailable handler (Git/browser/render/
+    // process/network/speech), an absent handler, a disabled entry, and
+    // platform-unsupported metadata. Each case must produce a typed
+    // diagnostic, execute no receipt, fall back to no other tool and leave
+    // the workspace unchanged. This exercises the injected capability
+    // registry metadata, not live Git/Playwright/Chromium/network/Whisper
+    // integrations, which remain unverified here.
+    // ------------------------------------------------------------------
+    void cor06_capabilityFamilyNegatives_data() {
+        QTest::addColumn<QString>("variant");
+        for (const auto& variant :
+             {"git", "browser", "render-vision", "sandbox-process", "network", "speech",
+              "missing-handler", "disabled-tool", "unsupported-platform"})
+            QTest::newRow(variant) << QString::fromLatin1(variant);
+    }
+
+    void cor06_capabilityFamilyNegatives() {
+        QFETCH(QString, variant);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        const auto calcPath = root + QStringLiteral("/src/calc.cpp");
+
+        LoopFixture fixture;
+        QHash<QString, ToolDescriptor> overrides;
+        QString toolId;
+        QString argumentId;
+        QString argumentValue;
+        QString unavailableReason;
+        QString expectedObservation;
+        bool expectUnsupportedCategory = false;
+        bool handlerUnavailable = false;
+
+        if (variant == QStringLiteral("git")) {
+            toolId = QStringLiteral("git-status");
+            argumentId = QStringLiteral("path");
+            argumentValue = root;
+            unavailableReason =
+                QStringLiteral("Git executable and its process sandbox are unavailable.");
+            expectedObservation = QStringLiteral("process sandbox are unavailable");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("browser")) {
+            toolId = QStringLiteral("open-url");
+            argumentId = QStringLiteral("url");
+            argumentValue = QStringLiteral("https://example.invalid/");
+            unavailableReason = QStringLiteral("Desktop browser capability is unavailable.");
+            expectedObservation = QStringLiteral("browser capability is unavailable");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("render-vision")) {
+            toolId = QStringLiteral("browser-screenshot");
+            argumentId = QStringLiteral("url");
+            argumentValue = QStringLiteral("https://example.invalid/");
+            unavailableReason =
+                QStringLiteral("Vision render backend (Playwright/Chromium) is unavailable.");
+            expectedObservation = QStringLiteral("render backend");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("sandbox-process")) {
+            toolId = QStringLiteral("run-command");
+            argumentId = QStringLiteral("command");
+            argumentValue = QStringLiteral("true");
+            unavailableReason = QStringLiteral("Process sandbox backend is unavailable.");
+            expectedObservation = QStringLiteral("sandbox backend is unavailable");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("network")) {
+            toolId = QStringLiteral("web-fetch");
+            argumentId = QStringLiteral("url");
+            argumentValue = QStringLiteral("https://example.invalid/");
+            unavailableReason = QStringLiteral("Network client capability is unavailable.");
+            expectedObservation = QStringLiteral("Network client capability is unavailable");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("speech")) {
+            toolId = QStringLiteral("voice-transcribe");
+            argumentId = QStringLiteral("path");
+            argumentValue = root + QStringLiteral("/audio.wav");
+            unavailableReason = QStringLiteral("Speech backend (Whisper) is unavailable.");
+            expectedObservation = QStringLiteral("Speech backend");
+            handlerUnavailable = true;
+        } else if (variant == QStringLiteral("missing-handler")) {
+            toolId = QStringLiteral("stat-path");
+            argumentId = QStringLiteral("path");
+            argumentValue = calcPath;
+            expectedObservation = QStringLiteral("Tool unavailable");
+            expectUnsupportedCategory = true;
+        } else if (variant == QStringLiteral("disabled-tool")) {
+            toolId = QStringLiteral("read-file");
+            argumentId = QStringLiteral("path");
+            argumentValue = calcPath;
+            ToolDescriptor disabled = builtInDescriptor(toolId);
+            disabled.enabled = false;
+            overrides.insert(toolId, disabled);
+            expectedObservation = QStringLiteral("Tool unavailable");
+            expectUnsupportedCategory = true;
+        } else { // unsupported-platform
+            toolId = QStringLiteral("stat-path");
+            argumentId = QStringLiteral("path");
+            argumentValue = calcPath;
+            ToolDescriptor unsupported = builtInDescriptor(toolId);
+            unsupported.platforms.linux = ToolPlatformSupport::Unsupported;
+            unsupported.platforms.macOS = ToolPlatformSupport::Unsupported;
+            unsupported.platforms.windows = ToolPlatformSupport::Unsupported;
+            overrides.insert(toolId, unsupported);
+            expectedObservation = QStringLiteral("unsupported on this platform");
+        }
+
+        if (variant == QStringLiteral("missing-handler")) {
+            // Capability metadata exists but no execution target is wired. The
+            // loop still lists the id as known, so the refusal must come from
+            // the gateway rather than a silent unknown-tool bypass.
+            QVERIFY(registerDescriptorWithoutHandler(fixture.registry, toolId));
+            fixture.knownTools = {toolId};
+        } else {
+            if (handlerUnavailable)
+                fixture.handler.unavailableReasonOverride = unavailableReason;
+            fixture.registerTools({toolId}, overrides);
+        }
+
+        ScriptedPlanner planner;
+        planner.decisions = {toolDecision(toolId), toolDecision(toolId)};
+        for (auto& decision : planner.decisions)
+            appendArg(decision, argumentId, argumentValue);
+        planner.repeatLast = false;
+
+        AgentLoop::Config config;
+        config.maxIterations = 4;
+        AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools, config);
+        configureLoopFixture(loop, fixture, root);
+        WorkspaceVerifier verifier(root);
+
+        const auto state = runLoop(loop, this, QStringLiteral("cor06x"), false,
+                                   QStringLiteral("Use the unavailable capability"));
+
+        QVERIFY2(state.phase == AgentLoopPhase::Failed || state.phase == AgentLoopPhase::Stuck,
+                 qPrintable(loopPhaseName(state.phase)));
+        QVERIFY(state.finalAnswer.isEmpty());
+        // No receipt, no fallback tool and no fallback process may run.
+        QCOMPARE(fixture.executor.calls, 0);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.handler.counts.value(toolId, 0), 0);
+        QCOMPARE(fixture.handler.order.size(), 0);
+        QVERIFY2(verifier.untouched(), qPrintable(verifier.delta().describe()));
+        QVERIFY(!state.steps.isEmpty());
+        QVERIFY2(state.steps.first().observation.contains(expectedObservation),
+                 qPrintable(state.steps.first().observation));
+        if (expectUnsupportedCategory)
+            QCOMPARE(state.steps.first().failureCategory, ToolFailureCategory::Unsupported);
+    }
+
+    // ------------------------------------------------------------------
+    // COR-06 (extended): model/provider availability is a capability too. An
+    // unavailable active binding must fail the run via the provider contract
+    // with no silent model substitution, no fallback tool and no fabricated
+    // success. The provider fixture is injected; no real model is contacted.
+    // ------------------------------------------------------------------
+    void cor06_modelProviderUnavailable() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+
+        LoopFixture fixture;
+        fixture.registerTools({QStringLiteral("read-file")});
+
+        FaultProvider provider;
+        ChatProviderReply unavailable;
+        unavailable.success = false;
+        unavailable.category = ChatProviderErrorCategory::ProviderUnavailable;
+        unavailable.httpStatus = 503;
+        unavailable.attempts = 3;
+        unavailable.errorMessage =
+            QStringLiteral("No local model is available for the active binding.");
+        provider.plannerReplies = {unavailable, unavailable};
+        provider.faultAfterQueue = unavailable;
+
+        auto planner = makeLlmPlanner(provider, fixtureDescriptors(fixture.knownTools));
+        AgentLoop loop(*planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools);
+        configureLoopFixture(loop, fixture, root);
+        WorkspaceVerifier verifier(root);
+
+        const auto state = runLoop(loop, this, QStringLiteral("cor06-model"), false,
+                                   QStringLiteral("Use the unavailable model capability"));
+        QCOMPARE(state.phase, AgentLoopPhase::Failed);
+        QCOMPARE(state.terminalReason, AgentTerminalReason::ProviderFailure);
+        QVERIFY(state.finalAnswer.isEmpty());
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 0);
+        QCOMPARE(fixture.executor.calls, 0);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QVERIFY(verifier.untouched());
+        // The active binding is unchanged: no silent model/provider fallback.
+        QCOMPARE(planner->modelBinding().modelId, QStringLiteral("fixture-model"));
+        QCOMPARE(planner->modelBinding().providerId, QStringLiteral("fixture-fault-provider"));
+    }
+
+    // ------------------------------------------------------------------
     // COR-07: denying the required filesystem/process action never executes
     // the handler and creates no persistent permission grant.
     // ------------------------------------------------------------------
@@ -2157,6 +2634,178 @@ private slots:
         QVERIFY(verifier.untouched());
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QCOMPARE(fresh.handler.unauthorizedCalls, 0);
+    }
+
+    // ------------------------------------------------------------------
+    // COR-10 (extended): cancellation is honored at each planning stage
+    // boundary. Cancellation requested before classification, during planning
+    // (before the first dispatch) and repeatedly must still deliver exactly
+    // one authoritative terminal and no queued tool effect.
+    // ------------------------------------------------------------------
+    void cor10_planningStageCancellation_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("cancel-before-classification") << QStringLiteral("pre-classification");
+        QTest::newRow("cancel-before-first-dispatch") << QStringLiteral("before-dispatch");
+        QTest::newRow("repeated-cancel") << QStringLiteral("repeated");
+    }
+
+    void cor10_planningStageCancellation() {
+        QFETCH(QString, variant);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        const auto calcPath = root + QStringLiteral("/src/calc.cpp");
+
+        LoopFixture fixture;
+        fixture.registerTools({QStringLiteral("read-file"), QStringLiteral("write-file")});
+
+        ScriptedPlanner planner;
+        auto read = toolDecision(QStringLiteral("read-file"));
+        appendArg(read, QStringLiteral("path"), calcPath);
+        planner.decisions = {read};
+        planner.repeatLast = false;
+
+        AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools);
+        configureLoopFixture(loop, fixture, root);
+        if (variant == QStringLiteral("pre-classification")) {
+            // Cancellation is already stamped before classification runs; the
+            // run must never dispatch planning or a tool.
+            loop.setCancelQuery([] { return true; });
+        } else if (variant == QStringLiteral("before-dispatch")) {
+            planner.onCall = [&loop](int index) {
+                if (index == 0)
+                    loop.cancelAsync();
+            };
+        } else { // repeated
+            planner.onCall = [&loop](int index) {
+                if (index == 0) {
+                    loop.cancelAsync();
+                    loop.cancelAsync();
+                }
+            };
+        }
+
+        int terminals = 0;
+        AgentLoopState terminal;
+        loop.runAsync(QStringLiteral("Cancelled during planning"), QStringLiteral("cor10-stage"),
+                      this, [&](const AgentLoopState& state) {
+                          terminal = state;
+                          ++terminals;
+                      });
+        QTRY_COMPARE_WITH_TIMEOUT(terminals, 1, kBarrierTimeoutMs);
+        QCOMPARE(terminal.phase, AgentLoopPhase::Cancelled);
+        QCOMPARE(fixture.executor.calls, 0);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QVERIFY(WorkspaceVerifier(root).untouched());
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 0);
+        if (variant == QStringLiteral("pre-classification"))
+            QCOMPARE(planner.calls, 0);
+        else
+            QCOMPARE(planner.calls, 1);
+    }
+
+    // ------------------------------------------------------------------
+    // COR-10 (extended): cancellation during genuine planning on the runtime
+    // worker, a late planning result ignored after the cancel stamp, exactly
+    // one authoritative terminal, and a fresh task on the same runtime with
+    // no inherited cancellation state.
+    // ------------------------------------------------------------------
+    void cor10_runtimePlanningBarrierAndFreshTask() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        const auto calcPath = root + QStringLiteral("/src/calc.cpp");
+
+        RuntimeFixture fixture;
+        fixture.create({QStringLiteral("read-file"), QStringLiteral("write-file")});
+        fixture.configure(root);
+
+        auto read = toolDecision(QStringLiteral("read-file"));
+        appendArg(read, QStringLiteral("path"), calcPath);
+        fixture.planner.decisions = {read};
+        fixture.planner.repeatLast = false;
+        fixture.planner.barrierPlanning = true;
+
+        const auto auditOf = [&](const QString& id) {
+            TerminalAudit audit;
+            audit.scan(fixture.runtime->eventHistory(id));
+            return audit;
+        };
+
+        QVERIFY(fixture.runtime->start(fixture.session, QStringLiteral("read the fixture once")));
+        // Planning is genuinely on the worker stack; cancel while it blocks.
+        QTRY_VERIFY_WITH_TIMEOUT(fixture.planner.planningEntered.available() > 0,
+                                 kBarrierTimeoutMs);
+        QVERIFY(fixture.planner.planningEntered.tryAcquire());
+        QVERIFY(fixture.runtime->cancel(fixture.session));
+        QCOMPARE(fixture.runtime->sessionState(fixture.session).phase, AgentLoopPhase::Cancelling);
+        // Release the late planning result after the cancel stamp: it must be
+        // ignored rather than dispatched.
+        fixture.planner.planningRelease.release();
+        QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(fixture.session).phase,
+                                  AgentLoopPhase::Cancelled, kBarrierTimeoutMs);
+        QVERIFY(!fixture.planner.planningBarrierTimedOut.load());
+        QVERIFY(fixture.runtime->sessionState(fixture.session).finalAnswer.isEmpty());
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 0);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.executor.calls, 0);
+        {
+            const auto audit = auditOf(fixture.session);
+            QVERIFY2(audit.singleTerminal() && audit.cancelled == 1, qPrintable(audit.describe()));
+        }
+        // A repeated cancel on a terminal session is rejected and cannot reopen
+        // or duplicate the terminal.
+        QVERIFY(!fixture.runtime->cancel(fixture.session));
+        {
+            const auto audit = auditOf(fixture.session);
+            QVERIFY2(audit.singleTerminal() && audit.cancelled == 1, qPrintable(audit.describe()));
+        }
+
+        // A fresh task on the same runtime inherits no cancellation state.
+        const auto next = fixture.runtime->createSession();
+        QVERIFY(!next.isEmpty());
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.workspaceContext.rootPath = root;
+        fixture.runtime->configureSession(next, options);
+        fixture.planner.barrierPlanning = false;
+        fixture.planner.resetPlanningIndex();
+        auto nextRead = toolDecision(QStringLiteral("read-file"));
+        appendArg(nextRead, QStringLiteral("path"), calcPath);
+        auto nextFinal = finalDecision(QStringLiteral("Fresh fixture read recorded."));
+        nextFinal.grounding = GroundingMode::Verified;
+        nextFinal.groundingDeclared = true;
+        fixture.planner.decisions = {nextRead, nextFinal};
+        fixture.planner.repeatLast = true;
+        // The verified filesystem final must use the canonical representation.
+        fixture.planner.canonicalFinal = true;
+        QVERIFY(fixture.runtime->start(next, QStringLiteral("read the fixture again")));
+        QTRY_VERIFY_WITH_TIMEOUT(
+            fixture.runtime->sessionState(next).phase == AgentLoopPhase::Completed ||
+                fixture.runtime->sessionState(next).phase == AgentLoopPhase::Failed ||
+                fixture.runtime->sessionState(next).phase == AgentLoopPhase::Stuck ||
+                fixture.runtime->sessionState(next).phase == AgentLoopPhase::Cancelled,
+            kBarrierTimeoutMs);
+        {
+            const auto fresh = fixture.runtime->sessionState(next);
+            QVERIFY2(fresh.phase == AgentLoopPhase::Completed,
+                     qPrintable(QStringLiteral("phase=%1 reason=%2 abort=%3")
+                                    .arg(loopPhaseName(fresh.phase))
+                                    .arg(terminalReasonName(fresh.terminalReason))
+                                    .arg(fresh.abortReason)));
+        }
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
+        {
+            const auto audit = auditOf(next);
+            QVERIFY2(audit.singleTerminal() && audit.completed == 1, qPrintable(audit.describe()));
+        }
+        QVERIFY(WorkspaceVerifier(root).untouched());
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
     }
 
     // ------------------------------------------------------------------
@@ -2904,6 +3553,108 @@ private slots:
         }
     }
 
+    // ------------------------------------------------------------------
+    // COR-16 (extended): a mutated resource may not be described as verified
+    // without a fresh post-mutation observation. The production final-answer
+    // gate already requires it, so this is exercised against the real policy:
+    // without a reread the verified final is rejected and the run fails
+    // boundedly; a genuine reread grounds the final; a fabricated structured
+    // claim attached to otherwise-valid evidence is still rejected. File
+    // changes are verified independently of tool output.
+    // ------------------------------------------------------------------
+    void cor16_mutatedResourceReread_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("mutated-without-reread") << QStringLiteral("without-reread");
+        QTest::newRow("mutated-with-reread") << QStringLiteral("with-reread");
+        QTest::newRow("fabricated-claim-after-reread") << QStringLiteral("fabricated");
+    }
+
+    void cor16_mutatedResourceReread() {
+        QFETCH(QString, variant);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        const auto fixed = QStringLiteral("int add(int a,int b){ return a + b; }\n");
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a - b; }\n"));
+        const auto calcPath = root + QStringLiteral("/src/calc.cpp");
+
+        LoopFixture fixture;
+        fixture.registerTools({QStringLiteral("read-file"), QStringLiteral("write-file")});
+        fixture.handler.allowedWrites.insert(QStringLiteral("src/calc.cpp"), fixed);
+
+        ScriptedPlanner planner;
+        auto readBefore = toolDecision(QStringLiteral("read-file"));
+        appendArg(readBefore, QStringLiteral("path"), calcPath);
+        auto write = toolDecision(QStringLiteral("write-file"), ToolRiskLevel::Medium);
+        appendArg(write, QStringLiteral("path"), calcPath);
+        appendArg(write, QStringLiteral("content"), fixed);
+        auto readAfter = toolDecision(QStringLiteral("read-file"));
+        appendArg(readAfter, QStringLiteral("path"), calcPath);
+
+        auto final = finalDecision(QStringLiteral("src/calc.cpp now returns a + b."));
+        final.grounding = GroundingMode::Verified;
+        final.groundingDeclared = true;
+        if (variant == QStringLiteral("fabricated")) {
+            // Structurally valid reread evidence plus a fabricated claim id.
+            final.claims = {{QStringLiteral("ghost-claim"), true}};
+            planner.decisions = {readBefore, write, readAfter, final};
+        } else if (variant == QStringLiteral("with-reread")) {
+            planner.decisions = {readBefore, write, readAfter, final};
+        } else { // without-reread
+            planner.decisions = {readBefore, write, final};
+        }
+        planner.repeatLast = true;
+        // Verified filesystem finals must use the evidence-derived canonical
+        // representation; derive it from the same (empty) classified intent.
+        planner.canonicalFinal = true;
+
+        AgentLoop::Config config;
+        config.maxIterations = 4;
+        AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools, config);
+        configureLoopFixture(loop, fixture, root);
+        WorkspaceVerifier verifier(root);
+
+        const auto state = runLoop(loop, this, QStringLiteral("cor16-reread"), false,
+                                   QStringLiteral("Repair and verify the fixture file"));
+
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.executor.calls, 0);
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("write-file"), 0), 1);
+        WorkspaceVerifier::Expected expected;
+        expected.changed = {QStringLiteral("src/calc.cpp")};
+        QString actual;
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
+        QCOMPARE(verifier.fileContent(QStringLiteral("src/calc.cpp")), fixed);
+
+        if (variant == QStringLiteral("with-reread")) {
+            QVERIFY2(state.phase == AgentLoopPhase::Completed,
+                     qPrintable(terminalFailureDescription(state)));
+            QVERIFY(!state.finalAnswer.isEmpty());
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 2);
+            QCOMPARE(state.rejectedFinalAnswers, 0);
+        } else if (variant == QStringLiteral("fabricated")) {
+            // The reread satisfies the mutation gate, but the fabricated claim
+            // id is unknown to the classified intent and is rejected.
+            QCOMPARE(state.phase, AgentLoopPhase::Failed);
+            QVERIFY(state.finalAnswer.isEmpty());
+            QCOMPARE(state.terminalReason, AgentTerminalReason::UnableToComplete);
+            QVERIFY2(state.abortReason.contains(QStringLiteral("unknown claim")),
+                     qPrintable(state.abortReason));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 2);
+        } else { // without-reread
+            QCOMPARE(state.phase, AgentLoopPhase::Failed);
+            QVERIFY(state.finalAnswer.isEmpty());
+            QCOMPARE(state.terminalReason, AgentTerminalReason::UnableToComplete);
+            QVERIFY2(state.abortReason.contains(QStringLiteral(
+                         "Observe the affected filesystem state after the mutation")),
+                     qPrintable(state.abortReason));
+            QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
+            QCOMPARE(state.rejectedFinalAnswers, 2);
+        }
+    }
+
     // Run the actual daemon/Desktop fixture executable in an isolated profile.
     // These fixed test arguments never enter model or shell dispatch.
 private:
@@ -3010,21 +3761,32 @@ private:
             QCOMPARE(event.providerId, QStringLiteral("ollama"));
             QCOMPARE(event.modelId, QStringLiteral("original-model"));
         }
-        if (!firstDeltaReceived) {
+        // Bounded planner streaming is the selected dispatch for text-only
+        // requests when the provider explicitly implements the deadline-aware
+        // contract. Native tool calls and structured output stay non-streaming.
+        if (!native) {
+            QVERIFY2(firstDeltaReceived,
+                     "bounded planner streaming never delivered a first provider delta");
+            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
+            QCOMPARE(provider->streamRequests.load(), 1);
+            QCOMPARE(provider->requests.load(), 0);
+            // The first delta arrived before cancellation; the late delta after
+            // cancellation was delivered but never accepted.
+            QCOMPARE(provider->emittedDeltas.load(), 2);
+            QCOMPARE(provider->originalDeadline, 120000);
+            QVERIFY(provider->originalRequireBounded.load());
+            QCOMPARE(provider->originalNative, false);
+            QCOMPARE(planner.modelBinding().capabilities.streaming, CapabilitySupport::Supported);
+        } else {
+            // There is no verified incremental native tool-call assembly contract,
+            // so native requests must remain on the bounded non-streaming path.
+            QCOMPARE(firstDeltaReceived, false);
             QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
             QCOMPARE(provider->streamRequests.load(), 0);
             QCOMPARE(provider->emittedDeltas.load(), 0);
             QCOMPARE(provider->requests.load(), 1);
             QCOMPARE(provider->originalDeadline, 120000);
-            QCOMPARE(provider->originalNative, native);
-            // Streaming is advertised by the frozen binding, yet the production
-            // router cannot select it: options.deadlineMs is fixed at 120000 and the
-            // streaming branch requires zero, while sendMessageStreaming cannot carry
-            // the per-request deadline at all.
-            QCOMPARE(planner.modelBinding().capabilities.streaming, CapabilitySupport::Supported);
-        } else {
-            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
-            QCOMPARE(provider->emittedDeltas.load(), 2);
+            QCOMPARE(provider->originalNative, true);
         }
         QVERIFY(!runtime.approve(session, true));
         QVERIFY(!runtime.cancel(session));
@@ -3032,6 +3794,9 @@ private:
         QVERIFY(nextBinding.ok());
         nextBinding.binding.capabilities.structuredOutput = CapabilitySupport::Unsupported;
         nextBinding.binding.capabilities.nativeToolCalling = CapabilitySupport::Unsupported;
+        // The subsequent task deliberately uses the bounded non-streaming path to
+        // prove the fallback stays intact on the same runtime.
+        nextBinding.binding.capabilities.streaming = CapabilitySupport::Unsupported;
         provider->fresh.store(true);
         planner.bindModel(nextBinding.binding, nextBinding.provider);
         const auto next = runtime.createSession();
@@ -3071,16 +3836,16 @@ private:
                 << "runtime-deltas=" << count(session, AgentEventType::ModelOutputDelta)
                 << "cancel-ack=" << provider->cancellationAcks.load()
                 << "next-read=" << handler.counts.value("read-file");
-        if (requireStream && !firstDeltaReceived)
-            QSKIP(
-                "COR-11 after-first-delta remains blocked by the existing provider contract: "
-                "LlmAgentRuntime fixes options.deadlineMs=120000 but its streaming branch requires "
-                "zero, and IChatProvider::sendMessageStreaming(message,onDelta,token) cannot carry "
-                "ChatRequestOptions, so removing the guard would drop the deadline (the provider's "
-                "own timeout may be 0 = unbounded) instead of preserving it. The planner delta "
-                "callback also intentionally discards private protocol. No end-to-end "
-                "streaming/tool-assembly coverage is claimed; see the transport-level and "
-                "native-assembly notes in P1-01.5.");
+        if (requireStream && native)
+            QSKIP("COR-11 native incremental tool-call assembly remains explicitly blocked: "
+                  "IChatProvider exposes no typed incremental tool-argument assembly event, so a "
+                  "partially streamed native call could only be dispatched after a validated "
+                  "terminal assembly. This fixture asserts the native request stays on the bounded "
+                  "non-streaming path (one sendRequest, zero streamed deltas, zero public deltas) "
+                  "and does not invent an assembly contract.");
+        if (requireStream && !native && !firstDeltaReceived)
+            QVERIFY2(false, "the bounded planner stream must start for a text-only request; the "
+                            "after-first-delta cancellation oracle cannot be satisfied");
     }
 
     void exerciseIndependentOracle(int corpus, const QString& variant) {

@@ -175,6 +175,43 @@ ChatProviderReply OllamaChatProvider::sendMessageWithToken(
 ChatProviderReply OllamaChatProvider::sendMessageStreaming(
     const QString& message, const std::function<void(const QString&)>& onDelta,
     const std::shared_ptr<std::atomic_bool>& cancellationToken) {
+    // Legacy streaming: no per-request options, provider-configured timeout only.
+    return streamMessage(message, onDelta, cancellationToken, {}, timeoutMs_, 2048, false);
+}
+
+ChatProviderReply OllamaChatProvider::sendMessageStreaming(
+    const QString& message, const std::function<void(const QString&)>& onDelta,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken, const ChatRequestOptions& options) {
+    if (options.structuredOutput || options.nativeToolCalling) {
+        auto reply = failureReply(
+            QStringLiteral("Bounded streaming does not carry structured or native tool output."),
+            ChatProviderErrorCategory::CapabilityUnsupported,
+            ChatProviderReply::Error::CapabilityRejected);
+        reply.diagnostics.insert(QStringLiteral("deadline_ms"), options.deadlineMs);
+        reply.diagnostics.insert(QStringLiteral("bounded_streaming"),
+                                 options.requireBoundedStreaming);
+        return reply;
+    }
+    if (options.requireBoundedStreaming && options.deadlineMs <= 0) {
+        // A bounded request must never run unbounded when its deadline is absent.
+        auto reply = failureReply(
+            QStringLiteral("Bounded streaming requires a positive request deadline."),
+            ChatProviderErrorCategory::RequestRejected, ChatProviderReply::Error::InvalidResponse);
+        reply.diagnostics.insert(QStringLiteral("deadline_ms"), 0);
+        reply.diagnostics.insert(QStringLiteral("bounded_streaming"), true);
+        return reply;
+    }
+    const auto token = cancellationToken ? cancellationToken : options.cancellationToken;
+    const int deadlineMs = options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_;
+    const int maxOutputTokens = options.maxOutputTokens > 0 ? options.maxOutputTokens : 2048;
+    return streamMessage(message, onDelta, token, options.images, deadlineMs, maxOutputTokens,
+                         options.requireBoundedStreaming);
+}
+
+ChatProviderReply OllamaChatProvider::streamMessage(
+    const QString& message, const std::function<void(const QString&)>& onDelta,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken, const QList<ChatImage>& images,
+    int deadlineMs, int maxOutputTokens, bool requireBoundedStreaming) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty())
         return failureReply(QStringLiteral("Prompt is blank."),
@@ -224,13 +261,15 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
     LocalInferenceRequest request;
     request.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     request.prompt = trimmed;
+    request.images = images;
     request.options.model = model;
     if (discoverySnapshot_)
         request.options.modelValidation = *discoverySnapshot_;
-    request.options.timeoutMs = timeoutMs_;
+    request.options.timeoutMs = deadlineMs;
+    request.options.requireBoundedStreaming = requireBoundedStreaming;
     request.options.temperature = 0.7;
     request.options.topP = 0.9;
-    request.options.maxTokens = 2048;
+    request.options.maxTokens = maxOutputTokens;
     request.options.streamingRequested = true;
     request.options.cancellationToken = cancellationToken;
 
@@ -248,6 +287,8 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
         reply.attempts = result.attempts;
         reply.retrySummary = result.retrySummary;
         reply.requestId = result.requestId;
+        reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+        reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
         return reply;
     }
     auto reply =
@@ -262,6 +303,8 @@ ChatProviderReply OllamaChatProvider::sendMessageStreaming(
     reply.attempts = result.attempts;
     reply.retrySummary = result.retrySummary;
     reply.requestId = result.requestId;
+    reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+    reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
     return reply;
 }
 

@@ -173,7 +173,8 @@ JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* man
                          false,
                          {},
                          QStringLiteral("Ollama local response was not valid JSON."),
-                         QNetworkReply::UnknownContentError};
+                         QNetworkReply::UnknownContentError,
+                         transport.httpStatus};
     }
 
     return JsonReply{true, false, document, {}, QNetworkReply::NoError,
@@ -1582,13 +1583,12 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 }
 
 namespace sentinel::core {
-QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs,
-                                                      const QMap<QByteArray, QByteArray>& headers,
-                                                      QString* errorOut,
-                                                      const std::shared_ptr<std::atomic_bool>& cancellationToken,
-                                                      ProviderDiscoveryOutcome* outcome) {
+QList<OllamaModelSummary> fetchOpenAiCompatibleModels(
+    const QUrl& url, int timeoutMs, const QMap<QByteArray, QByteArray>& headers, QString* errorOut,
+    const std::shared_ptr<std::atomic_bool>& cancellationToken, ProviderDiscoveryOutcome* outcome) {
     const auto reply = getJson(url, timeoutMs, nullptr, headers, cancellationToken);
-    if (outcome) *outcome = {reply.ok, reply.category, reply.httpStatus, reply.requestId};
+    if (outcome)
+        *outcome = {false, reply.category, reply.httpStatus, reply.requestId};
     if (!reply.ok) {
         if (errorOut) {
             *errorOut = reply.timedOut ? QStringLiteral("Timed out after %1 ms").arg(timeoutMs)
@@ -1598,14 +1598,25 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
         return {};
     }
 
+    const auto malformedCatalog = [&]() -> QList<OllamaModelSummary> {
+        if (outcome)
+            *outcome = {false, ChatProviderErrorCategory::MalformedResponse, reply.httpStatus,
+                        reply.requestId};
+        if (errorOut)
+            *errorOut = QStringLiteral("Model list returned an invalid model catalog.");
+        return {};
+    };
+    const auto data = reply.document.object().value(QStringLiteral("data"));
+    if (!data.isArray())
+        return malformedCatalog();
+
     QList<OllamaModelSummary> models;
-    const auto dataValues = reply.document.object().value(QStringLiteral("data")).toArray();
+    const auto dataValues = data.toArray();
     for (const auto& value : dataValues) {
         const auto object = value.toObject();
         const auto id = object.value(QStringLiteral("id")).toString().trimmed();
-        if (id.isEmpty()) {
-            continue;
-        }
+        if (!value.isObject() || !object.value(QStringLiteral("id")).isString() || id.isEmpty())
+            return malformedCatalog();
 
         QString createdStr;
         if (object.contains(QStringLiteral("created"))) {
@@ -1620,10 +1631,12 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
         OllamaModelSummary model{id, createdStr, 0};
         const auto positiveLimit = [&object](const QString& key) -> std::optional<int> {
             const auto field = object.value(key);
-            if (!field.isDouble()) return std::nullopt;
+            if (!field.isDouble())
+                return std::nullopt;
             const auto number = field.toDouble();
             if (number <= 0 || number > std::numeric_limits<int>::max() ||
-                number != std::floor(number)) return std::nullopt;
+                number != std::floor(number))
+                return std::nullopt;
             return static_cast<int>(number);
         };
         model.capabilities.contextWindow = positiveLimit(QStringLiteral("context_window"));
@@ -1643,7 +1656,8 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
                                                     : CapabilitySupport::Unsupported)
                                   : CapabilitySupport::Unknown;
         };
-        model.capabilities.nativeToolCalling = booleanCapability(QStringLiteral("trained_for_tool_use"));
+        model.capabilities.nativeToolCalling =
+            booleanCapability(QStringLiteral("trained_for_tool_use"));
         if (model.capabilities.nativeToolCalling == CapabilitySupport::Unknown)
             model.capabilities.nativeToolCalling = reportedSupport(QStringLiteral("tool_calling"));
         model.capabilities.structuredOutput = reportedSupport(QStringLiteral("structured_output"));
@@ -1660,6 +1674,10 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
             model.architecture = object.value(QStringLiteral("arch")).toString();
         models.append(std::move(model));
     }
+    if (outcome)
+        *outcome = {true, ChatProviderErrorCategory::None, reply.httpStatus, reply.requestId};
+    if (errorOut)
+        errorOut->clear();
     return models;
 }
 
