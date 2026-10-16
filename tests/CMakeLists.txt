@@ -227,6 +227,10 @@ add_sentinel_core_test(test_null_agent_runtime core/test_null_agent_runtime.cpp)
 add_sentinel_core_test(test_agent_loop core/test_agent_loop.cpp)
 add_sentinel_core_test(test_agent_reliability_harness
                        core/test_agent_reliability_harness.cpp)
+target_compile_definitions(test_agent_reliability_harness PRIVATE
+    SENTINEL_ORACLE_COMPILER="${CMAKE_CXX_COMPILER}"
+    SENTINEL_ORACLE_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}"
+    SENTINEL_ORACLE_GIT="${GIT_EXECUTABLE}")
 add_sentinel_core_test(test_agent_runtime core/test_agent_runtime.cpp)
 add_sentinel_core_test(test_llm_agent_runtime core/test_llm_agent_runtime.cpp)
 add_sentinel_core_test(test_observation_policy core/test_observation_policy.cpp)
@@ -340,6 +344,16 @@ qt_add_resources(test_desktop_ipc model_catalog_test PREFIX "/catalog-test"
     FILES "${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelCatalog.js")
 target_link_libraries(test_desktop_ipc PRIVATE sentinel_desktop_viewmodels sentinel_desktop_ipc sentinel_daemon_service sentinel_core Qt6::Test Qt6::Qml)
 add_test(NAME test_desktop_ipc COMMAND $<TARGET_FILE:test_desktop_ipc>)
+
+qt_add_executable(test_agent_reliability_ipc desktop/test_agent_reliability_ipc.cpp)
+target_link_libraries(test_agent_reliability_ipc PRIVATE
+    sentinel_desktop_viewmodels sentinel_desktop_ipc sentinel_daemon_service sentinel_core Qt6::Test)
+add_test(NAME test_agent_reliability_ipc COMMAND $<TARGET_FILE:test_agent_reliability_ipc>)
+set_tests_properties(test_agent_reliability_ipc PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 60)
+target_compile_definitions(test_agent_reliability_harness PRIVATE
+    SENTINEL_RELIABILITY_IPC_FIXTURE="$<TARGET_FILE:test_agent_reliability_ipc>")
+add_dependencies(test_agent_reliability_harness test_agent_reliability_ipc)
+
 
 qt_add_executable(test_native_integration
     desktop/test_native_integration.cpp

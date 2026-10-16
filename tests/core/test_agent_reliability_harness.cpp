@@ -21,6 +21,9 @@
 //   handler; any invocation outside the prescription is counted as an
 //   unauthorized effect and fails the case.
 
+#include "../support/DeterministicChatFixture.h"
+#include "../support/IndependentCompileOracle.h"
+#include "sentinel/core/security/SQLitePermissionGrantStore.h"
 #include <QtTest>
 
 #include "sentinel/core/agent/AgentEvent.h"
@@ -42,12 +45,16 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QDirIterator>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
+#include <QScopeGuard>
 #include <QSemaphore>
 #include <QTemporaryDir>
 #include <QTimer>
@@ -56,7 +63,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <vector>
 
 using namespace sentinel::core;
 
@@ -351,7 +357,9 @@ public:
     QString unavailableReasonOverride;     // registered capability missing
     bool blockSlowBuild = false;           // cooperative blocking command flag
     QSemaphore slowBuildStarted{0};
-    QSemaphore slowBuildRelease{0};
+    std::atomic<qint64> childPid{0};
+    std::atomic_bool childReleased{false};
+    std::atomic_bool childDrainTimedOut{false};
 
     QHash<QString, int> counts; // receipt issuance per toolId
     QStringList order;          // execution order receipts
@@ -467,28 +475,70 @@ public:
 
         if (blockSlowBuild && toolId == QLatin1String("run-command") &&
             arg(QStringLiteral("command")) == QStringLiteral("echo slow-build")) {
-            // Slow cooperative receipt: write the declared partial artifact,
-            // then wait on the test barrier until the test released it.
-            const QString artifact = QDir(root).filePath(QStringLiteral("build/partial.log"));
-            QFile file(artifact);
-            if (QDir(root).mkpath(QStringLiteral("build")) && file.open(QIODevice::WriteOnly) &&
-                file.write("partial fixture output\n") > 0) {
-                file.close();
-                result.mutations.append({artifact});
-                observation->kind = StructuredObservationKind::Generic;
-                observation->data.insert("exitCode", 0);
-                slowBuildStarted.release();
-                if (!slowBuildRelease.tryAcquire(1, kBarrierTimeoutMs)) {
-                    completion(
-                        {ToolExecutionStatus::Failed, QStringLiteral("fixture barrier timed out")});
-                    return IToolExecutor::Cancel{};
+            // Run only this test executable's fixed synthetic child mode. The
+            // worker context owns ProcessExecutor and its child until release.
+            auto* processes = new ProcessExecutor(request.callbackContext);
+            ProcessRequest launch;
+            launch.program = QCoreApplication::applicationFilePath();
+            launch.arguments = {QStringLiteral("--cooperative-child"),
+                                QDir(root).filePath(QStringLiteral("build/partial.log"))};
+            launch.workingDirectory = root;
+            launch.sessionId = sessionId;
+            launch.toolCallId = toolCallId;
+            launch.timeoutMs = kBarrierTimeoutMs; // test watchdog, not an acceptance budget
+            launch.unconfinedPermitted = true;    // explicit test helper, never model argv
+            struct ChildState {
+                bool cancelling = false;
+                QPointer<QEventLoop> drain;
+            };
+            const auto child = std::make_shared<ChildState>();
+            const auto processId = processes->start(
+                launch,
+                [this, child, completion,
+                 artifact = launch.arguments.last()](const ProcessRecord& record) {
+                    if (record.state == ProcessState::Running) {
+                        childPid.store(record.systemPid);
+                        return;
+                    }
+                    if (record.state != ProcessState::Exited &&
+                        record.state != ProcessState::Failed &&
+                        record.state != ProcessState::Cancelled)
+                        return;
+                    childReleased.store(true);
+                    if (child->drain)
+                        child->drain->quit();
+                    if (child->cancelling)
+                        return; // AgentLoop closes cancellation after the owner releases the child.
+                    ToolExecutionResult terminal{record.state == ProcessState::Cancelled
+                                                     ? ToolExecutionStatus::Cancelled
+                                                     : ToolExecutionStatus::Failed,
+                                                 QStringLiteral("Owned fixture child released.")};
+                    if (QFileInfo::exists(artifact))
+                        terminal.mutations.append({artifact});
+                    completion(std::move(terminal));
+                },
+                [this](const QString&, ProcessStream stream, const QByteArray& bytes) {
+                    if (stream == ProcessStream::Stdout && bytes.contains("fixture-child-ready"))
+                        slowBuildStarted.release();
+                });
+            return [this, child, processes, processId] {
+                child->cancelling = true;
+                QEventLoop drain;
+                child->drain = &drain;
+                QTimer watchdog;
+                watchdog.setSingleShot(true);
+                QObject::connect(&watchdog, &QTimer::timeout, &drain, &QEventLoop::quit);
+                processes->terminate(processId);
+                if (!childReleased.load()) {
+                    watchdog.start(kBarrierTimeoutMs);
+                    drain.exec();
                 }
-                result.summary = QStringLiteral("fixture slow build released");
-            } else {
-                completion({ToolExecutionStatus::Failed,
-                            QStringLiteral("fixture could not write the declared artifact")});
-                return IToolExecutor::Cancel{};
-            }
+                child->drain.clear();
+                if (!childReleased.load()) {
+                    childDrainTimedOut.store(true);
+                    processes->shutdown(); // reap only our owned helper on a failed test
+                }
+            };
         } else if (toolId == QLatin1String("run-command") &&
                    arg(QStringLiteral("command")) == QStringLiteral("echo slow-build")) {
             if (blockSlowBuild) {
@@ -606,6 +656,101 @@ public:
     int plannerRequests = 0;
     int cancelledReports = 0;
     bool barrierTimedOut = false;
+};
+
+// Probe the actual LlmAgentRuntime dispatch contract without forcing deadlines to zero.
+class CancellationProbeProvider final : public IChatProvider {
+public:
+    bool native = false, cooperative = false;
+    QString artifact, readPath;
+    std::atomic_int requests{0}, streamRequests{0}, emittedDeltas{0}, cancellationAcks{0},
+        freshRequests{0};
+    std::atomic_bool barrierTimedOut{false}, fresh{false};
+    QSemaphore entered, release;
+    std::shared_ptr<std::atomic_bool> originalToken, freshToken;
+    int originalDeadline = 0;
+    bool originalNative = false;
+    QString name() const override {
+        return QStringLiteral("cancellation-probe");
+    }
+    ChatProviderStatus status() const override {
+        return ChatProviderStatus::Ready;
+    }
+    bool supportsStreaming() const override {
+        return true;
+    }
+    ChatProviderConcurrency concurrency() const override {
+        return ChatProviderConcurrency::Supported;
+    }
+    ChatProviderReply sendMessage(const QString&) override {
+        return {true, QStringLiteral("{\"requirements\":[]}"), {}};
+    }
+    ChatProviderReply sendRequest(const QString&, const ChatRequestOptions& options) override {
+        if (options.deadlineMs == 60000)
+            return {true, QStringLiteral("{\"requirements\":[]}"), {}};
+        if (fresh.load()) {
+            freshToken = options.cancellationToken;
+            const int index = ++freshRequests;
+            ChatProviderReply reply;
+            reply.success = true;
+            reply.lifecycle = ChatRequestLifecycle::Completed;
+            reply.message =
+                index == 1
+                    ? QString::fromUtf8(
+                          QJsonDocument(QJsonObject{{"action", "tool"},
+                                                    {"tool", "read-file"},
+                                                    {"args", QJsonObject{{"path", readPath}}}})
+                              .toJson(QJsonDocument::Compact))
+                    : QStringLiteral("{\"action\":\"final\",\"grounding\":\"context\",\"answer\":"
+                                     "\"Fresh fixture read recorded.\"}");
+            return reply;
+        }
+        ++requests;
+        originalToken = options.cancellationToken;
+        originalDeadline = options.deadlineMs;
+        originalNative = options.nativeToolCalling;
+        entered.release();
+        if (!release.tryAcquire(1, kBarrierTimeoutMs))
+            barrierTimedOut.store(true);
+        return lateReply();
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString&, const std::function<void(const QString&)>& delta,
+                         const std::shared_ptr<std::atomic_bool>& token) override {
+        ++streamRequests;
+        originalToken = token;
+        delta(QStringLiteral("synthetic-first-delta"));
+        ++emittedDeltas;
+        entered.release();
+        if (!release.tryAcquire(1, kBarrierTimeoutMs))
+            barrierTimedOut.store(true);
+        delta(QStringLiteral("synthetic-late-delta"));
+        ++emittedDeltas;
+        return lateReply();
+    }
+
+private:
+    ChatProviderReply lateReply() {
+        ChatProviderReply reply;
+        if (cooperative && originalToken && originalToken->load()) {
+            ++cancellationAcks;
+            reply.category = ChatProviderErrorCategory::Cancelled;
+            reply.lifecycle = ChatRequestLifecycle::Cancelled;
+            reply.errorMessage = QStringLiteral("Synthetic provider acknowledged cancellation.");
+            return reply;
+        }
+        reply.success = true;
+        reply.lifecycle = ChatRequestLifecycle::Completed;
+        if (native)
+            reply.toolCalls.append({"late-call",
+                                    "write-file",
+                                    {{"path", artifact}, {"content", "late mutation"}},
+                                    {}});
+        else
+            reply.message = QStringLiteral(
+                "{\"action\":\"final\",\"grounding\":\"context\",\"answer\":\"late completion\"}");
+        return reply;
+    }
 };
 
 ModelBinding fixtureBinding() {
@@ -770,11 +915,11 @@ struct RuntimeFixture {
     QString session;
     QStringList toolIds;
 
-    void create(const QStringList& toolIds_) {
+    void create(const QStringList& toolIds_, std::shared_ptr<IPermissionGrantStore> grants = {}) {
         toolIds = toolIds_;
         runtime = std::make_unique<AgentRuntime>(
             std::make_unique<FixtureMetadataRuntime>(fixtureDescriptors(toolIds)), &planner,
-            executor, approval, sandbox);
+            executor, approval, sandbox, nullptr, nullptr, nullptr, std::move(grants));
         // Replace each compatibility-handler registration with the
         // deterministic fixture handler.
         for (const auto& descriptor : fixtureDescriptors(toolIds)) {
@@ -791,6 +936,7 @@ struct RuntimeFixture {
 
     void configure(const QString& workspaceRoot, bool autonomous = true,
                    const QStringList& availableTools = {}) {
+        QVERIFY2(runtime && !session.isEmpty(), "create runtime before configure");
         handler.root = workspaceRoot;
         AgentSessionOptions options;
         options.autonomousMode = autonomous;
@@ -835,6 +981,15 @@ void configureLoopFixture(AgentLoop& loop, LoopFixture& fixture, const QString& 
     AgentContextInput::WorkspaceContext context;
     context.rootPath = root;
     loop.setWorkspaceContext(context);
+}
+
+using CompileOracle = sentinel::test::IndependentCompileOracle;
+
+bool independentlyAccepted(const AgentLoopState& state, const WorkspaceVerifier& workspace,
+                           const WorkspaceVerifier::Expected& allowed,
+                           const CompileOracle::Result& actual) {
+    return state.phase == AgentLoopPhase::Completed && !state.finalAnswer.isEmpty() &&
+           workspace.matches(allowed) && actual.matchesSources(workspace.root()) && actual.passed();
 }
 
 QString terminalFailureDescription(const AgentLoopState& state) {
@@ -1045,6 +1200,10 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        const auto missingCompiler = CompileOracle::unavailableReason();
+        if (!missingCompiler.isEmpty())
+            QSKIP(qPrintable(missingCompiler));
+        QVERIFY(CompileOracle::initializeRepository(root).succeeded());
         seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
                  QStringLiteral("int add(int a,int b){ return a - b; }\n"));
         seedFile(QDir(workspace.path()), QStringLiteral("tests/oracle.txt"),
@@ -1154,6 +1313,14 @@ private slots:
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QCOMPARE(verifier.fileContent(QStringLiteral("src/calc.cpp")),
                  QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        const auto beforeOracle = stateOf(root).files;
+        const auto real = CompileOracle{}.verify(root, false, CompileOracle::Mode::Normal);
+        qInfo().noquote() << "Independent oracle:" << real.summary();
+        QCOMPARE(stateOf(root).files,
+                 beforeOracle); // Compiler/test must not mutate sources or tests.
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
+        QVERIFY2(real.passed(), qPrintable(real.summary()));
+        QCOMPARE(independentlyAccepted(state, verifier, expected, real), grounded);
     }
 
     // ------------------------------------------------------------------
@@ -1164,6 +1331,10 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        const auto missingCompiler = CompileOracle::unavailableReason();
+        if (!missingCompiler.isEmpty())
+            QSKIP(qPrintable(missingCompiler));
+        QVERIFY(CompileOracle::initializeRepository(root).succeeded());
         seedFile(QDir(workspace.path()), QStringLiteral("include/calc.h"),
                  QStringLiteral("int add(int,int);\n"));
         seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
@@ -1227,6 +1398,14 @@ private slots:
         QCOMPARE(verifier.fileContent(QStringLiteral("src/calc.cpp")),
                  QStringLiteral(
                      "#include \"calc.h\"\nint add(int a,int b,int c){ return a + b + c; }\n"));
+        const auto beforeOracle = stateOf(root).files;
+        const auto real = CompileOracle{}.verify(root, true, CompileOracle::Mode::Normal);
+        qInfo().noquote() << "Independent oracle:" << real.summary();
+        QCOMPARE(stateOf(root).files,
+                 beforeOracle); // Compiler/test must not mutate sources or tests.
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
+        QVERIFY2(real.passed(), qPrintable(real.summary()));
+        QCOMPARE(independentlyAccepted(state, verifier, expected, real), true);
     }
 
     // ------------------------------------------------------------------
@@ -1244,6 +1423,10 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        const auto missingCompiler = CompileOracle::unavailableReason();
+        if (!missingCompiler.isEmpty())
+            QSKIP(qPrintable(missingCompiler));
+        QVERIFY(CompileOracle::initializeRepository(root).succeeded());
         seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
                  QStringLiteral("int add(int a,int b){ return a - b; }\n"));
 
@@ -1301,6 +1484,70 @@ private slots:
         QString actual;
         QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        const auto beforeOracle = stateOf(root).files;
+        const auto real = CompileOracle{}.verify(root, false,
+                                                 testFails ? CompileOracle::Mode::TestFailure
+                                                           : CompileOracle::Mode::Normal);
+        qInfo().noquote() << "Independent oracle:" << real.summary();
+        QCOMPARE(stateOf(root).files,
+                 beforeOracle); // Compiler/test must not mutate sources or tests.
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
+        QCOMPARE(real.passed(), !testFails);
+        QCOMPARE(real.steps.size(), 4);
+        QCOMPARE(real.steps.last().process.exitCode, testFails ? 7 : 0);
+        QCOMPARE(independentlyAccepted(state, verifier, expected, real), !testFails);
+    }
+
+    // Independent real-process negatives complement the original runtime/evidence variants.
+    void cor02_independentCompileOracle_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("wrong-operator") << QStringLiteral("wrong-operator");
+        QTest::newRow("compile-failure") << QStringLiteral("compile-failure");
+        QTest::newRow("fabricated-receipts") << QStringLiteral("fabricated-receipts");
+    }
+    void cor02_independentCompileOracle() {
+        QFETCH(QString, variant);
+        exerciseIndependentOracle(2, variant);
+    }
+
+    void cor03_independentCompileOracle_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("broken-signature") << QStringLiteral("broken-signature");
+        QTest::newRow("broken-header") << QStringLiteral("broken-header");
+        QTest::newRow("unauthorized-change") << QStringLiteral("unauthorized-change");
+    }
+    void cor03_independentCompileOracle() {
+        QFETCH(QString, variant);
+        exerciseIndependentOracle(3, variant);
+    }
+
+    void cor04_independentCompileOracle_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("success") << QStringLiteral("success");
+        QTest::newRow("compile-failure") << QStringLiteral("compile-failure");
+        QTest::newRow("test-failure") << QStringLiteral("test-failure");
+        QTest::newRow("nonzero") << QStringLiteral("nonzero");
+        QTest::newRow("timeout") << QStringLiteral("timeout");
+        QTest::newRow("misleading-receipts") << QStringLiteral("misleading-receipts");
+    }
+    void cor04_independentCompileOracle() {
+        QFETCH(QString, variant);
+        exerciseIndependentOracle(4, variant);
+    }
+
+    void cor15_independentCompileOracle_data() {
+        QTest::addColumn<QString>("variant");
+        QTest::newRow("stale-source") << QStringLiteral("stale-source");
+        QTest::newRow("success") << QStringLiteral("success");
+        QTest::newRow("wrong-operator") << QStringLiteral("wrong-operator");
+        QTest::newRow("test-failure") << QStringLiteral("test-failure");
+        QTest::newRow("missing-test") << QStringLiteral("missing-test");
+        QTest::newRow("unauthorized-change") << QStringLiteral("unauthorized-change");
+        QTest::newRow("compile-failure") << QStringLiteral("compile-failure");
+    }
+    void cor15_independentCompileOracle() {
+        QFETCH(QString, variant);
+        exerciseIndependentOracle(15, variant);
     }
 
     // ------------------------------------------------------------------
@@ -1425,6 +1672,8 @@ private slots:
         QString unavailableReason;
         if (variant == QStringLiteral("platform-unsupported")) {
             probe.platforms.linux = ToolPlatformSupport::Unsupported;
+            probe.platforms.macOS = ToolPlatformSupport::Unsupported;
+            probe.platforms.windows = ToolPlatformSupport::Unsupported;
             overrides.insert(probe.id, probe);
             requested.prepend(probe.id);
         } else if (variant == QStringLiteral("handler-unavailable")) {
@@ -1442,6 +1691,8 @@ private slots:
 
         ScriptedPlanner planner;
         planner.decisions = {toolDecision(requestedId), toolDecision(requestedId)};
+        for (auto& decision : planner.decisions)
+            appendArg(decision, QStringLiteral("path"), root + QStringLiteral("/src/calc.cpp"));
         planner.repeatLast = false;
 
         AgentLoop::Config config;
@@ -1518,6 +1769,165 @@ private slots:
         QVERIFY(state.finalAnswer.isEmpty());
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QVERIFY(verifier.untouched());
+    }
+
+    void cor07_persistentGrantRevocation_data() {
+        QTest::addColumn<bool>("async");
+        QTest::newRow("sync") << false;
+        QTest::newRow("async") << true;
+    }
+    void cor07_persistentGrantRevocation() {
+        QFETCH(bool, async);
+        QTemporaryDir workspace, profileA, profileB;
+        QVERIFY(workspace.isValid() && profileA.isValid() && profileB.isValid());
+        const auto root = canonicalRoot(workspace);
+        const auto path = root + "/allowed.txt";
+        seedFile(QDir(root), "allowed.txt", "original\n");
+        seedFile(QDir(root), "other.txt", "unchanged\n");
+        WorkspaceVerifier verifier(root);
+        auto storeA =
+            std::make_shared<SQLitePermissionGrantStore>(profileA.filePath("grants.sqlite"));
+        RuntimeFixture fixture;
+        fixture.create({QStringLiteral("write-file")}, storeA);
+        fixture.handler.root = root;
+        fixture.approval.mode = FixtureApprovalPolicy::Mode::RequireApproval;
+        fixture.handler.allowedWrites.insert("allowed.txt", "authorized\n");
+        fixture.handler.allowedWrites.insert("other.txt", "outside grant\n");
+        const auto prepare = [&](RuntimeFixture& f, const QString& target) {
+            f.planner.resetPlanningIndex();
+            auto write = toolDecision("write-file", ToolRiskLevel::High);
+            appendArg(write, "path", root + '/' + target);
+            appendArg(write, "content", f.handler.allowedWrites.value(target));
+            auto final = finalDecision("Authorized fixture receipt recorded.");
+            final.grounding = GroundingMode::Context;
+            final.groundingDeclared = true;
+            f.planner.decisions = {write, final};
+            f.planner.repeatLast = false;
+            const auto session = f.runtime->createSession();
+            AgentSessionOptions options;
+            options.autonomousMode = false;
+            options.workspaceContext.rootPath = root;
+            f.runtime->configureSession(session, options);
+            return session;
+        };
+        const auto start = [&](RuntimeFixture& f, const QString& session) {
+            if (async)
+                return f.runtime->start(session, "Apply prescribed fixture write");
+            return f.runtime->submit(session, "Apply prescribed fixture write").phase !=
+                   AgentLoopPhase::Idle;
+        };
+        const auto resume = [&](RuntimeFixture& f, const QString& session, bool allowed) {
+            if (async)
+                return f.runtime->continueSession(session, allowed);
+            return f.runtime->resume(session, allowed).phase != AgentLoopPhase::Idle;
+        };
+        QList<PersistentPermissionGrant> stored;
+        const auto denied = prepare(fixture, "allowed.txt");
+        QVERIFY(start(fixture, denied));
+        QTRY_COMPARE(fixture.runtime->sessionState(denied).phase, AgentLoopPhase::AwaitingApproval);
+        QVERIFY(resume(fixture, denied, false));
+        QTRY_COMPARE(fixture.runtime->sessionState(denied).phase, AgentLoopPhase::Failed);
+        QCOMPARE(fixture.handler.counts.value("write-file"), 0);
+        QVERIFY(verifier.untouched());
+        QVERIFY(storeA->load(stored));
+        QCOMPARE(stored.size(), 0);
+
+        const auto authorized = prepare(fixture, "allowed.txt");
+        QVERIFY(start(fixture, authorized));
+        QTRY_COMPARE(fixture.runtime->sessionState(authorized).phase,
+                     AgentLoopPhase::AwaitingApproval);
+        QVERIFY(
+            fixture.runtime->approve(authorized, true)); // Actual persistent grant, not allow-once.
+        QVERIFY(storeA->load(stored));
+        QCOMPARE(stored.size(), 1);
+        QCOMPARE(fixture.runtime->persistentPermissionGrants().size(), 1);
+        const auto grant = stored.first();
+        QVERIFY(!grant.id.isEmpty());
+        QCOMPARE(grant.scope, path);
+        QCOMPARE(grant.domain, SecurityDomain::FileSystem);
+        QCOMPARE(grant.access, AccessMode::Write);
+        QVERIFY(resume(fixture, authorized, true));
+        QTRY_COMPARE(fixture.runtime->sessionState(authorized).phase, AgentLoopPhase::Completed);
+        QCOMPARE(fixture.handler.counts.value("write-file"), 1);
+        WorkspaceVerifier::Expected allowed;
+        allowed.changed = {QStringLiteral("allowed.txt")};
+        QVERIFY(verifier.matches(allowed));
+
+        // Same profile + exact resource is intentionally persistent across sessions.
+        const auto matchingSession = prepare(fixture, "allowed.txt");
+        QVERIFY(start(fixture, matchingSession));
+        QTRY_COMPARE(fixture.runtime->sessionState(matchingSession).phase,
+                     AgentLoopPhase::Completed);
+        QCOMPARE(fixture.handler.counts.value("write-file"), 2);
+        QVERIFY(storeA->load(stored));
+        QCOMPARE(stored.size(), 1);
+        QCOMPARE(stored.first().id, grant.id);
+        // Another resource in the same workspace must not inherit that file grant.
+        const auto outside = prepare(fixture, "other.txt");
+        QVERIFY(start(fixture, outside));
+        QTRY_COMPARE(fixture.runtime->sessionState(outside).phase,
+                     AgentLoopPhase::AwaitingApproval);
+        QVERIFY(resume(fixture, outside, false));
+        QTRY_COMPARE(fixture.runtime->sessionState(outside).phase, AgentLoopPhase::Failed);
+        QCOMPARE(fixture.handler.counts.value("write-file"), 2);
+
+        auto storeB =
+            std::make_shared<SQLitePermissionGrantStore>(profileB.filePath("grants.sqlite"));
+        RuntimeFixture isolated;
+        isolated.create({QStringLiteral("write-file")}, storeB);
+        isolated.handler.root = root;
+        isolated.handler.allowedWrites = fixture.handler.allowedWrites;
+        isolated.approval.mode = FixtureApprovalPolicy::Mode::RequireApproval;
+        const auto otherProfile = prepare(isolated, "allowed.txt");
+        QVERIFY(start(isolated, otherProfile));
+        QTRY_COMPARE(isolated.runtime->sessionState(otherProfile).phase,
+                     AgentLoopPhase::AwaitingApproval);
+        QVERIFY(resume(isolated, otherProfile, false));
+        QTRY_COMPARE(isolated.runtime->sessionState(otherProfile).phase, AgentLoopPhase::Failed);
+        QCOMPARE(isolated.handler.counts.value("write-file"), 0);
+        QVERIFY(isolated.runtime->persistentPermissionGrants().isEmpty());
+        QVERIFY(storeB->load(stored));
+        QCOMPARE(stored.size(), 0);
+        QVERIFY(fixture.runtime->revokePersistentPermission(grant.id));
+        QVERIFY(fixture.runtime->persistentPermissionGrants().isEmpty());
+        SQLitePermissionGrantStore reloaded(profileA.filePath("grants.sqlite"));
+        QVERIFY(reloaded.load(stored));
+        QCOMPARE(stored.size(), 0);
+        QVERIFY(!fixture.runtime->approve(authorized, true));
+        QVERIFY(!fixture.runtime->continueSession(authorized, true));
+        QVERIFY(fixture.runtime->persistentPermissionGrants().isEmpty());
+        // Exact old authorization cannot survive in either previously used session cache.
+        AuthorizationRequest request{SecurityDomain::FileSystem, AccessMode::Write, path};
+        QCOMPARE(fixture.runtime->permissionService().evaluateAuthorization(request, authorized),
+                 PermissionEffect::Ask);
+        QCOMPARE(
+            fixture.runtime->permissionService().evaluateAuthorization(request, matchingSession),
+            PermissionEffect::Ask);
+        const auto revoked = prepare(fixture, "allowed.txt");
+        QVERIFY(start(fixture, revoked));
+        QTRY_COMPARE(fixture.runtime->sessionState(revoked).phase,
+                     AgentLoopPhase::AwaitingApproval);
+        QVERIFY(resume(fixture, revoked, false));
+        QTRY_COMPARE(fixture.runtime->sessionState(revoked).phase, AgentLoopPhase::Failed);
+        QCOMPARE(fixture.handler.counts.value("write-file"), 2);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(isolated.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.executor.calls, 0);
+        QVERIFY(verifier.matches(allowed));
+        QCOMPARE(verifier.fileContent("allowed.txt"), QStringLiteral("authorized\n"));
+        QCOMPARE(verifier.fileContent("other.txt"), QStringLiteral("unchanged\n"));
+        QTRY_VERIFY([&] {
+            TerminalAudit audit;
+            audit.scan(isolated.runtime->eventHistory(otherProfile));
+            return audit.singleTerminal() && audit.failed == 1;
+        }());
+        for (const auto& session : {denied, authorized, matchingSession, outside, revoked}) {
+            QTRY_VERIFY([&] {
+                TerminalAudit audit;
+                audit.scan(fixture.runtime->eventHistory(session));
+                return audit.singleTerminal();
+            }());
+        }
     }
 
     // ------------------------------------------------------------------
@@ -1601,7 +2011,6 @@ private slots:
             QVERIFY(!fixtureRuntime.runtime->approve(session, false));
             QVERIFY(!fixtureRuntime.runtime->approve(session, true));
             QVERIFY(!fixtureRuntime.runtime->approve(QStringLiteral("foreign-session"), false));
-            runtimeHolderList.push_back(std::move(fixtureRuntime.runtime));
         }
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QVERIFY(verifier.untouched());
@@ -1781,6 +2190,7 @@ private slots:
         options.workspaceContext.rootPath = root;
         runtime->configureSession(session, std::move(options));
 
+        auto releaseProvider = qScopeGuard([&] { provider->release.release(); });
         QVERIFY(runtime->start(session, QStringLiteral("generate a grounded answer")));
         // Barrier: the planner request entered the provider (generation in
         // flight). Request the cancellation, then release the barrier.
@@ -1807,9 +2217,28 @@ private slots:
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         WorkspaceVerifier verifier(root);
         QVERIFY(verifier.untouched());
-        providerHolderList.push_back(std::move(provider));
-        runtimeHolderList.push_back(std::move(runtime));
-        llmPlannerHolderList.push_back(std::move(llmPlanner));
+    }
+
+    void cor11_cancelledRequestBindingAndNextTask_data() {
+        QTest::addColumn<bool>("native");
+        QTest::addColumn<bool>("cooperative");
+        QTest::newRow("cooperative-json-request") << false << true;
+        QTest::newRow("late-json-final") << false << false;
+        QTest::newRow("late-native-tool-call") << true << false;
+    }
+    void cor11_cancelledRequestBindingAndNextTask() {
+        QFETCH(bool, native);
+        QFETCH(bool, cooperative);
+        exerciseGenerationCancellation(native, cooperative, false);
+    }
+    void cor11_cancelAfterFirstStreamedDelta_data() {
+        QTest::addColumn<bool>("native");
+        QTest::newRow("json-stream") << false;
+        QTest::newRow("native-tool-assembly") << true;
+    }
+    void cor11_cancelAfterFirstStreamedDelta() {
+        QFETCH(bool, native);
+        exerciseGenerationCancellation(native, false, true);
     }
 
     // ------------------------------------------------------------------
@@ -1821,11 +2250,14 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
 
         RuntimeFixture fixture;
         fixture.handler.allowedCommands = {QStringLiteral("echo slow-build")};
         fixture.handler.blockSlowBuild = true;
-        fixture.create({QStringLiteral("run-command"), QStringLiteral("read-file")});
+        fixture.create({QStringLiteral("run-command"), QStringLiteral("read-file"),
+                        QStringLiteral("write-file")});
         {
             AgentSessionOptions options;
             options.autonomousMode = true;
@@ -1840,6 +2272,12 @@ private slots:
         finishPlan.groundingDeclared = true;
         appendArg(fixture.planner.decisions.first(), QStringLiteral("command"),
                   QStringLiteral("echo slow-build"));
+        auto queuedWrite = toolDecision(QStringLiteral("write-file"));
+        appendArg(queuedWrite, QStringLiteral("path"), root + QStringLiteral("/src/calc.cpp"));
+        appendArg(queuedWrite, QStringLiteral("content"), QStringLiteral("must never be written"));
+        fixture.handler.allowedWrites.insert(QStringLiteral("src/calc.cpp"),
+                                             QStringLiteral("must never be written"));
+        fixture.planner.decisions.append(queuedWrite);
         fixture.planner.decisions.append(finishPlan);
         fixture.planner.repeatLast = false;
         // Snapshot before the run so the cancelled run's committed partial
@@ -1848,17 +2286,25 @@ private slots:
         WorkspaceVerifier::Expected expected;
         expected.added = {QStringLiteral("build/partial.log")};
 
+        auto cancelBuild = qScopeGuard([&] { fixture.runtime->cancel(fixture.session); });
         QVERIFY(fixture.runtime->start(fixture.session,
                                        QStringLiteral("run the slow authorized build")));
         if (!fixture.handler.slowBuildStarted.tryAcquire(1, kBarrierTimeoutMs))
             QVERIFY2(false, "slow build never started");
+        QElapsedTimer cancellationClock;
+        cancellationClock.start();
         QVERIFY(fixture.runtime->cancel(fixture.session));
-        fixture.handler.slowBuildRelease.release();
 
         QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(fixture.session).phase,
                                   AgentLoopPhase::Cancelled, kBarrierTimeoutMs);
         // Exactly one invocation; nothing may run after the cancel seal.
         fixture.handler.seal();
+        QVERIFY(fixture.handler.childPid.load() > 0);
+        QVERIFY(fixture.handler.childReleased.load());
+        QVERIFY(!fixture.handler.childDrainTimedOut.load());
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("write-file"), 0), 0);
+        qInfo() << "COR-12 owned child release and cancelled terminal observed after"
+                << cancellationClock.elapsed() << "ms (fixture observation, not a timing gate)";
         QCOMPARE(fixture.handler.counts.value(QStringLiteral("run-command"), 0), 1);
         QCOMPARE(fixture.handler.postSealCalls, 0);
         QString actual;
@@ -1876,7 +2322,10 @@ private slots:
         options.workspaceContext.rootPath = root;
         fixture.handler.root = root;
         fixture.runtime->configureSession(nextSession, std::move(options));
+        fixture.handler.sealed.store(false);
         fixture.planner.resetPlanningIndex();
+        fixture.planner.canonicalFinal = true;
+        fixture.planner.canonicalIntent = {};
         fixture.planner.decisions = {toolDecision(QStringLiteral("read-file")),
                                      finalDecision(QStringLiteral("clean receipt"))};
         appendArg(fixture.planner.decisions.first(), QStringLiteral("path"),
@@ -1886,10 +2335,11 @@ private slots:
                                   AgentLoopPhase::Completed, kBarrierTimeoutMs);
         QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file"), 0), 1);
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QCOMPARE(fixture.handler.postSealCalls, 0);
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
         // Partial artifact unchanged by the next task.
         QCOMPARE(verifier.fileContent(QStringLiteral("build/partial.log")),
                  QStringLiteral("partial fixture output\n"));
-        runtimeHolderList.push_back(std::move(fixture.runtime));
     }
 
     // ------------------------------------------------------------------
@@ -1904,7 +2354,9 @@ private slots:
                  QStringLiteral("unchanged"));
 
         RuntimeFixture fixture;
-        fixture.configure(root, true);
+        fixture.create({QStringLiteral("run-command")});
+        fixture.configure(root, false);
+        WorkspaceVerifier verifier(root);
         fixture.approval.mode = FixtureApprovalPolicy::Mode::RequireApproval;
         fixture.planner.decisions = {
             toolDecision(QStringLiteral("run-command"), ToolRiskLevel::High)};
@@ -1915,7 +2367,6 @@ private slots:
                   QStringLiteral("echo approved-once"));
         fixture.planner.decisions.append(finishDecision);
         fixture.planner.repeatLast = false;
-        fixture.create({QStringLiteral("run-command")});
 
         QVERIFY(fixture.runtime->start(fixture.session, QStringLiteral("approved action")));
         QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(fixture.session).phase,
@@ -1932,10 +2383,8 @@ private slots:
         TerminalAudit audit;
         audit.scan(fixture.runtime->eventHistory(fixture.session));
         QVERIFY2(audit.singleTerminal() && audit.cancelled == 1, qPrintable(audit.describe()));
-        WorkspaceVerifier verifier(root);
         QVERIFY(verifier.untouched());
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
-        runtimeHolderList.push_back(std::move(fixture.runtime));
     }
 
     // ------------------------------------------------------------------
@@ -1959,6 +2408,9 @@ private slots:
         LoopFixture fixture;
         fixture.registerTools({QStringLiteral("read-file"), QStringLiteral("write-file")});
         const auto path = root + QStringLiteral("/src/calc.cpp");
+        fixture.handler.allowedWrites.insert(
+            QStringLiteral("src/calc.cpp"),
+            QStringLiteral("int add(int a,int b){ return a + b; }\n"));
 
         ScriptedPlanner planner;
         if (variant == QStringLiteral("read")) {
@@ -1979,6 +2431,10 @@ private slots:
         AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
                        fixture.knownTools, config);
         configureLoopFixture(loop, fixture, root);
+        auto policy = std::make_shared<FixedIntentPolicy>();
+        loop.setObservationIntentPolicy(policy);
+        planner.canonicalFinal = variant == QStringLiteral("read");
+        planner.canonicalIntent = policy->intent;
         WorkspaceVerifier verifier(root);
 
         const auto state = runLoop(loop, this, QStringLiteral("cor14"), false,
@@ -2023,6 +2479,10 @@ private slots:
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        const auto missingCompiler = CompileOracle::unavailableReason();
+        if (!missingCompiler.isEmpty())
+            QSKIP(qPrintable(missingCompiler));
+        QVERIFY(CompileOracle::initializeRepository(root).succeeded());
         seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
                  QStringLiteral("int add(int a,int b){ return a - b; }\n"));
 
@@ -2081,6 +2541,7 @@ private slots:
         planner.decisions.append(finish);
         planner.repeatLast = true;
         planner.canonicalFinal = withVerification;
+        planner.canonicalIntent = policy->intent;
 
         AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
                        fixture.knownTools);
@@ -2116,6 +2577,14 @@ private slots:
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
         QCOMPARE(verifier.fileContent(QStringLiteral("src/calc.cpp")),
                  QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        const auto beforeOracle = stateOf(root).files;
+        const auto real = CompileOracle{}.verify(root, false, CompileOracle::Mode::Normal);
+        qInfo().noquote() << "Independent oracle:" << real.summary();
+        QCOMPARE(stateOf(root).files,
+                 beforeOracle); // Compiler/test must not mutate sources or tests.
+        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
+        QVERIFY2(real.passed(), qPrintable(real.summary()));
+        QCOMPARE(independentlyAccepted(state, verifier, expected, real), withVerification);
     }
 
     // ------------------------------------------------------------------
@@ -2139,6 +2608,10 @@ private slots:
         LoopFixture fixture;
         fixture.registerTools({QStringLiteral("write-file"), QStringLiteral("run-command")});
         fixture.handler.testReceiptFails = true;
+        fixture.handler.allowedCommands = {QStringLiteral("ctest --test-dir build")};
+        fixture.handler.allowedWrites.insert(
+            QStringLiteral("src/calc.cpp"),
+            QStringLiteral("int add(int a,int b){ return a + b; }\n"));
         const auto calcPath = root + QStringLiteral("/src/calc.cpp");
 
         ScriptedPlanner planner;
@@ -2189,115 +2662,425 @@ private slots:
         }
     }
 
-    // ------------------------------------------------------------------
-    // COR-17: the "client" disconnects mid-run by unsubscribing; the run
-    // continues, reaches its expected terminal exactly once, and re-attach
-    // exposes canonical state with no mutation replay.
-    // ------------------------------------------------------------------
-    void cor17_disconnectReattachDuringActiveRun() {
+    // Run the actual daemon/Desktop fixture executable in an isolated profile.
+    // These fixed test arguments never enter model or shell dispatch.
+private:
+    void exerciseGenerationCancellation(bool native, bool cooperative, bool requireStream) {
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
-        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
-                 QStringLiteral("int add(int a,int b){ return a - b; }\n"));
-
-        RuntimeFixture fixture;
-        fixture.handler.allowedWrites.insert(
-            QStringLiteral("src/calc.cpp"),
-            QStringLiteral("int add(int a,int b){ return a + b; }\n"));
-        fixture.create({QStringLiteral("write-file"), QStringLiteral("read-file")});
-        fixture.configure(root);
-        fixture.planner.decisions = {toolDecision(QStringLiteral("write-file"))};
-        auto finishDecision = finalDecision(QStringLiteral("repair applied"));
-        finishDecision.grounding = GroundingMode::Context;
-        finishDecision.groundingDeclared = true;
-        fixture.planner.decisions.append(finishDecision);
-        fixture.planner.repeatLast = false;
-
-        // Client disconnect: subscription goes away while the run is active.
-        const QString subscriptionId = fixture.runtime->subscribe([](const AgentEvent&) {});
-        fixture.runtime->unsubscribe(subscriptionId);
-
-        QVERIFY(fixture.runtime->start(fixture.session, QStringLiteral("apply repair")));
-        QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(fixture.session).phase,
-                                  AgentLoopPhase::Completed, kBarrierTimeoutMs);
-        // Re-attach: canonical terminal and the full event history remain
-        // available, with no cancellation implied.
-        TerminalAudit audit;
-        audit.scan(fixture.runtime->eventHistory(fixture.session));
-        QVERIFY2(audit.singleTerminal() && audit.completed == 1, qPrintable(audit.describe()));
-        bool sawCancellation = false;
-        for (const auto& event : fixture.runtime->eventHistory(fixture.session))
-            sawCancellation |= event.type == AgentEventType::AgentCancelled;
-        QVERIFY(!sawCancellation);
-        QCOMPARE(fixture.handler.counts.value(QStringLiteral("write-file"), 0), 1);
+        seedFile(QDir(root), "artifact.txt", "original\n");
         WorkspaceVerifier verifier(root);
-        WorkspaceVerifier::Expected expected;
-        expected.changed = {QStringLiteral("src/calc.cpp")};
-        QString actual;
-        QVERIFY2(verifier.matches(expected, &actual), qPrintable(actual));
-        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
-        runtimeHolderList.push_back(std::move(fixture.runtime));
+        auto provider = std::make_shared<CancellationProbeProvider>();
+        provider->native = native;
+        provider->cooperative = cooperative;
+        provider->artifact = root + "/artifact.txt";
+        provider->readPath = provider->artifact;
+        sentinel::test::DeterministicModelServiceFixture catalog;
+        auto models = catalog.takeModelService();
+        models->registerProvider("ollama", [provider](const ModelBinding&) { return provider; });
+        OllamaModelDiscoveryResult discovery;
+        discovery.lifecycle = ChatRequestLifecycle::Completed;
+        discovery.models = {{"original-model", {}, 0}, {"next-model", {}, 0}};
+        models->acceptOllamaDiscovery(discovery, models->beginProviderHealthObservation());
+        models->setSelectedModel({"ollama", "original-model"});
+        auto original = models->resolve(models->selectedModel());
+        QVERIFY(original.ok());
+        original.binding.capabilities.streaming = CapabilitySupport::Supported;
+        original.binding.capabilities.nativeToolCalling =
+            native ? CapabilitySupport::Supported : CapabilitySupport::Unsupported;
+        original.binding.capabilities.structuredOutput = CapabilitySupport::Unsupported;
+        const auto descriptors = fixtureDescriptors({"read-file", "write-file"});
+        FixtureHandler handler;
+        handler.root = root;
+        handler.allowedWrites.insert("artifact.txt", "late mutation");
+        NoOpExecutor executor;
+        FixtureApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        LlmAgentRuntime planner(descriptors, provider.get());
+        planner.bindModel(original.binding, original.provider);
+        QSemaphore finished;
+        AgentRuntime runtime(std::make_unique<FixtureMetadataRuntime>(descriptors), planner,
+                             executor, approval, sandbox);
+        for (const auto& descriptor : descriptors) {
+            QVERIFY(runtime.toolRegistry().unregisterTool(descriptor.id));
+            QVERIFY(runtime.toolRegistry().registerTool(
+                {descriptor, std::shared_ptr<IToolHandler>(&handler, [](IToolHandler*) {})}));
+        }
+        const auto configure = [&](const QString& session) {
+            AgentSessionOptions options;
+            options.autonomousMode = true;
+            options.workspaceContext.rootPath = root;
+            options.onFinished = [&](const AgentLoopState&) { finished.release(); };
+            runtime.configureSession(session, options);
+        };
+        const auto session = runtime.createSession();
+        configure(session);
+        auto release = qScopeGuard([&] { provider->release.release(); });
+        QVERIFY(runtime.start(session, "Generate prescribed synthetic answer"));
+        QTRY_VERIFY_WITH_TIMEOUT(provider->entered.available() > 0, kBarrierTimeoutMs);
+        QVERIFY(provider->entered.tryAcquire());
+        const auto count = [&](const QString& id, AgentEventType type) {
+            int found = 0;
+            for (const auto& event : runtime.eventHistory(id))
+                if (event.type == type)
+                    ++found;
+            return found;
+        };
+        const bool firstDeltaReceived = count(session, AgentEventType::ModelOutputDelta) > 0;
+        const auto oldToken = provider->originalToken;
+        QVERIFY(oldToken && !oldToken->load());
+        models->setSelectedModel({"ollama", "next-model"});
+        QCOMPARE(planner.modelBinding().modelId, QStringLiteral("original-model"));
+        QCOMPARE(planner.modelBinding().providerId, QStringLiteral("ollama"));
+        QVERIFY(runtime.cancel(session));
+        QVERIFY(oldToken->load());
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelling);
+        QCOMPARE(count(session, AgentEventType::AgentCancelled), 0);
+        QCOMPARE(provider->cancellationAcks.load(), 0);
+        provider->release.release();
+        QTRY_VERIFY_WITH_TIMEOUT(finished.available() > 0, kBarrierTimeoutMs);
+        QVERIFY(finished.tryAcquire());
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelled);
+        QVERIFY(runtime.sessionState(session).finalAnswer.isEmpty());
+        QCOMPARE(handler.counts.value("write-file"), 0);
+        QCOMPARE(handler.counts.value("read-file"), 0);
+        QCOMPARE(handler.unauthorizedCalls, 0);
+        QCOMPARE(executor.calls, 0);
+        QVERIFY(verifier.untouched());
+        QCOMPARE(provider->cancellationAcks.load(), cooperative ? 1 : 0);
+        TerminalAudit terminal;
+        terminal.scan(runtime.eventHistory(session));
+        QVERIFY2(terminal.singleTerminal() && terminal.cancelled == 1,
+                 qPrintable(terminal.describe()));
+        const auto frozen = runtime.eventHistory(session);
+        QString turn;
+        for (const auto& event : frozen) {
+            QCOMPARE(event.sessionId, session);
+            if (event.type == AgentEventType::SessionCreated)
+                continue;
+            QVERIFY(!event.turnId.isEmpty());
+            if (turn.isEmpty())
+                turn = event.turnId;
+            QCOMPARE(event.turnId, turn);
+            QCOMPARE(event.providerId, QStringLiteral("ollama"));
+            QCOMPARE(event.modelId, QStringLiteral("original-model"));
+        }
+        if (!firstDeltaReceived) {
+            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
+            QCOMPARE(provider->streamRequests.load(), 0);
+            QCOMPARE(provider->emittedDeltas.load(), 0);
+            QCOMPARE(provider->requests.load(), 1);
+            QCOMPARE(provider->originalDeadline, 120000);
+            QCOMPARE(provider->originalNative, native);
+        } else {
+            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 1);
+            QCOMPARE(provider->emittedDeltas.load(), 2);
+        }
+        QVERIFY(!runtime.approve(session, true));
+        QVERIFY(!runtime.cancel(session));
+        auto nextBinding = models->resolve(models->selectedModel());
+        QVERIFY(nextBinding.ok());
+        nextBinding.binding.capabilities.structuredOutput = CapabilitySupport::Unsupported;
+        nextBinding.binding.capabilities.nativeToolCalling = CapabilitySupport::Unsupported;
+        provider->fresh.store(true);
+        planner.bindModel(nextBinding.binding, nextBinding.provider);
+        const auto next = runtime.createSession();
+        configure(next);
+        QVERIFY(next != session);
+        QVERIFY(runtime.start(next, "Read prescribed fixture in a fresh task"));
+        QTRY_VERIFY_WITH_TIMEOUT(finished.available() > 0, kBarrierTimeoutMs);
+        QVERIFY(finished.tryAcquire());
+        QCOMPARE(runtime.sessionState(next).phase, AgentLoopPhase::Completed);
+        QVERIFY(!runtime.sessionState(next).finalAnswer.contains("late"));
+        QCOMPARE(handler.counts.value("read-file"), 1);
+        QCOMPARE(handler.counts.value("write-file"), 0);
+        QCOMPARE(provider->freshRequests.load(), 2);
+        QVERIFY(provider->freshToken && provider->freshToken != oldToken &&
+                !provider->freshToken->load());
+        TerminalAudit nextTerminal;
+        nextTerminal.scan(runtime.eventHistory(next));
+        QVERIFY(nextTerminal.singleTerminal() && nextTerminal.completed == 1);
+        for (const auto& event : runtime.eventHistory(next)) {
+            if (event.type == AgentEventType::SessionCreated)
+                continue;
+            QCOMPARE(event.modelId, QStringLiteral("next-model"));
+            QVERIFY(event.turnId != turn);
+        }
+        QCOMPARE(runtime.sessionState(session).phase, AgentLoopPhase::Cancelled);
+        QVERIFY(runtime.sessionState(session).finalAnswer.isEmpty());
+        QCOMPARE(count(session, AgentEventType::AgentCompleted), 0);
+        QCOMPARE(count(session, AgentEventType::AgentCancelled), 1);
+        const auto afterNext = runtime.eventHistory(session);
+        QCOMPARE(afterNext.size(), frozen.size());
+        for (int i = 0; i < frozen.size(); ++i)
+            QCOMPARE(afterNext[i].id, frozen[i].id);
+        QVERIFY(verifier.untouched());
+        QVERIFY(!provider->barrierTimedOut.load());
+        qInfo() << "COR11 dispatch" << "request=" << provider->requests.load()
+                << "stream=" << provider->streamRequests.load()
+                << "runtime-deltas=" << count(session, AgentEventType::ModelOutputDelta)
+                << "cancel-ack=" << provider->cancellationAcks.load()
+                << "next-read=" << handler.counts.value("read-file");
+        if (requireStream && !firstDeltaReceived)
+            QSKIP(
+                "COR-11 after-first-delta remains blocked: LlmAgentRuntime fixes deadlineMs=120000 "
+                "but its streaming branch requires zero; planner delta callback also intentionally "
+                "suppresses private protocol. No streaming/tool-assembly coverage claimed.");
     }
 
-    // ------------------------------------------------------------------
-    // COR-18: stale, duplicate and foreign event identities plus late
-    // approvals after terminal are ignored; the first terminal stands and
-    // the next fresh task still works.
-    // ------------------------------------------------------------------
-    void cor18_staleDuplicateForeignEventsIgnored() {
+    void exerciseIndependentOracle(int corpus, const QString& variant) {
+        const auto missingCompiler = CompileOracle::unavailableReason();
+        if (!missingCompiler.isEmpty())
+            QSKIP(qPrintable(missingCompiler));
         QTemporaryDir workspace;
         QVERIFY(workspace.isValid());
         const auto root = canonicalRoot(workspace);
+        QVERIFY(CompileOracle::initializeRepository(root).succeeded());
+        const bool multi = corpus == 3;
+        seedFile(QDir(root), "src/calc.cpp",
+                 multi ? "#include \"calc.h\"\nint add(int a,int b){return a*b;}\n"
+                       : "int add(int a,int b){return a*b;}\n");
+        seedFile(QDir(root), "tests/oracle.txt", "trusted baseline\n");
+        if (multi)
+            seedFile(QDir(root), "include/calc.h", "int add(int,int);\n");
+        WorkspaceVerifier verifier(root);
+        WorkspaceVerifier::Expected allowed;
+        allowed.changed = {QStringLiteral("src/calc.cpp")};
+        QString source = multi ? "#include \"calc.h\"\nint add(int a,int b,int c){return a+b+c;}\n"
+                               : "int add(int a,int b){return a+b;}\n";
+        if (variant == "wrong-operator" || variant == "fabricated-receipts")
+            source = "int add(int a,int b){return a-b;}\n";
+        if (variant == "compile-failure" || variant == "misleading-receipts")
+            source = "int add(int a,int b){return a + ;}\n";
+        if (variant == "broken-signature")
+            source = "#include \"calc.h\"\nint add(int a,int b){return a+b;}\n";
+        LoopFixture fixture;
+        fixture.registerTools({QStringLiteral("write-file"), QStringLiteral("run-command")});
+        fixture.handler.allowedCommands = {QStringLiteral("cmake --build build"),
+                                           QStringLiteral("ctest --test-dir build")};
+        fixture.handler.allowedWrites.insert("src/calc.cpp", source);
+        ScriptedPlanner planner;
+        if (multi) {
+            allowed.changed.append("include/calc.h");
+            const QString header =
+                variant == "broken-header" ? "int add( ;\n" : "int add(int,int,int);\n";
+            fixture.handler.allowedWrites.insert("include/calc.h", header);
+            auto write = toolDecision("write-file");
+            appendArg(write, "path", root + "/include/calc.h");
+            appendArg(write, "content", header);
+            planner.decisions.append(write);
+        }
+        auto write = toolDecision("write-file");
+        appendArg(write, "path", root + "/src/calc.cpp");
+        appendArg(write, "content", source);
+        planner.decisions.append(write);
+        for (const auto& command :
+             {QStringLiteral("cmake --build build"), QStringLiteral("ctest --test-dir build")}) {
+            auto receipt = toolDecision("run-command");
+            appendArg(receipt, "command", command);
+            planner.decisions.append(receipt);
+        }
+        auto final = finalDecision("Fixture receipts report ALL_TESTS_PASSED.");
+        final.grounding = GroundingMode::Context;
+        final.groundingDeclared = true;
+        planner.decisions.append(final);
+        planner.repeatLast = false;
+        AgentLoop loop(planner, fixture.executor, fixture.approval, fixture.sandbox,
+                       fixture.knownTools);
+        configureLoopFixture(loop, fixture, root);
+        const auto state =
+            runLoop(loop, this, "independent-oracle", false, "Apply prescribed synthetic repair");
+        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(fixture.handler.counts.value("run-command"), 2);
+        QCOMPARE(fixture.handler.counts.value("write-file"), multi ? 2 : 1);
+        QCOMPARE(fixture.handler.unauthorizedCalls, 0);
+        QString difference;
+        QVERIFY2(verifier.matches(allowed, &difference), qPrintable(difference));
+        // Deliberately plant a verifier fault outside Agent authority. Do not weaken tool gates.
+        if (variant == "unauthorized-change")
+            seedFile(QDir(root), "tests/oracle.txt", "tampered baseline\n");
+        auto mode = CompileOracle::Mode::Normal;
+        if (variant == "test-failure")
+            mode = CompileOracle::Mode::TestFailure;
+        if (variant == "nonzero")
+            mode = CompileOracle::Mode::Nonzero;
+        if (variant == "timeout")
+            mode = CompileOracle::Mode::Timeout;
+        if (variant == "missing-test")
+            mode = CompileOracle::Mode::BuildOnly;
+        const auto before = stateOf(root).files;
+        const auto real = CompileOracle{}.verify(root, multi, mode);
+        qInfo().noquote()
+            << QStringLiteral("COR-%1 %2 independent oracle:").arg(corpus).arg(variant)
+            << real.summary();
+        QCOMPARE(stateOf(root).files, before);
+        if (variant == "stale-source") {
+            QVERIFY(real.passed());
+            QVERIFY(real.matchesSources(root));
+            seedFile(QDir(root), "src/calc.cpp", "int add(int a,int b){return a-b;}\n");
+            QVERIFY(verifier.matches(
+                allowed)); // Same authorized file; stale compilation is still invalid.
+            QVERIFY(!real.matchesSources(root));
+        }
+        QCOMPARE(independentlyAccepted(state, verifier, allowed, real), variant == "success");
+        QVERIFY(!real.steps.isEmpty());
+        if (variant == "compile-failure" || variant == "misleading-receipts" ||
+            variant == "broken-header") {
+            QCOMPARE(real.steps.size(), 1);
+            QVERIFY(real.steps.first().drained);
+            QVERIFY(real.steps.first().process.exitCode != 0);
+            QVERIFY(!real.steps.first().output.isEmpty());
+        } else if (variant == "broken-signature") {
+            QCOMPARE(real.steps.size(), 3);
+            QVERIFY(real.steps[0].succeeded() && real.steps[1].succeeded());
+            QVERIFY(real.steps.last().drained && real.steps.last().process.exitCode != 0);
+        } else if (variant == "missing-test") {
+            QCOMPARE(real.steps.size(), 3);
+            QVERIFY(real.steps.last().succeeded());
+            QVERIFY(!real.passed());
+        } else {
+            QCOMPARE(real.steps.size(), 4);
+            QVERIFY(real.steps[0].succeeded() && real.steps[1].succeeded() &&
+                    real.steps[2].succeeded());
+            QVERIFY(real.steps.last().drained);
+            QVERIFY(real.steps.last().process.systemPid > 0);
+            if (variant == "timeout") {
+                QVERIFY(real.steps.last().process.timedOut);
+                QCOMPARE(real.steps.last().process.state, ProcessState::Failed);
+                QVERIFY(real.steps.last().output.contains("oracle-timeout-ready"));
+            } else {
+                QCOMPARE(real.steps.last().process.state, ProcessState::Exited);
+                QCOMPARE(real.steps.last().process.exitCode,
+                         variant == "nonzero" ? 23
+                         : (variant == "test-failure" || variant == "wrong-operator" ||
+                            variant == "fabricated-receipts")
+                             ? 7
+                             : 0);
+                if (variant == "nonzero")
+                    QVERIFY(real.steps.last().output.contains("ALL_TESTS_PASSED"));
+                if (variant == "unauthorized-change") {
+                    QVERIFY(real.passed()); // Good binary cannot authorize a trusted-test mutation.
+                    QVERIFY(!verifier.matches(allowed));
+                }
+            }
+        }
+    }
 
+    void runIpcCorpusCase(const QString& slot) {
+#ifndef SENTINEL_RELIABILITY_IPC_FIXTURE
+        QSKIP("Real IPC fixture target is unavailable in this build.");
+#else
+        ProcessExecutor processes;
+        ProcessRequest request;
+        request.program = QString::fromUtf8(SENTINEL_RELIABILITY_IPC_FIXTURE);
+        request.arguments = {slot};
+        request.timeoutMs = 30000;
+        request.unconfinedPermitted = true;
+        request.environment = QProcessEnvironment::systemEnvironment();
+        request.environment.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen"));
+        ProcessRecord terminal;
+        QByteArray output;
+        bool finished = false;
+        processes.start(
+            request,
+            [&](const ProcessRecord& record) {
+                if (record.state == ProcessState::Exited || record.state == ProcessState::Failed ||
+                    record.state == ProcessState::Cancelled) {
+                    terminal = record;
+                    finished = true;
+                }
+            },
+            [&](const QString&, ProcessStream, const QByteArray& bytes) { output += bytes; });
+        QVERIFY2(QTest::qWaitFor([&] { return finished; }, 35000),
+                 "IPC corpus fixture did not terminate");
+        QVERIFY2(terminal.state == ProcessState::Exited && terminal.exitCode == 0,
+                 output.constData());
+        QVERIFY2(!output.contains("SKIP   :") && output.contains("0 skipped"), output.constData());
+#endif
+    }
+private slots:
+    void cor17_disconnectReattachDuringActiveRun() {
+        runIpcCorpusCase(QStringLiteral("cor17_disconnectReattachDuringActiveRun"));
+    }
+    void cor18_staleDuplicateForeignEventsIgnored() {
+        runIpcCorpusCase(QStringLiteral("cor18_staleDuplicateForeignEventsIgnored"));
+    }
+
+    // Component check only, deliberately separate from the COR-18 wire fixtures.
+    void terminalRuntimeRejectsLateAndForeignCommands() {
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        const auto path = root + QStringLiteral("/src/calc.cpp");
+        seedFile(QDir(workspace.path()), QStringLiteral("src/calc.cpp"),
+                 QStringLiteral("int add(int a,int b){ return a + b; }\n"));
+        WorkspaceVerifier verifier(root);
         RuntimeFixture fixture;
         fixture.create({QStringLiteral("read-file")});
         fixture.configure(root);
+        fixture.planner.canonicalFinal = true;
         fixture.planner.decisions = {toolDecision(QStringLiteral("read-file")),
                                      finalDecision(QStringLiteral("observed receipt"))};
+        appendArg(fixture.planner.decisions.first(), QStringLiteral("path"), path);
         QVERIFY(fixture.runtime->start(fixture.session, QStringLiteral("read the fixture")));
         QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(fixture.session).phase,
                                   AgentLoopPhase::Completed, kBarrierTimeoutMs);
-
-        const auto frozenEvents = fixture.runtime->eventHistory(fixture.session);
-        // Duplicate cancel on a terminal run is rejected.
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file")), 1);
+        const auto frozen = fixture.runtime->eventHistory(fixture.session);
         QVERIFY(!fixture.runtime->cancel(fixture.session));
-        // Foreign/unknown session identities are rejected without effect.
         QVERIFY(!fixture.runtime->cancel(QStringLiteral("foreign-session")));
         QVERIFY(!fixture.runtime->approve(QStringLiteral("foreign-session"), false));
-        // Late approvals against the stale terminal cannot reopen anything.
         QVERIFY(!fixture.runtime->approve(fixture.session, false));
         QVERIFY(!fixture.runtime->approve(fixture.session, true));
-        QCOMPARE(fixture.runtime->sessionState(fixture.session).phase, AgentLoopPhase::Completed);
-        QCOMPARE(fixture.runtime->eventHistory(fixture.session).size(), frozenEvents.size());
+        QCOMPARE(fixture.runtime->eventHistory(fixture.session).size(), frozen.size());
         TerminalAudit audit;
-        audit.scan(fixture.runtime->eventHistory(fixture.session));
+        audit.scan(frozen);
         QVERIFY2(audit.singleTerminal() && audit.completed == 1, qPrintable(audit.describe()));
-
-        // The next fresh task still runs; stale state cannot block a new run.
-        const auto nextSession = fixture.runtime->createSession();
-        QVERIFY(!nextSession.isEmpty());
+        const auto next = fixture.runtime->createSession();
+        QVERIFY(!next.isEmpty());
         AgentSessionOptions options;
         options.autonomousMode = true;
         options.workspaceContext.rootPath = root;
-        fixture.runtime->configureSession(nextSession, std::move(options));
+        fixture.runtime->configureSession(next, options);
         fixture.planner.resetPlanningIndex();
-        fixture.planner.decisions = {toolDecision(QStringLiteral("read-file")),
-                                     finalDecision(QStringLiteral("next receipt"))};
-        QVERIFY(fixture.runtime->start(nextSession, QStringLiteral("read again")));
-        QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(nextSession).phase,
+        QVERIFY(fixture.runtime->start(next, QStringLiteral("read again")));
+        QTRY_COMPARE_WITH_TIMEOUT(fixture.runtime->sessionState(next).phase,
                                   AgentLoopPhase::Completed, kBarrierTimeoutMs);
+        QCOMPARE(fixture.handler.counts.value(QStringLiteral("read-file")), 2);
         QCOMPARE(fixture.handler.unauthorizedCalls, 0);
-        runtimeHolderList.push_back(std::move(fixture.runtime));
+        QVERIFY(verifier.untouched());
     }
-
-private:
-    // Worker threads borrow planner/provider references; keep the holders
-    // alive until the slot's threads have joined (AgentRuntime dtor).
-    std::vector<std::unique_ptr<FaultProvider>> providerHolderList;
-    std::vector<std::unique_ptr<LlmAgentRuntime>> llmPlannerHolderList;
-    std::vector<std::unique_ptr<AgentRuntime>> runtimeHolderList;
 };
 
-QTEST_MAIN(AgentReliabilityHarnessTest)
+int main(int argc, char** argv) {
+    if (argc == 2 && QByteArray(argv[1]) == "--oracle-timeout-child") {
+        QCoreApplication app(argc, argv);
+        QFile output;
+        if (!output.open(stdout, QIODevice::WriteOnly))
+            return 4;
+        output.write("oracle-timeout-ready\n");
+        output.flush();
+        return app.exec(); // Owned timeout target, no sleeps or arbitrary executable.
+    }
+    if (argc == 3 && QByteArray(argv[1]) == "--cooperative-child") {
+        QCoreApplication app(argc, argv);
+        const QString artifact = QString::fromLocal8Bit(argv[2]);
+        if (!QDir().mkpath(QFileInfo(artifact).absolutePath()))
+            return 2;
+        QFile file(artifact);
+        if (!file.open(QIODevice::WriteOnly) || file.write("partial fixture output\n") <= 0)
+            return 3;
+        file.close();
+        QFile output;
+        if (!output.open(stdout, QIODevice::WriteOnly))
+            return 4;
+        output.write("fixture-child-ready\n");
+        output.flush();
+        return app.exec(); // only the owning ProcessExecutor terminates this helper
+    }
+    QGuiApplication app(argc, argv);
+    AgentReliabilityHarnessTest test;
+    return QTest::qExec(&test, argc, argv);
+}
 #include "test_agent_reliability_harness.moc"
