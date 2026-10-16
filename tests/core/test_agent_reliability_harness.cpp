@@ -386,8 +386,8 @@ public:
     // observation. The observation content is real; only the typed completeness
     // contract is degraded, which must prevent unsupported absence conclusions.
     bool observationIncomplete = false;
-    bool emptyFileContent = false;         // read-file reports empty (missing) content
-    bool blockSlowBuild = false;           // cooperative blocking command flag
+    bool emptyFileContent = false; // read-file reports empty (missing) content
+    bool blockSlowBuild = false;   // cooperative blocking command flag
     QSemaphore slowBuildStarted{0};
     std::atomic<qint64> childPid{0};
     std::atomic_bool childReleased{false};

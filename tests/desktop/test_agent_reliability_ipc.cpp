@@ -195,8 +195,9 @@ struct Fixture {
                 .withMemoryStore(std::make_unique<core::InMemoryStore>())
                 .withAgentRuntime(std::make_unique<core::NullAgentRuntime>(
                     core::NullAgentRuntime::standardTools()))
-                .withAgentStepPlanner(customPlanner ? std::move(customPlanner)
-                                                    : std::make_unique<MutationPlanner>(artifact, gate))
+                .withAgentStepPlanner(customPlanner
+                                          ? std::move(customPlanner)
+                                          : std::make_unique<MutationPlanner>(artifact, gate))
                 .withToolExecutor(std::move(counted))
                 .withSandboxPolicy(std::make_unique<core::StaticSandboxPolicy>(
                     QSet<QString>{"tool.metadata.read", "tool.risk.medium", "tool.risk.high"}))
@@ -574,8 +575,7 @@ void AgentReliabilityIpcTest::cor19_eventSequenceMonotonicAndGenerationFencing()
     client.connectToDaemon();
     QTRY_VERIFY(client.daemonReachable());
 
-    const auto created =
-        call(client, DaemonClient::Command::session_create, {{"title", "COR-19"}});
+    const auto created = call(client, DaemonClient::Command::session_create, {{"title", "COR-19"}});
     QVERIFY(created.ok);
     const auto session = created.payload.value("session_id").toString();
     QVERIFY(call(client, DaemonClient::Command::session_attach, {{"session_id", session}}).ok);
@@ -607,9 +607,7 @@ void AgentReliabilityIpcTest::cor19_eventSequenceMonotonicAndGenerationFencing()
     }
 
     QVERIFY(call(client, DaemonClient::Command::approval_respond,
-                 {{"run_id", run},
-                  {"approval_id", approval.value("approval_id")},
-                  {"allow", true}})
+                 {{"run_id", run}, {"approval_id", approval.value("approval_id")}, {"allow", true}})
                 .ok);
     QTRY_VERIFY(fixture.gate->entered.available() == 1);
     QVERIFY(fixture.exactMutation());
@@ -638,8 +636,7 @@ void AgentReliabilityIpcTest::cor19_eventSequenceMonotonicAndGenerationFencing()
     DaemonClient fresh(fixture.path, deadlineMs, 10000);
     fresh.connectToDaemon();
     QTRY_VERIFY(fresh.daemonReachable());
-    const auto snap =
-        call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
+    const auto snap = call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
     QVERIFY(snap.ok);
     QCOMPARE(snap.payload.value("state").toString(), QString("completed"));
     QCOMPARE(snap.payload.value("run_id").toString(), run);
@@ -706,16 +703,16 @@ void AgentReliabilityIpcTest::cor20_multiClientBackpressureAndBufferSaturation()
     ::fcntl(slowFd, F_SETFL, O_NONBLOCK);
 
     QSignalSpy fastEvents(&fastClient, &DaemonClient::eventReceived);
-    const auto started =
-        call(fastClient, DaemonClient::Command::agent_start,
-             {{"session_id", session}, {"text", "Run saturation task"}});
+    const auto started = call(fastClient, DaemonClient::Command::agent_start,
+                              {{"session_id", session}, {"text", "Run saturation task"}});
     QVERIFY(started.ok);
 
     QTRY_VERIFY_WITH_TIMEOUT(!wireEvent(fastEvents, "run.completed").isEmpty(), 15000);
     QCOMPARE(terminalCount(fastEvents), 1);
 
     char drainBuf[1024];
-    while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {}
+    while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {
+    }
     const ssize_t closedRead = ::read(slowFd, drainBuf, sizeof(drainBuf));
     QVERIFY(closedRead <= 0);
     ::close(slowFd);
@@ -723,8 +720,7 @@ void AgentReliabilityIpcTest::cor20_multiClientBackpressureAndBufferSaturation()
     DaemonClient fresh(fixture.path, deadlineMs, 10000);
     fresh.connectToDaemon();
     QTRY_VERIFY(fresh.daemonReachable());
-    const auto snap =
-        call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
+    const auto snap = call(fresh, DaemonClient::Command::session_attach, {{"session_id", session}});
     QVERIFY(snap.ok);
     QCOMPARE(snap.payload.value("state").toString(), QString("completed"));
 #else
