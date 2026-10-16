@@ -706,10 +706,10 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
         active->outputDirectory = std::move(outputDirectory);
         std::weak_ptr<Active> weak = active;
         const auto launch = [weak, process, input] {
-            const auto active = weak.lock();
-            if (!active)
+            const auto entry = weak.lock();
+            if (!entry)
                 return;
-            active->id = active->executor->start(
+            entry->id = entry->executor->start(
                 process,
                 [weak](const ProcessRecord& record) {
                     auto current = weak.lock();
@@ -776,8 +776,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                         current->output(id, stream, bytes);
                 });
             if (!input.isEmpty()) {
-                active->executor->write(active->id, input);
-                active->executor->closeWriteChannel(active->id);
+                entry->executor->write(entry->id, input);
+                entry->executor->closeWriteChannel(entry->id);
             }
         };
         if (toolId == QLatin1String("git-status") || toolId == QLatin1String("git-diff")) {
