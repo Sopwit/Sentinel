@@ -261,7 +261,7 @@ Dispatch procedure to be executed only after explicit authorization (not perform
 
 ### 6.1 Current-tree privacy (SEC-01) — corrected
 
-- Scanner on the audit baseline: **0 files flagged**; the whitelisted `/home/linuxbrew/...`
+- Scanner on the audit baseline: **0 files flagged**; the whitelisted `/home/linuxbrew/.linuxbrew/...`
   system prefix is the only `/home/...` token in the tree.
 - `docs/audits/P1_04_2_LINUX_CI_VALIDATION.md` SHA-256 `0ab8f740…` and
   `docs/audits/SEC_01_HISTORICAL_PRIVACY_REMEDIATION_RESULT.md` SHA-256 `3260c7e8…` match INT-02.
