@@ -23,8 +23,14 @@
 
 #include "../support/DeterministicChatFixture.h"
 #include "../support/IndependentCompileOracle.h"
+#include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/security/SQLitePermissionGrantStore.h"
+#include <QLoggingCategory>
+#include <QRegularExpression>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
+#include <mutex>
 
 #include "sentinel/core/agent/AgentEvent.h"
 #include "sentinel/core/agent/AgentLoop.h"
@@ -67,6 +73,14 @@
 using namespace sentinel::core;
 
 namespace {
+
+// Capture diagnostics without forwarding private fixture text to the test log.
+std::mutex plannerPrivacyLogMutex;
+QStringList plannerPrivacyLogs;
+void capturePlannerPrivacyLog(QtMsgType, const QMessageLogContext&, const QString& text) {
+    std::lock_guard lock(plannerPrivacyLogMutex);
+    plannerPrivacyLogs.append(text);
+}
 
 constexpr int kBarrierTimeoutMs = 20000;
 
@@ -2201,6 +2215,19 @@ private slots:
 
         QTRY_COMPARE_WITH_TIMEOUT(runtime->sessionState(session).phase, AgentLoopPhase::Cancelled,
                                   kBarrierTimeoutMs);
+        // commitResult() publishes the terminal event immediately after committing the
+        // phase, so polling only the phase can observe a window with no terminal yet.
+        // Poll the authoritative event instead of trusting the phase read order.
+        const auto terminalEventCount = [&] {
+            int events = 0;
+            for (const auto& event : runtime->eventHistory(session))
+                if (event.type == AgentEventType::AgentCancelled ||
+                    event.type == AgentEventType::AgentCompleted ||
+                    event.type == AgentEventType::AgentFailed)
+                    ++events;
+            return events;
+        };
+        QTRY_COMPARE_WITH_TIMEOUT(terminalEventCount(), 1, kBarrierTimeoutMs);
         QCOMPARE(provider->cancelledReports, 1);
         QCOMPARE(provider->plannerRequests, 1);
         TerminalAudit audit;
@@ -2239,6 +2266,221 @@ private slots:
     void cor11_cancelAfterFirstStreamedDelta() {
         QFETCH(bool, native);
         exerciseGenerationCancellation(native, false, true);
+    }
+
+    // Component evidence only: the legacy provider streaming method cannot carry
+    // planner ChatRequestOptions. Never present this as end-to-end COR11 routing.
+    void cor11_boundedTransportAndPlannerPrivacy_data() {
+        QTest::addColumn<QString>("variant");
+        for (const auto& name : {"complete", "cancel-after-first", "deadline-after-first",
+                                 "malformed-ndjson", "missing-terminal", "incomplete-planner-json"})
+            QTest::newRow(name) << QString::fromLatin1(name);
+    }
+    void cor11_boundedTransportAndPlannerPrivacy() {
+        QFETCH(QString, variant);
+        QTemporaryDir workspace;
+        QVERIFY(workspace.isValid());
+        const auto root = canonicalRoot(workspace);
+        seedFile(QDir(root), "artifact.txt", "original\n");
+        WorkspaceVerifier verifier(root);
+        const QString marker = QStringLiteral("PRIVATE_PLANNER_STREAM_SENTINEL");
+        const QByteArray first = "{\"private_protocol\":\"" + marker.toUtf8() + "\",";
+        const QByteArray tail =
+            "\"action\":\"final\",\"grounding\":\"context\",\"answer\":\"safe fixture answer\"}";
+        const auto line = [](const QByteArray& text, bool done) {
+            return QJsonDocument(QJsonObject{{"response", QString::fromUtf8(text)}, {"done", done}})
+                       .toJson(QJsonDocument::Compact) +
+                   '\n';
+        };
+        const auto chunk = [](const QByteArray& bytes) {
+            return QByteArray::number(bytes.size(), 16) + "\r\n" + bytes + "\r\n";
+        };
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+        QPointer<QTcpSocket> connection;
+        int requests = 0, disconnects = 0;
+        QByteArray requestBody;
+        connect(&server, &QTcpServer::newConnection, &server, [&] {
+            auto* socket = server.nextPendingConnection();
+            connection = socket;
+            connect(socket, &QTcpSocket::disconnected, &server, [&] { ++disconnects; });
+            connect(socket, &QTcpSocket::readyRead, &server, [&, socket] {
+                if (socket->property("responded").toBool())
+                    return;
+                auto data = socket->property("request").toByteArray() + socket->readAll();
+                socket->setProperty("request", data);
+                const int headers = data.indexOf("\r\n\r\n");
+                if (headers < 0)
+                    return;
+                const auto header = data.left(headers);
+                const auto match = QRegularExpression("content-length:\\s*(\\d+)",
+                                                      QRegularExpression::CaseInsensitiveOption)
+                                       .match(QString::fromLatin1(header));
+                if (!match.hasMatch() || data.size() - headers - 4 < match.captured(1).toInt())
+                    return;
+                socket->setProperty("responded", true);
+                ++requests;
+                requestBody = data.mid(headers + 4, match.captured(1).toInt());
+                socket->write(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nTransfer-Encoding: "
+                    "chunked\r\nConnection: close\r\n\r\n");
+                socket->write(chunk(line(first, false)));
+                if (variant == "cancel-after-first" || variant == "deadline-after-first")
+                    return;
+                if (variant == "malformed-ndjson")
+                    socket->write(chunk("invalid " + marker.toUtf8() + '\n'));
+                else if (variant == "incomplete-planner-json")
+                    socket->write(chunk(line({}, true)));
+                else
+                    socket->write(chunk(line(tail, variant != "missing-terminal")));
+                socket->write("0\r\n\r\n");
+                socket->disconnectFromHost();
+            });
+        });
+        {
+            std::lock_guard lock(plannerPrivacyLogMutex);
+            plannerPrivacyLogs.clear();
+        }
+        const auto oldHandler = qInstallMessageHandler(capturePlannerPrivacyLog);
+        const auto oldFilter = QLoggingCategory::installFilter([](QLoggingCategory* category) {
+            if (QByteArray(category->categoryName()) == "sentinel.agent.diagnostics")
+                category->setEnabled(QtInfoMsg, true);
+        });
+        auto restoreLogs = qScopeGuard([&] {
+            QLoggingCategory::installFilter(oldFilter);
+            qInstallMessageHandler(oldHandler);
+        });
+        OllamaChatProvider transport(
+            OllamaConfig::fromEndpoint(
+                QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort())),
+            1000);
+        transport.setSelectedModel("synthetic-planner");
+        auto token = std::make_shared<std::atomic_bool>(false);
+        QStringList internalDeltas;
+        bool transportReturned = false, firstWhileActive = false, lateChunkSent = false;
+        const QByteArray lateTail =
+            QJsonDocument(QJsonObject{{"action", "tool"},
+                                      {"tool", "write-file"},
+                                      {"args", QJsonObject{{"path", root + "/artifact.txt"},
+                                                           {"content", "late mutation"}}}})
+                .toJson(QJsonDocument::Compact)
+                .mid(1);
+        QVERIFY(QJsonDocument::fromJson(first + lateTail).isObject());
+
+        const auto actual = transport.sendMessageStreaming(
+            "fixed synthetic planner request",
+            [&](const QString& delta) {
+                // Actual production provider callback, fed only by HTTP bytes the
+                // synthetic server wrote. The first callback must happen while the
+                // transport is still active (before sendMessageStreaming returns).
+                if (internalDeltas.isEmpty())
+                    firstWhileActive = !transportReturned;
+                internalDeltas.append(delta);
+                if (variant == "cancel-after-first" && internalDeltas.size() == 1) {
+                    token->store(true); // Cancellation is strictly after the first provider delta.
+                    if (connection)
+                        lateChunkSent = connection->write(chunk(line(lateTail, true))) > 0;
+                }
+            },
+            token);
+        transportReturned = true;
+        QVERIFY2(firstWhileActive,
+                 "the real provider delta callback never fired before the transport returned");
+        QCOMPARE(requests, 1);
+        QVERIFY(!actual.requestId.isEmpty());
+        QVERIFY(!internalDeltas.isEmpty());
+        QCOMPARE(internalDeltas.first(), QString::fromUtf8(first));
+        const auto sent = QJsonDocument::fromJson(requestBody).object();
+        QCOMPARE(sent.value("model").toString(), QStringLiteral("synthetic-planner"));
+        QCOMPARE(sent.value("stream").toBool(), true);
+        QCOMPARE(sent.value("options").toObject().value("num_predict").toInt(), 2048);
+        QCOMPARE(actual.attempts, 1);
+        if (variant == "cancel-after-first") {
+            QVERIFY(token->load());
+            QVERIFY(lateChunkSent);
+            QCOMPARE(internalDeltas.size(), 1);
+            QCOMPARE(actual.lifecycle, ChatRequestLifecycle::Cancelled);
+            QCOMPARE(actual.category, ChatProviderErrorCategory::Cancelled);
+            QVERIFY(!actual.success);
+        } else if (variant == "deadline-after-first") {
+            QVERIFY(!token->load());
+            QCOMPARE(internalDeltas.size(), 1);
+            QCOMPARE(actual.lifecycle, ChatRequestLifecycle::TimedOut);
+            QCOMPARE(actual.category, ChatProviderErrorCategory::Timeout);
+            QVERIFY(!actual.success);
+        } else if (variant == "malformed-ndjson" || variant == "missing-terminal") {
+            QVERIFY(!actual.success);
+            QCOMPARE(actual.category, ChatProviderErrorCategory::MalformedResponse);
+        } else {
+            QVERIFY(actual.success);
+            QCOMPARE(actual.lifecycle, ChatRequestLifecycle::Completed);
+        }
+        QTRY_COMPARE(disconnects, 1); // Local socket release, not upstream compute release.
+        QVERIFY(!actual.errorMessage.contains(marker));
+        QVERIFY(!QJsonDocument(actual.diagnostics).toJson().contains(marker.toUtf8()));
+
+        // Replay the actual transport result through the existing parser/final gates.
+        // This intentionally does not pretend the planner chose bounded streaming.
+        FaultProvider parserInput;
+        parserInput.faultAfterQueue = actual;
+        FixtureHandler handler;
+        handler.root = root;
+        handler.allowedWrites.insert("artifact.txt", "late mutation");
+        NoOpExecutor executor;
+        FixtureApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+        const auto descriptors = fixtureDescriptors({"read-file", "write-file"});
+        auto planner = makeLlmPlanner(parserInput, descriptors);
+        AgentRuntime runtime(std::make_unique<FixtureMetadataRuntime>(descriptors), planner.get(),
+                             executor, approval, sandbox);
+        for (const auto& descriptor : descriptors) {
+            QVERIFY(runtime.toolRegistry().unregisterTool(descriptor.id));
+            QVERIFY(runtime.toolRegistry().registerTool(
+                {descriptor, std::shared_ptr<IToolHandler>(&handler, [](IToolHandler*) {})}));
+        }
+        const auto session = runtime.createSession();
+        AgentSessionOptions options;
+        options.autonomousMode = true;
+        options.workspaceContext.rootPath = root;
+        runtime.configureSession(session, options);
+        const auto state = runtime.submit(session, "Validate fixed synthetic planner result");
+        QCOMPARE(state.phase,
+                 variant == "complete" ? AgentLoopPhase::Completed : AgentLoopPhase::Failed);
+        QCOMPARE(parserInput.plannerRequests, variant == "incomplete-planner-json" ? 2 : 1);
+        if (variant == "complete")
+            QCOMPARE(state.finalAnswer, QStringLiteral("safe fixture answer"));
+        else
+            QVERIFY(state.finalAnswer.isEmpty());
+        QCOMPARE(handler.counts.value("write-file"), 0);
+        QCOMPARE(handler.counts.value("read-file"), 0);
+        QCOMPARE(handler.unauthorizedCalls, 0);
+        QCOMPARE(executor.calls, 0);
+        QVERIFY(verifier.untouched());
+        TerminalAudit terminal;
+        terminal.scan(runtime.eventHistory(session));
+        QVERIFY(terminal.singleTerminal());
+        QCOMPARE(terminal.completed, variant == "complete" ? 1 : 0);
+        int publicDeltas = 0;
+        QString publicText;
+        for (const auto& event : runtime.eventHistory(session)) {
+            if (event.type == AgentEventType::ModelOutputDelta)
+                ++publicDeltas;
+            if (const auto* text = std::get_if<AgentTextEvent>(&event.payload))
+                publicText += text->text;
+            if (const auto* run = std::get_if<AgentRunEvent>(&event.payload))
+                publicText += run->finalAnswer + run->abortReason + run->pendingThought;
+            if (const auto* step = std::get_if<AgentStepEvent>(&event.payload))
+                publicText += step->step.observation + step->step.thought + step->step.statusText;
+        }
+        QCOMPARE(publicDeltas, 0);
+        QVERIFY(!publicText.contains(marker));
+        QString logs;
+        {
+            std::lock_guard lock(plannerPrivacyLogMutex);
+            logs = plannerPrivacyLogs.join('\n');
+        }
+        QVERIFY(logs.contains("provider_id")); // Diagnostics were enabled and actually emitted.
+        QVERIFY(!logs.contains(marker));
     }
 
     // ------------------------------------------------------------------
@@ -2727,7 +2969,9 @@ private:
                     ++found;
             return found;
         };
-        const bool firstDeltaReceived = count(session, AgentEventType::ModelOutputDelta) > 0;
+        const bool firstDeltaReceived =
+            provider->emittedDeltas.load() >
+            0; // Internal observer; never require private public deltas.
         const auto oldToken = provider->originalToken;
         QVERIFY(oldToken && !oldToken->load());
         models->setSelectedModel({"ollama", "next-model"});
@@ -2773,8 +3017,13 @@ private:
             QCOMPARE(provider->requests.load(), 1);
             QCOMPARE(provider->originalDeadline, 120000);
             QCOMPARE(provider->originalNative, native);
+            // Streaming is advertised by the frozen binding, yet the production
+            // router cannot select it: options.deadlineMs is fixed at 120000 and the
+            // streaming branch requires zero, while sendMessageStreaming cannot carry
+            // the per-request deadline at all.
+            QCOMPARE(planner.modelBinding().capabilities.streaming, CapabilitySupport::Supported);
         } else {
-            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 1);
+            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
             QCOMPARE(provider->emittedDeltas.load(), 2);
         }
         QVERIFY(!runtime.approve(session, true));
@@ -2824,9 +3073,14 @@ private:
                 << "next-read=" << handler.counts.value("read-file");
         if (requireStream && !firstDeltaReceived)
             QSKIP(
-                "COR-11 after-first-delta remains blocked: LlmAgentRuntime fixes deadlineMs=120000 "
-                "but its streaming branch requires zero; planner delta callback also intentionally "
-                "suppresses private protocol. No streaming/tool-assembly coverage claimed.");
+                "COR-11 after-first-delta remains blocked by the existing provider contract: "
+                "LlmAgentRuntime fixes options.deadlineMs=120000 but its streaming branch requires "
+                "zero, and IChatProvider::sendMessageStreaming(message,onDelta,token) cannot carry "
+                "ChatRequestOptions, so removing the guard would drop the deadline (the provider's "
+                "own timeout may be 0 = unbounded) instead of preserving it. The planner delta "
+                "callback also intentionally discards private protocol. No end-to-end "
+                "streaming/tool-assembly coverage is claimed; see the transport-level and "
+                "native-assembly notes in P1-01.5.");
     }
 
     void exerciseIndependentOracle(int corpus, const QString& variant) {

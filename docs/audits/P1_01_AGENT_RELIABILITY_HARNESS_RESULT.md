@@ -329,3 +329,117 @@ Other remaining cases retain their earlier limits: COR-01 broader truncation/abs
 | Git state / scope | Branch/HEAD unchanged, nothing staged/committed/pushed/merged/reset/stashed. This continuation edits exactly the harness and this report; five existing overall dirty/untracked paths are retained from earlier work |
 
 Final harness source SHA-256: `89a44875f331d5e3a6d8776b467686dd0f8d7af445618c42a23b946c30053a85`. Executable SHA-256: `f7dc7222b9d8ef79e8d39641fb55c54b41ef74271e3fb8a6f31255b1f15f4848`. Raw local logs contain generated host paths and are retained as disposable evidence only. No environmental build/test failure remained; the inherited privacy finding and the source-backed streaming skips are distinct limitations. No live provider, upstream compute, native platform or full P1 acceptance is claimed.
+
+## P1-01.5 — Bounded Planner Streaming Contract
+
+Date: 2026-10-16 (Europe/Istanbul). Existing P1-01 worktree, branch `test/p1-01-agent-reliability`. The task brief expected HEAD `daef9b73f0ebbaf50c5eba35419a775a53ef4d22`; the worktree is at `ef7c18990ecc7139648fad64fe650478d522cf87`, whose direct parent is `daef9b73` (one additional committed P1-01 harness-extension commit, `test(agent): extend reliability harness with independent compile oracle and IPC fixture`). `daef9b73` is an ancestor, so the expected snapshot is intact. AGENTS.md, branch, HEAD, worktree list and dirty state were verified before editing. This continuation preserves every preceding report section verbatim (byte-identical prefix) and does not reset, stash, commit, push or merge.
+
+**No production code was changed in P1-01.5.** The existing provider contract cannot carry the per-request deadline (or `maxOutputTokens`) into the streaming transport. Removing the contradictory routing guard would therefore drop the planner's `deadlineMs=120000` deadline onto the provider's own timeout, which is `0` (unbounded) by default, violating the "no unbounded requests" and "preserve actual deadline enforcement" constraints. Instead the exact missing contract and a narrowly scoped implementation proposal are recorded, the COR-11 after-first-delta case stays an explicit, asserted skip, and the streaming transport's real bounded/cancellation/terminal/privacy behaviour is now genuinely covered. This is deliberately not presented as end-to-end planner streaming.
+
+### Confirmed source findings (reverified)
+
+| Claim | Verified source evidence |
+| --- | --- |
+| Planner fixes a positive deadline | [LlmAgentRuntime::nextStep](../../core/src/agent/LlmAgentRuntime.cpp) sets `options.deadlineMs = 120000;` and `options.maxOutputTokens = 2048;` unconditionally before dispatch |
+| Streaming branch requires a zero deadline | The same `send` lambda selects `sendMessageStreaming` only when `options.deadlineMs == 0 && attempt == 0 && options.images.isEmpty() && !options.structuredOutput && !options.nativeToolCalling && capabilities.streaming == Supported && streamObserver_` |
+| Synthetic/real providers receive `sendRequest` | With `deadlineMs=120000` the guard is never satisfied; `sendRequest(request, options)` is used. The harness records `request=1, stream=0` even when the binding advertises `streaming=Supported` |
+| Streaming method cannot carry options | [IChatProvider::sendMessageStreaming](../../core/include/sentinel/core/interfaces/IChatProvider.h) is `(const QString&, const std::function<void(const QString&)>&, const std::shared_ptr<std::atomic_bool>&)`; it has no `ChatRequestOptions` parameter, unlike `sendRequest(message, options)` |
+| Streaming transport enforces a bound only when given a timeout | [OllamaChatProvider::sendMessageStreaming](../../core/src/chat/OllamaChatProvider.cpp) sets `request.options.timeoutMs = timeoutMs_` (the constructor value). The non-streaming `sendRequest` path instead passes `options.deadlineMs` through `sendMessageWithToken(..., deadlineMs, maxOutputTokens)`. [OllamaLocalInferenceStreamClient::startStream](../../core/src/runtime/LocalInference.cpp) resolves `request.options.timeoutMs > 0 ? … : config_.streamTimeoutMs` and calls [ProviderRequestRuntime::wait](../../core/src/runtime/ProviderRequestRuntime.cpp), which starts a deadline timer only `if (timeoutMs > 0)` |
+| Default provider timeout is unbounded | [ModelService](../../core/src/model/ModelService.cpp) constructs `OllamaChatProvider(..., localInferenceTimeoutMs_)`; `localInferenceTimeoutMs_` defaults to `0` in [ModelService](../../core/include/sentinel/core/model/ModelService.h) and [ApplicationController](../../core/include/sentinel/core/app/ApplicationController.h). `wait(reply, 0, …)` therefore blocks until the reply finishes or the cancellation token flips |
+| Streaming transport does support cancellation, terminal errors and accumulation | The stream client fences cancelled output, classifies `Cancelled`/`Timeout`/`MalformedResponse`, and accumulates `result.accumulatedText`; `ProviderRequestRuntime::wait` aborts on the 25 ms cancellation poll |
+| Planner deltas are intentionally private | The inline streaming callback sets `outputEmitted = true` and `Q_UNUSED(delta)`. [AgentRuntime](../../core/src/agent/AgentRuntime.cpp) installs a `setStreamObserver` that would publish `ModelOutputDelta`, but the planner never invokes `streamObserver_`, so the public delta path is unreachable and no private planner protocol is published |
+| Native tool calls lack an incremental-streaming contract | `sendMessageStreaming` exposes only a text callback; completed `ChatProviderReply::toolCalls` are returned at the end. `LlmAgentRuntime` routes native tool calls through `sendRequest` (the streaming branch excludes `nativeToolCalling`) |
+
+### Reachability root cause
+
+The unreachable path is a contract mismatch, not a missing feature in the transport:
+
+1. The planner always requests a bounded generation (`deadlineMs=120000`).
+2. The positive deadline is only consumable by `sendRequest`, because `ChatRequestOptions` reaches `OllamaChatProvider::sendRequest` and is forwarded to the non-streaming inference client as `timeoutMs`.
+3. `sendMessageStreaming` accepts no `ChatRequestOptions`, so there is no way to pass `deadlineMs`; the streaming client falls back to the provider's constructor timeout, which is `0` (no timer) in the production wiring.
+4. The historical guard `options.deadlineMs == 0` was therefore the only way to keep streaming from silently running unbounded. It is contradictory because the planner never sets a zero deadline, so the branch is dead.
+
+A secondary, intentional boundary keeps raw planner JSON out of public events: even if streaming were selected, the planner callback discards `delta`, so nothing reaches `AgentRuntime`'s `ModelOutputDelta` publisher. That is a privacy requirement, not a defect.
+
+### Whether safe production remediation was possible
+
+**Not through the existing interfaces.** All ten requirements could only be met by extending the provider contract so the streaming call can carry the bounded request:
+
+- Removing `options.deadlineMs == 0` alone (the literal "remove the contradictory requirement") would select `sendMessageStreaming` for a `120000` ms request while the transport enforces the provider's own `timeoutMs_`, which may be `0`. That drops the deadline and can produce an unbounded request — exactly what the constraints forbid.
+- Enforcing the deadline from the runtime instead (a watchdog flipping the cancellation token) would conflate timeout with user cancellation, require a second token/composite polling loop, and duplicate `ProviderRequestRuntime` semantics. That is an unsafe workaround, so it was not implemented.
+- Making the guard conditional on a real "can bound streaming" capability requires a provider-contract change owned by the separate P2 provider-contract track, which this task must not modify.
+
+Because the transport itself (deadline timer, cancellation poll, terminal classification, accumulation) already supports the guarantees, the correction is small but belongs to the provider contract, not to P1-01.5 test/audit scope.
+
+### Narrowly scoped implementation proposal
+
+Preferred (reuses the existing deadline-honouring entry point):
+
+1. Add `bool streaming = false;` to [ChatRequestOptions](../../core/include/sentinel/core/interfaces/IChatProvider.h), defaulting false so the struct stays backward compatible.
+2. In `OllamaChatProvider::sendRequest` (and `SelectedEndpointChatProvider`), when `options.streaming` is set and the request is text-only (no `structuredOutput`, no `nativeToolCalling`, no images), invoke the existing stream client with `request.options.timeoutMs = options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_` and `request.options.cancellationToken = options.cancellationToken`; keep deltas internal (no callback) so no private protocol can be published. The `IChatProvider::sendRequest` default must reject `streaming` it cannot honour.
+3. In `LlmAgentRuntime::nextStep`, request `options.streaming = true` for text-only requests on a streaming-capable binding and delete the separate `sendMessageStreaming` branch and its dead `deadlineMs == 0` guard; keep `deadlineMs=120000`, the parser and the final-answer gates unchanged.
+4. Require a focused provider-contract regression (bounded stream, cancel-after-first-delta, missing terminal, malformed chunk) before enabling the planner flag.
+
+Alternative: an overload `sendMessageStreaming(message, onDelta, token, const ChatRequestOptions&)` plus a `supportsBoundedStreaming()` capability, routed only when the capability is true. This adds a second capability flag and a second dispatch path; the `streaming` option above is smaller and keeps one authoritative request contract.
+
+### Native tool-call assembly limitation
+
+`IChatProvider` exposes only `void(const QString&)` for streamed text and returns completed `ChatProviderReply::toolCalls` after the call. There is no incremental native tool-argument assembly event, and `LlmAgentRuntime` never streams native tool calls (`nativeToolCalling` excludes the stream branch). Retaining the explicit block/skip is correct: representing partial tool-argument fragments would require a new callback/event contract and risk executing a partially parsed call. No speculative incremental parser was added. The required contract decision is therefore: either keep native tool calls strictly non-streaming (current behaviour) or add a typed, fenced tool-assembly event to the provider contract and only dispatch a call after a validated terminal assembly.
+
+### COR-11 regression evidence
+
+Two cooperating fixtures are used. The transport row drives the **real** `OllamaChatProvider` against a disposable loopback `QTcpServer` that returns chunked NDJSON; every delta comes from HTTP bytes processed by the production provider callback (nothing is manufactured). The planner rows drive the production `LlmAgentRuntime`/`AgentRuntime` with the deterministic synthetic provider and assert the real routing decision and cancellation/binding semantics.
+
+| Required coverage | Verifying case | Actual result |
+| --- | --- | --- |
+| First provider delta observed before cancellation | `cor11_boundedTransportAndPlannerPrivacy(cancel-after-first)` | The callback's first delta is recorded while `sendMessageStreaming` is still executing (`firstWhileActive`), then the token is set strictly after that delta |
+| Cancellation while the stream remains active | same row | Token set inside the live callback; `lateChunkSent` proves a late chunk was written to the still-open stream after cancellation |
+| Cancellation acknowledgment / fenced late result | same row | `actual.lifecycle == Cancelled`, `category == Cancelled`, `success == false`, `internalDeltas.size() == 1` (late chunk fenced by the provider callback) |
+| No post-cancellation tool invocation | transport + replay | The cancelled transport result is replayed through the real parser/final gates; handler `read-file=0, write-file=0`, `executor.calls=0`, unauthorized calls 0, workspace untouched |
+| No accepted successful final after cancellation | same replay | Run fails with empty `finalAnswer`; a late `write-file` JSON fragment never becomes a call |
+| Exactly one cancelled terminal outcome | `cor11_cancelDuringGeneration` | `TerminalAudit` sees exactly one terminal, `cancelled == 1`; late approvals/duplicate cancels are rejected and the frozen history is unchanged |
+| No stale content in the next task | `cor11_cancelledRequestBindingAndNextTask` | Next task completes with a fresh token; original session stays `Cancelled` with an empty final answer and an unchanged frozen event list |
+| Original frozen model binding | same rows | Planner binding and every run event retain `ollama`/`original-*` even after `ModelService` selection changes; `originalDeadline == 120000`, `originalNative == native` |
+| Successful subsequent task with a new binding | same rows | Next task binds `next-model`, completes with one authorized read, distinct non-cancelled token, one terminal |
+| Bounded deadline expiration without cancellation | `…(deadline-after-first)` | Provider timeout expires after the first delta; `lifecycle == TimedOut`, `category == Timeout`, token never set |
+| Malformed/incomplete streamed planner response | `…(malformed-ndjson)`, `…(missing-terminal)`, `…(incomplete-planner-json)` | Malformed chunk and missing terminal fail as `MalformedResponse`; an incomplete planner JSON that still completes is rejected by the real `decisionFromLlmOutput`/final gates (2 repair requests, `Failed`, empty final) |
+| Provider callback genuinely invoked | all transport rows | `requests == 1`, the parsed request body has `model=synthetic-planner`, `stream=true`, `num_predict=2048`; `internalDeltas.first()` equals the exact sent bytes |
+| No private planner tokens in public events/logs/diagnostics | all rows | Marker absent from `errorMessage`, `diagnostics`, every public event payload, `ModelOutputDelta` count 0, and captured `sentinel.agent.diagnostics` logs (which were demonstrably enabled) |
+| Native tool-call assembly | `cor11_cancelAfterFirstStreamedDelta(native-tool-assembly)` | Explicit asserted skip; routing evidence recorded (native `sendRequest`, no stream, `originalNative == true`) |
+
+Both `cor11_cancelAfterFirstStreamedDelta` rows still run their full assertion body — routing counters, frozen binding, one cancelled terminal, successful next task — and then `QSKIP` because the after-first-delta *streaming* portion is unreachable. The skip is evidence-backed, not a silent omission.
+
+### Terminal, timeout and privacy results
+
+- **Terminal**: the real transport returns exactly one lifecycle per call (`Completed`/`Cancelled`/`TimedOut`/`Failed`), and the runtime publishes exactly one `AgentCompleted`/`AgentCancelled`/`AgentFailed`. The `cor11_cancelDuringGeneration` wait was tightened to poll the authoritative terminal event rather than only the phase, because `commitResult()` commits the phase fractionally before `finishTurn()` publishes the terminal; this removed an observed intermittent harness race without changing production ordering.
+- **Timeout**: bounded deadline expiration without cancellation is verified at the transport level (`deadline-after-first`). The planner-level deadline (`120000`) remains enforced through the reachable `sendRequest` path.
+- **Privacy**: raw planner protocol never reaches public events, logs, user errors or diagnostics in any exercised path. This is not a live-model or blanket redaction certification; it covers the exercised planner/transport paths only.
+
+### Validation
+
+| Check | Actual result |
+| --- | --- |
+| Focused COR-11 (6 test functions) | **12 passing rows, 0 failed, 2 skipped**; the two skips are the unreachable streaming/assembly rows |
+| Complete Agent Reliability harness | **72 passing records, 0 failed, 2 skipped** (~16.3–17.9 s); previously 66 passed/6 failed/2 skipped while the transport row was incomplete |
+| Real daemon/Desktop IPC fixtures | **5 passing records, 0 failed, 0 skipped** (`QT_QPA_PLATFORM=offscreen`, as CTest sets). Direct runs without the offscreen platform intermittently show a client-projection timing flake in the unchanged fixture; not caused by this change |
+| Complete CMake build + CTest | **129/129 targets passed**, 144.81 s (an earlier full run: 185.12 s) |
+| Formatting | `clang-format --version 23.1.3`, `--dry-run --Werror` clean on the changed translation unit |
+| Static analysis | `clang-tidy -p build/tests --checks='-*,clang-analyzer-*,bugprone-use-after-move,bugprone-dangling-handle'` clean, exit 0 |
+| Generated IPC/Desktop contracts | `python3 tools/ipc/generate.py --check` and `tools/ipc/generate_desktop.py --check` both exit 0; generated contracts unchanged |
+| Whitespace / privacy | `git diff --check` clean; `tools/analysis/check_personal_paths.py` flags only the inherited, unmodified `docs/audits/P1_04_2_LINUX_CI_VALIDATION.md`. No external Desktop/IPC schema changed |
+
+### Preservation and hashes
+
+Only [test_agent_reliability_harness.cpp](../../tests/core/test_agent_reliability_harness.cpp) and this report are changed in this continuation. The COR-07 revocation rows, the independent compile oracles, the real IPC fixture, the COR-12–16 source range and `IndependentCompileOracle.h` are untouched. The separate P2 provider-contract worktree was inspected but left alone; no provider-contract, legacy-CLI, Rust-IPC or workflow file was modified. Branch/HEAD are unchanged; nothing was staged, committed, pushed, merged, reset or stashed.
+
+- Harness source SHA-256: `3b7d23b7016eb841e61b0855781f96e1002b2264c8ee77d2d4dc2a409a8a9339`
+- Harness executable SHA-256: `30d973abd5eab8e0949c42a8639aa218bdeefb3e1bc706031c8e9f32e64b600c`
+- Inherited privacy finding SHA-256: `f00a8bcd35c4ad5d47d2ef4db070f4f9f3e0b85d86f4bad7209db34f3d67809d`
+
+### Assessment
+
+COR-11 is now split cleanly: the reachable non-streaming cancellation/binding/next-task subset is verified end-to-end, the streaming transport's bounded/cancellation/terminal/malformed/privacy behaviour is verified against the real provider over real HTTP bytes, and the end-to-end planner after-first-delta path remains an explicitly asserted, source-backed skip because the provider contract cannot carry the deadline. Nothing here weakens a cancellation, deadline or privacy gate.
+
+**AC-P1-01 remains incomplete / not accepted.** Remaining gaps: COR-11 end-to-end planner streaming after the first delta and inline native tool-call assembly (both blocked on the narrow provider-contract change above); COR-01 broader truncation/absence variants; COR-06 complete Git/browser/sandbox/vision/model capability failures; COR-10 planning-stage/same-runtime variants; COR-16 mutated-resource-without-reread rejection; and the existing real-IPC/native-platform/live-model limits. No real model, cloud or upstream compute was contacted; no upstream compute release is claimed.
+
+Recommended next task: implement the `ChatRequestOptions::streaming` provider-contract change in the dedicated provider-contract track with its own bounded/cancel/malformed regression, then re-enable the `cor11_cancelAfterFirstStreamedDelta` rows and remove the two skips; independently plan the native tool-assembly event contract before touching `native-tool-assembly`. Then continue COR-01/06/10/16.
