@@ -28,9 +28,16 @@ public:
     bool supportsStreaming() const override {
         return true;
     }
+    bool supportsBoundedStreaming() const override {
+        return true;
+    }
     ChatProviderReply
     sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
                          const std::shared_ptr<std::atomic_bool>& cancellationToken) override;
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) override;
 
     QString endpoint() const;
     QString selectedModel() const;
@@ -40,6 +47,11 @@ public:
     }
 
 private:
+    ChatProviderReply streamMessage(const QString& message,
+                                    const std::function<void(const QString&)>& onDelta,
+                                    const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                    const QList<ChatImage>& images, int deadlineMs,
+                                    int maxOutputTokens, bool requireBoundedStreaming);
     ChatProviderReply sendMessageWithToken(
         const QString& message, const std::shared_ptr<std::atomic_bool>& cancellationToken,
         const QList<ChatImage>& images = {}, int deadlineMs = 0, int maxOutputTokens = 0);

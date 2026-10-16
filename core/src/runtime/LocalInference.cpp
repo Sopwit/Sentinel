@@ -858,6 +858,18 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                                               "with %1 ms timeout metadata.")
                                    .arg(result.timeoutMs)));
 
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("Local streaming request rejected: a finite deadline is "
+                                        "required and none was available.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
@@ -1667,6 +1679,19 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
               QStringLiteral("%1 streaming request reached boundary with %2 ms timeout metadata.")
                   .arg(config_.providerDisplayName())
                   .arg(result.timeoutMs)));
+
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("%1 streaming request rejected: a finite deadline is "
+                                        "required and none was available.")
+                             .arg(config_.providerDisplayName());
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
 
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;

@@ -25,6 +25,7 @@ struct DeterministicChatProviderState {
 
 class DeterministicChatProvider final : public core::IChatProvider {
 public:
+    using core::IChatProvider::sendMessageStreaming;
     explicit DeterministicChatProvider(std::shared_ptr<DeterministicChatProviderState> state)
         : state_(std::move(state)) {}
 

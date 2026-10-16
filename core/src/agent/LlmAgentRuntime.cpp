@@ -24,6 +24,11 @@ namespace sentinel::core {
 namespace {
 Q_LOGGING_CATEGORY(agentProviderDiagnostics, "sentinel.agent.diagnostics", QtWarningMsg)
 
+// Defensive ceiling on the private planner text accumulated from a streaming
+// provider callback. The planner protocol object is small; this bound stops a
+// runaway stream from growing the internal buffer without limit.
+constexpr qsizetype kMaxPlannerStreamedChars = 262144;
+
 QString extractJsonObject(const QString& text) {
     auto trimmed = text.trimmed();
     // Accept a single fenced protocol object, never prose containing a command.
@@ -321,21 +326,46 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             options.toolResults = nativeResults_;
         }
         bool outputEmitted = false;
+        bool plannerStreamOverflow = false;
+        // Use the bounded-streaming contract only when the selected provider
+        // explicitly implements it. The planner keeps its finite 120000 ms
+        // deadline; the bounded overload carries that deadline into the
+        // streaming transport and rejects rather than running unbounded. Native
+        // tool calls, structured output and image requests stay on the bounded
+        // non-streaming path, and there is no unbounded streaming fallback.
+        const bool useBoundedStreaming =
+            attempt == 0 && options.deadlineMs > 0 && options.images.isEmpty() &&
+            !options.structuredOutput && !options.nativeToolCalling &&
+            modelBinding_.capabilities.streaming == CapabilitySupport::Supported &&
+            provider_->supportsBoundedStreaming() && streamObserver_;
         const auto send = [&]() {
-            return options.deadlineMs == 0 && attempt == 0 && options.images.isEmpty() &&
-                           !options.structuredOutput && !options.nativeToolCalling &&
-                           modelBinding_.capabilities.streaming == CapabilitySupport::Supported &&
-                           streamObserver_
-                       ? provider_->sendMessageStreaming(
-                             request,
-                             [&](const QString& delta) {
-                                 outputEmitted = true;
-                                 // Planner protocol is private. Only AgentLoop's accepted
-                                 // final answer is published as assistant content.
-                                 Q_UNUSED(delta);
-                             },
-                             streamCancellationToken_)
-                       : provider_->sendRequest(request, options);
+            if (!useBoundedStreaming) {
+                return provider_->sendRequest(request, options);
+            }
+            ChatRequestOptions streamingOptions = options;
+            streamingOptions.requireBoundedStreaming = true;
+            QString streamedPlannerText;
+            plannerStreamOverflow = false;
+            return provider_->sendMessageStreaming(
+                request,
+                [&](const QString& delta) {
+                    // Deltas arriving after cancellation are ignored and never
+                    // accumulated: no planner text may be accepted late.
+                    if (streamCancellationToken_ && streamCancellationToken_->load()) {
+                        return;
+                    }
+                    outputEmitted = true;
+                    // Planner protocol is private. Raw deltas are never published
+                    // as ModelOutputDelta (Only AgentLoop's accepted final answer
+                    // is published as assistant content). Accumulate internally
+                    // under a fixed safety ceiling instead.
+                    if (streamedPlannerText.size() + delta.size() > kMaxPlannerStreamedChars) {
+                        plannerStreamOverflow = true;
+                        return;
+                    }
+                    streamedPlannerText.append(delta);
+                },
+                streamCancellationToken_, streamingOptions);
         };
         const auto sendBoundRequest = [&]() {
             if (serializeProviderRequests_ && providerSerialization_) {
@@ -345,6 +375,13 @@ AgentStepDecision LlmAgentRuntime::nextStep(const QString& goal,
             return send();
         };
         auto reply = sendBoundRequest();
+        if (plannerStreamOverflow) {
+            AgentStepDecision failure;
+            failure.kind = AgentStepDecision::Kind::GiveUp;
+            failure.reason =
+                QStringLiteral("Planner streamed output exceeded the internal safety limit.");
+            return failure;
+        }
         int totalAttempts = qMax(1, reply.attempts);
         const bool transient =
             (reply.category == ChatProviderErrorCategory::RateLimited && reply.httpStatus == 429) ||

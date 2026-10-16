@@ -141,6 +141,12 @@ struct ChatRequestOptions {
         QString content;
     };
     QList<ToolResult> toolResults;
+    // Explicit bounded-streaming requirement. A caller sets this when it needs the
+    // provider to enforce a finite request deadline over the streaming transport.
+    // A provider that cannot guarantee a finite deadline must reject instead of
+    // running unbounded. A zero/absent deadline never satisfies a request that
+    // explicitly requires bounded streaming.
+    bool requireBoundedStreaming = false;
 };
 
 inline QString chatProviderStatusName(ChatProviderStatus status) {
@@ -182,6 +188,12 @@ public:
     virtual bool supportsStreaming() const {
         return false;
     }
+    // Explicit bounded-streaming capability. Declaring or overriding streaming
+    // support alone is not a bounded-streaming claim; a provider must opt in here
+    // and implement the options-carrying streaming entry point below.
+    virtual bool supportsBoundedStreaming() const {
+        return false;
+    }
     virtual ChatProviderConcurrency concurrency() const {
         return ChatProviderConcurrency::Unknown;
     }
@@ -189,6 +201,27 @@ public:
                                                    const std::function<void(const QString&)>&,
                                                    const std::shared_ptr<std::atomic_bool>&) {
         return sendMessage(message);
+    }
+    // Bounded streaming contract. Carries the caller's finite request deadline and
+    // cancellation token into the streaming transport. Providers that cannot
+    // enforce a finite deadline must not claim supportsBoundedStreaming(); this
+    // default rejects explicitly rather than silently discarding the required
+    // deadline or running unbounded.
+    virtual ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) {
+        Q_UNUSED(message);
+        Q_UNUSED(onDelta);
+        Q_UNUSED(cancellationToken);
+        Q_UNUSED(options);
+        ChatProviderReply reply;
+        reply.errorMessage =
+            QStringLiteral("Bounded streaming is unavailable through this provider.");
+        reply.error = ChatProviderReply::Error::CapabilityRejected;
+        reply.category = ChatProviderErrorCategory::CapabilityUnsupported;
+        reply.lifecycle = ChatRequestLifecycle::Failed;
+        return reply;
     }
 };
 

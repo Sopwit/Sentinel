@@ -73,6 +73,9 @@ struct LocalInferenceOptions {
     bool streamingRequested = false;
     bool cancellationRequested = false;
     std::shared_ptr<std::atomic_bool> cancellationToken;
+    // Explicit bounded requirement. When set, this streaming request must resolve
+    // to a positive deadline; the transport refuses instead of waiting unbounded.
+    bool requireBoundedStreaming = false;
 };
 
 struct LocalInferenceRequest {

@@ -717,11 +717,13 @@ public:
 // Probe the actual LlmAgentRuntime dispatch contract without forcing deadlines to zero.
 class CancellationProbeProvider final : public IChatProvider {
 public:
+    using IChatProvider::sendMessageStreaming;
     bool native = false, cooperative = false;
     QString artifact, readPath;
     std::atomic_int requests{0}, streamRequests{0}, emittedDeltas{0}, cancellationAcks{0},
         freshRequests{0};
     std::atomic_bool barrierTimedOut{false}, fresh{false};
+    std::atomic_bool originalRequireBounded{false};
     QSemaphore entered, release;
     std::shared_ptr<std::atomic_bool> originalToken, freshToken;
     int originalDeadline = 0;
@@ -733,6 +735,11 @@ public:
         return ChatProviderStatus::Ready;
     }
     bool supportsStreaming() const override {
+        return true;
+    }
+    // Explicit bounded-streaming opt-in: this fixture implements the actual
+    // deadline-aware streaming interface below, so the planner may route to it.
+    bool supportsBoundedStreaming() const override {
         return true;
     }
     ChatProviderConcurrency concurrency() const override {
@@ -770,22 +777,43 @@ public:
             barrierTimedOut.store(true);
         return lateReply();
     }
+    // Legacy streaming entry point retained for compatibility.
     ChatProviderReply
     sendMessageStreaming(const QString&, const std::function<void(const QString&)>& delta,
                          const std::shared_ptr<std::atomic_bool>& token) override {
+        return streamBounded(delta, token, {}, false);
+    }
+    // Deadline-aware bounded streaming contract used by the planner.
+    ChatProviderReply sendMessageStreaming(const QString&,
+                                           const std::function<void(const QString&)>& delta,
+                                           const std::shared_ptr<std::atomic_bool>& token,
+                                           const ChatRequestOptions& options) override {
+        return streamBounded(delta, token, options, options.requireBoundedStreaming);
+    }
+
+private:
+    ChatProviderReply streamBounded(const std::function<void(const QString&)>& delta,
+                                    const std::shared_ptr<std::atomic_bool>& token,
+                                    const ChatRequestOptions& options, bool bounded) {
         ++streamRequests;
         originalToken = token;
+        originalDeadline = options.deadlineMs;
+        originalNative = options.nativeToolCalling;
+        originalRequireBounded.store(bounded);
+        // The first real delta is delivered while the provider stream is active
+        // and before any cancellation is requested.
         delta(QStringLiteral("synthetic-first-delta"));
         ++emittedDeltas;
         entered.release();
         if (!release.tryAcquire(1, kBarrierTimeoutMs))
             barrierTimedOut.store(true);
+        // This late delta is delivered after cancellation and must never be
+        // accepted or published by the runtime.
         delta(QStringLiteral("synthetic-late-delta"));
         ++emittedDeltas;
         return lateReply();
     }
 
-private:
     ChatProviderReply lateReply() {
         ChatProviderReply reply;
         if (cooperative && originalToken && originalToken->load()) {
@@ -3733,21 +3761,32 @@ private:
             QCOMPARE(event.providerId, QStringLiteral("ollama"));
             QCOMPARE(event.modelId, QStringLiteral("original-model"));
         }
-        if (!firstDeltaReceived) {
+        // Bounded planner streaming is the selected dispatch for text-only
+        // requests when the provider explicitly implements the deadline-aware
+        // contract. Native tool calls and structured output stay non-streaming.
+        if (!native) {
+            QVERIFY2(firstDeltaReceived,
+                     "bounded planner streaming never delivered a first provider delta");
+            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
+            QCOMPARE(provider->streamRequests.load(), 1);
+            QCOMPARE(provider->requests.load(), 0);
+            // The first delta arrived before cancellation; the late delta after
+            // cancellation was delivered but never accepted.
+            QCOMPARE(provider->emittedDeltas.load(), 2);
+            QCOMPARE(provider->originalDeadline, 120000);
+            QVERIFY(provider->originalRequireBounded.load());
+            QCOMPARE(provider->originalNative, false);
+            QCOMPARE(planner.modelBinding().capabilities.streaming, CapabilitySupport::Supported);
+        } else {
+            // There is no verified incremental native tool-call assembly contract,
+            // so native requests must remain on the bounded non-streaming path.
+            QCOMPARE(firstDeltaReceived, false);
             QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
             QCOMPARE(provider->streamRequests.load(), 0);
             QCOMPARE(provider->emittedDeltas.load(), 0);
             QCOMPARE(provider->requests.load(), 1);
             QCOMPARE(provider->originalDeadline, 120000);
-            QCOMPARE(provider->originalNative, native);
-            // Streaming is advertised by the frozen binding, yet the production
-            // router cannot select it: options.deadlineMs is fixed at 120000 and the
-            // streaming branch requires zero, while sendMessageStreaming cannot carry
-            // the per-request deadline at all.
-            QCOMPARE(planner.modelBinding().capabilities.streaming, CapabilitySupport::Supported);
-        } else {
-            QCOMPARE(count(session, AgentEventType::ModelOutputDelta), 0);
-            QCOMPARE(provider->emittedDeltas.load(), 2);
+            QCOMPARE(provider->originalNative, true);
         }
         QVERIFY(!runtime.approve(session, true));
         QVERIFY(!runtime.cancel(session));
@@ -3755,6 +3794,9 @@ private:
         QVERIFY(nextBinding.ok());
         nextBinding.binding.capabilities.structuredOutput = CapabilitySupport::Unsupported;
         nextBinding.binding.capabilities.nativeToolCalling = CapabilitySupport::Unsupported;
+        // The subsequent task deliberately uses the bounded non-streaming path to
+        // prove the fallback stays intact on the same runtime.
+        nextBinding.binding.capabilities.streaming = CapabilitySupport::Unsupported;
         provider->fresh.store(true);
         planner.bindModel(nextBinding.binding, nextBinding.provider);
         const auto next = runtime.createSession();
@@ -3794,16 +3836,16 @@ private:
                 << "runtime-deltas=" << count(session, AgentEventType::ModelOutputDelta)
                 << "cancel-ack=" << provider->cancellationAcks.load()
                 << "next-read=" << handler.counts.value("read-file");
-        if (requireStream && !firstDeltaReceived)
-            QSKIP(
-                "COR-11 after-first-delta remains blocked by the existing provider contract: "
-                "LlmAgentRuntime fixes options.deadlineMs=120000 but its streaming branch requires "
-                "zero, and IChatProvider::sendMessageStreaming(message,onDelta,token) cannot carry "
-                "ChatRequestOptions, so removing the guard would drop the deadline (the provider's "
-                "own timeout may be 0 = unbounded) instead of preserving it. The planner delta "
-                "callback also intentionally discards private protocol. No end-to-end "
-                "streaming/tool-assembly coverage is claimed; see the transport-level and "
-                "native-assembly notes in P1-01.5.");
+        if (requireStream && native)
+            QSKIP("COR-11 native incremental tool-call assembly remains explicitly blocked: "
+                  "IChatProvider exposes no typed incremental tool-argument assembly event, so a "
+                  "partially streamed native call could only be dispatched after a validated "
+                  "terminal assembly. This fixture asserts the native request stays on the bounded "
+                  "non-streaming path (one sendRequest, zero streamed deltas, zero public deltas) "
+                  "and does not invent an assembly contract.");
+        if (requireStream && !native && !firstDeltaReceived)
+            QVERIFY2(false, "the bounded planner stream must start for a text-only request; the "
+                            "after-first-delta cancellation oracle cannot be satisfied");
     }
 
     void exerciseIndependentOracle(int corpus, const QString& variant) {
