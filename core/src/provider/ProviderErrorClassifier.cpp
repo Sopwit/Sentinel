@@ -62,7 +62,7 @@ QString ProviderErrorClassifier::userMessage(const ProviderError& error) {
     case ProviderErrorCategory::QuotaExceeded:
         return "Quota exceeded. Please check your plan.";
     default:
-        return QStringLiteral("Error: %1").arg(error.message);
+        return "Provider request failed.";
     }
 }
 

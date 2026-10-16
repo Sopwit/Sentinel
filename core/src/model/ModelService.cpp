@@ -608,6 +608,11 @@ public:
 
     ChatProviderReply sendRequest(const QString& message,
                                   const ChatRequestOptions& options) override {
+        if (!options.images.isEmpty() &&
+            binding_.capabilities.visionInput == CapabilitySupport::Unsupported)
+            return providerFailure(QStringLiteral("Selected model does not support image input."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
         if ((options.nativeToolCalling &&
              binding_.capabilities.nativeToolCalling != CapabilitySupport::Supported) ||
             (options.structuredOutput &&
