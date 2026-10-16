@@ -1,5 +1,7 @@
 # P1-04.2 — Linux / CI IPC Regression Validation
 
+> Editorial note (2026-10-16, SEC-01): Only the local-path identifier in the historical `TMPDIR` example was redacted. Test results, command semantics and conclusions are unchanged; the placeholder denotes a temporary directory on the repository filesystem.
+
 Date: 2026-10-16. Finding F02; criterion AC-P1-04. Previous investigation: `docs/audits/P1_04_IPC_HANDSHAKE_INVESTIGATION.md` (macOS, final digest `a1b969…c2508`). Scope: Linux regression validation of the already-committed P1-04 IPC reader correction plus static review and CI-matrix coverage analysis. No transport redesign, no source changes, no commits/pushes, no acceptance-matrix edits, no remote GitHub writes.
 
 ## 1. Safety and Baseline
@@ -103,7 +105,7 @@ All commands used the repository's actual manifest path (`cli/Cargo.toml`).
 | `python3 tools/branding/check.py` | — | PASS (5,226 source files; 69 branding files) |
 | `git diff --check` | — | clean |
 
-**Environment failure classified (not a product failure):** first workspace run on this host failed one mascot test, `tests::review_catalog_accepts_legacy_manifest_and_rejects_invalid_staged_timing`, panicking with `Os { code: 18, kind: CrossesDevices, "Invalid cross-device link" }` at `crates/sentinel-mascot/src/tests.rs:584`. Root cause: the test `fs::hard_link`s fixtures from the repository tree into `std::env::temp_dir()`; on this machine `/tmp` is `tmpfs` (device 43) while the repository is on `/dev/sda3` (device 55), so cross-filesystem hard links are refused by the kernel. This is a test-fixture/deployment assumption, not IPC or mascot product logic — it was masked on prior hosts where `/tmp` shares the repo filesystem. No source was changed; the test passed 22/22 when the single invocation used a `TMPDIR` on the repository filesystem (`export TMPDIR=/home/sopwith/.local/tmp`). The original failed log is retained in the unfiltered workspace log; later records use the accommodation and are reproducible. Hosted CI defaults its temp dir onto the same filesystem as the workspace, so the workflow is unaffected there.
+**Environment failure classified (not a product failure):** first workspace run on this host failed one mascot test, `tests::review_catalog_accepts_legacy_manifest_and_rejects_invalid_staged_timing`, panicking with `Os { code: 18, kind: CrossesDevices, "Invalid cross-device link" }` at `crates/sentinel-mascot/src/tests.rs:584`. Root cause: the test `fs::hard_link`s fixtures from the repository tree into `std::env::temp_dir()`; on this machine `/tmp` is `tmpfs` (device 43) while the repository is on `/dev/sda3` (device 55), so cross-filesystem hard links are refused by the kernel. This is a test-fixture/deployment assumption, not IPC or mascot product logic — it was masked on prior hosts where `/tmp` shares the repo filesystem. No source was changed; the test passed 22/22 when the single invocation used a `TMPDIR` on the repository filesystem (`export TMPDIR=<REDACTED_LOCAL_PATH>`). The original failed log is retained in the unfiltered workspace log; later records use the accommodation and are reproducible. Hosted CI defaults its temp dir onto the same filesystem as the workspace, so the workflow is unaffected there.
 
 ## 7. CI Coverage (`.github/workflows/ci-rust.yml`)
 
