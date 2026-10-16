@@ -389,3 +389,11 @@ add_executable(test_provider_certification_root
 target_include_directories(test_provider_certification_root PRIVATE ${PROJECT_SOURCE_DIR}/core/include)
 target_link_libraries(test_provider_certification_root PRIVATE Qt6::Core)
 add_test(NAME test_provider_certification_root COMMAND test_provider_certification_root)
+
+add_sentinel_core_test(test_model_lifecycle_ownership core/test_model_lifecycle_ownership.cpp)
+
+# P3-02: real helper reconciliation with synthetic IO; no model/process starts.
+qt_add_executable(test_local_model_runtime desktop/test_local_model_runtime.cpp)
+target_link_libraries(test_local_model_runtime PRIVATE sentinel_daemon_service Qt6::Test)
+add_test(NAME test_local_model_runtime COMMAND $<TARGET_FILE:test_local_model_runtime>)
+set_tests_properties(test_local_model_runtime PROPERTIES TIMEOUT 30)
