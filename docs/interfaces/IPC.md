@@ -1,6 +1,6 @@
 # Local IPC v1
 
-Sentinel's headless daemon composes the existing C++ services with `ApplicationControllerBuilder`. Rust clients never link or reimplement the runtime. Production Qt Desktop uses `DaemonClient` and `DesktopRuntimeClient` for Chat, Agent, model selection and session state. Its bootstrap does not construct an ApplicationController or a local execution fallback.
+Sentinel's headless daemon composes the existing C++ services with `ApplicationControllerBuilder`. Rust clients never link or reimplement the runtime. Production Qt Desktop uses `DaemonClient` and `DesktopRuntimeClient` for Chat, Agent, model selection and session state. Its bootstrap does not construct an ApplicationController or a local execution fallback. Desktop may launch a detached daemon when needed (unless safe mode or `--no-daemon-start` disables it); the daemon still owns runtime execution. Rust CLI/TUI never auto-spawn it. The legacy C++ CLI uses a separate in-process path outside this contract.
 
 ## Canonical contract
 
