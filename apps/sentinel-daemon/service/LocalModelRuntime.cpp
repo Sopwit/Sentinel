@@ -97,7 +97,18 @@ void LocalModelRuntime::scheduleReconcile(int delayMs) {
     }
 }
 LocalModelRuntime::~LocalModelRuntime() {
-    beginShutdown();
+    shuttingDown_ = true;
+    timer_.stop();
+    ++selectionRevision_;
+    // Destruction must not publish through a borrowed controller/test callback.
+    // Disconnect before abort; reply adapters may emit finished synchronously.
+    const auto reply = probeReply_;
+    probeReply_.clear();
+    if (reply) {
+        QObject::disconnect(reply, nullptr, this, nullptr);
+        reply->abort();
+        reply->deleteLater();
+    }
     processes_.shutdown();
 }
 void LocalModelRuntime::beginShutdown() {
