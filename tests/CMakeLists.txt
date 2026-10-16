@@ -403,3 +403,7 @@ set_tests_properties(test_local_model_runtime PROPERTIES TIMEOUT 30)
 add_sentinel_core_test(test_vendor_cloud_contract core/test_vendor_cloud_contract.cpp)
 
 add_sentinel_core_test(test_endpoint_security_capability core/test_endpoint_security_capability.cpp)
+
+# P4-01: existing telemetry seam and existing execution-budget contracts only.
+add_sentinel_core_test(test_resource_telemetry_contract core/test_resource_telemetry_contract.cpp)
+add_sentinel_core_test(test_execution_budget_policy core/test_execution_budget_policy.cpp)
