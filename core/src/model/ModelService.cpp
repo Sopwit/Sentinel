@@ -375,14 +375,19 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
     LMStudioLocalInferenceClient client(config, timeoutMs);
     const auto completion = client.completeNativeChat(protocol, body, options.cancellationToken);
     if (!completion.ok) {
+        // Precedence: cancellation, an explicit native capability rejection, then the
+        // transport-classified status/category. The Qt UnknownContentError flag is a
+        // last-resort fallback so it cannot override a validated HTTP status such as
+        // 408 (Timeout) or 429 (RateLimited).
         const auto classified =
-            completion.cancelled   ? ChatProviderErrorCategory::Cancelled
-            : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+            completion.cancelled ? ChatProviderErrorCategory::Cancelled
             : completion.httpStatus == 400 || completion.httpStatus == 422 ||
                     completion.httpStatus == 501
                 ? ChatProviderErrorCategory::CapabilityUnsupported
             : completion.providerErrorCategory > 0
                 ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
+            : completion.malformed
+                ? ChatProviderErrorCategory::MalformedResponse
                 : ProviderRequestRuntime::classify(completion.httpStatus, completion.networkError,
                                                    completion.timedOut, completion.cancelled);
         const auto category = classified == ChatProviderErrorCategory::None
@@ -779,27 +784,32 @@ public:
             const bool rejected = (options.nativeToolCalling || options.structuredOutput) &&
                                   (completion.httpStatus == 400 || completion.httpStatus == 422 ||
                                    completion.httpStatus == 501);
+            // Precedence: cancellation, explicit context/capability rejection, then the
+            // transport-classified status/category. The Qt UnknownContentError flag is a
+            // last-resort fallback so a validated HTTP status such as 408 (Timeout) or
+            // 429 (RateLimited) is never collapsed into MalformedResponse.
             auto reply = providerFailure(
                 completion.error,
-                completion.cancelled   ? ChatProviderErrorCategory::Cancelled
-                : contextRejected      ? ChatProviderErrorCategory::RequestRejected
-                : rejected             ? ChatProviderErrorCategory::CapabilityUnsupported
-                : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                completion.cancelled ? ChatProviderErrorCategory::Cancelled
+                : contextRejected    ? ChatProviderErrorCategory::RequestRejected
+                : rejected           ? ChatProviderErrorCategory::CapabilityUnsupported
                 : completion.providerErrorCategory > 0
                     ? static_cast<ChatProviderErrorCategory>(completion.providerErrorCategory)
-                    : ProviderRequestRuntime::classify(completion.httpStatus,
-                                                       completion.networkError, completion.timedOut,
-                                                       completion.cancelled),
+                : completion.malformed ? ChatProviderErrorCategory::MalformedResponse
+                                       : ProviderRequestRuntime::classify(
+                                             completion.httpStatus, completion.networkError,
+                                             completion.timedOut, completion.cancelled),
                 rejected && !contextRejected ? ChatProviderReply::Error::CapabilityRejected
                                              : ChatProviderReply::Error::ProviderFailure,
                 completion.httpStatus, completion.attempts, completion.retrySummary);
             reply.requestId = completion.requestId;
-            return finish(reply, contextRejected        ? QStringLiteral("context_exhausted")
-                                 : completion.malformed ? QStringLiteral("response_format_failure")
-                                 : rejected ? QStringLiteral("provider_request_rejected")
+            return finish(reply, contextRejected ? QStringLiteral("context_exhausted")
+                                 : rejected      ? QStringLiteral("provider_request_rejected")
                                  : completion.cancelled ? QStringLiteral("cancelled")
                                  : completion.timedOut  ? QStringLiteral("timeout")
-                                                        : QStringLiteral("transport_failure"));
+                                 : reply.category == ChatProviderErrorCategory::MalformedResponse
+                                     ? QStringLiteral("response_format_failure")
+                                     : QStringLiteral("transport_failure"));
         }
         const auto choices = completion.body.value(QStringLiteral("choices")).toArray();
         if (choices.isEmpty()) {

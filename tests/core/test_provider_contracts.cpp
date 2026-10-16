@@ -52,6 +52,8 @@ private slots:
     void echoedSecretsDoNotEnterDiagnostics();
     void publicErrorsAreAllowlisted_data();
     void publicErrorsAreAllowlisted();
+    void httpFailureClassification_data();
+    void httpFailureClassification();
     void streamingErrorsNeverEmitPayload_data();
     void streamingErrorsNeverEmitPayload();
     void unknownClassifierMessageIsSafe();
@@ -647,13 +649,11 @@ void ProviderContractsTest::publicErrorsAreAllowlisted() {
         const auto reply = provider->sendRequest("PRIVATE_PAYLOAD", options);
         QVERIFY(!reply.success);
         QVERIFY(reply.lifecycle != ChatRequestLifecycle::Completed);
-        // Native 501 retains the existing capability rejection contract.
-        // Existing native projection treats Qt UnknownContentError on 408/429
-        // as malformed. Retain that independent behavior in this redaction fix.
-        const int expected = native && (status == 408 || status == 429)
-                                 ? int(ChatProviderErrorCategory::MalformedResponse)
-                                 : category;
-        QCOMPARE(int(reply.category), expected);
+        // Native 501 retains the existing capability rejection contract (equal to the
+        // classified status). HTTP 408/429 now surface their transport categories
+        // (Timeout/RateLimited) instead of collapsing to MalformedResponse solely
+        // because Qt reports UnknownContentError for those statuses.
+        QCOMPARE(int(reply.category), category);
         QVERIFY(reply.errorMessage.size() < 512);
         QVERIFY(!reply.errorMessage.contains("PRIVATE_"));
         QVERIFY(!QJsonDocument(reply.diagnostics).toJson().contains("PRIVATE_"));
@@ -663,6 +663,108 @@ void ProviderContractsTest::publicErrorsAreAllowlisted() {
     }
     QCOMPARE(server.requests.size(), 2); // bounded requests are never retried
     QVERIFY(logs.text().contains("http_status"));
+    QVERIFY(!logs.text().contains("PRIVATE_"));
+}
+
+void ProviderContractsTest::httpFailureClassification_data() {
+    QTest::addColumn<int>("mode");      // 0 ordinary, 1 native tool, 2 structured, 3 combined
+    QTest::addColumn<QString>("fault"); // empty, disconnect, timeout or cancel
+    QTest::addColumn<int>("status");
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("category");
+
+    using C = ChatProviderErrorCategory;
+    const QByteArray secret =
+        R"({"error":{"message":"PRIVATE_PAYLOAD PRIVATE_KEY PRIVATE_BEARER"}})";
+    struct HttpRow {
+        const char* name;
+        int status;
+        QByteArray body;
+        C category;
+    };
+    // Qt reports UnknownContentError for unmapped HTTP statuses such as 408/429, so
+    // these rows reproduce the transport/status precedence defect directly.
+    const QList<HttpRow> rows{
+        {"native-408", 408, secret, C::Timeout},
+        {"native-429", 429, secret, C::RateLimited},
+        {"408-malformed-body", 408, QByteArray("{broken PRIVATE_PAYLOAD"), C::Timeout},
+        {"429-malformed-body", 429, QByteArray("{broken PRIVATE_PAYLOAD"), C::RateLimited},
+        {"401", 401, secret, C::AuthenticationRequired},
+        {"403", 403, secret, C::AuthenticationRequired},
+        {"404", 404, secret, C::ModelNotFound},
+        {"500", 500, secret, C::ProviderUnavailable},
+        {"501", 501, secret, C::CapabilityUnsupported},
+        {"200-malformed", 200, QByteArray("{broken PRIVATE_PAYLOAD"), C::MalformedResponse},
+    };
+    struct FaultRow {
+        const char* name;
+        const char* fault;
+        C category;
+    };
+    const QList<FaultRow> faults{
+        {"disconnect", "disconnect", C::ConnectionFailed},
+        {"timeout", "timeout", C::Timeout},
+        {"cancel", "cancel", C::Cancelled},
+    };
+    for (int mode = 0; mode < 4; ++mode) {
+        for (const auto& row : rows)
+            QTest::newRow(qPrintable(QString("mode%1-%2").arg(mode).arg(row.name)))
+                << mode << QString() << row.status << row.body << int(row.category);
+        for (const auto& fault : faults)
+            QTest::newRow(qPrintable(QString("mode%1-%2").arg(mode).arg(fault.name)))
+                << mode << QString(fault.fault) << 0 << QByteArray() << int(fault.category);
+    }
+}
+
+void ProviderContractsTest::httpFailureClassification() {
+    QFETCH(int, mode);
+    QFETCH(QString, fault);
+    QFETCH(int, status);
+    QFETCH(QByteArray, body);
+    QFETCH(int, category);
+    ProviderHttpFixture server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    auto token = std::make_shared<std::atomic_bool>(false);
+    server.respond = [&](QTcpSocket* socket, const auto&) {
+        if (fault == "cancel")
+            token->store(true);
+        else if (fault == "disconnect")
+            socket->abort();
+        else if (fault == "timeout")
+            return; // Retain the connection until the request deadline fires.
+        else
+            ProviderHttpFixture::reply(socket, body, status);
+    };
+    AppSettings settings(std::make_unique<InMemorySettingsStore>(), inMemoryTestCredentialStore());
+    settings.setNetworkMode("LocalOnly");
+    ModelService service(&settings);
+    service.setLmStudioEndpoint(server.endpoint().toString());
+    auto binding = nativeBinding("lm-studio");
+    binding.capabilities.structuredOutput = CapabilitySupport::Supported;
+    binding.capabilities.combinedToolsAndStructuredOutput = CapabilitySupport::Supported;
+    auto provider = service.constructProvider(binding);
+    ChatRequestOptions options;
+    options.deadlineMs = 500;
+    options.nativeToolCalling = mode & 1;
+    options.structuredOutput = mode & 2;
+    options.structuredSchemaName = "answer";
+    options.structuredSchema = {
+        {"type", "object"},
+        {"properties", QJsonObject{{"answer", QJsonObject{{"type", "integer"}}}}}};
+    options.tools = BuiltInToolProvider::descriptors();
+    options.cancellationToken = token;
+    ScopedProviderLogs logs;
+    const auto reply = provider->sendRequest("PRIVATE_PAYLOAD synthetic request", options);
+    QCOMPARE(server.requests.size(), 1); // bounded requests are never retried
+    QVERIFY(!reply.success);
+    QVERIFY(reply.lifecycle != ChatRequestLifecycle::Completed);
+    QCOMPARE(int(reply.category), category);
+    QCOMPARE(reply.attempts, 1);
+    if (fault.isEmpty())
+        QCOMPARE(reply.httpStatus, status);
+    QVERIFY(reply.errorMessage.size() < 512);
+    QVERIFY(!reply.errorMessage.contains("PRIVATE_"));
+    QVERIFY(!QJsonDocument(reply.diagnostics).toJson().contains("PRIVATE_"));
     QVERIFY(!logs.text().contains("PRIVATE_"));
 }
 
