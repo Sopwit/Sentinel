@@ -92,9 +92,16 @@ class LargeCatalog final : public core::IModelLibrarySourceAdapter {
 public:
     mutable int reads = 0;
     QList<core::ModelLibraryEntry> rows;
-    QString sourceId() const override { return "test-large-catalog"; }
-    QString providerId() const override { return {}; }
-    QList<core::ModelLibraryEntry> entries() const override { ++reads; return rows; }
+    QString sourceId() const override {
+        return "test-large-catalog";
+    }
+    QString providerId() const override {
+        return {};
+    }
+    QList<core::ModelLibraryEntry> entries() const override {
+        ++reads;
+        return rows;
+    }
 };
 class ShutdownGatePlanner final : public core::IAgentStepPlanner {
 public:
@@ -240,39 +247,67 @@ private slots:
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket socket;
         hello(socket, h.path);
-        auto page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
-                        .value("payload").toObject().value("properties").toObject();
-        QTRY_VERIFY_WITH_TIMEOUT(([&] {
-            page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
-                .value("payload").toObject().value("properties").toObject();
-            return page.value("totalModels").toInt() == 500;
-        })(), 5000);
+        auto page = request(socket, "model.helper_state",
+                            {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                        .value("payload")
+                        .toObject()
+                        .value("properties")
+                        .toObject();
+        QTRY_VERIFY_WITH_TIMEOUT(
+            ([&] {
+                page = request(socket, "model.helper_state",
+                               {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                           .value("payload")
+                           .toObject()
+                           .value("properties")
+                           .toObject();
+                return page.value("totalModels").toInt() == 500;
+            })(),
+            5000);
         QCOMPARE(page.value("totalModels").toInt(), 500);
         QVERIFY(page.value("nextOffset").toInt() > 0);
         const auto reads = catalog.reads;
         catalog.rows.clear(); // Background discovery changes while this client transfers pages.
         int count = page.value("models").toArray().size();
         while (page.value("nextOffset").toInt() >= 0) {
-            QCOMPARE(request(socket, "daemon.status").value("type").toString(), QString("response"));
-            page = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", page.value("nextOffset")}})
-                        .value("payload").toObject().value("properties").toObject();
+            QCOMPARE(request(socket, "daemon.status").value("type").toString(),
+                     QString("response"));
+            page =
+                request(socket, "model.helper_state",
+                        {{"component", "ggufLibraryFetcher"}, {"offset", page.value("nextOffset")}})
+                    .value("payload")
+                    .toObject()
+                    .value("properties")
+                    .toObject();
             count += page.value("models").toArray().size();
             QCOMPARE(page.value("totalModels").toInt(), 500);
             QCOMPARE(catalog.reads, reads);
         }
         QCOMPARE(count, 500);
-        const auto retained = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"},
-            {"offset", 0}, {"retain_models", true}}).value("payload").toObject().value("properties").toObject();
+        const auto retained =
+            request(socket, "model.helper_state",
+                    {{"component", "ggufLibraryFetcher"}, {"offset", 0}, {"retain_models", true}})
+                .value("payload")
+                .toObject()
+                .value("properties")
+                .toObject();
         QVERIFY(retained.value("modelsUnchanged").toBool());
         QVERIFY(retained.value("models").toArray().isEmpty());
         QCOMPARE(retained.value("totalModels").toInt(), 500);
         QCOMPARE(catalog.reads, reads);
-        request(socket, "model.helper_action", {{"component", "ggufLibraryFetcher"}, {"action", "cancel"}, {"value", ""}});
-        QTRY_VERIFY_WITH_TIMEOUT(([&] {
-            const auto state = request(socket, "model.helper_state", {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
-                .value("payload").toObject().value("properties").toObject();
-            return state.value("totalModels").toInt() == 0 && !state.value("fetching").toBool();
-        })(), 5000);
+        request(socket, "model.helper_action",
+                {{"component", "ggufLibraryFetcher"}, {"action", "cancel"}, {"value", ""}});
+        QTRY_VERIFY_WITH_TIMEOUT(
+            ([&] {
+                const auto state = request(socket, "model.helper_state",
+                                           {{"component", "ggufLibraryFetcher"}, {"offset", 0}})
+                                       .value("payload")
+                                       .toObject()
+                                       .value("properties")
+                                       .toObject();
+                return state.value("totalModels").toInt() == 0 && !state.value("fetching").toBool();
+            })(),
+            5000);
     }
     void deletesInactiveConversationWhileResponseIsRunning() {
         Harness h(test::DeterministicChatReply::Delayed);
@@ -286,14 +321,21 @@ private slots:
         hello(chat, h.path);
         hello(control, h.path);
         QCOMPARE(request(chat, "chat.send", {{"session_id", active}, {"text", "Hold response"}})
-                     .value("type").toString(), QString("response"));
-        const auto deleted = request(control, "desktop.action", {{"action", "requestPermanentDeleteConversation"},
-            {"session_id", active}, {"arguments", QJsonArray{inactive}}});
+                     .value("type")
+                     .toString(),
+                 QString("response"));
+        const auto deleted = request(control, "desktop.action",
+                                     {{"action", "requestPermanentDeleteConversation"},
+                                      {"session_id", active},
+                                      {"arguments", QJsonArray{inactive}}});
         QVERIFY(deleted.value("payload").toObject().value("accepted").toBool());
         QCOMPARE(h.controller->activeConversationId(), active);
-        const auto refused = request(control, "desktop.action", {{"action", "requestPermanentDeleteConversation"},
-            {"session_id", active}, {"arguments", QJsonArray{active}}});
-        QCOMPARE(refused.value("payload").toObject().value("code").toString(), QString("runtime-busy"));
+        const auto refused = request(control, "desktop.action",
+                                     {{"action", "requestPermanentDeleteConversation"},
+                                      {"session_id", active},
+                                      {"arguments", QJsonArray{active}}});
+        QCOMPARE(refused.value("payload").toObject().value("code").toString(),
+                 QString("runtime-busy"));
     }
     void respondsToPing() {
         Harness h;
@@ -902,9 +944,11 @@ private slots:
                 .toObject();
         const auto sessionId = created["session_id"].toString();
         QVERIFY(!sessionId.isEmpty());
-        QCOMPARE(
-            request(fastClient, "session.attach", {{"session_id", sessionId}})["type"].toString(),
-            QString("response"));
+        QCOMPARE(request(fastClient, "session.attach",
+                         {{ "session_id",
+                            sessionId }})["type"]
+                     .toString(),
+                 QString("response"));
 
         int slowFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
         QVERIFY(slowFd >= 0);
@@ -917,23 +961,24 @@ private slots:
         std::memcpy(address.sun_path, path.constData(), path.size() + 1);
         QCOMPARE(::connect(slowFd, reinterpret_cast<sockaddr*>(&address), sizeof(address)), 0);
 
-        const auto helloMsg =
-            QJsonDocument(message("hello", {{"client_id", "slow-reader"},
-                                           {"major", 1},
-                                           {"minor", 0},
-                                           {"capabilities", QJsonArray{}}}))
-                .toJson(QJsonDocument::Compact) +
-            '\n';
+        const auto helloMsg = QJsonDocument(message("hello", {{"client_id", "slow-reader"},
+                                                              {"major", 1},
+                                                              {"minor", 0},
+                                                              { "capabilities",
+                                                                QJsonArray {} }}))
+                                  .toJson(QJsonDocument::Compact) +
+                              '\n';
         QCOMPARE(::write(slowFd, helloMsg.constData(), helloMsg.size()), helloMsg.size());
         QTest::qWait(50);
         char buf[8192];
         ssize_t n = ::read(slowFd, buf, sizeof(buf));
         QVERIFY(n > 0);
 
-        const auto attachMsg =
-            QJsonDocument(message("session.attach", {{"session_id", sessionId}}))
-                .toJson(QJsonDocument::Compact) +
-            '\n';
+        const auto attachMsg = QJsonDocument(message("session.attach",
+                                                     {{ "session_id",
+                                                        sessionId }}))
+                                   .toJson(QJsonDocument::Compact) +
+                               '\n';
         QCOMPARE(::write(slowFd, attachMsg.constData(), attachMsg.size()), attachMsg.size());
         QTest::qWait(50);
         n = ::read(slowFd, buf, sizeof(buf));
@@ -949,8 +994,9 @@ private slots:
         h.controller->modelService()->acceptOllamaDiscovery(
             catalog, h.controller->modelService()->beginProviderHealthObservation());
 
-        const auto startResp = request(fastClient, "agent.start",
-                                       {{"session_id", sessionId}, {"text", "produce backpressure"}});
+        const auto startResp =
+            request(fastClient, "agent.start",
+                    {{"session_id", sessionId}, {"text", "produce backpressure"}});
         QCOMPARE(startResp["type"].toString(), QString("response"));
         const auto runId = startResp["payload"].toObject()["run_id"].toString();
         QVERIFY(!runId.isEmpty());
@@ -982,14 +1028,15 @@ private slots:
 
         QTest::qWait(100);
         char drainBuf[1024];
-        while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {}
+        while (::read(slowFd, drainBuf, sizeof(drainBuf)) > 0) {
+        }
         const ssize_t closedRead = ::read(slowFd, drainBuf, sizeof(drainBuf));
         QVERIFY(closedRead <= 0);
         ::close(slowFd);
 
         QLocalSocket freshClient;
         hello(freshClient, h.path);
-        const auto snapshot = request(freshClient, "session.attach", {{"session_id", sessionId}});
+        const auto snapshot = request(freshClient, "session.attach", {{ "session_id", sessionId }});
         QCOMPARE(snapshot["type"].toString(), QString("response"));
         const auto snapPayload = snapshot["payload"].toObject();
         QCOMPARE(snapPayload["state"].toString(), QString("completed"));
@@ -1109,9 +1156,9 @@ private slots:
         QCOMPARE(payload["output"].toString(), QString{});
         QVERIFY(payload["approval_id"].toString().isEmpty());
 
-        const auto replayResp = request(
-            s2, "approval.respond",
-            {{"run_id", runId}, {"approval_id", approvalId}, {"allow", true}});
+        const auto replayResp =
+            request(s2, "approval.respond",
+                    {{"run_id", runId}, {"approval_id", approvalId}, {"allow", true}});
         QCOMPARE(replayResp["type"].toString(), QString("error"));
         QCOMPARE(replayResp["payload"].toObject()["code"].toString(), QString("invalid-approval"));
     }
