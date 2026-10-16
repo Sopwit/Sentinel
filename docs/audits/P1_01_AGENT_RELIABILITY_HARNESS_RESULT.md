@@ -443,3 +443,116 @@ COR-11 is now split cleanly: the reachable non-streaming cancellation/binding/ne
 **AC-P1-01 remains incomplete / not accepted.** Remaining gaps: COR-11 end-to-end planner streaming after the first delta and inline native tool-call assembly (both blocked on the narrow provider-contract change above); COR-01 broader truncation/absence variants; COR-06 complete Git/browser/sandbox/vision/model capability failures; COR-10 planning-stage/same-runtime variants; COR-16 mutated-resource-without-reread rejection; and the existing real-IPC/native-platform/live-model limits. No real model, cloud or upstream compute was contacted; no upstream compute release is claimed.
 
 Recommended next task: implement the `ChatRequestOptions::streaming` provider-contract change in the dedicated provider-contract track with its own bounded/cancel/malformed regression, then re-enable the `cor11_cancelAfterFirstStreamedDelta` rows and remove the two skips; independently plan the native tool-assembly event contract before touching `native-tool-assembly`. Then continue COR-01/06/10/16.
+
+## P1-01.6 — Remaining Deterministic Corpus Coverage
+
+Date: 2026-10-16 (Europe/Istanbul). Existing P1-01 worktree, branch `test/p1-01-agent-reliability`. The task brief expected HEAD `ef7c18990ecc7139648fad64fe650478d522cf87`; the worktree is actually at `35cf03c31d43794660a5eefc477bb3b8aba81667`, one committed harness commit ahead (`test(agent): repair COR-12/13 fixture defects and add COR-11 planner privacy coverage`), whose parent is the expected `ef7c1899`. `ef7c1899` is an ancestor, so the expected snapshot is intact; work proceeded from the actual HEAD. AGENTS.md, branch, HEAD, worktree list and dirty state were verified before editing. This continuation preserves every preceding report section verbatim (byte-identical 445-line prefix) and does not reset, stash, commit, push or merge.
+
+**No production code was changed in P1-01.6.** All work is test-only coverage in [test_agent_reliability_harness.cpp](../../tests/core/test_agent_reliability_harness.cpp): 24 new deterministic rows (7 COR-01, 10 COR-06, 4 COR-10, 3 COR-16) built on the existing `AgentRuntime`, `AgentLoop`, deterministic provider fixtures, `WorkspaceVerifier`, `TerminalAudit`, the existing permission gateway and the disposable profile/repository fixtures. No Agent Runtime, provider, `ModelService`, `IChatProvider`, Rust IPC, legacy CLI or workflow file was touched, and no approval, cancellation or evidence gate was weakened.
+
+### Confirmed source findings
+
+| Behavior | Verified source evidence |
+| --- | --- |
+| Truncated/incomplete observation metadata cannot ground an absence claim | [ObservationPolicy.cpp](../../core/src/agent/ObservationPolicy.cpp) `EvidencePolicy::evaluate` requires a fresh `Verified` (or qualifying `Partial`) match per requirement for `GroundingMode::Verified`; an incomplete structured observation is degraded to `Partial`/limited coverage, so the final gate rejects an unsupported absence conclusion |
+| Hidden-excluded listing cannot prove hidden absence | The same gate plus `ClaimGroundingResolver::resolve` for `HiddenEntriesExist`/`PathPatternExists`; `list-directory` excludes hidden entries by default and its `includeHidden:false` coverage is not exhaustive |
+| A mutated resource needs a fresh post-mutation observation | [AgentLoop.cpp](../../core/src/agent/AgentLoop.cpp) `acceptFinalAnswer` rejects a `Verified` final unless every `Operation` evidence record has a later, same-resource filesystem observation; `recordEvidence` marks prior same-resource observations `Stale` and sets the planner feedback "Observe the affected path before claiming its final filesystem state." |
+| A verified filesystem final must use the evidence-derived representation | The same `acceptFinalAnswer` requires `ClaimGroundingResolver::filesystemFinalAnswer` to agree with the proposed answer; the harness derives it through the existing `ScriptedPlanner::canonicalFinal` path (unchanged production policy) |
+| Classification, planning and first-dispatch are distinct cancellation checkpoints | `AgentLoop::runAsync`/`advanceAsync` and `AgentLoop::run`/`advance` check `cancellationRequested()` before classification exit, after planning and before dispatch; `AgentRuntime::cancel` sets `cancelRequested_` and the shared model token synchronously, so a cancel stamped while the worker is blocked in planning is still observed before any tool step |
+| Capability absence fails closed with a typed diagnostic | [ToolExecutionGateway.cpp](../../core/src/runtime/ToolExecutionGateway.cpp) `validatePlan`/`executeAsync` return `UnknownTool` for a missing/disabled handler and `Failed` (`RuntimeUnavailable`/`Unsupported`) for an unavailable handler or unsupported platform; no receipt is issued and no fallback tool is dispatched |
+
+### Whether production remediation was needed
+
+None. Every exercised case is already enforced by the existing runtime, evidence and gateway contracts. In particular the COR-16 "mutated resource without reread" requirement is **already** implemented by `acceptFinalAnswer`: the harness confirms the verified final is rejected and the run fails boundedly with the "Observe the affected filesystem state after the mutation" diagnostic, while a genuine reread grounds the same final. This is documented as verified production behaviour, not as an acceptance gap, and no production policy was modified. While building the fixtures the existing "evidence-derived scoped representation" requirement was also observed; both are existing policy, not defects.
+
+### COR-01 — extended truncation, missing and omitted-context variants
+
+`cor01_truncatedAndMissingEvidence` (7 rows) degrades the structured coverage metadata (`complete:false`, `truncated:true`) or removes required content while keeping genuine file content, then drives a fabricated `Verified` final through the real gates. All rows are read-only.
+
+| Scenario | Observed outcome |
+| --- | --- |
+| `truncated-listing-absence` | `list-directory` ran once (truncated); `Failed`, empty final, `lacks fresh filesystem evidence`; zero reads, no write |
+| `hidden-excluded-claim` | `Failed`, empty final, `cannot determine`; one listing, no write |
+| `empty-incomplete-read` | `Failed`, empty final; one read of the real file, incomplete metadata never grounds the "file is empty" claim |
+| `missing-required-file` | `Failed`, empty final; the fabricated "defines the parser" answer is never published |
+| `omitted-critical-dependency` | `Failed`, empty final containing `helper.h`; only the observed dependency was read |
+| `dependency-observed` | `Completed`; both dependencies read (two reads total) and a grounded final |
+| `truncated-listing-positive` | `Completed`; the genuinely observed file content grounds the final despite truncated listing metadata |
+
+Every row asserts `unauthorizedCalls == 0`, `executor.calls == 0`, zero `write-file` receipts and `WorkspaceVerifier::untouched()`.
+
+### COR-06 — capability-family negatives (injected metadata)
+
+`cor06_capabilityFamilyNegatives` (9 rows) and `cor06_modelProviderUnavailable` (1 row). Each case must produce a typed diagnostic, execute no receipt, dispatch no fallback tool/process and leave the workspace unchanged. **This exercises the injected capability registry/handler/descriptor metadata and a deterministic synthetic provider only; it does not exercise live Git, Playwright/Chromium, network, Whisper or real-model integrations, which remain unverified.**
+
+| Capability | Negative mechanism | Observed outcome |
+| --- | --- | --- |
+| Git (`git-status`) | handler `unavailableReason` | `Failed`/`Stuck`, "process sandbox are unavailable", no receipt |
+| Browser (`open-url`) | handler `unavailableReason` | typed refusal, no receipt |
+| Render/vision (`browser-screenshot`) | handler `unavailableReason` | typed refusal, no receipt |
+| Process/sandbox (`run-command`) | handler `unavailableReason` | typed refusal, no receipt |
+| Network (`web-fetch`) | handler `unavailableReason` | typed refusal, no receipt |
+| Speech (`voice-transcribe`) | handler `unavailableReason` | typed refusal, no receipt |
+| Missing handler (`stat-path`) | descriptor registered without handler | `Tool unavailable`, `failureCategory == Unsupported`, no receipt |
+| Disabled tool (`read-file`) | `enabled = false` | `Tool unavailable`, `Unsupported`, no receipt |
+| Unsupported OS (`stat-path`) | all platforms `Unsupported` | "unsupported on this platform", no receipt |
+| Model/provider | synthetic provider unavailable (503-class) | `Failed`, `ProviderFailure`, empty final, active binding unchanged, no fallback tool/model |
+
+### COR-10 — planning-stage cancellation variants
+
+`cor10_planningStageCancellation` (3 rows) and `cor10_runtimePlanningBarrierAndFreshTask` (1 row), using the new deterministic `ScriptedPlanner` planning barrier (a semaphore, never a sleep).
+
+| Scenario | Observed outcome |
+| --- | --- |
+| Cancel before classification completes | `Cancelled`, planner never called (`planner.calls == 0`), no tool step |
+| Cancel before first dispatch | `Cancelled`, planning returned a tool decision but it was never dispatched (`planner.calls == 1`, zero receipts) |
+| Repeated cancel | exactly one terminal callback, `Cancelled`, no tool step |
+| Runtime planning barrier + fresh task | cancel stamped while genuine planning blocks on the worker; late planning result released after the cancel stamp is ignored; exactly one `AgentCancelled`; repeated cancel rejected without a second terminal; a fresh session on the same runtime completes with one authorized read and one `AgentCompleted`, no inherited cancellation state |
+
+All rows assert zero receipts, `executor.calls == 0`, `unauthorizedCalls == 0` and `WorkspaceVerifier::untouched()`.
+
+### COR-16 — mutated resource, reread and fabricated claim
+
+`cor16_mutatedResourceReread` (3 rows): an authorized mutation of `src/calc.cpp` plus a `Verified` final, with and without a genuine reread.
+
+| Scenario | Observed outcome |
+| --- | --- |
+| Mutated without reread | `Failed` (`UnableToComplete`); `rejectedFinalAnswers == 2`; abort reason "Observe the affected filesystem state after the mutation"; one read, one authorized write, changed set exactly `{src/calc.cpp}` |
+| Mutated with reread | `Completed`; non-empty grounded final; two reads, one authorized write, `rejectedFinalAnswers == 0` |
+| Fabricated claim after reread | `Failed`; the reread satisfies the mutation gate but the fabricated claim id is rejected ("unknown claim ID"); two reads, one write |
+
+All rows assert `unauthorizedCalls == 0`, `executor.calls == 0`, exactly one `write-file` receipt, and the changed-set/`WorkspaceVerifier` match against the exact expected content.
+
+### Terminal and privacy results
+
+- **Terminal**: each COR-10 runtime row publishes exactly one terminal event (`TerminalAudit::singleTerminal()`), and the cancelled session stays terminal against repeated cancel attempts.
+- **Privacy**: the added rows reuse the existing deterministic fixtures and publish no private planner protocol; the existing COR-11 privacy rows and the privacy scanner result are unchanged.
+
+### Validation
+
+| Check | Actual result |
+| --- | --- |
+| Focused COR-01/06/10/16 (24 new rows) | **26 passed, 0 failed, 0 skipped** (including `initTestCase`/`cleanupTestCase`) |
+| Complete Agent Reliability harness | **96 passed, 0 failed, 2 skipped** (~20.1 s); the two skips are the inherited, source-backed COR-11 after-first-delta blocking rows |
+| Real daemon/Desktop IPC fixtures (COR-17/18) | **Passed** both inside the harness run and as `test_agent_reliability_ipc` via CTest (`QT_QPA_PLATFORM=offscreen`) |
+| Complete CMake build + CTest | `cmake --build --preset tests` clean; `ctest --preset tests` **129/129 passed**, 154.13 s |
+| Formatting | `git diff -U0 | clang-format-diff.py -p1` clean after applying; local `clang-format` is 23.1.3 versus the CI-pinned 18.1.8 |
+| Static analysis | CI clang-tidy scope covers `apps/core/integrations/plugins`, not `tests`. A scoped `clang-tidy -p build/tests tests/core/test_agent_reliability_harness.cpp` reports only `readability-braces-around-statements` on the added single-statement `if`/`for` (the same style as the 100 pre-existing occurrences); no new check category and no `bugprone`/`clang-analyzer` finding was introduced |
+| Generated IPC/Desktop contracts | `python3 tools/ipc/generate.py --check` and `tools/ipc/generate_desktop.py --check` both exit 0; generated contracts unchanged |
+| Whitespace / privacy | `git diff --check` clean; `tools/analysis/check_personal_paths.py` still flags only the inherited, unmodified `docs/audits/P1_04_2_LINUX_CI_VALIDATION.md` (this finding is intentionally neither concealed nor "fixed" in this task) |
+
+### Preservation and hashes
+
+Only [test_agent_reliability_harness.cpp](../../tests/core/test_agent_reliability_harness.cpp) and this report are changed in this continuation. The entire prior report is an unchanged byte prefix (pre-append SHA-256 `c1fa145de3e9f5243183055d90cfe6064bb0d63596422bfbe69bd375a74bb310`, 445 lines). All P1-01–P1-01.5 work is preserved; no P2 worktree was modified; no approval, cancellation or evidence gate was weakened and no security bypass was added. Branch/HEAD are unchanged; nothing was staged, committed, pushed, merged, reset or stashed.
+
+- Harness source SHA-256: `1ce3356abb2de2cd33be90e82cd7bdc31f7b41a1c242326b5dff7d17a4aca2ed`
+- Harness executable SHA-256: `6f1073d5296aae7cad01a69c44516e8cae5522e1d7e964228f5f1ca7ef47d2a5`
+- Inherited privacy finding SHA-256 (unchanged): `f00a8bcd35c4ad5d47d2ef4db070f4f9f3e0b85d86f4bad7209db34f3d67809d`
+
+### Assessment
+
+The remaining deterministic COR-01, COR-06, COR-10 and COR-16 corpus variants are now covered by test-only rows against the existing runtime and its real gates. COR-16's mutation-without-reread requirement is confirmed to be **already enforced** by production and is documented as verified behaviour rather than a gap. No production change, fallback, silent elevation or misleading success was introduced.
+
+**AC-P1-01 remains incomplete / not accepted.** The previously listed gaps that remain are: COR-11 end-to-end planner streaming after the first delta and inline native tool-call assembly (still blocked on the `ChatRequestOptions::streaming` provider-contract change recorded in P1-01.5); the COR-06 capability rows exercise injected registry/handler/provider metadata rather than live Git/browser/Playwright/network/Whisper or real-model integrations; and the existing real-IPC/native-platform/live-model limits. No real model, cloud or upstream compute was contacted; no upstream compute release is claimed.
+
+Recommended next task: in the dedicated provider-contract track, implement `ChatRequestOptions::streaming` with its bounded/cancel/malformed regression and independently plan the native tool-assembly event contract; then re-enable the two skipped `cor11_cancelAfterFirstStreamedDelta` rows. Separately, add live platform/model capability evidence (or explicitly scoped platform-disabled rows) before any COR-06 live-integration claim.
