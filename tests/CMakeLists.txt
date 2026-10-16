@@ -55,7 +55,10 @@ add_test(NAME test_chat_surface COMMAND settings_ui_certification_probe --chat-s
 add_test(NAME test_models_surface COMMAND settings_ui_certification_probe --models-smoke)
 add_test(NAME test_settings_surface COMMAND settings_ui_certification_probe --settings-smoke)
 add_test(NAME test_tray_surface COMMAND settings_ui_certification_probe --tray-smoke)
-set_tests_properties(test_tray_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+# The tray acceptance test exercises real animation assets, including external
+# build trees where executable-ancestor development discovery cannot find them.
+set_tests_properties(test_tray_surface PROPERTIES ENVIRONMENT
+    "QT_QPA_PLATFORM=offscreen;SENTINEL_CORE_WARDEN_ASSET_ROOT=${CMAKE_SOURCE_DIR}/assets/core-warden")
 set_tests_properties(test_settings_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 set_tests_properties(test_models_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 set_tests_properties(test_chat_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -219,6 +222,11 @@ add_sentinel_core_test(test_llm_agent_runtime core/test_llm_agent_runtime.cpp)
 add_sentinel_core_test(test_observation_policy core/test_observation_policy.cpp)
 add_sentinel_core_test(test_real_tool_executor_tools core/test_real_tool_executor_tools.cpp)
 add_sentinel_core_test(test_process_executor core/test_process_executor.cpp)
+qt_add_executable(canonical_path_probe helpers/canonical_path_probe.cpp)
+target_link_libraries(canonical_path_probe PRIVATE Qt6::Core)
+target_compile_definitions(test_process_executor PRIVATE
+    CANONICAL_PATH_PROBE="$<TARGET_FILE:canonical_path_probe>")
+add_dependencies(test_process_executor canonical_path_probe)
 add_sentinel_core_test(test_fuzzy_editor core/test_fuzzy_editor.cpp)
 add_sentinel_core_test(test_web_search_tool core/test_web_search_tool.cpp)
 add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)

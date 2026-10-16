@@ -5,6 +5,7 @@
 #include "sentinel/core/runtime/ProcessExecutor.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSignalSpy>
@@ -25,7 +26,62 @@ private slots:
     void cancellationAndShutdown();
     void macHostContainmentPreventsChildren();
     void macHostContainmentRestrictsFilesystem();
+    void macHostCanonicalizationPreservesReadBoundary();
 };
+
+void ProcessExecutorTest::macHostCanonicalizationPreservesReadBoundary() {
+#ifndef Q_OS_MACOS
+    QSKIP("macOS canonicalization and containment probe.");
+#else
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    // Match PluginHostSession's canonical authorized-path contract.
+    const auto root = QFileInfo(directory.path()).canonicalFilePath();
+    QVERIFY(!root.isEmpty());
+    const auto allowedDirectory = root + "/authorized/nested";
+    QVERIFY(QDir().mkpath(allowedDirectory));
+    const auto allowed = allowedDirectory + "/allowed.txt";
+    // This sibling sits beneath an ancestor whose metadata must be traversable,
+    // but its contents must not become readable as a consequence.
+    const auto denied = root + "/denied.txt";
+    for (const auto& path : {allowed, denied}) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write("CANONICAL_OK"), qint64(12));
+    }
+    for (const auto& path : {allowed, denied}) {
+        ProcessExecutor executor;
+        ProcessRequest request;
+        request.program = QString::fromUtf8(CANONICAL_PATH_PROBE);
+        request.arguments = {path};
+        request.workingDirectory = allowedDirectory;
+        SandboxExecutionPlan plan;
+        plan.workingDirectory = allowedDirectory;
+        plan.readablePaths = {allowedDirectory};
+        plan.forbidDetachedChildren = true;
+        request.sandbox = plan;
+        QByteArray error;
+        const auto id = executor.start(
+            request, {}, [&error](const QString&, ProcessStream stream, const QByteArray& bytes) {
+                if (stream == ProcessStream::Stderr)
+                    error += bytes;
+            });
+        QTRY_VERIFY_WITH_TIMEOUT(executor.record(id).state == ProcessState::Exited ||
+                                     executor.record(id).state == ProcessState::Failed,
+                                 5000);
+        const auto record = executor.record(id);
+        QCOMPARE(record.sandbox.enforcement, SandboxEnforcement::Enforced);
+        QVERIFY(record.sandbox.networkDenied);
+        QVERIFY(record.sandbox.processTreeControlled);
+        if (path == allowed) {
+            if (record.exitCode != 0)
+                qWarning() << error;
+            QCOMPARE(record.exitCode, 0);
+        } else
+            QVERIFY(record.exitCode != 0);
+    }
+#endif
+}
 
 void ProcessExecutorTest::macHostContainmentRestrictsFilesystem() {
 #ifndef Q_OS_MACOS

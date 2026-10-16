@@ -362,9 +362,13 @@ int main(int argc, char** argv) {
     if (traySmoke) {
         auto* panel = engine.rootObjects().first()->findChild<QQuickWindow*>("sentinelQuickPanel");
         auto* fixture = engine.rootObjects().first()->findChild<QObject*>("quickPanelFixture");
-        if (!panel || !fixture) return 70;
+        if (!panel || !fixture) { qWarning("Tray acceptance: panel/fixture missing (70)"); return 70; }
         panel->show();
         QTimer::singleShot(200, &app, [&, panel, fixture] {
+            auto fail = [&app](int code, const char* stage) {
+                qWarning() << "Tray acceptance failed:" << stage << "exit" << code;
+                app.exit(code);
+            };
             auto find = [](auto&& self, QQuickItem* parent, const QString& name) -> QQuickItem* {
                 if (parent->objectName() == name) return parent;
                 for (auto* child : parent->childItems()) if (auto* result = self(self, child, name)) return result;
@@ -373,34 +377,34 @@ int main(int argc, char** argv) {
             auto* prompt = find(find, panel->contentItem(), "quickPanelPrompt");
             auto* send = find(find, panel->contentItem(), "quickPanelSend");
             auto* provider = find(find, panel->contentItem(), "quickPanelProvider");
-            if (!prompt || !send || !provider || prompt->isEnabled() || send->isEnabled()) { app.exit(71); return; }
+            if (!prompt || !send || !provider || prompt->isEnabled() || send->isEnabled()) { fail(71, "initial disconnected controls"); return; }
             QVariantMap state{{"ready", true}, {"busy", false}, {"connection", "Connected"}, {"state", "idle"}, {"voiceState", "idle"}, {"voiceAvailable", false}, {"voiceTranscript", ""}, {"approvalCount", 0}, {"approval", QVariantMap{}}, {"preview", ""}};
             fixture->setProperty("state", state);
             QApplication::processEvents();
             prompt->setProperty("text", "Quick question");
             prompt->forceActiveFocus();
             QTest::keyClick(panel, Qt::Key_Return);
-            if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().isEmpty()) { app.exit(72); return; }
+            if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().isEmpty()) { fail(72, "Chat keyboard submission"); return; }
             prompt->setProperty("text", "line one");
             prompt->forceActiveFocus();
             QTest::keyClick(panel, Qt::Key_Return, Qt::ShiftModifier);
-            if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().contains('\n')) { app.exit(78); return; }
+            if (fixture->property("submissions").toInt() != 1 || !prompt->property("text").toString().contains('\n')) { fail(78, "Shift-Enter newline"); return; }
             auto* statusButton = find(find, panel->contentItem(), "quickPanelStatus");
             auto* statusPopup = panel->findChild<QObject*>("quickPanelStatusDetails");
-            if (!statusButton || !statusPopup) { app.exit(79); return; }
+            if (!statusButton || !statusPopup) { fail(79, "status popup objects"); return; }
             QMetaObject::invokeMethod(statusButton, "clicked");
             QTest::qWait(40);
-            if (!statusPopup->property("visible").toBool()) { app.exit(80); return; }
+            if (!statusPopup->property("visible").toBool()) { fail(80, "status popup opens"); return; }
             QTest::keyClick(panel, Qt::Key_Escape);
             QTest::qWait(80);
-            if (statusPopup->property("visible").toBool() || !panel->isVisible()) { app.exit(81); return; }
+            if (statusPopup->property("visible").toBool() || !panel->isVisible()) { fail(81, "Escape dismisses popup only"); return; }
             panel->setProperty("agentMode", true);
             prompt->setProperty("text", "Agent question");
             QTest::keyClick(panel, Qt::Key_Return);
-            if (fixture->property("submissions").toInt() != 2 || !fixture->property("lastAgent").toBool()) { app.exit(73); return; }
+            if (fixture->property("submissions").toInt() != 2 || !fixture->property("lastAgent").toBool()) { fail(73, "Agent keyboard submission"); return; }
             prompt->forceActiveFocus(Qt::TabFocusReason);
             QTest::keyClick(panel, Qt::Key_Tab);
-            if (!panel->activeFocusItem() || !panel->activeFocusItem()->isVisible()) { app.exit(74); return; }
+            if (!panel->activeFocusItem() || !panel->activeFocusItem()->isVisible()) { fail(74, "keyboard focus"); return; }
             state["preview"] = "Fixture response preview — no inference performed.";
             fixture->setProperty("state", state);
             QTest::qWait(80);
@@ -408,38 +412,38 @@ int main(int argc, char** argv) {
             for (int width : {420, 320}) {
                 panel->setWidth(width);
                 QApplication::processEvents();
-                if (provider->width() <= 0 || send->mapToScene(QPointF()).x() + send->width() > panel->width()) { app.exit(75); return; }
+                if (provider->width() <= 0 || send->mapToScene(QPointF()).x() + send->width() > panel->width()) { fail(75, "compact layout"); return; }
             }
             state["busy"] = true;
             fixture->setProperty("state", state);
             QApplication::processEvents();
-            if (prompt->isEnabled() || provider->isEnabled() || !send->isEnabled()) { app.exit(76); return; }
+            if (prompt->isEnabled() || provider->isEnabled() || !send->isEnabled()) { fail(76, "busy controls"); return; }
             auto* warden = qobject_cast<sentinel::desktop::CoreWardenItem*>(find(find, panel->contentItem(), "coreWardenPlayer"));
-            if (!warden || !warden->isVisible()) { app.exit(83); return; }
+            if (!warden || !warden->isVisible()) { fail(83, "Warden visible"); return; }
             // The fixture changes only panel UI state; no provider/runtime event is injected.
             warden->setAnimationState("thinking");
             warden->setAnimate(true);
             QElapsedTimer loadDeadline; loadDeadline.start();
             while (!warden->playing() && loadDeadline.elapsed() < 3000) QTest::qWait(10);
-            if (!warden->playing()) { app.exit(84); return; }
+            if (!warden->playing()) { fail(84, "Warden animation assets/load"); return; }
             panel->hide();
             QTest::qWait(300);
-            if (warden->playing() || warden->cachedFrames() != 0) { app.exit(85); return; }
+            if (warden->playing() || warden->cachedFrames() != 0) { fail(85, "hidden Warden releases frames"); return; }
             panel->show();
             loadDeadline.restart();
             while (!warden->playing() && loadDeadline.elapsed() < 3000) QTest::qWait(10);
-            if (!warden->playing()) { app.exit(86); return; }
+            if (!warden->playing()) { fail(86, "shown Warden resumes"); return; }
             wardenPreferences.setMode("off"); QTest::qWait(100);
-            if (warden->isVisible() || warden->cachedFrames() != 0) { app.exit(87); return; }
+            if (warden->isVisible() || warden->cachedFrames() != 0) { fail(87, "off mode releases frames"); return; }
             wardenPreferences.setMode("auto");
             warden->setAnimationState("idle"); warden->setAnimate(false);
             fixture->setProperty("error", "Fixture connection error");
             QApplication::processEvents();
             auto* error = find(find, panel->contentItem(), "quickPanelError");
-            if (!error || !error->isVisible() || error->property("text").toString() != "Fixture connection error") { app.exit(77); return; }
+            if (!error || !error->isVisible() || error->property("text").toString() != "Fixture connection error") { fail(77, "error presentation"); return; }
             fixture->setProperty("error", "request-timeout");
             QApplication::processEvents();
-            if (!error->property("text").toString().contains("daemon did not reply")) { app.exit(82); return; }
+            if (!error->property("text").toString().contains("daemon did not reply")) { fail(82, "timeout error summary"); return; }
             const auto evidence = qEnvironmentVariable("SENTINEL_TRAY_EVIDENCE_DIR");
             if (!evidence.isEmpty()) {
                 QDir().mkpath(evidence);
