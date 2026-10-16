@@ -4,6 +4,7 @@
 
 #include "commands/ChatCommand.h"
 #include "commands/ConfigCommand.h"
+#include "commands/ExitCodes.h"
 #include "commands/ModelCommand.h"
 #include "commands/StatusCommand.h"
 #include "sentinel/core/app/AppMetadata.h"
@@ -43,5 +44,5 @@ int main(int argc, char* argv[]) {
 
     std::cerr << "Unknown command: " << command.toStdString() << std::endl;
     std::cerr << "Run 'sentinel-cli' without arguments for usage details." << std::endl;
-    return 1;
+    return sentinel::cli::kExitUsage;
 }
