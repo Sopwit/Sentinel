@@ -6,6 +6,8 @@
 #include "sentinel/core/model/ModelCategory.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
+#include "sentinel/core/runtime/LocalInference.h"
+#include "sentinel/core/runtime/LocalInferenceTransport.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -115,7 +117,8 @@ struct JsonReply {
 
 JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager,
                   const QMap<QByteArray, QByteArray>& headers = {},
-                  const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+                  const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {}) {
     const auto decision = NetworkPolicyService::instance().check(url);
     if (decision != NetworkDecision::Allowed) {
         JsonReply blocked;
@@ -123,15 +126,24 @@ JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* man
         blocked.error = NetworkPolicyService::code(decision);
         return blocked;
     }
-    QNetworkAccessManager localManager;
-    QNetworkAccessManager* activeManager = manager ? manager : &localManager;
+    if (!LMStudioConfig::isSecureTransportEndpoint(url)) {
+        JsonReply blocked;
+        blocked.category = ChatProviderErrorCategory::RequestRejected;
+        blocked.error = QStringLiteral("Invalid or insecure model discovery endpoint.");
+        return blocked;
+    }
+    std::unique_ptr<QNetworkAccessManager> localManager;
+    if (!manager)
+        localManager = networkFactory ? networkFactory->createManager()
+                                      : std::make_unique<QNetworkAccessManager>();
+    QNetworkAccessManager* activeManager = manager ? manager : localManager.get();
     QNetworkRequest request{url};
-    // NoLessSafeRedirectPolicy: follows HTTPS→HTTPS and HTTP→HTTPS redirects
-    // (required by Gemini and some other cloud API endpoints) while still
-    // blocking HTTPS→HTTP downgrades. Local Ollama endpoints never redirect,
-    // so this has no effect on them.
+    // Credentialed discovery fails closed on redirects: no credential is replayed
+    // to a new origin without an explicit per-hop policy boundary. Unauthenticated
+    // Online probes retain their existing no-downgrade redirect policy.
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                         NetworkPolicyService::instance().mode() == NetworkMode::Online
+                         NetworkPolicyService::instance().mode() == NetworkMode::Online &&
+                             headers.isEmpty() && !QUrlQuery(url).hasQueryItem(QStringLiteral("key"))
                              ? QNetworkRequest::NoLessSafeRedirectPolicy
                              : QNetworkRequest::ManualRedirectPolicy);
     for (auto it = headers.constBegin(); it != headers.constEnd(); ++it) {
@@ -163,6 +175,12 @@ JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* man
                          transport.httpStatus, transport.retryAfter, transport.category};
     }
 
+    if (transport.httpStatus >= 300 && transport.httpStatus < 400) {
+        reply->deleteLater();
+        return JsonReply{false, false, {}, QStringLiteral("Model discovery redirect rejected."),
+                         QNetworkReply::NoError, transport.httpStatus, {},
+                         ChatProviderErrorCategory::RequestRejected};
+    }
     const auto payload = reply->readAll();
     reply->deleteLater();
 
@@ -184,7 +202,8 @@ JsonReply getJsonOnce(const QUrl& url, int timeoutMs, QNetworkAccessManager* man
 JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr,
                   const QMap<QByteArray, QByteArray>& headers = {},
                   const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
-                  ProviderRequestMode mode = ProviderRequestMode::Discovery) {
+                  ProviderRequestMode mode = ProviderRequestMode::Discovery,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {}) {
     const auto requestId = ProviderRequestRuntime::requestId();
     const int maxAttempts = mode == ProviderRequestMode::HealthProbe ? 1 : 2;
     for (int attempt = 0; attempt < maxAttempts; ++attempt) {
@@ -196,10 +215,10 @@ JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager
             cancelled.error = QStringLiteral("Request cancelled.");
             return cancelled;
         }
-        auto reply = getJsonOnce(url, timeoutMs, manager, headers, cancellationToken);
+        auto reply = getJsonOnce(url, timeoutMs, manager, headers, cancellationToken, networkFactory);
         reply.requestId = requestId;
         reply.attempts = attempt + 1;
-        if (reply.category != ChatProviderErrorCategory::Offline)
+        if (reply.category == ChatProviderErrorCategory::None)
             reply.category = ProviderRequestRuntime::classify(
             reply.httpStatus, reply.networkError, reply.timedOut,
             cancellationToken && cancellationToken->load());
@@ -1585,8 +1604,9 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 namespace sentinel::core {
 QList<OllamaModelSummary> fetchOpenAiCompatibleModels(
     const QUrl& url, int timeoutMs, const QMap<QByteArray, QByteArray>& headers, QString* errorOut,
-    const std::shared_ptr<std::atomic_bool>& cancellationToken, ProviderDiscoveryOutcome* outcome) {
-    const auto reply = getJson(url, timeoutMs, nullptr, headers, cancellationToken);
+    const std::shared_ptr<std::atomic_bool>& cancellationToken, ProviderDiscoveryOutcome* outcome,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory) {
+    const auto reply = getJson(url, timeoutMs, nullptr, headers, cancellationToken, ProviderRequestMode::Discovery, networkFactory);
     if (outcome)
         *outcome = {false, reply.category, reply.httpStatus, reply.requestId};
     if (!reply.ok) {
@@ -1723,7 +1743,8 @@ fetchLlamaCppModels(const QUrl& modelsUrl, int timeoutMs,
 QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs,
                                                  QString* errorOut,
                                                  const std::shared_ptr<std::atomic_bool>& cancellationToken,
-                                                 ProviderDiscoveryOutcome* outcome) {
+                                                 ProviderDiscoveryOutcome* outcome,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory) {
     if (apiKey.trimmed().isEmpty()) {
         if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
@@ -1735,7 +1756,7 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("key"), apiKey.trimmed());
     url.setQuery(query);
-    const auto reply = getJson(url, timeoutMs, nullptr, {}, cancellationToken);
+    const auto reply = getJson(url, timeoutMs, nullptr, {}, cancellationToken, ProviderRequestMode::Discovery, networkFactory);
     if (outcome) *outcome = {reply.ok, reply.category, reply.httpStatus, reply.requestId};
     if (!reply.ok) {
         if (errorOut) {
@@ -1746,16 +1767,27 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
         return {};
     }
 
+    const auto malformedCatalog = [&]() -> QList<OllamaModelSummary> {
+        if (outcome)
+            *outcome = {false, ChatProviderErrorCategory::MalformedResponse, reply.httpStatus,
+                        reply.requestId};
+        if (errorOut)
+            *errorOut = QStringLiteral("Gemini returned an invalid model catalog.");
+        return {};
+    };
+    const auto modelsValue = reply.document.object().value(QStringLiteral("models"));
+    if (!modelsValue.isArray())
+        return malformedCatalog();
     QList<OllamaModelSummary> models;
-    const auto modelsArray = reply.document.object().value(QStringLiteral("models")).toArray();
+    const auto modelsArray = modelsValue.toArray();
     for (const auto& val : modelsArray) {
         const auto obj = val.toObject();
         auto name = obj.value(QStringLiteral("name")).toString().trimmed();
         if (name.startsWith(QStringLiteral("models/"))) {
             name = name.mid(7);
         }
-        if (name.isEmpty())
-            continue;
+        if (!val.isObject() || !obj.value(QStringLiteral("name")).isString() || name.isEmpty())
+            return malformedCatalog();
         const auto displayName = obj.value(QStringLiteral("displayName")).toString().trimmed();
         OllamaModelSummary model{
             name, displayName.isEmpty() ? QStringLiteral("Google Cloud") : displayName, 0};
@@ -1775,7 +1807,8 @@ QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int time
 QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs,
                                                     QString* errorOut,
                                                     const std::shared_ptr<std::atomic_bool>& cancellationToken,
-                                                    ProviderDiscoveryOutcome* outcome) {
+                                                    ProviderDiscoveryOutcome* outcome,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory) {
     if (apiKey.trimmed().isEmpty()) {
         if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
@@ -1786,13 +1819,14 @@ QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int t
     const QUrl url(QStringLiteral("https://api.anthropic.com/v1/models"));
     const QMap<QByteArray, QByteArray> headers{{"x-api-key", apiKey.trimmed().toUtf8()},
                                                {"anthropic-version", "2023-06-01"}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome, networkFactory);
 }
 
 QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey,
                                                  int timeoutMs, QString* errorOut,
                                                  const std::shared_ptr<std::atomic_bool>& cancellationToken,
-                                                 ProviderDiscoveryOutcome* outcome) {
+                                                 ProviderDiscoveryOutcome* outcome,
+    const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory) {
     if (apiKey.trimmed().isEmpty()) {
         if (outcome) *outcome = {false, ChatProviderErrorCategory::AuthenticationRequired, 0, {}};
         if (errorOut) {
@@ -1800,8 +1834,16 @@ QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString&
         }
         return {};
     }
+    if (url.scheme() != QLatin1String("https") ||
+        !LMStudioConfig::isSecureTransportEndpoint(url)) {
+        if (outcome)
+            *outcome = {false, ChatProviderErrorCategory::RequestRejected, 0, {}};
+        if (errorOut)
+            *errorOut = QStringLiteral("Cloud model discovery requires a valid HTTPS endpoint.");
+        return {};
+    }
     const QMap<QByteArray, QByteArray> headers{
         {"Authorization", ("Bearer " + apiKey.trimmed()).toUtf8()}};
-    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome);
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers, errorOut, cancellationToken, outcome, networkFactory);
 }
 } // namespace sentinel::core

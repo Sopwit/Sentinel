@@ -47,7 +47,8 @@ struct JsonReply {
 
 JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
                        const QMap<QByteArray, QByteArray>& headers = {},
-                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+                       const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                       const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {}) {
     const auto decision = NetworkPolicyService::instance().check(url);
     if (decision != NetworkDecision::Allowed) {
         JsonReply blocked;
@@ -55,7 +56,8 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
         blocked.error = NetworkPolicyService::code(decision);
         return blocked;
     }
-    QNetworkAccessManager manager;
+    const auto manager = networkFactory ? networkFactory->createManager()
+                                        : std::make_unique<QNetworkAccessManager>();
     QNetworkRequest request{url};
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -65,7 +67,7 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
     }
 
     QNetworkReply* reply =
-        manager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+        manager->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
     const auto transport = ProviderRequestRuntime::wait(reply, timeoutMs, cancellationToken);
     if (transport.cancelled) {
         reply->deleteLater();
@@ -82,6 +84,16 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
                          {},
                          QStringLiteral("Ollama local generation timed out."),
                          QNetworkReply::TimeoutError};
+    }
+
+    const int responseStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (responseStatus >= 300 && responseStatus < 400) {
+        reply->deleteLater();
+        JsonReply rejected;
+        rejected.httpStatus = responseStatus;
+        rejected.category = ChatProviderErrorCategory::RequestRejected;
+        rejected.error = QStringLiteral("Provider redirect rejected.");
+        return rejected;
     }
 
     if (reply->error() != QNetworkReply::NoError ||
@@ -133,8 +145,8 @@ JsonReply postJsonOnce(const QUrl& url, const QJsonObject& body, int timeoutMs,
 }
 
 ChatProviderErrorCategory requestCategory(const JsonReply& reply) {
-    if (reply.category == ChatProviderErrorCategory::Offline)
-        return ChatProviderErrorCategory::Offline;
+    if (reply.category != ChatProviderErrorCategory::None)
+        return reply.category;
     return ProviderRequestRuntime::classify(reply.httpStatus, reply.networkError, reply.timedOut,
                                             reply.cancelled);
 }
@@ -187,7 +199,8 @@ JsonReply executeJsonRequest(ProviderRequestMode mode,
 
 JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs,
                    const QMap<QByteArray, QByteArray>& headers = {},
-                   const std::shared_ptr<std::atomic_bool>& cancellationToken = {}) {
+                   const std::shared_ptr<std::atomic_bool>& cancellationToken = {},
+                   const std::shared_ptr<ILocalInferenceNetworkFactory>& networkFactory = {}) {
     QElapsedTimer lifetime;
     lifetime.start();
     return executeJsonRequest(
@@ -199,7 +212,7 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs,
                 return expired;
             }
             const int remaining = timeoutMs > 0 ? qMax(1, timeoutMs - int(lifetime.elapsed())) : 0;
-            return postJsonOnce(url, body, remaining, headers, cancellationToken);
+            return postJsonOnce(url, body, remaining, headers, cancellationToken, networkFactory);
         },
         timeoutMs > 0 ? 1 : 0);
 }
@@ -858,6 +871,18 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                                               "with %1 ms timeout metadata.")
                                    .arg(result.timeoutMs)));
 
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("Local streaming request rejected: a finite deadline is "
+                                        "required and none was available.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
@@ -1166,18 +1191,18 @@ LMStudioLocalInferenceClient::completeOpenAiChat(
     if (!endpointAllowed())
         return {false, {}, QStringLiteral("OpenAI-compatible endpoint is unavailable."), 0};
     const auto host = config_.endpoint.host().toLower();
-    if (host.contains(QLatin1String("anthropic.com")) ||
-        host.contains(QLatin1String("googleapis.com")))
+    if (host == QLatin1String("api.anthropic.com") ||
+        host == QLatin1String("generativelanguage.googleapis.com"))
         return {false, {}, QStringLiteral("Endpoint does not use OpenAI chat completions."), 501};
     QMap<QByteArray, QByteArray> headers;
     if (!config_.apiKey.isEmpty())
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-    const auto path = config_.endpoint.path().endsWith(QLatin1String("/v1"))
+    const auto path = config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
                           ? QStringLiteral("/chat/completions")
                           : QStringLiteral("/v1/chat/completions");
     const auto reply =
         postJson(endpointUrl(path), body, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs, headers,
-                 cancellationToken);
+                 cancellationToken, config_.networkFactory);
     if (!reply.ok)
         return {false,
                 {},
@@ -1232,7 +1257,7 @@ LMStudioLocalInferenceClient::completeNativeChat(
     if (protocol == NativeProtocol::Gemini)
         payload.remove(QStringLiteral("model"));
     const auto reply = postJson(url, payload, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs,
-                                headers, cancellationToken);
+                                headers, cancellationToken, config_.networkFactory);
     if (!reply.ok)
         return {
             false,
@@ -1305,8 +1330,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     // OpenAI-compatible body below only fits LM Studio / llama.cpp / local
     // OpenAI-compatible servers.
     if (config_.isCloud()) {
-        const bool isAnthropic = config_.endpoint.host().contains(QLatin1String("anthropic.com"));
-        const bool isGemini = config_.endpoint.host().contains(QLatin1String("googleapis.com"));
+        const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"), Qt::CaseInsensitive) == 0;
+        const bool isGemini = config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"), Qt::CaseInsensitive) == 0;
 
         if (isAnthropic) {
             QJsonObject messageObj;
@@ -1330,9 +1355,9 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             QMap<QByteArray, QByteArray> headers;
             headers.insert("x-api-key", config_.apiKey.toUtf8());
             headers.insert("anthropic-version", "2023-06-01");
-            const auto reply =
-                postJson(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")), body,
-                         timeoutMs, headers, request.options.cancellationToken);
+            const auto reply = postJson(
+                QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")), body, timeoutMs,
+                headers, request.options.cancellationToken, config_.networkFactory);
             recordRequestMetadata(response, reply);
             if (!reply.ok) {
                 response.status = LocalInferenceStatus::Error;
@@ -1403,8 +1428,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
                                           "%1:generateContent?key=%2")
                                .arg(modelId, config_.apiKey));
-            const auto reply =
-                postJson(url, body, timeoutMs, {}, request.options.cancellationToken);
+            const auto reply = postJson(url, body, timeoutMs, {}, request.options.cancellationToken,
+                                        config_.networkFactory);
             recordRequestMetadata(response, reply);
             if (!reply.ok) {
                 response.status = LocalInferenceStatus::Error;
@@ -1471,11 +1496,11 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
         QMap<QByteArray, QByteArray> headers;
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-        const auto reply =
-            postJson(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("/v1"))
-                                     ? QStringLiteral("/chat/completions")
-                                     : QStringLiteral("/v1/chat/completions")),
-                     body, timeoutMs, headers, request.options.cancellationToken);
+        const auto reply = postJson(
+            endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
+                            ? QStringLiteral("/chat/completions")
+                            : QStringLiteral("/v1/chat/completions")),
+            body, timeoutMs, headers, request.options.cancellationToken, config_.networkFactory);
         recordRequestMetadata(response, reply);
         if (!reply.ok) {
             response.status = LocalInferenceStatus::Error;
@@ -1548,10 +1573,11 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
               QStringLiteral("Calling local LM Studio /v1/chat/completions; timeout %1 ms.")
                   .arg(timeoutMs)));
 
-    const auto reply = postJson(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("/v1"))
-                                                ? QStringLiteral("/chat/completions")
-                                                : QStringLiteral("/v1/chat/completions")),
-                                body, timeoutMs, {}, request.options.cancellationToken);
+    const auto reply =
+        postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
+                                 ? QStringLiteral("/chat/completions")
+                                 : QStringLiteral("/v1/chat/completions")),
+                 body, timeoutMs, {}, request.options.cancellationToken, config_.networkFactory);
     recordRequestMetadata(response, reply);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
@@ -1668,6 +1694,19 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                   .arg(config_.providerDisplayName())
                   .arg(result.timeoutMs)));
 
+    if (request.options.requireBoundedStreaming && result.timeoutMs <= 0) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::RequestRejected);
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("%1 streaming request rejected: a finite deadline is "
+                                        "required and none was available.")
+                             .arg(config_.providerDisplayName());
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.lifecycle = ChatRequestLifecycle::Failed;
@@ -1717,12 +1756,24 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    QNetworkAccessManager manager;
+    const auto networkDecision = NetworkPolicyService::instance().check(config_.endpoint);
+    if (networkDecision != NetworkDecision::Allowed) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.lifecycle = ChatRequestLifecycle::Failed;
+        result.providerErrorCategory = static_cast<int>(ChatProviderErrorCategory::Offline);
+        result.error = LocalInferenceError::Offline;
+        result.summary = QStringLiteral("Provider request blocked by network policy: %1")
+                             .arg(NetworkPolicyService::code(networkDecision));
+        return result;
+    }
+
+    const auto manager = config_.networkFactory ? config_.networkFactory->createManager()
+                                                : std::make_unique<QNetworkAccessManager>();
     QNetworkRequest networkRequest;
     QJsonObject body;
 
-    const bool isAnthropic = config_.endpoint.host().contains(QLatin1String("anthropic.com"));
-    const bool isGemini = config_.endpoint.host().contains(QLatin1String("googleapis.com"));
+    const bool isAnthropic = config_.endpoint.host().compare(QLatin1String("api.anthropic.com"), Qt::CaseInsensitive) == 0;
+    const bool isGemini = config_.endpoint.host().compare(QLatin1String("generativelanguage.googleapis.com"), Qt::CaseInsensitive) == 0;
 
     if (isAnthropic) {
         networkRequest.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")));
@@ -1769,7 +1820,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         generationConfig.insert(QStringLiteral("maxOutputTokens"), request.options.maxTokens);
         body.insert(QStringLiteral("generationConfig"), generationConfig);
     } else {
-        networkRequest.setUrl(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("v1"))
+        networkRequest.setUrl(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
                                               ? QStringLiteral("/chat/completions")
                                               : QStringLiteral("/v1/chat/completions")));
         if (!config_.apiKey.isEmpty()) {
@@ -1807,7 +1858,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     elapsed.start();
 
     QNetworkReply* reply =
-        manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
+        manager->post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
 
     auto processLine = [&](const QByteArray& line) {
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();

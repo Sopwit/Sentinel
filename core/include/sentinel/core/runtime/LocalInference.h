@@ -5,8 +5,10 @@
 #pragma once
 
 #include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/runtime/LocalInferenceTransport.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
+#include <QHostAddress>
 #include <QJsonObject>
 #include <QList>
 #include <QNetworkReply>
@@ -73,6 +75,9 @@ struct LocalInferenceOptions {
     bool streamingRequested = false;
     bool cancellationRequested = false;
     std::shared_ptr<std::atomic_bool> cancellationToken;
+    // Explicit bounded requirement. When set, this streaming request must resolve
+    // to a positive deadline; the transport refuses instead of waiting unbounded.
+    bool requireBoundedStreaming = false;
 };
 
 struct LocalInferenceRequest {
@@ -282,20 +287,32 @@ struct LMStudioConfig {
     QUrl endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
     int timeoutMs = 0;
     QString apiKey;
+    // Safely constrained transport seam. Empty in production; a deterministic
+    // fixture may inject a factory so the real request builders run against a
+    // synthetic transport without contacting the network. See
+    // LocalInferenceTransport.h.
+    std::shared_ptr<ILocalInferenceNetworkFactory> networkFactory;
+
+    static bool isLoopbackHttp(const QUrl& url) {
+        QHostAddress address;
+        return url.scheme() == QLatin1String("http") &&
+               (url.host().compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0 ||
+                (address.setAddress(url.host()) && address.isLoopback()));
+    }
+
+    static bool isSecureTransportEndpoint(const QUrl& url) {
+        return url.isValid() && !url.host().isEmpty() && url.userInfo().isEmpty() &&
+               !url.authority().contains(QLatin1Char('@')) &&
+               (url.scheme() == QLatin1String("https") || isLoopbackHttp(url));
+    }
 
     bool isAllowedEndpoint() const {
-        if (isLoopbackHttp())
-            return true;
-        if (isCloud()) {
-            return !apiKey.trimmed().isEmpty();
-        }
-        return false;
+        return isSecureTransportEndpoint(endpoint) &&
+               (isLoopbackHttp() || !apiKey.trimmed().isEmpty());
     }
 
     bool isLoopbackHttp() const {
-        const auto host = endpoint.host().toLower();
-        return (host == QLatin1String("127.0.0.1") || host == QLatin1String("localhost")) &&
-               endpoint.scheme() == QLatin1String("http");
+        return isLoopbackHttp(endpoint);
     }
 
     bool isCloud() const {
@@ -304,17 +321,17 @@ struct LMStudioConfig {
 
     QString providerDisplayName() const {
         const auto host = endpoint.host().toLower();
-        if (host.contains(QLatin1String("googleapis.com")))
+        if (host == QLatin1String("generativelanguage.googleapis.com"))
             return QStringLiteral("Google Gemini API");
-        if (host.contains(QLatin1String("anthropic.com")))
+        if (host == QLatin1String("api.anthropic.com"))
             return QStringLiteral("Anthropic Claude API");
-        if (host.contains(QLatin1String("openai.com")))
+        if (host == QLatin1String("api.openai.com"))
             return QStringLiteral("OpenAI API");
-        if (host.contains(QLatin1String("deepseek.com")))
+        if (host == QLatin1String("api.deepseek.com"))
             return QStringLiteral("DeepSeek API");
-        if (host.contains(QLatin1String("groq.com")))
+        if (host == QLatin1String("api.groq.com"))
             return QStringLiteral("Groq Cloud API");
-        if (host.contains(QLatin1String("mistral.ai")))
+        if (host == QLatin1String("api.mistral.ai"))
             return QStringLiteral("Mistral AI API");
         if (isLoopbackHttp())
             return QStringLiteral("LM Studio / Local Server");
@@ -322,7 +339,7 @@ struct LMStudioConfig {
     }
 
     QString toString() const {
-        return endpoint.toString();
+        return endpoint.toString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
     }
 
     static LMStudioConfig defaultConfig() {

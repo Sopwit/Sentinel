@@ -172,6 +172,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/runtime/IToolExecutor.h
     include/sentinel/core/runtime/IToolRegistry.h
     include/sentinel/core/runtime/LocalInference.h
+    include/sentinel/core/runtime/LocalInferenceTransport.h
     include/sentinel/core/runtime/ProviderRequestRuntime.h
     include/sentinel/core/runtime/LocalRuntime.h
     include/sentinel/core/runtime/LocalRuntimeSession.h

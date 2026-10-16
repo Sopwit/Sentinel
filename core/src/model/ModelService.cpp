@@ -110,6 +110,9 @@ public:
     bool supportsStreaming() const override {
         return delegate_->supportsStreaming();
     }
+    bool supportsBoundedStreaming() const override {
+        return delegate_->supportsBoundedStreaming();
+    }
     ChatProviderReply sendMessage(const QString& message) override {
         const auto sequence = ++registry_->nextSequence;
         auto reply = delegate_->sendMessage(message);
@@ -128,6 +131,15 @@ public:
                          const std::shared_ptr<std::atomic_bool>& cancellationToken) override {
         const auto sequence = ++registry_->nextSequence;
         auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken);
+        update(sequence, reply, QStringLiteral("stream"));
+        return reply;
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) override {
+        const auto sequence = ++registry_->nextSequence;
+        auto reply = delegate_->sendMessageStreaming(message, onDelta, cancellationToken, options);
         update(sequence, reply, QStringLiteral("stream"));
         return reply;
     }
@@ -543,6 +555,9 @@ public:
     bool supportsStreaming() const override {
         return binding_.capabilities.streaming == CapabilitySupport::Supported;
     }
+    bool supportsBoundedStreaming() const override {
+        return binding_.capabilities.streaming == CapabilitySupport::Supported;
+    }
     ChatProviderReply sendMessage(const QString& message) override {
         return sendMessageWithToken(message, {});
     }
@@ -920,10 +935,51 @@ public:
             return providerFailure(QStringLiteral("Selected model does not support streaming."),
                                    ChatProviderErrorCategory::CapabilityUnsupported,
                                    ChatProviderReply::Error::CapabilityRejected);
+        return streamSelected(message, onDelta, cancellationToken, {}, timeoutMs_, 0, false);
+    }
+    ChatProviderReply
+    sendMessageStreaming(const QString& message, const std::function<void(const QString&)>& onDelta,
+                         const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                         const ChatRequestOptions& options) override {
+        if (binding_.capabilities.streaming != CapabilitySupport::Supported) {
+            return providerFailure(QStringLiteral("Selected model does not support streaming."),
+                                   ChatProviderErrorCategory::CapabilityUnsupported,
+                                   ChatProviderReply::Error::CapabilityRejected);
+        }
+        if (options.structuredOutput || options.nativeToolCalling) {
+            return providerFailure(
+                QStringLiteral(
+                    "Bounded streaming does not carry structured or native tool output."),
+                ChatProviderErrorCategory::CapabilityUnsupported,
+                ChatProviderReply::Error::CapabilityRejected);
+        }
+        if (options.requireBoundedStreaming && options.deadlineMs <= 0) {
+            return providerFailure(
+                QStringLiteral("Bounded streaming requires a positive request deadline."),
+                ChatProviderErrorCategory::RequestRejected,
+                ChatProviderReply::Error::InvalidResponse);
+        }
+        const auto token = cancellationToken ? cancellationToken : options.cancellationToken;
+        const int deadlineMs = options.deadlineMs > 0 ? options.deadlineMs : timeoutMs_;
+        return streamSelected(message, onDelta, token, options.images, deadlineMs,
+                              options.maxOutputTokens, options.requireBoundedStreaming);
+    }
+
+private:
+    ChatProviderReply streamSelected(const QString& message,
+                                     const std::function<void(const QString&)>& onDelta,
+                                     const std::shared_ptr<std::atomic_bool>& cancellationToken,
+                                     const QList<ChatImage>& images, int deadlineMs,
+                                     int maxOutputTokens, bool requireBoundedStreaming) {
         LocalInferenceRequest request;
         request.prompt = message;
+        request.images = images;
         request.options.model = binding_.modelId;
-        request.options.timeoutMs = timeoutMs_;
+        request.options.timeoutMs = deadlineMs;
+        request.options.requireBoundedStreaming = requireBoundedStreaming;
+        if (maxOutputTokens > 0) {
+            request.options.maxTokens = maxOutputTokens;
+        }
         request.options.cancellationToken = cancellationToken;
         LMStudioLocalInferenceStreamClient client(config_, timeoutMs_);
         const auto result =
@@ -935,6 +991,8 @@ public:
             ChatProviderReply reply{true, result.accumulatedText, {}};
             reply.lifecycle = ChatRequestLifecycle::Completed;
             reply.requestId = result.requestId;
+            reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+            reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
             return reply;
         }
         auto reply = providerFailure(
@@ -948,10 +1006,11 @@ public:
             result.retrySummary);
         reply.lifecycle = result.lifecycle;
         reply.requestId = result.requestId;
+        reply.diagnostics.insert(QStringLiteral("deadline_ms"), result.timeoutMs);
+        reply.diagnostics.insert(QStringLiteral("bounded_streaming"), requireBoundedStreaming);
         return reply;
     }
 
-private:
     ModelBinding binding_;
     LMStudioConfig config_;
     int timeoutMs_ = 0;
@@ -1716,6 +1775,7 @@ LMStudioConfig ModelService::providerConfig(const ModelBinding& binding) const {
     } else {
         config.endpoint = QUrl(lmStudioEndpoint_);
     }
+    config.networkFactory = providerNetworkFactory_;
     return config;
 }
 
@@ -1751,6 +1811,11 @@ void ModelService::setLlamaCppEndpoint(const QString& endpoint) {
 
 void ModelService::setLocalInferenceTimeoutMs(int timeoutMs) {
     localInferenceTimeoutMs_ = timeoutMs;
+}
+
+void ModelService::setProviderNetworkFactoryForTesting(
+    std::shared_ptr<ILocalInferenceNetworkFactory> networkFactory) {
+    providerNetworkFactory_ = std::move(networkFactory);
 }
 
 } // namespace sentinel::core
