@@ -18,6 +18,10 @@ QString ProviderRequestRuntime::requestId() {
 ChatProviderErrorCategory ProviderRequestRuntime::classify(
     int status, QNetworkReply::NetworkError error, bool timedOut, bool cancelled) {
     if (cancelled) return ChatProviderErrorCategory::Cancelled;
+    // Validated HTTP status and explicit deadline/network timeouts outrank the Qt
+    // network error code. Qt reports UnknownContentError for unmapped HTTP error
+    // statuses (for example 408 and 429) as well as for genuinely unparseable bodies,
+    // so the status must be interpreted before that fallback.
     if (timedOut || error == QNetworkReply::TimeoutError || status == 408)
         return ChatProviderErrorCategory::Timeout;
     if (status == 429) return ChatProviderErrorCategory::RateLimited;
@@ -27,13 +31,18 @@ ChatProviderErrorCategory ProviderRequestRuntime::classify(
     if (status == 400 || status == 422)
         return ChatProviderErrorCategory::RequestRejected;
     if (status == 501) return ChatProviderErrorCategory::CapabilityUnsupported;
+    if (status >= 500)
+        return ChatProviderErrorCategory::ProviderUnavailable;
+    // Any remaining validated HTTP error status is a rejected request, not a
+    // malformed body. Only a successful or absent HTTP status with an unparseable
+    // body is a malformed response.
+    if (status >= 400)
+        return ChatProviderErrorCategory::RequestRejected;
     if (error == QNetworkReply::UnknownContentError)
         return ChatProviderErrorCategory::MalformedResponse;
-    if (status >= 500) return ChatProviderErrorCategory::ProviderUnavailable;
     if (error != QNetworkReply::NoError)
         return ChatProviderErrorCategory::ConnectionFailed;
-    return status >= 400 ? ChatProviderErrorCategory::RequestRejected
-                         : ChatProviderErrorCategory::None;
+    return ChatProviderErrorCategory::None;
 }
 
 ProviderTransportResult ProviderRequestRuntime::wait(
