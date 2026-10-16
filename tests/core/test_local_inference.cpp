@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "../support/LocalInferenceWorkerFixture.h"
+#ifndef Q_MOC_RUN
+#include "../support/ProviderHttpFixture.h"
+#endif
+#include "sentinel/core/interfaces/IChatProvider.h"
+#include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/runtime/LocalInference.h"
 
 #include <QElapsedTimer>
@@ -43,6 +48,14 @@ private slots:
     void cloudOpenAiCompatibleRequestCarriesBearerKey();
     void completedReasoningOnlyIsInvalid();
     void zeroTimeoutCancelsOutstandingRequest();
+    void mockGenerationContract_data();
+    void mockGenerationContract();
+    void mockStreamContract_data();
+    void mockStreamContract();
+    void mockStreamCancellation_data();
+    void mockStreamCancellation();
+    void mockCancellationAndDisconnect_data();
+    void mockCancellationAndDisconnect();
     void boundedPlainRequest_data();
     void boundedPlainRequest();
 };
@@ -493,6 +506,227 @@ void LocalInferenceTest::boundedPlainRequest() {
         QCOMPARE(response.diagnostics.value("completion_tokens").toInt(), 7);
     }
     QVERIFY(response.text.isEmpty());
+}
+
+void LocalInferenceTest::mockGenerationContract_data() {
+    QTest::addColumn<bool>("ollama");
+    QTest::addColumn<int>("status");
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("category");
+    using C = sentinel::core::ChatProviderErrorCategory;
+    for (bool ollama : {true, false}) {
+        const auto prefix = ollama ? QByteArray("ollama-") : QByteArray("compatible-");
+        QTest::newRow((prefix + "success").constData())
+            << ollama << 200
+            << (ollama ? QByteArray(R"({"response":"fixture answer","done":true})")
+                       : QByteArray(R"({"choices":[{"message":{"content":"fixture answer"}}]})"))
+            << int(C::None);
+        for (const auto& row : QList<QPair<int, C>>{{401, C::AuthenticationRequired},
+                                                    {403, C::AuthenticationRequired},
+                                                    {404, C::ModelNotFound},
+                                                    {429, C::RateLimited},
+                                                    {500, C::ProviderUnavailable},
+                                                    {501, C::CapabilityUnsupported},
+                                                    {422, C::RequestRejected}})
+            QTest::newRow((prefix + QByteArray::number(row.first)).constData())
+                << ollama << row.first << QByteArray(R"({"error":{"message":"fixture rejection"}})")
+                << int(row.second);
+        QTest::newRow((prefix + "malformed-json").constData())
+            << ollama << 200 << QByteArray("{broken") << int(C::MalformedResponse);
+    }
+}
+
+void LocalInferenceTest::mockGenerationContract() {
+    QFETCH(bool, ollama);
+    QFETCH(int, status);
+    QFETCH(QByteArray, body);
+    QFETCH(int, category);
+    using namespace sentinel::core;
+    sentinel::test::ProviderHttpFixture server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    server.respond = [=](QTcpSocket* socket, const auto&) {
+        sentinel::test::ProviderHttpFixture::reply(socket, body, status);
+    };
+    LocalInferenceRequest request;
+    request.prompt = "synthetic prompt";
+    request.options.model = "fixture";
+    request.options.timeoutMs = 500;
+    LocalInferenceResponse response;
+    if (ollama) {
+        auto config = OllamaConfig::fromEndpoint(server.endpoint().toString());
+        config.modelDiscoveryEnabled = false;
+        response = OllamaLocalInferenceClient(config, 500).infer(request);
+    } else {
+        LMStudioConfig config;
+        config.endpoint = server.endpoint();
+        config.apiKey = "synthetic-key-never-personal";
+        response = LMStudioLocalInferenceClient(config, 500).infer(request);
+    }
+    QCOMPARE(server.requests.size(), 1);
+    QCOMPARE(server.requests.first().target,
+             ollama ? QByteArray("/api/generate") : QByteArray("/v1/chat/completions"));
+    QCOMPARE(server.requests.first().body.value("model").toString(), QString("fixture"));
+    QCOMPARE(response.httpStatus, status);
+    QCOMPARE(response.providerErrorCategory, category);
+    QCOMPARE(response.attempts, 1);
+    QVERIFY(!response.requestId.isEmpty());
+    if (category == int(ChatProviderErrorCategory::None)) {
+        QCOMPARE(response.status, LocalInferenceStatus::Succeeded);
+        QCOMPARE(response.text, QString("fixture answer"));
+    } else {
+        QVERIFY(response.status != LocalInferenceStatus::Succeeded);
+        QVERIFY(response.text.isEmpty());
+    }
+    QVERIFY(!response.summary.contains("synthetic-key-never-personal"));
+    QVERIFY(!QJsonDocument(response.diagnostics).toJson().contains("synthetic-key-never-personal"));
+}
+
+void LocalInferenceTest::mockStreamContract_data() {
+    QTest::addColumn<bool>("ollama");
+    QTest::addColumn<bool>("terminal");
+    for (bool ollama : {true, false})
+        for (bool terminal : {true, false})
+            QTest::newRow(qPrintable(QString("%1-%2").arg(ollama ? "ollama" : "compatible",
+                                                          terminal ? "complete" : "truncated")))
+                << ollama << terminal;
+}
+
+void LocalInferenceTest::mockStreamContract() {
+    QFETCH(bool, ollama);
+    QFETCH(bool, terminal);
+    using namespace sentinel::core;
+    sentinel::test::ProviderHttpFixture server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    server.respond = [=](QTcpSocket* socket, const auto&) {
+        QByteArray body =
+            ollama
+                ? QByteArray("{\"response\":\"hello \"}\n{\"response\":\"world\"}\n")
+                : QByteArray("data: {\"choices\":[{\"delta\":{\"content\":\"hello \"}}]}\n\ndata: "
+                             "{\"choices\":[{\"delta\":{\"content\":\"world\"}}]}\n\n");
+        if (terminal)
+            body += ollama ? QByteArray("{\"done\":true}\n") : QByteArray("data: [DONE]\n\n");
+        sentinel::test::ProviderHttpFixture::reply(
+            socket, body, 200, ollama ? "application/x-ndjson" : "text/event-stream");
+    };
+    LocalInferenceRequest request;
+    request.prompt = "synthetic stream";
+    request.options.model = "fixture";
+    request.options.timeoutMs = 500;
+    QString deltas;
+    const auto onChunk = [&](const LocalInferenceStreamChunk& chunk) { deltas += chunk.text; };
+    LocalInferenceStreamResult result;
+    if (ollama) {
+        auto config = OllamaConfig::fromEndpoint(server.endpoint().toString());
+        config.modelDiscoveryEnabled = false;
+        result = OllamaLocalInferenceStreamClient(config, 500).startStream(request, onChunk);
+    } else {
+        LMStudioConfig config;
+        config.endpoint = server.endpoint();
+        result = LMStudioLocalInferenceStreamClient(config, 500).startStream(request, onChunk);
+    }
+    QCOMPARE(server.requests.size(), 1);
+    QVERIFY(server.requests.first().body.value("stream").toBool());
+    QCOMPARE(deltas, QString("hello world"));
+    QCOMPARE(result.status == LocalInferenceStreamStatus::Completed, terminal);
+    if (terminal)
+        QCOMPARE(result.accumulatedText, deltas);
+    else
+        QCOMPARE(result.providerErrorCategory, int(ChatProviderErrorCategory::MalformedResponse));
+}
+
+void LocalInferenceTest::mockCancellationAndDisconnect_data() {
+    QTest::addColumn<bool>("ollama");
+    QTest::addColumn<QString>("fault");
+    for (bool ollama : {true, false})
+        for (const auto& fault : QStringList{"cancel", "disconnect", "timeout"})
+            QTest::newRow(qPrintable(QString("%1-%2").arg(ollama ? "ollama" : "compatible", fault)))
+                << ollama << fault;
+}
+
+void LocalInferenceTest::mockCancellationAndDisconnect() {
+    QFETCH(bool, ollama);
+    QFETCH(QString, fault);
+    using namespace sentinel::core;
+    sentinel::test::ProviderHttpFixture server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    auto token = std::make_shared<std::atomic_bool>(false);
+    server.respond = [&](QTcpSocket* socket, const auto&) {
+        if (fault == "cancel")
+            token->store(true); // Received request is the gate, not a scheduling sleep.
+        else if (fault == "disconnect")
+            socket->abort();
+        // Timeout deliberately retains the connection without responding.
+    };
+    LocalInferenceRequest request;
+    request.prompt = "synthetic interruption";
+    request.options.model = "fixture";
+    request.options.timeoutMs = 100;
+    request.options.cancellationToken = token;
+    LocalInferenceResponse response;
+    if (ollama) {
+        auto config = OllamaConfig::fromEndpoint(server.endpoint().toString());
+        config.modelDiscoveryEnabled = false;
+        response = OllamaLocalInferenceClient(config, 100).infer(request);
+    } else {
+        LMStudioConfig config;
+        config.endpoint = server.endpoint();
+        response = LMStudioLocalInferenceClient(config, 100).infer(request);
+    }
+    QVERIFY(!server.requests.isEmpty());
+    QVERIFY(response.status != LocalInferenceStatus::Succeeded);
+    QVERIFY(response.text.isEmpty());
+    const auto expected = fault == "cancel"    ? ChatProviderErrorCategory::Cancelled
+                          : fault == "timeout" ? ChatProviderErrorCategory::Timeout
+                                               : ChatProviderErrorCategory::ConnectionFailed;
+    QCOMPARE(response.providerErrorCategory, int(expected));
+    QCOMPARE(response.attempts, 1);
+}
+
+void LocalInferenceTest::mockStreamCancellation_data() {
+    QTest::addColumn<bool>("ollama");
+    QTest::newRow("ollama") << true;
+    QTest::newRow("compatible") << false;
+}
+void LocalInferenceTest::mockStreamCancellation() {
+    QFETCH(bool, ollama);
+    using namespace sentinel::core;
+    sentinel::test::ProviderHttpFixture server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    auto token = std::make_shared<std::atomic_bool>(false);
+    server.respond = [=](QTcpSocket* socket, const auto&) {
+        // Partial body with no terminal marker, held open until cancellation.
+        socket->write("HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n");
+        socket->write(
+            ollama ? QByteArray("{\"response\":\"first\"}\n")
+                   : QByteArray("data: {\"choices\":[{\"delta\":{\"content\":\"first\"}}]}\n\n"));
+    };
+    LocalInferenceRequest request;
+    request.prompt = "synthetic stream cancellation";
+    request.options.model = "fixture";
+    request.options.timeoutMs = 500;
+    request.options.cancellationToken = token;
+    QString text;
+    const auto onChunk = [&](const LocalInferenceStreamChunk& chunk) {
+        text += chunk.text;
+        if (!chunk.text.isEmpty())
+            token->store(true);
+    };
+    LocalInferenceStreamResult result;
+    if (ollama) {
+        auto config = OllamaConfig::fromEndpoint(server.endpoint().toString());
+        config.modelDiscoveryEnabled = false;
+        result = OllamaLocalInferenceStreamClient(config, 500).startStream(request, onChunk);
+    } else {
+        LMStudioConfig config;
+        config.endpoint = server.endpoint();
+        result = LMStudioLocalInferenceStreamClient(config, 500).startStream(request, onChunk);
+    }
+    QCOMPARE(text, QString("first"));
+    QCOMPARE(result.status, LocalInferenceStreamStatus::Cancelled);
+    QCOMPARE(result.providerErrorCategory, int(ChatProviderErrorCategory::Cancelled));
+    QCOMPARE(server.requests.size(), 1);
+    QCoreApplication::processEvents();
+    QCOMPARE(text, QString("first"));
 }
 
 #include "test_local_inference.moc"
