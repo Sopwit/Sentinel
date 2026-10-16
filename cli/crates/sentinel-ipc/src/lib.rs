@@ -358,13 +358,39 @@ impl Client {
     }
     fn read_until(&mut self, deadline: Option<std::time::Instant>) -> Result<Envelope, Error> {
         loop {
+            let mut drain_only = false;
             if let Some(deadline) = deadline {
-                self.reader
-                    .get_ref()
-                    .set_read_timeout(Some(remaining_budget(deadline)?))
+                let budget = remaining_budget(deadline)?;
+                if self.reader.buffer().is_empty()
+                    && self
+                        .reader
+                        .get_ref()
+                        .set_read_timeout(Some(budget))
+                        .is_err()
+                {
+                    // macOS may reject setsockopt after peer closure even when
+                    // complete frames remain queued. Drain without blocking;
+                    // never extend the deadline or wait after a setter failure.
+                    self.reader
+                        .get_ref()
+                        .set_nonblocking(true)
+                        .map_err(|_| Error::Disconnected)?;
+                    drain_only = true;
+                }
+            }
+            let available = self.reader.fill_buf();
+            if drain_only {
+                self.writer
+                    .set_nonblocking(false)
                     .map_err(|_| Error::Disconnected)?;
             }
-            let available = self.reader.fill_buf().map_err(transport_error)?;
+            let available = available.map_err(|error| {
+                if drain_only {
+                    Error::Disconnected
+                } else {
+                    transport_error(error)
+                }
+            })?;
             if available.is_empty() {
                 return Err(Error::Disconnected);
             }
@@ -654,5 +680,271 @@ mod generation_compatibility_tests {
                 _ => panic!("Expected typed hello response"),
             }
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod close_regression_tests {
+    use super::*;
+    use std::io::Read;
+    use std::net::Shutdown;
+    use std::sync::mpsc;
+    use std::time::{Duration, Instant};
+
+    fn client(stream: UnixStream, capacity: usize) -> Client {
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
+        Client {
+            writer: stream.try_clone().unwrap(),
+            reader: BufReader::with_capacity(capacity, stream),
+            incoming: Vec::new(),
+            sequence: 0,
+            events: VecDeque::new(),
+        }
+    }
+    fn response(id: &str, name: &str) -> Value {
+        let payload = if name == "hello" {
+            json!({"major":1,"minor":0,"daemon_version":APP_VERSION,"capabilities":[]})
+        } else {
+            json!({"running":true,"daemon_version":APP_VERSION,"uptime_ms":0,"active_runs":0,"sessions":0})
+        };
+        json!({"version":{"major":1,"minor":0},"type":"response","id":id,"name":name,"payload":payload})
+    }
+    fn event() -> Value {
+        json!({"version":{"major":1,"minor":0},"type":"event","id":"","name":"output.delta","payload":{"text":"test","run_id":"r","session_id":"s"}})
+    }
+    fn read_request(peer: &mut BufReader<UnixStream>) -> Envelope {
+        let mut line = String::new();
+        peer.read_line(&mut line).unwrap();
+        serde_json::from_str(&line).unwrap()
+    }
+    #[test]
+    fn buffered_response_after_confirmed_peer_close() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let mut client = client(stream, 8192);
+        let frame = format!("{}\n", response("1", "hello"));
+        peer.write_all(frame.as_bytes()).unwrap();
+        // Prefetch the complete frame, then synchronously close both peer handles.
+        assert_eq!(client.reader.fill_buf().unwrap(), frame.as_bytes());
+        peer.shutdown(Shutdown::Both).unwrap();
+        drop(peer);
+        let setting = client
+            .reader
+            .get_ref()
+            .set_read_timeout(Some(Duration::from_secs(1)));
+        eprintln!(
+            "closed peer timeout setter: {setting:?}; buffered bytes={}",
+            client.reader.buffer().len()
+        );
+        let result = client.read_until(Some(Instant::now() + Duration::from_secs(1)));
+        assert_eq!(result.unwrap().name, "hello");
+        assert!(matches!(client.read(), Err(Error::Disconnected)));
+    }
+    #[test]
+    fn unbuffered_complete_response_after_confirmed_peer_close() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let mut client = client(stream, 16);
+        writeln!(peer, "{}", response("1", "hello")).unwrap();
+        peer.shutdown(Shutdown::Both).unwrap();
+        drop(peer);
+        assert!(client.reader.buffer().is_empty());
+        assert_eq!(
+            client
+                .read_until(Some(Instant::now() + Duration::from_secs(1)))
+                .unwrap()
+                .name,
+            "hello"
+        );
+        assert!(matches!(client.read(), Err(Error::Disconnected)));
+    }
+    #[test]
+    fn incomplete_response_at_eof_is_not_success() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let mut client = client(stream, 16);
+        let frame = response("1", "hello").to_string();
+        peer.write_all(&frame.as_bytes()[..30]).unwrap();
+        peer.shutdown(Shutdown::Both).unwrap();
+        drop(peer);
+        assert!(matches!(
+            client.read_until(Some(Instant::now() + Duration::from_secs(1))),
+            Err(Error::Disconnected)
+        ));
+        assert_eq!(client.incoming.len(), 30);
+    }
+    #[test]
+    fn handshake_event_order_and_immediate_close() {
+        for before in [None, Some(true), Some(false)] {
+            let (stream, peer) = UnixStream::pair().unwrap();
+            let server = std::thread::spawn(move || {
+                peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+                let mut reader = BufReader::new(peer.try_clone().unwrap());
+                let request = read_request(&mut reader);
+                assert_eq!(request.name, "hello");
+                let reply = response(&request.id, "hello");
+                let frames = match before {
+                    Some(true) => format!("{}\n{}\n", event(), reply),
+                    Some(false) => format!("{}\n{}\n", reply, event()),
+                    None => format!("{reply}\n"),
+                };
+                let mut peer = peer;
+                peer.write_all(frames.as_bytes()).unwrap();
+                peer.shutdown(Shutdown::Both).unwrap();
+            });
+            let mut client = client(stream, 16);
+            assert_eq!(
+                client
+                    .request(
+                        "hello",
+                        json!({"client_id":"fixture","major":1,"minor":0,"capabilities":[]})
+                    )
+                    .unwrap()["major"],
+                1
+            );
+            if before.is_some() {
+                assert_eq!(client.next_event().unwrap().payload["text"], "test");
+            }
+            assert!(matches!(client.next_event(), Err(Error::Disconnected)));
+            server.join().unwrap();
+        }
+    }
+    #[test]
+    fn fragmented_frame_writes_and_large_request() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let text = "x".repeat(20000);
+        let expected = text.clone();
+        let server = std::thread::spawn(move || {
+            peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+            let mut reader = BufReader::with_capacity(16, peer.try_clone().unwrap());
+            let request = read_request(&mut reader);
+            assert_eq!(request.payload["text"], expected);
+            let reply = json!({"version":{"major":1,"minor":0},"type":"response","id":request.id,"name":"chat.send","payload":{"run_id":"r","session_id":"s"}});
+            for chunk in format!("{reply}\n").as_bytes().chunks(3) {
+                peer.write_all(chunk).unwrap();
+            }
+            peer.shutdown(Shutdown::Both).unwrap();
+        });
+        let mut client = client(stream, 16);
+        assert_eq!(
+            client
+                .request("chat.send", json!({"session_id":"s","text":text}))
+                .unwrap()["run_id"],
+            "r"
+        );
+        server.join().unwrap();
+    }
+    #[test]
+    fn expired_write_deadline_sends_no_frame() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let mut client = client(stream, 16);
+        assert!(matches!(
+            client.request_until("daemon.status", json!({}), Instant::now()),
+            Err(Error::Timeout)
+        ));
+        peer.set_nonblocking(true).unwrap();
+        assert_eq!(
+            peer.read(&mut [0; 1]).unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
+    }
+    #[test]
+    fn sequential_requests_restore_both_timeouts() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let (done, wait) = mpsc::channel();
+        let server = std::thread::spawn(move || {
+            peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+            let mut reader = BufReader::new(peer.try_clone().unwrap());
+            for id in ["1", "2"] {
+                let request = read_request(&mut reader);
+                assert_eq!(request.id, id);
+                writeln!(peer, "{}", response(id, "daemon.status")).unwrap();
+            }
+            wait.recv_timeout(Duration::from_secs(2)).unwrap();
+        });
+        let mut client = client(stream, 16);
+        let read = Some(Duration::from_secs(1));
+        let write = Some(Duration::from_millis(750));
+        client.set_read_timeout(read).unwrap();
+        client.writer.set_write_timeout(write).unwrap();
+        for _ in 0..2 {
+            assert_eq!(
+                client.request("daemon.status", json!({})).unwrap()["running"],
+                true
+            );
+            assert_eq!(client.reader.get_ref().read_timeout().unwrap(), read);
+            assert_eq!(client.writer.write_timeout().unwrap(), write);
+        }
+        done.send(()).unwrap();
+        server.join().unwrap();
+    }
+    #[test]
+    fn stale_id_and_wrong_name_are_rejected() {
+        for (id, name) in [("old", "daemon.status"), ("1", "hello")] {
+            let (stream, mut peer) = UnixStream::pair().unwrap();
+            let server = std::thread::spawn(move || {
+                peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+                let mut reader = BufReader::new(peer.try_clone().unwrap());
+                read_request(&mut reader);
+                writeln!(peer, "{}", response(id, name)).unwrap();
+                peer.shutdown(Shutdown::Both).unwrap();
+            });
+            let mut client = client(stream, 16);
+            assert!(matches!(
+                client.request("daemon.status", json!({})),
+                Err(Error::Protocol(_))
+            ));
+            server.join().unwrap();
+        }
+    }
+    #[test]
+    fn blocked_writer_deadline_closes_transport() {
+        let (stream, _peer) = UnixStream::pair().unwrap();
+        let mut client = client(stream, 16);
+        // Fill the actual send queue to WouldBlock; no scheduling sleep is needed.
+        client.writer.set_nonblocking(true).unwrap();
+        loop {
+            match client.writer.write(&[0; 8192]) {
+                Ok(0) => panic!("unexpected zero write"),
+                Ok(_) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => break,
+                Err(error) => panic!("unexpected queue-fill error: {error}"),
+            }
+        }
+        client.writer.set_nonblocking(false).unwrap();
+        client
+            .set_read_timeout(Some(Duration::from_millis(20)))
+            .unwrap();
+        assert!(matches!(
+            client.request("daemon.status", json!({})),
+            Err(Error::Timeout)
+        ));
+        assert!(matches!(
+            client.request("daemon.status", json!({})),
+            Err(Error::Disconnected)
+        ));
+    }
+    #[test]
+    fn peer_closes_without_response_is_disconnected() {
+        let (stream, peer) = UnixStream::pair().unwrap();
+        let server = std::thread::spawn(move || {
+            peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+            let mut reader = BufReader::new(peer.try_clone().unwrap());
+            read_request(&mut reader);
+            peer.shutdown(Shutdown::Both).unwrap();
+        });
+        let mut client = client(stream, 16);
+        assert!(matches!(
+            client.request("daemon.status", json!({})),
+            Err(Error::Disconnected)
+        ));
+        server.join().unwrap();
+    }
+    #[test]
+    fn client_drop_closes_all_socket_handles() {
+        let (stream, mut peer) = UnixStream::pair().unwrap();
+        let client = client(stream, 16);
+        peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        drop(client);
+        assert_eq!(peer.read(&mut [0; 1]).unwrap(), 0);
     }
 }
