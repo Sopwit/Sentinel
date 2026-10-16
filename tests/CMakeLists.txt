@@ -225,6 +225,8 @@ add_sentinel_core_test(test_upgrade core/test_upgrade.cpp)
 add_sentinel_core_test(test_local_echo_provider core/test_local_echo_provider.cpp)
 add_sentinel_core_test(test_null_agent_runtime core/test_null_agent_runtime.cpp)
 add_sentinel_core_test(test_agent_loop core/test_agent_loop.cpp)
+add_sentinel_core_test(test_agent_reliability_harness
+                       core/test_agent_reliability_harness.cpp)
 add_sentinel_core_test(test_agent_runtime core/test_agent_runtime.cpp)
 add_sentinel_core_test(test_llm_agent_runtime core/test_llm_agent_runtime.cpp)
 add_sentinel_core_test(test_observation_policy core/test_observation_policy.cpp)
