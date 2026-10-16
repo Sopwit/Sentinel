@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -27,3 +28,104 @@ jobs:
       - run: cargo +1.94.0 fmt --all --check
       - run: cargo +1.94.0 clippy --locked --all-targets -- -D warnings
       - run: cargo +1.94.0 test --locked
+  ipc-stress:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install 1.94.0 --profile minimal
+      - name: Run 100 sequential IPC suites
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          import platform
+          import signal
+          import subprocess
+          import sys
+          import time
+
+          output = Path("../ipc-stress-results")
+          output.mkdir(exist_ok=True)
+          command = ["cargo", "+1.94.0", "test", "--locked", "-p", "sentinel-ipc"]
+          metadata = {
+              "github_sha": os.environ["GITHUB_SHA"],
+              "checkout_sha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "runner_os": os.environ["RUNNER_OS"],
+              "platform": platform.platform(),
+              "rustc": subprocess.check_output(["rustc", "+1.94.0", "-Vv"], text=True),
+              "command": command,
+              "iteration_timeout_seconds": 120,
+          }
+          (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+          results = []
+          for iteration in range(1, 101):
+              started = time.monotonic()
+              timed_out = False
+              with (output / f"iteration-{iteration:03d}.log").open("w") as log:
+                  process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
+                                             start_new_session=True)
+                  try:
+                      code = process.wait(timeout=120)
+                  except subprocess.TimeoutExpired:
+                      timed_out = True
+                      os.killpg(process.pid, signal.SIGKILL)
+                      code = process.wait()
+              result = {"iteration": iteration, "exit_code": code, "timed_out": timed_out,
+                        "elapsed_seconds": round(time.monotonic() - started, 3)}
+              (output / f"iteration-{iteration:03d}.json").write_text(json.dumps(result) + "\n")
+              results.append(result)
+              (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+              print(json.dumps(result), flush=True)
+          failed = sum(item["exit_code"] != 0 or item["timed_out"] for item in results)
+          (output / "outcome.json").write_text(json.dumps({"completed": len(results), "failed": failed}) + "\n")
+          sys.exit(1 if failed else 0)
+          PYTHON
+      - name: Summarize IPC stress evidence
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+
+          output = Path("../ipc-stress-results")
+          output.mkdir(exist_ok=True)
+          results_path = output / "results.json"
+          results = json.loads(results_path.read_text()) if results_path.exists() else []
+          failed = sum(item["exit_code"] != 0 or item["timed_out"] for item in results)
+          outcome = output / "outcome.json"
+          success = len(results) == 100 and failed == 0 and outcome.exists()
+          summary = (f"### IPC stress: {os.environ['RUNNER_OS']}\n"
+                     f"Result: {'PASS' if success else 'FAIL / INCOMPLETE'}\n\n"
+                     f"Completed: {len(results)}/100; failed: {failed}; "
+                     f"missing: {100 - len(results)}. No retries.\n\n"
+                     f"Source: `{os.environ['GITHUB_SHA']}`; Rust: 1.94.0. "
+                     "See diagnostic artifact for every log and exit code.\n")
+          (output / "summary.md").write_text(summary)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as handle:
+              handle.write(summary)
+          PYTHON
+      - name: Upload IPC stress diagnostics
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ipc-stress-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ipc-stress-results/
+          if-no-files-found: error
+          retention-days: 14
