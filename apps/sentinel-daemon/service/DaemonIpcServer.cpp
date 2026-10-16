@@ -112,15 +112,22 @@ bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
     if (!query.exec("SELECT session_id, payload FROM session_projection")) {
         return false;
     }
+    QSqlQuery updateQuery(db);
+    updateQuery.prepare("UPDATE session_projection SET payload = ? WHERE session_id = ?");
     while (query.next()) {
+        const auto sessionId = query.value(0).toString();
         auto value = QJsonDocument::fromJson(query.value(1).toByteArray()).object();
         if (value.value("state") == "running" || value.value("state") == "approval") {
             // A new daemon never replays an interrupted mutation or revives a grant.
             value.insert("state", "failed");
             value.insert("output", QString{});
             value.insert("detail", "daemon-restarted");
+            updateQuery.addBindValue(
+                QString::fromUtf8(QJsonDocument(value).toJson(QJsonDocument::Compact)));
+            updateQuery.addBindValue(sessionId);
+            updateQuery.exec();
         }
-        m_lastRuns.insert(query.value(0).toString(), value);
+        m_lastRuns.insert(sessionId, value);
     }
     return true;
 }
@@ -507,6 +514,29 @@ void DaemonIpcServer::error(QLocalSocket* socket, const QString& id, const QStri
     qWarning().noquote() << "IPC protocol error:" << code;
     send(socket, envelope("error", id, "ProtocolError", {{"code", code}}));
 }
+#if defined(Q_OS_UNIX)
+std::optional<uid_t> DaemonIpcServer::querySocketPeerUid(qintptr descriptor) {
+#if defined(Q_OS_MACOS)
+    uid_t peerUid = 0;
+    gid_t peerGid = 0;
+    if (::getpeereid(static_cast<int>(descriptor), &peerUid, &peerGid) == 0) {
+        return peerUid;
+    }
+    return std::nullopt;
+#elif defined(Q_OS_LINUX)
+    struct ucred peer{};
+    socklen_t size = sizeof(peer);
+    if (::getsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_PEERCRED,
+                     &peer, &size) == 0) {
+        return peer.uid;
+    }
+    return std::nullopt;
+#else
+    Q_UNUSED(descriptor);
+    return std::nullopt;
+#endif
+}
+#endif
 void DaemonIpcServer::handleNewConnection() {
     while (auto* socket = m_server.nextPendingConnection()) {
         if (m_clients.size() >= 32) {
@@ -514,21 +544,10 @@ void DaemonIpcServer::handleNewConnection() {
             socket->deleteLater();
             continue;
         }
-#ifdef Q_OS_MACOS
-        uid_t peerUid;
-        gid_t peerGid;
-        if (::getpeereid(static_cast<int>(socket->socketDescriptor()), &peerUid, &peerGid) != 0 ||
-            peerUid != ::getuid()) {
-            socket->abort();
-            socket->deleteLater();
-            continue;
-        }
-#elif defined(Q_OS_LINUX)
-        struct ucred peer{};
-        socklen_t size = sizeof(peer);
-        if (::getsockopt(static_cast<int>(socket->socketDescriptor()), SOL_SOCKET, SO_PEERCRED,
-                         &peer, &size) != 0 ||
-            peer.uid != ::getuid()) {
+#if defined(Q_OS_UNIX)
+        const auto peerUid = m_peerUidResolver ? m_peerUidResolver(socket->socketDescriptor())
+                                               : querySocketPeerUid(socket->socketDescriptor());
+        if (!peerUid.has_value() || peerUid.value() != ::getuid()) {
             socket->abort();
             socket->deleteLater();
             continue;
@@ -1590,8 +1609,8 @@ void DaemonIpcServer::handleRequest(const QJsonObject& message, QLocalSocket* so
     }
 }
 void DaemonIpcServer::publishEvent(const QString& name, const QJsonObject& data) {
-    if (name == "run.started" || name == "run.completed" || name == "run.cancelled" ||
-        name == "run.failed") {
+    if (name == "run.started" || name == "approval.requested" || name == "run.completed" ||
+        name == "run.cancelled" || name == "run.failed") {
         rememberRun();
     }
     auto payload = data;

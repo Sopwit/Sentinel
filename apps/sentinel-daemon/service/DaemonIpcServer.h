@@ -12,7 +12,12 @@
 #include <QThread>
 #include <QTimer>
 #include <atomic>
+#include <functional>
 #include <memory>
+#include <optional>
+#if defined(Q_OS_UNIX)
+#include <sys/types.h>
+#endif
 namespace sentinel::core {
 class ApplicationController;
 class AppSettings;
@@ -36,6 +41,13 @@ public:
     void setSettings(core::AppSettings* settings) {
         m_settings = settings;
     }
+#if defined(Q_OS_UNIX)
+    using PeerUidResolver = std::function<std::optional<uid_t>(qintptr)>;
+    static std::optional<uid_t> querySocketPeerUid(qintptr descriptor);
+    void setPeerUidResolverForTesting(PeerUidResolver resolver) {
+        m_peerUidResolver = std::move(resolver);
+    }
+#endif
 
 signals:
     void shutdownStarted();
@@ -117,5 +129,8 @@ private:
     bool m_shuttingDown = false;
     QElapsedTimer m_uptime;
     std::unique_ptr<DaemonModelHelpers> m_modelHelpers;
+#if defined(Q_OS_UNIX)
+    PeerUidResolver m_peerUidResolver;
+#endif
 };
 } // namespace sentinel::daemon

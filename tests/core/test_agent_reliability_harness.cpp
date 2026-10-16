@@ -4025,6 +4025,12 @@ private slots:
     void cor18_staleDuplicateForeignEventsIgnored() {
         runIpcCorpusCase(QStringLiteral("cor18_staleDuplicateForeignEventsIgnored"));
     }
+    void cor19_eventSequenceMonotonicAndGenerationFencing() {
+        runIpcCorpusCase(QStringLiteral("cor19_eventSequenceMonotonicAndGenerationFencing"));
+    }
+    void cor20_multiClientBackpressureAndBufferSaturation() {
+        runIpcCorpusCase(QStringLiteral("cor20_multiClientBackpressureAndBufferSaturation"));
+    }
 
     // Component check only, deliberately separate from the COR-18 wire fixtures.
     void terminalRuntimeRejectsLateAndForeignCommands() {

@@ -947,4 +947,32 @@ mod close_regression_tests {
         drop(client);
         assert_eq!(peer.read(&mut [0; 1]).unwrap(), 0);
     }
+    #[test]
+    fn event_backlog_saturation_triggers_protocol_error() {
+        let (stream, peer) = UnixStream::pair().unwrap();
+        let server = std::thread::spawn(move || {
+            peer.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+            let mut reader = BufReader::new(peer.try_clone().unwrap());
+            let request = read_request(&mut reader);
+            assert_eq!(request.name, "hello");
+            let event_frame = format!("{}\n", event());
+            let mut peer = peer;
+            for _ in 0..257 {
+                peer.write_all(event_frame.as_bytes()).unwrap();
+            }
+            writeln!(peer, "{}", response(&request.id, "hello")).unwrap();
+        });
+        let mut client = client(stream, 16);
+        let err = client
+            .request(
+                "hello",
+                json!({"client_id":"fixture","major":1,"minor":0,"capabilities":[]}),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(err, Error::Protocol(ref s) if s.contains("event backlog exceeded")),
+            "unexpected error: {err:?}"
+        );
+        server.join().unwrap();
+    }
 }
