@@ -2,6 +2,7 @@ add_executable(sentinel-cli
     main.cpp
     commands/ChatCommand.h
     commands/ChatCommand.cpp
+    commands/ExitCodes.h
     commands/ModelCommand.h
     commands/ModelCommand.cpp
     commands/StatusCommand.h

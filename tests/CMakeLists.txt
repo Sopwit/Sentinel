@@ -296,6 +296,13 @@ target_link_libraries(test_chat_view_model
 
 # ── Integration, Performance, Benchmark & GUI Test Targets ───────────────────
 add_sentinel_core_test(test_rag_e2e_pipeline integration/test_rag_e2e_pipeline.cpp)
+add_sentinel_core_test(test_legacy_cli_exit_codes integration/test_legacy_cli_exit_codes.cpp)
+target_compile_definitions(test_legacy_cli_exit_codes PRIVATE
+    SENTINEL_CLI_BINARY="$<TARGET_FILE:sentinel-cli>")
+target_include_directories(test_legacy_cli_exit_codes PRIVATE
+    ${PROJECT_SOURCE_DIR}/apps/sentinel-cli)
+add_dependencies(test_legacy_cli_exit_codes sentinel-cli)
+set_tests_properties(test_legacy_cli_exit_codes PROPERTIES TIMEOUT 300)
 add_sentinel_core_test(test_startup_time performance/test_startup_time.cpp)
 add_sentinel_core_test(bench_semantic_search benchmarks/bench_semantic_search.cpp)
 add_sentinel_core_test(bench_context_compression benchmarks/bench_context_compression.cpp)

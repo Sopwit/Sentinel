@@ -4,6 +4,7 @@
 
 #include "ModelCommand.h"
 
+#include "ExitCodes.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
@@ -14,10 +15,30 @@
 #include <QEventLoop>
 #include <QTimer>
 
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 
 namespace sentinel::cli {
+
+namespace {
+
+// Model pull inactivity deadline. SENTINEL_CLI_PULL_IDLE_TIMEOUT_MS exists
+// only so deterministic tests can bound the wait without changing command-line
+// arguments; unset production behavior keeps the documented 60-second
+// inactivity deadline (docs/reference/CLI_REFERENCE.md). The deadline measures
+// time without progress or status movement, so a healthy long download that
+// keeps streaming is never cut off.
+int pullIdleDeadlineMs() {
+    bool ok = false;
+    const int envMs = qEnvironmentVariableIntValue("SENTINEL_CLI_PULL_IDLE_TIMEOUT_MS", &ok);
+    if (ok && envMs >= 100) {
+        return envMs;
+    }
+    return 60000;
+}
+
+} // namespace
 
 int executeModelCommand(const QStringList& args) {
     const QString sub = args.value(0, QStringLiteral("list"));
@@ -43,23 +64,33 @@ int executeModelCommand(const QStringList& args) {
                          });
 
         controller->refreshOllamaStatus();
-        QTimer::singleShot(5000, &loop, [&loop]() { loop.quit(); });
+        QTimer listDeadline;
+        listDeadline.setSingleShot(true);
+        QObject::connect(&listDeadline, &QTimer::timeout, &loop, [&loop]() { loop.quit(); });
+        listDeadline.start(5000);
         loop.exec();
+        listDeadline.stop();
 
         std::cout << "Ollama Health:    " << controller->ollamaHealthStatus().toStdString() << " ("
                   << controller->ollamaConnectionStatus().toStdString() << ")" << std::endl;
 
         const auto discovery = controller->ollamaDiscovery();
-        if (!statusRefreshed || discovery.lifecycle == sentinel::core::ChatRequestLifecycle::Pending ||
+        if (!statusRefreshed) {
+            std::cerr << "Model discovery did not complete: discovery deadline expired after 5 "
+                         "seconds."
+                      << std::endl;
+            return kExitTimeout;
+        }
+        if (discovery.lifecycle == sentinel::core::ChatRequestLifecycle::Pending ||
             discovery.lifecycle == sentinel::core::ChatRequestLifecycle::Cancelled) {
-            std::cerr << "Model discovery did not complete: "
-                      << discovery.safeDetail.toStdString() << std::endl;
-            return 1;
+            std::cerr << "Model discovery did not complete: " << discovery.safeDetail.toStdString()
+                      << std::endl;
+            return kExitFailure;
         }
         if (!discovery.succeeded()) {
             std::cerr << "Model discovery failed: " << discovery.safeDetail.toStdString()
                       << std::endl;
-            return 1;
+            return kExitFailure;
         }
         const auto& models = discovery.models;
         if (models.isEmpty()) {
@@ -75,14 +106,17 @@ int executeModelCommand(const QStringList& args) {
                 std::cout << std::endl;
             }
         }
-        return 0;
+        return kExitSuccess;
     }
 
     if (sub == QStringLiteral("pull")) {
-        const QString modelId = args.value(1);
+        const QString modelId = args.value(1).trimmed();
         if (modelId.isEmpty()) {
+            // OllamaModelPuller::pull() silently ignores a blank model and
+            // emits nothing, which previously left this command waiting in its
+            // event loop forever.
             std::cerr << "Usage: sentinel-cli model pull <model_name>" << std::endl;
-            return 1;
+            return kExitUsage;
         }
 
         OllamaModelPuller puller;
@@ -90,36 +124,90 @@ int executeModelCommand(const QStringList& args) {
 
         QEventLoop loop;
         auto finished = false;
+        auto pullSucceeded = false;
+        auto pullTimedOut = false;
         QObject::connect(&puller, &OllamaModelPuller::pullFinished, &loop,
-                         [&loop, &finished](const QString& model, bool success) {
+                         [&loop, &finished, &pullSucceeded](const QString& model, bool success) {
                              finished = true;
+                             pullSucceeded = success;
                              std::cout << std::endl
                                        << (success ? "Pull completed: " : "Pull failed: ")
                                        << model.toStdString() << std::endl;
                              loop.quit();
                          });
 
+        const int idleDeadlineMs = pullIdleDeadlineMs();
+        auto lastProgress = puller.progress();
+        auto lastStatus = puller.statusText();
+        auto lastActivity = std::chrono::steady_clock::now();
+
         QTimer progressTimer;
-        QObject::connect(&progressTimer, &QTimer::timeout, &loop, [&puller, &finished]() {
-            if (finished) {
-                return;
-            }
-            std::cout << "\r  Progress: " << static_cast<int>(puller.progress() * 100) << "% - "
-                      << puller.statusText().toStdString() << "          ";
-            std::cout.flush();
-        });
+        QObject::connect(&progressTimer, &QTimer::timeout, &loop,
+                         [&loop, &puller, &finished, &pullTimedOut, &lastProgress, &lastStatus,
+                          &lastActivity, idleDeadlineMs]() {
+                             if (finished) {
+                                 return;
+                             }
+                             std::cout
+                                 << "\r  Progress: " << static_cast<int>(puller.progress() * 100)
+                                 << "% - " << puller.statusText().toStdString() << "          ";
+                             std::cout.flush();
+
+                             const auto progress = puller.progress();
+                             const auto status = puller.statusText();
+                             if (progress != lastProgress || status != lastStatus) {
+                                 lastProgress = progress;
+                                 lastStatus = status;
+                                 lastActivity = std::chrono::steady_clock::now();
+                                 return;
+                             }
+                             if (std::chrono::steady_clock::now() - lastActivity >=
+                                 std::chrono::milliseconds(idleDeadlineMs)) {
+                                 pullTimedOut = true;
+                                 std::cerr
+                                     << std::endl
+                                     << "sentinel-cli: model pull stalled: no progress within "
+                                     << idleDeadlineMs << " ms" << std::endl;
+                                 // Stop the in-flight request so a late success
+                                 // callback cannot reclassify this run.
+                                 puller.cancel();
+                                 loop.quit();
+                             }
+                         });
         progressTimer.start(250);
 
         std::cout << "Pulling model: " << modelId.toStdString() << " ..." << std::endl;
         puller.pull(modelId);
 
-        loop.exec();
-        return 0;
+        if (!finished) {
+            loop.exec();
+        }
+        progressTimer.stop();
+
+        // The deadline decision wins over any callback that arrives afterwards.
+        if (pullTimedOut) {
+            return kExitTimeout;
+        }
+        if (!finished) {
+            std::cerr << "sentinel-cli: model pull failed: no result was reported for "
+                      << modelId.toStdString() << std::endl;
+            return kExitFailure;
+        }
+        if (!pullSucceeded) {
+            std::cerr << "sentinel-cli: model pull failed: " << modelId.toStdString();
+            const auto errorText = puller.errorText();
+            if (!errorText.trimmed().isEmpty()) {
+                std::cerr << " (" << errorText.toStdString() << ")";
+            }
+            std::cerr << std::endl;
+            return kExitFailure;
+        }
+        return kExitSuccess;
     }
 
     std::cerr << "Unknown model subcommand: " << sub.toStdString() << std::endl;
     std::cerr << "Available: list, pull" << std::endl;
-    return 1;
+    return kExitUsage;
 }
 
 } // namespace sentinel::cli
