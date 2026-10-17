@@ -176,6 +176,13 @@ class DaemonIpcServerTest : public QObject {
     Q_OBJECT
 private slots:
     void shutdownAckDoesNotWaitForUnresponsivePlanner() {
+        // WIN-02: Daemon IPC requires Unix peer-credential authentication (SO_PEERCRED).
+        // Windows named-pipe peer-process authentication is not implemented (PD-DWIN-01).
+        // All connections are rejected fail-closed on Windows; this test cannot succeed.
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         QSemaphore entered, release;
         Harness h(test::DeterministicChatReply::Final, true, nullptr, false,
                   std::make_unique<ShutdownGatePlanner>(entered, release));
@@ -199,6 +206,11 @@ private slots:
     }
 
     void shutdownAcknowledgesAndDrainsExactlyOnce() {
+        // WIN-02: Requires Unix peer-credential authentication. See PD-DWIN-01.
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket client;
@@ -231,6 +243,11 @@ private slots:
         }
     }
     void modelPagesFreezeSnapshotAndDoNotRebuildCatalog() {
+        // WIN-02: Requires Unix peer-credential authentication. See PD-DWIN-01.
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         LargeCatalog catalog;
         Harness h;
         for (int i = 0; i < 500; ++i) {
@@ -310,6 +327,10 @@ private slots:
             5000);
     }
     void deletesInactiveConversationWhileResponseIsRunning() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Delayed);
         auto gate = std::make_shared<QSemaphore>();
         h.models.state->completionGate = gate;
@@ -338,6 +359,10 @@ private slots:
                  QString("runtime-busy"));
     }
     void respondsToPing() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -345,6 +370,10 @@ private slots:
         QCOMPARE(request(s, "daemon.status")["payload"].toObject()["running"].toBool(), true);
     }
     void respondsToStatusWithControllerData() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -353,6 +382,10 @@ private slots:
                  QString("sentinel-test-model"));
     }
     void terminalDiagnosticsAreSafeAndAuthoritative() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
                                    core::inMemoryTestCredentialStore());
         Harness h(test::DeterministicChatReply::Final, false, &settings);
@@ -384,6 +417,10 @@ private slots:
         QCOMPARE(properties["activeRuntimeModelLabel"].toString(), QString("sentinel-test-model"));
     }
     void workspaceSelectionAndRootAreValidated() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
                                    core::inMemoryTestCredentialStore());
         Harness h(test::DeterministicChatReply::Final, false, &settings);
@@ -423,6 +460,10 @@ private slots:
             QString("workspace-root-rejected"));
     }
     void terminalFilesRespectWorkspaceAndToolBoundaries() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         core::AppSettings settings(std::make_unique<core::InMemorySettingsStore>(),
                                    core::inMemoryTestCredentialStore());
         Harness h(test::DeterministicChatReply::Final, false, &settings, true);
@@ -484,6 +525,10 @@ private slots:
                  QString("permission-denied"));
     }
     void activeBindingCannotBeSwitched() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Delayed);
         h.models.state->delayMs = 300;
         QVERIFY(h.server->startServer(h.path));
@@ -505,6 +550,10 @@ private slots:
         QTest::qWait(350);
     }
     void rejectsUnknownCommand() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -513,6 +562,10 @@ private slots:
                  QString("unknown-command"));
     }
     void incompatibleMajor() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -525,6 +578,10 @@ private slots:
             QString("incompatible-major"));
     }
     void handshakeRequired() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -534,6 +591,10 @@ private slots:
                  QString("handshake-required"));
     }
     void multipleClientsAndReconnect() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket a, b;
@@ -551,6 +612,10 @@ private slots:
                  created["session_id"]);
     }
     void collisionDoesNotUnlinkOwner() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         daemon::DaemonIpcServer second;
@@ -560,6 +625,10 @@ private slots:
         QCOMPARE(request(s, "daemon.status")["type"].toString(), QString("response"));
     }
     void malformedAndInvalidPayload() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -574,6 +643,10 @@ private slots:
                  QString("invalid-payload"));
     }
     void framingAcrossChunks() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -588,6 +661,10 @@ private slots:
         QCOMPARE(receive(s)["id"].toString(), QString("test-id"));
     }
     void oversizedFrame() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -597,6 +674,10 @@ private slots:
         QCOMPARE(receive(s)["payload"].toObject()["code"].toString(), QString("message-too-large"));
     }
     void rejectsUnknownSessionAndApprovalReplay() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -612,6 +693,10 @@ private slots:
                  QString("invalid-approval"));
     }
     void deterministicChatEvents() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Streaming);
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -632,6 +717,10 @@ private slots:
         QCOMPARE(output, QString("SENTINEL_TEST_RESPONSE"));
     }
     void cancellationHasNoLateCompletion() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Delayed);
         h.models.state->delayMs = 300;
         QVERIFY(h.server->startServer(h.path));
@@ -656,6 +745,10 @@ private slots:
         QVERIFY(!s.canReadLine());
     }
     void agentApprovalRoundTrip() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s, control;
@@ -701,6 +794,10 @@ private slots:
         QVERIFY(completed);
     }
     void disconnectDoesNotCancelChat() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Delayed);
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -721,6 +818,10 @@ private slots:
         QVERIFY(!snapshot["output"].toString().isEmpty());
     }
     void cancelledProjectionCannotLeakIntoNewConversation() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s;
@@ -749,6 +850,10 @@ private slots:
                      qPrintable(message.content));
     }
     void agentCancellationDuringApproval() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         QVERIFY(h.server->startServer(h.path));
         QLocalSocket s, control;
@@ -816,6 +921,9 @@ private slots:
 #endif
     }
     void ownedSocketRemovedOnStop() {
+#ifndef Q_OS_UNIX
+        QSKIP("Socket filesystem node cleanup is a Unix platform contract.");
+#endif
         Harness h;
         QVERIFY(h.server->startServer(h.path));
         h.server->stopServer();
@@ -833,7 +941,7 @@ private slots:
         const auto peerUid = daemon::DaemonIpcServer::querySocketPeerUid(fd);
         QVERIFY(peerUid.has_value());
         QCOMPARE(peerUid.value(), ::getuid());
-        const auto created = request(s, "session.create", {{"title", "Native Auth Session"}});
+        const auto created = request(s, "session.create", {{ "title", "Native Auth Session" }});
         QCOMPARE(created.value("type").toString(), QString("response"));
         QVERIFY(!created.value("payload").toObject().value("session_id").toString().isEmpty());
 #else
@@ -939,9 +1047,10 @@ private slots:
 
         QLocalSocket fastClient;
         hello(fastClient, h.path);
-        const auto created =
-            request(fastClient, "session.create", {{"title", "Backpressure Session"}})["payload"]
-                .toObject();
+        const auto created = request(fastClient, "session.create",
+                                     {{ "title",
+                                        "Backpressure Session" }})["payload"]
+                                 .toObject();
         const auto sessionId = created["session_id"].toString();
         QVERIFY(!sessionId.isEmpty());
         QCOMPARE(request(fastClient, "session.attach",
@@ -987,16 +1096,17 @@ private slots:
         ::fcntl(slowFd, F_SETFL, O_NONBLOCK);
 
         core::OllamaModelDiscoveryResult catalog;
-        catalog.models = {{QStringLiteral("sentinel-test-model"), {}, 0}};
+        catalog.models = {{ QStringLiteral("sentinel-test-model"), {}, 0 }};
         catalog.lifecycle = core::ChatRequestLifecycle::Completed;
         catalog.errorCategory = core::ChatProviderErrorCategory::None;
         catalog.safeDetail = QStringLiteral("Deterministic test catalog is ready.");
         h.controller->modelService()->acceptOllamaDiscovery(
             catalog, h.controller->modelService()->beginProviderHealthObservation());
 
-        const auto startResp =
-            request(fastClient, "agent.start",
-                    {{"session_id", sessionId}, {"text", "produce backpressure"}});
+        const auto startResp = request(fastClient, "agent.start",
+                                       {{"session_id", sessionId},
+                                        { "text",
+                                          "produce backpressure" }});
         QCOMPARE(startResp["type"].toString(), QString("response"));
         const auto runId = startResp["payload"].toObject()["run_id"].toString();
         QVERIFY(!runId.isEmpty());
@@ -1046,6 +1156,10 @@ private slots:
 #endif
     }
     void interruptedRunningRunReconciledOnRestart() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         const auto dbPath = h.directory.filePath("sessions.sqlite3");
         QVERIFY(h.server->openSessionProjectionStore(dbPath));
@@ -1109,6 +1223,10 @@ private slots:
         QSqlDatabase::removeDatabase("test_verify_interrupted_run");
     }
     void interruptedApprovalRunReconciledOnRestart() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         const auto dbPath = h.directory.filePath("sessions.sqlite3");
         QVERIFY(h.server->openSessionProjectionStore(dbPath));
@@ -1163,6 +1281,10 @@ private slots:
         QCOMPARE(replayResp["payload"].toObject()["code"].toString(), QString("invalid-approval"));
     }
     void completedRunSurvivesDaemonRestart() {
+#ifndef Q_OS_UNIX
+        QSKIP("Daemon IPC peer authentication requires SO_PEERCRED (Unix-only); "
+              "Windows named-pipe transport is not implemented (see PD-DWIN-01).");
+#endif
         Harness h(test::DeterministicChatReply::Final, true);
         const auto dbPath = h.directory.filePath("sessions.sqlite3");
         QVERIFY(h.server->openSessionProjectionStore(dbPath));
