@@ -228,11 +228,30 @@ private:
 
     std::unique_ptr<QTemporaryDir> tempDir_;
     QProcessEnvironment baseEnv_;
-    QString settingsSuffix_; // settings.json path relative to XDG_CONFIG_HOME
+    QString settingsSuffix_; // settings.json path relative to isolated profile root
 };
 
+namespace {
+
+void applyTestEnvironment(QProcessEnvironment& env, const QString& root) {
+    env.insert(QStringLiteral("HOME"), root);
+    env.insert(QStringLiteral("CFFIXED_USER_HOME"), root);
+    env.insert(QStringLiteral("XDG_CONFIG_HOME"), root + QStringLiteral("/config"));
+    env.insert(QStringLiteral("XDG_DATA_HOME"), root + QStringLiteral("/share"));
+    env.insert(QStringLiteral("XDG_STATE_HOME"), root + QStringLiteral("/state"));
+    env.insert(QStringLiteral("XDG_CACHE_HOME"), root + QStringLiteral("/cache"));
+    env.insert(QStringLiteral("XDG_DOCUMENTS_HOME"), root + QStringLiteral("/Documents"));
+#if defined(Q_OS_WIN)
+    env.insert(QStringLiteral("USERPROFILE"), root);
+    env.insert(QStringLiteral("APPDATA"), root + QStringLiteral("/AppData/Roaming"));
+    env.insert(QStringLiteral("LOCALAPPDATA"), root + QStringLiteral("/AppData/Local"));
+#endif
+}
+
+} // namespace
+
 QString LegacyCliExitCodesTest::settingsPath() const {
-    return QDir(baseEnv_.value(QStringLiteral("XDG_CONFIG_HOME"))).filePath(settingsSuffix_);
+    return tempDir_ ? QDir(tempDir_->path()).filePath(settingsSuffix_) : QString{};
 }
 
 void LegacyCliExitCodesTest::writeSettings(const QJsonObject& values) const {
@@ -254,15 +273,11 @@ void LegacyCliExitCodesTest::initTestCase() {
     QTemporaryDir probeDir;
     QVERIFY(probeDir.isValid());
 
+    const auto probeRoot = probeDir.path();
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert(QStringLiteral("HOME"), probeDir.path());
-    env.insert(QStringLiteral("XDG_CONFIG_HOME"), probeDir.path() + QStringLiteral("/config"));
-    env.insert(QStringLiteral("XDG_DATA_HOME"), probeDir.path() + QStringLiteral("/share"));
-    env.insert(QStringLiteral("XDG_STATE_HOME"), probeDir.path() + QStringLiteral("/state"));
-    env.insert(QStringLiteral("XDG_CACHE_HOME"), probeDir.path() + QStringLiteral("/cache"));
-    env.insert(QStringLiteral("XDG_DOCUMENTS_HOME"),
-               probeDir.path() + QStringLiteral("/Documents"));
-    QDir().mkpath(probeDir.path() + QStringLiteral("/Documents"));
+    applyTestEnvironment(env, probeRoot);
+    QDir().mkpath(probeRoot + QStringLiteral("/Documents"));
+    QDir().mkpath(probeRoot + QStringLiteral("/config"));
 
     QProcess probe;
     probe.setProcessEnvironment(env);
@@ -282,10 +297,12 @@ void LegacyCliExitCodesTest::initTestCase() {
         }
     }
     QVERIFY2(!settingsFile.isEmpty(), "status output did not report its settings file path");
-    const auto configRoot = env.value(QStringLiteral("XDG_CONFIG_HOME"));
-    QVERIFY2(settingsFile.startsWith(configRoot),
-             "settings file is not rooted at XDG_CONFIG_HOME; test isolation would be invalid");
-    settingsSuffix_ = settingsFile.mid(configRoot.size() + 1);
+    const auto cleanProbeRoot = QDir::fromNativeSeparators(probeRoot);
+    const auto cleanSettingsFile = QDir::fromNativeSeparators(settingsFile);
+    QVERIFY2(
+        cleanSettingsFile.startsWith(cleanProbeRoot),
+        "settings file is not rooted in isolated test directory; test isolation would be invalid");
+    settingsSuffix_ = cleanSettingsFile.mid(cleanProbeRoot.size() + 1);
     QVERIFY2(QFileInfo(settingsSuffix_).isRelative(), "settings suffix must be relative");
 }
 
@@ -295,12 +312,7 @@ void LegacyCliExitCodesTest::init() {
 
     const auto root = tempDir_->path();
     baseEnv_ = QProcessEnvironment::systemEnvironment();
-    baseEnv_.insert(QStringLiteral("HOME"), root + QStringLiteral("/home"));
-    baseEnv_.insert(QStringLiteral("XDG_CONFIG_HOME"), root + QStringLiteral("/config"));
-    baseEnv_.insert(QStringLiteral("XDG_DATA_HOME"), root + QStringLiteral("/share"));
-    baseEnv_.insert(QStringLiteral("XDG_STATE_HOME"), root + QStringLiteral("/state"));
-    baseEnv_.insert(QStringLiteral("XDG_CACHE_HOME"), root + QStringLiteral("/cache"));
-    baseEnv_.insert(QStringLiteral("XDG_DOCUMENTS_HOME"), root + QStringLiteral("/Documents"));
+    applyTestEnvironment(baseEnv_, root);
     baseEnv_.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen"));
     // Deterministic deadlines: never inherit ambient test-seam overrides.
     baseEnv_.remove(QStringLiteral("SENTINEL_CLI_CHAT_TIMEOUT_MS"));
@@ -579,9 +591,14 @@ void LegacyCliExitCodesTest::chatRefusedWithoutConversationStoreSetsFailure() {
     const QStringList documentRoots{
         baseEnv_.value(QStringLiteral("XDG_DOCUMENTS_HOME")),
         baseEnv_.value(QStringLiteral("HOME")) + QStringLiteral("/Documents"),
+#if defined(Q_OS_WIN)
+        baseEnv_.value(QStringLiteral("USERPROFILE")) + QStringLiteral("/Documents"),
+#endif
     };
     for (const auto& root : documentRoots) {
-        QVERIFY(QDir().mkpath(root + QStringLiteral("/Sentinel/conversations.sqlite3")));
+        if (!root.isEmpty()) {
+            QVERIFY(QDir().mkpath(root + QStringLiteral("/Sentinel/conversations.sqlite3")));
+        }
     }
 
     const auto result = runCli({QStringLiteral("chat"), QStringLiteral("hello")}, {}, 20000);

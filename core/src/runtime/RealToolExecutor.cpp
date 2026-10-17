@@ -794,10 +794,9 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 preflight,
                 [weak, launch](const ProcessRecord& record) {
                     const auto current = weak.lock();
-                    if (!current ||
-                        (record.state != ProcessState::Exited &&
-                         record.state != ProcessState::Failed &&
-                         record.state != ProcessState::Cancelled))
+                    if (!current || (record.state != ProcessState::Exited &&
+                                     record.state != ProcessState::Failed &&
+                                     record.state != ProcessState::Cancelled))
                         return;
                     if (record.state == ProcessState::Exited && record.exitCode == 1 &&
                         !record.timedOut) {
@@ -816,11 +815,9 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                             : QStringLiteral("Git filter safety check could not complete: %1")
                                   .arg(detail)};
                     failure.failureCategory =
-                        record.state == ProcessState::Cancelled
-                            ? ToolFailureCategory::Cancelled
-                        : record.timedOut
-                            ? ToolFailureCategory::Timeout
-                            : ToolFailureCategory::SecurityDenied;
+                        record.state == ProcessState::Cancelled ? ToolFailureCategory::Cancelled
+                        : record.timedOut                       ? ToolFailureCategory::Timeout
+                                          : ToolFailureCategory::SecurityDenied;
                     failure.sandbox = record.sandbox;
                     if (record.exitCode != 0 && (current->err.startsWith("bwrap:") ||
                                                  current->err.startsWith("sandbox-exec:"))) {
@@ -969,9 +966,8 @@ IToolExecutor::Cancel RealToolExecutor::executeAsync(const ToolExecutionRequest&
                 // A docker sandbox that cannot even start is almost always a
                 // missing docker CLI, so say that instead of a bare sandbox error.
                 const bool missingDocker =
-                    current->docker &&
-                    (launchFailure.isEmpty() ||
-                     launchFailure == QLatin1String("ExecutableUnavailable"));
+                    current->docker && (launchFailure.isEmpty() ||
+                                        launchFailure == QLatin1String("ExecutableUnavailable"));
                 summary =
                     missingDocker
                         ? QStringLiteral(
