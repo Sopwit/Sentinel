@@ -58,4 +58,44 @@ std::optional<QString> parseAnthropicMessagesText(const QJsonObject& body,
     return text;
 }
 
+QJsonObject anthropicToolDeclaration(const QJsonObject& nativeToolDefinition) {
+    const auto function = nativeToolDefinition.value(QStringLiteral("function")).toObject();
+    return QJsonObject{
+        {QStringLiteral("name"), function.value(QStringLiteral("name"))},
+        {QStringLiteral("description"), function.value(QStringLiteral("description"))},
+        {QStringLiteral("input_schema"), function.value(QStringLiteral("parameters"))}};
+}
+
+QJsonObject buildAnthropicNativeRequestBody(const QString& model, const QJsonArray& messages,
+                                            int maxTokens, const QJsonArray& tools,
+                                            const QJsonObject& structuredSchema) {
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), model);
+    body.insert(QStringLiteral("messages"), messages);
+    body.insert(QStringLiteral("max_tokens"), maxTokens > 0 ? maxTokens : 2048);
+    if (!tools.isEmpty()) {
+        body.insert(QStringLiteral("tools"), tools);
+    }
+    if (!structuredSchema.isEmpty()) {
+        body.insert(
+            QStringLiteral("output_config"),
+            QJsonObject{{QStringLiteral("format"),
+                         QJsonObject{{QStringLiteral("type"), QStringLiteral("json_schema")},
+                                     {QStringLiteral("schema"), structuredSchema}}}});
+    }
+    return body;
+}
+
+QJsonArray anthropicToolResultBlocks(const QList<AnthropicToolResult>& results,
+                                     int maxContentLength) {
+    QJsonArray blocks;
+    for (const auto& result : results) {
+        blocks.append(
+            QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_result")},
+                        {QStringLiteral("tool_use_id"), result.callId},
+                        {QStringLiteral("content"), result.content.left(maxContentLength)}});
+    }
+    return blocks;
+}
+
 } // namespace sentinel::core::provider
