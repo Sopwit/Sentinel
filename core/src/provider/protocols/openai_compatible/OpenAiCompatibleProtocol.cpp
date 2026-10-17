@@ -53,6 +53,23 @@ std::optional<QString> parseOpenAiCompatibleChatText(const QJsonObject& body,
     return text;
 }
 
+QList<OpenAiCompatibleToolCall> parseOpenAiCompatibleToolCalls(const QJsonObject& body) {
+    QList<OpenAiCompatibleToolCall> calls;
+    const auto choices = body.value(QStringLiteral("choices")).toArray();
+    if (choices.isEmpty()) {
+        return calls;
+    }
+    const auto message = choices.first().toObject().value(QStringLiteral("message")).toObject();
+    for (const auto& value : message.value(QStringLiteral("tool_calls")).toArray()) {
+        const auto call = value.toObject();
+        const auto function = call.value(QStringLiteral("function")).toObject();
+        calls.append(OpenAiCompatibleToolCall{call.value(QStringLiteral("id")).toString(),
+                                              function.value(QStringLiteral("name")).toString(),
+                                              function.value(QStringLiteral("arguments"))});
+    }
+    return calls;
+}
+
 OpenAiCompatibleCatalogParse parseOpenAiCompatibleModelCatalog(const QJsonObject& body) {
     OpenAiCompatibleCatalogParse parsed;
     const auto data = body.value(QStringLiteral("data"));
