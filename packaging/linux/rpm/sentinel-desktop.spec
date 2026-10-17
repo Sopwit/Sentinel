@@ -1,5 +1,5 @@
 Name:           sentinel-desktop
-Version:        1.0.0
+Version:        1.0.0~rc.8
 Release:        1%{?dist}
 Summary:        Local-first AI desktop assistant
 
@@ -16,7 +16,9 @@ BuildRequires:  qt6-qtsql-devel >= 6.5.0
 BuildRequires:  qt6-qtmultimedia-devel >= 6.5.0
 BuildRequires:  qt6-qttools-devel >= 6.5.0
 BuildRequires:  desktop-file-utils
-BuildRequires:  libappstream-glib
+BuildRequires:  appstream
+# %check runs the full CTest suite, which exercises the Linux sandbox backend.
+BuildRequires:  bubblewrap
 
 Requires:       qt6-qtbase >= 6.5.0
 Requires:       qt6-qtdeclarative >= 6.5.0
@@ -27,6 +29,9 @@ Recommends:     libnotify
 Recommends:     xdg-utils
 Recommends:     libsecret
 Recommends:     avahi-tools
+# Required for approved tool execution on Linux; without it the sandbox
+# backend reports unavailable and launch is denied rather than unsandboxed.
+Recommends:     bubblewrap
 
 %description
 Sentinel is a cross-platform, local-first AI desktop assistant application
@@ -48,7 +53,14 @@ companionship while ensuring privacy and explicit user control.
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/dev.sentinel.Sentinel.desktop
-appstream-util validate-relax --nonet %{buildroot}%{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
+if command -v appstreamcli >/dev/null 2>&1; then
+    appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
+elif command -v appstream-util >/dev/null 2>&1; then
+    appstream-util validate-relax --nonet %{buildroot}%{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
+else
+    echo 'No AppStream validator is available.' >&2
+    exit 1
+fi
 export QT_QPA_PLATFORM=offscreen
 %ctest
 
@@ -72,6 +84,7 @@ fi
 %{_bindir}/sentinel-desktop
 %{_bindir}/sentinel-daemon
 %{_bindir}/sentinel-cli
+%{_bindir}/sentinel-plugin-host
 %{_datadir}/applications/dev.sentinel.Sentinel.desktop
 %{_datadir}/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg
 %{_datadir}/icons/hicolor/16x16/apps/dev.sentinel.Sentinel.png
@@ -84,11 +97,27 @@ fi
 %{_datadir}/icons/hicolor/256x256/apps/dev.sentinel.Sentinel.png
 %{_datadir}/icons/hicolor/512x512/apps/dev.sentinel.Sentinel.png
 %{_datadir}/metainfo/dev.sentinel.Sentinel.metainfo.xml
-%{_datadir}/dbus-1/services/dev.sentinel.Sentinel.service
+# Runtime assets installed by CMake outside the usual metadata paths.
+%{_datadir}/sentinel
+%{_datadir}/licenses/sentinel
+%{_datadir}/doc/Sentinel
+# systemd user units live in <prefix>/lib/systemd/user on Fedora, not <libdir>.
 %{_prefix}/lib/systemd/user/sentinel-desktop.service
 %config(noreplace) %{_sysconfdir}/sentinel/config.json.template
 
 %changelog
+* Sat Oct 17 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0~rc.8-1
+- Align the package version with the canonical CMake SENTINEL_APP_VERSION (1.0.0-rc.8)
+- Package sentinel-plugin-host plus the installed license, doc and core-warden assets
+- Remove the inert D-Bus activation file (no session-bus registration exists)
+- Recommend bubblewrap for the Linux tool-execution sandbox
+- Prefer appstreamcli, falling back to appstream-util, for metadata validation
+* Tue Sep 22 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0-1
+- Ship sentinel-daemon and sentinel-cli alongside the desktop app
+- Run tests headless via QT_QPA_PLATFORM=offscreen
+- Recommend optional runtime helpers (libnotify, xdg-utils, libsecret, avahi-tools)
+- Initial enterprise RPM package release for Fedora KDE Plasma
+- FHS 3.0, XDG Base Directory, D-Bus session activation and systemd user service integration
 * Thu Aug 06 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0-1
 - Ship sentinel-daemon and sentinel-cli alongside the desktop app
 - systemd user unit now launches the headless sentinel-daemon binary

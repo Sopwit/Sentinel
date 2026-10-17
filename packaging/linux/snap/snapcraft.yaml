@@ -1,6 +1,6 @@
 name: sentinel-desktop
 base: core24
-version: '1.0.0'
+version: '1.0.0-rc.8'
 summary: Local-first AI desktop assistant
 description: |
   Sentinel is a cross-platform, local-first AI desktop assistant application
