@@ -6,6 +6,7 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QList>
 #include <QString>
 #include <QUrl>
 
@@ -40,5 +41,31 @@ enum class GeminiGenerateContentTextError {
 std::optional<QString>
 parseGeminiGenerateContentText(const QJsonObject& body,
                                GeminiGenerateContentTextError* error = nullptr);
+
+// Builds the Gemini native generateContent request body used by the provider
+// adapter. `contents` (role/parts, already built by the caller) is inserted
+// verbatim. The native body keeps `model` so the transport can derive the URL and
+// remove it before dispatch (unlike the infer/stream body, which carries a
+// temperature and always emits maxOutputTokens). A non-empty
+// `functionDeclarations` adds the functionDeclarations tool envelope; a non-empty
+// `structuredSchema` adds responseMimeType/responseSchema to generationConfig.
+QJsonObject buildGeminiNativeRequestBody(const QString& model, const QJsonArray& contents,
+                                         int maxOutputTokens,
+                                         const QJsonArray& functionDeclarations = {},
+                                         const QJsonObject& structuredSchema = {});
+
+// One Gemini functionResponse entry for a native function continuation round-trip.
+struct GeminiFunctionResult {
+    QString callId;
+    QString functionName;
+    QString content;
+};
+
+// Converts resolved function names and result text into Gemini functionResponse
+// parts. Result text is truncated to `maxContentLength` (default 6800). Synthesized
+// Sentinel ids ("sentinel-gemini-...") are internal bookkeeping and are never
+// echoed to the provider; provider-supplied ids are forwarded verbatim.
+QJsonArray geminiFunctionResponseParts(const QList<GeminiFunctionResult>& results,
+                                       int maxContentLength = 6800);
 
 } // namespace sentinel::core::provider
