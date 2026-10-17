@@ -6,6 +6,7 @@
 #include "sentinel/core/chat/ChatImageContent.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
 #include <QElapsedTimer>
@@ -1197,10 +1198,7 @@ LMStudioLocalInferenceClient::completeOpenAiChat(
     QMap<QByteArray, QByteArray> headers;
     if (!config_.apiKey.isEmpty())
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-    const auto path =
-        config_.endpoint.adjusted(QUrl::StripTrailingSlash).path().endsWith(QLatin1String("/v1"))
-            ? QStringLiteral("/chat/completions")
-            : QStringLiteral("/v1/chat/completions");
+    const auto path = provider::openAiCompatibleChatCompletionsPath(config_.endpoint);
     const auto reply =
         postJson(endpointUrl(path), body, timeoutMs_ > 0 ? timeoutMs_ : config_.timeoutMs, headers,
                  cancellationToken, config_.networkFactory);
@@ -1485,13 +1483,10 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
-        QJsonObject body;
-        body.insert(QStringLiteral("model"), response.model);
-        body.insert(QStringLiteral("messages"), messagesArr);
-        body.insert(QStringLiteral("stream"), false);
-        body.insert(QStringLiteral("temperature"), request.options.temperature);
-        body.insert(QStringLiteral("max_tokens"),
-                    request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
+        const auto body = provider::buildOpenAiCompatibleChatBody(
+            response.model, messagesArr,
+            request.options.maxTokens > 0 ? request.options.maxTokens : 2048, false,
+            request.options.temperature);
 
         response.traces.append(
             trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
@@ -1500,13 +1495,9 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
         QMap<QByteArray, QByteArray> headers;
         headers.insert("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
-        const auto reply = postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
-                                                        .path()
-                                                        .endsWith(QLatin1String("/v1"))
-                                                    ? QStringLiteral("/chat/completions")
-                                                    : QStringLiteral("/v1/chat/completions")),
-                                    body, timeoutMs, headers, request.options.cancellationToken,
-                                    config_.networkFactory);
+        const auto reply = postJson(
+            endpointUrl(provider::openAiCompatibleChatCompletionsPath(config_.endpoint)), body,
+            timeoutMs, headers, request.options.cancellationToken, config_.networkFactory);
         recordRequestMetadata(response, reply);
         if (!reply.ok) {
             response.status = LocalInferenceStatus::Error;
@@ -1519,34 +1510,26 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                 trace(3, QStringLiteral("Generation"), QStringLiteral("Error"), response.summary));
             return response;
         }
-        const auto choices = reply.document.object().value(QStringLiteral("choices")).toArray();
-        if (choices.isEmpty()) {
+        provider::OpenAiCompatibleChatTextError textError =
+            provider::OpenAiCompatibleChatTextError::None;
+        const auto text =
+            provider::parseOpenAiCompatibleChatText(reply.document.object(), &textError);
+        if (!text) {
             response.status = LocalInferenceStatus::Error;
             response.error = LocalInferenceError::InvalidResponse;
             response.summary =
-                QStringLiteral("%1 cloud generation response did not include choices.")
-                    .arg(config_.providerDisplayName());
-            response.traces.append(trace(3, QStringLiteral("Generation"),
-                                         QStringLiteral("Invalid Response"), response.summary));
-            return response;
-        }
-        const auto choiceObj = choices.first().toObject();
-        const auto text = choiceObj.value(QStringLiteral("message"))
-                              .toObject()
-                              .value(QStringLiteral("content"))
-                              .toString();
-        if (text.isEmpty()) {
-            response.status = LocalInferenceStatus::Error;
-            response.error = LocalInferenceError::InvalidResponse;
-            response.summary = QStringLiteral("%1 cloud generation response did not include text.")
-                                   .arg(config_.providerDisplayName());
+                textError == provider::OpenAiCompatibleChatTextError::MissingChoices
+                    ? QStringLiteral("%1 cloud generation response did not include choices.")
+                          .arg(config_.providerDisplayName())
+                    : QStringLiteral("%1 cloud generation response did not include text.")
+                          .arg(config_.providerDisplayName());
             response.traces.append(trace(3, QStringLiteral("Generation"),
                                          QStringLiteral("Invalid Response"), response.summary));
             return response;
         }
         response.status = LocalInferenceStatus::Succeeded;
         response.error = LocalInferenceError::None;
-        response.text = text;
+        response.text = *text;
         response.summary =
             QStringLiteral("%1 cloud generation succeeded.").arg(config_.providerDisplayName());
         response.traces.append(
@@ -1562,11 +1545,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     QJsonArray messagesArr;
     messagesArr.append(messageObj);
 
-    QJsonObject body;
-    body.insert(QStringLiteral("model"), response.model);
-    body.insert(QStringLiteral("messages"), messagesArr);
-    body.insert(QStringLiteral("stream"), false);
-    body.insert(QStringLiteral("max_tokens"), qMax(1, request.options.maxTokens));
+    const auto body = provider::buildOpenAiCompatibleChatBody(
+        response.model, messagesArr, qMax(1, request.options.maxTokens), false, std::nullopt);
     const auto serializedBytes = QJsonDocument(body).toJson(QJsonDocument::Compact).size();
     response.diagnostics.insert(QStringLiteral("request_bytes"), serializedBytes);
     response.diagnostics.insert(QStringLiteral("estimated_input_tokens"),
@@ -1580,12 +1560,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                   .arg(timeoutMs)));
 
     const auto reply =
-        postJson(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
-                                     .path()
-                                     .endsWith(QLatin1String("/v1"))
-                                 ? QStringLiteral("/chat/completions")
-                                 : QStringLiteral("/v1/chat/completions")),
-                 body, timeoutMs, {}, request.options.cancellationToken, config_.networkFactory);
+        postJson(endpointUrl(provider::openAiCompatibleChatCompletionsPath(config_.endpoint)), body,
+                 timeoutMs, {}, request.options.cancellationToken, config_.networkFactory);
     recordRequestMetadata(response, reply);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
@@ -1630,9 +1606,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             QStringLiteral("Provider output limit reached; classification is indeterminate.");
         return response;
     }
-    const auto messageVal = choiceObj.value(QStringLiteral("message")).toObject();
-    const auto text = messageVal.value(QStringLiteral("content")).toString();
-    if (text.isEmpty()) {
+    const auto text = provider::parseOpenAiCompatibleChatText(reply.document.object());
+    if (!text) {
         response.status = LocalInferenceStatus::Error;
         response.error = LocalInferenceError::InvalidResponse;
         response.summary =
@@ -1644,8 +1619,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
 
     response.status = LocalInferenceStatus::Succeeded;
     response.error = LocalInferenceError::None;
-    response.text = text;
-    response.approximateOutputTokens = approximateTokenCount(text);
+    response.text = *text;
+    response.approximateOutputTokens = approximateTokenCount(*text);
     response.summary =
         QStringLiteral("Local inference completed through LM Studio /v1/chat/completions.");
     response.traces.append(trace(3, QStringLiteral("Generation"), QStringLiteral("Succeeded"),
@@ -1831,11 +1806,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         generationConfig.insert(QStringLiteral("maxOutputTokens"), request.options.maxTokens);
         body.insert(QStringLiteral("generationConfig"), generationConfig);
     } else {
-        networkRequest.setUrl(endpointUrl(config_.endpoint.adjusted(QUrl::StripTrailingSlash)
-                                                  .path()
-                                                  .endsWith(QLatin1String("/v1"))
-                                              ? QStringLiteral("/chat/completions")
-                                              : QStringLiteral("/v1/chat/completions")));
+        networkRequest.setUrl(
+            endpointUrl(provider::openAiCompatibleChatCompletionsPath(config_.endpoint)));
         if (!config_.apiKey.isEmpty()) {
             networkRequest.setRawHeader("Authorization",
                                         QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
@@ -1848,15 +1820,13 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
-        body.insert(QStringLiteral("model"), result.model);
-        body.insert(QStringLiteral("messages"), messagesArr);
-        body.insert(QStringLiteral("stream"), true);
         // Reasoning-capable local models can spend a server's small default
         // generation budget entirely on hidden reasoning tokens, producing a
         // completed SSE stream with no assistant content.  Give chat a
         // bounded explicit output budget unless a caller supplied one.
-        body.insert(QStringLiteral("max_tokens"),
-                    request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
+        body = provider::buildOpenAiCompatibleChatBody(
+            result.model, messagesArr,
+            request.options.maxTokens > 0 ? request.options.maxTokens : 2048, true, std::nullopt);
     }
     networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
                              QStringLiteral("application/json"));
