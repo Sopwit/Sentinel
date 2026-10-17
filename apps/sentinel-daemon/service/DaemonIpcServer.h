@@ -44,7 +44,12 @@ public:
 #if defined(Q_OS_UNIX)
     using PeerUidResolver = std::function<std::optional<uid_t>(qintptr)>;
     static std::optional<uid_t> querySocketPeerUid(qintptr descriptor);
+    // Safely constrained test-only hook for deterministic peer credential simulation.
+    // Cannot be altered while the IPC listener is active.
     void setPeerUidResolverForTesting(PeerUidResolver resolver) {
+        if (m_server.isListening()) {
+            return;
+        }
         m_peerUidResolver = std::move(resolver);
     }
 #endif

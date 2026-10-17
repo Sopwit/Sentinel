@@ -1074,6 +1074,8 @@ private slots:
 
         s.disconnectFromServer();
         h.server->stopServer();
+        h.controller->cancelAgentRun();
+        h.server.reset();
 
         daemon::DaemonIpcServer recovered(h.controller.get());
         QVERIFY(recovered.openSessionProjectionStore(dbPath));
@@ -1138,6 +1140,8 @@ private slots:
 
         s.disconnectFromServer();
         h.server->stopServer();
+        h.controller->cancelAgentRun();
+        h.server.reset();
 
         daemon::DaemonIpcServer recovered(h.controller.get());
         QVERIFY(recovered.openSessionProjectionStore(dbPath));
@@ -1203,7 +1207,10 @@ private slots:
         QVERIFY(completed);
 
         s.disconnectFromServer();
+        control.disconnectFromServer();
         h.server->stopServer();
+        h.controller->cancelAgentRun();
+        h.server.reset();
 
         daemon::DaemonIpcServer recovered(h.controller.get());
         QVERIFY(recovered.openSessionProjectionStore(dbPath));
@@ -1219,6 +1226,158 @@ private slots:
         QCOMPARE(payload["run_id"].toString(), runId);
         QCOMPARE(payload["state"].toString(), QString("completed"));
         QCOMPARE(payload["output"].toString(), QString("Fixture finished"));
+    }
+    void multipleInterruptedRunsReconciledAtomicallyOnRestart() {
+        Harness h;
+        const auto s1 = h.controller->createConversation("Session 1");
+        const auto s2 = h.controller->createConversation("Session 2");
+        const auto s3 = h.controller->createConversation("Session 3");
+        const auto dbPath = h.directory.filePath("multi_sessions.sqlite3");
+        {
+            QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "seed_multi_sessions");
+            db.setDatabaseName(dbPath);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(
+                "CREATE TABLE session_projection (session_id TEXT PRIMARY KEY, payload TEXT NOT NULL)"));
+            q.prepare("INSERT INTO session_projection (session_id, payload) VALUES (?, ?)");
+
+            q.bindValue(0, s1);
+            q.bindValue(1, QString::fromUtf8(QJsonDocument(QJsonObject{
+                                                 {"run_id", "r1"},
+                                                 {"state", "running"},
+                                                 {"run_type", "agent"},
+                                                 {"output", "running output"}})
+                                                 .toJson(QJsonDocument::Compact)));
+            QVERIFY(q.exec());
+
+            q.bindValue(0, s2);
+            q.bindValue(1, QString::fromUtf8(QJsonDocument(QJsonObject{
+                                                 {"run_id", "r2"},
+                                                 {"state", "approval"},
+                                                 {"run_type", "agent"},
+                                                 {"approval_id", "app1"}})
+                                                 .toJson(QJsonDocument::Compact)));
+            QVERIFY(q.exec());
+
+            q.bindValue(0, s3);
+            q.bindValue(1, QString::fromUtf8(QJsonDocument(QJsonObject{
+                                                 {"run_id", "r3"},
+                                                 {"state", "completed"},
+                                                 {"run_type", "agent"},
+                                                 {"output", "final result"}})
+                                                 .toJson(QJsonDocument::Compact)));
+            QVERIFY(q.exec());
+            db.close();
+        }
+        QSqlDatabase::removeDatabase("seed_multi_sessions");
+
+        // First restart: reconciles s1 and s2, keeps s3 intact
+        {
+            daemon::DaemonIpcServer server1(h.controller.get());
+            QVERIFY(server1.openSessionProjectionStore(dbPath));
+            QVERIFY(server1.startServer(h.path));
+
+            QLocalSocket s;
+            hello(s, h.path);
+
+            const auto snap1 =
+                request(s, "session.attach", {{"session_id", s1}})["payload"].toObject();
+            QCOMPARE(snap1["state"].toString(), QString("failed"));
+            QCOMPARE(snap1["detail"].toString(), QString("daemon-restarted"));
+            QVERIFY(snap1["output"].toString().isEmpty());
+
+            const auto snap2 =
+                request(s, "session.attach", {{"session_id", s2}})["payload"].toObject();
+            QCOMPARE(snap2["state"].toString(), QString("failed"));
+            QCOMPARE(snap2["detail"].toString(), QString("daemon-restarted"));
+            QVERIFY(snap2["output"].toString().isEmpty());
+
+            const auto snap3 =
+                request(s, "session.attach", {{"session_id", s3}})["payload"].toObject();
+            QCOMPARE(snap3["state"].toString(), QString("completed"));
+            QCOMPARE(snap3["output"].toString(), QString("final result"));
+
+            s.disconnectFromServer();
+            server1.stopServer();
+        }
+
+        // Verify disk storage directly agrees with in-memory projections for all rows
+        {
+            QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "verify_multi_disk");
+            db.setDatabaseName(dbPath);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+
+            QVERIFY(q.exec(
+                QString("SELECT payload FROM session_projection WHERE session_id = '%1'").arg(s1)));
+            QVERIFY(q.next());
+            auto d1 = QJsonDocument::fromJson(q.value(0).toByteArray()).object();
+            QCOMPARE(d1["state"].toString(), QString("failed"));
+            QCOMPARE(d1["detail"].toString(), QString("daemon-restarted"));
+
+            QVERIFY(q.exec(
+                QString("SELECT payload FROM session_projection WHERE session_id = '%1'").arg(s2)));
+            QVERIFY(q.next());
+            auto d2 = QJsonDocument::fromJson(q.value(0).toByteArray()).object();
+            QCOMPARE(d2["state"].toString(), QString("failed"));
+            QCOMPARE(d2["detail"].toString(), QString("daemon-restarted"));
+
+            QVERIFY(q.exec(
+                QString("SELECT payload FROM session_projection WHERE session_id = '%1'").arg(s3)));
+            QVERIFY(q.next());
+            auto d3 = QJsonDocument::fromJson(q.value(0).toByteArray()).object();
+            QCOMPARE(d3["state"].toString(), QString("completed"));
+            QCOMPARE(d3["output"].toString(), QString("final result"));
+
+            db.close();
+        }
+        QSqlDatabase::removeDatabase("verify_multi_disk");
+
+        // Second restart: prove idempotency across repeated restarts
+        {
+            daemon::DaemonIpcServer server2(h.controller.get());
+            QVERIFY(server2.openSessionProjectionStore(dbPath));
+            QVERIFY(server2.startServer(h.path));
+
+            QLocalSocket s;
+            hello(s, h.path);
+
+            const auto snap1 =
+                request(s, "session.attach", {{"session_id", s1}})["payload"].toObject();
+            QCOMPARE(snap1["state"].toString(), QString("failed"));
+            QCOMPARE(snap1["detail"].toString(), QString("daemon-restarted"));
+
+            const auto snap2 =
+                request(s, "session.attach", {{"session_id", s2}})["payload"].toObject();
+            QCOMPARE(snap2["state"].toString(), QString("failed"));
+            QCOMPARE(snap2["detail"].toString(), QString("daemon-restarted"));
+
+            const auto snap3 =
+                request(s, "session.attach", {{"session_id", s3}})["payload"].toObject();
+            QCOMPARE(snap3["state"].toString(), QString("completed"));
+            QCOMPARE(snap3["output"].toString(), QString("final result"));
+
+            s.disconnectFromServer();
+            server2.stopServer();
+        }
+    }
+    void testSeamCannotBeModifiedWhileListening() {
+#ifdef Q_OS_UNIX
+        Harness h;
+        QVERIFY(h.server->startServer(h.path));
+        // Attempting to modify the test resolver while listening must be rejected
+        h.server->setPeerUidResolverForTesting(
+            [](qintptr) { return std::optional<uid_t>(::getuid() + 999); });
+        // Native same-UID connection must still succeed because mutation was ignored
+        QLocalSocket s;
+        hello(s, h.path);
+        const auto resp = request(s, "daemon.status");
+        QCOMPARE(resp["type"].toString(), QString("response"));
+        s.disconnectFromServer();
+#else
+        QSKIP("Peer authorization is a Unix platform contract.");
+#endif
     }
 };
 QTEST_GUILESS_MAIN(DaemonIpcServerTest)
