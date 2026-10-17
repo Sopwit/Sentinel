@@ -23,6 +23,10 @@ private Q_SLOTS:
     void testParseTextMissingContent();
     void testParseTextEmptyContent();
     void testByteEquivalence();
+    void testToolDeclaration();
+    void testNativeRequestBody();
+    void testNativeRequestBodyWithToolsAndStructured();
+    void testToolResultBlocks();
 };
 
 void TestAnthropicMessagesProtocol::testUrl() {
@@ -152,6 +156,94 @@ void TestAnthropicMessagesProtocol::testByteEquivalence() {
     QVERIFY(raw.contains("\"model\":\"claude-test\""));
     QVERIFY(raw.contains("\"stream\":false"));
     QVERIFY(raw.contains("\"messages\":[{\"content\":\"hello world\",\"role\":\"user\"}]"));
+}
+
+void TestAnthropicMessagesProtocol::testToolDeclaration() {
+    // The OpenAI-style envelope is flattened into the Anthropic tool shape.
+    const QJsonObject envelope{
+        {QStringLiteral("type"), QStringLiteral("function")},
+        {QStringLiteral("function"),
+         QJsonObject{{QStringLiteral("name"), QStringLiteral("read-file")},
+                     {QStringLiteral("description"), QStringLiteral("Read a file.")},
+                     {QStringLiteral("parameters"),
+                      QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}}}}}};
+    const auto declaration = anthropicToolDeclaration(envelope);
+    QCOMPARE(declaration.value(QStringLiteral("name")).toString(), QStringLiteral("read-file"));
+    QCOMPARE(declaration.value(QStringLiteral("description")).toString(),
+             QStringLiteral("Read a file."));
+    QCOMPARE(declaration.value(QStringLiteral("input_schema"))
+                 .toObject()
+                 .value(QStringLiteral("type"))
+                 .toString(),
+             QStringLiteral("object"));
+    // The Anthropic shape must not reuse the nested OpenAI envelope.
+    QVERIFY(!declaration.contains(QStringLiteral("type")));
+    QVERIFY(!declaration.contains(QStringLiteral("function")));
+}
+
+void TestAnthropicMessagesProtocol::testNativeRequestBody() {
+    QJsonArray messages;
+    QJsonObject msg;
+    msg.insert(QStringLiteral("role"), QStringLiteral("user"));
+    msg.insert(QStringLiteral("content"), QStringLiteral("hello world"));
+    messages.append(msg);
+
+    const auto body = buildAnthropicNativeRequestBody(QStringLiteral("claude-test"), messages, 512);
+    // Golden bytes captured from the pre-refactor ModelService::nativeEndpointReply
+    // inline assembly. The native body never carries a `stream` key.
+    QCOMPARE(
+        QJsonDocument(body).toJson(QJsonDocument::Compact),
+        QByteArrayLiteral(
+            R"({"max_tokens":512,"messages":[{"content":"hello world","role":"user"}],"model":"claude-test"})"));
+}
+
+void TestAnthropicMessagesProtocol::testNativeRequestBodyWithToolsAndStructured() {
+    QJsonArray messages;
+    messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+                                {QStringLiteral("content"), QStringLiteral("hi")}});
+    QJsonArray tools;
+    tools.append(QJsonObject{{QStringLiteral("name"), QStringLiteral("read-file")},
+                             {QStringLiteral("description"), QStringLiteral("Read.")},
+                             {QStringLiteral("input_schema"),
+                              QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}}}});
+    const QJsonObject schema{
+        {QStringLiteral("type"), QStringLiteral("object")},
+        {QStringLiteral("properties"),
+         QJsonObject{{QStringLiteral("answer"),
+                      QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")}}}}}};
+
+    const auto body =
+        buildAnthropicNativeRequestBody(QStringLiteral("claude-test"), messages, 0, tools, schema);
+    QCOMPARE(body.value(QStringLiteral("model")).toString(), QStringLiteral("claude-test"));
+    // maxOutputTokens <= 0 falls back to 2048.
+    QCOMPARE(body.value(QStringLiteral("max_tokens")).toInt(), 2048);
+    QCOMPARE(body.value(QStringLiteral("tools")).toArray(), tools);
+    const auto format = body.value(QStringLiteral("output_config"))
+                            .toObject()
+                            .value(QStringLiteral("format"))
+                            .toObject();
+    QCOMPARE(format.value(QStringLiteral("type")).toString(), QStringLiteral("json_schema"));
+    QCOMPARE(format.value(QStringLiteral("schema")).toObject(), schema);
+    QVERIFY(!body.contains(QStringLiteral("stream")));
+
+    // Empty tools/structured schema omit both envelopes.
+    const auto bare = buildAnthropicNativeRequestBody(QStringLiteral("claude-test"), messages, 10);
+    QVERIFY(!bare.contains(QStringLiteral("tools")));
+    QVERIFY(!bare.contains(QStringLiteral("output_config")));
+}
+
+void TestAnthropicMessagesProtocol::testToolResultBlocks() {
+    const QList<AnthropicToolResult> results{
+        {QStringLiteral("toolu_1"), QStringLiteral("case contents")},
+        {QStringLiteral("toolu_2"), QString(7000, QLatin1Char('x'))}};
+    const auto blocks = anthropicToolResultBlocks(results);
+    QCOMPARE(blocks.size(), 2);
+    const auto first = blocks.at(0).toObject();
+    QCOMPARE(first.value(QStringLiteral("type")).toString(), QStringLiteral("tool_result"));
+    QCOMPARE(first.value(QStringLiteral("tool_use_id")).toString(), QStringLiteral("toolu_1"));
+    QCOMPARE(first.value(QStringLiteral("content")).toString(), QStringLiteral("case contents"));
+    // Result text is clipped to the native continuation limit.
+    QCOMPARE(blocks.at(1).toObject().value(QStringLiteral("content")).toString().size(), 6800);
 }
 
 QTEST_MAIN(TestAnthropicMessagesProtocol)

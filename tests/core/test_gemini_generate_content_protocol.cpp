@@ -24,6 +24,9 @@ private Q_SLOTS:
     void testParseTextMissingContent();
     void testParseTextEmptyParts();
     void testByteEquivalence();
+    void testNativeRequestBody();
+    void testNativeRequestBodyWithToolsAndStructured();
+    void testFunctionResponseParts();
 };
 
 void TestGeminiGenerateContentProtocol::testUrlGeneration() {
@@ -159,6 +162,90 @@ void TestGeminiGenerateContentProtocol::testByteEquivalence() {
     QVERIFY(raw.contains("\"temperature\":0"));
     QVERIFY(raw.contains("\"topP\":1"));
     QVERIFY(raw.contains("\"contents\":[{\"parts\":[{\"text\":\"hello world\"}],\"role\":\"user\"}]"));
+}
+
+void TestGeminiGenerateContentProtocol::testNativeRequestBody() {
+    QJsonObject part;
+    part.insert(QStringLiteral("text"), QStringLiteral("hi"));
+    QJsonObject content;
+    content.insert(QStringLiteral("role"), QStringLiteral("user"));
+    content.insert(QStringLiteral("parts"), QJsonArray{part});
+    const QJsonArray contents{content};
+
+    const auto body = buildGeminiNativeRequestBody(QStringLiteral("gemini-test"), contents, 1024);
+    // Golden bytes captured from the pre-refactor ModelService::nativeEndpointReply
+    // inline assembly. The native body keeps `model` (the transport derives the URL
+    // and removes it before dispatch).
+    QCOMPARE(
+        QJsonDocument(body).toJson(QJsonDocument::Compact),
+        QByteArrayLiteral(
+            R"({"contents":[{"parts":[{"text":"hi"}],"role":"user"}],"generationConfig":{"maxOutputTokens":1024},"model":"gemini-test"})"));
+}
+
+void TestGeminiGenerateContentProtocol::testNativeRequestBodyWithToolsAndStructured() {
+    QJsonObject part;
+    part.insert(QStringLiteral("text"), QStringLiteral("hi"));
+    QJsonObject content;
+    content.insert(QStringLiteral("role"), QStringLiteral("user"));
+    content.insert(QStringLiteral("parts"), QJsonArray{part});
+    const QJsonArray contents{content};
+    const QJsonArray declarations{
+        QJsonObject{{QStringLiteral("name"), QStringLiteral("read-file")},
+                    {QStringLiteral("parametersJsonSchema"),
+                     QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}}}}};
+    const QJsonObject schema{{QStringLiteral("type"), QStringLiteral("object")}};
+
+    const auto body = buildGeminiNativeRequestBody(QStringLiteral("gemini-test"), contents, 0,
+                                                   declarations, schema);
+    QCOMPARE(body.value(QStringLiteral("model")).toString(), QStringLiteral("gemini-test"));
+    const auto tools = body.value(QStringLiteral("tools")).toArray();
+    QCOMPARE(tools.size(), 1);
+    QCOMPARE(tools.first().toObject().value(QStringLiteral("functionDeclarations")).toArray(),
+             declarations);
+    const auto generationConfig = body.value(QStringLiteral("generationConfig")).toObject();
+    // maxOutputTokens <= 0 is omitted; structured output still emits the config.
+    QVERIFY(!generationConfig.contains(QStringLiteral("maxOutputTokens")));
+    QCOMPARE(generationConfig.value(QStringLiteral("responseMimeType")).toString(),
+             QStringLiteral("application/json"));
+    QCOMPARE(generationConfig.value(QStringLiteral("responseSchema")).toObject(), schema);
+
+    // With no tools and no structured schema, generationConfig is omitted entirely.
+    const auto bare = buildGeminiNativeRequestBody(QStringLiteral("gemini-test"), contents, 0);
+    QVERIFY(!bare.contains(QStringLiteral("tools")));
+    QVERIFY(!bare.contains(QStringLiteral("generationConfig")));
+}
+
+void TestGeminiGenerateContentProtocol::testFunctionResponseParts() {
+    const QList<GeminiFunctionResult> results{
+        {QStringLiteral("call_explicit"), QStringLiteral("read-file"),
+         QStringLiteral("case contents")},
+        {QStringLiteral("sentinel-gemini-7-1"), QStringLiteral("read-file"),
+         QString(7000, QLatin1Char('y'))}};
+    const auto parts = geminiFunctionResponseParts(results);
+    QCOMPARE(parts.size(), 2);
+    const auto explicitResponse =
+        parts.at(0).toObject().value(QStringLiteral("functionResponse")).toObject();
+    QCOMPARE(explicitResponse.value(QStringLiteral("name")).toString(),
+             QStringLiteral("read-file"));
+    QCOMPARE(explicitResponse.value(QStringLiteral("response"))
+                 .toObject()
+                 .value(QStringLiteral("output"))
+                 .toString(),
+             QStringLiteral("case contents"));
+    // A provider-supplied id is forwarded verbatim.
+    QCOMPARE(explicitResponse.value(QStringLiteral("id")).toString(),
+             QStringLiteral("call_explicit"));
+    // A synthesized Sentinel id is internal bookkeeping and never echoed back.
+    const auto synthesizedResponse =
+        parts.at(1).toObject().value(QStringLiteral("functionResponse")).toObject();
+    QVERIFY(!synthesizedResponse.contains(QStringLiteral("id")));
+    // Result text is clipped to the native continuation limit.
+    QCOMPARE(synthesizedResponse.value(QStringLiteral("response"))
+                 .toObject()
+                 .value(QStringLiteral("output"))
+                 .toString()
+                 .size(),
+             6800);
 }
 
 QTEST_MAIN(TestGeminiGenerateContentProtocol)
