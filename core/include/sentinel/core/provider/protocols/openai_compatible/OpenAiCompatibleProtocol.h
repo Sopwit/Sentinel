@@ -46,6 +46,22 @@ std::optional<QString>
 parseOpenAiCompatibleChatText(const QJsonObject& body,
                               OpenAiCompatibleChatTextError* error = nullptr);
 
+// One normalized OpenAI-compatible assistant tool call. The nested
+// {function:{name,arguments}} envelope is flattened; `arguments` is forwarded
+// unchanged (normally a JSON-encoded string) so callers keep their existing
+// decode-and-validate step.
+struct OpenAiCompatibleToolCall {
+    QString callId;       // top-level "id"; empty when the provider omitted it
+    QString name;         // "function"."name"; empty when omitted
+    QJsonValue arguments; // "function"."arguments", unmodified
+};
+
+// Normalizes choices[0].message.tool_calls in provider order. A missing or
+// non-array `choices`, a missing/non-object first choice or `message`, or a
+// missing/non-array `tool_calls` yields an empty list. No registration or
+// argument-decoding policy is applied here.
+QList<OpenAiCompatibleToolCall> parseOpenAiCompatibleToolCalls(const QJsonObject& body);
+
 struct OpenAiCompatibleCatalogParse {
     QList<OllamaModelSummary> models;
     bool malformed = false;

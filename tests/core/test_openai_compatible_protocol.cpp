@@ -56,6 +56,7 @@ private slots:
     void emptyAndMalformedResponses();
     void toolPayloadPassThrough();
     void structuredJsonOutputPassThrough();
+    void toolCallResponseParsing();
     void validCatalogParsing();
     void malformedCatalogRejected_data();
     void malformedCatalogRejected();
@@ -418,6 +419,54 @@ void OpenAiCompatibleProtocolTest::localInferenceBodyByteEquivalence() {
     QCOMPARE(state->requests.size(), 1);
     QCOMPARE(state->requests.first().body, expected);
     QCOMPARE(state->requests.first().url.path(), QStringLiteral("/v1/chat/completions"));
+}
+
+void OpenAiCompatibleProtocolTest::toolCallResponseParsing() {
+    // Multiple assistant tool calls are normalized in provider order; the nested
+    // envelope is flattened and the raw arguments string is forwarded unmodified.
+    const QByteArray response = R"({
+        "choices": [{"message": {"content": "",
+            "tool_calls": [
+                {"id": "call-1", "type": "function", "function": {"name": "fs_read", "arguments": "{\"path\":\"a\"}"}},
+                {"id": "call-2", "type": "function", "function": {"name": "fs_write", "arguments": "{}"}}
+            ]}}]
+    })";
+    const auto calls = sentinel::core::provider::parseOpenAiCompatibleToolCalls(
+        QJsonDocument::fromJson(response).object());
+    QCOMPARE(calls.size(), 2);
+    QCOMPARE(calls.at(0).callId, QStringLiteral("call-1"));
+    QCOMPARE(calls.at(0).name, QStringLiteral("fs_read"));
+    QCOMPARE(calls.at(0).arguments.toString(), QStringLiteral("{\"path\":\"a\"}"));
+    QCOMPARE(calls.at(1).callId, QStringLiteral("call-2"));
+    QCOMPARE(calls.at(1).name, QStringLiteral("fs_write"));
+
+    // Empty or malformed envelopes yield no calls.
+    for (const QByteArray& malformed :
+         {QByteArray("{}"), QByteArray(R"({"choices":[]})"), QByteArray(R"({"choices":"x"})"),
+          QByteArray(R"({"choices":[{"finish_reason":"stop"}]})"),
+          QByteArray(R"({"choices":[{"message":{"tool_calls":"x"}}]})"),
+          QByteArray(R"({"choices":[{"message":{"content":"hi"}}]})")}) {
+        QVERIFY2(sentinel::core::provider::parseOpenAiCompatibleToolCalls(
+                     QJsonDocument::fromJson(malformed).object())
+                     .isEmpty(),
+                 malformed.constData());
+    }
+
+    // A non-object entry is surfaced with empty fields (the adapter rejects it).
+    const auto degenerate = sentinel::core::provider::parseOpenAiCompatibleToolCalls(
+        QJsonDocument::fromJson(R"({"choices":[{"message":{"tool_calls":["x"]}}]})").object());
+    QCOMPARE(degenerate.size(), 1);
+    QVERIFY(degenerate.first().callId.isEmpty());
+    QVERIFY(degenerate.first().name.isEmpty());
+    QVERIFY(!degenerate.first().arguments.isString());
+
+    // A non-string arguments value is surfaced unmodified.
+    const auto numericArgs = sentinel::core::provider::parseOpenAiCompatibleToolCalls(
+        QJsonDocument::fromJson(
+            R"({"choices":[{"message":{"tool_calls":[{"id":"c","function":{"name":"n","arguments":7}}]}}]})")
+            .object());
+    QCOMPARE(numericArgs.size(), 1);
+    QVERIFY(numericArgs.first().arguments.isDouble());
 }
 
 QTEST_GUILESS_MAIN(OpenAiCompatibleProtocolTest)

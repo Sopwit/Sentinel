@@ -11,6 +11,7 @@
 #include "sentinel/core/model/IModelRouter.h"
 #include "sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h"
 #include "sentinel/core/provider/protocols/gemini_generate_content/GeminiGenerateContentProtocol.h"
+#include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
@@ -398,81 +399,14 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
         reply.requestId = completion.requestId;
         return reply;
     };
-    QJsonArray parts;
     QString claudeContinuation;
     QString geminiContinuation;
-    if (claude) {
-        parts = completion.body.value(QStringLiteral("content")).toArray();
-        auto history = body.value(QStringLiteral("messages")).toArray();
-        history.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("assistant")},
-                                   {QStringLiteral("content"), parts}});
-        claudeContinuation =
-            QString::fromUtf8(QJsonDocument(history).toJson(QJsonDocument::Compact));
-    } else {
-        const auto candidates = completion.body.value(QStringLiteral("candidates")).toArray();
-        if (candidates.isEmpty() && !completion.body.value(QStringLiteral("promptFeedback"))
-                                         .toObject()
-                                         .value(QStringLiteral("blockReason"))
-                                         .toString()
-                                         .isEmpty()) {
-            auto reply =
-                providerFailure(QStringLiteral("Gemini blocked the request."),
-                                ChatProviderErrorCategory::RequestRejected,
-                                ChatProviderReply::Error::ProviderFailure, completion.httpStatus,
-                                completion.attempts, completion.retrySummary);
-            reply.requestId = completion.requestId;
-            return reply;
-        }
-        if (!candidates.isEmpty()) {
-            const auto candidate = candidates.first().toObject();
-            const auto finishReason = candidate.value(QStringLiteral("finishReason")).toString();
-            if (finishReason == QLatin1String("SAFETY") ||
-                finishReason == QLatin1String("PROHIBITED_CONTENT")) {
-                auto reply = providerFailure(QStringLiteral("Gemini rejected the response."),
-                                             ChatProviderErrorCategory::RequestRejected,
-                                             ChatProviderReply::Error::ProviderFailure,
-                                             completion.httpStatus, completion.attempts,
-                                             completion.retrySummary);
-                reply.requestId = completion.requestId;
-                return reply;
-            }
-            const auto modelContent = candidate.value(QStringLiteral("content")).toObject();
-            parts = modelContent.value(QStringLiteral("parts")).toArray();
-            auto history = body.value(QStringLiteral("contents")).toArray();
-            history.append(modelContent);
-            geminiContinuation =
-                QString::fromUtf8(QJsonDocument(history).toJson(QJsonDocument::Compact));
-        }
-    }
-    if (parts.isEmpty())
-        return invalid(QStringLiteral("Native provider response has no content."));
-    int generatedId = 0;
-    for (const auto& value : parts) {
-        const auto part = value.toObject();
-        if (claude) {
-            const auto type = part.value(QStringLiteral("type")).toString();
-            if (type == QLatin1String("text")) {
-                result.message += part.value(QStringLiteral("text")).toString();
-                continue;
-            }
-            if (type != QLatin1String("tool_use"))
-                continue;
-        } else if (part.contains(QStringLiteral("text"))) {
-            result.message += part.value(QStringLiteral("text")).toString();
-            continue;
-        } else if (!part.contains(QStringLiteral("functionCall"))) {
-            continue;
-        }
-        const auto call = claude ? part : part.value(QStringLiteral("functionCall")).toObject();
-        const auto name = call.value(QStringLiteral("name")).toString();
-        const auto arguments =
-            call.value(claude ? QStringLiteral("input") : QStringLiteral("args"));
-        const auto callId = claude ? call.value(QStringLiteral("id")).toString()
-                            : call.value(QStringLiteral("id")).toString().isEmpty()
-                                ? QStringLiteral("sentinel-gemini-%1-%2")
-                                      .arg(completion.requestId)
-                                      .arg(++generatedId)
-                                : call.value(QStringLiteral("id")).toString();
+    // Native tool-name resolution, continuation wiring and the gemini-3
+    // signature policy stay in this adapter; the protocol modules only normalize
+    // the response into text plus {callId, name, arguments, signature} parts.
+    const auto appendToolCall = [&](const QString& callId, const QString& name,
+                                    const QJsonValue& arguments, const QString& signature,
+                                    const QString& continuation) -> QString {
         QString toolId;
         for (const auto& tool : options.tools)
             if (tool.enabled && tool.exposedToModel && nativeFunctionName(tool.id) == name) {
@@ -481,15 +415,63 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
             }
         if (!options.nativeToolCalling || toolId.isEmpty() || callId.isEmpty() ||
             !arguments.isObject())
-            return invalid(QStringLiteral("Invalid or unregistered native function call."));
-        const auto signature =
-            claude ? QString{} : part.value(QStringLiteral("thoughtSignature")).toString();
+            return QStringLiteral("Invalid or unregistered native function call.");
         if (!claude && binding.modelId.startsWith(QLatin1String("gemini-3")) &&
             result.toolCalls.isEmpty() && signature.isEmpty())
-            return invalid(
-                QStringLiteral("Gemini function response lacks a continuation signature."));
-        result.toolCalls.append({callId, toolId, arguments.toObject(),
-                                 claude ? claudeContinuation : geminiContinuation});
+            return QStringLiteral("Gemini function response lacks a continuation signature.");
+        result.toolCalls.append({callId, toolId, arguments.toObject(), continuation});
+        return {};
+    };
+    if (claude) {
+        const auto parsed = provider::parseAnthropicMessagesResponse(completion.body);
+        if (!parsed.hasContent)
+            return invalid(QStringLiteral("Native provider response has no content."));
+        result.message = parsed.text;
+        auto history = body.value(QStringLiteral("messages")).toArray();
+        history.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("assistant")},
+                                   {QStringLiteral("content"), parsed.contentBlocks}});
+        claudeContinuation =
+            QString::fromUtf8(QJsonDocument(history).toJson(QJsonDocument::Compact));
+        for (const auto& call : parsed.toolUses) {
+            const auto error =
+                appendToolCall(call.callId, call.name, call.input, QString{}, claudeContinuation);
+            if (!error.isEmpty())
+                return invalid(error);
+        }
+    } else {
+        const auto parsed =
+            provider::parseGeminiGenerateContentResponse(completion.body, completion.requestId);
+        if (parsed.status == provider::GeminiGenerateContentResponseStatus::Blocked) {
+            auto reply =
+                providerFailure(QStringLiteral("Gemini blocked the request."),
+                                ChatProviderErrorCategory::RequestRejected,
+                                ChatProviderReply::Error::ProviderFailure, completion.httpStatus,
+                                completion.attempts, completion.retrySummary);
+            reply.requestId = completion.requestId;
+            return reply;
+        }
+        if (parsed.status == provider::GeminiGenerateContentResponseStatus::Rejected) {
+            auto reply =
+                providerFailure(QStringLiteral("Gemini rejected the response."),
+                                ChatProviderErrorCategory::RequestRejected,
+                                ChatProviderReply::Error::ProviderFailure, completion.httpStatus,
+                                completion.attempts, completion.retrySummary);
+            reply.requestId = completion.requestId;
+            return reply;
+        }
+        if (parsed.status != provider::GeminiGenerateContentResponseStatus::Ok)
+            return invalid(QStringLiteral("Native provider response has no content."));
+        result.message = parsed.text;
+        auto history = body.value(QStringLiteral("contents")).toArray();
+        history.append(parsed.modelContent);
+        geminiContinuation =
+            QString::fromUtf8(QJsonDocument(history).toJson(QJsonDocument::Compact));
+        for (const auto& call : parsed.functionCalls) {
+            const auto error = appendToolCall(call.callId, call.name, call.args,
+                                              call.thoughtSignature, geminiContinuation);
+            if (!error.isEmpty())
+                return invalid(error);
+        }
     }
     if (options.structuredOutput && result.toolCalls.isEmpty()) {
         QJsonParseError parseError;
@@ -860,24 +842,20 @@ public:
                     ChatProviderReply::Error::InvalidResponse, completion.httpStatus,
                     completion.attempts, completion.retrySummary),
                 QStringLiteral("output_limit"));
-        for (const auto& value : replyMessage.value(QStringLiteral("tool_calls")).toArray()) {
-            const auto call = value.toObject();
-            const auto function = call.value(QStringLiteral("function")).toObject();
-            const auto name = function.value(QStringLiteral("name")).toString();
+        for (const auto& call : provider::parseOpenAiCompatibleToolCalls(completion.body)) {
             QString toolId;
             for (const auto& tool : options.tools)
-                if (nativeFunctionName(tool.id) == name) {
+                if (nativeFunctionName(tool.id) == call.name) {
                     toolId = tool.id;
                     break;
                 }
             QJsonParseError parseError;
-            const auto arguments = QJsonDocument::fromJson(
-                function.value(QStringLiteral("arguments")).toString().toUtf8(), &parseError);
-            const auto callId = call.value(QStringLiteral("id")).toString();
-            if (toolId.isEmpty() || callId.isEmpty() || !arguments.isObject() ||
+            const auto arguments =
+                QJsonDocument::fromJson(call.arguments.toString().toUtf8(), &parseError);
+            if (toolId.isEmpty() || call.callId.isEmpty() || !arguments.isObject() ||
                 parseError.error != QJsonParseError::NoError)
                 return malformed(QStringLiteral("Invalid or unregistered native tool call."));
-            result.toolCalls.append({callId, toolId, arguments.object()});
+            result.toolCalls.append({call.callId, toolId, arguments.object()});
         }
         if (options.structuredOutput && result.toolCalls.isEmpty()) {
             QJsonParseError parseError;

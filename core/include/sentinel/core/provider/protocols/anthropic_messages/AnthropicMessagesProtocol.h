@@ -38,6 +38,37 @@ enum class AnthropicMessagesTextError {
 std::optional<QString> parseAnthropicMessagesText(const QJsonObject& body,
                                                  AnthropicMessagesTextError* error = nullptr);
 
+// One normalized `tool_use` block from a native Anthropic Messages response.
+struct AnthropicResponseToolUse {
+    // Provider-supplied "id"; empty when the provider omitted it. Callers reject
+    // an empty call id, matching the native continuation contract.
+    QString callId;
+    // Provider-supplied "name"; empty when omitted.
+    QString name;
+    // Raw "input" value, forwarded unchanged. Callers require a JSON object.
+    QJsonValue input;
+};
+
+// Normalized scan of a native Anthropic Messages `content` array.
+struct AnthropicMessagesResponse {
+    // The raw `content` array, in provider order, for continuation assembly.
+    QJsonArray contentBlocks;
+    // True when `content` is an array with at least one block.
+    bool hasContent = false;
+    // Concatenation of every block whose `type` is "text", in provider order.
+    QString text;
+    // Every block whose `type` is "tool_use", in provider order.
+    QList<AnthropicResponseToolUse> toolUses;
+};
+
+// Scans a native Anthropic Messages response body exactly as the pre-refactor
+// ModelService response loop did: a "text" block contributes its `text`, a
+// "tool_use" block contributes a normalized tool use, and every other type
+// (including non-object blocks) is ignored. `hasContent` mirrors the native
+// "content present and non-empty" guard. No capability or tool-registration
+// policy is applied here.
+AnthropicMessagesResponse parseAnthropicMessagesResponse(const QJsonObject& body);
+
 // Converts an OpenAI-style tool definition envelope
 // ({type:"function", function:{name, description, parameters}}) into the flat
 // Anthropic Messages tool declaration ({name, description, input_schema}).
