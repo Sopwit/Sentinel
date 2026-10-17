@@ -7,6 +7,7 @@
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
 #include "sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h"
+#include "sentinel/core/provider/protocols/gemini_generate_content/GeminiGenerateContentProtocol.h"
 #include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
@@ -1245,9 +1246,7 @@ LMStudioLocalInferenceClient::completeNativeChat(
         const auto model = body.value(QStringLiteral("model")).toString();
         if (model.isEmpty())
             return {false, {}, QStringLiteral("Native Gemini model is missing."), 400};
-        url = QUrl(QStringLiteral(
-                       "https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
-                       .arg(QString::fromLatin1(QUrl::toPercentEncoding(model))));
+        url = provider::geminiGenerateContentUrl(model);
         headers.insert("x-goog-api-key", config_.apiKey.toUtf8());
     } else {
         return {
@@ -1403,23 +1402,15 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             QJsonArray contentsArr;
             contentsArr.append(contentObj);
 
-            QJsonObject body;
-            body.insert(QStringLiteral("contents"), contentsArr);
-            QJsonObject generationConfig;
-            generationConfig.insert(QStringLiteral("temperature"), request.options.temperature);
-            generationConfig.insert(QStringLiteral("topP"), request.options.topP);
-            generationConfig.insert(QStringLiteral("maxOutputTokens"),
-                                    request.options.maxTokens > 0 ? request.options.maxTokens
-                                                                  : 2048);
-            body.insert(QStringLiteral("generationConfig"), generationConfig);
+            const auto body = provider::buildGeminiGenerateContentBody(
+                contentsArr, request.options.maxTokens > 0 ? request.options.maxTokens : 2048,
+                request.options.temperature, request.options.topP);
 
             response.traces.append(trace(
                 2, QStringLiteral("Generation"), QStringLiteral("Started"),
                 QStringLiteral("Calling Gemini generateContent; timeout %1 ms.").arg(timeoutMs)));
 
-            const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
-                                          "%1:generateContent?key=%2")
-                               .arg(modelId, config_.apiKey));
+            const auto url = provider::geminiGenerateContentUrl(modelId, config_.apiKey);
             const auto reply = postJson(url, body, timeoutMs, {}, request.options.cancellationToken,
                                         config_.networkFactory);
             recordRequestMetadata(response, reply);
@@ -1433,21 +1424,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                                              QStringLiteral("Error"), response.summary));
                 return response;
             }
-            const auto candidates =
-                reply.document.object().value(QStringLiteral("candidates")).toArray();
-            QString text;
-            if (!candidates.isEmpty()) {
-                const auto parts = candidates.first()
-                                       .toObject()
-                                       .value(QStringLiteral("content"))
-                                       .toObject()
-                                       .value(QStringLiteral("parts"))
-                                       .toArray();
-                for (const auto& part : parts) {
-                    text += part.toObject().value(QStringLiteral("text")).toString();
-                }
-            }
-            if (text.isEmpty()) {
+            const auto text = provider::parseGeminiGenerateContentText(reply.document.object());
+            if (!text.has_value()) {
                 response.status = LocalInferenceStatus::Error;
                 response.error = LocalInferenceError::InvalidResponse;
                 response.summary =
@@ -1458,7 +1436,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             }
             response.status = LocalInferenceStatus::Succeeded;
             response.error = LocalInferenceError::None;
-            response.text = text;
+            response.text = *text;
             response.summary = QStringLiteral("Gemini cloud generation succeeded.");
             response.traces.append(trace(3, QStringLiteral("Generation"),
                                          QStringLiteral("Succeeded"), response.summary));
@@ -1769,9 +1747,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     } else if (isGemini) {
         const QString modelId = result.model;
         networkRequest.setUrl(
-            QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
-                                "%1:streamGenerateContent?key=%2&alt=sse")
-                     .arg(modelId, config_.apiKey)));
+            provider::geminiStreamGenerateContentUrl(modelId, config_.apiKey));
 
         QJsonObject partObj;
         partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
@@ -1785,13 +1761,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         QJsonArray contentsArr;
         contentsArr.append(contentObj);
 
-        body.insert(QStringLiteral("contents"), contentsArr);
-
-        QJsonObject generationConfig;
-        generationConfig.insert(QStringLiteral("temperature"), request.options.temperature);
-        generationConfig.insert(QStringLiteral("topP"), request.options.topP);
-        generationConfig.insert(QStringLiteral("maxOutputTokens"), request.options.maxTokens);
-        body.insert(QStringLiteral("generationConfig"), generationConfig);
+        body = provider::buildGeminiGenerateContentBody(
+            contentsArr, request.options.maxTokens, request.options.temperature, request.options.topP);
     } else {
         networkRequest.setUrl(
             endpointUrl(provider::openAiCompatibleChatCompletionsPath(config_.endpoint)));
