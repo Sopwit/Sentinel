@@ -176,6 +176,7 @@ add_sentinel_core_test(test_runtime_integration core/test_runtime_integration.cp
 add_sentinel_core_test(test_runtime_provider core/test_runtime_provider.cpp)
 add_sentinel_core_test(test_provider_contracts core/test_provider_contracts.cpp)
 add_sentinel_core_test(test_native_provider_contract core/test_native_provider_contract.cpp)
+add_sentinel_core_test(test_openai_compatible_protocol core/test_openai_compatible_protocol.cpp)
 add_sentinel_core_test(test_bounded_streaming_contract core/test_bounded_streaming_contract.cpp)
 add_sentinel_core_test(test_credential_store core/test_credential_store.cpp)
 add_sentinel_core_test(test_provider_credentials core/test_provider_credentials.cpp)
@@ -409,6 +410,14 @@ add_test(NAME test_local_model_runtime COMMAND $<TARGET_FILE:test_local_model_ru
 set_tests_properties(test_local_model_runtime PROPERTIES TIMEOUT 30)
 
 add_sentinel_core_test(test_vendor_cloud_contract core/test_vendor_cloud_contract.cpp)
+
+# P4-03: adaptive resource policy foundation (fake clock, injected snapshots,
+# explicit fixture configuration; no host telemetry and no production wiring).
+add_sentinel_core_test(test_resource_policy core/test_resource_policy.cpp)
+
+# P4-03.1: independent adversarial fixtures for the same policy contract. Kept
+# separate so the reviewed 25-case suite stays byte-identical.
+add_sentinel_core_test(test_resource_policy_review core/test_resource_policy_review.cpp)
 
 add_sentinel_core_test(test_endpoint_security_capability core/test_endpoint_security_capability.cpp)
 

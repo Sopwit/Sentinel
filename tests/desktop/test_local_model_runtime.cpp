@@ -97,7 +97,9 @@ struct Fixture {
             starts.append(request);
             onProcessState = std::move(callback);
             process.processId = "owned-fixture-handle";
-            process.state = ProcessState::Running;
+            if (process.state != ProcessState::Failed) {
+                process.state = ProcessState::Running;
+            }
             return process.processId;
         };
         dependencies.record = [this](const QString& id) {
@@ -548,6 +550,38 @@ private slots:
         QCOMPARE(f.starts.size(), owned ? 1 : 0);
         QVERIFY(f.terminated.isEmpty());
         QCOMPARE(f.selected.model, owned ? QString{} : QString("not-registered"));
+    }
+    void synchronousFailedStartSetsUnavailable() {
+        Fixture f;
+        f.process.state = ProcessState::Failed;
+        f.process.error = "Exec format error";
+        f.start();
+        QCOMPARE(f.runtime->readiness(), RuntimeReadinessState::Unavailable);
+        QCOMPARE(f.starts.size(), 1);
+        QVERIFY(f.terminated.isEmpty());
+        // Verify subsequent ensureRunning does not restart in a loop due to attemptedKey_
+        f.runtime->ensureRunning();
+        QCOMPARE(f.starts.size(), 1);
+    }
+    void repeatedShutdownIsIdempotent() {
+        Fixture f;
+        f.health(200);
+        f.runtime->beginShutdown();
+        QCOMPARE(f.runtime->readiness(), RuntimeReadinessState::Unknown);
+        f.runtime->beginShutdown();
+        QCOMPARE(f.runtime->readiness(), RuntimeReadinessState::Unknown);
+        f.runtime.reset();
+    }
+    void duplicateEnsureRunningWhileProbingDropsExtraRequests() {
+        Fixture f;
+        f.runtime->ensureRunning();
+        QCOMPARE(f.probes.size(), 1);
+        f.runtime->ensureRunning();
+        QCOMPARE(f.probes.size(), 1);
+        f.probes.last()->finish(200);
+        QCOMPARE(f.probes.size(), 2);
+        f.runtime->ensureRunning();
+        QCOMPARE(f.probes.size(), 2);
     }
     void removalDuringActualUseRemainsBlocked() {
         QSKIP("No model-residency lease/removal contract exists; a live provider handle is not "

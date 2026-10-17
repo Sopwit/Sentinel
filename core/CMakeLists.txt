@@ -31,6 +31,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/agent/ObservationPolicy.h
     include/sentinel/core/agent/NullAgentRuntime.h
     include/sentinel/core/agent/StaticAgentRegistry.h
+    include/sentinel/core/policy/ResourcePolicy.h
     include/sentinel/core/app/ApplicationController.h
     include/sentinel/core/app/AgentInspectorService.h
     include/sentinel/core/app/ApplicationControllerBuilder.h
@@ -258,6 +259,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/cache/PromptCacheService.h
     include/sentinel/core/provider/ProviderMessageNormalizer.h
     include/sentinel/core/provider/ProviderErrorClassifier.h
+    include/sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h
     include/sentinel/core/doomloop/DoomLoopDetector.h
     include/sentinel/core/wildcard/WildcardMatcher.h
     include/sentinel/core/schema/ToolJsonSchemaNormalizer.h
@@ -339,6 +341,7 @@ add_library(sentinel_core STATIC
     src/agent/NullAgentRuntime.cpp
     src/agent/StaticAgentRegistry.cpp
     src/agent/SubagentService.cpp
+    src/policy/ResourcePolicy.cpp
     src/app/ApplicationController.cpp
     src/app/AgentInspectorService.cpp
     src/app/ControlledTaskService.cpp
@@ -457,6 +460,7 @@ add_library(sentinel_core STATIC
     src/cache/PromptCacheService.cpp
     src/provider/ProviderMessageNormalizer.cpp
     src/provider/ProviderErrorClassifier.cpp
+    src/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.cpp
     src/doomloop/DoomLoopDetector.cpp
     src/wildcard/WildcardMatcher.cpp
     src/schema/ToolJsonSchemaNormalizer.cpp
