@@ -58,6 +58,30 @@ std::optional<QString> parseAnthropicMessagesText(const QJsonObject& body,
     return text;
 }
 
+AnthropicMessagesResponse parseAnthropicMessagesResponse(const QJsonObject& body) {
+    AnthropicMessagesResponse response;
+    const auto contentVal = body.value(QStringLiteral("content"));
+    if (contentVal.isArray()) {
+        response.contentBlocks = contentVal.toArray();
+    }
+    response.hasContent = !response.contentBlocks.isEmpty();
+    for (const auto& value : response.contentBlocks) {
+        const auto part = value.toObject();
+        const auto type = part.value(QStringLiteral("type")).toString();
+        if (type == QLatin1String("text")) {
+            response.text += part.value(QStringLiteral("text")).toString();
+            continue;
+        }
+        if (type != QLatin1String("tool_use")) {
+            continue;
+        }
+        response.toolUses.append(AnthropicResponseToolUse{
+            part.value(QStringLiteral("id")).toString(),
+            part.value(QStringLiteral("name")).toString(), part.value(QStringLiteral("input"))});
+    }
+    return response;
+}
+
 QJsonObject anthropicToolDeclaration(const QJsonObject& nativeToolDefinition) {
     const auto function = nativeToolDefinition.value(QStringLiteral("function")).toObject();
     return QJsonObject{

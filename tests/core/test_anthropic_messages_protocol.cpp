@@ -27,6 +27,11 @@ private Q_SLOTS:
     void testNativeRequestBody();
     void testNativeRequestBodyWithToolsAndStructured();
     void testToolResultBlocks();
+    void testResponseTextOnly();
+    void testResponseToolUse();
+    void testResponseMixedAndUnknownBlocks();
+    void testResponseMultipleToolUsesAndMissingId();
+    void testResponseEmptyAndMalformed();
 };
 
 void TestAnthropicMessagesProtocol::testUrl() {
@@ -244,6 +249,102 @@ void TestAnthropicMessagesProtocol::testToolResultBlocks() {
     QCOMPARE(first.value(QStringLiteral("content")).toString(), QStringLiteral("case contents"));
     // Result text is clipped to the native continuation limit.
     QCOMPARE(blocks.at(1).toObject().value(QStringLiteral("content")).toString().size(), 6800);
+}
+
+void TestAnthropicMessagesProtocol::testResponseTextOnly() {
+    const QJsonObject body{
+        {QStringLiteral("content"),
+         QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                {QStringLiteral("text"), QStringLiteral("alpha ")}},
+                    QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                {QStringLiteral("text"), QStringLiteral("beta")}}}}};
+    const auto parsed = parseAnthropicMessagesResponse(body);
+    QVERIFY(parsed.hasContent);
+    QCOMPARE(parsed.text, QStringLiteral("alpha beta"));
+    QVERIFY(parsed.toolUses.isEmpty());
+    QCOMPARE(parsed.contentBlocks.size(), 2);
+}
+
+void TestAnthropicMessagesProtocol::testResponseToolUse() {
+    const QJsonObject toolUse{
+        {QStringLiteral("type"), QStringLiteral("tool_use")},
+        {QStringLiteral("id"), QStringLiteral("toolu_1")},
+        {QStringLiteral("name"), QStringLiteral("read-file")},
+        {QStringLiteral("input"), QJsonObject{{QStringLiteral("path"), QStringLiteral("a")}}}};
+    const QJsonObject body{{QStringLiteral("content"), QJsonArray{toolUse}}};
+    const auto parsed = parseAnthropicMessagesResponse(body);
+    QVERIFY(parsed.hasContent);
+    QVERIFY(parsed.text.isEmpty());
+    QCOMPARE(parsed.toolUses.size(), 1);
+    QCOMPARE(parsed.toolUses.first().callId, QStringLiteral("toolu_1"));
+    QCOMPARE(parsed.toolUses.first().name, QStringLiteral("read-file"));
+    QCOMPARE(parsed.toolUses.first().input.toObject(),
+             (QJsonObject{{QStringLiteral("path"), QStringLiteral("a")}}));
+    // The raw blocks are preserved verbatim for continuation assembly.
+    QCOMPARE(parsed.contentBlocks.first().toObject(), toolUse);
+}
+
+void TestAnthropicMessagesProtocol::testResponseMixedAndUnknownBlocks() {
+    const QJsonArray content{QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                         {QStringLiteral("text"), QStringLiteral("before ")}},
+                             QJsonObject{{QStringLiteral("type"), QStringLiteral("thinking")},
+                                         {QStringLiteral("thinking"), QStringLiteral("ignored")}},
+                             QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_use")},
+                                         {QStringLiteral("id"), QStringLiteral("toolu_1")},
+                                         {QStringLiteral("name"), QStringLiteral("read-file")},
+                                         {QStringLiteral("input"), QJsonObject{}}},
+                             QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                         {QStringLiteral("text"), QStringLiteral("after")}}};
+    const auto parsed =
+        parseAnthropicMessagesResponse(QJsonObject{{QStringLiteral("content"), content}});
+    // Text blocks concatenate in provider order; the unknown block is ignored.
+    QCOMPARE(parsed.text, QStringLiteral("before after"));
+    QCOMPARE(parsed.toolUses.size(), 1);
+    QCOMPARE(parsed.toolUses.first().callId, QStringLiteral("toolu_1"));
+    // The raw content array keeps the ignored block for continuation fidelity.
+    QCOMPARE(parsed.contentBlocks.size(), 4);
+}
+
+void TestAnthropicMessagesProtocol::testResponseMultipleToolUsesAndMissingId() {
+    const QJsonArray content{
+        QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_use")},
+                    {QStringLiteral("id"), QStringLiteral("toolu_1")},
+                    {QStringLiteral("name"), QStringLiteral("read-file")},
+                    {QStringLiteral("input"), QJsonObject{}}},
+        // A missing id is surfaced as an empty call id (the adapter rejects it).
+        QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_use")},
+                    {QStringLiteral("name"), QStringLiteral("read-file")},
+                    {QStringLiteral("input"), QJsonObject{}}},
+        // A non-object input is surfaced unchanged (the adapter rejects it).
+        QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_use")},
+                    {QStringLiteral("id"), QStringLiteral("toolu_3")},
+                    {QStringLiteral("name"), QStringLiteral("read-file")},
+                    {QStringLiteral("input"), QStringLiteral("oops")}}};
+    const auto parsed =
+        parseAnthropicMessagesResponse(QJsonObject{{QStringLiteral("content"), content}});
+    QCOMPARE(parsed.toolUses.size(), 3);
+    QCOMPARE(parsed.toolUses.at(0).callId, QStringLiteral("toolu_1"));
+    QVERIFY(parsed.toolUses.at(1).callId.isEmpty());
+    QVERIFY(!parsed.toolUses.at(2).input.isObject());
+}
+
+void TestAnthropicMessagesProtocol::testResponseEmptyAndMalformed() {
+    // Missing / non-array content: hasContent is false and nothing is parsed.
+    for (const QJsonObject& body :
+         {QJsonObject{}, QJsonObject{{QStringLiteral("stop_reason"), QStringLiteral("end_turn")}},
+          QJsonObject{{QStringLiteral("content"), QStringLiteral("nope")}},
+          QJsonObject{{QStringLiteral("content"), QJsonArray()}}}) {
+        const auto parsed = parseAnthropicMessagesResponse(body);
+        QVERIFY(!parsed.hasContent);
+        QVERIFY(parsed.text.isEmpty());
+        QVERIFY(parsed.toolUses.isEmpty());
+    }
+    // Non-object blocks are ignored, but the array still counts as content.
+    const auto parsed = parseAnthropicMessagesResponse(
+        QJsonObject{{QStringLiteral("content"), QJsonArray{QJsonValue(QStringLiteral("junk"))}}});
+    QVERIFY(parsed.hasContent);
+    QVERIFY(parsed.text.isEmpty());
+    QVERIFY(parsed.toolUses.isEmpty());
 }
 
 QTEST_MAIN(TestAnthropicMessagesProtocol)
