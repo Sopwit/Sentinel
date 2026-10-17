@@ -336,8 +336,14 @@ ApplicationWindow {
         modeName: root.viewModel.currentModeName
         preferredWidth: Math.min(520, root.width - SentinelTheme.space4Xl)
         preferredHeight: 260
+        // Non-destructive default: Enter restores the locally drafted text rather than
+        // discarding it. Discard remains reachable with Tab / Shift+Tab.
+        initialFocusItem: recoveryRestore
 
         contentItem: ColumnLayout {
+            Accessible.role: Accessible.Dialog
+            Accessible.name: qsTr("Restore previous session")
+            Accessible.description: qsTr("Sentinel saved your last draft locally. Restore it into the composer or discard it.")
             spacing: SentinelTheme.spaceMd
             Label {
                 Layout.fillWidth: true
@@ -346,6 +352,8 @@ ApplicationWindow {
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontCard
                 font.bold: true
+                Accessible.role: Accessible.StaticText
+                Accessible.name: text
             }
             Label {
                 Layout.fillWidth: true
@@ -367,6 +375,7 @@ ApplicationWindow {
                 }
                 Item { Layout.fillWidth: true }
                 SentinelButton {
+                    id: recoveryRestore
                     text: qsTr("Restore")
                     onClicked: {
                         dashboardPage.restoreDraft(root.viewModel.recoveryDraftText)
@@ -448,10 +457,15 @@ ApplicationWindow {
         preferredWidth: 620
         preferredHeight: 380
         closePolicy: Popup.NoAutoClose
-        onOpened: daemonApprovalDeny.forceActiveFocus()
+        // Safety: focus lands on Deny, so a stray Enter/Return can never approve.
+        // Allow once is only reachable by an explicit Tab + activation.
+        initialFocusItem: daemonApprovalDeny
         readonly property var approval: root.viewModel.pendingDaemonApproval
         visible: root.viewModel.daemonConnected && !!approval.approval_id
         contentItem: ColumnLayout {
+            Accessible.role: Accessible.Dialog
+            Accessible.name: qsTr("Tool approval required")
+            Accessible.description: qsTr("An agent requested permission to run a tool. Review the request, then deny, allow once, or cancel the run.")
             spacing: SentinelTheme.spaceMd
             Label {
                 Layout.fillWidth: true
@@ -459,6 +473,8 @@ ApplicationWindow {
                 text: qsTr("Tool approval required")
                 font.bold: true
                 color: SentinelTheme.textPrimary
+                Accessible.role: Accessible.StaticText
+                Accessible.name: text
             }
             Label {
                 Layout.fillWidth: true
@@ -472,6 +488,8 @@ ApplicationWindow {
                     }).join("\n")
                 wrapMode: Text.WrapAnywhere
                 color: SentinelTheme.textPrimary
+                Accessible.role: Accessible.StaticText
+                Accessible.name: text
             }
             Item { Layout.fillHeight: true }
             RowLayout {

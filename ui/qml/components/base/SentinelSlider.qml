@@ -14,6 +14,12 @@ Slider {
     property color accent: SentinelTheme.calmAccent
     property string suffix: ""
     property int decimals: 2
+    property string accessibleDescription: ""
+
+    // Accessibility contract: exposed as a slider. QtQuick.Controls derives the value
+    // range/position from the control; the usage site must supply Accessible.name.
+    Accessible.role: Accessible.Slider
+    Accessible.description: control.accessibleDescription
 
     implicitWidth: 160
     implicitHeight: 36

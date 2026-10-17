@@ -167,6 +167,9 @@ private slots:
     void nativeSafeErrorProjection();
     void injectedTransportCannotBypassNetworkPolicy();
     void defaultTransportRemainsProductionHttps();
+    // P2-M03: byte-equivalence of the native request body against pre-refactor
+    // golden fixtures captured from ModelService::nativeEndpointReply.
+    void nativeRequestBodyByteEquivalence();
 };
 
 void NativeProviderContractTest::initTestCase() {
@@ -1201,6 +1204,54 @@ void NativeProviderContractTest::defaultTransportRemainsProductionHttps() {
     QVERIFY(config.isAllowedEndpoint());
     QCOMPARE(config.endpoint.scheme(), QStringLiteral("https"));
     QCOMPARE(config.endpoint.host(), QStringLiteral("api.anthropic.com"));
+}
+
+void NativeProviderContractTest::nativeRequestBodyByteEquivalence() {
+    // The exact bytes POSTed to the provider must be unchanged by the P2-M03
+    // extraction of the native request serialization. The golden strings are
+    // captured from the pre-refactor ModelService::nativeEndpointReply assembly.
+    {
+        // Native tool calling forces the ModelService::nativeEndpointReply path
+        // (a plain request without native capabilities routes through infer()).
+        ProviderHarness harness;
+        harness.respondBody(R"({"content":[{"type":"text","text":"ok"}]})");
+        auto provider = harness.provider(claudeBinding());
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.deadlineMs = 500;
+        options.nativeToolCalling = true;
+        options.tools = {syntheticReadTool()};
+        ScopedOnlineNetworkMode online;
+        const auto reply = provider->sendRequest("synthetic claude prompt", options);
+        QVERIFY2(reply.success, qPrintable(reply.errorMessage));
+        // Anthropic native body: max_tokens (2048 fallback), messages, model, flat
+        // tool declarations. No `stream` key on the native path.
+        QCOMPARE(
+            harness.lastRequest().body,
+            QByteArrayLiteral(
+                R"({"max_tokens":2048,"messages":[{"content":"synthetic claude prompt","role":"user"}],"model":"claude-sonnet-4-20250514","tools":[{"description":"Read the contents of a workspace file.","input_schema":{"properties":{"path":{"description":"Workspace-relative path.","type":"string"}},"required":["path"],"type":"object"},"name":"read-file"}]})"));
+    }
+    {
+        ProviderHarness harness;
+        harness.respondBody(
+            R"({"candidates":[{"content":{"role":"model","parts":[{"text":"ok"}]},"finishReason":"STOP"}]})");
+        auto provider = harness.provider(geminiBinding());
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.deadlineMs = 500;
+        options.nativeToolCalling = true;
+        options.tools = {syntheticReadTool()};
+        ScopedOnlineNetworkMode online;
+        const auto reply = provider->sendRequest("synthetic gemini prompt", options);
+        QVERIFY2(reply.success, qPrintable(reply.errorMessage));
+        // Gemini generateContent removes `model` before dispatch (the URL carries it)
+        // and omits generationConfig when no output bound is set. Declarations use
+        // the parametersJsonSchema field.
+        QCOMPARE(
+            harness.lastRequest().body,
+            QByteArrayLiteral(
+                R"({"contents":[{"parts":[{"text":"synthetic gemini prompt"}],"role":"user"}],"tools":[{"functionDeclarations":[{"description":"Read the contents of a workspace file.","name":"read-file","parametersJsonSchema":{"properties":{"path":{"description":"Workspace-relative path.","type":"string"}},"required":["path"],"type":"object"}}]}]})"));
+    }
 }
 
 QTEST_GUILESS_MAIN(NativeProviderContractTest)

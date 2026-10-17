@@ -20,8 +20,30 @@ Button {
     ToolTip.visible: control.hovered && control.tooltipText.length > 0
     ToolTip.text: control.tooltipText
 
+    // Accessibility contract: the visible label is the accessible name; a tooltip
+    // that carries extra information becomes the description. Icon-only buttons
+    // must supply Accessible.name (or tooltipText) at the usage site.
+    Accessible.role: Accessible.Button
+    Accessible.name: control.text.length > 0 ? control.text : control.tooltipText
+    Accessible.description: control.tooltipText.length > 0 && control.tooltipText !== control.text
+                            ? control.tooltipText : ""
+    Accessible.pressed: control.down
+
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
+
+    // Qt Quick Controls activates buttons with Space only. Enter/Return is the other
+    // activation key keyboard and screen-reader users expect, so accept it on the
+    // focused button. The event is consumed to stop it reaching an ancestor handler
+    // and firing the action twice.
+    Keys.onReturnPressed: function(event) {
+        control.click()
+        event.accepted = true
+    }
+    Keys.onEnterPressed: function(event) {
+        control.click()
+        event.accepted = true
+    }
     opacity: enabled ? 1.0 : InteractionTokens.disabledOpacity
     implicitHeight: SentinelTheme.controlHeight
     scale: down ? InteractionTokens.pressScale

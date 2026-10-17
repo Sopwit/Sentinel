@@ -9,6 +9,8 @@
 #include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/model/IModelRouter.h"
+#include "sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h"
+#include "sentinel/core/provider/protocols/gemini_generate_content/GeminiGenerateContentProtocol.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
@@ -267,9 +269,7 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                          }))
             return malformed(QStringLiteral("Native tool continuation is not registered."));
 
-    QJsonObject body{{QStringLiteral("model"), binding.modelId}};
-    QJsonArray initialParts{QJsonObject{{QStringLiteral("text"), message}}};
-    appendGeminiImageParts(initialParts, options.images);
+    QJsonObject body;
     if (claude) {
         QJsonArray messages{QJsonObject{
             {QStringLiteral("role"), QStringLiteral("user")},
@@ -286,45 +286,32 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                     options.priorToolCalls.first().providerContinuation)
                     return malformed(QStringLiteral("Claude tool continuation histories differ."));
             messages = history.array();
-            QJsonArray results;
+            QList<provider::AnthropicToolResult> results;
             for (int i = 0; i < options.priorToolCalls.size(); ++i) {
                 const auto& call = options.priorToolCalls.at(i);
                 const auto& result = options.toolResults.at(i);
                 if (call.callId.isEmpty() || call.callId != result.callId)
                     return malformed(QStringLiteral("Native tool result ID mismatch."));
-                results.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_result")},
-                                           {QStringLiteral("tool_use_id"), call.callId},
-                                           {QStringLiteral("content"), result.content.left(6800)}});
+                results.append({call.callId, result.content});
             }
-            messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                                        {QStringLiteral("content"), results}});
+            messages.append(QJsonObject{
+                {QStringLiteral("role"), QStringLiteral("user")},
+                {QStringLiteral("content"), provider::anthropicToolResultBlocks(results)}});
         }
-        body.insert(QStringLiteral("messages"), messages);
-        body.insert(QStringLiteral("max_tokens"),
-                    options.maxOutputTokens > 0 ? options.maxOutputTokens : 2048);
+        QJsonArray tools;
         if (options.nativeToolCalling) {
-            QJsonArray tools;
             for (const auto& tool : options.tools) {
                 if (!tool.enabled || !tool.exposedToModel)
                     continue;
-                const auto function =
-                    nativeToolDefinition(tool).value(QStringLiteral("function")).toObject();
-                tools.append(QJsonObject{
-                    {QStringLiteral("name"), function.value(QStringLiteral("name"))},
-                    {QStringLiteral("description"), function.value(QStringLiteral("description"))},
-                    {QStringLiteral("input_schema"),
-                     function.value(QStringLiteral("parameters"))}});
+                tools.append(provider::anthropicToolDeclaration(nativeToolDefinition(tool)));
             }
-            if (!tools.isEmpty())
-                body.insert(QStringLiteral("tools"), tools);
         }
-        if (options.structuredOutput)
-            body.insert(
-                QStringLiteral("output_config"),
-                QJsonObject{{QStringLiteral("format"),
-                             QJsonObject{{QStringLiteral("type"), QStringLiteral("json_schema")},
-                                         {QStringLiteral("schema"), options.structuredSchema}}}});
+        body = provider::buildAnthropicNativeRequestBody(
+            binding.modelId, messages, options.maxOutputTokens, tools,
+            options.structuredOutput ? options.structuredSchema : QJsonObject{});
     } else {
+        QJsonArray initialParts{QJsonObject{{QStringLiteral("text"), message}}};
+        appendGeminiImageParts(initialParts, options.images);
         QJsonArray contents{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
                                         {QStringLiteral("parts"), initialParts}}};
         if (!options.priorToolCalls.isEmpty()) {
@@ -341,47 +328,29 @@ ChatProviderReply nativeEndpointReply(LMStudioLocalInferenceClient::NativeProtoc
                     return malformed(
                         QStringLiteral("Gemini function continuation histories differ."));
             contents = history.array();
-            QJsonArray results;
+            QList<provider::GeminiFunctionResult> results;
             for (int i = 0; i < options.priorToolCalls.size(); ++i) {
                 const auto& call = options.priorToolCalls.at(i);
                 const auto& result = options.toolResults.at(i);
                 if (call.callId.isEmpty() || call.callId != result.callId)
                     return malformed(QStringLiteral("Native function result ID mismatch."));
-                QJsonObject functionResponse{
-                    {QStringLiteral("name"), nativeFunctionName(call.toolId)},
-                    {QStringLiteral("response"),
-                     QJsonObject{{QStringLiteral("output"), result.content.left(6800)}}}};
-                if (!call.callId.startsWith(QLatin1String("sentinel-gemini-"))) {
-                    functionResponse.insert(QStringLiteral("id"), call.callId);
-                }
-                results.append(QJsonObject{{QStringLiteral("functionResponse"), functionResponse}});
+                results.append({call.callId, nativeFunctionName(call.toolId), result.content});
             }
-            contents.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                                        {QStringLiteral("parts"), results}});
+            contents.append(QJsonObject{
+                {QStringLiteral("role"), QStringLiteral("user")},
+                {QStringLiteral("parts"), provider::geminiFunctionResponseParts(results)}});
         }
-        body.insert(QStringLiteral("contents"), contents);
+        QJsonArray declarations;
         if (options.nativeToolCalling) {
-            QJsonArray declarations;
             for (const auto& tool : options.tools) {
                 if (!tool.enabled || !tool.exposedToModel)
                     continue;
                 declarations.append(geminiFunctionDeclaration(tool));
             }
-            if (!declarations.isEmpty())
-                body.insert(QStringLiteral("tools"),
-                            QJsonArray{QJsonObject{
-                                {QStringLiteral("functionDeclarations"), declarations}}});
         }
-        QJsonObject generationConfig;
-        if (options.maxOutputTokens > 0)
-            generationConfig.insert(QStringLiteral("maxOutputTokens"), options.maxOutputTokens);
-        if (options.structuredOutput) {
-            generationConfig.insert(QStringLiteral("responseMimeType"),
-                                    QStringLiteral("application/json"));
-            generationConfig.insert(QStringLiteral("responseSchema"), options.structuredSchema);
-        }
-        if (!generationConfig.isEmpty())
-            body.insert(QStringLiteral("generationConfig"), generationConfig);
+        body = provider::buildGeminiNativeRequestBody(
+            binding.modelId, contents, options.maxOutputTokens, declarations,
+            options.structuredOutput ? options.structuredSchema : QJsonObject{});
     }
 
     LMStudioLocalInferenceClient client(config, timeoutMs);

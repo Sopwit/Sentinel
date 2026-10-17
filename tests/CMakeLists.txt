@@ -411,6 +411,10 @@ target_link_libraries(test_extensions_hub PRIVATE sentinel_desktop_viewmodels)
 add_test(NAME test_extensions_surface COMMAND $<TARGET_FILE:settings_ui_certification_probe> --extensions-smoke)
 set_tests_properties(test_extensions_surface PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# P6-03: base control and overlay dialog accessibility contracts (offscreen).
+add_test(NAME test_desktop_accessibility COMMAND $<TARGET_FILE:settings_ui_certification_probe> --accessibility-smoke)
+set_tests_properties(test_desktop_accessibility PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 60)
+
 # Local explicit-root contract; no live provider or stored credentials are used.
 add_executable(test_provider_certification_root
     core/test_provider_certification_root.cpp
@@ -444,3 +448,6 @@ add_sentinel_core_test(test_resource_policy core/test_resource_policy.cpp)
 
 # P4-03.1: independent adversarial fixtures for the same policy contract.
 add_sentinel_core_test(test_resource_policy_review core/test_resource_policy_review.cpp)
+
+# P4-04: read-only telemetry → policy-input adapter translation.
+add_sentinel_core_test(test_resource_policy_adapter core/test_resource_policy_adapter.cpp)

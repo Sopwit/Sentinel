@@ -107,4 +107,47 @@ parseGeminiGenerateContentText(const QJsonObject& body,
     return text;
 }
 
+QJsonObject buildGeminiNativeRequestBody(const QString& model, const QJsonArray& contents,
+                                         int maxOutputTokens,
+                                         const QJsonArray& functionDeclarations,
+                                         const QJsonObject& structuredSchema) {
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), model);
+    body.insert(QStringLiteral("contents"), contents);
+    if (!functionDeclarations.isEmpty()) {
+        body.insert(QStringLiteral("tools"),
+                    QJsonArray{QJsonObject{
+                        {QStringLiteral("functionDeclarations"), functionDeclarations}}});
+    }
+    QJsonObject generationConfig;
+    if (maxOutputTokens > 0) {
+        generationConfig.insert(QStringLiteral("maxOutputTokens"), maxOutputTokens);
+    }
+    if (!structuredSchema.isEmpty()) {
+        generationConfig.insert(QStringLiteral("responseMimeType"),
+                                QStringLiteral("application/json"));
+        generationConfig.insert(QStringLiteral("responseSchema"), structuredSchema);
+    }
+    if (!generationConfig.isEmpty()) {
+        body.insert(QStringLiteral("generationConfig"), generationConfig);
+    }
+    return body;
+}
+
+QJsonArray geminiFunctionResponseParts(const QList<GeminiFunctionResult>& results,
+                                       int maxContentLength) {
+    QJsonArray parts;
+    for (const auto& result : results) {
+        QJsonObject functionResponse{
+            {QStringLiteral("name"), result.functionName},
+            {QStringLiteral("response"),
+             QJsonObject{{QStringLiteral("output"), result.content.left(maxContentLength)}}}};
+        if (!result.callId.startsWith(QLatin1String("sentinel-gemini-"))) {
+            functionResponse.insert(QStringLiteral("id"), result.callId);
+        }
+        parts.append(QJsonObject{{QStringLiteral("functionResponse"), functionResponse}});
+    }
+    return parts;
+}
+
 } // namespace sentinel::core::provider

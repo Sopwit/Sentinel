@@ -10,10 +10,21 @@ import Sentinel.Desktop
 TextField {
     id: control
 
+    property string accessibleDescription: ""
+
     color: SentinelTheme.textPrimary
     placeholderTextColor: SentinelTheme.textPlaceholder
     selectByMouse: true
     hoverEnabled: true
+
+    // Accessibility contract: an editable text field is exposed as EditableText.
+    // The placeholder is the default accessible name until the usage site supplies
+    // a real label via Accessible.name (a placeholder is not a substitute for a label).
+    Accessible.role: Accessible.EditableText
+    Accessible.name: control.placeholderText
+    Accessible.description: control.accessibleDescription
+    Accessible.readOnly: control.readOnly
+
     // Font fallback and DPI can make the line taller than the nominal control.
     implicitHeight: Math.max(36, Math.ceil(lineMetrics.height) + topPadding + bottomPadding)
     FontMetrics {
