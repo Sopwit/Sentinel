@@ -444,3 +444,6 @@ add_sentinel_core_test(test_resource_policy core/test_resource_policy.cpp)
 
 # P4-03.1: independent adversarial fixtures for the same policy contract.
 add_sentinel_core_test(test_resource_policy_review core/test_resource_policy_review.cpp)
+
+# P4-04: read-only telemetry → policy-input adapter translation.
+add_sentinel_core_test(test_resource_policy_adapter core/test_resource_policy_adapter.cpp)
