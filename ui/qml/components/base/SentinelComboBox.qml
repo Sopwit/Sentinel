@@ -15,10 +15,20 @@ ComboBox {
 
     property color accent: SentinelTheme.calmAccent
     property string placeholderText: ""
+    property string accessibleDescription: ""
     property var delegateTextResolver: null
     property string delegateSuffix: ""
     property int popupMaxHeight: 300
     property bool popupShowsCheckmark: true
+
+    // Accessibility contract: exposed as a combo box whose expanded state tracks the
+    // popup. The usage site must supply Accessible.name (e.g. "Provider") because a
+    // combo box has no intrinsic label; the placeholder is used only as a fallback.
+    Accessible.role: Accessible.ComboBox
+    Accessible.name: control.placeholderText
+    Accessible.description: control.accessibleDescription
+    Accessible.expandable: true
+    Accessible.expanded: control.popup.visible
 
     implicitHeight: SentinelTheme.controlHeight
     font.pixelSize: SentinelTheme.fontBody
@@ -219,6 +229,15 @@ ComboBox {
         highlighted: control.highlightedIndex === index
         hoverEnabled: true
 
+        // Accessibility contract: each option is a labelled list item whose selected
+        // state mirrors the current index (the default ItemDelegate exposes an empty name).
+        Accessible.role: Accessible.ListItem
+        Accessible.name: delegateText.text
+        Accessible.selectable: true
+        Accessible.selected: control.currentIndex === delegateScope1.index
+        Accessible.checkable: true
+        Accessible.checked: control.currentIndex === delegateScope1.index
+
         contentItem: RowLayout {
             spacing: SentinelTheme.spaceSm
             anchors.fill: parent
@@ -226,6 +245,7 @@ ComboBox {
             anchors.rightMargin: SentinelTheme.spaceMd
 
             Text {
+                id: delegateText
                 Layout.fillWidth: true
                 text: {
                     var base = control.textRole ? delegateScope1.model[control.textRole] : delegateScope1.modelData

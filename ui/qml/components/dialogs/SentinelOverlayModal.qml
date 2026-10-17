@@ -15,6 +15,14 @@ Popup {
     property int preferredHeight: 420
     property string modeName: "Sentinel"
 
+    // ── Keyboard / focus contract ─────────────────────────────────────────────
+    // initialFocusItem pins the item that receives focus when the overlay opens.
+    // Safety-critical dialogs must point it at a non-destructive action (e.g. Deny)
+    // so that a stray Enter cannot confirm the dangerous action. When it is unset the
+    // first tabbable direct child of the content is used, preserving earlier behaviour.
+    property Item initialFocusItem: null
+    property Item previousFocusItem: null
+
     parent: Overlay.overlay
     width: Math.min(preferredWidth, Math.max(320, parent ? parent.width - SentinelTheme.space4Xl : preferredWidth))
     height: Math.min(preferredHeight, Math.max(280, parent ? parent.height - SentinelTheme.space4Xl : preferredHeight))
@@ -27,19 +35,46 @@ Popup {
     padding: 0
     clip: true
 
-    onOpened: {
-        Qt.callLater(function() {
-            if (contentItem && contentItem.children.length > 0) {
-                for (var i = 0; i < contentItem.children.length; i++) {
-                    var child = contentItem.children[i]
-                    if (child.visible && child.enabled && child.activeFocusOnTab) {
-                        child.forceActiveFocus()
-                        return
-                    }
+    // Move focus into the overlay once it is shown. This is scheduled from
+    // `aboutToShow` and deferred to the next event-loop turn so it runs after the
+    // popup has taken focus itself. It deliberately does not use `opened`, which is
+    // only emitted once the enter transition has finished and therefore never fires
+    // when transitions are disabled (reduced motion) or not animated (headless).
+    function applyInitialFocus() {
+        if (!modal.visible)
+            return
+        var target = modal.initialFocusItem
+        if (!target && contentItem) {
+            var children = contentItem.children
+            for (var i = 0; i < children.length; ++i) {
+                var child = children[i]
+                if (child.visible && child.enabled && child.activeFocusOnTab) {
+                    target = child
+                    break
                 }
             }
-        })
+        }
+        if (target && target.visible !== false && target.enabled !== false)
+            target.forceActiveFocus(Qt.TabFocusReason)
     }
+
+    // Restore the previously focused item as soon as the overlay starts hiding, so
+    // closing a dialog never strands focus. `aboutToHide` is used rather than
+    // `closed` so focus is returned even when the exit transition does not run.
+    function restorePreviousFocus() {
+        var target = modal.previousFocusItem
+        modal.previousFocusItem = null
+        if (target && target.visible && target.enabled)
+            target.forceActiveFocus(Qt.TabFocusReason)
+    }
+
+    onAboutToShow: {
+        // Captured before the overlay takes focus so it can be handed back on close.
+        modal.previousFocusItem = contentItem ? contentItem.Window.activeFocusItem : null
+        Qt.callLater(modal.applyInitialFocus)
+    }
+
+    onAboutToHide: modal.restorePreviousFocus()
 
     Overlay.modal: Rectangle {
         color: SentinelTheme.lightTheme
