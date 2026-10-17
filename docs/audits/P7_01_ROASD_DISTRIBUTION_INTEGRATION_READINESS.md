@@ -14,7 +14,7 @@ Classification: Packaging and distribution integration audit (read-only across r
 | Audit branch | `audit/p7-01-roasd-integration` |
 | Audit HEAD | `6035bf74cbb3f2556e29fe1bf31163a56eb5b591` (`6035bf74cbb3`) |
 | Base | `origin/main` @ `6035bf74cbb3f2556e29fe1bf31163a56eb5b591` (verified; `git merge-base HEAD origin/main` = HEAD) |
-| Worktree | `/Users/emir/.local/share/opencode/worktree/d272e3/audit/p7-01-roasd-integration` |
+| Worktree | `<personal-home>/.local/share/opencode/worktree/d272e3/audit/p7-01-roasd-integration` |
 | Ro-ASD project | https://github.com/Project-Ro-ASD (inspected read-only) |
 | Host used for checks | macOS (Darwin), Qt 6.12.0, CMake 4.4.4, Python 3.15 — no Fedora host available |
 

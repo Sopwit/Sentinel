@@ -492,10 +492,6 @@ if(UNIX AND NOT APPLE)
     install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/systemd/sentinel-desktop.service
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/user
     )
-
-    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dbus/dev.sentinel.Sentinel.service
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/services
-    )
 endif()
 
 target_sources(sentinel_desktop_viewmodels PRIVATE include/sentinel/desktop/SystemDictationService.h)

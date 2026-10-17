@@ -1,4 +1,0 @@
-[D-BUS Service]
-Name=dev.sentinel.Sentinel
-Exec=/usr/bin/sentinel-desktop
-SystemdService=sentinel-desktop.service

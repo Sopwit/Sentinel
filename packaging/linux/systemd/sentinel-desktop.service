@@ -10,5 +10,28 @@ Restart=on-failure
 RestartSec=5s
 Slice=app.slice
 
+# Per-user session service for the local daemon. It must never run as root and
+# must never be granted elevated or broad privileges.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=full
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+SystemCallArchitectures=native
+LockPersonality=yes
+
+# Deliberately NOT restricted here:
+#   * ProtectHome / ProtectSystem=strict - the daemon owns its runtime socket,
+#     profile directory and user data under the session user's home directory.
+#   * RestrictNamespaces - approved tool execution sandboxes programs with
+#     bubblewrap user namespaces and must not be blocked at the unit level.
+
 [Install]
 WantedBy=default.target

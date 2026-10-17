@@ -1,0 +1,197 @@
+name: Fedora packaging CI
+
+# Fedora 44 is the Ro-ASD product release. This workflow proves that Sentinel
+# still configures, builds, installs and validates its packaging metadata on
+# Fedora with distribution Qt 6 packages, independent of any Ro-ASD repository.
+#
+# A green Fedora container run is NOT evidence of Ro-ASD image compatibility:
+# no Ro-ASD image, repository, signing or acceptance service is involved.
+#
+# Introduced by P7-02A and never executed on a live Fedora 44 host yet. Steps
+# that depend on container capabilities (user namespaces for the bubblewrap
+# sandbox, rpmlint severity handling, systemd unit dependency resolution and
+# the Fedora Rust toolchain version) are marked advisory until a maintainer
+# confirms a green run, after which the advisory markers should be removed.
+# See docs/audits/P7_02A_FEDORA_PACKAGING_FOUNDATION_RESULT.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packaging-metadata:
+    name: Fedora packaging metadata
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:44
+    timeout-minutes: 20
+    steps:
+      - name: Bootstrap container
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False git tar gzip
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install validation tools
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False \
+            rpm-build desktop-file-utils appstream systemd
+      - name: Validate packaging metadata consistency
+        run: python3 tools/packaging/check_packaging_consistency.py
+      - name: Validate desktop entry
+        run: desktop-file-validate packaging/linux/dev.sentinel.Sentinel.desktop
+      - name: Validate AppStream metadata
+        run: appstreamcli validate --no-net packaging/linux/dev.sentinel.Sentinel.metainfo.xml
+      - name: Parse RPM specs
+        run: |
+          set -euxo pipefail
+          for spec in packaging/linux/rpm/sentinel-desktop.spec \
+                      packaging/linux/fedora-kde/sentinel-desktop.spec; do
+            rpmspec -P "$spec" > /dev/null
+          done
+      - name: Build source RPM
+        run: packaging/linux/fedora-kde/build_copr.sh
+      - name: Lint RPM specs (advisory)
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False rpmlint
+          rpmlint packaging/linux/rpm/sentinel-desktop.spec \
+                  packaging/linux/fedora-kde/sentinel-desktop.spec
+      - name: Verify systemd user unit syntax (advisory)
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          unit=/usr/lib/systemd/user/sentinel-desktop.service
+          install -Dm0644 packaging/linux/systemd/sentinel-desktop.service "$unit"
+          systemd-analyze verify "$unit"
+
+  build-package:
+    name: Fedora 44 package-ready build
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:44
+    timeout-minutes: 60
+    steps:
+      - name: Bootstrap container
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False git tar gzip
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install build dependencies
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False \
+            cmake ninja-build gcc-c++ \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsql-devel \
+            qt6-qtmultimedia-devel qt6-qttools-devel \
+            mesa-libGL-devel vulkan-loader-devel
+      - name: Configure
+        run: cmake --preset package-ready
+      - name: Build
+        run: cmake --build --preset package-ready
+      - name: Stage installation
+        run: cmake --install build/package-ready --prefix "$PWD/dist"
+      - name: Verify staged layout and binary parity
+        run: |
+          set -euxo pipefail
+          # Every binary the RPM specs ship must exist in the staged prefix.
+          for binary in sentinel-desktop sentinel-daemon sentinel-cli sentinel-plugin-host; do
+            test -x "dist/bin/$binary"
+          done
+          test -f dist/share/applications/dev.sentinel.Sentinel.desktop
+          test -f dist/share/metainfo/dev.sentinel.Sentinel.metainfo.xml
+          test -f dist/share/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg
+          test -f dist/lib/systemd/user/sentinel-desktop.service
+          test -f dist/etc/sentinel/config.json.template
+          test -d dist/share/sentinel/core-warden
+          test -d dist/share/licenses/sentinel
+          for size in 16 22 24 32 48 64 128 256 512; do
+            test -f "dist/share/icons/hicolor/${size}x${size}/apps/dev.sentinel.Sentinel.png"
+          done
+
+  test:
+    name: Fedora 44 build and test
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:44
+    timeout-minutes: 60
+    steps:
+      - name: Bootstrap container
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False git tar gzip
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install build and test dependencies
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False \
+            cmake ninja-build gcc-c++ \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsql-devel \
+            qt6-qtmultimedia-devel qt6-qttools-devel \
+            mesa-libGL-devel vulkan-loader-devel \
+            bubblewrap google-noto-sans-fonts
+      - name: Configure
+        run: cmake --preset tests
+      - name: Build
+        run: cmake --build --preset tests
+      - name: Test (advisory)
+        continue-on-error: true
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --preset tests --output-on-failure
+
+  rust-feasibility:
+    name: Fedora 44 Rust packaging feasibility
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:44
+    timeout-minutes: 20
+    steps:
+      - name: Bootstrap container
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False git tar gzip
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Probe Fedora toolchain (advisory)
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          dnf -y install --setopt=install_weak_deps=False cargo rust
+          rustc --version
+          cargo --version
+          # The cli/ workspace pins rust-version = 1.94; report whether the
+          # distribution toolchain satisfies it and whether the lockfile
+          # resolves. No Rust RPM is produced by this repository yet.
+          required="$(sed -n 's/^rust-version = "\(.*\)"/\1/p' cli/Cargo.toml)"
+          echo "cli/Cargo.toml rust-version: ${required}"
+          python3 - "$required" <<'PY'
+          import re, subprocess, sys
+          required = tuple(int(part) for part in sys.argv[1].split("."))
+          raw = subprocess.check_output(["rustc", "--version"], text=True).split()[1]
+          available = tuple(int(part) for part in re.findall(r"\d+", raw)[:2])
+          print(f"available rustc {raw} -> requirement {'.'.join(map(str, required))}")
+          print("SATISFIED" if available >= required else "NOT SATISFIED: distribution toolchain is older than the pinned rust-version")
+          PY
+          (cd cli && cargo metadata --locked --format-version 1 > /dev/null)
+          echo "cli/ lockfile resolves with the distribution toolchain"
