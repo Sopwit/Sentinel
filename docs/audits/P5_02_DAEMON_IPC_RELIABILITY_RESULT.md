@@ -181,3 +181,29 @@ The Sentinel daemon IPC layer operates under the following authoritative contrac
    Create a dedicated GitHub Actions workflow using a Docker container with two pre-created users (`sentinel-daemon` and `sentinel-client`) to test real un-simulated `SO_PEERCRED` cross-UID rejection.
 3. **Structured Telemetry & Health Endpoint**:
    Once P4 baseline resource instrumentation is finalized, expose daemon health metrics (active client count, pending bytes per client, dropped client counter) via `daemon.status`.
+
+## 13. P5-02.1 Review and Acceptance Scope Clarification (2026-10-17)
+
+Following the independent P5-02.1 review and hardening audit, the following boundaries are formally recorded:
+
+1. **AC-P1-04 (Hosted 100-Repeat Unix Stress)**:
+   - Status remains **Unverified** (or Blocked).
+   - Local test passes on a single Darwin arm64 development machine do not satisfy the matrix requirement for two independent hosted 100-repeat Unix stress matrix runs (`macos-14` and `ubuntu-22.04`). Hosted CI workflows were not dispatched in accordance with offline audit constraints.
+2. **AC-P5-01 (Single-Writer Daemon & Peer Authorization)**:
+   - Status remains **Blocked** (native platform acceptance).
+   - Local Unix peer credential checks (`::getpeereid` on macOS, `SO_PEERCRED` on Linux) are verified deterministically via simulated injection and native same-UID query.
+   - Real multi-user Linux deployment remains an integration gate.
+   - Windows named-pipe peer authorization is completely absent and blocked by policy decision **PD-D07**.
+3. **AC-P5-03 (Slow-Client Backpressure & History Fencing)**:
+   - Status remains **Unverified**.
+   - Unix deterministic write-buffer limit (1 MB abort threshold) and COR-17..COR-20 event sequence fencing are verified on Unix transport.
+   - This evidence does not constitute platform-wide acceptance; Windows named-pipe backpressure and kernel-level socket buffer tuning vary by OS.
+4. **AC-P5-04 (Shutdown, Drain and Legacy Authority)**:
+   - Status remains **Blocked**.
+   - Blocked by maintainer policy decisions: **PD-D05** (legacy in-process CLI disposition) and **PD-D10** (provider ownership and hard-stop policy).
+5. **AC-P5-05 (Contract Integrity & Restart Reconciliation)**:
+   - Status remains **Unverified**.
+   - SQLite transactional reconciliation of interrupted `running`/`approval` runs to `failed` (`daemon-restarted`) is deterministically verified and idempotent.
+   - Local fixture tests do not substitute for platform-level systemd or launchd service supervisor lifecycle integration.
+6. **Policy Decisions**:
+   - **PD-D07** (Windows trust and isolation) and **PD-D10** (Provider ownership and hard-stop policy) remain strictly **Pending Decision**. No decision is marked adopted.
