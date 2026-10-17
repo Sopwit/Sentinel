@@ -319,6 +319,9 @@ add_library(sentinel_core STATIC
     include/sentinel/core/util/SampledChecksum.h
     include/sentinel/core/util/Lazy.h
     include/sentinel/core/util/MemoMap.h
+    include/sentinel/core/resource/ResourceTelemetry.h
+    include/sentinel/core/resource/IResourceMonitorAdapter.h
+    include/sentinel/core/resource/ResourceMonitor.h
     src/agent/AgentActivityLog.cpp
     src/agent/AgentLoop.cpp
     src/agent/SQLiteAgentRunStore.cpp
@@ -396,6 +399,9 @@ add_library(sentinel_core STATIC
     src/memory/SqlitePragmas.cpp
     src/memory/StaticMemoryCatalog.cpp
     src/platform/DefaultPlatformService.cpp
+    src/resource/ResourceTelemetry.cpp
+    src/resource/ResourceMonitor.cpp
+    src/resource/NativeResourceMonitorAdapter.cpp
     src/model/ModelManagement.cpp
     src/model/ModelLibrary.cpp
     src/model/HuggingFaceModelSource.cpp
@@ -553,11 +559,12 @@ target_link_libraries(sentinel_core
 )
 
 if(WIN32)
-    target_link_libraries(sentinel_core PRIVATE dbghelp crypt32 advapi32)
+    target_link_libraries(sentinel_core PRIVATE dbghelp crypt32 advapi32 psapi)
 endif()
 
 if(APPLE)
-    target_link_libraries(sentinel_core PRIVATE "-framework Security" "-framework CoreFoundation")
+    target_link_libraries(sentinel_core PRIVATE "-framework Security" "-framework CoreFoundation"
+                                                "-framework IOKit")
 endif()
 
 target_compile_features(sentinel_core PUBLIC cxx_std_20)

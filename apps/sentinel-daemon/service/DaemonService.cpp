@@ -31,6 +31,9 @@ DaemonService::DaemonService(QObject* parent) : QObject(parent) {
 
 DaemonService::~DaemonService() {
     m_healthTimer.stop();
+    if (m_resourceMonitor) {
+        m_resourceMonitor->stop();
+    }
     if (m_controller) {
         m_controller->stopChatGeneration();
         if (m_controller->agentRuntime()) {
@@ -207,10 +210,37 @@ bool DaemonService::initialize(const QString& socketPath) {
 
     m_controller->refreshOllamaStatus();
 
+    startResourceTelemetryIfEnabled();
+
     // Health check every 60 seconds
     m_healthTimer.start(60000);
     qInfo().noquote() << "Sentinel Daemon Service initialized successfully.";
     return true;
+}
+
+void DaemonService::startResourceTelemetryIfEnabled() {
+    // Opt-in only: measurement must never become an implicit daemon dependency.
+    const auto enabled = qEnvironmentVariable("SENTINEL_RESOURCE_TELEMETRY");
+    if (enabled != QStringLiteral("1") &&
+        enabled.compare(QStringLiteral("true"), Qt::CaseInsensitive) != 0) {
+        return;
+    }
+
+    sentinel::core::ResourceMonitorConfig config;
+    bool intervalOk = false;
+    const int requestedInterval =
+        qEnvironmentVariableIntValue("SENTINEL_RESOURCE_TELEMETRY_INTERVAL_MS", &intervalOk);
+    if (intervalOk) {
+        config.samplingIntervalMs = requestedInterval;
+    }
+
+    m_resourceMonitor = std::make_unique<sentinel::core::ResourceMonitor>(
+        sentinel::core::makeNativeResourceMonitorAdapter(), nullptr, config);
+    if (m_resourceMonitor->start()) {
+        qInfo().noquote() << "Resource telemetry monitoring enabled (adapter="
+                          << m_resourceMonitor->capabilities().adapterId
+                          << ", interval=" << config.effectiveSamplingIntervalMs() << "ms)";
+    }
 }
 
 void DaemonService::performHealthCheck() {

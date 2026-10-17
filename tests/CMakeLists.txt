@@ -307,6 +307,7 @@ add_sentinel_core_test(test_startup_time performance/test_startup_time.cpp)
 add_sentinel_core_test(bench_semantic_search benchmarks/bench_semantic_search.cpp)
 add_sentinel_core_test(bench_context_compression benchmarks/bench_context_compression.cpp)
 add_sentinel_core_test(bench_sqlite_store benchmarks/bench_sqlite_store.cpp)
+add_sentinel_core_test(bench_resource_telemetry benchmarks/bench_resource_telemetry.cpp)
 
 find_package(Qt6 COMPONENTS QuickTest QUIET)
 if(Qt6QuickTest_FOUND AND TARGET Qt6::QuickTest)
@@ -414,3 +415,7 @@ add_sentinel_core_test(test_endpoint_security_capability core/test_endpoint_secu
 # P4-01: existing telemetry seam and existing execution-budget contracts only.
 add_sentinel_core_test(test_resource_telemetry_contract core/test_resource_telemetry_contract.cpp)
 add_sentinel_core_test(test_execution_budget_policy core/test_execution_budget_policy.cpp)
+
+# P4-02: native resource telemetry value contracts and sampling lifecycle.
+add_sentinel_core_test(test_native_resource_telemetry core/test_native_resource_telemetry.cpp)
+add_sentinel_core_test(test_resource_monitor_sampling core/test_resource_monitor_sampling.cpp)
