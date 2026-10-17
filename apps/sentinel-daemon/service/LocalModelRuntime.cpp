@@ -348,6 +348,10 @@ void LocalModelRuntime::ensureRunning() {
             });
             if (dependencies_.record(processId_).state == core::ProcessState::Failed) {
                 processId_.clear();
+                if (readiness_ != core::RuntimeReadinessState::Unavailable) {
+                    setReadiness(core::RuntimeReadinessState::Unavailable,
+                                 "llama.cpp process failed to start.");
+                }
             }
         });
 }
