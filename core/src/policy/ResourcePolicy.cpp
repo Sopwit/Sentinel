@@ -5,6 +5,8 @@
 #include "sentinel/core/policy/ResourcePolicy.h"
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 namespace sentinel::core {
 
@@ -65,6 +67,12 @@ SignalOutcome ascendingSignal(const ResourcePolicyInput<double>& input, bool wat
         return outcome;
     }
     const double value = *rawValue;
+    if (!std::isfinite(value) || value < 0.0 || value > 1.0) {
+        // A `Measured` label on an impossible fraction is unusable evidence: it
+        // may neither raise nor clear pressure, and it degrades telemetry.
+        outcome.unverified = true;
+        return outcome;
+    }
     if (escalateAt.has_value()) {
         outcome.raised = value >= (*escalateAt * scale);
         if (outcome.raised) {
@@ -81,10 +89,10 @@ SignalOutcome ascendingSignal(const ResourcePolicyInput<double>& input, bool wat
 }
 
 // Byte counts where a *lower* value means more pressure (available memory).
-SignalOutcome descendingSignal(const ResourcePolicyInput<qint64>& input, bool watched,
-                               const std::optional<qint64>& escalateAt,
-                               const std::optional<qint64>& deescalateAt,
-                               ResourcePressureState tier) {
+SignalOutcome descendingBytesSignal(const ResourcePolicyInput<qint64>& input, bool watched,
+                                    const std::optional<qint64>& escalateAt,
+                                    const std::optional<qint64>& deescalateAt,
+                                    ResourcePressureState tier) {
     SignalOutcome outcome = baseOutcome(watched, tier);
     if (!watched) {
         return outcome;
@@ -100,6 +108,10 @@ SignalOutcome descendingSignal(const ResourcePolicyInput<qint64>& input, bool wa
         return outcome;
     }
     const qint64 value = *rawValue;
+    if (value < 0) {
+        outcome.unverified = true;
+        return outcome;
+    }
     if (escalateAt.has_value()) {
         outcome.raised = value <= *escalateAt;
         if (outcome.raised) {
@@ -113,6 +125,45 @@ SignalOutcome descendingSignal(const ResourcePolicyInput<qint64>& input, bool wa
     return outcome;
 }
 
+// Byte counts where a *higher* value means more pressure (process RSS). This is
+// the ascending counterpart to `descendingBytesSignal` above; the two differ
+// only in the comparison direction and must never be swapped.
+SignalOutcome ascendingBytesSignal(const ResourcePolicyInput<qint64>& input, bool watched,
+                                   const std::optional<qint64>& escalateAt,
+                                   const std::optional<qint64>& deescalateAt,
+                                   ResourcePressureState tier) {
+    SignalOutcome outcome = baseOutcome(watched, tier);
+    if (!watched) {
+        return outcome;
+    }
+    if (!input.applicable()) {
+        outcome.applicable = false;
+        return outcome;
+    }
+    outcome.present = input.usable();
+    const auto rawValue = input.value;
+    if (signalIsUnverified(input.state) || !input.fresh() || !rawValue.has_value()) {
+        outcome.unverified = true;
+        return outcome;
+    }
+    const qint64 value = *rawValue;
+    if (value < 0) {
+        outcome.unverified = true;
+        return outcome;
+    }
+    if (escalateAt.has_value()) {
+        outcome.raised = value >= *escalateAt;
+        if (outcome.raised) {
+            return outcome;
+        }
+        if (!deescalateAt.has_value()) {
+            return outcome;
+        }
+    }
+    outcome.raised = deescalateAt.has_value() && value > *deescalateAt;
+    return outcome;
+}
+
 // Artificial scale is applied to fractional thresholds only: scaling a byte
 // threshold by a dimensionless factor has no meaning.
 double fractionScale(const ResourceProfileBudget& budget) {
@@ -122,6 +173,19 @@ double fractionScale(const ResourceProfileBudget& budget) {
 
 int tierIndex(ResourcePressureState state) {
     return static_cast<int>(state);
+}
+
+// Saturating monotonic deadline: `base + delta` must never overflow a signed
+// 64-bit timestamp (undefined behaviour) when an extreme monotonic reading is
+// combined with a large configured cooldown. `delta` is validated non-negative.
+qint64 saturatingDeadlineMs(qint64 base, qint64 delta) {
+    if (delta <= 0) {
+        return base;
+    }
+    if (base > std::numeric_limits<qint64>::max() - delta) {
+        return std::numeric_limits<qint64>::max();
+    }
+    return base + delta;
 }
 
 ResourcePolicyReason highestPriorityReason(const ResourcePolicyDecision& decision) {
@@ -614,14 +678,14 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
     outcomes.append(ascendingSignal(
         inputs.memoryPressureLevel, memoryPressureWatched, thresholds.memoryPressureEscalateAt,
         thresholds.memoryPressureDeescalateAt, thresholds.memoryPressureEscalatedTier, scale));
-    outcomes.append(descendingSignal(inputs.hostAvailableBytes, availableMemoryWatched,
-                                     thresholds.availableMemoryEscalateAtBytes,
-                                     thresholds.availableMemoryDeescalateAtBytes,
-                                     thresholds.availableMemoryEscalatedTier));
-    outcomes.append(descendingSignal(inputs.processResidentBytes, processResidentWatched,
-                                     thresholds.processResidentEscalateAtBytes,
-                                     thresholds.processResidentDeescalateAtBytes,
-                                     thresholds.processResidentEscalatedTier));
+    outcomes.append(descendingBytesSignal(inputs.hostAvailableBytes, availableMemoryWatched,
+                                          thresholds.availableMemoryEscalateAtBytes,
+                                          thresholds.availableMemoryDeescalateAtBytes,
+                                          thresholds.availableMemoryEscalatedTier));
+    outcomes.append(ascendingBytesSignal(inputs.processResidentBytes, processResidentWatched,
+                                         thresholds.processResidentEscalateAtBytes,
+                                         thresholds.processResidentDeescalateAtBytes,
+                                         thresholds.processResidentEscalatedTier));
 
     // Thermal: a native level string, never a fabricated numeric score.
     {
@@ -644,13 +708,15 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
     {
         SignalOutcome outcome = baseOutcome(powerWatched, thresholds.powerEscalatedTier);
         if (powerWatched) {
+            // A fresh measured source is real evidence and must count as present
+            // coverage; a stale/unknown one is present only while a value exists.
+            outcome.present = inputs.powerSource.usable();
             const bool sourceApplicable = inputs.powerSource.applicable();
             if (!sourceApplicable) {
                 // A host without power telemetry contributes nothing.
                 outcome.applicable = false;
             } else if (signalIsUnverified(inputs.powerSource.state) ||
                        !inputs.powerSource.fresh()) {
-                outcome.present = inputs.powerSource.usable();
                 outcome.unverified = true;
             } else {
                 const bool onBattery =
@@ -660,8 +726,9 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
                 } else if (onBattery && thresholds.batteryChargeEscalateAt.has_value() &&
                            inputs.batteryChargeFraction.applicable() &&
                            inputs.batteryChargeFraction.fresh()) {
-                    outcome.raised = *inputs.batteryChargeFraction.value <=
-                                     (*thresholds.batteryChargeEscalateAt * scale);
+                    const double charge = *inputs.batteryChargeFraction.value;
+                    outcome.raised = std::isfinite(charge) &&
+                                     charge <= (*thresholds.batteryChargeEscalateAt * scale);
                 }
             }
         }
@@ -756,10 +823,13 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
     const bool wasInterrupted = interruptedSinceMs_ != 0;
 
     // --- Inert policy ------------------------------------------------------
-    if (!decision.thresholdsCalibrated || applicableWatchedCount == 0) {
-        // No verified verdict is possible. The conservative fallback is today's
-        // fixed limits: propose nothing, restrict nothing, and never read the
-        // absence of a rule as "Normal".
+    if (!configurationProblems_.isEmpty() || !decision.thresholdsCalibrated ||
+        applicableWatchedCount == 0) {
+        // No verified verdict is possible. This covers an uncalibrated policy,
+        // a host that provides no watched signal, and an invalid configuration
+        // (which must fail closed rather than act on inconsistent thresholds).
+        // The conservative fallback is today's fixed limits: propose nothing,
+        // restrict nothing, and never read the absence of a rule as "Normal".
         state_ = ResourcePressureState::Unknown;
         lastVerifiedTier_ = ResourcePressureState::Unknown;
         pendingTier_ = ResourcePressureState::Unknown;
@@ -791,7 +861,7 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
             // A restriction must not outlive the telemetry that justified it.
             state_ = ResourcePressureState::Normal;
             stateEnteredAtMs_ = nowMonotonicMs;
-            cooldownUntilMs_ = nowMonotonicMs + config_.timing.cooldownMs;
+            cooldownUntilMs_ = saturatingDeadlineMs(nowMonotonicMs, config_.timing.cooldownMs);
             pendingTier_ = ResourcePressureState::Unknown;
             decision.isTransition = true;
             addReason(decision, ResourcePolicyReason::MonitoringInterruptedFallback);
@@ -833,7 +903,7 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
             if (transitionAllowed) {
                 state_ = target;
                 stateEnteredAtMs_ = nowMonotonicMs;
-                cooldownUntilMs_ = nowMonotonicMs + config_.timing.cooldownMs;
+                cooldownUntilMs_ = saturatingDeadlineMs(nowMonotonicMs, config_.timing.cooldownMs);
                 pendingTier_ = ResourcePressureState::Unknown;
                 decision.isTransition = true;
             }
@@ -851,7 +921,7 @@ ResourcePolicyDecision ResourcePolicyEngine::evaluate(const ResourcePolicyInputs
                     std::max(tierIndex(ResourcePressureState::Normal), tierIndex(state_) - 1);
                 state_ = static_cast<ResourcePressureState>(next);
                 stateEnteredAtMs_ = nowMonotonicMs;
-                cooldownUntilMs_ = nowMonotonicMs + config_.timing.cooldownMs;
+                cooldownUntilMs_ = saturatingDeadlineMs(nowMonotonicMs, config_.timing.cooldownMs);
                 pendingTier_ = ResourcePressureState::Unknown;
                 decision.isTransition = true;
                 addReason(decision, ResourcePolicyReason::DeescalationRequested);

@@ -423,3 +423,6 @@ add_sentinel_core_test(test_resource_monitor_sampling core/test_resource_monitor
 
 # P4-03: adaptive resource policy foundation and deterministic contracts.
 add_sentinel_core_test(test_resource_policy core/test_resource_policy.cpp)
+
+# P4-03.1: independent adversarial fixtures for the same policy contract.
+add_sentinel_core_test(test_resource_policy_review core/test_resource_policy_review.cpp)
