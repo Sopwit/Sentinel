@@ -12,6 +12,7 @@
 #include "sentinel/core/platform/StandardPathProvider.h"
 #include "sentinel/desktop/DesktopRuntimeClient.h"
 #include "sentinel/desktop/DesktopShellViewModel.h"
+#include "sentinel/desktop/WindowStatePersistence.h"
 #include "sentinel/desktop/viewmodels/AgentInspectorViewModel.h"
 
 #include <QApplication>
@@ -57,6 +58,8 @@ private:
     std::unique_ptr<sentinel::core::ModeManager> m_modeManager;
     std::unique_ptr<sentinel::core::WinTaskbarIntegration> m_taskbarIntegration;
     std::unique_ptr<DesktopShellViewModel> m_shellViewModel;
+    std::unique_ptr<QSettings> m_windowSettings;
+    std::unique_ptr<WindowStateController> m_windowState;
     QTranslator m_translator;
     QQmlApplicationEngine m_engine;
 };

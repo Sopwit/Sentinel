@@ -31,6 +31,7 @@ add_library(sentinel_desktop_viewmodels STATIC
     src/DesktopModelHelper.cpp
     include/sentinel/desktop/DesktopRuntimeClient.h
     include/sentinel/desktop/DesktopControllerBridge.h
+    include/sentinel/desktop/DesktopErrorProjection.h
     src/DesktopRuntimeClient.cpp
     src/DesktopControllerBridge.cpp
     include/sentinel/desktop/ChatMessageListModel.h
@@ -46,6 +47,8 @@ add_library(sentinel_desktop_viewmodels STATIC
 add_library(sentinel_desktop_startup STATIC
     include/sentinel/desktop/GraphicsBackend.h
     src/GraphicsBackend.cpp
+    include/sentinel/desktop/WindowStatePersistence.h
+    src/WindowStatePersistence.cpp
 )
 
 target_include_directories(sentinel_desktop_startup
@@ -56,6 +59,7 @@ target_include_directories(sentinel_desktop_startup
 target_link_libraries(sentinel_desktop_startup
     PUBLIC
         Qt6::Core
+        Qt6::Gui
         Qt6::Quick
 )
 

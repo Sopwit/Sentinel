@@ -164,7 +164,9 @@ ApplicationWindow {
                     show: root.viewModel.globalErrorVisible
                     message: root.viewModel.globalErrorMessage
                     severity: root.viewModel.globalErrorSeverity
+                    actionLabel: root.viewModel.globalErrorActionLabel
                     modeName: root.viewModel.currentModeName
+                    onActionTriggered: root.viewModel.triggerGlobalErrorAction()
                     onDismissed: root.viewModel.dismissGlobalError()
                 }
 
