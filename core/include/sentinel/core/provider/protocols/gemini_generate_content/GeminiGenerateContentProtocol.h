@@ -42,6 +42,50 @@ std::optional<QString>
 parseGeminiGenerateContentText(const QJsonObject& body,
                                GeminiGenerateContentTextError* error = nullptr);
 
+// How a native Gemini generateContent response terminated, before any
+// capability-specific rejection. The order mirrors the pre-refactor
+// ModelService scan: a block reason precedes finish-reason rejection, which
+// precedes the empty-content guard.
+enum class GeminiGenerateContentResponseStatus {
+    Ok,        // candidates present, no safety rejection, parts non-empty
+    Blocked,   // empty candidates with a promptFeedback.blockReason
+    Rejected,  // first candidate finishReason is SAFETY or PROHIBITED_CONTENT
+    NoContent, // no candidates (and no block reason), or empty candidate parts
+};
+
+// One normalized `functionCall` part from a native Gemini generateContent
+// response.
+struct GeminiResponseFunctionCall {
+    // Provider "id" when present, otherwise the synthesized
+    // "sentinel-gemini-<requestId>-<n>" id (n is 1-based per response).
+    QString callId;
+    // Provider "name"; empty when omitted.
+    QString name;
+    // Raw "args" value, forwarded unchanged. Callers require a JSON object.
+    QJsonValue args;
+    // Raw "thoughtSignature" from the enclosing part; empty when absent.
+    QString thoughtSignature;
+};
+
+// Normalized scan of a native Gemini generateContent response.
+struct GeminiGenerateContentResponse {
+    GeminiGenerateContentResponseStatus status = GeminiGenerateContentResponseStatus::NoContent;
+    QString finishReason;
+    // First candidate `content` object, for continuation assembly. Empty unless
+    // status is Ok.
+    QJsonObject modelContent;
+    // Concatenation of every part carrying a `text` member, in provider order.
+    QString text;
+    // Every part carrying a `functionCall`, in provider order.
+    QList<GeminiResponseFunctionCall> functionCalls;
+};
+
+// Scans a native Gemini generateContent response body. `requestId` seeds the
+// synthesized function-call ids exactly as the native response scan did. No
+// capability, registration or signature policy is applied here.
+GeminiGenerateContentResponse parseGeminiGenerateContentResponse(const QJsonObject& body,
+                                                                 const QString& requestId);
+
 // Builds the Gemini native generateContent request body used by the provider
 // adapter. `contents` (role/parts, already built by the caller) is inserted
 // verbatim. The native body keeps `model` so the transport can derive the URL and

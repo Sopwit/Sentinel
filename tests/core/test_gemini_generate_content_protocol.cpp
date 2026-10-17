@@ -27,6 +27,11 @@ private Q_SLOTS:
     void testNativeRequestBody();
     void testNativeRequestBodyWithToolsAndStructured();
     void testFunctionResponseParts();
+    void testResponseTextOnly();
+    void testResponseFunctionCallSynthesis();
+    void testResponseMixedParts();
+    void testResponseTerminalStates_data();
+    void testResponseTerminalStates();
 };
 
 void TestGeminiGenerateContentProtocol::testUrlGeneration() {
@@ -246,6 +251,120 @@ void TestGeminiGenerateContentProtocol::testFunctionResponseParts() {
                  .toString()
                  .size(),
              6800);
+}
+
+void TestGeminiGenerateContentProtocol::testResponseTextOnly() {
+    const QJsonObject body{
+        {QStringLiteral("candidates"),
+         QJsonArray{QJsonObject{
+             {QStringLiteral("content"),
+              QJsonObject{
+                  {QStringLiteral("role"), QStringLiteral("model")},
+                  {QStringLiteral("parts"),
+                   QJsonArray{QJsonObject{{QStringLiteral("text"), QStringLiteral("hi ")}},
+                              QJsonObject{{QStringLiteral("text"), QStringLiteral("there")}}}}}},
+             {QStringLiteral("finishReason"), QStringLiteral("STOP")}}}}};
+    const auto parsed = parseGeminiGenerateContentResponse(body, QStringLiteral("req-1"));
+    QCOMPARE(parsed.status, GeminiGenerateContentResponseStatus::Ok);
+    QCOMPARE(parsed.finishReason, QStringLiteral("STOP"));
+    QCOMPARE(parsed.text, QStringLiteral("hi there"));
+    QVERIFY(parsed.functionCalls.isEmpty());
+    QCOMPARE(parsed.modelContent.value(QStringLiteral("role")).toString(), QStringLiteral("model"));
+}
+
+void TestGeminiGenerateContentProtocol::testResponseFunctionCallSynthesis() {
+    const QJsonObject firstCall{
+        {QStringLiteral("name"), QStringLiteral("read-file")},
+        {QStringLiteral("args"), QJsonObject{{QStringLiteral("path"), QStringLiteral("a")}}}};
+    const QJsonObject explicitCall{{QStringLiteral("id"), QStringLiteral("call_explicit")},
+                                   {QStringLiteral("name"), QStringLiteral("write-file")},
+                                   {QStringLiteral("args"), QJsonObject{}}};
+    const QJsonObject thirdCall{{QStringLiteral("name"), QStringLiteral("read-file")},
+                                {QStringLiteral("args"), QJsonObject{}}};
+    const QJsonObject body{
+        {QStringLiteral("candidates"),
+         QJsonArray{QJsonObject{
+             {QStringLiteral("content"),
+              QJsonObject{{QStringLiteral("parts"),
+                           QJsonArray{QJsonObject{{QStringLiteral("functionCall"), firstCall},
+                                                  {QStringLiteral("thoughtSignature"),
+                                                   QStringLiteral("sig_a")}},
+                                      QJsonObject{{QStringLiteral("functionCall"), explicitCall}},
+                                      QJsonObject{{QStringLiteral("functionCall"), thirdCall}}}}}},
+             {QStringLiteral("finishReason"), QStringLiteral("STOP")}}}}};
+    const auto parsed = parseGeminiGenerateContentResponse(body, QStringLiteral("req-7"));
+    QCOMPARE(parsed.status, GeminiGenerateContentResponseStatus::Ok);
+    QCOMPARE(parsed.functionCalls.size(), 3);
+    // Missing ids are synthesized per response; provider ids are forwarded.
+    QCOMPARE(parsed.functionCalls.at(0).callId, QStringLiteral("sentinel-gemini-req-7-1"));
+    QCOMPARE(parsed.functionCalls.at(0).name, QStringLiteral("read-file"));
+    QCOMPARE(parsed.functionCalls.at(0).args.toObject(),
+             (QJsonObject{{QStringLiteral("path"), QStringLiteral("a")}}));
+    QCOMPARE(parsed.functionCalls.at(0).thoughtSignature, QStringLiteral("sig_a"));
+    QCOMPARE(parsed.functionCalls.at(1).callId, QStringLiteral("call_explicit"));
+    QVERIFY(parsed.functionCalls.at(1).thoughtSignature.isEmpty());
+    QCOMPARE(parsed.functionCalls.at(2).callId, QStringLiteral("sentinel-gemini-req-7-2"));
+}
+
+void TestGeminiGenerateContentProtocol::testResponseMixedParts() {
+    const QJsonObject call{{QStringLiteral("name"), QStringLiteral("read-file")},
+                           {QStringLiteral("args"), QJsonObject{}}};
+    const QJsonObject body{
+        {QStringLiteral("candidates"),
+         QJsonArray{QJsonObject{
+             {QStringLiteral("content"),
+              QJsonObject{
+                  {QStringLiteral("parts"),
+                   QJsonArray{QJsonObject{{QStringLiteral("text"), QStringLiteral("thinking")}},
+                              QJsonObject{{QStringLiteral("functionCall"), call}},
+                              QJsonObject{{QStringLiteral("text"), QStringLiteral(" done")}}}}}},
+             {QStringLiteral("finishReason"), QStringLiteral("STOP")}}}}};
+    const auto parsed = parseGeminiGenerateContentResponse(body, QStringLiteral("req-9"));
+    QCOMPARE(parsed.text, QStringLiteral("thinking done"));
+    QCOMPARE(parsed.functionCalls.size(), 1);
+    QCOMPARE(parsed.functionCalls.first().callId, QStringLiteral("sentinel-gemini-req-9-1"));
+}
+
+void TestGeminiGenerateContentProtocol::testResponseTerminalStates_data() {
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("status");
+    const int blocked = int(GeminiGenerateContentResponseStatus::Blocked);
+    const int rejected = int(GeminiGenerateContentResponseStatus::Rejected);
+    const int noContent = int(GeminiGenerateContentResponseStatus::NoContent);
+    const int ok = int(GeminiGenerateContentResponseStatus::Ok);
+
+    QTest::newRow("blocked") << QByteArray(R"({"promptFeedback":{"blockReason":"SAFETY"}})")
+                             << blocked;
+    QTest::newRow("empty-object") << QByteArray("{}") << noContent;
+    QTest::newRow("empty-candidates") << QByteArray(R"({"candidates":[]})") << noContent;
+    QTest::newRow("safety")
+        << QByteArray(
+               R"({"candidates":[{"content":{"parts":[{"text":"x"}]},"finishReason":"SAFETY"}]})")
+        << rejected;
+    QTest::newRow("prohibited")
+        << QByteArray(
+               R"({"candidates":[{"content":{"parts":[{"text":"x"}]},"finishReason":"PROHIBITED_CONTENT"}]})")
+        << rejected;
+    QTest::newRow("no-parts") << QByteArray(R"({"candidates":[{"finishReason":"STOP"}]})")
+                              << noContent;
+    QTest::newRow("empty-parts")
+        << QByteArray(R"({"candidates":[{"content":{"parts":[]},"finishReason":"STOP"}]})")
+        << noContent;
+    QTest::newRow("content-not-object")
+        << QByteArray(R"({"candidates":[{"content":"x","finishReason":"STOP"}]})") << noContent;
+    // A block reason is only terminal when the candidates array is empty.
+    QTest::newRow("block-reason-ignored-with-candidates")
+        << QByteArray(
+               R"({"candidates":[{"content":{"parts":[{"text":"x"}]},"finishReason":"STOP"}],"promptFeedback":{"blockReason":"SAFETY"}})")
+        << ok;
+}
+
+void TestGeminiGenerateContentProtocol::testResponseTerminalStates() {
+    QFETCH(QByteArray, body);
+    QFETCH(int, status);
+    const auto parsed = parseGeminiGenerateContentResponse(QJsonDocument::fromJson(body).object(),
+                                                           QStringLiteral("req"));
+    QCOMPARE(int(parsed.status), status);
 }
 
 QTEST_MAIN(TestGeminiGenerateContentProtocol)

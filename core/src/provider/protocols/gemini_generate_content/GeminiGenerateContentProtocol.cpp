@@ -107,6 +107,56 @@ parseGeminiGenerateContentText(const QJsonObject& body,
     return text;
 }
 
+GeminiGenerateContentResponse parseGeminiGenerateContentResponse(const QJsonObject& body,
+                                                                 const QString& requestId) {
+    GeminiGenerateContentResponse response;
+    const auto candidates = body.value(QStringLiteral("candidates")).toArray();
+    if (candidates.isEmpty()) {
+        const auto blockReason = body.value(QStringLiteral("promptFeedback"))
+                                     .toObject()
+                                     .value(QStringLiteral("blockReason"))
+                                     .toString();
+        response.status = blockReason.isEmpty() ? GeminiGenerateContentResponseStatus::NoContent
+                                                : GeminiGenerateContentResponseStatus::Blocked;
+        return response;
+    }
+    const auto candidate = candidates.first().toObject();
+    response.finishReason = candidate.value(QStringLiteral("finishReason")).toString();
+    if (response.finishReason == QLatin1String("SAFETY") ||
+        response.finishReason == QLatin1String("PROHIBITED_CONTENT")) {
+        response.status = GeminiGenerateContentResponseStatus::Rejected;
+        return response;
+    }
+    response.modelContent = candidate.value(QStringLiteral("content")).toObject();
+    const auto parts = response.modelContent.value(QStringLiteral("parts")).toArray();
+    if (parts.isEmpty()) {
+        response.status = GeminiGenerateContentResponseStatus::NoContent;
+        return response;
+    }
+    response.status = GeminiGenerateContentResponseStatus::Ok;
+    int generatedId = 0;
+    for (const auto& value : parts) {
+        const auto part = value.toObject();
+        if (part.contains(QStringLiteral("text"))) {
+            response.text += part.value(QStringLiteral("text")).toString();
+            continue;
+        }
+        if (!part.contains(QStringLiteral("functionCall"))) {
+            continue;
+        }
+        const auto call = part.value(QStringLiteral("functionCall")).toObject();
+        QString callId = call.value(QStringLiteral("id")).toString();
+        if (callId.isEmpty()) {
+            callId = QStringLiteral("sentinel-gemini-%1-%2").arg(requestId).arg(++generatedId);
+        }
+        response.functionCalls.append(
+            GeminiResponseFunctionCall{callId, call.value(QStringLiteral("name")).toString(),
+                                       call.value(QStringLiteral("args")),
+                                       part.value(QStringLiteral("thoughtSignature")).toString()});
+    }
+    return response;
+}
+
 QJsonObject buildGeminiNativeRequestBody(const QString& model, const QJsonArray& contents,
                                          int maxOutputTokens,
                                          const QJsonArray& functionDeclarations,
