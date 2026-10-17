@@ -2,8 +2,14 @@
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/memory/InMemorySettingsStore.h"
 #include "sentinel/core/model/ModelService.h"
+#include "sentinel/core/model/ModelStorageManager.h"
 #include "sentinel/core/runtime/ProcessExecutor.h"
 #include "sentinel/core/security/ProviderCredentials.h"
+#include <QCryptographicHash>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QTemporaryDir>
 #include <QtTest>
 
 using namespace sentinel::core;
@@ -18,6 +24,9 @@ private slots:
     void unknownProcessCannotBeTerminated();
     void unobservedEndpointIsNotReady_data();
     void unobservedEndpointIsNotReady();
+    void activeAgentRunRetainsModelBindingAcrossSelectionChange();
+    void modelDeletionDoesNotInvalidateActiveRunBinding();
+    void repeatedShutdownAndProcessOwnershipInvariants();
 };
 
 void ModelLifecycleOwnershipTest::concurrentBindingsSurviveSelectionAndRegistryDestruction() {
@@ -122,6 +131,97 @@ void ModelLifecycleOwnershipTest::unknownProcessCannotBeTerminated() {
     QVERIFY(!processes.kill("external-llama-server"));
     QVERIFY(processes.records().isEmpty());
     processes.shutdown();
+    QVERIFY(processes.records().isEmpty());
+}
+
+void ModelLifecycleOwnershipTest::activeAgentRunRetainsModelBindingAcrossSelectionChange() {
+    ModelService service;
+    const auto initial = service.resolve("ollama", "qwen-2.5-coder");
+    QVERIFY(initial.ok());
+    QCOMPARE(initial.binding.providerId, QString("ollama"));
+    QCOMPARE(initial.binding.modelId, QString("qwen-2.5-coder"));
+
+    // Global selection changes to different provider, model, and endpoint
+    service.setSelectedModel({"llama-cpp-server", "mistral-7b"});
+    service.setOllamaEndpoint("http://127.0.0.1:19999");
+    service.setSelectedProviderId("openai");
+
+    // Captured binding and provider held by active run remain completely unchanged
+    QVERIFY(initial.ok());
+    QCOMPARE(initial.binding.providerId, QString("ollama"));
+    QCOMPARE(initial.binding.modelId, QString("qwen-2.5-coder"));
+    QVERIFY(initial.provider != nullptr);
+
+    // New resolution produces distinct binding
+    const auto second = service.resolve("llama-cpp-server", "mistral-7b");
+    QVERIFY(second.ok());
+    QCOMPARE(second.binding.providerId, QString("llama-cpp-server"));
+    QCOMPARE(second.binding.modelId, QString("mistral-7b"));
+    QVERIFY(second.provider != initial.provider);
+}
+
+void ModelLifecycleOwnershipTest::modelDeletionDoesNotInvalidateActiveRunBinding() {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto root = tempDir.path();
+    ModelStorageManager storage;
+    QVERIFY(storage.setActiveRoot(root));
+
+    const QString repo = "sentinel/fixture-repo";
+    const QString rev = "0123456789abcdef0123456789abcdef01234567";
+    const QString filename = "model.gguf";
+    const auto identity = QStringLiteral("%1@%2:%3").arg(repo, rev, filename);
+    const auto dirName = QString::fromLatin1(
+        QCryptographicHash::hash(identity.toUtf8(), QCryptographicHash::Sha256).toHex());
+    QDir artifactDir(QDir(root).filePath(dirName));
+    QVERIFY(artifactDir.mkpath("."));
+    const auto artifactPath = artifactDir.filePath(filename);
+    const auto sidecarPath = artifactPath + QStringLiteral(".source.json");
+
+    {
+        QFile file(artifactPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("GGUF artifact data");
+    }
+    {
+        QFile sidecar(sidecarPath);
+        QVERIFY(sidecar.open(QIODevice::WriteOnly));
+        QJsonObject obj{{QStringLiteral("repositoryId"), repo},
+                        {QStringLiteral("filename"), filename},
+                        {QStringLiteral("revision"), rev}};
+        sidecar.write(QJsonDocument(obj).toJson());
+    }
+
+    // Active run resolves and holds binding
+    ModelService service;
+    const auto resolution = service.resolve("llama-cpp-server", "model.gguf");
+    QVERIFY(resolution.ok());
+    QCOMPARE(resolution.binding.modelId, QString("model.gguf"));
+
+    // Delete artifact via storage manager: succeeds because no in-use lease fence exists (witness
+    // D6)
+    QVERIFY(storage.removeArtifact(artifactPath));
+    QVERIFY(!QFile::exists(artifactPath));
+
+    // Active run's captured binding and provider instance remain intact in memory (Part D
+    // guarantee)
+    QVERIFY(resolution.ok());
+    QCOMPARE(resolution.binding.modelId, QString("model.gguf"));
+    QVERIFY(resolution.provider != nullptr);
+}
+
+void ModelLifecycleOwnershipTest::repeatedShutdownAndProcessOwnershipInvariants() {
+    ProcessExecutor processes;
+    QVERIFY(processes.records().isEmpty());
+
+    // Repeated shutdown is safe and idempotent
+    processes.shutdown();
+    processes.shutdown();
+    QVERIFY(processes.records().isEmpty());
+
+    // Refuses termination of unknown / external handles
+    QVERIFY(!processes.terminate("external-pid-1234"));
+    QVERIFY(!processes.kill("external-pid-1234"));
     QVERIFY(processes.records().isEmpty());
 }
 
