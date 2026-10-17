@@ -11,6 +11,14 @@ Switch {
 
     property color accent: SentinelTheme.calmAccent
 
+    // Accessibility contract: switches are On/Off toggles. The checked state is exposed
+    // so assistive technology announces the current value; a label (Accessible.name)
+    // must be supplied at the usage site, as for a visual switch label.
+    Accessible.role: Accessible.Switch
+    Accessible.checkable: true
+    Accessible.checked: control.checked
+    Accessible.pressed: control.pressed
+
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     implicitWidth: 42

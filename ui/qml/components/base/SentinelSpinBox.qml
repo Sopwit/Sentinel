@@ -11,6 +11,13 @@ SpinBox {
     id: control
 
     property color accent: SentinelTheme.calmAccent
+    property string accessibleDescription: ""
+
+    // Accessibility contract: exposed as a spin box. QtQuick.Controls derives the value
+    // and editable state; the usage site must supply Accessible.name.
+    Accessible.role: Accessible.SpinBox
+    Accessible.description: control.accessibleDescription
+    Accessible.readOnly: !control.editable
 
     implicitWidth: 160
     implicitHeight: 36
