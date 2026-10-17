@@ -170,6 +170,9 @@ private slots:
     // P2-M03: byte-equivalence of the native request body against pre-refactor
     // golden fixtures captured from ModelService::nativeEndpointReply.
     void nativeRequestBodyByteEquivalence();
+    // P2-M04: production-path equivalence for the extracted native response
+    // normalization (text + tool-call parts, continuation fidelity).
+    void nativeResponseNormalizationEquivalence();
 };
 
 void NativeProviderContractTest::initTestCase() {
@@ -1251,6 +1254,84 @@ void NativeProviderContractTest::nativeRequestBodyByteEquivalence() {
             harness.lastRequest().body,
             QByteArrayLiteral(
                 R"({"contents":[{"parts":[{"text":"synthetic gemini prompt"}],"role":"user"}],"tools":[{"functionDeclarations":[{"description":"Read the contents of a workspace file.","name":"read-file","parametersJsonSchema":{"properties":{"path":{"description":"Workspace-relative path.","type":"string"}},"required":["path"],"type":"object"}}]}]})"));
+    }
+}
+
+void NativeProviderContractTest::nativeResponseNormalizationEquivalence() {
+    // The P2-M04 extraction must preserve the exact production response shape:
+    // text is concatenated in provider order, tool calls are normalized with the
+    // registered tool id, and the continuation embeds the raw response content
+    // blocks unmodified. These assertions run through the real
+    // ModelService::nativeEndpointReply path.
+    const QString claudeContent =
+        R"([{"type":"text","text":"reading "},)"
+        R"({"type":"tool_use","id":"toolu_a","name":"read-file","input":{"path":"a"}},)"
+        R"({"type":"text","text":"now"}])";
+    {
+        ProviderHarness harness;
+        harness.respondBody(
+            QJsonDocument(QJsonObject{{QStringLiteral("content"),
+                                       QJsonDocument::fromJson(claudeContent.toUtf8()).array()}})
+                .toJson(QJsonDocument::Compact));
+        auto provider = harness.provider(claudeBinding());
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.deadlineMs = 500;
+        options.nativeToolCalling = true;
+        options.tools = {syntheticReadTool()};
+        ScopedOnlineNetworkMode online;
+        const auto reply = provider->sendRequest("please read a", options);
+        QVERIFY2(reply.success, qPrintable(reply.errorMessage));
+        QCOMPARE(reply.message, QStringLiteral("reading now"));
+        QCOMPARE(reply.toolCalls.size(), 1);
+        QCOMPARE(reply.toolCalls.first().callId, QStringLiteral("toolu_a"));
+        QCOMPARE(reply.toolCalls.first().toolId, QStringLiteral("read-file"));
+        const auto continuation =
+            QJsonDocument::fromJson(reply.toolCalls.first().providerContinuation.toUtf8()).array();
+        QCOMPARE(continuation.size(), 2);
+        QCOMPARE(continuation.first().toObject().value("role").toString(), QStringLiteral("user"));
+        QCOMPARE(continuation.last().toObject().value("content").toArray(),
+                 QJsonDocument::fromJson(claudeContent.toUtf8()).array());
+    }
+    {
+        // Multiple tool calls are accepted in provider order.
+        ProviderHarness harness;
+        harness.respondBody(
+            R"({"content":[{"type":"tool_use","id":"toolu_1","name":"read-file","input":{"path":"a"}},{"type":"tool_use","id":"toolu_2","name":"read-file","input":{"path":"b"}}]})");
+        auto provider = harness.provider(claudeBinding());
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.deadlineMs = 500;
+        options.nativeToolCalling = true;
+        options.tools = {syntheticReadTool()};
+        ScopedOnlineNetworkMode online;
+        const auto reply = provider->sendRequest("read both", options);
+        QVERIFY2(reply.success, qPrintable(reply.errorMessage));
+        QCOMPARE(reply.toolCalls.size(), 2);
+        QCOMPARE(reply.toolCalls.at(0).callId, QStringLiteral("toolu_1"));
+        QCOMPARE(reply.toolCalls.at(1).callId, QStringLiteral("toolu_2"));
+    }
+    {
+        // Gemini: mixed text + functionCall; the candidate content is embedded
+        // verbatim in the continuation.
+        ProviderHarness harness;
+        harness.respondBody(
+            R"({"candidates":[{"content":{"role":"model","parts":[{"text":"ready "},{"functionCall":{"name":"read-file","args":{"path":"a"}}}]},"finishReason":"STOP"}]})");
+        auto provider = harness.provider(geminiBinding());
+        QVERIFY(provider);
+        ChatRequestOptions options;
+        options.deadlineMs = 500;
+        options.nativeToolCalling = true;
+        options.tools = {syntheticReadTool()};
+        ScopedOnlineNetworkMode online;
+        const auto reply = provider->sendRequest("read a", options);
+        QVERIFY2(reply.success, qPrintable(reply.errorMessage));
+        QCOMPARE(reply.message, QStringLiteral("ready "));
+        QCOMPARE(reply.toolCalls.size(), 1);
+        QVERIFY(reply.toolCalls.first().callId.startsWith(QStringLiteral("sentinel-gemini-")));
+        const auto continuation =
+            QJsonDocument::fromJson(reply.toolCalls.first().providerContinuation.toUtf8()).array();
+        QCOMPARE(continuation.last().toObject().value("role").toString(), QStringLiteral("model"));
     }
 }
 
