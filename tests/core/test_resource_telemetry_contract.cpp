@@ -102,8 +102,12 @@ void ResourceTelemetryContractTest::refreshIsTheOnlyRereadPath() {
     scripted->facts.systemRamBytes = 16LL * 1024 * 1024 * 1024;
     service.refresh();
     QCOMPARE(scripted->collectCount, 2);
-    QVERIFY(service.facts().systemRamBytes != first);
-    QCOMPARE(*service.facts().systemRamBytes, 16LL * 1024 * 1024 * 1024);
+    const auto& refreshedFacts = service.facts();
+    QVERIFY(refreshedFacts.systemRamBytes != first);
+    QVERIFY(refreshedFacts.systemRamBytes.has_value());
+    if (refreshedFacts.systemRamBytes.has_value()) {
+        QCOMPARE(refreshedFacts.systemRamBytes.value(), 16LL * 1024 * 1024 * 1024);
+    }
 }
 
 void ResourceTelemetryContractTest::nativeAdapterNeverReportsZeroCapacity() {

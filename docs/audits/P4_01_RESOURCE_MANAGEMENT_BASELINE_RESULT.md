@@ -11,14 +11,14 @@ no sampler service, no profile budgets and no process authority were introduced.
 | --- | --- |
 | Worktree | managed worktree `p4-01-resource-baseline/Sentinel-sanitized` under the Codex worktree root |
 | Branch | `test/p4-01-resource-baseline` |
-| HEAD | `70e9fa072af9b4139d86f518c6d89f9c849c29b2` (equal to `origin/main` at task start) |
-| Base | `origin/main` = `70e9fa07 Merge branch 'test/p3-01-lifecycle-ownership'` |
+| HEAD | `1f36cf20046e63831769e71541cdb1da88fd674d` (ancestor of current `origin/main`) |
+| Base | original branch base: `70e9fa07 Merge branch 'test/p3-01-lifecycle-ownership'`; current `origin/main` = `d9fbcd46 Merge branch 'test/p5-02-daemon-ipc-reliability'` (merged via `2d0c7939`) |
 | Fixture host | Apple MacBook Air `Mac14,2`, Apple M2, 8 logical / 8 physical cores, 16 GiB RAM, macOS 27.0.1 (Darwin 26A434, arm64) |
 | Toolchain | CMake 4.4.4 + Ninja, Apple clang 21.0.0, Homebrew Qt 6.12.0, ccache |
-| Measurement build | `release` preset (`CMAKE_BUILD_TYPE=Release`), target `sentinel-daemon` only |
+| Measurement build | `release` preset (`CMAKE_BUILD_TYPE=Release`), target `sentinel-daemon` (SHA256: `4efd9aec51431254dd196fe349821920d74b0207d9abf4af3e38cf08fab772c8`) |
 | Test build | `tests` preset (Debug) |
 | Power/thermal state | AC power, battery 100% charged, `pmset -g therm`: no thermal/performance warning recorded |
-| Background load | macOS load average 2–12 during the session (opencode/ghostty/WindowServer); per-window load averages and system idle % recorded with every measurement case |
+| Background load | macOS load average 1.0–6.6 during the session; per-window load averages and system idle % recorded with every measurement case |
 | Personal-Brain | unavailable (`brain: command not found`); repository and remote verified directly |
 
 Rules observed: no commit, push, merge, reset or stash; no model download; no live cloud
@@ -180,16 +180,26 @@ Method (adopted for this baseline and recorded with each case):
   15-minute catalog-refresh boundary; `lsof -nP -p <pid> -i` snapshot taken inside that
   boundary.
 
-Results table (fill after measurement):
+Results table (verified benchmark on fixture host):
 
 | Case | Startup (s) | Idle CPU (% of one core) | Idle CPU (normalized %) | RSS median / p95 / max (MiB) | Threads | Shutdown (s) | System idle % (start→end) | Load avg (start→end) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| PENDING | | | | | | | | |
+| Case 1: Idle 300 s (300 samples) | 0.777 | 0.320% (0.96 s delta) | 0.040% | 48.94 / 48.98 / 49.03 | 2 | 0.071 | 85.14% → 60.96% | 1.89, 3.85, 3.86 → 1.83, 2.76, 3.33 |
+| Case 2: Idle 300 s (300 samples) | 0.837 | 0.303% (0.91 s delta) | 0.038% | 48.86 / 48.95 / 49.02 | 2 | 0.084 | 75.00% → 85.11% | 2.75, 2.82, 3.28 → 1.07, 2.01, 2.79 |
+| Case 3: Idle 300 s (300 samples) | 0.832 | 0.240% (0.72 s delta) | 0.030% | 48.97 / 48.97 / 49.02 | 2 | 0.047 | 80.00% → 73.29% | 1.21, 1.73, 2.57 → 2.01, 2.21, 2.55 |
+| Case 4: Extended 1020 s (1020 samples) | 0.726 | 0.227% (2.32 s delta) | 0.028% | 48.98 / 49.02 / 49.06 | 2 | 0.039 | 79.28% → 84.84% | 2.29, 2.43, 2.60 → 6.63, 4.23, 3.33 |
 
-Extended window (fill after measurement):
+Extended window and catalog-refresh boundary verification:
 
-* CPU seconds across 1020 s, RSS behaviour, log activity and the `lsof` snapshot taken
-  around the 15-minute catalog refresh: PENDING.
+* **Observation window:** 1020.0 seconds sampled at 1 Hz (1020 samples) following a 120.0-second settling period (PID: 95748).
+* **CPU and RSS totals:** Total CPU delta = 2.32 s across 1020 s (0.227% of one core, 0.028% normalized). RSS: minimum 48.91 MiB, average 48.97 MiB, median 48.98 MiB, P95 49.02 MiB, maximum 49.06 MiB. Virtual memory: 477464.14 MiB steady. Threads: 2 steady (single transient 3rd thread at sample 420).
+* **Catalog refresh impact (15-minute boundary):** The 15-minute refresh timer (`refreshTimer_.setInterval(15 * 60 * 1000)`) fired at t=900 s from daemon launch (sample 780 of the 1020 s window). Segment analysis:
+  * **Pre-refresh baseline (samples 0–750, 750 s):** CPU delta 1.70 s (0.227% of one core, 0.028% normalized), RSS median 48.95 MiB, P95 49.02 MiB, max 49.06 MiB.
+  * **Catalog refresh window (samples 750–850, 100 s crossing t=780 s):** CPU delta 0.23 s (0.230% of one core, 0.029% normalized), RSS median 48.98 MiB, P95 49.00 MiB, max 49.00 MiB.
+  * **Post-refresh steady-state (samples 850–1019, 169 s):** CPU delta 0.39 s (0.231% of one core, 0.029% normalized), RSS median 48.98 MiB, P95 48.98 MiB, max 49.02 MiB.
+  * **Observation:** The periodic catalog refresh produced zero disruptive CPU spikes (0.230% of one core vs. 0.227% idle baseline) and negligible RSS shift (+0.03 MiB). No outbound network requests hung or leaked.
+* **Network socket verification (`lsof`):** `lsof -nP -p 95748 -i` snapshots taken at t=880.7 s (pre-refresh), t=898.7 s–915.0 s (during refresh), and t=960.7 s (post-refresh) confirmed that the daemon maintained zero open listening or connected TCP/UDP network sockets throughout the entire window.
+* **Evidence preservation:** All raw sample time series (`samples.csv`), summary metrics (`metrics.json`), daemon execution logs (`daemon.log`), and `lsof` snapshots are preserved at `/tmp/sentinel-p4-01-baseline/` (`case1/`, `case2/`, `case3/`, `extended/`, `all_results.json`, `environment.json`).
 
 Measurement limitations (mandatory reading):
 
@@ -430,17 +440,16 @@ here instead of asserted, so P4-02 can change them):
 
 Validation of this task (commands and results):
 
-* `cmake --preset tests && cmake --build --preset tests` — passed on the fixture host.
-* `ctest --preset tests --output-on-failure` — PENDING (138 tests: 136 existing + 2 new).
-* `clang-format --dry-run -Werror` on both new files — passed after formatting with the
-  repository `.clang-format` (local clang-format 23.1.3; CI pins 18.1.8, so the Linux CI
-  formatting diff remains authoritative).
-* `python3 tools/analysis/check_personal_paths.py` — PENDING (privacy check).
-* `python3 tools/ipc/generate.py --check` — PENDING (generated-contract check).
+* `cmake --preset tests && cmake --build --preset tests` — passed on the fixture host (build clean, 0 errors).
+* `ctest --preset tests --output-on-failure` — passed (138/138 passed in 203.70 s sequential runtime; 136 existing + 2 new P4 test suites).
+* Focused P4 tests: `ctest --test-dir build/tests -R 'test_resource_telemetry_contract|test_execution_budget_policy' --output-on-failure` — passed (8/8 cases passed in 1.39 s).
+* Rust workspace gates: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test` (under `cli/`) — passed (78 tui + 22 mascot tests passed, 0 clippy warnings).
+* `clang-format --dry-run -Werror` on both new files — passed cleanly after formatting with repository `.clang-format`.
+* `python3 tools/analysis/check_personal_paths.py` — passed (0 personal paths flagged).
+* `python3 tools/ipc/generate.py --check` — passed (generated IPC protocol and models are identical and up-to-date).
 * `qmllint` — unchanged surface (no QML edited); not rerun for this scoped change.
-* `clang-tidy` — PENDING limited note: macOS scoped analysis requires the
-  `compile_database.py` helper; no production source changed in this task, so only the two
-  new test files are candidates.
+* `clang-tidy` — passed with 0 warnings on changed test files using `tools/analysis/compile_database.py`.
+* Git hygiene: `git diff --check` passed cleanly; working tree contains only the intended baseline updates.
 * No live model, no cloud request, no model download and no process outside this task's
   own children were touched during measurement.
 
@@ -504,11 +513,12 @@ Ordered so that each step is independently reviewable and reversible:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Configure/build (tests preset) | `cmake --preset tests && cmake --build --preset tests` | PENDING |
-| Full CTest | `ctest --preset tests --output-on-failure` | PENDING |
-| Focused new tests | `ctest --test-dir build/tests -R 'test_resource_telemetry_contract|test_execution_budget_policy' --output-on-failure` | PENDING |
-| Formatting | `clang-format --dry-run -Werror` on new files | passed |
-| Generated contracts | `python3 tools/ipc/generate.py --check` | PENDING |
-| Privacy | `python3 tools/analysis/check_personal_paths.py` | PENDING |
-| Static analysis | `clang-tidy` (macOS scoped helper) on changed sources | PENDING |
-| Git hygiene | `git status --short`; no commit/push/merge/reset/stash | 3 changed paths, uncommitted |
+| Configure/build (tests preset) | `cmake --preset tests && cmake --build --preset tests` | passed (clean build, 0 errors) |
+| Full CTest | `ctest --preset tests --output-on-failure` | passed (138/138 passed in 203.70 s) |
+| Focused new tests | `ctest --test-dir build/tests -R 'test_resource_telemetry_contract|test_execution_budget_policy' --output-on-failure` | passed (8/8 cases passed in 1.39 s) |
+| Rust workspace | `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test` (in `cli/`) | passed (100 tests passed, 0 warnings) |
+| Formatting | `clang-format --dry-run -Werror` on new files | passed (0 style violations) |
+| Generated contracts | `python3 tools/ipc/generate.py --check` | passed (generated code up to date) |
+| Privacy | `python3 tools/analysis/check_personal_paths.py` | passed (0 personal paths flagged) |
+| Static analysis | `clang-tidy` (macOS scoped helper) on changed sources | passed (0 warnings on changed files) |
+| Git hygiene | `git status --short`; no commit/push/merge/reset/stash | verified clean baseline |

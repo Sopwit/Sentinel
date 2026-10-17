@@ -116,6 +116,7 @@ bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
     }
     QSqlQuery updateQuery(db);
     updateQuery.prepare("UPDATE session_projection SET payload = ? WHERE session_id = ?");
+    const bool transactionActive = db.transaction();
     while (query.next()) {
         const auto sessionId = query.value(0).toString();
         auto value = QJsonDocument::fromJson(query.value(1).toByteArray()).object();
@@ -124,12 +125,22 @@ bool DaemonIpcServer::openSessionProjectionStore(const QString& path) {
             value.insert("state", "failed");
             value.insert("output", QString{});
             value.insert("detail", "daemon-restarted");
-            updateQuery.addBindValue(
-                QString::fromUtf8(QJsonDocument(value).toJson(QJsonDocument::Compact)));
-            updateQuery.addBindValue(sessionId);
-            updateQuery.exec();
+            updateQuery.bindValue(
+                0, QString::fromUtf8(QJsonDocument(value).toJson(QJsonDocument::Compact)));
+            updateQuery.bindValue(1, sessionId);
+            if (!updateQuery.exec()) {
+                qWarning("IPC session projection reconciliation update failed");
+                if (transactionActive) {
+                    db.rollback();
+                }
+                return false;
+            }
         }
         m_lastRuns.insert(sessionId, value);
+    }
+    if (transactionActive && !db.commit()) {
+        qWarning("IPC session projection reconciliation commit failed");
+        return false;
     }
     return true;
 }
@@ -378,7 +389,7 @@ bool DaemonIpcServer::startServer(const QString& requested) {
             return false;
         }
 #ifdef Q_OS_UNIX
-        struct stat rootInfo{};
+        struct stat rootInfo {};
         if (::lstat(root.toLocal8Bit().constData(), &rootInfo) != 0 || !S_ISDIR(rootInfo.st_mode) ||
             rootInfo.st_uid != ::getuid()) {
             return false;
@@ -392,7 +403,7 @@ bool DaemonIpcServer::startServer(const QString& requested) {
         }
     }
 #ifdef Q_OS_UNIX
-    struct stat directoryInfo{};
+    struct stat directoryInfo {};
     if (::lstat(directory.toLocal8Bit().constData(), &directoryInfo) != 0 ||
         !S_ISDIR(directoryInfo.st_mode) || directoryInfo.st_uid != ::getuid()) {
         return false;
@@ -418,7 +429,7 @@ bool DaemonIpcServer::startServer(const QString& requested) {
         return false;
 #endif
 #ifdef Q_OS_UNIX
-        struct stat info{};
+        struct stat info {};
         if (::lstat(m_path.toLocal8Bit().constData(), &info) != 0 || !S_ISSOCK(info.st_mode) ||
             info.st_uid != ::getuid()) {
             m_lock.reset();
@@ -485,6 +496,10 @@ void DaemonIpcServer::requestShutdown() {
 void DaemonIpcServer::stopServer() {
     m_shutdownDrain.stop();
     m_server.close();
+    if (m_controller && !m_agentSubscription.isEmpty()) {
+        m_controller->agentRuntime()->unsubscribe(m_agentSubscription);
+        m_agentSubscription.clear();
+    }
     const auto sockets = m_clients.keys();
     for (auto* socket : sockets) {
         socket->abort();
@@ -494,6 +509,10 @@ void DaemonIpcServer::stopServer() {
     m_lock.reset();
 }
 void DaemonIpcServer::send(QLocalSocket* socket, const QJsonObject& message) {
+    if (!socket || socket->state() == QLocalSocket::UnconnectedState ||
+        socket->state() == QLocalSocket::ClosingState) {
+        return;
+    }
     qsizetype budget = protocol::max_frame_bytes;
     QByteArray bytes;
     if (withinBudget(message, budget)) {
@@ -519,6 +538,9 @@ void DaemonIpcServer::error(QLocalSocket* socket, const QString& id, const QStri
 }
 #if defined(Q_OS_UNIX)
 std::optional<uid_t> DaemonIpcServer::querySocketPeerUid(qintptr descriptor) {
+    if (descriptor < 0) {
+        return std::nullopt;
+    }
 #if defined(Q_OS_MACOS)
     uid_t peerUid = 0;
     gid_t peerGid = 0;
@@ -527,9 +549,10 @@ std::optional<uid_t> DaemonIpcServer::querySocketPeerUid(qintptr descriptor) {
     }
     return std::nullopt;
 #elif defined(Q_OS_LINUX)
-    struct ucred peer{};
+    struct ucred peer {};
     socklen_t size = sizeof(peer);
-    if (::getsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_PEERCRED, &peer, &size) == 0) {
+    if (::getsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_PEERCRED, &peer, &size) == 0 &&
+        size >= sizeof(peer)) {
         return peer.uid;
     }
     return std::nullopt;

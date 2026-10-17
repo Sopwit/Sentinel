@@ -104,8 +104,9 @@ public:
     }
 
     void completeNext() {
-        if (pending.isEmpty())
+        if (pending.isEmpty()) {
             return;
+        }
         const auto item = pending.takeFirst();
         item.completion({ToolExecutionStatus::Succeeded, QStringLiteral("fixture success")});
     }
@@ -182,7 +183,8 @@ void ExecutionBudgetPolicyTest::cancelRestoresSharedBudgetForTheNextRun() {
                            authorizedRequest(QStringLiteral("fixture.b"), QStringLiteral("/tmp/b"),
                                              AccessMode::Write)},
                           QStringLiteral("session"), {QStringLiteral("1"), QStringLiteral("2")}, {},
-                          {}, [&](QList<ToolExecutionResult>) { foregroundCompleted = true; });
+                          {},
+                          [&](const QList<ToolExecutionResult>&) { foregroundCompleted = true; });
 
         QCOMPARE(executor.startedCount, 1);
         QCOMPARE(budget->active.load(), 1);
@@ -229,7 +231,7 @@ void ExecutionBudgetPolicyTest::conflictingMutationsSerializeWhileReadOnlyRunsSh
              authorizedRequest(QStringLiteral("fixture.write.two"),
                                QStringLiteral("/workspace/shared"), AccessMode::Write)},
             QStringLiteral("session"), {QStringLiteral("1"), QStringLiteral("2")}, {}, {},
-            [&](QList<ToolExecutionResult>) { ++completed; });
+            [&](const QList<ToolExecutionResult>&) { ++completed; });
 
         // Overlapping mutable resources never run concurrently.
         QCOMPARE(executor.startedCount, 1);
@@ -251,7 +253,7 @@ void ExecutionBudgetPolicyTest::conflictingMutationsSerializeWhileReadOnlyRunsSh
                           authorizedRequest(QStringLiteral("fixture.read.two"),
                                             QStringLiteral("/workspace/shared"), AccessMode::Read)},
                          QStringLiteral("session"), {QStringLiteral("1"), QStringLiteral("2")}, {},
-                         {}, [&](QList<ToolExecutionResult>) { ++completed; });
+                         {}, [&](const QList<ToolExecutionResult>&) { ++completed; });
 
         // Overlapping read-only resources may share the budget concurrently.
         QCOMPARE(executor.startedCount, 2);
