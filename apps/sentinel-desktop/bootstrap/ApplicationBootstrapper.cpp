@@ -39,6 +39,7 @@ void qml_register_types_Sentinel_Warden();
 #include <QProcess>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QSettings>
 #include <QStandardPaths>
 
 namespace sentinel::desktop {
@@ -199,9 +200,10 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
         std::move(desktopStore),
         sentinel::core::CredentialStore(std::shared_ptr<sentinel::core::ICredentialBackend>{}));
     const auto settingsError = m_settings->storageErrorCode();
-    if (settingsError == QLatin1String("CorruptState") ||
-        settingsError == QLatin1String("UnsupportedSettingsVersion") ||
-        settingsError == QLatin1String("StoreUnavailable")) {
+    const bool settingsRecovered = settingsError == QLatin1String("CorruptState") ||
+                                   settingsError == QLatin1String("UnsupportedSettingsVersion") ||
+                                   settingsError == QLatin1String("StoreUnavailable");
+    if (settingsRecovered) {
         sentinel::core::RecoveryService::recordCondition(QStringLiteral("settings"),
                                                          QStringLiteral("settings"), settingsError,
                                                          QStringLiteral("repair-settings"));
@@ -236,6 +238,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     m_taskbarIntegration = std::make_unique<sentinel::core::WinTaskbarIntegration>();
     m_shellViewModel = std::make_unique<DesktopShellViewModel>(
         *m_runtimeClient, *m_modeManager, *m_settings, m_taskbarIntegration.get());
+    if (settingsRecovered)
+        m_shellViewModel->reportStartupRecovery(settingsError);
 
     m_singleInstanceGuard.bindShellViewModel(m_shellViewModel.get());
 
@@ -304,6 +308,14 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     if (auto* window = qobject_cast<QQuickWindow*>(rootWindow)) {
         m_shellViewModel->registerMainWindow(window->winId());
     }
+
+    // Local, non-sensitive window state, isolated per profile so tests and portable installs
+    // do not touch a developer's real preferences.
+    m_windowSettings = std::make_unique<QSettings>(
+        m_pathProvider.settingsFilePath() + QStringLiteral(".window"), QSettings::IniFormat);
+    m_windowState = std::make_unique<WindowStateController>(*m_windowSettings, this);
+    if (auto* window = qobject_cast<QWindow*>(rootWindow))
+        m_windowState->attach(window);
     if (!ownUrl.isEmpty()) {
         quickPanel->openLink(ownUrl);
     }

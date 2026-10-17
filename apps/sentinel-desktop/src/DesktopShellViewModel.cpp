@@ -220,6 +220,10 @@ bool updateNotification(const QString& json, const QString& notificationId,
 
 } // namespace
 
+namespace {
+constexpr int kDaemonUnavailableGraceMs = 5000;
+} // namespace
+
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
                                              core::ModeManager& modeManager,
                                              core::AppSettings& settings,
@@ -233,6 +237,8 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopRuntimeClient& client,
                                              core::WinTaskbarIntegration* taskbar, QObject* parent)
     : DesktopShellViewModel(DesktopControllerBridge::Source{nullptr, &client}, modeManager,
                             settings, taskbar, parent) {
+    connect(&client.transport(), &DaemonClient::connectionStateChanged, this,
+            [this] { refreshDaemonErrorProjection(); });
     connect(&client, &DesktopRuntimeClient::changed, this,
             &DesktopShellViewModel::runtimeProjectionChanged);
     connect(&client, &DesktopRuntimeClient::conversationDeleteCompleted, this,
@@ -271,6 +277,18 @@ DesktopShellViewModel::DesktopShellViewModel(DesktopControllerBridge::Source sou
                                   : nullptr),
       chatMessages_(this), taskbar_(taskbar) {
     backupManager_ = new DesktopBackupHelper(controller_.remote(), this);
+    daemonGraceTimer_ = new QTimer(this);
+    daemonGraceTimer_->setSingleShot(true);
+    daemonGraceTimer_->setInterval(kDaemonUnavailableGraceMs);
+    connect(daemonGraceTimer_, &QTimer::timeout, this, [this] {
+        auto* runtime = controller_.remote();
+        if (!runtime)
+            return;
+        const auto state = runtime->transport().connectionState();
+        if (state != DaemonClient::ConnectionState::Connected &&
+            state != DaemonClient::ConnectionState::Reconnecting)
+            showDaemonUnavailableBanner();
+    });
     connect(&systemDictation_, &SystemDictationService::activeChanged, this, [this] {
         voiceRecordingActive_ = systemDictation_.active(); emit voiceRecordingActiveChanged();
     });
@@ -6562,19 +6580,128 @@ QString DesktopShellViewModel::globalErrorActionLabel() const {
 
 void DesktopShellViewModel::setGlobalError(const QString& message, const QString& severity,
                                            const QString& actionLabel) {
+    applyGlobalError(message, severity, actionLabel, DesktopErrorCategory::None);
+}
+
+void DesktopShellViewModel::applyGlobalError(const QString& message, const QString& severity,
+                                             const QString& actionLabel,
+                                             DesktopErrorCategory category) {
+    if (message.isEmpty()) {
+        clearGlobalError();
+        return;
+    }
+    // Deduplicate repeated equivalent failures so re-projection never stacks banners.
+    if (globalErrorVisible_ && globalErrorMessage_ == message && globalErrorSeverity_ == severity &&
+        globalErrorActionLabel_ == actionLabel && globalErrorCategory_ == category) {
+        return;
+    }
     globalErrorMessage_ = message;
     globalErrorSeverity_ = severity;
     globalErrorActionLabel_ = actionLabel;
-    globalErrorVisible_ = !message.isEmpty();
+    globalErrorVisible_ = true;
+    globalErrorCategory_ = category;
+    emit globalErrorChanged();
+}
+
+void DesktopShellViewModel::clearGlobalError() {
+    if (!globalErrorVisible_ && globalErrorMessage_.isEmpty()) {
+        globalErrorCategory_ = DesktopErrorCategory::None;
+        return;
+    }
+    globalErrorVisible_ = false;
+    globalErrorMessage_.clear();
+    globalErrorActionLabel_.clear();
+    globalErrorCategory_ = DesktopErrorCategory::None;
     emit globalErrorChanged();
 }
 
 void DesktopShellViewModel::dismissGlobalError() {
-    if (!globalErrorVisible_)
+    clearGlobalError();
+}
+
+void DesktopShellViewModel::triggerGlobalErrorAction() {
+    switch (globalErrorCategory_) {
+    case DesktopErrorCategory::DaemonUnavailable:
+    case DesktopErrorCategory::DaemonDisconnected:
+        // Reconnect only: never replay a mutation. Acceptance may be uncertain after a
+        // timeout/disconnect, so the transport re-handshakes and re-projects instead.
+        if (auto* runtime = controller_.remote())
+            runtime->transport().connectToDaemon();
+        break;
+    default:
+        break;
+    }
+}
+
+void DesktopShellViewModel::reportStartupRecovery(const QString& code) {
+    if (code.isEmpty())
         return;
-    globalErrorVisible_ = false;
-    globalErrorMessage_.clear();
-    emit globalErrorChanged();
+    // The code is a product identifier from RecoveryService; raw detail is never shown.
+    applyGlobalError(
+        tr("Sentinel recovered from a local settings problem. Review your preferences if "
+           "anything looks incorrect."),
+        QStringLiteral("Warning"), QString(), DesktopErrorCategory::StartupRecovery);
+}
+
+void DesktopShellViewModel::setDaemonAvailabilityGracePeriodMs(int milliseconds) {
+    if (daemonGraceTimer_)
+        daemonGraceTimer_->setInterval(qMax(0, milliseconds));
+}
+
+void DesktopShellViewModel::showDaemonUnavailableBanner() {
+    if (daemonUnavailableShown_)
+        return;
+    daemonUnavailableShown_ = true;
+    applyGlobalError(
+        tr("The Sentinel daemon is unavailable. Some features stay disabled until it reconnects."),
+        QStringLiteral("Warning"), tr("Retry"), DesktopErrorCategory::DaemonUnavailable);
+}
+
+void DesktopShellViewModel::refreshDaemonErrorProjection() {
+    auto* runtime = controller_.remote();
+    if (!runtime)
+        return;
+    const auto state = runtime->transport().connectionState();
+    const auto category = desktopErrorCategoryForDaemonState(state);
+
+    // A serving connection, or a detected loss after one, closes any pending cold-start window.
+    // A transient Connecting retry deliberately keeps it open so a slow daemon is not reported.
+    if (state == DaemonClient::ConnectionState::Connected ||
+        state == DaemonClient::ConnectionState::Reconnecting) {
+        daemonUnavailableShown_ = false;
+        if (daemonGraceTimer_)
+            daemonGraceTimer_->stop();
+    }
+
+    if (!category)
+        return; // Connecting / Disconnected / VersionMismatch / ShuttingDown: leave as-is.
+
+    switch (*category) {
+    case DesktopErrorCategory::DaemonUnavailable:
+        // Cold start: the daemon may simply not be up yet, so defer briefly instead of
+        // flashing a false alarm. A daemon that stays absent is still surfaced.
+        if (daemonGraceTimer_ && daemonGraceTimer_->interval() > 0) {
+            if (!daemonGraceTimer_->isActive() && !daemonUnavailableShown_)
+                daemonGraceTimer_->start();
+        } else {
+            showDaemonUnavailableBanner();
+        }
+        break;
+    case DesktopErrorCategory::DaemonDisconnected:
+        // The daemon was reachable and dropped: report immediately, do not defer.
+        applyGlobalError(tr("Lost connection to the Sentinel daemon. Reconnecting…"),
+                         QStringLiteral("Error"), tr("Reconnect"),
+                         DesktopErrorCategory::DaemonDisconnected);
+        break;
+    case DesktopErrorCategory::None:
+        // Connection restored: only clear a banner this projection owns.
+        if (isDaemonErrorCategory(globalErrorCategory_))
+            clearGlobalError();
+        break;
+    case DesktopErrorCategory::StartupRecovery:
+    default:
+        break;
+    }
 }
 
 void DesktopShellViewModel::relaunchApplication() {

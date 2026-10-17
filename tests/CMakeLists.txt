@@ -287,6 +287,22 @@ target_link_libraries(test_graphics_backend
 
 add_test(NAME test_graphics_backend COMMAND $<TARGET_FILE:test_graphics_backend>)
 
+qt_add_executable(test_desktop_shell_state
+    desktop/test_desktop_shell_state.cpp
+)
+
+target_link_libraries(test_desktop_shell_state
+    PRIVATE
+        sentinel_desktop_viewmodels
+        sentinel_desktop_startup
+        Qt6::Test
+)
+
+add_test(NAME test_desktop_shell_state COMMAND $<TARGET_FILE:test_desktop_shell_state>)
+set_tests_properties(test_desktop_shell_state PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    TIMEOUT 60)
+
 target_link_libraries(test_desktop_shell_view_model
     PRIVATE
         sentinel_desktop_viewmodels

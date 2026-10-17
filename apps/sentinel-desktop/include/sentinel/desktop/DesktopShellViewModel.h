@@ -18,6 +18,7 @@
 #include "sentinel/core/security/PermissionPolicyService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 #include "sentinel/desktop/DesktopControllerBridge.h"
+#include "sentinel/desktop/DesktopErrorProjection.h"
 
 #include <QElapsedTimer>
 #include <QHash>
@@ -2764,6 +2765,15 @@ public:
     void setGlobalError(const QString& message, const QString& severity = QStringLiteral("Error"),
                         const QString& actionLabel = QString());
     Q_INVOKABLE void dismissGlobalError();
+    // Invoked by the global banner's action button; keeps the action policy in C++.
+    Q_INVOKABLE void triggerGlobalErrorAction();
+    // Surfaces a recoverable desktop initialization problem (for example a repaired settings
+    // store) with a generic, non-sensitive message. Never stores raw exception text.
+    void reportStartupRecovery(const QString& code);
+    // How long the daemon may stay in the never-connected (Unavailable) state before the global
+    // banner appears, so a daemon that is still booting does not flash a false alarm. A lost
+    // connection (Reconnecting) is always surfaced immediately. Zero disables the grace.
+    void setDaemonAvailabilityGracePeriodMs(int milliseconds);
     Q_INVOKABLE bool snoozeNotification(const QString& notificationId, int minutes);
     Q_INVOKABLE bool unsnoozeNotification(const QString& notificationId);
     Q_INVOKABLE bool shouldShowNotification(const QVariantMap& notification) const;
@@ -2892,6 +2902,11 @@ private:
                           QObject* parent);
     QString onboardingErrorCode_;
     static QString normalizedPageOrDefault(const QString& page);
+    void applyGlobalError(const QString& message, const QString& severity,
+                          const QString& actionLabel, DesktopErrorCategory category);
+    void clearGlobalError();
+    void refreshDaemonErrorProjection();
+    void showDaemonUnavailableBanner();
 
     DesktopControllerBridge controller_;
     core::ModeManager& modeManager_;
@@ -2934,6 +2949,8 @@ private:
     core::WinTaskbarIntegration* taskbar_ = nullptr;
     QSystemTrayIcon* trayIcon_ = nullptr;
     QTimer* updateCheckTimer_ = nullptr;
+    QTimer* daemonGraceTimer_ = nullptr;
+    bool daemonUnavailableShown_ = false;
     QNetworkAccessManager* networkManager_ = nullptr;
     QString lastReleaseUrl_;
     QString lastAssetUrl_;
@@ -2948,6 +2965,7 @@ private:
     QString globalErrorSeverity_ = QStringLiteral("Error");
     bool globalErrorVisible_ = false;
     QString globalErrorActionLabel_;
+    DesktopErrorCategory globalErrorCategory_ = DesktopErrorCategory::None;
     QSet<QString> notifiedIds_;
     QString lastAgentStatus_;
     QString lastNotifiedCategory_;
