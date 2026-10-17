@@ -1,0 +1,424 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
+#include "sentinel/core/runtime/LocalInference.h"
+#ifndef Q_MOC_RUN
+#include "../support/ScriptedProviderTransport.h"
+#endif
+
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QUrl>
+#include <QtTest>
+
+#include <memory>
+
+namespace {
+
+using sentinel::core::provider::OpenAiCompatibleChatTextError;
+
+QJsonArray userMessages(const QString& text) {
+    return QJsonArray{QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+                                  {QStringLiteral("content"), text}}};
+}
+
+QByteArray compactJson(const QJsonObject& body) {
+    return QJsonDocument(body).toJson(QJsonDocument::Compact);
+}
+
+QByteArray compactJson(const QJsonArray& array) {
+    return QJsonDocument(array).toJson(QJsonDocument::Compact);
+}
+
+// Pre-refactor golden bytes captured from core/src/runtime/LocalInference.cpp at
+// base 6035bf74 (see docs/audits/P2_M02_OPENAI_COMPATIBLE_PROTOCOL_EXTRACTION_RESULT.md).
+const QByteArray kLocalGolden =
+    R"({"max_tokens":512,"messages":[{"content":"hello world","role":"user"}],"model":"fixture-model","stream":false})";
+const QByteArray kLocalClampedGolden =
+    R"({"max_tokens":1,"messages":[{"content":"hello world","role":"user"}],"model":"fixture-model","stream":false})";
+
+} // namespace
+
+class OpenAiCompatibleProtocolTest final : public QObject {
+    Q_OBJECT
+
+private slots:
+    void chatPathGeneration_data();
+    void chatPathGeneration();
+    void requestBodyByteEquivalence_data();
+    void requestBodyByteEquivalence();
+    void standardTextResponseParsing_data();
+    void standardTextResponseParsing();
+    void emptyAndMalformedResponses_data();
+    void emptyAndMalformedResponses();
+    void toolPayloadPassThrough();
+    void structuredJsonOutputPassThrough();
+    void validCatalogParsing();
+    void malformedCatalogRejected_data();
+    void malformedCatalogRejected();
+    void missingModelIdentifierRejected();
+    void duplicateAndInvalidEntries();
+    void providerSpecificCatalogFields();
+    void localInferenceBodyByteEquivalence_data();
+    void localInferenceBodyByteEquivalence();
+};
+
+void OpenAiCompatibleProtocolTest::chatPathGeneration_data() {
+    QTest::addColumn<QString>("endpoint");
+    QTest::addColumn<QString>("expected");
+    QTest::newRow("loopback-root")
+        << QStringLiteral("http://127.0.0.1:1234") << QStringLiteral("/v1/chat/completions");
+    QTest::newRow("loopback-trailing-slash")
+        << QStringLiteral("http://127.0.0.1:1234/") << QStringLiteral("/v1/chat/completions");
+    QTest::newRow("loopback-v1") << QStringLiteral("http://127.0.0.1:1234/v1")
+                                 << QStringLiteral("/chat/completions");
+    QTest::newRow("openai-root") << QStringLiteral("https://api.openai.com")
+                                 << QStringLiteral("/v1/chat/completions");
+    QTest::newRow("openai-v1") << QStringLiteral("https://api.openai.com/v1")
+                               << QStringLiteral("/chat/completions");
+    QTest::newRow("deepseek-v1") << QStringLiteral("https://api.deepseek.com/v1")
+                                 << QStringLiteral("/chat/completions");
+    QTest::newRow("groq-prefixed-v1")
+        << QStringLiteral("https://api.groq.com/openai/v1") << QStringLiteral("/chat/completions");
+    QTest::newRow("mistral-v1") << QStringLiteral("https://api.mistral.ai/v1")
+                                << QStringLiteral("/chat/completions");
+}
+
+void OpenAiCompatibleProtocolTest::chatPathGeneration() {
+    QFETCH(QString, endpoint);
+    QFETCH(QString, expected);
+    QCOMPARE(sentinel::core::provider::openAiCompatibleChatCompletionsPath(QUrl(endpoint)),
+             expected);
+}
+
+void OpenAiCompatibleProtocolTest::requestBodyByteEquivalence_data() {
+    QTest::addColumn<int>("maxTokens");
+    QTest::addColumn<bool>("stream");
+    QTest::addColumn<bool>("includeTemperature");
+    QTest::addColumn<double>("temperature");
+    QTest::addColumn<QByteArray>("expected");
+
+    QTest::newRow("cloud-explicit")
+        << 512 << false << true << 0.7
+        << QByteArray(
+               R"({"max_tokens":512,"messages":[{"content":"hello world","role":"user"}],"model":"fixture-model","stream":false,"temperature":0.7})");
+    QTest::newRow("cloud-fallback-2048")
+        << 2048 << false << true << 0.0
+        << QByteArray(
+               R"({"max_tokens":2048,"messages":[{"content":"hello world","role":"user"}],"model":"fixture-model","stream":false,"temperature":0})");
+    QTest::newRow("local-explicit") << 512 << false << false << 0.0 << kLocalGolden;
+    QTest::newRow("local-clamped-to-one") << 1 << false << false << 0.0 << kLocalClampedGolden;
+    QTest::newRow("stream-fallback-2048")
+        << 2048 << true << false << 0.0
+        << QByteArray(
+               R"({"max_tokens":2048,"messages":[{"content":"hello world","role":"user"}],"model":"fixture-model","stream":true})");
+}
+
+void OpenAiCompatibleProtocolTest::requestBodyByteEquivalence() {
+    QFETCH(int, maxTokens);
+    QFETCH(bool, stream);
+    QFETCH(bool, includeTemperature);
+    QFETCH(double, temperature);
+    QFETCH(QByteArray, expected);
+
+    const std::optional<double> temperatureField =
+        includeTemperature ? std::optional<double>{temperature} : std::nullopt;
+    const auto body = sentinel::core::provider::buildOpenAiCompatibleChatBody(
+        QStringLiteral("fixture-model"), userMessages(QStringLiteral("hello world")), maxTokens,
+        stream, temperatureField);
+    QCOMPARE(compactJson(body), expected);
+}
+
+void OpenAiCompatibleProtocolTest::standardTextResponseParsing_data() {
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<QString>("expected");
+
+    QTest::newRow("plain")
+        << QByteArray(
+               R"({"choices":[{"message":{"role":"assistant","content":"fixture answer"}}]})")
+        << QStringLiteral("fixture answer");
+    QTest::newRow("whitespace-preserved")
+        << QByteArray(R"({"choices":[{"message":{"content":" leading and trailing "}}]})")
+        << QStringLiteral(" leading and trailing ");
+    QTest::newRow("unicode") << QByteArray(
+                                    R"({"choices":[{"message":{"content":"naïve — ünïcøde ✅"}}]})")
+                             << QStringLiteral("naïve — ünïcøde ✅");
+    QTest::newRow("extra-choices-ignored")
+        << QByteArray(
+               R"({"choices":[{"message":{"content":"first"}},{"message":{"content":"second"}}]})")
+        << QStringLiteral("first");
+    QTest::newRow("finish-reason-present")
+        << QByteArray(
+               R"({"choices":[{"finish_reason":"stop","message":{"content":"with reason"}}]})")
+        << QStringLiteral("with reason");
+}
+
+void OpenAiCompatibleProtocolTest::standardTextResponseParsing() {
+    QFETCH(QByteArray, response);
+    QFETCH(QString, expected);
+    OpenAiCompatibleChatTextError error = OpenAiCompatibleChatTextError::MissingChoices;
+    const auto text = sentinel::core::provider::parseOpenAiCompatibleChatText(
+        QJsonDocument::fromJson(response).object(), &error);
+    QVERIFY(text.has_value());
+    QCOMPARE(*text, expected);
+    QCOMPARE(error, OpenAiCompatibleChatTextError::None);
+}
+
+void OpenAiCompatibleProtocolTest::emptyAndMalformedResponses_data() {
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<int>("expectedError");
+
+    const int missingChoices = int(OpenAiCompatibleChatTextError::MissingChoices);
+    const int missingText = int(OpenAiCompatibleChatTextError::MissingText);
+    QTest::newRow("empty-object") << QByteArray("{}") << missingChoices;
+    QTest::newRow("empty-choices") << QByteArray(R"({"choices":[]})") << missingChoices;
+    QTest::newRow("choices-not-array") << QByteArray(R"({"choices":"nope"})") << missingChoices;
+    QTest::newRow("choices-null") << QByteArray(R"({"choices":null})") << missingChoices;
+    QTest::newRow("empty-choice-object") << QByteArray(R"({"choices":[{}]})") << missingText;
+    QTest::newRow("missing-message")
+        << QByteArray(R"({"choices":[{"finish_reason":"stop"}]})") << missingText;
+    QTest::newRow("empty-content")
+        << QByteArray(R"({"choices":[{"message":{"content":""}}]})") << missingText;
+    QTest::newRow("numeric-content")
+        << QByteArray(R"({"choices":[{"message":{"content":123}}]})") << missingText;
+    QTest::newRow("null-content") << QByteArray(R"({"choices":[{"message":{"content":null}}]})")
+                                  << missingText;
+    QTest::newRow("choice-not-object") << QByteArray(R"({"choices":["nope"]})") << missingText;
+    QTest::newRow("content-array")
+        << QByteArray(R"({"choices":[{"message":{"content":[{"type":"text"}]}}]})") << missingText;
+}
+
+void OpenAiCompatibleProtocolTest::emptyAndMalformedResponses() {
+    QFETCH(QByteArray, response);
+    QFETCH(int, expectedError);
+    OpenAiCompatibleChatTextError error = OpenAiCompatibleChatTextError::None;
+    const auto text = sentinel::core::provider::parseOpenAiCompatibleChatText(
+        QJsonDocument::fromJson(response).object(), &error);
+    QVERIFY(!text.has_value());
+    QCOMPARE(int(error), expectedError);
+}
+
+void OpenAiCompatibleProtocolTest::toolPayloadPassThrough() {
+    QJsonArray toolCalls;
+    toolCalls.append(
+        QJsonObject{{QStringLiteral("id"), QStringLiteral("call-1")},
+                    {QStringLiteral("type"), QStringLiteral("function")},
+                    {QStringLiteral("function"),
+                     QJsonObject{{QStringLiteral("name"), QStringLiteral("fs_read")},
+                                 {QStringLiteral("arguments"), QStringLiteral("{}")}}}});
+    QJsonArray messages;
+    messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
+                                {QStringLiteral("content"), "call"}});
+    messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("assistant")},
+                                {QStringLiteral("tool_calls"), toolCalls}});
+    messages.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("tool")},
+                                {QStringLiteral("tool_call_id"), QStringLiteral("call-1")},
+                                {QStringLiteral("content"), QStringLiteral("result")}});
+
+    const auto body = sentinel::core::provider::buildOpenAiCompatibleChatBody(
+        QStringLiteral("fixture-model"), messages, 256, false, std::nullopt);
+    QCOMPARE(body.value(QStringLiteral("messages")).toArray(), messages);
+    QCOMPARE(compactJson(body.value(QStringLiteral("messages")).toArray()), compactJson(messages));
+    QVERIFY(!compactJson(body).contains("tool_choice"));
+}
+
+void OpenAiCompatibleProtocolTest::structuredJsonOutputPassThrough() {
+    const QString structured = QStringLiteral("{\"requirements\":[],\"confidence\":0.5}");
+    const auto body = sentinel::core::provider::buildOpenAiCompatibleChatBody(
+        QStringLiteral("fixture-model"), userMessages(structured), 64, false, std::nullopt);
+    QCOMPARE(body.value(QStringLiteral("messages"))
+                 .toArray()
+                 .first()
+                 .toObject()
+                 .value(QStringLiteral("content"))
+                 .toString(),
+             structured);
+    OpenAiCompatibleChatTextError error = OpenAiCompatibleChatTextError::None;
+    const auto parsed = sentinel::core::provider::parseOpenAiCompatibleChatText(
+        QJsonObject{
+            {QStringLiteral("choices"),
+             QJsonArray{QJsonObject{{QStringLiteral("message"),
+                                     QJsonObject{{QStringLiteral("content"), structured}}}}}}},
+        &error);
+    QVERIFY(parsed.has_value());
+    QCOMPARE(*parsed, structured);
+    QCOMPARE(error, OpenAiCompatibleChatTextError::None);
+}
+
+void OpenAiCompatibleProtocolTest::validCatalogParsing() {
+    const QByteArray response = R"({
+        "object": "list",
+        "data": [
+            {"id": "plain", "created": 1700000000},
+            {"id": " rich ", "context_window": 8192, "max_output_tokens": 1024,
+             "tool_calling": true, "structured_output": false, "streaming": true,
+             "vision": true, "audio_input": false, "audio_output": true,
+             "publisher": "acme", "family": "fam", "architecture": "arch-a"},
+            {"id": "caps", "max_context_length": 4096,
+             "capabilities": {"trained_for_tool_use": false, "vision": false}}
+        ]
+    })";
+    const auto parsed = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+        QJsonDocument::fromJson(response).object());
+    QVERIFY(!parsed.malformed);
+    QCOMPARE(parsed.models.size(), 3);
+
+    QCOMPARE(parsed.models.at(0).name, QStringLiteral("plain"));
+    QCOMPARE(parsed.models.at(0).modifiedAt, QStringLiteral("1.7e+09"));
+    QVERIFY(!parsed.models.at(0).capabilities.contextWindow.has_value());
+    QCOMPARE(parsed.models.at(0).capabilities.streaming,
+             sentinel::core::CapabilitySupport::Unknown);
+
+    QCOMPARE(parsed.models.at(1).name, QStringLiteral("rich"));
+    QCOMPARE(parsed.models.at(1).capabilities.contextWindow.value_or(0), 8192);
+    QCOMPARE(parsed.models.at(1).capabilities.maxOutputTokens.value_or(0), 1024);
+    QCOMPARE(parsed.models.at(1).capabilities.nativeToolCalling,
+             sentinel::core::CapabilitySupport::Supported);
+    QCOMPARE(parsed.models.at(1).capabilities.structuredOutput,
+             sentinel::core::CapabilitySupport::Unsupported);
+    QCOMPARE(parsed.models.at(1).capabilities.streaming,
+             sentinel::core::CapabilitySupport::Supported);
+    QCOMPARE(parsed.models.at(1).capabilities.visionInput,
+             sentinel::core::CapabilitySupport::Supported);
+    QCOMPARE(parsed.models.at(1).capabilities.audioInput,
+             sentinel::core::CapabilitySupport::Unsupported);
+    QCOMPARE(parsed.models.at(1).capabilities.audioOutput,
+             sentinel::core::CapabilitySupport::Supported);
+    QCOMPARE(parsed.models.at(1).publisher, QStringLiteral("acme"));
+    QCOMPARE(parsed.models.at(1).family, QStringLiteral("fam"));
+    QCOMPARE(parsed.models.at(1).architecture, QStringLiteral("arch-a"));
+
+    QCOMPARE(parsed.models.at(2).name, QStringLiteral("caps"));
+    QCOMPARE(parsed.models.at(2).capabilities.contextWindow.value_or(0), 4096);
+    QCOMPARE(parsed.models.at(2).capabilities.nativeToolCalling,
+             sentinel::core::CapabilitySupport::Unsupported);
+    QCOMPARE(parsed.models.at(2).capabilities.visionInput,
+             sentinel::core::CapabilitySupport::Unsupported);
+}
+
+void OpenAiCompatibleProtocolTest::malformedCatalogRejected_data() {
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<bool>("malformed");
+    QTest::addColumn<int>("expectedCount");
+
+    QTest::newRow("empty-object") << QByteArray("{}") << true << 0;
+    QTest::newRow("data-object") << QByteArray(R"({"data":{}})") << true << 0;
+    QTest::newRow("data-string") << QByteArray(R"({"data":"x"})") << true << 0;
+    QTest::newRow("data-null") << QByteArray(R"({"data":null})") << true << 0;
+    QTest::newRow("wrong-shape") << QByteArray(R"({"unexpected":[]})") << true << 0;
+    QTest::newRow("entry-not-object") << QByteArray(R"({"data":["x"]})") << true << 0;
+    QTest::newRow("entry-null") << QByteArray(R"({"data":[null]})") << true << 0;
+    QTest::newRow("missing-id") << QByteArray(R"({"data":[{}]})") << true << 0;
+    QTest::newRow("empty-id") << QByteArray(R"({"data":[{"id":""}]})") << true << 0;
+    QTest::newRow("whitespace-id") << QByteArray(R"({"data":[{"id":"   "}]})") << true << 0;
+    QTest::newRow("numeric-id") << QByteArray(R"({"data":[{"id":7}]})") << true << 0;
+    QTest::newRow("bool-id") << QByteArray(R"({"data":[{"id":true}]})") << true << 0;
+    QTest::newRow("null-id") << QByteArray(R"({"data":[{"id":null}]})") << true << 0;
+    QTest::newRow("valid-then-invalid")
+        << QByteArray(R"({"data":[{"id":"ok"},{"id":""}]})") << true << 0;
+    QTest::newRow("empty-catalog") << QByteArray(R"({"data":[]})") << false << 0;
+    QTest::newRow("single-valid") << QByteArray(R"({"data":[{"id":"ok"}]})") << false << 1;
+    QTest::newRow("trimmed-id") << QByteArray(R"({"data":[{"id":" ok "}]})") << false << 1;
+}
+
+void OpenAiCompatibleProtocolTest::malformedCatalogRejected() {
+    QFETCH(QByteArray, response);
+    QFETCH(bool, malformed);
+    QFETCH(int, expectedCount);
+    const auto parsed = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+        QJsonDocument::fromJson(response).object());
+    QCOMPARE(parsed.malformed, malformed);
+    QCOMPARE(parsed.models.size(), expectedCount);
+    if (malformed)
+        QVERIFY(parsed.models.isEmpty());
+}
+
+void OpenAiCompatibleProtocolTest::missingModelIdentifierRejected() {
+    for (const QByteArray& response :
+         {QByteArray(R"({"data":[{}]})"), QByteArray(R"({"data":[{"other":"x"}]})"),
+          QByteArray(R"({"data":[{"id":null}]})"), QByteArray(R"({"data":[{"id":false}]})"),
+          QByteArray(R"({"data":[{"id":[]}]})")}) {
+        const auto parsed = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+            QJsonDocument::fromJson(response).object());
+        QVERIFY2(parsed.malformed, response.constData());
+        QVERIFY(parsed.models.isEmpty());
+    }
+}
+
+void OpenAiCompatibleProtocolTest::duplicateAndInvalidEntries() {
+    const auto duplicates = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+        QJsonDocument::fromJson(R"({"data":[{"id":"a"},{"id":"a"},{"id":"b"}]})").object());
+    QVERIFY(!duplicates.malformed);
+    QCOMPARE(duplicates.models.size(), 3);
+    QCOMPARE(duplicates.models.at(0).name, QStringLiteral("a"));
+    QCOMPARE(duplicates.models.at(1).name, QStringLiteral("a"));
+    QCOMPARE(duplicates.models.at(2).name, QStringLiteral("b"));
+
+    const auto invalidAfterValid = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+        QJsonDocument::fromJson(R"({"data":[{"id":"a"},{"id":7},{"id":"b"}]})").object());
+    QVERIFY(invalidAfterValid.malformed);
+    QVERIFY(invalidAfterValid.models.isEmpty());
+}
+
+void OpenAiCompatibleProtocolTest::providerSpecificCatalogFields() {
+    const QByteArray response = R"({
+        "data": [
+            {"id": "provider-entry", "created": "2024-01-01T00:00:00Z",
+             "arch": "llama", "streaming": true, "extra_unknown": {"ignored": true},
+             "capabilities": {"vision": true}}
+        ]
+    })";
+    const auto parsed = sentinel::core::provider::parseOpenAiCompatibleModelCatalog(
+        QJsonDocument::fromJson(response).object());
+    QVERIFY(!parsed.malformed);
+    QCOMPARE(parsed.models.size(), 1);
+    QCOMPARE(parsed.models.at(0).name, QStringLiteral("provider-entry"));
+    QCOMPARE(parsed.models.at(0).modifiedAt, QStringLiteral("2024-01-01T00:00:00Z"));
+    QCOMPARE(parsed.models.at(0).architecture, QStringLiteral("llama"));
+    QCOMPARE(parsed.models.at(0).capabilities.streaming,
+             sentinel::core::CapabilitySupport::Supported);
+    QCOMPARE(parsed.models.at(0).capabilities.visionInput,
+             sentinel::core::CapabilitySupport::Supported);
+}
+
+void OpenAiCompatibleProtocolTest::localInferenceBodyByteEquivalence_data() {
+    QTest::addColumn<int>("maxTokens");
+    QTest::addColumn<QByteArray>("expected");
+    QTest::newRow("explicit") << 512 << kLocalGolden;
+    QTest::newRow("clamped") << 0 << kLocalClampedGolden;
+}
+
+void OpenAiCompatibleProtocolTest::localInferenceBodyByteEquivalence() {
+    QFETCH(int, maxTokens);
+    QFETCH(QByteArray, expected);
+
+    auto state = std::make_shared<sentinel::test::ScriptedTransportState>();
+    state->responder = [](const auto&) {
+        return sentinel::test::ScriptedHttpResponse::body(
+            R"({"choices":[{"message":{"role":"assistant","content":"fixture answer"}}]})");
+    };
+    sentinel::core::LMStudioConfig config;
+    config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
+    config.networkFactory = std::make_shared<sentinel::test::ScriptedNetworkFactory>(state);
+    sentinel::test::ScopedOnlineNetworkMode online;
+
+    sentinel::core::LMStudioLocalInferenceClient client(config, 500);
+    sentinel::core::LocalInferenceRequest request;
+    request.prompt = QStringLiteral("hello world");
+    request.options.model = QStringLiteral("fixture-model");
+    request.options.maxTokens = maxTokens;
+    request.options.timeoutMs = 500;
+
+    const auto response = client.infer(request);
+    QCOMPARE(response.status, sentinel::core::LocalInferenceStatus::Succeeded);
+    QCOMPARE(response.text, QStringLiteral("fixture answer"));
+    QCOMPARE(state->requests.size(), 1);
+    QCOMPARE(state->requests.first().body, expected);
+    QCOMPARE(state->requests.first().url.path(), QStringLiteral("/v1/chat/completions"));
+}
+
+QTEST_GUILESS_MAIN(OpenAiCompatibleProtocolTest)
+#include "test_openai_compatible_protocol.moc"
