@@ -5,6 +5,7 @@
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/model/ModelCategory.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
 #include "sentinel/core/runtime/LocalInference.h"
 #include "sentinel/core/runtime/LocalInferenceTransport.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
@@ -1632,87 +1633,20 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(
         return {};
     }
 
-    const auto malformedCatalog = [&]() -> QList<OllamaModelSummary> {
+    const auto parsed = provider::parseOpenAiCompatibleModelCatalog(reply.document.object());
+    if (parsed.malformed) {
         if (outcome)
             *outcome = {false, ChatProviderErrorCategory::MalformedResponse, reply.httpStatus,
                         reply.requestId};
         if (errorOut)
             *errorOut = QStringLiteral("Model list returned an invalid model catalog.");
         return {};
-    };
-    const auto data = reply.document.object().value(QStringLiteral("data"));
-    if (!data.isArray())
-        return malformedCatalog();
-
-    QList<OllamaModelSummary> models;
-    const auto dataValues = data.toArray();
-    for (const auto& value : dataValues) {
-        const auto object = value.toObject();
-        const auto id = object.value(QStringLiteral("id")).toString().trimmed();
-        if (!value.isObject() || !object.value(QStringLiteral("id")).isString() || id.isEmpty())
-            return malformedCatalog();
-
-        QString createdStr;
-        if (object.contains(QStringLiteral("created"))) {
-            const auto createdVal = object.value(QStringLiteral("created"));
-            if (createdVal.isDouble()) {
-                createdStr = QString::number(createdVal.toDouble());
-            } else {
-                createdStr = createdVal.toString();
-            }
-        }
-
-        OllamaModelSummary model{id, createdStr, 0};
-        const auto positiveLimit = [&object](const QString& key) -> std::optional<int> {
-            const auto field = object.value(key);
-            if (!field.isDouble())
-                return std::nullopt;
-            const auto number = field.toDouble();
-            if (number <= 0 || number > std::numeric_limits<int>::max() ||
-                number != std::floor(number))
-                return std::nullopt;
-            return static_cast<int>(number);
-        };
-        model.capabilities.contextWindow = positiveLimit(QStringLiteral("context_window"));
-        if (!model.capabilities.contextWindow)
-            model.capabilities.contextWindow = positiveLimit(QStringLiteral("max_context_length"));
-        model.capabilities.maxOutputTokens = positiveLimit(QStringLiteral("max_output_tokens"));
-        const auto reportedSupport = [&object](const QString& key) {
-            const auto field = object.value(key);
-            return field.isBool() ? (field.toBool() ? CapabilitySupport::Supported
-                                                    : CapabilitySupport::Unsupported)
-                                  : CapabilitySupport::Unknown;
-        };
-        const auto reported = object.value(QStringLiteral("capabilities")).toObject();
-        const auto booleanCapability = [&reported](const QString& key) {
-            const auto field = reported.value(key);
-            return field.isBool() ? (field.toBool() ? CapabilitySupport::Supported
-                                                    : CapabilitySupport::Unsupported)
-                                  : CapabilitySupport::Unknown;
-        };
-        model.capabilities.nativeToolCalling =
-            booleanCapability(QStringLiteral("trained_for_tool_use"));
-        if (model.capabilities.nativeToolCalling == CapabilitySupport::Unknown)
-            model.capabilities.nativeToolCalling = reportedSupport(QStringLiteral("tool_calling"));
-        model.capabilities.structuredOutput = reportedSupport(QStringLiteral("structured_output"));
-        model.capabilities.visionInput = booleanCapability(QStringLiteral("vision"));
-        if (model.capabilities.visionInput == CapabilitySupport::Unknown)
-            model.capabilities.visionInput = reportedSupport(QStringLiteral("vision"));
-        model.capabilities.audioInput = reportedSupport(QStringLiteral("audio_input"));
-        model.capabilities.audioOutput = reportedSupport(QStringLiteral("audio_output"));
-        model.capabilities.streaming = reportedSupport(QStringLiteral("streaming"));
-        model.publisher = object.value(QStringLiteral("publisher")).toString();
-        model.family = object.value(QStringLiteral("family")).toString();
-        model.architecture = object.value(QStringLiteral("architecture")).toString();
-        if (model.architecture.isEmpty())
-            model.architecture = object.value(QStringLiteral("arch")).toString();
-        models.append(std::move(model));
     }
     if (outcome)
         *outcome = {true, ChatProviderErrorCategory::None, reply.httpStatus, reply.requestId};
     if (errorOut)
         errorOut->clear();
-    return models;
+    return parsed.models;
 }
 
 QList<OllamaModelSummary>
