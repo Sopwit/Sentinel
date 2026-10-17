@@ -260,6 +260,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/provider/ProviderMessageNormalizer.h
     include/sentinel/core/provider/ProviderErrorClassifier.h
     include/sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h
+    include/sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h
     include/sentinel/core/doomloop/DoomLoopDetector.h
     include/sentinel/core/wildcard/WildcardMatcher.h
     include/sentinel/core/schema/ToolJsonSchemaNormalizer.h
@@ -461,6 +462,7 @@ add_library(sentinel_core STATIC
     src/provider/ProviderMessageNormalizer.cpp
     src/provider/ProviderErrorClassifier.cpp
     src/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.cpp
+    src/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.cpp
     src/doomloop/DoomLoopDetector.cpp
     src/wildcard/WildcardMatcher.cpp
     src/schema/ToolJsonSchemaNormalizer.cpp

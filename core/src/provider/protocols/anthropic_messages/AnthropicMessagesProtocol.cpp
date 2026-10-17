@@ -1,0 +1,61 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <sopwith.osdev@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h"
+
+namespace sentinel::core::provider {
+
+QUrl anthropicMessagesUrl() {
+    return QUrl(QStringLiteral("https://api.anthropic.com/v1/messages"));
+}
+
+QJsonObject buildAnthropicMessagesBody(const QString& model,
+                                       const QJsonArray& messages,
+                                       int maxTokens,
+                                       bool stream,
+                                       const QString& systemPrompt) {
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), model);
+    if (!systemPrompt.isEmpty()) {
+        body.insert(QStringLiteral("system"), systemPrompt);
+    }
+    body.insert(QStringLiteral("messages"), messages);
+    body.insert(QStringLiteral("max_tokens"), maxTokens > 0 ? maxTokens : 2048);
+    body.insert(QStringLiteral("stream"), stream);
+    return body;
+}
+
+std::optional<QString> parseAnthropicMessagesText(const QJsonObject& body,
+                                                 AnthropicMessagesTextError* error) {
+    if (error) {
+        *error = AnthropicMessagesTextError::None;
+    }
+    const auto contentVal = body.value(QStringLiteral("content"));
+    if (!contentVal.isArray()) {
+        if (error) {
+            *error = AnthropicMessagesTextError::MissingContent;
+        }
+        return std::nullopt;
+    }
+    const auto contentParts = contentVal.toArray();
+    QString text;
+    for (const auto& part : contentParts) {
+        if (!part.isObject()) {
+            continue;
+        }
+        const auto partObj = part.toObject();
+        if (partObj.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
+            text += partObj.value(QStringLiteral("text")).toString();
+        }
+    }
+    if (text.isEmpty()) {
+        if (error) {
+            *error = AnthropicMessagesTextError::MissingText;
+        }
+        return std::nullopt;
+    }
+    return text;
+}
+
+} // namespace sentinel::core::provider

@@ -6,6 +6,7 @@
 #include "sentinel/core/chat/ChatImageContent.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
 #include "sentinel/core/network/NetworkPolicyService.h"
+#include "sentinel/core/provider/protocols/anthropic_messages/AnthropicMessagesProtocol.h"
 #include "sentinel/core/provider/protocols/openai_compatible/OpenAiCompatibleProtocol.h"
 #include "sentinel/core/runtime/ProviderRequestRuntime.h"
 
@@ -1236,7 +1237,7 @@ LMStudioLocalInferenceClient::completeNativeChat(
     QUrl url;
     QMap<QByteArray, QByteArray> headers;
     if (protocol == NativeProtocol::Claude && host == QLatin1String("api.anthropic.com")) {
-        url = QUrl(QStringLiteral("https://api.anthropic.com/v1/messages"));
+        url = provider::anthropicMessagesUrl();
         headers.insert("x-api-key", config_.apiKey.toUtf8());
         headers.insert("anthropic-version", "2023-06-01");
     } else if (protocol == NativeProtocol::Gemini &&
@@ -1343,12 +1344,9 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             QJsonArray messagesArr;
             messagesArr.append(messageObj);
 
-            QJsonObject body;
-            body.insert(QStringLiteral("model"), response.model);
-            body.insert(QStringLiteral("messages"), messagesArr);
-            body.insert(QStringLiteral("max_tokens"),
-                        request.options.maxTokens > 0 ? request.options.maxTokens : 2048);
-            body.insert(QStringLiteral("stream"), false);
+            const auto body = provider::buildAnthropicMessagesBody(
+                response.model, messagesArr,
+                request.options.maxTokens > 0 ? request.options.maxTokens : 2048, false);
 
             response.traces.append(trace(
                 2, QStringLiteral("Generation"), QStringLiteral("Started"),
@@ -1358,7 +1356,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             headers.insert("x-api-key", config_.apiKey.toUtf8());
             headers.insert("anthropic-version", "2023-06-01");
             const auto reply = postJson(
-                QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")), body, timeoutMs,
+                provider::anthropicMessagesUrl(), body, timeoutMs,
                 headers, request.options.cancellationToken, config_.networkFactory);
             recordRequestMetadata(response, reply);
             if (!reply.ok) {
@@ -1371,16 +1369,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
                                              QStringLiteral("Error"), response.summary));
                 return response;
             }
-            const auto contentParts =
-                reply.document.object().value(QStringLiteral("content")).toArray();
-            QString text;
-            for (const auto& part : contentParts) {
-                const auto partObj = part.toObject();
-                if (partObj.value(QStringLiteral("type")).toString() == QStringLiteral("text")) {
-                    text += partObj.value(QStringLiteral("text")).toString();
-                }
-            }
-            if (text.isEmpty()) {
+            const auto text = provider::parseAnthropicMessagesText(reply.document.object());
+            if (!text.has_value()) {
                 response.status = LocalInferenceStatus::Error;
                 response.error = LocalInferenceError::InvalidResponse;
                 response.summary =
@@ -1391,7 +1381,7 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
             }
             response.status = LocalInferenceStatus::Succeeded;
             response.error = LocalInferenceError::None;
-            response.text = text;
+            response.text = *text;
             response.summary = QStringLiteral("Anthropic cloud generation succeeded.");
             response.traces.append(trace(3, QStringLiteral("Generation"),
                                          QStringLiteral("Succeeded"), response.summary));
@@ -1762,7 +1752,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                                         Qt::CaseInsensitive) == 0;
 
     if (isAnthropic) {
-        networkRequest.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")));
+        networkRequest.setUrl(provider::anthropicMessagesUrl());
         if (!config_.apiKey.isEmpty()) {
             networkRequest.setRawHeader("x-api-key", config_.apiKey.toUtf8());
         }
@@ -1775,10 +1765,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         QJsonArray messagesArr;
         messagesArr.append(messageObj);
 
-        body.insert(QStringLiteral("model"), result.model);
-        body.insert(QStringLiteral("messages"), messagesArr);
-        body.insert(QStringLiteral("max_tokens"), 2048);
-        body.insert(QStringLiteral("stream"), true);
+        body = provider::buildAnthropicMessagesBody(result.model, messagesArr, 2048, true);
     } else if (isGemini) {
         const QString modelId = result.model;
         networkRequest.setUrl(
