@@ -117,3 +117,4 @@ All documents are deterministic evidence reports anchored to explicit Git commit
 | [INT_03_SOURCE_HISTORY_RECONCILIATION.md](INT_03_SOURCE_HISTORY_RECONCILIATION.md) | Reconciliation of diverged branches and commit topology | History Hygiene |
 | [INT_04_POST_MERGE_VALIDATION_RESULT.md](INT_04_POST_MERGE_VALIDATION_RESULT.md) | Full 143-test suite validation after initial branch consolidation | Regression Gate |
 | [INT_05_PLATFORM_PROVIDER_RESOURCE_INTEGRATION_RESULT.md](INT_05_PLATFORM_PROVIDER_RESOURCE_INTEGRATION_RESULT.md) | Candidate integration validation across P2-M02, P3-04, P4-03.1, and CI-05 | Main Integration |
+| [INT_06_CURRENT_MAIN_RECONCILIATION_RESULT.md](INT_06_CURRENT_MAIN_RECONCILIATION_RESULT.md) | Source history reconciliation and dirty worktree closure on main branch | Final Main Reconciliation |
