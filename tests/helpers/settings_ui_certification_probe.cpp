@@ -111,11 +111,18 @@ int main(int argc, char** argv) {
     const bool chatSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--chat-smoke";
     const bool settingsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--settings-smoke";
     const bool modelsSmoke = argc == 2 && QString::fromLocal8Bit(argv[1]) == "--models-smoke";
+    const bool accessibilitySmoke =
+        argc == 2 && QString::fromLocal8Bit(argv[1]) == "--accessibility-smoke";
     Phase1Diagnostic diagnostic(phase1Smoke);
     QTemporaryDir temporaryProfile;
-    if (argc != 2 || (!extensionsSmoke && !phase1Smoke && !focusSmoke && !navigationSmoke && !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
+    if (argc != 2 || (!extensionsSmoke && !phase1Smoke && !focusSmoke && !navigationSmoke &&
+                      !chatSmoke && !modelsSmoke && !settingsSmoke && !traySmoke &&
+                      !accessibilitySmoke && !QDir(QString::fromLocal8Bit(argv[1])).exists()))
         return 2;
-    QDir profile(extensionsSmoke || phase1Smoke || focusSmoke || navigationSmoke || chatSmoke || modelsSmoke || settingsSmoke || traySmoke ? temporaryProfile.path() : QString::fromLocal8Bit(argv[1]));
+    QDir profile(extensionsSmoke || phase1Smoke || focusSmoke || navigationSmoke || chatSmoke ||
+                         modelsSmoke || settingsSmoke || traySmoke || accessibilitySmoke
+                     ? temporaryProfile.path()
+                     : QString::fromLocal8Bit(argv[1]));
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(profile.filePath("settings.json")),
         sentinel::core::inMemoryTestCredentialStore());
@@ -166,9 +173,14 @@ int main(int argc, char** argv) {
     for (const auto* name : {"ggufLibraryFetcher", "lmStudioLibraryFetcher", "ollamaModelDetailFetcher", "ollamaPuller", "daemonClient"})
         engine.rootContext()->setContextProperty(name, &emptyLibrary);
     diagnostic.stage("qml-engine-load");
-    engine.load(QUrl::fromLocalFile(extensionsSmoke
-        ? QFileInfo(QStringLiteral(CERTIFICATION_QML_WRAPPER)).dir().filePath("extensions_hub_certification.qml")
-        : QStringLiteral(CERTIFICATION_QML_WRAPPER)));
+    engine.load(QUrl::fromLocalFile(
+        extensionsSmoke ? QFileInfo(QStringLiteral(CERTIFICATION_QML_WRAPPER))
+                              .dir()
+                              .filePath("extensions_hub_certification.qml")
+        : accessibilitySmoke ? QFileInfo(QStringLiteral(CERTIFICATION_QML_WRAPPER))
+                                   .dir()
+                                   .filePath("accessibility_certification.qml")
+                             : QStringLiteral(CERTIFICATION_QML_WRAPPER)));
     diagnostic.stage("qml-engine-loaded");
     if (engine.rootObjects().isEmpty())
         return 3;
@@ -192,25 +204,35 @@ int main(int argc, char** argv) {
             auto* settingsNav = find(find, window->contentItem(), "settingsNavigationButton");
             check(tools && extensions && settingsNav, "rail destinations");
             check(tools->y() < extensions->y() && extensions->mapToScene(QPointF()).y() < settingsNav->mapToScene(QPointF()).y(), "Tools Extensions Settings order");
-            tools->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+            tools->forceActiveFocus();
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(30);
             check(hub->property("section").toString() == "tools" && window->property("currentPage").toString() == "Tools", "keyboard Tools route");
-            extensions->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+            extensions->forceActiveFocus();
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(30);
             check(hub->property("section").toString() == "plugins", "keyboard Extensions route");
             QVariantList entries{QVariantMap{{"id", "plugin:fixture"}, {"name", "Synthetic plugin metadata"}, {"type", "plugins"}, {"enabledKnown", true}, {"enabled", false}},
                 QVariantMap{{"id", "mcp:fixture"}, {"name", "Synthetic configured server"}, {"type", "mcp"}, {"enabledKnown", true}, {"enabled", true}},
                 QVariantMap{{"id", "skill:fixture"}, {"name", "Synthetic discovered skill"}, {"type", "skills"}, {"enabledKnown", false}}};
             QVariantMap data{{"phase", "ready"}, {"message", "Synthetic UI fixture — no plugin, MCP server, skill or tool executed."}, {"entries", entries}, {"tools", QStringList{"fixture.read", "fixture.refused"}}, {"policy", QStringList{"Synthetic policy: execution permission not granted"}}};
-            fixture->setProperty("daemonConnected", true); fixture->setProperty("data", data); QTest::qWait(40);
+            fixture->setProperty("daemonConnected", true);
+            fixture->setProperty("data", data);
+            QTest::qWait(40);
             check(search->isEnabled() && refresh->isEnabled(), "metadata actions available");
             for (const auto& key : {"plugins", "mcp", "skills", "tools"}) {
                 auto* button = find(find, hub, "extensionsSection_" + QString(key));
-                check(button, "section button"); button->forceActiveFocus(); QTest::keyClick(window, Qt::Key_Space); QTest::qWait(30);
+                check(button, "section button");
+                button->forceActiveFocus();
+                QTest::keyClick(window, Qt::Key_Space);
+                QTest::qWait(30);
                 check(hub->property("section").toString() == key && window->activeFocusItem()->isVisible(), "section keyboard/focus");
                 const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
                 if (!evidence.isEmpty()) {
                     QDir().mkpath(evidence);
                     for (const auto& theme : {QStringLiteral("Paper"), QStringLiteral("Liquid Glass Dark")}) {
-                        viewModel.setThemeName(theme); QTest::qWait(80);
+                        viewModel.setThemeName(theme);
+                        QTest::qWait(80);
                         window->grabWindow().save(evidence + "/" + key + (theme == "Paper" ? "-light.png" : "-dark.png"));
                     }
                 }
@@ -251,25 +273,327 @@ int main(int argc, char** argv) {
             fixture->setProperty("actionData", QVariantMap{{"phase", "accepted"}});
             QMetaObject::invokeMethod(hub, "openSection", Q_ARG(QVariant, QVariant("tools")));
             QCoreApplication::processEvents();
-            hub->setProperty("query", "no-match"); QTest::qWait(20);
-            auto* empty = find(find, hub, "extensionsEmpty"); check(empty && empty->isVisible(), "search empty state");
-            hub->setProperty("query", "fixture.read"); QTest::qWait(20);
+            hub->setProperty("query", "no-match");
+            QTest::qWait(20);
+            auto* empty = find(find, hub, "extensionsEmpty");
+            check(empty && empty->isVisible(), "search empty state");
+            hub->setProperty("query", "fixture.read");
+            QTest::qWait(20);
             check(!empty->isVisible(), "local tool identity filter");
             for (const auto& phase : {"loading", "error", "unavailable", "disconnected"}) {
-                data["phase"] = phase; data["entries"] = QVariantList{}; data["tools"] = QStringList{};
-                fixture->setProperty("data", data); QTest::qWait(20);
+                data["phase"] = phase;
+                data["entries"] = QVariantList{};
+                data["tools"] = QStringList{};
+                fixture->setProperty("data", data);
+                QTest::qWait(20);
                 check(!search->isEnabled(), "non-ready search disabled");
                 const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
-                if (!evidence.isEmpty()) window->grabWindow().save(evidence + "/state-" + phase + ".png");
+                if (!evidence.isEmpty())
+                    window->grabWindow().save(evidence + "/state-" + phase + ".png");
             }
-            fixture->setProperty("daemonConnected", false); QTest::qWait(20);
+            fixture->setProperty("daemonConnected", false);
+            QTest::qWait(20);
             check(!refresh->isEnabled(), "disconnect disables refresh");
-            window->resize(780, 640); QTest::qWait(40);
+            window->resize(780, 640);
+            QTest::qWait(40);
             check(search->width() > 100 && refresh->mapToScene(QPointF()).x() + refresh->width() <= window->width(), "compact layout fits");
             const auto evidence = qEnvironmentVariable("SENTINEL_EXTENSIONS_EVIDENCE_DIR");
-            if (!evidence.isEmpty()) window->grabWindow().save(evidence + "/compact-disconnected.png");
-            QTest::keyClick(window, Qt::Key_Tab); check(window->activeFocusItem() && window->activeFocusItem()->isVisible(), "Tab remains visible");
+            if (!evidence.isEmpty())
+                window->grabWindow().save(evidence + "/compact-disconnected.png");
+            QTest::keyClick(window, Qt::Key_Tab);
+            check(window->activeFocusItem() && window->activeFocusItem()->isVisible(),
+                  "Tab remains visible");
             qInfo("Extensions routing, rail order, four sections, filter, loading/error/disconnected/unsupported and keyboard/compact checks passed; synthetic data only");
+            app.exit(0);
+        });
+    }
+    if (accessibilitySmoke) {
+        auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        QTimer::singleShot(250, &app, [&, window] {
+            auto itemOf = [&](const char* name) {
+                return window->findChild<QQuickItem*>(QString::fromLatin1(name));
+            };
+            auto ifaceOf = [&](const char* name) -> QAccessibleInterface* {
+                auto* item = itemOf(name);
+                return item ? QAccessible::queryAccessibleInterface(item) : nullptr;
+            };
+            auto nameOf = [&](const char* name) {
+                auto* iface = ifaceOf(name);
+                return iface ? iface->text(QAccessible::Name) : QString();
+            };
+            auto roleOf = [&](const char* name) {
+                auto* iface = ifaceOf(name);
+                return iface ? int(iface->role()) : -1;
+            };
+            auto fail = [&](int code, const char* stage) {
+                qWarning() << "Accessibility acceptance failed:" << stage << "exit" << code;
+                app.exit(code);
+            };
+            // Popups finish closing only once the exit transition has run; poll
+            // instead of guessing a sleep so the check stays deterministic.
+            auto waitHidden = [&](QObject* popup) {
+                for (int i = 0; i < 100 && popup->property("visible").toBool(); ++i)
+                    QTest::qWait(20);
+                return !popup->property("visible").toBool();
+            };
+
+            // Part A — base control accessibility contracts (roles/names/descriptions).
+            if (roleOf("a11yButton") != int(QAccessible::Button) ||
+                nameOf("a11yButton") != QStringLiteral("Save changes")) {
+                fail(201, "button role/name");
+                return;
+            }
+            if (!ifaceOf("a11yButton") || ifaceOf("a11yButton")->text(QAccessible::Description) !=
+                                              QStringLiteral("Persist the current settings")) {
+                fail(202, "button description");
+                return;
+            }
+            if (roleOf("a11yIconButton") != int(QAccessible::Button) ||
+                nameOf("a11yIconButton") != QStringLiteral("Confirm action")) {
+                fail(203, "icon-only button name");
+                return;
+            }
+            auto* disabledButton = itemOf("a11yDisabledButton");
+            if (!disabledButton || disabledButton->isEnabled() ||
+                roleOf("a11yDisabledButton") != int(QAccessible::Button)) {
+                fail(204, "disabled semantics");
+                return;
+            }
+            if (roleOf("a11yTextField") != int(QAccessible::EditableText) ||
+                nameOf("a11yTextField") != QStringLiteral("Search models")) {
+                fail(205, "text field role/name");
+                return;
+            }
+            if (!ifaceOf("a11yTextField") ||
+                ifaceOf("a11yTextField")->text(QAccessible::Description) !=
+                    QStringLiteral("Filters the locally known model catalog")) {
+                fail(206, "text field description");
+                return;
+            }
+            if (roleOf("a11yComboBox") != int(QAccessible::ComboBox) ||
+                nameOf("a11yComboBox") != QStringLiteral("Provider")) {
+                fail(207, "combo role/name");
+                return;
+            }
+            if (roleOf("a11ySwitch") != int(QAccessible::Switch) ||
+                nameOf("a11ySwitch") != QStringLiteral("Enable notifications")) {
+                fail(208, "switch role/name");
+                return;
+            }
+            if (roleOf("a11ySlider") != int(QAccessible::Slider) ||
+                nameOf("a11ySlider") != QStringLiteral("Volume")) {
+                fail(209, "slider role/name");
+                return;
+            }
+            if (roleOf("a11ySpinBox") != int(QAccessible::SpinBox) ||
+                nameOf("a11ySpinBox") != QStringLiteral("Retries")) {
+                fail(210, "spin box role/name");
+                return;
+            }
+            if (itemOf("a11yButton")->focusPolicy() != Qt::StrongFocus ||
+                itemOf("a11ySwitch")->focusPolicy() != Qt::StrongFocus) {
+                fail(211, "focus policy");
+                return;
+            }
+
+            // Keyboard activation and focus indicators.
+            auto* button = itemOf("a11yButton");
+            button->forceActiveFocus(Qt::TabFocusReason);
+            if (!button->hasActiveFocus()) {
+                fail(212, "button focus");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(20);
+            if (window->property("buttonClicks").toInt() != 1) {
+                fail(213, "button space activation");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Return);
+            QTest::qWait(20);
+            if (window->property("buttonClicks").toInt() != 2) {
+                fail(213, "button enter activation");
+                return;
+            }
+
+            // Disabled controls cannot take focus and cannot be activated.
+            disabledButton->forceActiveFocus(Qt::TabFocusReason);
+            if (disabledButton->hasActiveFocus()) {
+                fail(214, "disabled focus");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(20);
+            if (window->property("disabledClicks").toInt() != 0) {
+                fail(215, "disabled activation");
+                return;
+            }
+
+            // Text entry.
+            auto* textField = itemOf("a11yTextField");
+            textField->forceActiveFocus(Qt::TabFocusReason);
+            for (const char c : {'q', 'w', 'e', 'n'})
+                QTest::keyClick(window, c);
+            QTest::qWait(20);
+            if (textField->property("text").toString() != QStringLiteral("qwen")) {
+                fail(216, "text field input");
+                return;
+            }
+
+            // Switch: keyboard toggle updates value and exposed checked state.
+            auto* switchItem = itemOf("a11ySwitch");
+            switchItem->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(20);
+            if (!switchItem->property("checked").toBool()) {
+                fail(217, "switch toggle");
+                return;
+            }
+            if (!QAccessible::queryAccessibleInterface(switchItem)->state().checked) {
+                fail(218, "switch checked state");
+                return;
+            }
+
+            // Slider increases on the Right arrow.
+            auto* slider = itemOf("a11ySlider");
+            slider->forceActiveFocus(Qt::TabFocusReason);
+            const double beforeSlider = slider->property("value").toDouble();
+            QTest::keyClick(window, Qt::Key_Right);
+            QTest::qWait(20);
+            if (slider->property("value").toDouble() <= beforeSlider) {
+                fail(219, "slider arrow increase");
+                return;
+            }
+
+            // Spin box increases on the Up arrow.
+            auto* spinBox = itemOf("a11ySpinBox");
+            spinBox->forceActiveFocus(Qt::TabFocusReason);
+            const int beforeSpin = spinBox->property("value").toInt();
+            QTest::keyClick(window, Qt::Key_Up);
+            QTest::qWait(20);
+            if (spinBox->property("value").toInt() <= beforeSpin) {
+                fail(220, "spin box arrow increase");
+                return;
+            }
+
+            // Combo box expands and reports the expanded accessible state.
+            auto* combo = itemOf("a11yComboBox");
+            combo->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(window, Qt::Key_Space);
+            QTest::qWait(60);
+            if (!combo->property("popup").value<QObject*>() ||
+                !combo->property("popup").value<QObject*>()->property("visible").toBool()) {
+                fail(221, "combo popup opens");
+                return;
+            }
+            if (!QAccessible::queryAccessibleInterface(combo)->state().expanded) {
+                fail(222, "combo expanded state");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTest::qWait(60);
+
+            // Tab navigation reaches the next visible focusable control.
+            button->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(window, Qt::Key_Tab);
+            QTest::qWait(20);
+            auto* nextFocus = window->activeFocusItem();
+            if (!nextFocus || !nextFocus->isVisible() || nextFocus == button) {
+                fail(223, "tab navigation");
+                return;
+            }
+
+            // Part B — approval dialog semantics and safety.
+            auto* approvalModal = window->findChild<QObject*>("a11yApprovalModal");
+            if (!approvalModal || !QMetaObject::invokeMethod(approvalModal, "open")) {
+                fail(224, "approval open");
+                return;
+            }
+            QTest::qWait(80);
+            auto* approvalIface = ifaceOf("a11yApprovalContent");
+            if (!approvalIface || approvalIface->role() != QAccessible::Dialog ||
+                approvalIface->text(QAccessible::Name) !=
+                    QStringLiteral("Tool approval required")) {
+                fail(225, "approval dialog semantics");
+                return;
+            }
+            auto* deny = itemOf("a11yApprovalDeny");
+            if (window->activeFocusItem() != deny) {
+                auto* focused = window->activeFocusItem();
+                qWarning() << "approval focus debug: focus"
+                           << (focused ? focused->objectName() : QStringLiteral("<null>"))
+                           << "expected" << QStringLiteral("a11yApprovalDeny");
+                fail(226, "approval initial focus");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTest::qWait(40);
+            if (!approvalModal->property("visible").toBool()) {
+                fail(227, "approval NoAutoClose");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Return);
+            QTest::qWait(40);
+            if (window->property("approvals").toInt() != 0 ||
+                window->property("denials").toInt() != 1) {
+                fail(228, "approval enter denies");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Tab);
+            QTest::qWait(20);
+            if (window->activeFocusItem() != itemOf("a11yApprovalAllow")) {
+                fail(229, "approval tab order");
+                return;
+            }
+            if (!QMetaObject::invokeMethod(approvalModal, "close")) {
+                fail(230, "approval close");
+                return;
+            }
+            if (!waitHidden(approvalModal)) {
+                fail(230, "approval close");
+                return;
+            }
+            if (window->property("approvals").toInt() != 0) {
+                fail(231, "no accidental approval");
+                return;
+            }
+
+            // Recovery dialog focus + safe focus restoration. This one is shown by
+            // setting `visible` (as Main.qml does for its overlays) rather than by
+            // calling open(), so the focus contract is proven for that path too.
+            button->forceActiveFocus(Qt::TabFocusReason);
+            auto* recoveryModal = window->findChild<QObject*>("a11yRecoveryModal");
+            if (!recoveryModal) {
+                fail(232, "recovery open");
+                return;
+            }
+            recoveryModal->setProperty("visible", true);
+            QTest::qWait(80);
+            if (window->activeFocusItem() != itemOf("a11yRecoveryRestore")) {
+                fail(233, "recovery initial focus");
+                return;
+            }
+            auto* recoveryIface = ifaceOf("a11yRecoveryContent");
+            if (!recoveryIface || recoveryIface->role() != QAccessible::Dialog ||
+                recoveryIface->text(QAccessible::Name) !=
+                    QStringLiteral("Restore previous session")) {
+                fail(234, "recovery dialog semantics");
+                return;
+            }
+            QTest::keyClick(window, Qt::Key_Escape);
+            if (!waitHidden(recoveryModal)) {
+                fail(235, "recovery escape close");
+                return;
+            }
+            if (!button->hasActiveFocus()) {
+                fail(236, "focus restoration");
+                return;
+            }
+
+            qInfo("Base control roles/names/descriptions, keyboard activation, disabled semantics, "
+                  "tab order, "
+                  "dialog roles, default focus, no-accidental-approval and focus restoration "
+                  "passed (offscreen)");
             app.exit(0);
         });
     }
