@@ -419,3 +419,6 @@ add_sentinel_core_test(test_execution_budget_policy core/test_execution_budget_p
 # P4-02: native resource telemetry value contracts and sampling lifecycle.
 add_sentinel_core_test(test_native_resource_telemetry core/test_native_resource_telemetry.cpp)
 add_sentinel_core_test(test_resource_monitor_sampling core/test_resource_monitor_sampling.cpp)
+
+# P4-03: adaptive resource policy foundation and deterministic contracts.
+add_sentinel_core_test(test_resource_policy core/test_resource_policy.cpp)
